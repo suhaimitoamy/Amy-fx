@@ -496,9 +496,15 @@ class MainActivity : Activity() {
                 } else {
                     prefs.edit().putBoolean("scanner_enabled", true).apply()
                 }
+                val cleanBsl = bsl?.trim()?.takeIf { it.isNotBlank() && it != "undefined" && it != "null" }
+                val cleanSsl = ssl?.trim()?.takeIf { it.isNotBlank() && it != "undefined" && it != "null" }
+                prefs.edit()
+                    .putString("scanner_bsl_target", cleanBsl ?: "")
+                    .putString("scanner_ssl_target", cleanSsl ?: "")
+                    .apply()
                 val intent = Intent(mContext, ScannerService::class.java).apply {
-                    putExtra("bsl", bsl)
-                    putExtra("ssl", ssl)
+                    putExtra("bsl", cleanBsl)
+                    putExtra("ssl", cleanSsl)
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     mContext.startForegroundService(intent)
@@ -623,8 +629,9 @@ class MainActivity : Activity() {
         @JavascriptInterface
         fun finishFile() {
             try {
-                currentFileOutputStream?.flush()
-                currentFileOutputStream?.close()
+                val os = currentFileOutputStream ?: throw IllegalStateException("Output stream belum siap")
+                os.flush()
+                os.close()
                 currentFileOutputStream = null
                 (mContext as Activity).runOnUiThread {
                     Toast.makeText(mContext, "File tersimpan di folder Download", Toast.LENGTH_LONG).show()
@@ -642,10 +649,10 @@ class MainActivity : Activity() {
                 val cleanBase64 = base64Data.replaceFirst("^data:.*?;base64,".toRegex(), "")
                 val fileAsBytes = Base64.decode(cleanBase64, 0)
 
-                val os = openDownloadOutputStream(filename, "application/pdf")
-                os?.write(fileAsBytes)
-                os?.flush()
-                os?.close()
+                val os = openDownloadOutputStream(filename, "application/pdf") ?: throw IllegalStateException("Gagal membuat file")
+                os.write(fileAsBytes)
+                os.flush()
+                os.close()
 
                 (mContext as Activity).runOnUiThread {
                     Toast.makeText(mContext, "File tersimpan di folder Download", Toast.LENGTH_LONG).show()

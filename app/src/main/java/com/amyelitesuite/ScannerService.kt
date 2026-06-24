@@ -145,19 +145,27 @@ class ScannerService : Service() {
         nativeMarketAlertsEnabled = prefs.getBoolean("native_market_alerts_enabled", false)
         prefs.edit().putBoolean("scanner_enabled", true).apply()
 
+        val savedBsl = prefs.getString("scanner_bsl_target", null)?.toDoubleOrNull() ?: 0.0
+        val savedSsl = prefs.getString("scanner_ssl_target", null)?.toDoubleOrNull() ?: 0.0
         val passedBsl = intent?.getStringExtra("bsl")?.toDoubleOrNull() ?: 0.0
         val passedSsl = intent?.getStringExtra("ssl")?.toDoubleOrNull() ?: 0.0
+        val activeBsl = if (passedBsl > 0.0) passedBsl else savedBsl
+        val activeSsl = if (passedSsl > 0.0) passedSsl else savedSsl
 
-        if (passedBsl > 0 || passedSsl > 0) {
-            hasExternalTargets = true
-        }
-        if (passedBsl > 0 && abs(passedBsl - bslTarget) > 0.01) {
-            bslTarget = passedBsl
+        hasExternalTargets = activeBsl > 0.0 || activeSsl > 0.0
+        if (activeBsl > 0.0 && abs(activeBsl - bslTarget) > 0.01) {
+            bslTarget = activeBsl
             hasAlertedBsl = false
         }
-        if (passedSsl > 0 && abs(passedSsl - sslTarget) > 0.01) {
-            sslTarget = passedSsl
+        if (activeSsl > 0.0 && abs(activeSsl - sslTarget) > 0.01) {
+            sslTarget = activeSsl
             hasAlertedSsl = false
+        }
+        if (passedBsl > 0.0 || passedSsl > 0.0) {
+            prefs.edit()
+                .putString("scanner_bsl_target", if (activeBsl > 0.0) activeBsl.toString() else "")
+                .putString("scanner_ssl_target", if (activeSsl > 0.0) activeSsl.toString() else "")
+                .apply()
         }
 
         if (apiKey.isNullOrEmpty()) {
@@ -252,7 +260,9 @@ class ScannerService : Service() {
     }
 
     private fun startWebSocket() {
-        stopWebSocket()
+        stopWebSocket(suppressReconnect = false)
+        manualSocketClose = false
+        suppressReconnectUntil = 0L
         val request = Request.Builder()
             .url("wss://ws.twelvedata.com/v1/quotes/price?apikey=$apiKey")
             .build()
@@ -284,12 +294,14 @@ class ScannerService : Service() {
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                if (this@ScannerService.webSocket !== webSocket) return
                 if (manualSocketClose || System.currentTimeMillis() < suppressReconnectUntil) return
                 Log.e("AmyFX", "WebSocket Error: ${t.message}")
                 scheduleReconnect("failure")
             }
 
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                if (this@ScannerService.webSocket !== webSocket) return
                 if (manualSocketClose || System.currentTimeMillis() < suppressReconnectUntil) {
                     manualSocketClose = false
                     Log.d("AmyFX", "WebSocket Closed manually: $reason")
@@ -1086,6 +1098,7 @@ Scanner ringan mengikuti target dari Mapping.
 
     private fun sendAlertNotification(title: String, message: String) {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val contentText = if (nativeMarketAlertsEnabled) directionSentence() else "Target BSL/SSL tercapai."
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -1098,7 +1111,7 @@ Scanner ringan mengikuti target dari Mapping.
         val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, "scanner_alerts_channel")
                 .setContentTitle(title)
-                .setContentText(directionSentence())
+                .setContentText(contentText)
                 .setStyle(Notification.BigTextStyle().bigText(message))
                 .setSmallIcon(R.drawable.ic_stat_amy_fx)
                 .setContentIntent(pendingIntent)
@@ -1108,7 +1121,7 @@ Scanner ringan mengikuti target dari Mapping.
             @Suppress("DEPRECATION")
             Notification.Builder(this)
                 .setContentTitle(title)
-                .setContentText(directionSentence())
+                .setContentText(contentText)
                 .setStyle(Notification.BigTextStyle().bigText(message))
                 .setSmallIcon(R.drawable.ic_stat_amy_fx)
                 .setContentIntent(pendingIntent)
@@ -1119,13 +1132,16 @@ Scanner ringan mengikuti target dari Mapping.
         nm.notify(2, notification)
     }
 
-    private fun stopWebSocket() {
-        manualSocketClose = true
-        suppressReconnectUntil = System.currentTimeMillis() + 3000L
-        reconnectJob?.cancel()
-        reconnectJob = null
-        webSocket?.close(1000, "Service Stopped")
+    private fun stopWebSocket(suppressReconnect: Boolean = true) {
+        if (suppressReconnect) {
+            manualSocketClose = true
+            suppressReconnectUntil = System.currentTimeMillis() + 3000L
+            reconnectJob?.cancel()
+            reconnectJob = null
+        }
+        val socket = webSocket
         webSocket = null
+        socket?.close(1000, if (suppressReconnect) "Service Stopped" else "Service Restart")
     }
 
     private fun createNotificationChannel() {
