@@ -376,10 +376,13 @@
               <button class="ghost-button" id="exportAllBtn" type="button">Backup</button>
               <label class="ghost-button import-button" for="importBackupInput">Restore</label>
               <input id="importBackupInput" type="file" accept=".zip,application/zip" hidden>
+              <button class="ghost-button" id="scanStorageBtn" type="button">Scan HP</button>
+              <input id="storageScanInput" type="file" multiple accept="image/*,video/*,.pdf,.doc,.docx,.md,.txt,.xls,.xlsx,.csv,.ppt,.pptx" hidden>
               <button class="ghost-button" id="setPinBtn" type="button">PIN</button>
               <button class="ghost-button danger" id="clearPinBtn" type="button">Hapus PIN</button>
             </div>
           </div>
+          <p class="form-message" id="scanStorageMessage" role="status"></p>
           <div class="dashboard-grid" id="dashboardGrid"></div>
           <div class="statistics-page" id="statisticsViewContent"></div>
         </section>

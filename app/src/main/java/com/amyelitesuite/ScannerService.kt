@@ -130,7 +130,7 @@ class ScannerService : Service() {
 
         createNotificationChannel()
 
-        if (wakeLock == null) {
+        if (wakeLock == null || wakeLock?.isHeld != true) {
             val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
             wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "amyfx:scanner")
             wakeLock?.acquire(12 * 60 * 60 * 1000L)
@@ -1086,9 +1086,10 @@ Scanner ringan mengikuti target dari Mapping.
         val last = lastAlertAt[key] ?: 0L
         if (now - last < 10 * 60 * 1000L) return
 
+        val isTargetHit = key.startsWith("BSL-") || key.startsWith("SSL-")
         val signature = title + "|" + message.lineSequence().take(5).joinToString("|")
-        if (signature == lastMarketAlertSignature && now - lastMarketAlertAt < 30 * 60 * 1000L) return
-        if (now - lastMarketAlertAt < 90 * 1000L) return
+        if (!isTargetHit && signature == lastMarketAlertSignature && now - lastMarketAlertAt < 30 * 60 * 1000L) return
+        if (!isTargetHit && now - lastMarketAlertAt < 90 * 1000L) return
 
         lastAlertAt[key] = now
         lastMarketAlertSignature = signature
@@ -1129,7 +1130,7 @@ Scanner ringan mengikuti target dari Mapping.
                 .build()
         }
 
-        nm.notify(2, notification)
+        nm.notify(2 + kotlin.math.abs((title + message).hashCode() % 100000), notification)
     }
 
     private fun stopWebSocket(suppressReconnect: Boolean = true) {

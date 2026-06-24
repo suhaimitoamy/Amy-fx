@@ -34,6 +34,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let selectedIndicator = indicators[0];
 
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>'\"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '\"': '&quot;' }[ch]));
+  }
+
   async function loadRepoIndicators() {
     try {
       const res = await fetch('apps/indikator/manifest.json');
@@ -100,7 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function handleKoleksi(action) {
     if (action === 'kode') {
       const savedCode = localStorage.getItem('amy_saved_code');
-      mainContent.innerHTML = `<div class="page-header row"><button class="back-btn" data-nav="koleksi">‹</button><h2>Kode Tersimpan</h2></div><section class="code-panel"><pre id="code-display">${savedCode || 'Belum ada kode tersimpan.'}</pre><div class="actions"><button class="action-btn primary" data-copy-koleksi>Salin Kode</button></div></section>`;
+      mainContent.innerHTML = `<div class="page-header row"><button class="back-btn" data-nav="koleksi">‹</button><h2>Kode Tersimpan</h2></div><section class="code-panel"><pre id="code-display"></pre><div class="actions"><button class="action-btn primary" data-copy-koleksi>Salin Kode</button></div></section>`;
+      const savedDisplay = document.getElementById('code-display');
+      if (savedDisplay) savedDisplay.textContent = savedCode || 'Belum ada kode tersimpan.';
     } else if (action === 'favorit' || action === 'riwayat') {
       showToast('Fitur ini akan segera hadir pada update berikutnya.');
     } else if (action === 'update') {
@@ -114,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const filtered = indicators.filter(item => (category === 'Semua' || item.category === category) && (item.name.toLowerCase().includes(query.toLowerCase()) || item.desc.toLowerCase().includes(query.toLowerCase())));
     list.innerHTML = filtered.map(item => {
       const originalIndex = indicators.indexOf(item);
-      return `<button class="indicator-item" data-select-indicator="${originalIndex}">${icon('code')}<span><strong>${item.name}</strong><small>${item.desc}</small></span><span class="chevron">›</span></button>`;
+      return `<button class="indicator-item" data-select-indicator="${originalIndex}">${icon('code')}<span><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.desc)}</small></span><span class="chevron">›</span></button>`;
     }).join('') || '<div class="empty">Indikator tidak ditemukan.</div>';
   }
 
@@ -123,7 +129,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const categoryOptions = ['Semua', ...new Set(indicators.map(i => i.category))];
     const pillsHTML = categoryOptions.map(cat => `<button class="pill ${cat === 'Semua' ? 'active' : ''}" data-filter="${cat}">${cat}</button>`).join('');
 
-    mainContent.innerHTML = `<div class="page-header row"><button class="back-btn" data-nav="proyek">‹</button><h2>Indikator TradingView</h2></div><input id="indicator-search" class="search-input" placeholder="Cari indikator..."><div class="pill-row">${pillsHTML}</div><div id="indicator-list" class="indicator-list slide-up"></div><section class="code-panel"><span class="badge">Terpilih</span><h3>${selectedIndicator.name}</h3><p>${selectedIndicator.desc}</p><pre id="code-display">${selectedIndicator.code || 'Mengambil source code lokal...'}</pre><div class="actions"><button class="action-btn" data-save-code>Simpan Kode</button><button class="action-btn primary" data-copy-code>Salin Kode</button></div></section>`;
+    mainContent.innerHTML = `<div class="page-header row"><button class="back-btn" data-nav="proyek">‹</button><h2>Indikator TradingView</h2></div><input id="indicator-search" class="search-input" placeholder="Cari indikator..."><div class="pill-row">${pillsHTML}</div><div id="indicator-list" class="indicator-list slide-up"></div><section class="code-panel"><span class="badge">Terpilih</span><h3>${escapeHtml(selectedIndicator.name)}</h3><p>${escapeHtml(selectedIndicator.desc)}</p><pre id="code-display"></pre><div class="actions"><button class="action-btn" data-save-code>Simpan Kode</button><button class="action-btn primary" data-copy-code>Salin Kode</button></div></section>`;
+    const codeDisplay = document.getElementById('code-display');
+    if (codeDisplay) codeDisplay.textContent = selectedIndicator.code || 'Mengambil source code lokal...';
     
     renderIndicatorList();
 

@@ -251,7 +251,7 @@
   }
 
   function trackReadingProgress() {
-    var article = document.querySelector('.article-layout .article');
+    var article = document.querySelector('.article-layout .article, .article');
     if (article) {
       var h1 = article.querySelector('h1');
       if (h1) {
@@ -323,7 +323,7 @@
   }
 
   function initReaderMode() {
-    var article = document.querySelector('.article-layout .article');
+    var article = document.querySelector('.article-layout .article, .article');
     if (!article) return;
     
     var progressBar = document.createElement('div');
@@ -395,7 +395,7 @@ window.showToast = function(msg) {
   }
   const toast = document.createElement('div');
   toast.className = 'amy-toast';
-  toast.innerHTML = msg;
+  toast.textContent = String(msg || "");
   container.appendChild(toast);
   setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 3000);
 };

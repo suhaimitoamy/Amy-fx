@@ -98,6 +98,9 @@ const dom = {
   installBtn: document.querySelector("#installBtn"),
   exportAllBtn: document.querySelector("#exportAllBtn"),
   importBackupInput: document.querySelector("#importBackupInput"),
+  scanStorageBtn: document.querySelector("#scanStorageBtn"),
+  storageScanInput: document.querySelector("#storageScanInput"),
+  scanStorageMessage: document.querySelector("#scanStorageMessage"),
   setPinBtn: document.querySelector("#setPinBtn"),
   clearPinBtn: document.querySelector("#clearPinBtn"),
   journalCount: document.querySelector("#journalCount"),
@@ -367,6 +370,10 @@ function bindEvents() {
 
   dom.exportAllBtn?.addEventListener("click", exportBackup);
   dom.importBackupInput?.addEventListener("change", importBackup);
+  dom.scanStorageBtn?.addEventListener("click", scanStorageFiles);
+  dom.storageScanInput?.addEventListener("change", handleStorageScanInput);
+  window.addEventListener("amyNativeStorageScanResult", handleNativeStorageScanResult);
+  window.handleNativeStorageScanResult = (detail) => handleNativeStorageScanResult({ detail });
   dom.setPinBtn?.addEventListener("click", setLocalPin);
   dom.clearPinBtn?.addEventListener("click", clearLocalPin);
   dom.newJournalBtn?.addEventListener("click", () => { resetJournalForm(); openJournalEditor("new"); });
@@ -1407,18 +1414,33 @@ function bindDashboardInteractions() {
       const filter = card.dataset.dashboardFilter;
       if (filter === "Jurnal") {
         setView("journal");
-      } else if (filter === "Video" || filter === "PDF" || filter === "Gambar") {
-        dom.filterType.value = filter;
-        dom.filterStatus.value = "Semua";
-        dom.filterSort.value = "Terbaru";
+        return;
+      }
+      if (filter === "Video" || filter === "PDF" || filter === "Gambar") {
+        state.fileType = filter;
+        state.status = "Semua";
+        state.sort = "pinned-newest";
+        resetGridLimits();
+        saveSettings();
+        renderPills();
         setView("library");
-      } else if (filter === "Belum dibaca") {
-        dom.filterStatus.value = "Belum dibaca";
-        dom.filterType.value = "Semua";
+        return;
+      }
+      if (filter === "Belum dibaca") {
+        state.status = "Belum dibaca";
+        state.fileType = "Semua";
+        resetGridLimits();
+        saveSettings();
+        renderPills();
         setView("library");
-      } else if (filter === "Sudah dibaca") {
-        dom.filterStatus.value = "Selesai"; // Approximation
-        dom.filterType.value = "Semua";
+        return;
+      }
+      if (filter === "Sudah dibaca") {
+        state.status = "Selesai";
+        state.fileType = "Semua";
+        resetGridLimits();
+        saveSettings();
+        renderPills();
         setView("library");
       }
     });
@@ -1704,6 +1726,8 @@ async function handleNativeStorageScanResult(event) {
   if (message) setScanStorageMessage(message);
 }
 
+
+window.scanStorageFiles = scanStorageFiles;
 
 async function handleStorageScanInput() {
   const files = [...(dom.storageScanInput?.files || [])];
@@ -2008,19 +2032,17 @@ async function handleFilePick() {
 
   try {
     const pendingFiles = [];
+    const batchHashes = new Set();
     for (const file of files) {
-      const isDuplicate = state.items.some(item =>
-        (item.mediaName && item.mediaName === file.name) ||
-        (item.files && item.files.some(f => f.name === file.name))
-      );
-      if (isDuplicate) {
+      const pending = await makePendingMedia(file, { compressImage: dom.compressImageInput?.checked });
+      if (!pending) continue;
+      if (pending.fileHash && (findDuplicateByHash(pending.fileHash) || batchHashes.has(pending.fileHash))) {
         dom.formMessage.textContent = `File "${file.name}" sudah ada di Library.`;
         dom.fileInput.value = "";
         return;
       }
-
-      const pending = await makePendingMedia(file, { compressImage: dom.compressImageInput?.checked });
-      if (pending) pendingFiles.push(pending);
+      if (pending.fileHash) batchHashes.add(pending.fileHash);
+      pendingFiles.push(pending);
     }
 
     if (!pendingFiles.length) {
@@ -2410,14 +2432,34 @@ async function deleteItemsByIds(ids) {
   return true;
 }
 
+async function copyTextSafe(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {}
+  try {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.append(textarea);
+    textarea.select();
+    const ok = document.execCommand("copy");
+    textarea.remove();
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 async function copyCode(item, button) {
   if (!item.code) return;
-  try {
-    await navigator.clipboard.writeText(item.code);
-    pulseButton(button, "Tersalin");
-  } catch {
-    pulseButton(button, "Gagal");
-  }
+  const ok = await copyTextSafe(item.code);
+  pulseButton(button, ok ? "Tersalin" : "Gagal");
+  if (!ok) window.showToast("Gagal menyalin kode. Pilih teks lalu salin manual.");
 }
 
 async function showDocument(item) {

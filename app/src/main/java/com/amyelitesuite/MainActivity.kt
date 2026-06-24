@@ -498,10 +498,10 @@ class MainActivity : Activity() {
                 }
                 val cleanBsl = bsl?.trim()?.takeIf { it.isNotBlank() && it != "undefined" && it != "null" }
                 val cleanSsl = ssl?.trim()?.takeIf { it.isNotBlank() && it != "undefined" && it != "null" }
-                prefs.edit()
-                    .putString("scanner_bsl_target", cleanBsl ?: "")
-                    .putString("scanner_ssl_target", cleanSsl ?: "")
-                    .apply()
+                prefs.edit().apply {
+                    if (cleanBsl != null) putString("scanner_bsl_target", cleanBsl)
+                    if (cleanSsl != null) putString("scanner_ssl_target", cleanSsl)
+                }.apply()
                 val intent = Intent(mContext, ScannerService::class.java).apply {
                     putExtra("bsl", cleanBsl)
                     putExtra("ssl", cleanSsl)
