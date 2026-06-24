@@ -1,0 +1,348 @@
+//==================== CUSTOM CONTEXT DASHBOARD ====================//
+ctx_groupDash = "Custom Context Dashboard"
+ctx_showDashboard = input.bool(true, "Show Context Dashboard", group=ctx_groupDash)
+ctx_dashPositionInput = input.string("Bottom Right", "Dashboard Position", options=["Top Right", "Top Left", "Bottom Right", "Bottom Left"], group=ctx_groupDash)
+ctx_minContextScore = input.int(4, "Minimum Context Score", minval=1, maxval=10, group=ctx_groupDash)
+ctx_scanDepth = input.int(10, "LuxAlgo Object Scan Depth", minval=1, maxval=50, group=ctx_groupDash)
+
+ctx_dashPos(_pos) =>
+    _pos == "Top Left" ? position.top_left :
+     _pos == "Bottom Right" ? position.bottom_right :
+     _pos == "Bottom Left" ? position.bottom_left :
+     position.top_right
+
+ctx_price(_x) =>
+    na(_x) ? "-" : str.tostring(_x, format.mintick)
+
+ctx_range(_a, _b) =>
+    na(_a) or na(_b) ? "-" : ctx_price(math.min(_a, _b)) + " - " + ctx_price(math.max(_a, _b))
+
+ctx_join(_a, _b) =>
+    _a == "" ? _b : _b == "" ? _a : _a + " + " + _b
+
+ctx_clip(_s, _max) =>
+    str.length(_s) > _max ? str.substring(_s, 0, _max) + "..." : _s
+
+ctx_zoneDist(_a, _b) =>
+    _hi = math.max(_a, _b)
+    _lo = math.min(_a, _b)
+    na(_a) or na(_b) ? na : close >= _lo and close <= _hi ? 0.0 : math.min(math.abs(close - _hi), math.abs(close - _lo))
+
+ctx_inZone(_a, _b) =>
+    not na(_a) and not na(_b) and low <= math.max(_a, _b) and high >= math.min(_a, _b)
+
+//==================== READ LUXALGO CONTEXT ====================//
+ctx_mssBull = MSS.dir == 1
+ctx_mssBear = MSS.dir == -1
+ctx_mssText = ctx_mssBull ? "BULLISH" : ctx_mssBear ? "BEARISH" : "NEUTRAL"
+
+ctx_inKillzone = ny or ldn_open or ldn_close or asian
+ctx_killzoneText = ny ? "New York" :
+     ldn_open ? "London Open" :
+     ldn_close ? "London Close" :
+     asian ? "Asian" :
+     "Off"
+
+//==================== LIQUIDITY CONTEXT ====================//
+box ctx_buysideBox = na
+box ctx_sellsideBox = na
+bool ctx_buysideBroken = false
+bool ctx_sellsideBroken = false
+float ctx_buysideTop = na
+float ctx_buysideBottom = na
+float ctx_sellsideTop = na
+float ctx_sellsideBottom = na
+float ctx_bestBuysideDist = na
+float ctx_bestSellsideDist = na
+
+if b_liq_B.size() > 0
+    for i = 0 to math.min(b_liq_B.size() - 1, ctx_scanDepth - 1)
+        ctx_buysideItem = b_liq_B.get(i)
+        ctx_buysideItemBox = ctx_buysideItem.bx
+        if not na(ctx_buysideItemBox) and not ctx_buysideItem.broken
+            ctx_tmpTop = ctx_buysideItemBox.get_top()
+            ctx_tmpBottom = ctx_buysideItemBox.get_bottom()
+            ctx_tmpDist = ctx_zoneDist(ctx_tmpTop, ctx_tmpBottom)
+            if na(ctx_bestBuysideDist) or ctx_tmpDist < ctx_bestBuysideDist
+                ctx_bestBuysideDist := ctx_tmpDist
+                ctx_buysideBox := ctx_buysideItemBox
+                ctx_buysideBroken := ctx_buysideItem.broken
+                ctx_buysideTop := ctx_tmpTop
+                ctx_buysideBottom := ctx_tmpBottom
+
+if b_liq_S.size() > 0
+    for i = 0 to math.min(b_liq_S.size() - 1, ctx_scanDepth - 1)
+        ctx_sellsideItem = b_liq_S.get(i)
+        ctx_sellsideItemBox = ctx_sellsideItem.bx
+        if not na(ctx_sellsideItemBox) and not ctx_sellsideItem.broken
+            ctx_tmpTop = ctx_sellsideItemBox.get_top()
+            ctx_tmpBottom = ctx_sellsideItemBox.get_bottom()
+            ctx_tmpDist = ctx_zoneDist(ctx_tmpTop, ctx_tmpBottom)
+            if na(ctx_bestSellsideDist) or ctx_tmpDist < ctx_bestSellsideDist
+                ctx_bestSellsideDist := ctx_tmpDist
+                ctx_sellsideBox := ctx_sellsideItemBox
+                ctx_sellsideBroken := ctx_sellsideItem.broken
+                ctx_sellsideTop := ctx_tmpTop
+                ctx_sellsideBottom := ctx_tmpBottom
+
+ctx_hasBuyside = not na(ctx_buysideBox)
+ctx_hasSellside = not na(ctx_sellsideBox)
+
+ctx_buysideSweep = ctx_hasBuyside and high > ctx_buysideTop and close < ctx_buysideTop
+ctx_sellsideSweep = ctx_hasSellside and low < ctx_sellsideBottom and close > ctx_sellsideBottom
+
+ctx_buysideText = ctx_hasBuyside ? "Buyside " + (ctx_buysideSweep ? "Swept " : "Active ") + ctx_range(ctx_buysideTop, ctx_buysideBottom) : ""
+ctx_sellsideText = ctx_hasSellside ? "Sellside " + (ctx_sellsideSweep ? "Swept " : "Active ") + ctx_range(ctx_sellsideTop, ctx_sellsideBottom) : ""
+ctx_liquidityText = ctx_join(ctx_buysideText, ctx_sellsideText)
+ctx_liquidityText := ctx_liquidityText == "" ? "None" : ctx_liquidityText
+
+//==================== FVG CONTEXT ====================//
+box ctx_bullFvgBox = na
+box ctx_bearFvgBox = na
+bool ctx_bullFvgActive = false
+bool ctx_bearFvgActive = false
+float ctx_bullFvgTop = na
+float ctx_bullFvgBottom = na
+float ctx_bearFvgTop = na
+float ctx_bearFvgBottom = na
+float ctx_bestBullFvgDist = na
+float ctx_bestBearFvgDist = na
+
+if bFVG_UP.size() > 0
+    for i = 0 to math.min(bFVG_UP.size() - 1, ctx_scanDepth - 1)
+        ctx_bullFvgItem = bFVG_UP.get(i)
+        ctx_bullFvgItemBox = ctx_bullFvgItem.box
+        if ctx_bullFvgItem.active and not na(ctx_bullFvgItemBox)
+            ctx_tmpTop = ctx_bullFvgItemBox.get_top()
+            ctx_tmpBottom = ctx_bullFvgItemBox.get_bottom()
+            ctx_tmpDist = ctx_zoneDist(ctx_tmpTop, ctx_tmpBottom)
+            if na(ctx_bestBullFvgDist) or ctx_tmpDist < ctx_bestBullFvgDist
+                ctx_bestBullFvgDist := ctx_tmpDist
+                ctx_bullFvgBox := ctx_bullFvgItemBox
+                ctx_bullFvgActive := true
+                ctx_bullFvgTop := ctx_tmpTop
+                ctx_bullFvgBottom := ctx_tmpBottom
+
+if bFVG_DN.size() > 0
+    for i = 0 to math.min(bFVG_DN.size() - 1, ctx_scanDepth - 1)
+        ctx_bearFvgItem = bFVG_DN.get(i)
+        ctx_bearFvgItemBox = ctx_bearFvgItem.box
+        if ctx_bearFvgItem.active and not na(ctx_bearFvgItemBox)
+            ctx_tmpTop = ctx_bearFvgItemBox.get_top()
+            ctx_tmpBottom = ctx_bearFvgItemBox.get_bottom()
+            ctx_tmpDist = ctx_zoneDist(ctx_tmpTop, ctx_tmpBottom)
+            if na(ctx_bestBearFvgDist) or ctx_tmpDist < ctx_bestBearFvgDist
+                ctx_bestBearFvgDist := ctx_tmpDist
+                ctx_bearFvgBox := ctx_bearFvgItemBox
+                ctx_bearFvgActive := true
+                ctx_bearFvgTop := ctx_tmpTop
+                ctx_bearFvgBottom := ctx_tmpBottom
+
+ctx_inBullFvg = ctx_bullFvgActive and ctx_inZone(ctx_bullFvgTop, ctx_bullFvgBottom)
+ctx_inBearFvg = ctx_bearFvgActive and ctx_inZone(ctx_bearFvgTop, ctx_bearFvgBottom)
+
+ctx_bullFvgText = ctx_bullFvgActive ? "Bull FVG " + ctx_range(ctx_bullFvgTop, ctx_bullFvgBottom) : ""
+ctx_bearFvgText = ctx_bearFvgActive ? "Bear FVG " + ctx_range(ctx_bearFvgTop, ctx_bearFvgBottom) : ""
+ctx_fvgText = ctx_join(ctx_bullFvgText, ctx_bearFvgText)
+ctx_fvgText := ctx_fvgText == "" ? "None" : ctx_fvgText
+
+//==================== ORDER BLOCK CONTEXT ====================//
+float ctx_bullObTop = na
+float ctx_bullObBottom = na
+float ctx_bearObTop = na
+float ctx_bearObBottom = na
+bool ctx_bullObBreaker = false
+bool ctx_bearObBreaker = false
+float ctx_bestBullObDist = na
+float ctx_bestBearObDist = na
+
+if bullish_ob.size() > 0
+    for i = 0 to math.min(bullish_ob.size() - 1, ctx_scanDepth - 1)
+        ctx_bullObItem = bullish_ob.get(i)
+        if not ctx_bullObItem.breaker and not na(ctx_bullObItem.top) and not na(ctx_bullObItem.btm)
+            ctx_tmpDist = ctx_zoneDist(ctx_bullObItem.top, ctx_bullObItem.btm)
+            if na(ctx_bestBullObDist) or ctx_tmpDist < ctx_bestBullObDist
+                ctx_bestBullObDist := ctx_tmpDist
+                ctx_bullObTop := ctx_bullObItem.top
+                ctx_bullObBottom := ctx_bullObItem.btm
+                ctx_bullObBreaker := ctx_bullObItem.breaker
+
+if bearish_ob.size() > 0
+    for i = 0 to math.min(bearish_ob.size() - 1, ctx_scanDepth - 1)
+        ctx_bearObItem = bearish_ob.get(i)
+        if not ctx_bearObItem.breaker and not na(ctx_bearObItem.top) and not na(ctx_bearObItem.btm)
+            ctx_tmpDist = ctx_zoneDist(ctx_bearObItem.top, ctx_bearObItem.btm)
+            if na(ctx_bestBearObDist) or ctx_tmpDist < ctx_bestBearObDist
+                ctx_bestBearObDist := ctx_tmpDist
+                ctx_bearObTop := ctx_bearObItem.top
+                ctx_bearObBottom := ctx_bearObItem.btm
+                ctx_bearObBreaker := ctx_bearObItem.breaker
+
+ctx_hasBullOb = not na(ctx_bullObTop) and not na(ctx_bullObBottom)
+ctx_hasBearOb = not na(ctx_bearObTop) and not na(ctx_bearObBottom)
+ctx_inBullOb = ctx_hasBullOb and ctx_inZone(ctx_bullObTop, ctx_bullObBottom)
+ctx_inBearOb = ctx_hasBearOb and ctx_inZone(ctx_bearObTop, ctx_bearObBottom)
+
+ctx_bullObText = ctx_hasBullOb ? "Bull OB " + ctx_range(ctx_bullObTop, ctx_bullObBottom) : ""
+ctx_bearObText = ctx_hasBearOb ? "Bear OB " + ctx_range(ctx_bearObTop, ctx_bearObBottom) : ""
+ctx_obText = ctx_join(ctx_bullObText, ctx_bearObText)
+ctx_obText := ctx_obText == "" ? "None" : ctx_obText
+
+//==================== PRICE ACTION CONTEXT ====================//
+ctx_bodySafe = math.max(body, syminfo.mintick)
+ctx_barRange = math.max(high - low, syminfo.mintick)
+ctx_upperWick = high - math.max(open, close)
+ctx_lowerWick = math.min(open, close) - low
+
+ctx_bullEngulfing = close > open and close[1] < open[1] and close > open[1] and open <= close[1]
+ctx_bearEngulfing = close < open and close[1] > open[1] and close < open[1] and open >= close[1]
+
+ctx_bullPinbar = ctx_lowerWick > ctx_bodySafe * 1.5 and close > open and close > low + ctx_barRange * 0.60
+ctx_bearPinbar = ctx_upperWick > ctx_bodySafe * 1.5 and close < open and close < high - ctx_barRange * 0.60
+
+ctx_bullRejection = ctx_lowerWick > ctx_bodySafe and close > open
+ctx_bearRejection = ctx_upperWick > ctx_bodySafe and close < open
+
+ctx_displacementText = L_bodyUP ? "Bullish Displacement" : L_bodyDN ? "Bearish Displacement" : "None"
+
+ctx_priceActionText = ""
+ctx_priceActionText := ctx_join(ctx_priceActionText, ctx_bullEngulfing ? "Bull Engulfing" : "")
+ctx_priceActionText := ctx_join(ctx_priceActionText, ctx_bearEngulfing ? "Bear Engulfing" : "")
+ctx_priceActionText := ctx_join(ctx_priceActionText, ctx_bullPinbar ? "Bull Pinbar" : "")
+ctx_priceActionText := ctx_join(ctx_priceActionText, ctx_bearPinbar ? "Bear Pinbar" : "")
+ctx_priceActionText := ctx_join(ctx_priceActionText, ctx_bullRejection ? "Bull Rejection" : "")
+ctx_priceActionText := ctx_join(ctx_priceActionText, ctx_bearRejection ? "Bear Rejection" : "")
+ctx_priceActionText := ctx_priceActionText == "" ? "None" : ctx_priceActionText
+
+//==================== CONTEXT SCORE ====================//
+ctx_buyScore = 0
+ctx_buyScore += ctx_mssBull ? 2 : 0
+ctx_buyScore += ctx_inKillzone ? 1 : 0
+ctx_buyScore += ctx_hasSellside ? 1 : 0
+ctx_buyScore += ctx_sellsideSweep ? 2 : 0
+ctx_buyScore += ctx_inBullFvg ? 1 : 0
+ctx_buyScore += ctx_inBullOb ? 1 : 0
+ctx_buyScore += L_bodyUP ? 1 : 0
+ctx_buyScore += ctx_bullEngulfing or ctx_bullPinbar or ctx_bullRejection ? 1 : 0
+
+ctx_sellScore = 0
+ctx_sellScore += ctx_mssBear ? 2 : 0
+ctx_sellScore += ctx_inKillzone ? 1 : 0
+ctx_sellScore += ctx_hasBuyside ? 1 : 0
+ctx_sellScore += ctx_buysideSweep ? 2 : 0
+ctx_sellScore += ctx_inBearFvg ? 1 : 0
+ctx_sellScore += ctx_inBearOb ? 1 : 0
+ctx_sellScore += L_bodyDN ? 1 : 0
+ctx_sellScore += ctx_bearEngulfing or ctx_bearPinbar or ctx_bearRejection ? 1 : 0
+
+ctx_buyContext = ctx_buyScore >= ctx_minContextScore and ctx_buyScore > ctx_sellScore
+ctx_sellContext = ctx_sellScore >= ctx_minContextScore and ctx_sellScore > ctx_buyScore
+ctx_mixedContext = ctx_buyScore >= ctx_minContextScore and ctx_sellScore >= ctx_minContextScore and ctx_buyScore == ctx_sellScore
+
+ctx_contextBias = ctx_buyContext ? "BUY CTX" : ctx_sellContext ? "SELL CTX" : ctx_mixedContext ? "MIXED" : "WAIT"
+ctx_actionState = ctx_buyContext ? "BUY CTX" : ctx_sellContext ? "SELL CTX" : ctx_mixedContext ? "MIXED" : "WAIT"
+
+//==================== ENTRY SOURCE TEXT ====================//
+ctx_buyEntrySource = ""
+ctx_buyEntrySource := ctx_join(ctx_buyEntrySource, ctx_inBullFvg ? "Bull FVG" : "")
+ctx_buyEntrySource := ctx_join(ctx_buyEntrySource, ctx_inBullOb ? "Bull OB" : "")
+ctx_buyEntrySource := ctx_join(ctx_buyEntrySource, ctx_sellsideSweep ? "SSL Sweep" : "")
+
+ctx_sellEntrySource = ""
+ctx_sellEntrySource := ctx_join(ctx_sellEntrySource, ctx_inBearFvg ? "Bear FVG" : "")
+ctx_sellEntrySource := ctx_join(ctx_sellEntrySource, ctx_inBearOb ? "Bear OB" : "")
+ctx_sellEntrySource := ctx_join(ctx_sellEntrySource, ctx_buysideSweep ? "BSL Sweep" : "")
+
+ctx_entrySourceText = ctx_buyContext ? ctx_buyEntrySource : ctx_sellContext ? ctx_sellEntrySource : ctx_mixedContext ? ctx_join(ctx_buyEntrySource, ctx_sellEntrySource) : ""
+ctx_entrySourceText := ctx_entrySourceText == "" ? "None" : ctx_entrySourceText
+
+//==================== REASON TEXT ====================//
+ctx_buyReason = ""
+ctx_buyReason := ctx_join(ctx_buyReason, ctx_mssBull ? "MSS Bull" : "")
+ctx_buyReason := ctx_join(ctx_buyReason, ctx_inKillzone ? ctx_killzoneText : "")
+ctx_buyReason := ctx_join(ctx_buyReason, ctx_sellsideSweep ? "SSL Sweep " + ctx_range(ctx_sellsideTop, ctx_sellsideBottom) : "")
+ctx_buyReason := ctx_join(ctx_buyReason, not ctx_sellsideSweep and ctx_hasSellside ? "SSL " + ctx_range(ctx_sellsideTop, ctx_sellsideBottom) : "")
+ctx_buyReason := ctx_join(ctx_buyReason, ctx_inBullFvg ? "In Bull FVG " + ctx_range(ctx_bullFvgTop, ctx_bullFvgBottom) : "")
+ctx_buyReason := ctx_join(ctx_buyReason, ctx_inBullOb ? "In Bull OB " + ctx_range(ctx_bullObTop, ctx_bullObBottom) : "")
+ctx_buyReason := ctx_join(ctx_buyReason, L_bodyUP ? "Bull Disp" : "")
+ctx_buyReason := ctx_join(ctx_buyReason, ctx_bullEngulfing ? "Bull Engulf" : "")
+ctx_buyReason := ctx_join(ctx_buyReason, ctx_bullPinbar ? "Bull Pinbar" : "")
+ctx_buyReason := ctx_join(ctx_buyReason, ctx_bullRejection ? "Bull Reject" : "")
+
+ctx_sellReason = ""
+ctx_sellReason := ctx_join(ctx_sellReason, ctx_mssBear ? "MSS Bear" : "")
+ctx_sellReason := ctx_join(ctx_sellReason, ctx_inKillzone ? ctx_killzoneText : "")
+ctx_sellReason := ctx_join(ctx_sellReason, ctx_buysideSweep ? "BSL Sweep " + ctx_range(ctx_buysideTop, ctx_buysideBottom) : "")
+ctx_sellReason := ctx_join(ctx_sellReason, not ctx_buysideSweep and ctx_hasBuyside ? "BSL " + ctx_range(ctx_buysideTop, ctx_buysideBottom) : "")
+ctx_sellReason := ctx_join(ctx_sellReason, ctx_inBearFvg ? "In Bear FVG " + ctx_range(ctx_bearFvgTop, ctx_bearFvgBottom) : "")
+ctx_sellReason := ctx_join(ctx_sellReason, ctx_inBearOb ? "In Bear OB " + ctx_range(ctx_bearObTop, ctx_bearObBottom) : "")
+ctx_sellReason := ctx_join(ctx_sellReason, L_bodyDN ? "Bear Disp" : "")
+ctx_sellReason := ctx_join(ctx_sellReason, ctx_bearEngulfing ? "Bear Engulf" : "")
+ctx_sellReason := ctx_join(ctx_sellReason, ctx_bearPinbar ? "Bear Pinbar" : "")
+ctx_sellReason := ctx_join(ctx_sellReason, ctx_bearRejection ? "Bear Reject" : "")
+
+ctx_reasonText = ctx_buyContext ? ctx_buyReason : ctx_sellContext ? ctx_sellReason : ctx_mixedContext ? "Mixed: B " + str.tostring(ctx_buyScore) + " / S " + str.tostring(ctx_sellScore) : "No dominant context"
+
+//==================== DASHBOARD OUTPUT ====================//
+ctx_dashTextSize = size.tiny
+ctx_biasColor = ctx_buyContext ? color.new(color.lime, 15) : ctx_sellContext ? color.new(color.red, 15) : ctx_mixedContext ? color.new(color.orange, 15) : color.new(color.gray, 35)
+
+ctx_buysideDash = ctx_hasBuyside ? (ctx_buysideSweep ? "Swept " : "Active ") + ctx_range(ctx_buysideTop, ctx_buysideBottom) : "None"
+ctx_sellsideDash = ctx_hasSellside ? (ctx_sellsideSweep ? "Swept " : "Active ") + ctx_range(ctx_sellsideTop, ctx_sellsideBottom) : "None"
+
+ctx_bullFvgDash = ctx_bullFvgActive ? ctx_range(ctx_bullFvgTop, ctx_bullFvgBottom) : "None"
+ctx_bearFvgDash = ctx_bearFvgActive ? ctx_range(ctx_bearFvgTop, ctx_bearFvgBottom) : "None"
+
+ctx_bullObDash = ctx_hasBullOb ? ctx_range(ctx_bullObTop, ctx_bullObBottom) : "None"
+ctx_bearObDash = ctx_hasBearOb ? ctx_range(ctx_bearObTop, ctx_bearObBottom) : "None"
+
+var table ctx_dash = table.new(ctx_dashPos(ctx_dashPositionInput), 3, 12, bgcolor=color.new(color.black, 20), border_width=1, border_color=color.gray)
+
+if ctx_showDashboard and barstate.islast
+    table.cell(ctx_dash, 0, 0, "LUX CTX", text_color=color.white, bgcolor=color.new(color.blue, 0), text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 0, syminfo.ticker, text_color=color.white, bgcolor=color.new(color.blue, 0), text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 2, 0, ctx_contextBias, text_color=color.white, bgcolor=ctx_biasColor, text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 1, "MSS", text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 1, ctx_mssText, text_color=color.white, bgcolor=ctx_mssBull ? color.new(color.green, 25) : ctx_mssBear ? color.new(color.red, 25) : color.new(color.gray, 35), text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 2, 1, "KZ: " + ctx_killzoneText, text_color=color.white, bgcolor=ctx_inKillzone ? color.new(color.teal, 25) : color.new(color.gray, 35), text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 2, "BSL", text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 2, ctx_clip(ctx_buysideDash, 24), text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 2, 2, ctx_buysideSweep ? "Sweep" : "-", text_color=color.white, bgcolor=ctx_buysideSweep ? color.new(color.red, 20) : color.new(color.gray, 40), text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 3, "SSL", text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 3, ctx_clip(ctx_sellsideDash, 24), text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 2, 3, ctx_sellsideSweep ? "Sweep" : "-", text_color=color.white, bgcolor=ctx_sellsideSweep ? color.new(color.green, 20) : color.new(color.gray, 40), text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 4, "Bull FVG", text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 4, ctx_clip(ctx_bullFvgDash, 24), text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 2, 4, ctx_inBullFvg ? "In Zone" : ctx_bullFvgActive ? "Active" : "-", text_color=color.white, bgcolor=ctx_inBullFvg ? color.new(color.green, 20) : ctx_bullFvgActive ? color.new(color.green, 35) : color.new(color.gray, 40), text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 5, "Bear FVG", text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 5, ctx_clip(ctx_bearFvgDash, 24), text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 2, 5, ctx_inBearFvg ? "In Zone" : ctx_bearFvgActive ? "Active" : "-", text_color=color.white, bgcolor=ctx_inBearFvg ? color.new(color.red, 20) : ctx_bearFvgActive ? color.new(color.red, 35) : color.new(color.gray, 40), text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 6, "Bull OB", text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 6, ctx_clip(ctx_bullObDash, 24), text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 2, 6, ctx_inBullOb ? "In Zone" : ctx_hasBullOb ? "Active" : "-", text_color=color.white, bgcolor=ctx_inBullOb ? color.new(color.green, 20) : ctx_hasBullOb ? color.new(color.green, 35) : color.new(color.gray, 40), text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 7, "Bear OB", text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 7, ctx_clip(ctx_bearObDash, 24), text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 2, 7, ctx_inBearOb ? "In Zone" : ctx_hasBearOb ? "Active" : "-", text_color=color.white, bgcolor=ctx_inBearOb ? color.new(color.red, 20) : ctx_hasBearOb ? color.new(color.red, 35) : color.new(color.gray, 40), text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 8, "PA", text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 8, ctx_clip(ctx_priceActionText, 28), text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 2, 8, ctx_clip(ctx_displacementText, 18), text_color=color.white, text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 9, "Score", text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 9, "B " + str.tostring(ctx_buyScore), text_color=color.white, bgcolor=ctx_buyScore >= ctx_minContextScore ? color.new(color.green, 25) : color.new(color.gray, 35), text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 2, 9, "S " + str.tostring(ctx_sellScore), text_color=color.white, bgcolor=ctx_sellScore >= ctx_minContextScore ? color.new(color.red, 25) : color.new(color.gray, 35), text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 10, "Entry Src", text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 10, ctx_clip(ctx_entrySourceText, 36), text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 2, 10, ctx_entrySourceText == "None" ? "-" : "Active", text_color=color.white, bgcolor=ctx_entrySourceText == "None" ? color.new(color.gray, 40) : ctx_biasColor, text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 11, "Reason", text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 11, ctx_clip(ctx_reasonText, 36), text_color=color.white, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 2, 11, ctx_actionState, text_color=color.white, bgcolor=ctx_biasColor, text_size=ctx_dashTextSize)

@@ -1,0 +1,407 @@
+//@version=6
+indicator("XAUUSD Context Narrator v10 Visual Pro", overlay = true, max_labels_count = 150, max_lines_count = 300, max_boxes_count = 100)
+
+//==================== INPUTS ====================//
+groupSess = "Sessions"
+tzInput = input.string("Asia/Makassar", "Timezone", group = groupSess)
+asiaSession = input.session("0600-1400", "Asia Session", group = groupSess)
+londonSession = input.session("1500-2000", "London Session", group = groupSess)
+newYorkSession = input.session("2030-0000", "New York Session", group = groupSess)
+
+groupTf = "Timeframes"
+biasTf = input.timeframe("15", "HTF Validation TF", group = groupTf)
+levelTf = input.timeframe("5", "Entry Structure TF", group = groupTf)
+
+groupLogic = "Logic"
+fibRetMode = input.string("Adaptive", "Fib Retracement Mode", options = ["Adaptive", "Shallow", "Normal", "Deep"], group = groupLogic)
+fibUsePoiRefinement = input.bool(true, "Refine zone with OB/FVG POI", group = groupLogic)
+minFvgAtr = input.float(0.10, "Min FVG size (ATR)", minval = 0.0, step = 0.05, group = groupLogic)
+
+groupTarget = "Fibo Momentum Targets"
+fibExt1 = input.float(1.0, "TP1 Extension", minval = 0.5, step = 0.05, group = groupTarget)
+fibExt2 = input.float(1.272, "TP2 Extension", minval = 0.8, step = 0.05, group = groupTarget)
+
+groupVis = "Visuals"
+showLevels = input.bool(true, "Show active support/resistance", group = groupVis)
+showConfirmedZone = input.bool(true, "Show confirmed zone", group = groupVis)
+showPoiZones = input.bool(true, "Show OB / FVG Boxes", group = groupVis)
+showSignals = input.bool(true, "Show grab / MSS / trigger markers", group = groupVis)
+showProjectedPath = input.bool(true, "Show 2-Way Projected path", group = groupVis)
+showDashboard = input.bool(true, "Show dashboard", group = groupVis)
+dashboardStyle = input.string("Mobile", "Dashboard Style", options = ["Mobile", "Desktop"], group = groupVis)
+dashboardPos = input.string("Bottom Left", "Dashboard Position", options = ["Top Right", "Top Left", "Bottom Right", "Bottom Left"], group = groupVis)
+dashTextSize = input.string("Tiny", "Dashboard Text Size", options = ["Tiny", "Small", "Normal"], group = groupVis)
+
+//==================== HARDCODED PRESETS (BALANCED) ====================//
+swingLen = 4
+atrLen = 14
+bodyRatioMin = 0.50
+displacementAtr = 0.30
+breakBufferAtr = 0.14
+falseBreakWickRatio = 1.30
+impulseBodyAtr = 0.45
+holdBufferAtr = 0.10
+minRangeAtr = 1.50 
+
+//==================== HELPERS ====================//
+f_inSession(_sess) => not na(time(timeframe.period, _sess, tzInput))
+f_dashPos(_pos) => _pos == "Top Left" ? position.top_left : _pos == "Bottom Right" ? position.bottom_right : _pos == "Bottom Left" ? position.bottom_left : position.top_right
+f_price(_x) => na(_x) ? "-" : str.tostring(_x, format.mintick)
+f_interLow(_aLow, _aHigh, _bLow, _bHigh) => (not na(_aLow) and not na(_bLow)) ? math.max(_aLow, _bLow) : na
+f_interHigh(_aLow, _aHigh, _bLow, _bHigh) => (not na(_aHigh) and not na(_bHigh)) ? math.min(_aHigh, _bHigh) : na
+f_overlap(_aLow, _aHigh, _bLow, _bHigh) => not na(_aLow) and not na(_aHigh) and not na(_bLow) and not na(_bHigh) and math.max(_aLow, _bLow) <= math.min(_aHigh, _bHigh)
+f_zoneText(_lo, _hi) => na(_lo) or na(_hi) ? "-" : f_price(_lo) + " - " + f_price(_hi)
+
+f_zone_bounds(_dir, _origin, _extreme) =>
+    float _range = math.abs(_extreme - _origin)
+    float _low = na, float _high = na
+    if _range > 0
+        float _fib500 = _dir == 1 ? _extreme - _range * 0.500 : _extreme + _range * 0.500
+        float _fib618 = _dir == 1 ? _extreme - _range * 0.618 : _extreme + _range * 0.618
+        float _fib786 = _dir == 1 ? _extreme - _range * 0.786 : _extreme + _range * 0.786
+        
+        if _dir == 1
+            _low := _fib786, _high := _fib500
+        else
+            _low := _fib500, _high := _fib786
+    [_low, _high]
+
+//==================== SESSIONS ====================//
+inAsia = f_inSession(asiaSession)
+inLondon = f_inSession(londonSession)
+inNewYork = f_inSession(newYorkSession)
+sessionShort = inAsia ? "Asia" : inLondon ? "London" : inNewYork ? "NY" : "Off"
+
+//==================== BASE DATA ====================//
+atr = ta.atr(atrLen)
+body = math.abs(close - open)
+barRange = math.max(high - low, syminfo.mintick)
+displacementOk = body >= atr * displacementAtr and (body / barRange) >= bodyRatioMin
+bullCloseStrength = (close - low) / barRange >= 0.65
+bearCloseStrength = (close - low) / barRange <= 0.35
+
+//==================== HTF VALIDATION ====================//
+biasTfIsHigher = timeframe.in_seconds(biasTf) > timeframe.in_seconds()
+htfClose = biasTfIsHigher ? request.security(syminfo.tickerid, biasTf, close[1], lookahead = barmerge.lookahead_on) : close
+htfEma20 = biasTfIsHigher ? request.security(syminfo.tickerid, biasTf, ta.ema(close, 20)[1], lookahead = barmerge.lookahead_on) : ta.ema(close, 20)
+htfEma50 = biasTfIsHigher ? request.security(syminfo.tickerid, biasTf, ta.ema(close, 50)[1], lookahead = barmerge.lookahead_on) : ta.ema(close, 50)
+
+bullBias = htfClose > htfEma20 and htfEma20 > htfEma50
+bearBias = htfClose < htfEma20 and htfEma20 < htfEma50
+biasText = bullBias ? "Bullish" : bearBias ? "Bearish" : "Netral"
+
+//==================== STRUCTURE & DEALING RANGE ====================//
+ph = ta.pivothigh(high, swingLen, swingLen)
+pl = ta.pivotlow(low, swingLen, swingLen)
+
+var float activeResistance = na
+var float activeSupport = na
+
+if not na(ph)
+    activeResistance := ph
+if not na(pl)
+    activeSupport := pl
+
+bullStructure = not na(activeResistance) and not na(activeSupport) and activeResistance > activeResistance[1]
+bearStructure = not na(activeResistance) and not na(activeSupport) and activeSupport < activeSupport[1]
+structureText = bullBias ? "Bull Context" : bearBias ? "Bear Context" : "Mixed"
+
+// DEALING RANGE
+var float drHigh = na
+var float drLow = na
+if not na(ph)
+    drHigh := ph
+if not na(pl)
+    drLow := pl
+
+drReady = not na(drHigh) and not na(drLow)
+
+// FILTER ANTI-CHOPPY
+drRangeDistance = drReady ? (drHigh - drLow) : 0
+drValid = drReady and (drRangeDistance >= (atr * minRangeAtr))
+
+drMid = drValid ? (drHigh + drLow) * 0.5 : na
+pdText = na(drMid) ? "-" : close < drMid ? "Discount" : close > drMid ? "Premium" : "Equilibrium"
+
+//==================== ASIA RANGE ====================//
+var float asiaHigh = na
+var float asiaLow = na
+var bool asiaLocked = false
+asiaStart = inAsia and not inAsia[1]
+asiaEnd = not inAsia and inAsia[1]
+
+if asiaStart
+    asiaHigh := high, asiaLow := low, asiaLocked := false
+else if inAsia
+    asiaHigh := na(asiaHigh) ? high : math.max(asiaHigh, high)
+    asiaLow := na(asiaLow) ? low : math.min(asiaLow, low)
+
+if asiaEnd and not na(asiaHigh) and not na(asiaLow)
+    asiaLocked := true
+
+//==================== BREAK & SWEEP ENGINE ====================//
+var float lastBrokenRes = na
+var float lastBrokenSup = na
+
+closeBreakUp = not na(activeResistance) and close > activeResistance + (atr * breakBufferAtr) and close > open and displacementOk and activeResistance != lastBrokenRes
+closeBreakDown = not na(activeSupport) and close < activeSupport - (atr * breakBufferAtr) and close < open and displacementOk and activeSupport != lastBrokenSup
+
+if closeBreakUp
+    lastBrokenRes := activeResistance
+if closeBreakDown
+    lastBrokenSup := activeSupport
+
+// False Break (Sweep) Detection
+sweepReclaimBull = not na(activeSupport) and low < activeSupport - (atr * breakBufferAtr) and close > activeSupport and close > open and ((high - math.max(open, close)) < (math.min(open, close) - low))
+sweepReclaimBear = not na(activeResistance) and high > activeResistance + (atr * breakBufferAtr) and close < activeResistance and close < open and ((high - math.max(open, close)) > (math.min(open, close) - low))
+
+bullGrabEvent = sweepReclaimBull and not sweepReclaimBull[1]
+bearGrabEvent = sweepReclaimBear and not sweepReclaimBear[1]
+
+//==================== POI ENGINE (POLISHED LUX-STYLE BOXES) ====================//
+var float bullObLow = na, var float bullObHigh = na, var bool bullObActive = false, var int bullObBar = na
+var float bearObLow = na, var float bearObHigh = na, var bool bearObActive = false, var int bearObBar = na
+var float bullFvgLow = na, var float bullFvgHigh = na, var bool bullFvgActive = false, var int bullFvgBar = na
+var float bearFvgLow = na, var float bearFvgHigh = na, var bool bearFvgActive = false, var int bearFvgBar = na
+
+var box bObBox = na, var box brObBox = na, var box bFvgBox = na, var box brFvgBox = na
+
+// Define clean colors
+color boxBullBg = color.new(#4CAF50, 85)
+color boxBullBorder = #4CAF50
+color boxBearBg = color.new(#F44336, 85)
+color boxBearBorder = #F44336
+
+if closeBreakUp and close[1] < open[1]
+    bullObLow := low[1], bullObHigh := high[1], bullObActive := true, bullObBar := bar_index
+    if showPoiZones
+        bObBox := box.new(left=bar_index[1], top=bullObHigh, right=bar_index+2, bottom=bullObLow, bgcolor=boxBullBg, border_color=boxBullBorder, text="Order block", text_color=color.black, text_size=size.small, text_halign=text.align_center, text_valign=text.align_center)
+
+if closeBreakDown and close[1] > open[1]
+    bearObLow := low[1], bearObHigh := high[1], bearObActive := true, bearObBar := bar_index
+    if showPoiZones
+        brObBox := box.new(left=bar_index[1], top=bearObHigh, right=bar_index+2, bottom=bearObLow, bgcolor=boxBearBg, border_color=boxBearBorder, text="Order block", text_color=color.black, text_size=size.small, text_halign=text.align_center, text_valign=text.align_center)
+
+if bar_index > 2 and low > high[2] and (low - high[2]) >= atr * minFvgAtr
+    bullFvgLow := high[2], bullFvgHigh := low, bullFvgActive := true, bullFvgBar := bar_index
+    if showPoiZones
+        bFvgBox := box.new(left=bar_index[2], top=bullFvgHigh, right=bar_index+2, bottom=bullFvgLow, bgcolor=boxBullBg, border_color=boxBullBorder, text="FVG", text_color=color.black, text_size=size.small, text_halign=text.align_center, text_valign=text.align_center)
+
+if bar_index > 2 and high < low[2] and (low[2] - high) >= atr * minFvgAtr
+    bearFvgLow := high, bearFvgHigh := low[2], bearFvgActive := true, bearFvgBar := bar_index
+    if showPoiZones
+        brFvgBox := box.new(left=bar_index[2], top=bearFvgHigh, right=bar_index+2, bottom=bearFvgLow, bgcolor=boxBearBg, border_color=boxBearBorder, text="FVG", text_color=color.black, text_size=size.small, text_halign=text.align_center, text_valign=text.align_center)
+
+if bullObActive
+    if bar_index > bullObBar and low <= bullObHigh
+        bullObActive := false 
+    else if close < bullObLow - (atr * holdBufferAtr)
+        bullObActive := false 
+    else
+        box.set_right(bObBox, bar_index + 1) 
+
+if bearObActive
+    if bar_index > bearObBar and high >= bearObLow
+        bearObActive := false 
+    else if close > bearObHigh + (atr * holdBufferAtr)
+        bearObActive := false 
+    else
+        box.set_right(brObBox, bar_index + 1)
+
+if bullFvgActive
+    if bar_index > bullFvgBar and low <= bullFvgHigh
+        bullFvgActive := false 
+    else if close < bullFvgLow - (atr * holdBufferAtr)
+        bullFvgActive := false 
+    else
+        box.set_right(bFvgBox, bar_index + 1)
+
+if bearFvgActive
+    if bar_index > bearFvgBar and high >= bearFvgLow
+        bearFvgActive := false 
+    else if close > bearFvgHigh + (atr * holdBufferAtr)
+        bearFvgActive := false 
+    else
+        box.set_right(brFvgBox, bar_index + 1)
+
+//==================== 2-WAY ROADMAP PROJECTIONS ====================//
+[bZLow, bZHigh] = f_zone_bounds(1, drLow, drHigh)
+[sZLow, sZHigh] = f_zone_bounds(-1, drHigh, drLow)
+
+float buyExecLow = bZLow, float buyExecHigh = bZHigh
+if fibUsePoiRefinement and drValid
+    if bullObActive and f_overlap(bullObLow, bullObHigh, bZLow, bZHigh)
+        buyExecLow := f_interLow(bullObLow, bullObHigh, bZLow, bZHigh), buyExecHigh := f_interHigh(bullObLow, bullObHigh, bZLow, bZHigh)
+    else if bullFvgActive and f_overlap(bullFvgLow, bullFvgHigh, bZLow, bZHigh)
+        buyExecLow := f_interLow(bullFvgLow, bullFvgHigh, bZLow, bZHigh), buyExecHigh := f_interHigh(bullFvgLow, bullFvgHigh, bZLow, bZHigh)
+
+float sellExecLow = sZLow, float sellExecHigh = sZHigh
+if fibUsePoiRefinement and drValid
+    if bearObActive and f_overlap(bearObLow, bearObHigh, sZLow, sZHigh)
+        sellExecLow := f_interLow(bearObLow, bearObHigh, sZLow, sZHigh), sellExecHigh := f_interHigh(bearObLow, bearObHigh, sZLow, sZHigh)
+    else if bearFvgActive and f_overlap(bearFvgLow, bearFvgHigh, sZLow, sZHigh)
+        sellExecLow := f_interLow(bearFvgLow, bearFvgHigh, sZLow, sZHigh), sellExecHigh := f_interHigh(bearFvgLow, bearFvgHigh, sZLow, sZHigh)
+
+buyExecMid = (buyExecLow + buyExecHigh) * 0.5
+sellExecMid = (sellExecLow + sellExecHigh) * 0.5
+
+inBuyZone = low <= buyExecHigh and high >= buyExecLow
+inSellZone = high >= sellExecLow and low <= sellExecHigh
+
+bullTrigger = inBuyZone and close > open and bullCloseStrength and drValid
+bearTrigger = inSellZone and close < open and bearCloseStrength and drValid
+
+longSL = drLow
+longTP1 = drLow + math.abs(drHigh - drLow) * fibExt1
+longTP2 = drLow + math.abs(drHigh - drLow) * fibExt2
+
+shortSL = drHigh
+shortTP1 = drHigh - math.abs(drHigh - drLow) * fibExt1
+shortTP2 = drHigh - math.abs(drHigh - drLow) * fibExt2
+
+//==================== TRADE LOCK ====================//
+var bool tradeLocked = false
+var int tradeDir = 0
+
+if not tradeLocked
+    if bullTrigger and bullBias 
+        tradeLocked := true
+        tradeDir := 1
+    else if bearTrigger and bearBias
+        tradeLocked := true
+        tradeDir := -1
+
+if tradeLocked
+    if tradeDir == 1 and (close < longSL or high >= longTP1)
+        tradeLocked := false, tradeDir := 0
+    if tradeDir == -1 and (close > shortSL or low <= shortTP1)
+        tradeLocked := false, tradeDir := 0
+
+//==================== TEXT NARRATIVES ====================//
+string areaText = not drValid ? "Area ranging terlalu sempit (Choppy). Hindari entry." : pdText == "Discount" ? "Harga berada di area Discount dari Dealing Range." : pdText == "Premium" ? "Harga berada di area Premium dari Dealing Range." : "Harga berada di Equilibrium."
+string confirmText = not drValid ? "Menunggu market keluar dari zona ranging." : tradeLocked ? "Trigger valid! Eksekusi terkunci." : "Menunggu trigger (Bullish/Bearish close) di dalam zona eksekusi."
+string planText = not drValid ? "Belum ada rencana eksekusi. Market Choppy." : tradeLocked ? (tradeDir == 1 ? "BUY eksekusi aktif. SL di " + f_price(longSL) + " dan TP di " + f_price(longTP1) : "SELL eksekusi aktif. SL di " + f_price(shortSL) + " dan TP di " + f_price(shortTP1)) : "Pantau area Buy: " + f_zoneText(buyExecLow, buyExecHigh) + " atau Sell: " + f_zoneText(sellExecLow, sellExecHigh)
+string narrativeText = bullBias ? "Bias HTF Bullish. Fokus utama cari peluang Buy di area Discount." : bearBias ? "Bias HTF Bearish. Fokus utama cari peluang Sell di area Premium." : "Bias M15 Netral. Tunggu arah trend lebih jelas."
+string poiSummaryText = (bullObActive ? "Bull OB " : "") + (bullFvgActive ? "Bull FVG " : "") + (bearObActive ? "Bear OB " : "") + (bearFvgActive ? "Bear FVG" : "")
+if poiSummaryText == ""
+    poiSummaryText := "No Active POI"
+
+//==================== VISUALS (CLEAN LINES & LABELS) ====================//
+// Plotting thin gray lines for structure
+plot(showLevels and drValid ? drHigh : na, "Dealing High", color = color.new(color.black, 50), style = plot.style_linebr, linewidth = 1)
+plot(showLevels and drValid ? drLow : na, "Dealing Low", color = color.new(color.black, 50), style = plot.style_linebr, linewidth = 1)
+plot(showLevels and asiaLocked ? asiaHigh : na, "Asia High", color = color.new(color.black, 50), style = plot.style_cross, linewidth = 1)
+plot(showLevels and asiaLocked ? asiaLow : na, "Asia Low", color = color.new(color.black, 50), style = plot.style_cross, linewidth = 1)
+
+// Labels at the end of the lines
+var label lbl_drHigh = na
+var label lbl_drLow = na
+var label lbl_asiaHigh = na
+var label lbl_asiaLow = na
+
+if barstate.islast
+    if showLevels and drValid
+        if na(lbl_drHigh)
+            lbl_drHigh := label.new(bar_index + 2, drHigh, "— Swing high", style=label.style_none, textcolor=color.black, textalign=text.align_left, size=size.small)
+        else
+            label.set_xy(lbl_drHigh, bar_index + 2, drHigh)
+
+        if na(lbl_drLow)
+            lbl_drLow := label.new(bar_index + 2, drLow, "— Swing low", style=label.style_none, textcolor=color.black, textalign=text.align_left, size=size.small)
+        else
+            label.set_xy(lbl_drLow, bar_index + 2, drLow)
+
+    if showLevels and asiaLocked
+        if na(lbl_asiaHigh)
+            lbl_asiaHigh := label.new(bar_index + 2, asiaHigh, "— Asia high", style=label.style_none, textcolor=color.black, textalign=text.align_left, size=size.small)
+        else
+            label.set_xy(lbl_asiaHigh, bar_index + 2, asiaHigh)
+
+        if na(lbl_asiaLow)
+            lbl_asiaLow := label.new(bar_index + 2, asiaLow, "— Asia low", style=label.style_none, textcolor=color.black, textalign=text.align_left, size=size.small)
+        else
+            label.set_xy(lbl_asiaLow, bar_index + 2, asiaLow)
+
+// Execution Zones (Soft Transparent Fill)
+buyZL = plot(showConfirmedZone and drValid and (not tradeLocked or tradeDir == 1) ? buyExecLow : na, "Buy Zone Low", color = color.new(color.green, 20), style = plot.style_linebr, linewidth = 1)
+buyZH = plot(showConfirmedZone and drValid and (not tradeLocked or tradeDir == 1) ? buyExecHigh : na, "Buy Zone High", color = color.new(color.green, 20), style = plot.style_linebr, linewidth = 1)
+fill(buyZL, buyZH, color = color.new(color.green, 92), title = "Buy Zone Fill")
+
+sellZL = plot(showConfirmedZone and drValid and (not tradeLocked or tradeDir == -1) ? sellExecLow : na, "Sell Zone Low", color = color.new(color.red, 20), style = plot.style_linebr, linewidth = 1)
+sellZH = plot(showConfirmedZone and drValid and (not tradeLocked or tradeDir == -1) ? sellExecHigh : na, "Sell Zone High", color = color.new(color.red, 20), style = plot.style_linebr, linewidth = 1)
+fill(sellZL, sellZH, color = color.new(color.red, 92), title = "Sell Zone Fill")
+
+// MURNI VISUAL LABEL TEKS
+plotshape(showSignals and closeBreakUp and drValid, title = "Bull Break", style = shape.labelup, location = location.belowbar, color = color.new(color.green, 0), text = "Breakout", textcolor = color.white, size = size.tiny)
+plotshape(showSignals and closeBreakDown and drValid, title = "Bear Break", style = shape.labeldown, location = location.abovebar, color = color.new(color.red, 0), text = "Breakout", textcolor = color.white, size = size.tiny)
+plotshape(showSignals and bullGrabEvent and drValid, title = "Bull False Break", style = shape.labelup, location = location.belowbar, color = color.new(color.orange, 0), text = "False Break", textcolor = color.white, size = size.tiny)
+plotshape(showSignals and bearGrabEvent and drValid, title = "Bear False Break", style = shape.labeldown, location = location.abovebar, color = color.new(color.orange, 0), text = "False Break", textcolor = color.white, size = size.tiny)
+
+// TRIGGERS
+plotshape(showSignals and bullTrigger and not tradeLocked[1], title = "Buy Entry", style = shape.triangleup, location = location.belowbar, color = color.new(color.green, 0), size = size.small)
+plotshape(showSignals and bearTrigger and not tradeLocked[1], title = "Sell Entry", style = shape.triangledown, location = location.abovebar, color = color.new(color.red, 0), size = size.small)
+
+var line buyPath1 = na, var line buyPath2 = na, var line sellPath1 = na, var line sellPath2 = na
+if barstate.islast and showProjectedPath
+    if not na(buyPath1)
+        line.delete(buyPath1), line.delete(buyPath2)
+    if not na(sellPath1)
+        line.delete(sellPath1), line.delete(sellPath2)
+        
+    if drValid and not na(buyExecMid) and tradeDir != -1
+        pathCol = bullBias ? color.new(color.green, 0) : color.new(color.green, 65) 
+        buyPath1 := line.new(bar_index, close, bar_index + 10, buyExecMid, xloc = xloc.bar_index, extend = extend.none, color = pathCol, width = 2, style = line.style_dotted)
+        buyPath2 := line.new(bar_index + 10, buyExecMid, bar_index + 25, longTP1, xloc = xloc.bar_index, extend = extend.none, color = color.new(color.blue, 20), width = 2, style = line.style_dashed)
+        
+    if drValid and not na(sellExecMid) and tradeDir != 1
+        pathCol = bearBias ? color.new(color.red, 0) : color.new(color.red, 65)
+        sellPath1 := line.new(bar_index, close, bar_index + 10, sellExecMid, xloc = xloc.bar_index, extend = extend.none, color = pathCol, width = 2, style = line.style_dotted)
+        sellPath2 := line.new(bar_index + 10, sellExecMid, bar_index + 25, shortTP1, xloc = xloc.bar_index, extend = extend.none, color = color.new(color.blue, 20), width = 2, style = line.style_dashed)
+
+//==================== DASHBOARD ====================//
+var tSize = dashTextSize == "Tiny" ? size.tiny : dashTextSize == "Small" ? size.small : size.normal
+var table dash = na
+dashRows = 8
+dashCols = dashboardStyle == "Mobile" ? 1 : 2
+
+if showDashboard and na(dash)
+    dash := table.new(f_dashPos(dashboardPos), dashCols, dashRows, border_width = 1, border_color = color.rgb(80, 80, 80, 40), frame_color = color.rgb(50, 50, 50, 20), frame_width = 1)
+
+if showDashboard and barstate.islast
+    headerBg = color.rgb(41, 98, 255, 10)
+    keyBg = color.rgb(40, 42, 54, 10)
+    valueBg = color.rgb(240, 243, 250, 5)
+    biasBg = bullBias ? color.rgb(0, 150, 136, 20) : bearBias ? color.rgb(244, 67, 54, 20) : color.rgb(158, 158, 158, 20)
+    stateBg = tradeLocked ? color.rgb(76, 175, 80, 10) : not drValid ? color.rgb(244, 67, 54, 20) : color.rgb(255, 152, 0, 20)
+
+    statusText = tradeLocked ? (tradeDir == 1 ? "LOCKED BUY" : "LOCKED SELL") : not drValid ? "CHOPPY / RANGE - WAIT" : "MAPPING RANGE..."
+    zoneLineText = tradeDir == 1 ? "Buy Zone: " + f_zoneText(buyExecLow, buyExecHigh) : tradeDir == -1 ? "Sell Zone: " + f_zoneText(sellExecLow, sellExecHigh) : not drValid ? "-" : "B: " + f_price(buyExecMid) + " | S: " + f_price(sellExecMid)
+    invalidLineText = tradeDir == 1 ? f_price(longSL) : tradeDir == -1 ? f_price(shortSL) : "Wait"
+    tpLineText = tradeDir == 1 ? f_price(longTP1) + " / " + f_price(longTP2) : tradeDir == -1 ? f_price(shortTP1) + " / " + f_price(shortTP2) : "Wait"
+
+    if dashboardStyle == "Mobile"
+        table.cell(dash, 0, 0, "XAUUSD SMC v10 Visual Pro | " + timeframe.period, text_color = color.white, bgcolor = headerBg, text_size = tSize)
+        table.cell(dash, 0, 1, "Bias M15: " + biasText + " | " + structureText, text_color = color.white, bgcolor = biasBg, text_size = tSize)
+        table.cell(dash, 0, 2, "Session: " + sessionShort + " | PD: " + pdText, text_color = color.gray, bgcolor = valueBg, text_size = tSize)
+        table.cell(dash, 0, 3, "Area: " + areaText, text_color = color.gray, bgcolor = valueBg, text_size = tSize)
+        table.cell(dash, 0, 4, "State: " + statusText + " | " + confirmText, text_color = color.white, bgcolor = stateBg, text_size = tSize)
+        table.cell(dash, 0, 5, "Zone: " + zoneLineText + " | POI: " + poiSummaryText, text_color = color.gray, bgcolor = valueBg, text_size = tSize)
+        table.cell(dash, 0, 6, "SL: " + invalidLineText + " | TP: " + tpLineText, text_color = color.gray, bgcolor = valueBg, text_size = tSize)
+        table.cell(dash, 0, 7, "Rencana: " + planText, text_color = color.gray, bgcolor = valueBg, text_size = tSize)
+    else
+        table.cell(dash, 0, 0, "XAUUSD SMC v10 Visual Pro", text_color = color.white, bgcolor = headerBg, text_size = tSize)
+        table.cell(dash, 1, 0, timeframe.period, text_color = color.white, bgcolor = headerBg, text_size = tSize)
+        table.cell(dash, 0, 1, "Bias", text_color = color.white, bgcolor = keyBg, text_size = tSize)
+        table.cell(dash, 1, 1, biasText + " | " + structureText, text_color = color.white, bgcolor = biasBg, text_size = tSize)
+        table.cell(dash, 0, 2, "Sesi / Area", text_color = color.white, bgcolor = keyBg, text_size = tSize)
+        table.cell(dash, 1, 2, sessionShort + " | " + areaText, text_color = color.gray, bgcolor = valueBg, text_size = tSize)
+        table.cell(dash, 0, 3, "State", text_color = color.white, bgcolor = keyBg, text_size = tSize)
+        table.cell(dash, 1, 3, statusText + " | " + confirmText, text_color = color.white, bgcolor = stateBg, text_size = tSize)
+        table.cell(dash, 0, 4, "Zone & POI", text_color = color.white, bgcolor = keyBg, text_size = tSize)
+        table.cell(dash, 1, 4, zoneLineText + " | " + poiSummaryText, text_color = color.gray, bgcolor = valueBg, text_size = tSize)
+        table.cell(dash, 0, 5, "SL / TP", text_color = color.white, bgcolor = keyBg, text_size = tSize)
+        table.cell(dash, 1, 5, "SL " + invalidLineText + " | TP " + tpLineText, text_color = color.gray, bgcolor = valueBg, text_size = tSize)
+        table.cell(dash, 0, 6, "Rencana", text_color = color.white, bgcolor = keyBg, text_size = tSize)
+        table.cell(dash, 1, 6, planText, text_color = color.gray, bgcolor = valueBg, text_size = tSize)
+        table.cell(dash, 0, 7, "Catatan", text_color = color.white, bgcolor = keyBg, text_size = tSize)
+        table.cell(dash, 1, 7, narrativeText, text_color = color.gray, bgcolor = valueBg, text_size = tSize)

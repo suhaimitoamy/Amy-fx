@@ -1,0 +1,397 @@
+//@version=5
+indicator("GCX Entry Only V1", overlay=true, max_labels_count=500, max_lines_count=500, max_boxes_count=20)
+
+//==============================================================================
+// GCX ENTRY ONLY V1
+// Fokus: entry trigger saja.
+// Tidak pakai dashboard.
+// Tidak pakai HTF bias.
+// Tidak pakai context score.
+// Tidak pakai projection score.
+// BUY/SELL hanya muncul dari gabungan trigger eksekusi.
+//==============================================================================
+
+//==============================================================================
+// INPUTS
+//==============================================================================
+groupCore = "Core"
+entryMode = input.string("Balanced", "Entry Mode", options=["Aggressive", "Balanced", "Conservative"], group=groupCore)
+confirmOnClose = input.bool(true, "Confirm On Candle Close", group=groupCore)
+cooldownBars = input.int(5, "Signal Cooldown Bars", minval=0, maxval=100, group=groupCore)
+showReasons = input.bool(true, "Show Reason Label", group=groupCore)
+
+// Trigger modules
+groupTrig = "Trigger Modules"
+useRetest = input.bool(true, "Use Breakout Retest", group=groupTrig)
+useSweep = input.bool(true, "Use Liquidity Sweep Reclaim/Reject", group=groupTrig)
+useSRReject = input.bool(true, "Use Support/Resistance Rejection", group=groupTrig)
+useCandlePattern = input.bool(true, "Use Pinbar / Engulfing", group=groupTrig)
+useFVGReaction = input.bool(true, "Use FVG Reaction", group=groupTrig)
+useOBReaction = input.bool(true, "Use Order Block Reaction", group=groupTrig)
+useBreakout = input.bool(false, "Use Direct Breakout Trigger", group=groupTrig)
+useDeltaFilter = input.bool(true, "Use Delta Direction Filter", group=groupTrig)
+
+// Structure / trigger settings
+groupSet = "Trigger Settings"
+swingLen = input.int(3, "Swing Length", minval=1, maxval=20, group=groupSet)
+sweepLookback = input.int(10, "Sweep Lookback", minval=3, maxval=100, group=groupSet)
+retestWindow = input.int(12, "Retest Valid Bars", minval=1, maxval=100, group=groupSet)
+obLookback = input.int(8, "OB Scan Bars", minval=2, maxval=50, group=groupSet)
+atrLen = input.int(14, "ATR Length", minval=1, maxval=100, group=groupSet)
+zonePadAtr = input.float(0.25, "Zone Pad ATR", minval=0.0, maxval=2.0, step=0.05, group=groupSet)
+breakBufferAtr = input.float(0.10, "Break Buffer ATR", minval=0.0, maxval=2.0, step=0.05, group=groupSet)
+bodyRatioMin = input.float(0.45, "Min Body Ratio", minval=0.1, maxval=1.0, step=0.05, group=groupSet)
+displacementAtr = input.float(0.30, "Min Displacement ATR", minval=0.0, maxval=5.0, step=0.05, group=groupSet)
+wickRatioMin = input.float(1.20, "Min Wick / Body Ratio", minval=0.2, maxval=5.0, step=0.05, group=groupSet)
+fvgMinAtr = input.float(0.10, "Min FVG ATR", minval=0.0, maxval=3.0, step=0.05, group=groupSet)
+
+// Order flow proxy
+groupFlow = "Order Flow Proxy"
+volLen = input.int(20, "Volume Baseline", minval=5, maxval=200, group=groupFlow)
+volSpikeMult = input.float(1.2, "Volume Spike Multiplier", minval=0.5, maxval=5.0, step=0.1, group=groupFlow)
+deltaEmaLen = input.int(5, "Delta EMA Length", minval=1, maxval=50, group=groupFlow)
+
+// Risk / visuals
+groupRisk = "Risk / Visual"
+showLevels = input.bool(true, "Show S/R Levels", group=groupRisk)
+showTradeLevels = input.bool(true, "Show Entry SL TP", group=groupRisk)
+stopPadAtr = input.float(0.20, "Stop Padding ATR", minval=0.0, maxval=2.0, step=0.05, group=groupRisk)
+maxStopAtr = input.float(2.20, "Max Stop ATR", minval=0.5, maxval=10.0, step=0.1, group=groupRisk)
+rr1 = input.float(1.5, "TP1 RR", minval=0.5, maxval=10.0, step=0.1, group=groupRisk)
+rr2 = input.float(2.5, "TP2 RR", minval=0.5, maxval=10.0, step=0.1, group=groupRisk)
+
+//==============================================================================
+// HELPERS
+//==============================================================================
+f_lastBearish(_lookback) =>
+    float zHigh = na
+    float zLow = na
+    for i = 1 to _lookback
+        if na(zHigh) and close[i] < open[i]
+            zHigh := open[i]
+            zLow := low[i]
+    [zHigh, zLow]
+
+f_lastBullish(_lookback) =>
+    float zHigh = na
+    float zLow = na
+    for i = 1 to _lookback
+        if na(zHigh) and close[i] > open[i]
+            zHigh := high[i]
+            zLow := open[i]
+    [zHigh, zLow]
+
+f_price(_x) =>
+    na(_x) ? "-" : str.tostring(_x, format.mintick)
+
+f_vote(_x) =>
+    _x ? 1 : 0
+
+//==============================================================================
+// BASE
+//==============================================================================
+atr = ta.atr(atrLen)
+body = math.abs(close - open)
+bodySafe = math.max(body, syminfo.mintick)
+barRange = math.max(high - low, syminfo.mintick)
+bodyRatio = body / barRange
+upperWick = high - math.max(open, close)
+lowerWick = math.min(open, close) - low
+zonePad = atr * zonePadAtr
+breakBuffer = atr * breakBufferAtr
+confirmed = confirmOnClose ? barstate.isconfirmed : true
+
+requiredVotes = entryMode == "Aggressive" ? 1 : entryMode == "Balanced" ? 2 : 3
+
+//==============================================================================
+// LOCAL STRUCTURE
+//==============================================================================
+ph = ta.pivothigh(high, swingLen, swingLen)
+pl = ta.pivotlow(low, swingLen, swingLen)
+
+var float activeResistance = na
+var float activeSupport = na
+
+if not na(ph)
+    activeResistance := ph
+if not na(pl)
+    activeSupport := pl
+
+plot(showLevels ? activeSupport : na, "Support", color=color.new(color.green, 15), style=plot.style_linebr, linewidth=2)
+plot(showLevels ? activeResistance : na, "Resistance", color=color.new(color.red, 15), style=plot.style_linebr, linewidth=2)
+
+//==============================================================================
+// ORDER FLOW PROXY
+//==============================================================================
+safeRange = math.max(high - low, syminfo.mintick)
+buyPressure = volume * (close - low) / safeRange
+sellPressure = volume * (high - close) / safeRange
+delta = buyPressure - sellPressure
+deltaEma = ta.ema(delta, deltaEmaLen)
+volAvg = ta.sma(volume, volLen)
+volumeSpike = volume > volAvg * volSpikeMult
+
+deltaBuyOk = not useDeltaFilter or (delta > 0 and deltaEma >= 0)
+deltaSellOk = not useDeltaFilter or (delta < 0 and deltaEma <= 0)
+
+//==============================================================================
+// TRIGGER 1: BREAKOUT + RETEST
+//==============================================================================
+displacementOk = body >= atr * displacementAtr and bodyRatio >= bodyRatioMin
+
+breakUp = not na(activeResistance) and close > activeResistance + breakBuffer and close > open and displacementOk
+breakDown = not na(activeSupport) and close < activeSupport - breakBuffer and close < open and displacementOk
+
+var float brokenResistance = na
+var int brokenResistanceBar = na
+var float brokenSupport = na
+var int brokenSupportBar = na
+
+if breakUp
+    brokenResistance := activeResistance
+    brokenResistanceBar := bar_index
+
+if breakDown
+    brokenSupport := activeSupport
+    brokenSupportBar := bar_index
+
+buyRetest = useRetest and not na(brokenResistance) and not na(brokenResistanceBar) and bar_index > brokenResistanceBar and bar_index - brokenResistanceBar <= retestWindow and low <= brokenResistance + zonePad and close > brokenResistance and close > open
+sellRetest = useRetest and not na(brokenSupport) and not na(brokenSupportBar) and bar_index > brokenSupportBar and bar_index - brokenSupportBar <= retestWindow and high >= brokenSupport - zonePad and close < brokenSupport and close < open
+
+//==============================================================================
+// TRIGGER 2: LIQUIDITY SWEEP + RECLAIM / REJECT
+//==============================================================================
+priorLow = ta.lowest(low[1], sweepLookback)
+priorHigh = ta.highest(high[1], sweepLookback)
+
+buySweep = useSweep and low < priorLow and close > priorLow and close > open and lowerWick > bodySafe * wickRatioMin
+sellSweep = useSweep and high > priorHigh and close < priorHigh and close < open and upperWick > bodySafe * wickRatioMin
+
+//==============================================================================
+// TRIGGER 3: SUPPORT / RESISTANCE REJECTION
+//==============================================================================
+buySRReject = useSRReject and not na(activeSupport) and low <= activeSupport + zonePad and close > activeSupport and close > open and lowerWick > bodySafe * wickRatioMin
+sellSRReject = useSRReject and not na(activeResistance) and high >= activeResistance - zonePad and close < activeResistance and close < open and upperWick > bodySafe * wickRatioMin
+
+//==============================================================================
+// TRIGGER 4: CANDLE PATTERN
+//==============================================================================
+bullPinbar = useCandlePattern and lowerWick > bodySafe * 1.5 and close > open and close > low + barRange * 0.60
+bearPinbar = useCandlePattern and upperWick > bodySafe * 1.5 and close < open and close < high - barRange * 0.60
+
+bullEngulfing = useCandlePattern and close > open and close[1] < open[1] and close > open[1] and open <= close[1]
+bearEngulfing = useCandlePattern and close < open and close[1] > open[1] and close < open[1] and open >= close[1]
+
+buyCandle = bullPinbar or bullEngulfing
+sellCandle = bearPinbar or bearEngulfing
+
+//==============================================================================
+// TRIGGER 5: FVG REACTION
+//==============================================================================
+bullFvgCreated = low > high[2] and (low - high[2]) >= atr * fvgMinAtr
+bearFvgCreated = high < low[2] and (low[2] - high) >= atr * fvgMinAtr
+
+var float bullFvgHigh = na
+var float bullFvgLow = na
+var float bearFvgHigh = na
+var float bearFvgLow = na
+
+if bullFvgCreated
+    bullFvgHigh := low
+    bullFvgLow := high[2]
+
+if bearFvgCreated
+    bearFvgHigh := low[2]
+    bearFvgLow := high
+
+if not na(bullFvgLow) and close < bullFvgLow
+    bullFvgHigh := na
+    bullFvgLow := na
+
+if not na(bearFvgHigh) and close > bearFvgHigh
+    bearFvgHigh := na
+    bearFvgLow := na
+
+inBullFvg = not na(bullFvgHigh) and low <= bullFvgHigh and high >= bullFvgLow
+inBearFvg = not na(bearFvgHigh) and high >= bearFvgLow and low <= bearFvgHigh
+
+bullFvgMid = not na(bullFvgHigh) and not na(bullFvgLow) ? (bullFvgHigh + bullFvgLow) / 2 : na
+bearFvgMid = not na(bearFvgHigh) and not na(bearFvgLow) ? (bearFvgHigh + bearFvgLow) / 2 : na
+
+buyFvgReaction = useFVGReaction and inBullFvg and close > open and close >= bullFvgMid
+sellFvgReaction = useFVGReaction and inBearFvg and close < open and close <= bearFvgMid
+
+//==============================================================================
+// TRIGGER 6: ORDER BLOCK REACTION
+//==============================================================================
+[bullObHighTmp, bullObLowTmp] = f_lastBearish(obLookback)
+[bearObHighTmp, bearObLowTmp] = f_lastBullish(obLookback)
+
+var float bullObHigh = na
+var float bullObLow = na
+var float bearObHigh = na
+var float bearObLow = na
+
+if breakUp and not na(bullObHighTmp)
+    bullObHigh := bullObHighTmp
+    bullObLow := bullObLowTmp
+
+if breakDown and not na(bearObHighTmp)
+    bearObHigh := bearObHighTmp
+    bearObLow := bearObLowTmp
+
+if not na(bullObLow) and close < bullObLow
+    bullObHigh := na
+    bullObLow := na
+
+if not na(bearObHigh) and close > bearObHigh
+    bearObHigh := na
+    bearObLow := na
+
+inBullOb = not na(bullObHigh) and low <= bullObHigh and high >= bullObLow
+inBearOb = not na(bearObHigh) and high >= bearObLow and low <= bearObHigh
+
+bullObMid = not na(bullObHigh) and not na(bullObLow) ? (bullObHigh + bullObLow) / 2 : na
+bearObMid = not na(bearObHigh) and not na(bearObLow) ? (bearObHigh + bearObLow) / 2 : na
+
+buyObReaction = useOBReaction and inBullOb and close > open and close >= bullObMid
+sellObReaction = useOBReaction and inBearOb and close < open and close <= bearObMid
+
+//==============================================================================
+// TRIGGER 7: DIRECT BREAKOUT
+//==============================================================================
+buyBreakout = useBreakout and breakUp and close > high[1]
+sellBreakout = useBreakout and breakDown and close < low[1]
+
+//==============================================================================
+// VOTE ENGINE
+//==============================================================================
+buyVotes = 0
+buyVotes += f_vote(buyRetest)
+buyVotes += f_vote(buySweep)
+buyVotes += f_vote(buySRReject)
+buyVotes += f_vote(buyCandle)
+buyVotes += f_vote(buyFvgReaction)
+buyVotes += f_vote(buyObReaction)
+buyVotes += f_vote(buyBreakout)
+
+sellVotes = 0
+sellVotes += f_vote(sellRetest)
+sellVotes += f_vote(sellSweep)
+sellVotes += f_vote(sellSRReject)
+sellVotes += f_vote(sellCandle)
+sellVotes += f_vote(sellFvgReaction)
+sellVotes += f_vote(sellObReaction)
+sellVotes += f_vote(sellBreakout)
+
+buyTrigger = buyVotes >= requiredVotes and buyVotes > sellVotes and deltaBuyOk
+sellTrigger = sellVotes >= requiredVotes and sellVotes > buyVotes and deltaSellOk
+
+//==============================================================================
+// RISK FILTER
+//==============================================================================
+longStopBase = low
+longStopBase := not na(activeSupport) ? math.min(longStopBase, activeSupport) : longStopBase
+longStopBase := buySweep ? math.min(longStopBase, priorLow) : longStopBase
+longStopBase := inBullOb and not na(bullObLow) ? math.min(longStopBase, bullObLow) : longStopBase
+longStopBase := inBullFvg and not na(bullFvgLow) ? math.min(longStopBase, bullFvgLow) : longStopBase
+longStop = longStopBase - atr * stopPadAtr
+longRisk = close - longStop
+longRiskOk = longRisk > syminfo.mintick and longRisk <= atr * maxStopAtr
+longTp1 = close + longRisk * rr1
+longTp2 = close + longRisk * rr2
+
+shortStopBase = high
+shortStopBase := not na(activeResistance) ? math.max(shortStopBase, activeResistance) : shortStopBase
+shortStopBase := sellSweep ? math.max(shortStopBase, priorHigh) : shortStopBase
+shortStopBase := inBearOb and not na(bearObHigh) ? math.max(shortStopBase, bearObHigh) : shortStopBase
+shortStopBase := inBearFvg and not na(bearFvgHigh) ? math.max(shortStopBase, bearFvgHigh) : shortStopBase
+shortStop = shortStopBase + atr * stopPadAtr
+shortRisk = shortStop - close
+shortRiskOk = shortRisk > syminfo.mintick and shortRisk <= atr * maxStopAtr
+shortTp1 = close - shortRisk * rr1
+shortTp2 = close - shortRisk * rr2
+
+//==============================================================================
+// SIGNAL ENGINE
+//==============================================================================
+var int lastSignalBar = na
+cooldownOk = na(lastSignalBar) or bar_index - lastSignalBar > cooldownBars
+
+rawBuy = confirmed and cooldownOk and buyTrigger and longRiskOk
+rawSell = confirmed and cooldownOk and sellTrigger and shortRiskOk
+
+buySignal = rawBuy and not rawSell
+sellSignal = rawSell and not rawBuy
+
+if buySignal or sellSignal
+    lastSignalBar := bar_index
+
+//==============================================================================
+// REASON TEXT
+//==============================================================================
+buyReason = ""
+buyReason := buyReason + (buyRetest ? "RT " : "")
+buyReason := buyReason + (buySweep ? "SWP " : "")
+buyReason := buyReason + (buySRReject ? "SR " : "")
+buyReason := buyReason + (buyCandle ? "CDL " : "")
+buyReason := buyReason + (buyFvgReaction ? "FVG " : "")
+buyReason := buyReason + (buyObReaction ? "OB " : "")
+buyReason := buyReason + (buyBreakout ? "BOS " : "")
+
+sellReason = ""
+sellReason := sellReason + (sellRetest ? "RT " : "")
+sellReason := sellReason + (sellSweep ? "SWP " : "")
+sellReason := sellReason + (sellSRReject ? "SR " : "")
+sellReason := sellReason + (sellCandle ? "CDL " : "")
+sellReason := sellReason + (sellFvgReaction ? "FVG " : "")
+sellReason := sellReason + (sellObReaction ? "OB " : "")
+sellReason := sellReason + (sellBreakout ? "BOS " : "")
+
+//==============================================================================
+// VISUALS
+//==============================================================================
+plotshape(buySignal, title="BUY", style=shape.labelup, location=location.belowbar, color=color.new(color.green, 0), text="BUY", textcolor=color.white, size=size.small)
+plotshape(sellSignal, title="SELL", style=shape.labeldown, location=location.abovebar, color=color.new(color.red, 0), text="SELL", textcolor=color.white, size=size.small)
+
+if showReasons and buySignal
+    label.new(bar_index, low, "BUY\n" + buyReason + "\nV:" + str.tostring(buyVotes), style=label.style_label_up, color=color.new(color.green, 0), textcolor=color.white, size=size.small)
+
+if showReasons and sellSignal
+    label.new(bar_index, high, "SELL\n" + sellReason + "\nV:" + str.tostring(sellVotes), style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white, size=size.small)
+
+var line entryLine = na
+var line slLine = na
+var line tp1Line = na
+var line tp2Line = na
+
+if showTradeLevels and (buySignal or sellSignal)
+    if not na(entryLine)
+        line.delete(entryLine)
+    if not na(slLine)
+        line.delete(slLine)
+    if not na(tp1Line)
+        line.delete(tp1Line)
+    if not na(tp2Line)
+        line.delete(tp2Line)
+
+    entryPrice = close
+    slPrice = buySignal ? longStop : shortStop
+    tp1Price = buySignal ? longTp1 : shortTp1
+    tp2Price = buySignal ? longTp2 : shortTp2
+
+    entryLine := line.new(bar_index, entryPrice, bar_index + 20, entryPrice, color=color.new(color.yellow, 0), width=2)
+    slLine := line.new(bar_index, slPrice, bar_index + 20, slPrice, color=color.new(color.red, 0), width=2)
+    tp1Line := line.new(bar_index, tp1Price, bar_index + 20, tp1Price, color=color.new(color.green, 0), width=2)
+    tp2Line := line.new(bar_index, tp2Price, bar_index + 20, tp2Price, color=color.new(color.green, 40), style=line.style_dotted, width=2)
+
+// Hidden data-window values
+plot(buyVotes, title="Buy Trigger Votes", color=color.new(color.green, 100), display=display.data_window)
+plot(sellVotes, title="Sell Trigger Votes", color=color.new(color.red, 100), display=display.data_window)
+plot(delta, title="Delta Proxy", color=color.new(color.blue, 100), display=display.data_window)
+
+//==============================================================================
+// ALERTS
+//==============================================================================
+alertcondition(buySignal, title="GCX ENTRY ONLY BUY", message="GCX Entry Only BUY on {{ticker}} at {{close}}")
+alertcondition(sellSignal, title="GCX ENTRY ONLY SELL", message="GCX Entry Only SELL on {{ticker}} at {{close}}")

@@ -1,0 +1,583 @@
+//@version=6
+strategy("XAUUSD Smart Context + Entry PRO Production",
+     overlay = true,
+     pyramiding = 0,
+     initial_capital = 10000,
+     currency = currency.USD,
+     default_qty_type = strategy.percent_of_equity,
+     default_qty_value = 1,
+     commission_type = strategy.commission.percent,
+     commission_value = 0.07,
+     calc_on_order_fills = false,
+     calc_on_every_tick = false,
+     process_orders_on_close = true,
+     max_labels_count = 300,
+     max_lines_count = 300,
+     max_boxes_count = 100)
+
+//==================== INPUTS ====================//
+groupSess = "Sessions"
+tzInput = input.string("Asia/Makassar", "Timezone", group = groupSess)
+asiaSession = input.session("0600-1400", "Asia Session", group = groupSess)
+londonSession = input.session("1500-2000", "London Session", group = groupSess)
+newYorkSession = input.session("2030-0000", "New York Session", group = groupSess)
+allowAsiaEntries = input.bool(false, "Allow entries in Asia session", group = groupSess)
+
+groupTf = "Timeframes"
+biasTf = input.timeframe("60", "HTF Bias TF", group = groupTf)
+levelTf = input.timeframe("15", "Structure TF", group = groupTf)
+
+groupStruct = "Structure / Breakout"
+swingLen = input.int(2, "Swing Length", minval = 1, group = groupStruct)
+atrLen = input.int(14, "ATR Period", minval = 1, group = groupStruct)
+bodyRatioMin = input.float(0.45, "Min body ratio", minval = 0.1, maxval = 1.0, step = 0.05, group = groupStruct)
+displacementAtr = input.float(0.25, "Min displacement body (ATR)", minval = 0.0, step = 0.05, group = groupStruct)
+breakBufferAtr = input.float(0.10, "Breakout buffer (ATR)", minval = 0.0, step = 0.05, group = groupStruct)
+falseBreakWickRatio = input.float(1.20, "False break wick/body ratio", minval = 0.5, step = 0.05, group = groupStruct)
+maxStretchAtr = input.float(1.80, "Max stretch from EMA20 (ATR)", minval = 0.5, step = 0.1, group = groupStruct)
+
+groupSMC = "SMC Confluence"
+setupMode = input.string("Both", "Setup Mode", options = ["Both", "Breakout", "Reversal"], group = groupSMC)
+obLookback = input.int(6, "Order block scan bars", minval = 2, maxval = 20, group = groupSMC)
+fvgMinAtr = input.float(0.15, "Min FVG size (ATR)", minval = 0.0, step = 0.05, group = groupSMC)
+useFVG = input.bool(true, "Use FVG filter", group = groupSMC)
+useOB = input.bool(true, "Use Order Block filter", group = groupSMC)
+useOTE = input.bool(true, "Use OTE filter", group = groupSMC)
+minScore = input.int(4, "Minimum confluence score", minval = 2, maxval = 10, group = groupSMC)
+
+groupRisk = "Risk Management"
+rr = input.float(1.6, "Risk : Reward", minval = 0.5, step = 0.1, group = groupRisk)
+stopPadAtr = input.float(0.20, "Stop padding (ATR)", minval = 0.0, step = 0.05, group = groupRisk)
+maxStopAtr = input.float(2.20, "Maximum stop size (ATR)", minval = 0.5, step = 0.1, group = groupRisk)
+
+groupVis = "Visuals"
+showLevels = input.bool(true, "Show active support/resistance", group = groupVis)
+showAsia = input.bool(true, "Show Asia range", group = groupVis)
+showSessionBg = input.bool(true, "Highlight entry session", group = groupVis)
+showLabels = input.bool(true, "Show reason labels", group = groupVis)
+showTradeLevels = input.bool(true, "Show entry/SL/TP levels", group = groupVis)
+signalLevelBars = input.int(4, "Show last signal levels for N bars", minval = 0, maxval = 50, group = groupVis)
+showDashboard = input.bool(true, "Show dashboard", group = groupVis)
+dashboardPos = input.string("Top Right", "Dashboard Position", options = ["Top Right", "Top Left", "Bottom Right", "Bottom Left"], group = groupVis)
+dashboardMode = input.string("Compact", "Dashboard Mode", options = ["Compact", "Full"], group = groupVis)
+
+//==================== HELPERS ====================//
+f_inSession(_sess) =>
+    not na(time(timeframe.period, _sess, tzInput))
+
+f_lastBearish(_lookback) =>
+    float zHigh = na
+    float zLow = na
+    for i = 1 to _lookback
+        if na(zHigh) and close[i] < open[i]
+            zHigh := open[i]
+            zLow := low[i]
+    [zHigh, zLow]
+
+f_lastBullish(_lookback) =>
+    float zHigh = na
+    float zLow = na
+    for i = 1 to _lookback
+        if na(zHigh) and close[i] > open[i]
+            zHigh := high[i]
+            zLow := open[i]
+    [zHigh, zLow]
+
+f_dashPos(_pos) =>
+    _pos == "Top Left" ? position.top_left :
+     _pos == "Bottom Right" ? position.bottom_right :
+     _pos == "Bottom Left" ? position.bottom_left :
+     position.top_right
+
+f_price(_x) =>
+    na(_x) ? "-" : str.tostring(_x, format.mintick)
+
+f_num(_x) =>
+    na(_x) ? "-" : str.tostring(_x, "#.##")
+
+f_scoreTag(_score, _min) =>
+    _score >= _min + 3 ? "A+" :
+     _score >= _min + 2 ? "A" :
+     _score >= _min + 1 ? "B" :
+     _score >= _min ? "C" :
+     "D"
+
+f_side(_posSize) =>
+    _posSize > 0 ? "LONG" :
+     _posSize < 0 ? "SHORT" :
+     "FLAT"
+
+//==================== SESSIONS ====================//
+inAsia = f_inSession(asiaSession)
+inLondon = f_inSession(londonSession)
+inNewYork = f_inSession(newYorkSession)
+entrySession = allowAsiaEntries ? (inAsia or inLondon or inNewYork) : (inLondon or inNewYork)
+
+bgcolor(showSessionBg and entrySession ? color.new(color.teal, 92) : na)
+
+//==================== ASIA RANGE ====================//
+var float asiaHigh = na
+var float asiaLow = na
+var bool asiaLocked = false
+
+prevInAsia = bar_index > 0 ? inAsia[1] : false
+asiaStart = inAsia and not prevInAsia
+asiaEnd = not inAsia and prevInAsia
+
+if asiaStart
+    asiaHigh := high
+    asiaLow := low
+    asiaLocked := false
+else if inAsia
+    asiaHigh := na(asiaHigh) ? high : math.max(asiaHigh, high)
+    asiaLow := na(asiaLow) ? low : math.min(asiaLow, low)
+
+if asiaEnd and not na(asiaHigh) and not na(asiaLow)
+    asiaLocked := true
+
+bullAsiaSweep = asiaLocked and not na(asiaLow) and low < asiaLow and close > asiaLow
+bearAsiaSweep = asiaLocked and not na(asiaHigh) and high > asiaHigh and close < asiaHigh
+
+//==================== BASE DATA ====================//
+atr = ta.atr(atrLen)
+emaExec = ta.ema(close, 20)
+body = math.abs(close - open)
+bodySafe = math.max(body, syminfo.mintick)
+barRange = math.max(high - low, syminfo.mintick)
+bodyRatio = body / barRange
+upperWick = high - math.max(open, close)
+lowerWick = math.min(open, close) - low
+breakBuffer = atr * breakBufferAtr
+displacementOk = body >= atr * displacementAtr and bodyRatio >= bodyRatioMin
+notOverextendedLong = close <= emaExec + atr * maxStretchAtr
+notOverextendedShort = close >= emaExec - atr * maxStretchAtr
+
+chartTfSec = timeframe.in_seconds()
+biasTfSec = timeframe.in_seconds(biasTf)
+levelTfSec = timeframe.in_seconds(levelTf)
+biasTfIsHigher = biasTfSec > chartTfSec
+levelTfIsHigher = levelTfSec > chartTfSec
+
+//==================== HTF BIAS ====================//
+htfClose = biasTfIsHigher ? request.security(syminfo.tickerid, biasTf, close[1], lookahead = barmerge.lookahead_on) : close
+htfEma20 = biasTfIsHigher ? request.security(syminfo.tickerid, biasTf, ta.ema(close, 20)[1], lookahead = barmerge.lookahead_on) : ta.ema(close, 20)
+htfEma50 = biasTfIsHigher ? request.security(syminfo.tickerid, biasTf, ta.ema(close, 50)[1], lookahead = barmerge.lookahead_on) : ta.ema(close, 50)
+
+bullBias = htfClose > htfEma20 and htfEma20 > htfEma50
+bearBias = htfClose < htfEma20 and htfEma20 < htfEma50
+
+//==================== STRUCTURE LEVELS ====================//
+levelPh = levelTfIsHigher ? request.security(syminfo.tickerid, levelTf, ta.pivothigh(high, swingLen, swingLen), lookahead = barmerge.lookahead_off) : ta.pivothigh(high, swingLen, swingLen)
+levelPl = levelTfIsHigher ? request.security(syminfo.tickerid, levelTf, ta.pivotlow(low, swingLen, swingLen), lookahead = barmerge.lookahead_off) : ta.pivotlow(low, swingLen, swingLen)
+
+var float activeResistance = na
+var float activeSupport = na
+
+if not na(levelPh)
+    activeResistance := levelPh
+if not na(levelPl)
+    activeSupport := levelPl
+
+validBreakUp = not na(activeResistance) and close > activeResistance + breakBuffer and close > open and displacementOk
+validBreakDown = not na(activeSupport) and close < activeSupport - breakBuffer and close < open and displacementOk
+
+retestLong = not na(activeResistance[1]) and low <= activeResistance[1] and close > activeResistance[1] and close > open and bodyRatio >= 0.35
+retestShort = not na(activeSupport[1]) and high >= activeSupport[1] and close < activeSupport[1] and close < open and bodyRatio >= 0.35
+
+falseBreakUp = not na(activeResistance) and high > activeResistance + breakBuffer and close < activeResistance and upperWick > bodySafe * falseBreakWickRatio
+falseBreakDown = not na(activeSupport) and low < activeSupport - breakBuffer and close > activeSupport and lowerWick > bodySafe * falseBreakWickRatio
+
+rejectionResistance = not na(activeResistance) and high >= activeResistance and close < activeResistance and close < open and upperWick > bodySafe
+rejectionSupport = not na(activeSupport) and low <= activeSupport and close > activeSupport and close > open and lowerWick > bodySafe
+
+//==================== FVG ====================//
+bullFvgCreated = useFVG and low > high[2] and (low - high[2]) >= atr * fvgMinAtr
+bearFvgCreated = useFVG and high < low[2] and (low[2] - high) >= atr * fvgMinAtr
+
+var float bullFvgHigh = na
+var float bullFvgLow = na
+var float bearFvgHigh = na
+var float bearFvgLow = na
+
+if bullFvgCreated
+    bullFvgHigh := low
+    bullFvgLow := high[2]
+
+if bearFvgCreated
+    bearFvgHigh := low[2]
+    bearFvgLow := high
+
+if not na(bullFvgLow) and close < bullFvgLow
+    bullFvgHigh := na
+    bullFvgLow := na
+
+if not na(bearFvgHigh) and close > bearFvgHigh
+    bearFvgHigh := na
+    bearFvgLow := na
+
+inBullFvg = useFVG and not na(bullFvgHigh) and low <= bullFvgHigh and high >= bullFvgLow
+inBearFvg = useFVG and not na(bearFvgHigh) and high >= bearFvgLow and low <= bearFvgHigh
+
+//==================== ORDER BLOCK ====================//
+[bullObHighTmp, bullObLowTmp] = f_lastBearish(obLookback)
+[bearObHighTmp, bearObLowTmp] = f_lastBullish(obLookback)
+
+var float bullObHigh = na
+var float bullObLow = na
+var float bearObHigh = na
+var float bearObLow = na
+
+if useOB and validBreakUp and not na(bullObHighTmp)
+    bullObHigh := bullObHighTmp
+    bullObLow := bullObLowTmp
+
+if useOB and validBreakDown and not na(bearObHighTmp)
+    bearObHigh := bearObHighTmp
+    bearObLow := bearObLowTmp
+
+if not na(bullObLow) and close < bullObLow
+    bullObHigh := na
+    bullObLow := na
+
+if not na(bearObHigh) and close > bearObHigh
+    bearObHigh := na
+    bearObLow := na
+
+inBullOb = useOB and not na(bullObHigh) and low <= bullObHigh and high >= bullObLow
+inBearOb = useOB and not na(bearObHigh) and high >= bearObLow and low <= bearObHigh
+
+//==================== OTE ====================//
+ph = ta.pivothigh(high, swingLen, swingLen)
+pl = ta.pivotlow(low, swingLen, swingLen)
+
+var float lastSwingHigh = na
+var float lastSwingLow = na
+var int lastSwingHighBar = na
+var int lastSwingLowBar = na
+
+if not na(ph)
+    lastSwingHigh := ph
+    lastSwingHighBar := bar_index - swingLen
+
+if not na(pl)
+    lastSwingLow := pl
+    lastSwingLowBar := bar_index - swingLen
+
+bullLegReady = useOTE and not na(lastSwingLowBar) and not na(lastSwingHighBar) and lastSwingLowBar < lastSwingHighBar and lastSwingHigh > lastSwingLow
+bearLegReady = useOTE and not na(lastSwingHighBar) and not na(lastSwingLowBar) and lastSwingHighBar < lastSwingLowBar and lastSwingHigh > lastSwingLow
+
+bullOteLow = bullLegReady ? lastSwingHigh - (lastSwingHigh - lastSwingLow) * 0.79 : na
+bullOteHigh = bullLegReady ? lastSwingHigh - (lastSwingHigh - lastSwingLow) * 0.62 : na
+bearOteLow = bearLegReady ? lastSwingLow + (lastSwingHigh - lastSwingLow) * 0.62 : na
+bearOteHigh = bearLegReady ? lastSwingLow + (lastSwingHigh - lastSwingLow) * 0.79 : na
+
+inBullOte = bullLegReady and low <= bullOteHigh and high >= bullOteLow
+inBearOte = bearLegReady and high >= bearOteLow and low <= bearOteHigh
+
+//==================== SCORE ENGINE ====================//
+hasLongZone = inBullFvg or bullFvgCreated or inBullOb or inBullOte
+hasShortZone = inBearFvg or bearFvgCreated or inBearOb or inBearOte
+
+buyScore = (bullBias ? 2 : 0) +
+     (entrySession ? 1 : 0) +
+     ((inBullFvg or bullFvgCreated) ? 1 : 0) +
+     (inBullOb ? 1 : 0) +
+     (inBullOte ? 1 : 0) +
+     (rejectionSupport ? 1 : 0) +
+     ((falseBreakDown or bullAsiaSweep) ? 1 : 0) +
+     ((validBreakUp or retestLong) ? 1 : 0)
+
+sellScore = (bearBias ? 2 : 0) +
+     (entrySession ? 1 : 0) +
+     ((inBearFvg or bearFvgCreated) ? 1 : 0) +
+     (inBearOb ? 1 : 0) +
+     (inBearOte ? 1 : 0) +
+     (rejectionResistance ? 1 : 0) +
+     ((falseBreakUp or bearAsiaSweep) ? 1 : 0) +
+     ((validBreakDown or retestShort) ? 1 : 0)
+
+buyQuality = f_scoreTag(buyScore, minScore)
+sellQuality = f_scoreTag(sellScore, minScore)
+
+//==================== SIGNAL ENGINE ====================//
+buyBreakoutSetup = setupMode != "Reversal" and bullBias and entrySession and notOverextendedLong and (validBreakUp or retestLong) and (hasLongZone or bullAsiaSweep or retestLong) and buyScore >= minScore
+buyReversalSetup = setupMode != "Breakout" and entrySession and notOverextendedLong and (falseBreakDown or bullAsiaSweep) and rejectionSupport and (bullBias or close > htfEma20) and hasLongZone and buyScore >= minScore
+
+sellBreakoutSetup = setupMode != "Reversal" and bearBias and entrySession and notOverextendedShort and (validBreakDown or retestShort) and (hasShortZone or bearAsiaSweep or retestShort) and sellScore >= minScore
+sellReversalSetup = setupMode != "Breakout" and entrySession and notOverextendedShort and (falseBreakUp or bearAsiaSweep) and rejectionResistance and (bearBias or close < htfEma20) and hasShortZone and sellScore >= minScore
+
+rawLongSignal = barstate.isconfirmed and strategy.position_size == 0 and (buyBreakoutSetup or buyReversalSetup)
+rawShortSignal = barstate.isconfirmed and strategy.position_size == 0 and (sellBreakoutSetup or sellReversalSetup)
+
+longSignal = rawLongSignal and not rawShortSignal
+shortSignal = rawShortSignal and not rawLongSignal
+
+//==================== RISK / EXECUTION ====================//
+longBaseStop = low
+if not na(activeSupport)
+    longBaseStop := math.min(longBaseStop, activeSupport)
+if not na(bullObLow)
+    longBaseStop := math.min(longBaseStop, bullObLow)
+if bullAsiaSweep and not na(asiaLow)
+    longBaseStop := math.min(longBaseStop, asiaLow)
+
+shortBaseStop = high
+if not na(activeResistance)
+    shortBaseStop := math.max(shortBaseStop, activeResistance)
+if not na(bearObHigh)
+    shortBaseStop := math.max(shortBaseStop, bearObHigh)
+if bearAsiaSweep and not na(asiaHigh)
+    shortBaseStop := math.max(shortBaseStop, asiaHigh)
+
+longStop = longBaseStop - atr * stopPadAtr
+shortStop = shortBaseStop + atr * stopPadAtr
+
+longRisk = close - longStop
+shortRisk = shortStop - close
+
+longRiskOk = longRisk > syminfo.mintick and longRisk <= atr * maxStopAtr
+shortRiskOk = shortRisk > syminfo.mintick and shortRisk <= atr * maxStopAtr
+
+longTp = close + longRisk * rr
+shortTp = close - shortRisk * rr
+
+if longSignal and longRiskOk
+    strategy.entry("BUY", strategy.long)
+    strategy.exit("BUY TP/SL", from_entry = "BUY", stop = longStop, limit = longTp)
+
+if shortSignal and shortRiskOk
+    strategy.entry("SELL", strategy.short)
+    strategy.exit("SELL TP/SL", from_entry = "SELL", stop = shortStop, limit = shortTp)
+
+//==================== LAST SIGNAL MEMORY ====================//
+var string lastSignalType = "WAIT"
+var string lastSetupType = "-"
+var string lastBreakType = "-"
+var string lastQuality = "-"
+var float lastEntry = na
+var float lastSL = na
+var float lastTP = na
+var float lastScore = na
+var int lastSignalBar = na
+
+if longSignal and longRiskOk
+    lastSignalType := "BUY"
+    lastSetupType := buyBreakoutSetup ? "Breakout" : "Reversal"
+    lastBreakType := validBreakUp ? "BOS Up" : retestLong ? "Retest Long" : bullAsiaSweep ? "Asia Low Sweep" : falseBreakDown ? "False Break Down" : "Bull Context"
+    lastQuality := buyQuality
+    lastEntry := close
+    lastSL := longStop
+    lastTP := longTp
+    lastScore := buyScore
+    lastSignalBar := bar_index
+
+if shortSignal and shortRiskOk
+    lastSignalType := "SELL"
+    lastSetupType := sellBreakoutSetup ? "Breakout" : "Reversal"
+    lastBreakType := validBreakDown ? "BOS Down" : retestShort ? "Retest Short" : bearAsiaSweep ? "Asia High Sweep" : falseBreakUp ? "False Break Up" : "Bear Context"
+    lastQuality := sellQuality
+    lastEntry := close
+    lastSL := shortStop
+    lastTP := shortTp
+    lastScore := sellScore
+    lastSignalBar := bar_index
+
+//==================== VISUALS ====================//
+plot(showLevels ? activeSupport : na, "Active Support", color = color.new(color.blue, 0), style = plot.style_linebr)
+plot(showLevels ? activeResistance : na, "Active Resistance", color = color.new(color.red, 0), style = plot.style_linebr)
+plot(showAsia and asiaLocked ? asiaHigh : na, "Asia High", color = color.new(color.purple, 0), style = plot.style_linebr)
+plot(showAsia and asiaLocked ? asiaLow : na, "Asia Low", color = color.new(color.purple, 0), style = plot.style_linebr)
+
+barsSinceSignal = na(lastSignalBar) ? na : bar_index - lastSignalBar
+showPlanLevels = showTradeLevels and (strategy.position_size != 0 or (not na(barsSinceSignal) and barsSinceSignal <= signalLevelBars))
+tradeEntryPlot = showPlanLevels ? (strategy.position_size != 0 ? strategy.position_avg_price : lastEntry) : na
+tradeSLPlot = showPlanLevels ? lastSL : na
+tradeTPPlot = showPlanLevels ? lastTP : na
+
+plot(tradeEntryPlot, "Trade Entry", color = color.new(color.yellow, 0), style = plot.style_linebr)
+plot(tradeSLPlot, "Trade SL", color = color.new(color.red, 25), style = plot.style_linebr)
+plot(tradeTPPlot, "Trade TP", color = color.new(color.green, 25), style = plot.style_linebr)
+
+plotshape(longSignal and longRiskOk, title = "BUY Signal", style = shape.labelup, location = location.belowbar, color = color.lime, text = "BUY", textcolor = color.black, size = size.small)
+plotshape(shortSignal and shortRiskOk, title = "SELL Signal", style = shape.labeldown, location = location.abovebar, color = color.red, text = "SELL", textcolor = color.white, size = size.small)
+
+if showLabels and longSignal and longRiskOk
+    string longReason = buyBreakoutSetup ? "BUY BOS/Retest" : "BUY Sweep"
+    longReason := longReason + "\nScore: " + str.tostring(buyScore) + " | Q: " + buyQuality
+    longReason := longReason + (bullBias ? "\nHTF: Bull" : "\nHTF: Neutral")
+    longReason := longReason + ((inBullFvg or bullFvgCreated) ? "\nFVG" : "")
+    longReason := longReason + (inBullOb ? "\nOB" : "")
+    longReason := longReason + (inBullOte ? "\nOTE" : "")
+    longReason := longReason + (bullAsiaSweep ? "\nAsia Sweep" : "")
+    longReason := longReason + "\nE: " + f_price(close) + " | SL: " + f_price(longStop) + " | TP: " + f_price(longTp)
+    label.new(bar_index, low, longReason, style = label.style_label_up, color = color.new(color.lime, 0), textcolor = color.black)
+
+if showLabels and shortSignal and shortRiskOk
+    string shortReason = sellBreakoutSetup ? "SELL BOS/Retest" : "SELL Sweep"
+    shortReason := shortReason + "\nScore: " + str.tostring(sellScore) + " | Q: " + sellQuality
+    shortReason := shortReason + (bearBias ? "\nHTF: Bear" : "\nHTF: Neutral")
+    shortReason := shortReason + ((inBearFvg or bearFvgCreated) ? "\nFVG" : "")
+    shortReason := shortReason + (inBearOb ? "\nOB" : "")
+    shortReason := shortReason + (inBearOte ? "\nOTE" : "")
+    shortReason := shortReason + (bearAsiaSweep ? "\nAsia Sweep" : "")
+    shortReason := shortReason + "\nE: " + f_price(close) + " | SL: " + f_price(shortStop) + " | TP: " + f_price(shortTp)
+    label.new(bar_index, high, shortReason, style = label.style_label_down, color = color.new(color.red, 0), textcolor = color.white)
+
+//==================== DASHBOARD DATA ====================//
+sessionText = inAsia ? "Asia" : inLondon ? "London" : inNewYork ? "New York" : "Off"
+asiaStateText = inAsia ? "Building" : asiaLocked ? "Locked" : "Waiting"
+biasText = bullBias ? "Bull" : bearBias ? "Bear" : "Neutral"
+
+currentBreakText = validBreakUp ? "BOS Up" :
+     validBreakDown ? "BOS Down" :
+     retestLong ? "Retest Long" :
+     retestShort ? "Retest Short" :
+     falseBreakDown ? "False Break Down" :
+     falseBreakUp ? "False Break Up" :
+     rejectionSupport ? "Reject Support" :
+     rejectionResistance ? "Reject Resistance" :
+     "None"
+
+sweepText = bullAsiaSweep ? "Low Swept" : bearAsiaSweep ? "High Swept" : "None"
+
+hasCurrentLong = longSignal and longRiskOk
+hasCurrentShort = shortSignal and shortRiskOk
+
+displaySignal = strategy.position_size > 0 ? "LONG" :
+     strategy.position_size < 0 ? "SHORT" :
+     hasCurrentLong ? "BUY" :
+     hasCurrentShort ? "SELL" :
+     lastSignalType
+
+displaySetup = hasCurrentLong ? (buyBreakoutSetup ? "Breakout" : "Reversal") :
+     hasCurrentShort ? (sellBreakoutSetup ? "Breakout" : "Reversal") :
+     lastSetupType
+
+displayScore = hasCurrentLong ? buyScore : hasCurrentShort ? sellScore : lastScore
+displayQuality = hasCurrentLong ? buyQuality : hasCurrentShort ? sellQuality : lastQuality
+displayEntry = strategy.position_size != 0 ? strategy.position_avg_price : (hasCurrentLong or hasCurrentShort ? close : lastEntry)
+displaySL = hasCurrentLong ? longStop : hasCurrentShort ? shortStop : lastSL
+displayTP = hasCurrentLong ? longTp : hasCurrentShort ? shortTp : lastTP
+
+stopDist = na(displayEntry) or na(displaySL) ? na : math.abs(displayEntry - displaySL)
+tpDist = na(displayEntry) or na(displayTP) ? na : math.abs(displayTP - displayEntry)
+tradeStateText = f_side(strategy.position_size)
+signalAgeText = na(lastSignalBar) ? "-" : str.tostring(bar_index - lastSignalBar) + " bar"
+
+biasBg = biasText == "Bull" ? color.new(color.lime, 82) : biasText == "Bear" ? color.new(color.red, 82) : color.new(color.gray, 84)
+signalBg = displaySignal == "BUY" or displaySignal == "LONG" ? color.new(color.lime, 74) : displaySignal == "SELL" or displaySignal == "SHORT" ? color.new(color.red, 74) : color.new(color.gray, 84)
+headerBg = color.new(color.blue, 76)
+labelBg = color.new(color.black, 20)
+valueBg = color.new(color.black, 78)
+
+dashRows = dashboardMode == "Compact" ? 12 : 18
+var table dash = na
+
+if showDashboard and na(dash)
+    dash := table.new(f_dashPos(dashboardPos), 2, dashRows, border_width = 1, border_color = color.new(color.gray, 55), frame_color = color.new(color.gray, 35), frame_width = 1)
+
+if showDashboard and not na(dash)
+    table.delete(dash)
+    dash := table.new(f_dashPos(dashboardPos), 2, dashRows, border_width = 1, border_color = color.new(color.gray, 55), frame_color = color.new(color.gray, 35), frame_width = 1)
+
+if not showDashboard and not na(dash)
+    table.delete(dash)
+    dash := na
+
+if showDashboard and not na(dash) and barstate.islast
+    table.clear(dash, 0, 0, 1, dashRows - 1)
+
+    if dashboardMode == "Compact"
+        table.cell(dash, 0, 0, "XAUUSD DASH", text_color = color.white, bgcolor = headerBg)
+        table.cell(dash, 1, 0, "TF " + timeframe.period, text_color = color.white, bgcolor = headerBg)
+
+        table.cell(dash, 0, 1, "Bias", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 1, biasText, text_color = color.white, bgcolor = biasBg)
+
+        table.cell(dash, 0, 2, "Session", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 2, sessionText, text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 3, "Break", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 3, currentBreakText, text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 4, "Signal", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 4, displaySignal, text_color = color.white, bgcolor = signalBg)
+
+        table.cell(dash, 0, 5, "Setup", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 5, displaySetup + " / " + displayQuality, text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 6, "Entry", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 6, f_price(displayEntry), text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 7, "SL", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 7, f_price(displaySL), text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 8, "TP", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 8, f_price(displayTP), text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 9, "Score", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 9, f_num(displayScore), text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 10, "State", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 10, tradeStateText, text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 11, "Age", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 11, signalAgeText, text_color = color.white, bgcolor = valueBg)
+    else
+        table.cell(dash, 0, 0, "XAUUSD DASH", text_color = color.white, bgcolor = headerBg)
+        table.cell(dash, 1, 0, "TF " + timeframe.period, text_color = color.white, bgcolor = headerBg)
+
+        table.cell(dash, 0, 1, "Bias", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 1, biasText, text_color = color.white, bgcolor = biasBg)
+
+        table.cell(dash, 0, 2, "Bias TF/Struct", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 2, biasTf + " / " + levelTf, text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 3, "Session", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 3, sessionText, text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 4, "Asia", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 4, asiaStateText + " / " + sweepText, text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 5, "Break", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 5, currentBreakText, text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 6, "Signal", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 6, displaySignal, text_color = color.white, bgcolor = signalBg)
+
+        table.cell(dash, 0, 7, "Setup", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 7, displaySetup + " / " + displayQuality, text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 8, "Entry", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 8, f_price(displayEntry), text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 9, "SL", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 9, f_price(displaySL), text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 10, "TP", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 10, f_price(displayTP), text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 11, "SL Dist", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 11, f_price(stopDist), text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 12, "TP Dist", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 12, f_price(tpDist), text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 13, "RR", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 13, "1 : " + f_num(rr), text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 14, "Support", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 14, f_price(activeSupport), text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 15, "Resistance", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 15, f_price(activeResistance), text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 16, "State", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 16, tradeStateText, text_color = color.white, bgcolor = valueBg)
+
+        table.cell(dash, 0, 17, "Age", text_color = color.white, bgcolor = labelBg)
+        table.cell(dash, 1, 17, signalAgeText, text_color = color.white, bgcolor = valueBg)
+
+//==================== ALERTS ====================//
+alertcondition(longSignal and longRiskOk, title = "BUY XAUUSD", message = "BUY confirmed on candle close")
+alertcondition(shortSignal and shortRiskOk, title = "SELL XAUUSD", message = "SELL confirmed on candle close")

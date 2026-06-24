@@ -1,0 +1,358 @@
+//@version=6
+indicator("XAUUSD Context Narrator v1.4", overlay = true, max_labels_count = 50, max_lines_count = 50)
+
+//==================== INPUTS ====================//
+groupSess = "Sessions"
+tzInput = input.string("Asia/Makassar", "Timezone", group = groupSess)
+asiaSession = input.session("0600-1400", "Asia Session", group = groupSess)
+londonSession = input.session("1500-2000", "London Session", group = groupSess)
+newYorkSession = input.session("2030-0000", "New York Session", group = groupSess)
+
+groupTf = "Timeframes"
+biasTf = input.timeframe("15", "HTF Bias TF", group = groupTf)
+levelTf = input.timeframe("5", "Structure TF", group = groupTf)
+
+groupStruct = "Structure"
+swingLen = input.int(3, "Swing Length", minval = 1, group = groupStruct)
+atrLen = input.int(14, "ATR Period", minval = 1, group = groupStruct)
+bodyRatioMin = input.float(0.50, "Min body ratio", minval = 0.1, maxval = 1.0, step = 0.05, group = groupStruct)
+displacementAtr = input.float(0.30, "Min displacement body (ATR)", minval = 0.0, step = 0.05, group = groupStruct)
+breakBufferAtr = input.float(0.15, "Breakout buffer (ATR)", minval = 0.0, step = 0.05, group = groupStruct)
+falseBreakWickRatio = input.float(1.30, "Sweep wick/body ratio", minval = 0.5, step = 0.05, group = groupStruct)
+
+groupVis = "Visuals"
+showLevels = input.bool(true, "Show active support/resistance", group = groupVis)
+showAsia = input.bool(true, "Show Asia range", group = groupVis)
+showSessionBg = input.bool(false, "Highlight active session", group = groupVis)
+showDashboard = input.bool(true, "Show narrator dashboard", group = groupVis)
+dashboardStyle = input.string("Mobile", "Dashboard Style", options = ["Mobile", "Desktop"], group = groupVis)
+dashboardPos = input.string("Bottom Left", "Dashboard Position", options = ["Top Right", "Top Left", "Bottom Right", "Bottom Left"], group = groupVis)
+
+//==================== HELPERS ====================//
+f_inSession(_sess) =>
+    not na(time(timeframe.period, _sess, tzInput))
+
+f_dashPos(_pos) =>
+    _pos == "Top Left" ? position.top_left :
+     _pos == "Bottom Right" ? position.bottom_right :
+     _pos == "Bottom Left" ? position.bottom_left :
+     position.top_right
+
+f_price(_x) =>
+    na(_x) ? "-" : str.tostring(_x, format.mintick)
+
+f_min_na(_a, _b) =>
+    na(_a) ? _b : na(_b) ? _a : math.min(_a, _b)
+
+f_max_na(_a, _b) =>
+    na(_a) ? _b : na(_b) ? _a : math.max(_a, _b)
+
+//==================== SESSIONS ====================//
+inAsia = f_inSession(asiaSession)
+inLondon = f_inSession(londonSession)
+inNewYork = f_inSession(newYorkSession)
+
+sessionText = inAsia ? "Asia" : inLondon ? "London" : inNewYork ? "New York" : "Off"
+sessionShort = inAsia ? "Asia" : inLondon ? "London" : inNewYork ? "NY" : "Off"
+
+bgcolor(showSessionBg and (inAsia or inLondon or inNewYork) ? color.new(color.teal, 92) : na)
+
+//==================== ASIA RANGE ====================//
+var float asiaHigh = na
+var float asiaLow = na
+var bool asiaLocked = false
+
+prevInAsia = bar_index > 0 ? inAsia[1] : false
+asiaStart = inAsia and not prevInAsia
+asiaEnd = not inAsia and prevInAsia
+
+if asiaStart
+    asiaHigh := high
+    asiaLow := low
+    asiaLocked := false
+else if inAsia
+    asiaHigh := na(asiaHigh) ? high : math.max(asiaHigh, high)
+    asiaLow := na(asiaLow) ? low : math.min(asiaLow, low)
+
+if asiaEnd and not na(asiaHigh) and not na(asiaLow)
+    asiaLocked := true
+
+bullAsiaSweep = asiaLocked and not na(asiaLow) and low < asiaLow and close > asiaLow
+bearAsiaSweep = asiaLocked and not na(asiaHigh) and high > asiaHigh and close < asiaHigh
+
+//==================== BASE DATA ====================//
+atr = ta.atr(atrLen)
+body = math.abs(close - open)
+bodySafe = math.max(body, syminfo.mintick)
+barRange = math.max(high - low, syminfo.mintick)
+bodyRatio = body / barRange
+upperWick = high - math.max(open, close)
+lowerWick = math.min(open, close) - low
+breakBuffer = atr * breakBufferAtr
+displacementOk = body >= atr * displacementAtr and bodyRatio >= bodyRatioMin
+
+chartTfSec = timeframe.in_seconds()
+biasTfSec = timeframe.in_seconds(biasTf)
+levelTfSec = timeframe.in_seconds(levelTf)
+biasTfIsHigher = biasTfSec > chartTfSec
+levelTfIsHigher = levelTfSec > chartTfSec
+
+//==================== HTF BIAS ====================//
+htfClose = biasTfIsHigher ? request.security(syminfo.tickerid, biasTf, close[1], lookahead = barmerge.lookahead_on) : close
+htfEma20 = biasTfIsHigher ? request.security(syminfo.tickerid, biasTf, ta.ema(close, 20)[1], lookahead = barmerge.lookahead_on) : ta.ema(close, 20)
+htfEma50 = biasTfIsHigher ? request.security(syminfo.tickerid, biasTf, ta.ema(close, 50)[1], lookahead = barmerge.lookahead_on) : ta.ema(close, 50)
+
+bullBias = htfClose > htfEma20 and htfEma20 > htfEma50
+bearBias = htfClose < htfEma20 and htfEma20 < htfEma50
+
+biasText = bullBias ? "Bullish" : bearBias ? "Bearish" : "Netral"
+
+//==================== STRUCTURE LEVELS ====================//
+levelPh = levelTfIsHigher ? request.security(syminfo.tickerid, levelTf, ta.pivothigh(high, swingLen, swingLen), lookahead = barmerge.lookahead_off) : ta.pivothigh(high, swingLen, swingLen)
+levelPl = levelTfIsHigher ? request.security(syminfo.tickerid, levelTf, ta.pivotlow(low, swingLen, swingLen), lookahead = barmerge.lookahead_off) : ta.pivotlow(low, swingLen, swingLen)
+
+var float activeResistance = na
+var float activeSupport = na
+var float prevResistance = na
+var float prevSupport = na
+
+if not na(levelPh)
+    prevResistance := activeResistance
+    activeResistance := levelPh
+
+if not na(levelPl)
+    prevSupport := activeSupport
+    activeSupport := levelPl
+
+bullStructure = not na(activeResistance) and not na(prevResistance) and not na(activeSupport) and not na(prevSupport) and activeResistance > prevResistance and activeSupport > prevSupport
+bearStructure = not na(activeResistance) and not na(prevResistance) and not na(activeSupport) and not na(prevSupport) and activeResistance < prevResistance and activeSupport < prevSupport
+
+structureText = bullStructure ? "HH / HL" : bearStructure ? "LH / LL" : bullBias ? "Konteks Bull" : bearBias ? "Konteks Bear" : "Range / Mixed"
+
+//==================== BREAK / SWEEP ====================//
+validBreakUp = not na(activeResistance) and close > activeResistance + breakBuffer and close > open and displacementOk
+validBreakDown = not na(activeSupport) and close < activeSupport - breakBuffer and close < open and displacementOk
+
+falseBreakUp = not na(activeResistance) and high > activeResistance + breakBuffer and close < activeResistance and upperWick > bodySafe * falseBreakWickRatio
+falseBreakDown = not na(activeSupport) and low < activeSupport - breakBuffer and close > activeSupport and lowerWick > bodySafe * falseBreakWickRatio
+
+//==================== SWING RANGE / OCT CONTEXT ====================//
+ph = ta.pivothigh(high, swingLen, swingLen)
+pl = ta.pivotlow(low, swingLen, swingLen)
+
+var float lastSwingHigh = na
+var float lastSwingLow = na
+
+if not na(ph)
+    lastSwingHigh := ph
+
+if not na(pl)
+    lastSwingLow := pl
+
+rangeReady = not na(lastSwingHigh) and not na(lastSwingLow) and lastSwingHigh > lastSwingLow
+rangeMid = rangeReady ? (lastSwingHigh + lastSwingLow) * 0.5 : na
+zoneText = not rangeReady ? "-" : close < rangeMid ? "Discount" : close > rangeMid ? "Premium" : "Equilibrium"
+
+//==================== STATE MACHINE ====================//
+var int ctxDir = 0
+var int ctxState = 0
+var float ctxLevel = na
+
+if validBreakUp
+    ctxDir := 1
+    ctxState := 1
+    ctxLevel := activeResistance
+
+if validBreakDown
+    ctxDir := -1
+    ctxState := 1
+    ctxLevel := activeSupport
+
+longRetestTouch = ctxDir == 1 and ctxState == 1 and not na(ctxLevel) and low <= ctxLevel + breakBuffer
+shortRetestTouch = ctxDir == -1 and ctxState == 1 and not na(ctxLevel) and high >= ctxLevel - breakBuffer
+
+if longRetestTouch
+    if close >= ctxLevel
+        ctxState := 2
+    else
+        ctxState := 3
+
+if shortRetestTouch
+    if close <= ctxLevel
+        ctxState := 2
+    else
+        ctxState := 3
+
+if ctxDir == 1 and ctxState == 2 and close < ctxLevel
+    ctxState := 3
+
+if ctxDir == -1 and ctxState == 2 and close > ctxLevel
+    ctxState := 3
+
+stateText = ctxState == 1 ? "Belum Valid" : ctxState == 2 ? "Valid" : ctxState == 3 ? "Gagal" : "Belum Ada"
+
+//==================== NARRATIVE ENGINE ====================//
+string areaText = bullAsiaSweep ? "Low Asia disapu, likuiditas bawah sudah diambil." :
+     bearAsiaSweep ? "High Asia disapu, likuiditas atas sudah diambil." :
+     falseBreakDown ? "Low struktur sempat disapu, buyer mencoba bertahan." :
+     falseBreakUp ? "High struktur sempat disapu, seller mencoba menahan harga." :
+     zoneText == "Discount" ? "Harga berada di area discount dari swing terakhir." :
+     zoneText == "Premium" ? "Harga berada di area premium dari swing terakhir." :
+     "Belum ada event likuiditas yang dominan."
+
+string breakText = validBreakUp ? "Harga menembus resistance terakhir dengan close yang kuat." :
+     validBreakDown ? "Harga menembus support terakhir dengan close yang kuat." :
+     ctxDir == 1 ? "Break bullish sudah terjadi, market menunggu konfirmasi berikutnya." :
+     ctxDir == -1 ? "Break bearish sudah terjadi, market menunggu konfirmasi berikutnya." :
+     "Belum ada break structure yang valid."
+
+string confirmText = ctxState == 1 and ctxDir == 1 ? "Harga sudah break naik, tapi belum ada retest yang bertahan." :
+     ctxState == 1 and ctxDir == -1 ? "Harga sudah break turun, tapi belum ada retest yang bertahan." :
+     ctxState == 2 and ctxDir == 1 ? "Area break bertahan sebagai support baru. Retest valid." :
+     ctxState == 2 and ctxDir == -1 ? "Area break bertahan sebagai resistance baru. Retest valid." :
+     ctxState == 3 and ctxDir == 1 ? "Harga kembali menembus di bawah level break. Retest gagal." :
+     ctxState == 3 and ctxDir == -1 ? "Harga kembali menembus di atas level break. Retest gagal." :
+     "Konfirmasi belum terbentuk."
+
+string narrativeText = ctxState == 2 and ctxDir == 1 ? "Buyer mulai memegang kontrol setelah break dan retest bertahan." :
+     ctxState == 2 and ctxDir == -1 ? "Seller mulai memegang kontrol setelah break dan retest bertahan." :
+     ctxState == 1 and ctxDir == 1 ? "Bias bullish ada, tetapi market masih menguji area break." :
+     ctxState == 1 and ctxDir == -1 ? "Bias bearish ada, tetapi market masih menguji area break." :
+     ctxState == 3 and ctxDir == 1 ? "Kenaikan gagal dipertahankan dan struktur bullish melemah." :
+     ctxState == 3 and ctxDir == -1 ? "Penurunan gagal dipertahankan dan struktur bearish melemah." :
+     bullBias ? "Bias HTF masih bullish, tunggu event struktur berikutnya." :
+     bearBias ? "Bias HTF masih bearish, tunggu event struktur berikutnya." :
+     "Market masih netral, tunggu struktur yang lebih jelas."
+
+//==================== EXECUTION PLAN ====================//
+longEntry = not na(ctxLevel) ? ctxLevel : activeSupport
+shortEntry = not na(ctxLevel) ? ctxLevel : activeResistance
+
+float longInvalidBase = na
+longInvalidBase := f_min_na(longInvalidBase, ctxLevel)
+longInvalidBase := f_min_na(longInvalidBase, activeSupport)
+longInvalidBase := f_min_na(longInvalidBase, lastSwingLow)
+if asiaLocked
+    longInvalidBase := f_min_na(longInvalidBase, asiaLow)
+
+float shortInvalidBase = na
+shortInvalidBase := f_max_na(shortInvalidBase, ctxLevel)
+shortInvalidBase := f_max_na(shortInvalidBase, activeResistance)
+shortInvalidBase := f_max_na(shortInvalidBase, lastSwingHigh)
+if asiaLocked
+    shortInvalidBase := f_max_na(shortInvalidBase, asiaHigh)
+
+longSL = not na(longInvalidBase) ? longInvalidBase - breakBuffer : na
+shortSL = not na(shortInvalidBase) ? shortInvalidBase + breakBuffer : na
+
+longRisk = not na(longEntry) and not na(longSL) ? math.max(longEntry - longSL, syminfo.mintick) : na
+shortRisk = not na(shortEntry) and not na(shortSL) ? math.max(shortSL - shortEntry, syminfo.mintick) : na
+
+longTP1 = not na(longEntry) and not na(longRisk) ? longEntry + longRisk : na
+longTP2 = not na(longEntry) and not na(longRisk) ? longEntry + longRisk * 2.0 : na
+
+shortTP1 = not na(shortEntry) and not na(shortRisk) ? shortEntry - shortRisk : na
+shortTP2 = not na(shortEntry) and not na(shortRisk) ? shortEntry - shortRisk * 2.0 : na
+
+string planText = ctxState == 2 and ctxDir == 1 ?
+     "Cari BUY di area " + f_price(longEntry) +
+     ".\nSL di bawah " + f_price(longSL) +
+     ".\nTP1 " + f_price(longTP1) + " | TP2 " + f_price(longTP2) + "." :
+     ctxState == 2 and ctxDir == -1 ?
+     "Cari SELL di area " + f_price(shortEntry) +
+     ".\nSL di atas " + f_price(shortSL) +
+     ".\nTP1 " + f_price(shortTP1) + " | TP2 " + f_price(shortTP2) + "." :
+     ctxState == 1 and ctxDir == 1 ?
+     "Belum BUY sekarang.\nTunggu retest area " + f_price(ctxLevel) +
+     " lalu close tetap di atasnya.\nSL di bawah " + f_price(longSL) +
+     ". TP1 " + f_price(longTP1) + " | TP2 " + f_price(longTP2) + "." :
+     ctxState == 1 and ctxDir == -1 ?
+     "Belum SELL sekarang.\nTunggu retest area " + f_price(ctxLevel) +
+     " lalu close tetap di bawahnya.\nSL di atas " + f_price(shortSL) +
+     ". TP1 " + f_price(shortTP1) + " | TP2 " + f_price(shortTP2) + "." :
+     ctxState == 3 and ctxDir == 1 ?
+     "BUY gagal.\nCari SELL hanya jika harga tetap di bawah " + f_price(ctxLevel) +
+     ".\nSL di atas " + f_price(shortSL) +
+     ". TP1 " + f_price(shortTP1) + " | TP2 " + f_price(shortTP2) + "." :
+     ctxState == 3 and ctxDir == -1 ?
+     "SELL gagal.\nCari BUY hanya jika harga reclaim " + f_price(ctxLevel) +
+     ".\nSL di bawah " + f_price(longSL) +
+     ". TP1 " + f_price(longTP1) + " | TP2 " + f_price(longTP2) + "." :
+     bullBias and not na(activeSupport) ?
+     "Bias masih bullish.\nFokus cari BUY di area support " + f_price(activeSupport) +
+     ".\nSL di bawah " + f_price(activeSupport - breakBuffer) + "." :
+     bearBias and not na(activeResistance) ?
+     "Bias masih bearish.\nFokus cari SELL di area resistance " + f_price(activeResistance) +
+     ".\nSL di atas " + f_price(activeResistance + breakBuffer) + "." :
+     "Belum ada rencana eksekusi yang jelas.\nTunggu break atau retest yang lebih rapi."
+
+//==================== VISUALS ====================//
+plot(showLevels ? activeSupport : na, "Active Support", color = color.new(color.blue, 0), style = plot.style_linebr, linewidth = 2)
+plot(showLevels ? activeResistance : na, "Active Resistance", color = color.new(color.red, 0), style = plot.style_linebr, linewidth = 2)
+plot(showAsia and asiaLocked ? asiaHigh : na, "Asia High", color = color.new(color.purple, 30), style = plot.style_linebr)
+plot(showAsia and asiaLocked ? asiaLow : na, "Asia Low", color = color.new(color.purple, 30), style = plot.style_linebr)
+
+//==================== MOBILE / DESKTOP DASHBOARD ====================//
+dashRows = 7
+dashCols = dashboardStyle == "Mobile" ? 1 : 2
+
+var table dash = na
+var string lastDashPos = dashboardPos
+var string lastDashStyle = dashboardStyle
+
+if showDashboard and (na(dash) or lastDashPos != dashboardPos or lastDashStyle != dashboardStyle)
+    if not na(dash)
+        table.delete(dash)
+    dash := table.new(
+         f_dashPos(dashboardPos),
+         dashCols,
+         dashRows,
+         border_width = 1,
+         border_color = color.rgb(90, 90, 90),
+         frame_color = color.rgb(60, 60, 60),
+         frame_width = 1)
+    lastDashPos := dashboardPos
+    lastDashStyle := dashboardStyle
+
+if not showDashboard and not na(dash)
+    table.delete(dash)
+    dash := na
+
+if showDashboard and not na(dash) and barstate.islast
+    table.clear(dash, 0, 0, dashCols - 1, dashRows - 1)
+
+    headerBg = color.rgb(70, 95, 150)
+    keyBg = color.rgb(70, 70, 80)
+    valueBg = color.rgb(210, 210, 210)
+    biasBg = bullBias ? color.rgb(80, 130, 80) : bearBias ? color.rgb(145, 75, 75) : color.rgb(110, 110, 110)
+    stateBg = ctxState == 2 ? color.rgb(80, 130, 80) : ctxState == 1 ? color.rgb(170, 120, 50) : ctxState == 3 ? color.rgb(145, 75, 75) : color.rgb(110, 110, 110)
+
+    if dashboardStyle == "Mobile"
+        table.cell(dash, 0, 0, "XAUUSD CONTEXT | " + timeframe.period + " | " + sessionShort, text_color = color.white, bgcolor = headerBg, text_size = size.tiny)
+        table.cell(dash, 0, 1, "Bias: " + biasText + " | " + structureText, text_color = color.white, bgcolor = biasBg, text_size = size.tiny)
+        table.cell(dash, 0, 2, "Area: " + areaText, text_color = color.black, bgcolor = valueBg, text_size = size.tiny)
+        table.cell(dash, 0, 3, "Break: " + breakText, text_color = color.black, bgcolor = valueBg, text_size = size.tiny)
+        table.cell(dash, 0, 4, "State: " + stateText + " | " + confirmText, text_color = color.white, bgcolor = stateBg, text_size = size.tiny)
+        table.cell(dash, 0, 5, "Catatan: " + narrativeText, text_color = color.black, bgcolor = valueBg, text_size = size.tiny)
+        table.cell(dash, 0, 6, "Rencana:\n" + planText, text_color = color.black, bgcolor = valueBg, text_size = size.tiny)
+    else
+        table.cell(dash, 0, 0, "XAUUSD CONTEXT", text_color = color.white, bgcolor = headerBg, text_size = size.tiny)
+        table.cell(dash, 1, 0, timeframe.period + " | " + sessionText, text_color = color.white, bgcolor = headerBg, text_size = size.tiny)
+
+        table.cell(dash, 0, 1, "Bias", text_color = color.white, bgcolor = keyBg, text_size = size.tiny)
+        table.cell(dash, 1, 1, biasText + " | " + structureText, text_color = color.white, bgcolor = biasBg, text_size = size.tiny)
+
+        table.cell(dash, 0, 2, "Area", text_color = color.white, bgcolor = keyBg, text_size = size.tiny)
+        table.cell(dash, 1, 2, areaText, text_color = color.black, bgcolor = valueBg, text_size = size.tiny)
+
+        table.cell(dash, 0, 3, "Break", text_color = color.white, bgcolor = keyBg, text_size = size.tiny)
+        table.cell(dash, 1, 3, breakText, text_color = color.black, bgcolor = valueBg, text_size = size.tiny)
+
+        table.cell(dash, 0, 4, "State", text_color = color.white, bgcolor = keyBg, text_size = size.tiny)
+        table.cell(dash, 1, 4, stateText + " | " + confirmText, text_color = color.white, bgcolor = stateBg, text_size = size.tiny)
+
+        table.cell(dash, 0, 5, "Catatan", text_color = color.white, bgcolor = keyBg, text_size = size.tiny)
+        table.cell(dash, 1, 5, narrativeText, text_color = color.black, bgcolor = valueBg, text_size = size.tiny)
+
+        table.cell(dash, 0, 6, "Rencana", text_color = color.white, bgcolor = keyBg, text_size = size.tiny)
+        table.cell(dash, 1, 6, planText, text_color = color.black, bgcolor = valueBg, text_size = size.tiny)

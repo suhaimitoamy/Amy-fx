@@ -1,0 +1,149 @@
+[
+  {
+    "name": "Amy Breakout Retest Rejection Assistant",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: AMY_Breakout_Retest_Rejection_Assistant.pine.txt",
+    "url": "apps/indikator/files/AMY_Breakout_Retest_Rejection_Assistant.pine.txt",
+    "code": ""
+  },
+  {
+    "name": "Amy Kronos Filter Bot Signal",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: AMY_Kronos_Filter_Bot_Signal.pine.txt",
+    "url": "apps/indikator/files/AMY_Kronos_Filter_Bot_Signal.pine.txt",
+    "code": ""
+  },
+  {
+    "name": "Amy Neo Wave Structure Entry Map",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: AMY_Neo_Wave_Structure_Entry_Map.pine.txt",
+    "url": "apps/indikator/files/AMY_Neo_Wave_Structure_Entry_Map.pine.txt",
+    "code": ""
+  },
+  {
+    "name": "Amy Pro Clean Sd Snr Fibo Scalping Engine Nowarning",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: AMY_PRO_Clean_SD_SNR_Fibo_Scalping_Engine_NoWarning.pine.txt",
+    "url": "apps/indikator/files/AMY_PRO_Clean_SD_SNR_Fibo_Scalping_Engine_NoWarning.pine.txt",
+    "code": ""
+  },
+  {
+    "name": "Amy Pro Sd Snr Fibo Scalping Engine",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: AMY_PRO_SD_SNR_Fibo_Scalping_Engine.pine.txt",
+    "url": "apps/indikator/files/AMY_PRO_SD_SNR_Fibo_Scalping_Engine.pine.txt",
+    "code": ""
+  },
+  {
+    "name": "Amy Supply Demand Snr Fibo Entry Calculator",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: AMY_Supply_Demand_SNR_Fibo_Entry_Calculator.pine.txt",
+    "url": "apps/indikator/files/AMY_Supply_Demand_SNR_Fibo_Entry_Calculator.pine.txt",
+    "code": ""
+  },
+  {
+    "name": "Amy Ultimate Professional Suite",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: AMY_Ultimate_Professional_Suite.pine",
+    "url": "apps/indikator/files/AMY_Ultimate_Professional_Suite.pine",
+    "code": ""
+  },
+  {
+    "name": "Gcx Entry Only V1",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: GCX-Entry-Only-V1.pine",
+    "url": "apps/indikator/files/GCX-Entry-Only-V1.pine",
+    "code": ""
+  },
+  {
+    "name": "Gcx Matrix V12",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: GCX-Matrix-V12.pine",
+    "url": "apps/indikator/files/GCX-Matrix-V12.pine",
+    "code": ""
+  },
+  {
+    "name": "Ict Yang Di Sempurnakan Edited",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: ICT yang di sempurnakan edited.pine",
+    "url": "apps/indikator/files/ICT yang di sempurnakan edited.pine",
+    "code": ""
+  },
+  {
+    "name": "Ict Amy Entry Assistant V3 Break Retest Rejection",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: ICT_AMY_Entry_Assistant_V3_Break_Retest_Rejection.pine.txt",
+    "url": "apps/indikator/files/ICT_AMY_Entry_Assistant_V3_Break_Retest_Rejection.pine.txt",
+    "code": ""
+  },
+  {
+    "name": "Ict Amy Entry Assistant V3 Mathzone Stable Nowarning",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: ICT_AMY_Entry_Assistant_V3_MathZone_Stable_NoWarning.pine.txt",
+    "url": "apps/indikator/files/ICT_AMY_Entry_Assistant_V3_MathZone_Stable_NoWarning.pine.txt",
+    "code": ""
+  },
+  {
+    "name": "Ict Concepts Amygmgo Fixed Ready",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: ICT_Concepts_amygmgo_FIXED_READY.pine",
+    "url": "apps/indikator/files/ICT_Concepts_amygmgo_FIXED_READY.pine",
+    "code": ""
+  },
+  {
+    "name": "Ict Validated Smc V1 Clean",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: ICT_Validated_SMC_v1_clean.pine",
+    "url": "apps/indikator/files/ICT_Validated_SMC_v1_clean.pine",
+    "code": ""
+  },
+  {
+    "name": "Smc",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: Smc.pine",
+    "url": "apps/indikator/files/Smc.pine",
+    "code": ""
+  },
+  {
+    "name": "Indikator Baru",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: indikator-baru.pine",
+    "url": "apps/indikator/files/indikator-baru.pine",
+    "code": ""
+  },
+  {
+    "name": "Indikator V1",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: indikator-v1.pine",
+    "url": "apps/indikator/files/indikator-v1.pine",
+    "code": ""
+  },
+  {
+    "name": "Indikator V10",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: indikator-v10.pine",
+    "url": "apps/indikator/files/indikator-v10.pine",
+    "code": ""
+  },
+  {
+    "name": "Indikator V2",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: indikator-v2.pine",
+    "url": "apps/indikator/files/indikator-v2.pine",
+    "code": ""
+  },
+  {
+    "name": "Indikator V3",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: indikator-v3.pine",
+    "url": "apps/indikator/files/indikator-v3.pine",
+    "code": ""
+  },
+  {
+    "name": "Indikator V3 V4",
+    "category": "Pine Script",
+    "desc": "File sumber lokal: indikator-v3_v4.pine",
+    "url": "apps/indikator/files/indikator-v3_v4.pine",
+    "code": ""
+  }
+]

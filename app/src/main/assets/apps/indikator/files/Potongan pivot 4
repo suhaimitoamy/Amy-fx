@@ -1,0 +1,223 @@
+//==================== AMY PIVOT V2 ====================//
+amyPivotV2_group = "AMY Pivot V2"
+amyPivotV2_show = input.bool(true, "Show Pivot Levels", group=amyPivotV2_group)
+amyPivotV2_tf = input.string("D", "Pivot Source TF", options=["D", "W", "M"], group=amyPivotV2_group)
+amyPivotV2_displayMode = input.string("Clean", "Pivot Display Mode", options=["All", "Clean", "Major Only"], group=amyPivotV2_group)
+amyPivotV2_showLabels = input.bool(true, "Show Pivot Price Labels", group=amyPivotV2_group)
+amyPivotV2_backBars = input.int(80, "Left Bars", minval=10, maxval=500, group=amyPivotV2_group)
+amyPivotV2_extendBars = input.int(40, "Right Bars", minval=5, maxval=300, group=amyPivotV2_group)
+amyPivotV2_lineWidth = input.int(1, "Line Width", minval=1, maxval=4, group=amyPivotV2_group)
+amyPivotV2_nearAtrMult = input.float(2.0, "Show Level If Near ATR", minval=0.5, step=0.5, group=amyPivotV2_group)
+
+amyPivotV2_rawHigh = request.security(syminfo.tickerid, amyPivotV2_tf, high, gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off)
+amyPivotV2_rawLow = request.security(syminfo.tickerid, amyPivotV2_tf, low, gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off)
+amyPivotV2_rawClose = request.security(syminfo.tickerid, amyPivotV2_tf, close, gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off)
+
+amyPivotV2_newTfBar = ta.change(time(amyPivotV2_tf)) != 0
+
+var float amyPivotV2_prevHigh = na
+var float amyPivotV2_prevLow = na
+var float amyPivotV2_prevClose = na
+
+if amyPivotV2_newTfBar or na(amyPivotV2_prevHigh)
+    amyPivotV2_prevHigh := amyPivotV2_rawHigh[1]
+    amyPivotV2_prevLow := amyPivotV2_rawLow[1]
+    amyPivotV2_prevClose := amyPivotV2_rawClose[1]
+
+amyPivotV2_atr = ta.atr(14)
+amyPivotV2_range = amyPivotV2_prevHigh - amyPivotV2_prevLow
+amyPivotV2_p = (amyPivotV2_prevHigh + amyPivotV2_prevLow + amyPivotV2_prevClose) / 3.0
+
+amyPivotV2_r1 = 2.0 * amyPivotV2_p - amyPivotV2_prevLow
+amyPivotV2_s1 = 2.0 * amyPivotV2_p - amyPivotV2_prevHigh
+amyPivotV2_r2 = amyPivotV2_p + amyPivotV2_range
+amyPivotV2_s2 = amyPivotV2_p - amyPivotV2_range
+amyPivotV2_r3 = amyPivotV2_prevHigh + 2.0 * (amyPivotV2_p - amyPivotV2_prevLow)
+amyPivotV2_s3 = amyPivotV2_prevLow - 2.0 * (amyPivotV2_prevHigh - amyPivotV2_p)
+amyPivotV2_r4 = amyPivotV2_r3 + amyPivotV2_range
+amyPivotV2_s4 = amyPivotV2_s3 - amyPivotV2_range
+
+amyPivotV2_isNear(_lvl) =>
+    not na(_lvl) and math.abs(close - _lvl) <= amyPivotV2_atr * amyPivotV2_nearAtrMult
+
+amyPivotV2_showLevel(_lvl, _name) =>
+    amyPivotV2_displayMode == "All" ? true :
+     amyPivotV2_displayMode == "Major Only" ? (_name == "PIVOT" or _name == "R1" or _name == "S1") :
+     _name == "PIVOT" or _name == "R1" or _name == "S1" or amyPivotV2_isNear(_lvl)
+
+var line[] amyPivotV2_lines = array.new<line>(9, na)
+var label[] amyPivotV2_labels = array.new<label>(9, na)
+var string amyPivotV2_lastTf = ""
+
+if amyPivotV2_lastTf != amyPivotV2_tf
+    for i = 0 to array.size(amyPivotV2_lines) - 1
+        amyPivotV2_oldLine = array.get(amyPivotV2_lines, i)
+        amyPivotV2_oldLabel = array.get(amyPivotV2_labels, i)
+        if not na(amyPivotV2_oldLine)
+            line.delete(amyPivotV2_oldLine)
+            array.set(amyPivotV2_lines, i, na)
+        if not na(amyPivotV2_oldLabel)
+            label.delete(amyPivotV2_oldLabel)
+            array.set(amyPivotV2_labels, i, na)
+    amyPivotV2_lastTf := amyPivotV2_tf
+
+amyPivotV2_draw(_idx, _price, _name, _baseColor) =>
+    line _ln = array.get(amyPivotV2_lines, _idx)
+    label _lb = array.get(amyPivotV2_labels, _idx)
+    _show = amyPivotV2_show and not na(_price) and amyPivotV2_showLevel(_price, _name)
+    _txt = _name + "  " + str.tostring(_price, format.mintick)
+    _left = math.max(0, bar_index - amyPivotV2_backBars)
+    _right = bar_index + amyPivotV2_extendBars
+
+    if _show
+        if na(_ln)
+            _ln := line.new(_left, _price, _right, _price, xloc=xloc.bar_index, extend=extend.none, color=_baseColor, width=amyPivotV2_lineWidth)
+        else
+            line.set_xy1(_ln, _left, _price)
+            line.set_xy2(_ln, _right, _price)
+            line.set_color(_ln, _baseColor)
+            line.set_width(_ln, amyPivotV2_lineWidth)
+            line.set_style(_ln, line.style_solid)
+
+        if amyPivotV2_showLabels
+            if na(_lb)
+                _lb := label.new(_right, _price, _txt, xloc=xloc.bar_index, style=label.style_label_left, color=color.new(_baseColor, 82), textcolor=_baseColor, size=size.tiny)
+            else
+                label.set_xy(_lb, _right, _price)
+                label.set_text(_lb, _txt)
+                label.set_color(_lb, color.new(_baseColor, 82))
+                label.set_textcolor(_lb, _baseColor)
+                label.set_size(_lb, size.tiny)
+        else
+            if not na(_lb)
+                label.delete(_lb)
+                _lb := na
+    else
+        if not na(_ln)
+            line.delete(_ln)
+            _ln := na
+        if not na(_lb)
+            label.delete(_lb)
+            _lb := na
+
+    array.set(amyPivotV2_lines, _idx, _ln)
+    array.set(amyPivotV2_labels, _idx, _lb)
+
+amyPivotV2_draw(0, amyPivotV2_r4, "R4", color.new(color.red, 35))
+amyPivotV2_draw(1, amyPivotV2_r3, "R3", color.new(color.red, 30))
+amyPivotV2_draw(2, amyPivotV2_r2, "R2", color.new(color.red, 20))
+amyPivotV2_draw(3, amyPivotV2_r1, "R1", color.new(color.red, 10))
+amyPivotV2_draw(4, amyPivotV2_p, "PIVOT", color.new(color.blue, 0))
+amyPivotV2_draw(5, amyPivotV2_s1, "S1", color.new(color.lime, 10))
+amyPivotV2_draw(6, amyPivotV2_s2, "S2", color.new(color.lime, 20))
+amyPivotV2_draw(7, amyPivotV2_s3, "S3", color.new(color.lime, 30))
+amyPivotV2_draw(8, amyPivotV2_s4, "S4", color.new(color.lime, 35))
+
+//==================== AMY KEY LEVELS V2 ====================//
+amyKeyV2_group = "AMY Key Levels V2"
+amyKeyV2_show = input.bool(true, "Show Key Levels", group=amyKeyV2_group)
+amyKeyV2_showLabels = input.bool(true, "Show Key Level Labels", group=amyKeyV2_group)
+amyKeyV2_backBars = input.int(80, "Left Bars", minval=10, maxval=500, group=amyKeyV2_group)
+amyKeyV2_extendBars = input.int(40, "Right Bars", minval=5, maxval=300, group=amyKeyV2_group)
+amyKeyV2_lineWidth = input.int(1, "Line Width", minval=1, maxval=4, group=amyKeyV2_group)
+
+amyKeyV2_showMO = input.bool(true, "Show Midnight Open", group=amyKeyV2_group)
+amyKeyV2_showPDH = input.bool(true, "Show PDH", group=amyKeyV2_group)
+amyKeyV2_showPDL = input.bool(true, "Show PDL", group=amyKeyV2_group)
+amyKeyV2_showBSL = input.bool(false, "Show BSL", group=amyKeyV2_group)
+amyKeyV2_showSSL = input.bool(false, "Show SSL", group=amyKeyV2_group)
+
+amyKeyV2_moTz = input.string("America/New_York", "Midnight Open Timezone", group=amyKeyV2_group)
+amyKeyV2_swingLen = input.int(5, "BSL / SSL Swing Length", minval=1, maxval=50, group=amyKeyV2_group)
+
+amyKeyV2_moEngine() =>
+    var float _mo = na
+    _newDay = ta.change(time("D", "0000-2359", amyKeyV2_moTz)) != 0
+    if _newDay or na(_mo)
+        _mo := open
+    _mo
+
+amyKeyV2_moFixed = request.security(syminfo.tickerid, "1", amyKeyV2_moEngine(), gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off)
+
+var float amyKeyV2_moFallback = na
+amyKeyV2_newDayChart = ta.change(time("D", "0000-2359", amyKeyV2_moTz)) != 0
+
+if amyKeyV2_newDayChart or na(amyKeyV2_moFallback)
+    amyKeyV2_moFallback := open
+
+amyKeyV2_midnightOpen = na(amyKeyV2_moFixed) ? amyKeyV2_moFallback : amyKeyV2_moFixed
+
+amyKeyV2_rawDailyHigh = request.security(syminfo.tickerid, "D", high, gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off)
+amyKeyV2_rawDailyLow = request.security(syminfo.tickerid, "D", low, gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off)
+
+amyKeyV2_newExchangeDay = ta.change(time("D")) != 0
+
+var float amyKeyV2_pdh = na
+var float amyKeyV2_pdl = na
+
+if amyKeyV2_newExchangeDay or na(amyKeyV2_pdh)
+    amyKeyV2_pdh := amyKeyV2_rawDailyHigh[1]
+    amyKeyV2_pdl := amyKeyV2_rawDailyLow[1]
+
+amyKeyV2_ph = ta.pivothigh(high, amyKeyV2_swingLen, amyKeyV2_swingLen)
+amyKeyV2_pl = ta.pivotlow(low, amyKeyV2_swingLen, amyKeyV2_swingLen)
+
+var float amyKeyV2_bsl = na
+var float amyKeyV2_ssl = na
+
+if not na(amyKeyV2_ph)
+    amyKeyV2_bsl := amyKeyV2_ph
+
+if not na(amyKeyV2_pl)
+    amyKeyV2_ssl := amyKeyV2_pl
+
+var line[] amyKeyV2_lines = array.new<line>(5, na)
+var label[] amyKeyV2_labels = array.new<label>(5, na)
+
+amyKeyV2_draw(_idx, _price, _name, _col, _showLevel) =>
+    line _ln = array.get(amyKeyV2_lines, _idx)
+    label _lb = array.get(amyKeyV2_labels, _idx)
+    _show = amyKeyV2_show and _showLevel and not na(_price)
+    _txt = _name + "  " + str.tostring(_price, format.mintick)
+    _left = math.max(0, bar_index - amyKeyV2_backBars)
+    _right = bar_index + amyKeyV2_extendBars
+
+    if _show
+        if na(_ln)
+            _ln := line.new(_left, _price, _right, _price, xloc=xloc.bar_index, extend=extend.none, color=_col, width=amyKeyV2_lineWidth)
+        else
+            line.set_xy1(_ln, _left, _price)
+            line.set_xy2(_ln, _right, _price)
+            line.set_color(_ln, _col)
+            line.set_width(_ln, amyKeyV2_lineWidth)
+            line.set_style(_ln, line.style_solid)
+
+        if amyKeyV2_showLabels
+            if na(_lb)
+                _lb := label.new(_right, _price, _txt, xloc=xloc.bar_index, style=label.style_label_left, color=color.new(_col, 82), textcolor=_col, size=size.tiny)
+            else
+                label.set_xy(_lb, _right, _price)
+                label.set_text(_lb, _txt)
+                label.set_color(_lb, color.new(_col, 82))
+                label.set_textcolor(_lb, _col)
+                label.set_size(_lb, size.tiny)
+        else
+            if not na(_lb)
+                label.delete(_lb)
+                _lb := na
+    else
+        if not na(_ln)
+            line.delete(_ln)
+            _ln := na
+        if not na(_lb)
+            label.delete(_lb)
+            _lb := na
+
+    array.set(amyKeyV2_lines, _idx, _ln)
+    array.set(amyKeyV2_labels, _idx, _lb)
+
+amyKeyV2_draw(0, amyKeyV2_midnightOpen, "MO", color.new(color.yellow, 0), amyKeyV2_showMO)
+amyKeyV2_draw(1, amyKeyV2_pdh, "PDH", color.new(color.red, 0), amyKeyV2_showPDH)
+amyKeyV2_draw(2, amyKeyV2_pdl, "PDL", color.new(color.lime, 0), amyKeyV2_showPDL)
+amyKeyV2_draw(3, amyKeyV2_bsl, "BSL", color.new(color.fuchsia, 0), amyKeyV2_showBSL)
+amyKeyV2_draw(4, amyKeyV2_ssl, "SSL", color.new(color.aqua, 0), amyKeyV2_showSSL)
