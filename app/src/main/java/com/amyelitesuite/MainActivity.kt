@@ -183,6 +183,7 @@ class MainActivity : Activity() {
         }
 
         updatePermissionGate()
+        maybeRequestNotificationPermission()
     }
 
     override fun onResume() {
@@ -331,7 +332,7 @@ class MainActivity : Activity() {
 
         batteryStatusText.text = if (batteryOk) "✅ Battery Optimization: Unrestricted" else "❌ Battery Optimization: belum Unrestricted"
         notificationStatusText.text = if (notificationOk) "✅ Notifikasi: aktif" else "❌ Notifikasi: belum aktif"
-        scannerStatusText.text = if (ready) "✅ Scanner: siap jalan di background" else "⛔ Scanner: ditahan sampai izin lengkap"
+        scannerStatusText.text = if (notificationOk) "✅ Scanner: bisa jalan" else "⛔ Scanner: butuh izin notifikasi"
         if (::manageFilesStatusText.isInitialized) {
             manageFilesStatusText.text = if (manageFilesOk) "✅ Kelola Semua File: aktif" else "⚠️ Kelola Semua File: belum aktif"
         }
@@ -361,7 +362,23 @@ class MainActivity : Activity() {
     }
 
     private fun hasRequiredPermissions(): Boolean {
-        return isBatteryOptimizationDisabled() && isNotificationPermissionGranted()
+        // Scanner may run even if battery optimization or manage-all-files is not granted.
+        // The only hard gate for visible alerts is Android notification permission.
+        return isNotificationPermissionGranted()
+    }
+
+    private fun isManageAllFilesGranted(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Environment.isExternalStorageManager()
+        } else {
+            true
+        }
+    }
+
+    private fun maybeRequestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33 && !isNotificationPermissionGranted()) {
+            requestPermissions(arrayOf("android.permission.POST_NOTIFICATIONS"), NOTIFICATION_REQUEST_CODE)
+        }
     }
 
     private fun requestNotificationPermission() {
@@ -422,6 +439,25 @@ class MainActivity : Activity() {
             startActivity(intent)
         } catch (e: Exception) {
             Toast.makeText(this, "Buka Settings > Apps > Amy FX", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun openManageAllFilesSettingsInternal() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            openAppSettings()
+            return
+        }
+        try {
+            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                data = Uri.parse("package:$packageName")
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            try {
+                startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+            } catch (ignored: Exception) {
+                openAppSettings()
+            }
         }
     }
 
@@ -508,6 +544,13 @@ class MainActivity : Activity() {
         }
 
         @JavascriptInterface
+        fun openManageAllFilesSettings() {
+            (mContext as Activity).runOnUiThread {
+                this@MainActivity.openManageAllFilesSettingsInternal()
+            }
+        }
+
+        @JavascriptInterface
         fun triggerHaptic(pattern: Int) {
             try {
                 val vibrator = mContext.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
@@ -527,7 +570,8 @@ class MainActivity : Activity() {
             try {
                 if (!this@MainActivity.hasRequiredPermissions()) {
                     (mContext as Activity).runOnUiThread {
-                        this@MainActivity.updatePermissionGate(true)
+                        this@MainActivity.maybeRequestNotificationPermission()
+                        Toast.makeText(mContext, "Aktifkan izin notifikasi agar alert mengambang muncul.", Toast.LENGTH_LONG).show()
                     }
                     return
                 }

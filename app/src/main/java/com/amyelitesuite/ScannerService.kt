@@ -1110,12 +1110,16 @@ Scanner ringan mengikuti target dari Mapping.
         )
 
         val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(this, "scanner_alerts_channel")
+            Notification.Builder(this, "scanner_alerts_channel_v2")
                 .setContentTitle(title)
                 .setContentText(contentText)
                 .setStyle(Notification.BigTextStyle().bigText(message))
                 .setSmallIcon(R.drawable.ic_stat_amy_fx)
                 .setContentIntent(pendingIntent)
+                .setPriority(Notification.PRIORITY_HIGH)
+                .setCategory(Notification.CATEGORY_ALARM)
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setDefaults(Notification.DEFAULT_ALL)
                 .setAutoCancel(true)
                 .build()
         } else {
@@ -1126,6 +1130,10 @@ Scanner ringan mengikuti target dari Mapping.
                 .setStyle(Notification.BigTextStyle().bigText(message))
                 .setSmallIcon(R.drawable.ic_stat_amy_fx)
                 .setContentIntent(pendingIntent)
+                .setPriority(Notification.PRIORITY_HIGH)
+                .setCategory(Notification.CATEGORY_ALARM)
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setDefaults(Notification.DEFAULT_ALL)
                 .setAutoCancel(true)
                 .build()
         }
@@ -1157,13 +1165,18 @@ Scanner ringan mengikuti target dari Mapping.
                 enableLights(false)
             }
             val alertChannel = NotificationChannel(
-                "scanner_alerts_channel",
+                "scanner_alerts_channel_v2",
                 "Scanner Market Alerts",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Amy FX scanner market alerts"
                 enableVibration(true)
                 enableLights(true)
+                val audioAttributes = android.media.AudioAttributes.Builder()
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION)
+                    .build()
+                setSound(android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION), audioAttributes)
             }
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             nm.createNotificationChannel(serviceChannel)
