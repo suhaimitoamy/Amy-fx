@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0F111A" />
+    <title>Amy FX Analyzer</title>
+    <script type="module" crossorigin src="./assets/index-DKwJega-.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-Dc-k40KW.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // GLOBAL AMY FX HAPTIC
+      window.triggerHaptic = function(pattern) {
+        if (window.Android && window.Android.triggerHaptic) {
+          window.Android.triggerHaptic(pattern || 20);
+        } else if ('vibrate' in navigator) {
+          navigator.vibrate(pattern || 20);
+        }
+      };
+      document.addEventListener('click', function(e) {
+        let btn = e.target.closest('button, a, .card, .nav-btn, .action-btn, .clickable');
+        if (btn) window.triggerHaptic(20);
+      });
+    </script>
+  </body>
+</html>

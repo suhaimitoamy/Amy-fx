@@ -51,11 +51,9 @@ class MainActivity : Activity() {
     private lateinit var batteryStatusText: TextView
     private lateinit var notificationStatusText: TextView
     private lateinit var scannerStatusText: TextView
-    private lateinit var manageFilesStatusText: TextView
     private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
     private val FILE_CHOOSER_REQUEST_CODE = 100
     private val NOTIFICATION_REQUEST_CODE = 2
-    private val MANAGE_FILES_REQUEST_CODE = 3
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -200,8 +198,8 @@ class MainActivity : Activity() {
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                "amy_heads_up_v5",
-                "Amy FX Heads-Up Alerts",
+                "amy_alerts_v2",
+                "Trading Alerts",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "High priority trading signals"
@@ -249,7 +247,6 @@ class MainActivity : Activity() {
         batteryStatusText = statusText()
         notificationStatusText = statusText()
         scannerStatusText = statusText()
-        manageFilesStatusText = statusText()
 
         val batteryButton = goldButton("Buka Battery Optimization") {
             openBatteryOptimizationRequest()
@@ -257,10 +254,6 @@ class MainActivity : Activity() {
 
         val notificationButton = goldButton("Aktifkan Notifikasi") {
             requestNotificationPermission()
-        }
-
-        val manageFilesButton = goldButton("Izinkan Kelola Semua File") {
-            openManageAllFilesAccess()
         }
 
         val appSettingsButton = darkButton("Buka Detail Aplikasi") {
@@ -276,10 +269,8 @@ class MainActivity : Activity() {
         container.addView(batteryStatusText)
         container.addView(notificationStatusText)
         container.addView(scannerStatusText)
-        container.addView(manageFilesStatusText)
         container.addView(batteryButton)
         container.addView(notificationButton)
-        container.addView(manageFilesButton)
         container.addView(appSettingsButton)
         container.addView(recheckButton)
 
@@ -326,15 +317,11 @@ class MainActivity : Activity() {
 
         val batteryOk = isBatteryOptimizationDisabled()
         val notificationOk = isNotificationPermissionGranted()
-        val manageFilesOk = isManageAllFilesGranted()
         val ready = batteryOk && notificationOk
 
         batteryStatusText.text = if (batteryOk) "✅ Battery Optimization: Unrestricted" else "❌ Battery Optimization: belum Unrestricted"
         notificationStatusText.text = if (notificationOk) "✅ Notifikasi: aktif" else "❌ Notifikasi: belum aktif"
         scannerStatusText.text = if (ready) "✅ Scanner: siap jalan di background" else "⛔ Scanner: ditahan sampai izin lengkap"
-        if (::manageFilesStatusText.isInitialized) {
-            manageFilesStatusText.text = if (manageFilesOk) "✅ Kelola Semua File: aktif" else "⚠️ Kelola Semua File: belum aktif"
-        }
 
         // Permission center is non-blocking. The app can be opened for Mapping/Jurnal/Academy even if
         // background-scanner permissions are not complete. Scanner start still checks permissions.
@@ -387,33 +374,6 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun isManageAllFilesGranted(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Environment.isExternalStorageManager()
-        } else {
-            true
-        }
-    }
-
-    private fun openManageAllFilesAccess() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            updatePermissionGate(true)
-            return
-        }
-        try {
-            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
-                data = Uri.parse("package:$packageName")
-            }
-            startActivity(intent)
-        } catch (e: Exception) {
-            try {
-                startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
-            } catch (ex: Exception) {
-                openAppSettings()
-            }
-        }
-    }
-
     private fun openAppSettings() {
         try {
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -447,7 +407,6 @@ class MainActivity : Activity() {
               btn.style.boxShadow = '0 6px 18px rgba(0,0,0,.35)';
               btn.onclick = function(){ if (window.Android && window.Android.goHome) { window.Android.goHome(); } else { location.href = 'file:///android_asset/index.html'; } };
               document.body.appendChild(btn);
-               document.body.style.setProperty('--amy-native-back-height','28px');
             })();
         """.trimIndent(), null)
     }
@@ -489,14 +448,6 @@ class MainActivity : Activity() {
         fun goHome() {
             (mContext as Activity).runOnUiThread {
                 this@MainActivity.webView.loadUrl("file:///android_asset/index.html")
-            }
-        }
-
-
-        @JavascriptInterface
-        fun openManageFilesPermission() {
-            (mContext as Activity).runOnUiThread {
-                this@MainActivity.openManageAllFilesAccess()
             }
         }
 
@@ -628,7 +579,7 @@ class MainActivity : Activity() {
                 )
 
                 val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    Notification.Builder(mContext, "amy_heads_up_v5")
+                    Notification.Builder(mContext, "amy_alerts_v2")
                 } else {
                     @Suppress("DEPRECATION")
                     Notification.Builder(mContext)
@@ -642,10 +593,6 @@ class MainActivity : Activity() {
                     .setStyle(Notification.BigTextStyle().bigText(message))
                     .setAutoCancel(true)
                     .setContentIntent(pendingIntent)
-                    .setCategory(Notification.CATEGORY_ALARM)
-                    .setPriority(Notification.PRIORITY_MAX)
-                    .setVisibility(Notification.VISIBILITY_PUBLIC)
-                    .setDefaults(Notification.DEFAULT_ALL)
                     .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
                     .setVibrate(longArrayOf(0, 500, 250, 500))
                     .build()

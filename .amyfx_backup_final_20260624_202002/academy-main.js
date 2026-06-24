@@ -252,7 +252,7 @@
 
   function trackReadingProgress() {
     var article = document.querySelector('.article-layout .article, .article');
-    if (article && !article.querySelector('.chapter-list')) {
+    if (article) {
       var h1 = article.querySelector('h1');
       if (h1) {
         localStorage.setItem('amy_last_opened_title', h1.textContent);
