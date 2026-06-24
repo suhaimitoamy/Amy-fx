@@ -9,6 +9,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.ActivityNotFoundException
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -19,6 +20,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.PowerManager
+import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Base64
 import android.view.Gravity
@@ -37,6 +39,7 @@ import android.widget.Toast
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import java.io.File
 import java.io.FileOutputStream
+import java.io.OutputStream
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -402,7 +405,7 @@ class MainActivity : Activity() {
               btn.style.fontSize = '12px';
               btn.style.padding = '8px 12px';
               btn.style.boxShadow = '0 6px 18px rgba(0,0,0,.35)';
-              btn.onclick = function(){ location.href = '../../index.html'; };
+              btn.onclick = function(){ if (window.Android && window.Android.goHome) { window.Android.goHome(); } else { location.href = 'file:///android_asset/index.html'; } };
               document.body.appendChild(btn);
             })();
         """.trimIndent(), null)
@@ -432,7 +435,7 @@ class MainActivity : Activity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
             if (fileUploadCallback == null) return
-            val result = if (data == null || resultCode != Activity.RESULT_OK) null else arrayOf(data.data!!)
+            val result = WebChromeClient.FileChooserParams.parseResult(resultCode, data)
             fileUploadCallback?.onReceiveValue(result)
             fileUploadCallback = null
         } else {
@@ -441,6 +444,13 @@ class MainActivity : Activity() {
     }
 
     inner class WebAppInterface(private val mContext: Context) {
+        @JavascriptInterface
+        fun goHome() {
+            (mContext as Activity).runOnUiThread {
+                this@MainActivity.webView.loadUrl("file:///android_asset/index.html")
+            }
+        }
+
         @JavascriptInterface
         fun showAppToast(message: String) {
             (mContext as Activity).runOnUiThread {
@@ -474,8 +484,15 @@ class MainActivity : Activity() {
                 }
 
                 val prefs = mContext.getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
-                if (!apiKey.isNullOrEmpty() && apiKey != "undefined") {
-                    prefs.edit().putString("api_key", apiKey).putBoolean("scanner_enabled", true).apply()
+                val cleanedApiKey = apiKey?.trim()
+                val storedApiKey = prefs.getString("api_key", null)
+                if (!cleanedApiKey.isNullOrBlank() && cleanedApiKey != "undefined" && cleanedApiKey != "null") {
+                    prefs.edit().putString("api_key", cleanedApiKey).putBoolean("scanner_enabled", true).apply()
+                } else if (storedApiKey.isNullOrBlank()) {
+                    (mContext as Activity).runOnUiThread {
+                        Toast.makeText(mContext, "API key belum tersedia. Buka Mapping > Settings lalu Save & Connect dulu.", Toast.LENGTH_LONG).show()
+                    }
+                    return
                 } else {
                     prefs.edit().putBoolean("scanner_enabled", true).apply()
                 }
@@ -581,15 +598,12 @@ class MainActivity : Activity() {
             }
         }
 
-        private var currentFileOutputStream: FileOutputStream? = null
+        private var currentFileOutputStream: OutputStream? = null
 
         @JavascriptInterface
         fun startFile(filename: String) {
             try {
-                val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                if (!downloadsDir.exists()) downloadsDir.mkdirs()
-                val file = File(downloadsDir, filename)
-                currentFileOutputStream = FileOutputStream(file, false)
+                currentFileOutputStream = openDownloadOutputStream(filename, "application/octet-stream")
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -628,14 +642,10 @@ class MainActivity : Activity() {
                 val cleanBase64 = base64Data.replaceFirst("^data:.*?;base64,".toRegex(), "")
                 val fileAsBytes = Base64.decode(cleanBase64, 0)
 
-                val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                if (!downloadsDir.exists()) downloadsDir.mkdirs()
-
-                val file = File(downloadsDir, filename)
-                val os = FileOutputStream(file, false)
-                os.write(fileAsBytes)
-                os.flush()
-                os.close()
+                val os = openDownloadOutputStream(filename, "application/pdf")
+                os?.write(fileAsBytes)
+                os?.flush()
+                os?.close()
 
                 (mContext as Activity).runOnUiThread {
                     Toast.makeText(mContext, "File tersimpan di folder Download", Toast.LENGTH_LONG).show()
@@ -644,6 +654,24 @@ class MainActivity : Activity() {
                 (mContext as Activity).runOnUiThread {
                     Toast.makeText(mContext, "Gagal menyimpan file", Toast.LENGTH_LONG).show()
                 }
+            }
+        }
+
+        private fun openDownloadOutputStream(filename: String, mimeType: String): OutputStream? {
+            val safeName = filename.replace(Regex("[\\/:*?\"<>|]"), "_").ifBlank { "Amy_FX_File_${System.currentTimeMillis()}" }
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val values = ContentValues().apply {
+                    put(MediaStore.Downloads.DISPLAY_NAME, safeName)
+                    put(MediaStore.Downloads.MIME_TYPE, mimeType)
+                    put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                    put(MediaStore.Downloads.IS_PENDING, 0)
+                }
+                val uri = mContext.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                uri?.let { mContext.contentResolver.openOutputStream(it) }
+            } else {
+                val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                if (!downloadsDir.exists()) downloadsDir.mkdirs()
+                FileOutputStream(File(downloadsDir, safeName), false)
             }
         }
     }

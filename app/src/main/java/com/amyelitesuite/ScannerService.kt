@@ -38,6 +38,7 @@ class ScannerService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var watchdogJob: Job? = null
+    private var reconnectJob: Job? = null
     private lateinit var dataAgent: MarketDataSyncAgent
     private var apiKey: String? = null
     private var bslTarget: Double = 0.0
@@ -71,6 +72,8 @@ class ScannerService : Service() {
     @Volatile private var lastTickAt = System.currentTimeMillis()
     @Volatile private var lastReconnectAt = 0L
     @Volatile private var reconnectAttempt = 0
+    @Volatile private var manualSocketClose = false
+    @Volatile private var suppressReconnectUntil = 0L
     @Volatile private var hasExternalTargets = false
     @Volatile private var nativeMarketAlertsEnabled = false
     @Volatile private var lastHtfScanAt = 0L
@@ -158,6 +161,7 @@ class ScannerService : Service() {
         }
 
         if (apiKey.isNullOrEmpty()) {
+            prefs.edit().putBoolean("scanner_enabled", false).apply()
             stopForeground(true)
             stopSelf()
             return START_NOT_STICKY
@@ -172,6 +176,10 @@ class ScannerService : Service() {
     }
 
     private fun bootstrapContext() {
+        if (!nativeMarketAlertsEnabled) {
+            startForegroundServiceNotification()
+            return
+        }
         serviceScope.launch {
             try {
                 val rows = dataAgent.bootstrap("XAU/USD", "M5", 300)
@@ -197,10 +205,18 @@ class ScannerService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        val text = "M15:${contextShort()} | HTF:$htfBias | Score:$setupScore | $setupGrade"
-        val big = "$text\nTarget: ${targetText()}\nInvalid: ${invalidText()}"
+        val text = if (nativeMarketAlertsEnabled) {
+            "M15:${contextShort()} | HTF:$htfBias | Score:$setupScore | $setupGrade"
+        } else {
+            "Scanner ON | Target: ${targetText()}"
+        }
+        val big = if (nativeMarketAlertsEnabled) {
+            "$text\nTarget: ${targetText()}\nInvalid: ${invalidText()}"
+        } else {
+            "Amy FX Background Scanner aktif.\nMode ringan: hanya memantau target BSL/SSL dari Mapping.\nTarget: ${targetText()}"
+        }
         val now = System.currentTimeMillis()
-        val signature = "$text|${targetText()}|${invalidText()}"
+        val signature = "$text|${targetText()}|${invalidText()}|$nativeMarketAlertsEnabled"
         if (foregroundStarted && signature == lastForegroundSignature && now - lastForegroundUpdateAt < 60_000L) return
         foregroundStarted = true
         lastForegroundSignature = signature
@@ -245,6 +261,9 @@ class ScannerService : Service() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 Log.d("AmyFX", "WebSocket Connected")
                 reconnectAttempt = 0
+                manualSocketClose = false
+                reconnectJob?.cancel()
+                reconnectJob = null
                 lastTickAt = System.currentTimeMillis()
                 val subscribeMsg = """{"action": "subscribe", "params": {"symbols": "XAU/USD"}}"""
                 webSocket.send(subscribeMsg)
@@ -265,11 +284,17 @@ class ScannerService : Service() {
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                if (manualSocketClose || System.currentTimeMillis() < suppressReconnectUntil) return
                 Log.e("AmyFX", "WebSocket Error: ${t.message}")
                 scheduleReconnect("failure")
             }
 
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                if (manualSocketClose || System.currentTimeMillis() < suppressReconnectUntil) {
+                    manualSocketClose = false
+                    Log.d("AmyFX", "WebSocket Closed manually: $reason")
+                    return
+                }
                 Log.d("AmyFX", "WebSocket Closed: $reason")
                 scheduleReconnect("closed")
             }
@@ -281,8 +306,9 @@ class ScannerService : Service() {
         val delayMs = reconnectDelayMs()
         if (now - lastReconnectAt < delayMs) return
         lastReconnectAt = now
+        if (reconnectJob?.isActive == true) return
         reconnectAttempt = (reconnectAttempt + 1).coerceAtMost(5)
-        serviceScope.launch {
+        reconnectJob = serviceScope.launch {
             delay(delayMs)
             Log.d("AmyFX", "Reconnecting WebSocket: $reason after ${delayMs / 1000}s")
             startWebSocket()
@@ -315,21 +341,20 @@ class ScannerService : Service() {
     }
 
     private fun checkTargets(currentPrice: Double, timestamp: Long) {
-        val rows = dataAgent.onTick("XAU/USD", "M5", currentPrice, timestamp)
-        if (rows.size >= 20) {
-            buildContext(rows, currentPrice)
-            updateM15Dashboard(rows)
-            updateHtfBias(rows, currentPrice)
-            updateSetupScore(currentPrice)
-            if (nativeMarketAlertsEnabled) {
+        if (nativeMarketAlertsEnabled) {
+            val rows = dataAgent.onTick("XAU/USD", "M5", currentPrice, timestamp)
+            if (rows.size >= 20) {
+                buildContext(rows, currentPrice)
+                updateM15Dashboard(rows)
+                updateHtfBias(rows, currentPrice)
+                updateSetupScore(currentPrice)
                 scanNativeEvents(rows, currentPrice).forEach { event ->
                     sendDedupedAlert(event.key, event.title, event.message)
                 }
+                startForegroundServiceNotification()
             }
-            startForegroundServiceNotification()
-        }
 
-        if (nativeMarketAlertsEnabled) {
+
             val fvg = activeFvg
             val inFvg = fvg != null && currentPrice >= fvg.low && currentPrice <= fvg.high
 
@@ -363,8 +388,8 @@ class ScannerService : Service() {
             hasAlertedBsl = true
             sendDedupedAlert(
                 "BSL-${fmt(bslTarget)}",
-                contextTitle(),
-                marketReadMessage("BSL tertembus", "Target atas ${fmt(bslTarget)} sudah diambil.")
+                if (nativeMarketAlertsEnabled) contextTitle() else "AMY FX — TARGET HIT",
+                targetHitMessage("BSL tertembus", "Target atas ${fmt(bslTarget)} sudah diambil.")
             )
         }
 
@@ -372,8 +397,8 @@ class ScannerService : Service() {
             hasAlertedSsl = true
             sendDedupedAlert(
                 "SSL-${fmt(sslTarget)}",
-                contextTitle(),
-                marketReadMessage("SSL tertembus", "Target bawah ${fmt(sslTarget)} sudah diambil.")
+                if (nativeMarketAlertsEnabled) contextTitle() else "AMY FX — TARGET HIT",
+                targetHitMessage("SSL tertembus", "Target bawah ${fmt(sslTarget)} sudah diambil.")
             )
         }
     }
@@ -1024,6 +1049,26 @@ ${invalidText()}
         """.trimIndent()
     }
 
+    private fun targetHitMessage(event: String, detail: String): String {
+        return if (nativeMarketAlertsEnabled) {
+            marketReadMessage(event, detail)
+        } else {
+            """
+Amy FX Background Scanner
+
+Event:
+$event
+$detail
+
+Target aktif:
+${targetText()}
+
+Mode:
+Scanner ringan mengikuti target dari Mapping.
+            """.trimIndent()
+        }
+    }
+
     private fun sendDedupedAlert(key: String, title: String, message: String) {
         val now = System.currentTimeMillis()
         val last = lastAlertAt[key] ?: 0L
@@ -1075,6 +1120,10 @@ ${invalidText()}
     }
 
     private fun stopWebSocket() {
+        manualSocketClose = true
+        suppressReconnectUntil = System.currentTimeMillis() + 3000L
+        reconnectJob?.cancel()
+        reconnectJob = null
         webSocket?.close(1000, "Service Stopped")
         webSocket = null
     }

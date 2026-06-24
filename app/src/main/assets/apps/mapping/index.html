@@ -11,16 +11,7 @@
   </head>
   <body>
     <div id="root"></div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" async defer></script>
     <script>
-      if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js').catch(err => {
-            console.log('SW registration failed: ', err);
-          });
-        });
-      }
-
       // GLOBAL AMY FX HAPTIC
       window.triggerHaptic = function(pattern) {
         if (window.Android && window.Android.triggerHaptic) {
