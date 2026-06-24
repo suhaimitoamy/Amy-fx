@@ -70,6 +70,9 @@ class ScannerService : Service() {
     private var lastMarketAlertSignature = ""
     @Volatile private var lastTickAt = System.currentTimeMillis()
     @Volatile private var lastReconnectAt = 0L
+    @Volatile private var reconnectAttempt = 0
+    @Volatile private var hasExternalTargets = false
+    @Volatile private var nativeMarketAlertsEnabled = false
     @Volatile private var lastHtfScanAt = 0L
     @Volatile private var foregroundStarted = false
     @Volatile private var lastForegroundUpdateAt = 0L
@@ -114,6 +117,8 @@ class ScannerService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == "STOP_SCANNER") {
+            getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
+                .edit().putBoolean("scanner_enabled", false).apply()
             stopWebSocket()
             stopForeground(true)
             stopSelf()
@@ -134,10 +139,15 @@ class ScannerService : Service() {
 
         val prefs = getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
         apiKey = prefs.getString("api_key", null)
+        nativeMarketAlertsEnabled = prefs.getBoolean("native_market_alerts_enabled", false)
+        prefs.edit().putBoolean("scanner_enabled", true).apply()
 
         val passedBsl = intent?.getStringExtra("bsl")?.toDoubleOrNull() ?: 0.0
         val passedSsl = intent?.getStringExtra("ssl")?.toDoubleOrNull() ?: 0.0
 
+        if (passedBsl > 0 || passedSsl > 0) {
+            hasExternalTargets = true
+        }
         if (passedBsl > 0 && abs(passedBsl - bslTarget) > 0.01) {
             bslTarget = passedBsl
             hasAlertedBsl = false
@@ -234,6 +244,7 @@ class ScannerService : Service() {
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 Log.d("AmyFX", "WebSocket Connected")
+                reconnectAttempt = 0
                 lastTickAt = System.currentTimeMillis()
                 val subscribeMsg = """{"action": "subscribe", "params": {"symbols": "XAU/USD"}}"""
                 webSocket.send(subscribeMsg)
@@ -267,12 +278,23 @@ class ScannerService : Service() {
 
     private fun scheduleReconnect(reason: String) {
         val now = System.currentTimeMillis()
-        if (now - lastReconnectAt < 5000L) return
+        val delayMs = reconnectDelayMs()
+        if (now - lastReconnectAt < delayMs) return
         lastReconnectAt = now
+        reconnectAttempt = (reconnectAttempt + 1).coerceAtMost(5)
         serviceScope.launch {
-            delay(5000)
-            Log.d("AmyFX", "Reconnecting WebSocket: $reason")
+            delay(delayMs)
+            Log.d("AmyFX", "Reconnecting WebSocket: $reason after ${delayMs / 1000}s")
             startWebSocket()
+        }
+    }
+
+    private fun reconnectDelayMs(): Long {
+        return when (reconnectAttempt) {
+            0 -> 15_000L
+            1 -> 30_000L
+            2 -> 45_000L
+            else -> 60_000L
         }
     }
 
@@ -285,12 +307,7 @@ class ScannerService : Service() {
                 val silentTooLong = now - lastTickAt > 120_000L
                 if (silentTooLong) {
                     Log.w("AmyFX", "Watchdog restarting silent WebSocket")
-                    sendDedupedAlert(
-                        "WATCHDOG-${now / 600000L}",
-                        contextTitle(),
-                        marketReadMessage("Scanner watchdog", "WebSocket direstart otomatis")
-                    )
-                    startWebSocket()
+                    scheduleReconnect("watchdog")
                     lastTickAt = now
                 }
             }
@@ -304,38 +321,42 @@ class ScannerService : Service() {
             updateM15Dashboard(rows)
             updateHtfBias(rows, currentPrice)
             updateSetupScore(currentPrice)
-            scanNativeEvents(rows, currentPrice).forEach { event ->
-                sendDedupedAlert(event.key, event.title, event.message)
+            if (nativeMarketAlertsEnabled) {
+                scanNativeEvents(rows, currentPrice).forEach { event ->
+                    sendDedupedAlert(event.key, event.title, event.message)
+                }
             }
             startForegroundServiceNotification()
         }
 
-        val fvg = activeFvg
-        val inFvg = fvg != null && currentPrice >= fvg.low && currentPrice <= fvg.high
+        if (nativeMarketAlertsEnabled) {
+            val fvg = activeFvg
+            val inFvg = fvg != null && currentPrice >= fvg.low && currentPrice <= fvg.high
 
-        if (inFvg && fvg != null) {
-            val q = poiQuality("FVG", fvg.type, currentPrice, fvg)
-            sendDedupedAlert(
-                "FVG-${fvg.type}-${fmt(fvg.low)}-${fmt(fvg.high)}",
-                contextTitle(),
-                marketReadMessage("${fvg.type} FVG touched", "Area ${fmt(fvg.low)} - ${fmt(fvg.high)}. Quality ${q.first} ${q.second}/100. OB ditahan karena FVG aktif.")
-            )
-            return
-        }
+            if (inFvg && fvg != null) {
+                val q = poiQuality("FVG", fvg.type, currentPrice, fvg)
+                sendDedupedAlert(
+                    "FVG-${fvg.type}-${fmt(fvg.low)}-${fmt(fvg.high)}",
+                    contextTitle(),
+                    marketReadMessage("${fvg.type} FVG touched", "Area ${fmt(fvg.low)} - ${fmt(fvg.high)}. Quality ${q.first} ${q.second}/100. OB ditahan karena FVG aktif.")
+                )
+                return
+            }
 
-        val ob = when {
-            discountOb?.let { currentPrice >= it.low && currentPrice <= it.high } == true -> discountOb
-            premiumOb?.let { currentPrice >= it.low && currentPrice <= it.high } == true -> premiumOb
-            else -> null
-        }
+            val ob = when {
+                discountOb?.let { currentPrice >= it.low && currentPrice <= it.high } == true -> discountOb
+                premiumOb?.let { currentPrice >= it.low && currentPrice <= it.high } == true -> premiumOb
+                else -> null
+            }
 
-        if (ob != null) {
-            val q = poiQuality("OB", ob.type, currentPrice, ob)
-            sendDedupedAlert(
-                "OB-${ob.type}-${fmt(ob.low)}-${fmt(ob.high)}",
-                contextTitle(),
-                marketReadMessage("${ob.type} OB touched", "Area ${fmt(ob.low)} - ${fmt(ob.high)}. Quality ${q.first} ${q.second}/100.")
-            )
+            if (ob != null) {
+                val q = poiQuality("OB", ob.type, currentPrice, ob)
+                sendDedupedAlert(
+                    "OB-${ob.type}-${fmt(ob.low)}-${fmt(ob.high)}",
+                    contextTitle(),
+                    marketReadMessage("${ob.type} OB touched", "Area ${fmt(ob.low)} - ${fmt(ob.high)}. Quality ${q.first} ${q.second}/100.")
+                )
+            }
         }
 
         if (bslTarget > 0 && currentPrice >= bslTarget && !hasAlertedBsl) {
@@ -643,8 +664,8 @@ class ScannerService : Service() {
             -1 -> "BEARISH"
             else -> "NEUTRAL"
         }
-        if (m15Bsl > 0.0) bslTarget = m15Bsl
-        if (m15Ssl > 0.0) sslTarget = m15Ssl
+        if (!hasExternalTargets && m15Bsl > 0.0) bslTarget = m15Bsl
+        if (!hasExternalTargets && m15Ssl > 0.0) sslTarget = m15Ssl
         m15Reason = buildM15Reason()
     }
 
@@ -1030,7 +1051,7 @@ ${invalidText()}
         )
 
         val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(this, "scanner_channel")
+            Notification.Builder(this, "scanner_alerts_channel")
                 .setContentTitle(title)
                 .setContentText(directionSentence())
                 .setStyle(Notification.BigTextStyle().bigText(message))
@@ -1063,14 +1084,24 @@ ${invalidText()}
             val serviceChannel = NotificationChannel(
                 "scanner_channel",
                 "Background Scanner",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Amy FX scanner status"
+                enableVibration(false)
+                enableLights(false)
+            }
+            val alertChannel = NotificationChannel(
+                "scanner_alerts_channel",
+                "Scanner Market Alerts",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Amy FX background scanner alerts"
+                description = "Amy FX scanner market alerts"
                 enableVibration(true)
                 enableLights(true)
             }
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             nm.createNotificationChannel(serviceChannel)
+            nm.createNotificationChannel(alertChannel)
         }
     }
 

@@ -17,6 +17,11 @@ class BootReceiver : BroadcastReceiver() {
         ) return
 
         val prefs = context.getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
+        val scannerEnabled = prefs.getBoolean("scanner_enabled", false)
+        if (!scannerEnabled) {
+            Log.d("AmyFX", "BootReceiver skipped: scanner disabled")
+            return
+        }
         val apiKey = prefs.getString("api_key", null)
         if (apiKey.isNullOrBlank()) {
             Log.d("AmyFX", "BootReceiver skipped: API key empty")

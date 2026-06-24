@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   let indicators = [
-    { name: 'Memuat data...', category: 'Loading', desc: 'Mengambil indikator dari repo...', code: 'Loading...' }
+    { name: 'Memuat data...', category: 'Loading', desc: 'Mengambil indikator lokal...', code: 'Loading...' }
   ];
 
   let selectedIndicator = indicators[0];
@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const categoryOptions = ['Semua', ...new Set(indicators.map(i => i.category))];
     const pillsHTML = categoryOptions.map(cat => `<button class="pill ${cat === 'Semua' ? 'active' : ''}" data-filter="${cat}">${cat}</button>`).join('');
 
-    mainContent.innerHTML = `<div class="page-header row"><button class="back-btn" data-nav="proyek">‹</button><h2>Indikator TradingView</h2></div><input id="indicator-search" class="search-input" placeholder="Cari indikator..."><div class="pill-row">${pillsHTML}</div><div id="indicator-list" class="indicator-list slide-up"></div><section class="code-panel"><span class="badge">Terpilih</span><h3>${selectedIndicator.name}</h3><p>${selectedIndicator.desc}</p><pre id="code-display">${selectedIndicator.code || 'Mengambil source code dari GitHub...'}</pre><div class="actions"><button class="action-btn" data-save-code>Simpan Kode</button><button class="action-btn primary" data-copy-code>Salin Kode</button></div></section>`;
+    mainContent.innerHTML = `<div class="page-header row"><button class="back-btn" data-nav="proyek">‹</button><h2>Indikator TradingView</h2></div><input id="indicator-search" class="search-input" placeholder="Cari indikator..."><div class="pill-row">${pillsHTML}</div><div id="indicator-list" class="indicator-list slide-up"></div><section class="code-panel"><span class="badge">Terpilih</span><h3>${selectedIndicator.name}</h3><p>${selectedIndicator.desc}</p><pre id="code-display">${selectedIndicator.code || 'Mengambil source code lokal...'}</pre><div class="actions"><button class="action-btn" data-save-code>Simpan Kode</button><button class="action-btn primary" data-copy-code>Salin Kode</button></div></section>`;
     
     renderIndicatorList();
 
@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
          if (codeDisplay) codeDisplay.textContent = text;
        } catch (err) {
          const codeDisplay = document.getElementById('code-display');
-         if (codeDisplay) codeDisplay.textContent = 'Gagal memuat kode. Periksa koneksi internet.';
+         if (codeDisplay) codeDisplay.textContent = 'Gagal memuat kode lokal.';
        }
     }
   }
@@ -158,6 +158,30 @@ document.addEventListener('DOMContentLoaded', () => {
     if (target === 'koleksi') renderKoleksi();
   }
 
+
+  async function copyTextSafe(text) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (e) {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
   document.addEventListener('click', async event => {
     const openBtn = event.target.closest('[data-open]');
     const navBtn = event.target.closest('[data-nav]');
@@ -171,10 +195,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (navBtn) navigate(navBtn.dataset.nav);
     if (indicatorBtn) { selectedIndicator = indicators[Number(indicatorBtn.dataset.selectIndicator)]; renderIndikator(); }
     if (filterBtn) { document.querySelectorAll('.pill').forEach(item => item.classList.remove('active')); filterBtn.classList.add('active'); renderIndicatorList(filterBtn.dataset.filter, document.getElementById('indicator-search')?.value || ''); }
-    if (copyBtn) { try { await navigator.clipboard.writeText(selectedIndicator.code); } catch (error) {} copyBtn.textContent = 'Tersalin'; }
-    if (saveBtn) { localStorage.setItem('amy_saved_code', selectedIndicator.code); saveBtn.textContent = 'Tersimpan'; }
+    if (copyBtn) {
+      const ok = await copyTextSafe(selectedIndicator.code || '');
+      copyBtn.textContent = ok ? 'Tersalin' : 'Gagal Salin';
+      if (!ok) showToast('Gagal menyalin kode. Pilih teks lalu salin manual.');
+    }
+    if (saveBtn) { localStorage.setItem('amy_saved_code', selectedIndicator.code || ''); saveBtn.textContent = 'Tersimpan'; }
     if (koleksiBtn) handleKoleksi(koleksiBtn.dataset.koleksi);
-    if (copyKoleksiBtn) { try { await navigator.clipboard.writeText(localStorage.getItem('amy_saved_code') || ''); } catch(e){} copyKoleksiBtn.textContent = 'Tersalin'; }
+    if (copyKoleksiBtn) {
+      const ok = await copyTextSafe(localStorage.getItem('amy_saved_code') || '');
+      copyKoleksiBtn.textContent = ok ? 'Tersalin' : 'Gagal Salin';
+      if (!ok) showToast('Gagal menyalin kode tersimpan.');
+    }
   });
 
   document.addEventListener('input', event => {

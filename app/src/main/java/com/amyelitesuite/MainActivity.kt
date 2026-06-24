@@ -123,6 +123,7 @@ class MainActivity : Activity() {
         webView.webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 swipeRefreshLayout.isRefreshing = false
+                injectHomeButtonForLocalModule(url)
             }
         }
 
@@ -319,11 +320,13 @@ class MainActivity : Activity() {
         notificationStatusText.text = if (notificationOk) "✅ Notifikasi: aktif" else "❌ Notifikasi: belum aktif"
         scannerStatusText.text = if (ready) "✅ Scanner: siap jalan di background" else "⛔ Scanner: ditahan sampai izin lengkap"
 
-        permissionGate.visibility = if (ready) View.GONE else View.VISIBLE
-        swipeRefreshLayout.isEnabled = ready
+        // Permission center is non-blocking. The app can be opened for Mapping/Jurnal/Academy even if
+        // background-scanner permissions are not complete. Scanner start still checks permissions.
+        permissionGate.visibility = View.GONE
+        swipeRefreshLayout.isEnabled = true
 
         if (forceToast) {
-            Toast.makeText(this, if (ready) "Izin sudah lengkap." else "Masih ada izin yang belum aktif.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, if (ready) "Izin sudah lengkap." else "Izin scanner belum lengkap, tetapi aplikasi tetap bisa dipakai.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -377,6 +380,32 @@ class MainActivity : Activity() {
         } catch (e: Exception) {
             Toast.makeText(this, "Buka Settings > Apps > Amy FX", Toast.LENGTH_LONG).show()
         }
+    }
+
+    private fun injectHomeButtonForLocalModule(url: String?) {
+        if (url == null || !url.contains("/apps/")) return
+        webView.evaluateJavascript("""
+            (function(){
+              if (document.getElementById('amy-fx-home-button')) return;
+              var btn = document.createElement('button');
+              btn.id = 'amy-fx-home-button';
+              btn.textContent = '← Amy FX';
+              btn.style.position = 'fixed';
+              btn.style.left = '12px';
+              btn.style.top = '12px';
+              btn.style.zIndex = '2147483647';
+              btn.style.border = '1px solid rgba(212,175,55,.55)';
+              btn.style.borderRadius = '999px';
+              btn.style.background = 'rgba(10,10,10,.88)';
+              btn.style.color = '#d4af37';
+              btn.style.fontWeight = '800';
+              btn.style.fontSize = '12px';
+              btn.style.padding = '8px 12px';
+              btn.style.boxShadow = '0 6px 18px rgba(0,0,0,.35)';
+              btn.onclick = function(){ location.href = '../../index.html'; };
+              document.body.appendChild(btn);
+            })();
+        """.trimIndent(), null)
     }
 
     private fun dp(value: Int): Int {
@@ -444,9 +473,11 @@ class MainActivity : Activity() {
                     return
                 }
 
+                val prefs = mContext.getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
                 if (!apiKey.isNullOrEmpty() && apiKey != "undefined") {
-                    val prefs = mContext.getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
-                    prefs.edit().putString("api_key", apiKey).apply()
+                    prefs.edit().putString("api_key", apiKey).putBoolean("scanner_enabled", true).apply()
+                } else {
+                    prefs.edit().putBoolean("scanner_enabled", true).apply()
                 }
                 val intent = Intent(mContext, ScannerService::class.java).apply {
                     putExtra("bsl", bsl)
@@ -465,6 +496,8 @@ class MainActivity : Activity() {
         @JavascriptInterface
         fun stopBackgroundScanner() {
             try {
+                mContext.getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
+                    .edit().putBoolean("scanner_enabled", false).apply()
                 val intent = Intent(mContext, ScannerService::class.java)
                 intent.action = "STOP_SCANNER"
                 mContext.startService(intent)

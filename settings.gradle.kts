@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Amy Elite Suite"
+rootProject.name = "Amy FX"
 include(":app")
