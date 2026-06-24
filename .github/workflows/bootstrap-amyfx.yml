@@ -1,0 +1,124 @@
+name: Bootstrap Amy FX Final App
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/bootstrap-amyfx.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  merge:
+    name: Merge modules into one Android app
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout final repo
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build final Amy FX structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          WORK="$(mktemp -d)"
+
+          git clone --depth 1 https://github.com/suhaimitoamy/amy-elite-suite.git "$WORK/amy-elite-suite"
+          git clone https://github.com/suhaimitoamy/ai-chart-analyzer-pwa.git "$WORK/ai-chart-analyzer-pwa"
+          git clone --depth 1 https://github.com/suhaimitoamy/Build-aplikasi.git "$WORK/Build-aplikasi"
+          git clone --depth 1 https://github.com/suhaimitoamy/amy-trading-academy.git "$WORK/amy-trading-academy"
+          git clone --depth 1 https://github.com/suhaimitoamy/Indikator-trading-view.git "$WORK/Indikator-trading-view"
+
+          cd "$WORK/ai-chart-analyzer-pwa"
+          git checkout 95b328114488e2a9da2ab7744b31afb944216208
+          npm install --no-audit --no-fund
+          npx vite build --base=./
+
+          cd "$GITHUB_WORKSPACE"
+          find . -mindepth 1 \
+            ! -path './.git' ! -path './.git/*' \
+            ! -path './.github' ! -path './.github/*' \
+            -exec rm -rf {} +
+
+          rsync -a \
+            --exclude='.git' --exclude='.gradle' --exclude='build' --exclude='app/build' \
+            --exclude='*.zip' --exclude='tmp.txt' --exclude='log.txt' \
+            "$WORK/amy-elite-suite/" ./
+
+          mkdir -p app/src/main/assets/apps/mapping
+          mkdir -p app/src/main/assets/apps/journal
+          mkdir -p app/src/main/assets/apps/academy
+          mkdir -p app/src/main/assets/apps/indikator/files
+
+          rsync -a "$WORK/ai-chart-analyzer-pwa/dist/" app/src/main/assets/apps/mapping/
+          rsync -a "$WORK/Build-aplikasi/www/" app/src/main/assets/apps/journal/
+          rsync -a --exclude='.git' --exclude='.antigravitycli' "$WORK/amy-trading-academy/" app/src/main/assets/apps/academy/
+          rsync -a --exclude='.git' --exclude='.github' "$WORK/Indikator-trading-view/" app/src/main/assets/apps/indikator/files/
+
+          python3 <<'PY'
+          from pathlib import Path
+          import json, urllib.parse
+
+          root = Path('app/src/main/assets/apps/indikator/files')
+          items = []
+          for p in sorted(root.rglob('*')):
+              if p.is_file() and (p.name.lower().endswith('.pine') or p.name.lower().endswith('.pine.txt')):
+                  rel = p.relative_to(root).as_posix()
+                  name = p.name.replace('.pine.txt', '').replace('.pine', '').replace('-', ' ').replace('_', ' ')
+                  name = ' '.join(w.capitalize() for w in name.split())
+                  items.append({
+                      'name': name,
+                      'category': 'Pine Script',
+                      'desc': f'File sumber lokal: {rel}',
+                      'url': 'apps/indikator/files/' + urllib.parse.quote(rel, safe='/'),
+                      'code': ''
+                  })
+          Path('app/src/main/assets/apps/indikator/manifest.json').write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding='utf-8')
+
+          appjs = Path('app/src/main/assets/app.js')
+          s = appjs.read_text(encoding='utf-8')
+          s = s.replace("  const site = 'https://suhaimitoamy.github.io/';\n", "")
+          s = s.replace("{ id: 'jurnal', title: 'Jurnal Trading', badge: 'Jurnal', icon: 'journal', desc: 'Catat jurnal, evaluasi performa, dan riwayat trading', target: site + 'Build-aplikasi/index.html?v=20260517multiprovider' }", "{ id: 'jurnal', title: 'Jurnal Trading', badge: 'Jurnal', icon: 'journal', desc: 'Catat jurnal, evaluasi performa, dan riwayat trading', target: 'apps/journal/index.html' }")
+          s = s.replace("{ id: 'academy', title: 'Amy Trading Academy', badge: 'Learning', icon: 'academy', desc: 'Materi belajar trading dalam aplikasi', target: site + 'amy-trading-academy/' }", "{ id: 'academy', title: 'Amy Trading Academy', badge: 'Learning', icon: 'academy', desc: 'Materi belajar trading dalam aplikasi', target: 'apps/academy/index.html' }")
+          s = s.replace("{ id: 'mapping', title: 'Mapping', badge: 'Mapping', icon: 'mapping', desc: 'Mapping market & chart untuk analisis peluang', target: site + 'ai-chart-analyzer-pwa/' }", "{ id: 'mapping', title: 'Mapping', badge: 'Mapping', icon: 'mapping', desc: 'Mapping market & chart untuk analisis peluang', target: 'apps/mapping/index.html' }")
+          old = """const res = await fetch('https://api.github.com/repos/suhaimitoamy/Indikator-trading-view/contents/');
+      if (!res.ok) throw new Error('API limit or network error');
+      const data = await res.json();
+      
+      const repoIndicators = data
+        .filter(item => item.name.endsWith('.pine'))
+        .map(item => {
+           let formattedName = item.name.replace('.pine', '').replace(/[-_]/g, ' ');
+           formattedName = formattedName.replace(/\b\w/g, l => l.toUpperCase());
+           return {
+             name: formattedName,
+             category: 'Pine Script',
+             desc: `File sumber: ${item.name}`,
+             url: item.download_url,
+             code: ''
+           };
+        });"""
+          new = """const res = await fetch('apps/indikator/manifest.json');
+      if (!res.ok) throw new Error('Local manifest error');
+      const repoIndicators = await res.json();"""
+          s = s.replace(old, new)
+          s = s.replace("desc: 'Gagal mengambil data indikator.'", "desc: 'Gagal mengambil data indikator lokal.'")
+          appjs.write_text(s, encoding='utf-8')
+
+          Path('README.md').write_text('''# Amy FX\n\nAplikasi gabungan Amy FX.\n\nStruktur utama:\n\n- Amy Elite Suite sebagai dashboard utama Android.\n- Mapping / AI Chart Analyzer sebagai module lokal.\n- Trading Library / Jurnal sebagai module lokal.\n- Amy Trading Academy sebagai module lokal.\n- Indikator TradingView sebagai library lokal.\n\nModule lokal berada di `app/src/main/assets/apps/`.\n\nBuild APK:\n\n```bash\nchmod +x gradlew\n./gradlew assembleDebug --no-configuration-cache --stacktrace\n```\n''', encoding='utf-8')
+          PY
+
+          git config user.name "amy-fx-bot"
+          git config user.email "amy-fx-bot@users.noreply.github.com"
+          git add -A
+          git commit -m "build: merge Amy FX modules into one Android app" || exit 0
+          git push
