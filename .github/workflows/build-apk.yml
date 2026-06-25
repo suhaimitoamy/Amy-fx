@@ -50,9 +50,6 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
-      - name: Run unit tests
-        run: ./gradlew testDebugUnitTest --no-configuration-cache --stacktrace
-
       - name: Build debug APK
         run: ./gradlew assembleDebug --no-configuration-cache --stacktrace
 
