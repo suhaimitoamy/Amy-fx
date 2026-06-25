@@ -404,14 +404,6 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun isManageAllFilesGranted(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Environment.isExternalStorageManager()
-        } else {
-            true
-        }
-    }
-
     private fun openManageAllFilesAccess() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
             updatePermissionGate(true)
