@@ -1,0 +1,346 @@
+//@version=6
+strategy("XAUUSD Smart Context + Entry PRO (Non-Repaint)",
+     overlay = true,
+     pyramiding = 0,
+     initial_capital = 10000,
+     currency = currency.USD,
+     default_qty_type = strategy.percent_of_equity,
+     default_qty_value = 1,
+     commission_type = strategy.commission.percent,
+     commission_value = 0.07,
+     calc_on_order_fills = true,
+     calc_on_every_tick = false,
+     process_orders_on_close = true)
+
+//==================== INPUTS ====================//
+groupSess = "Sessions"
+tzInput = input.string("Asia/Makassar", "Timezone", group=groupSess)
+asiaSession = input.session("0600-1400", "Asia Session", group=groupSess)
+londonSession = input.session("1500-2000", "London Session", group=groupSess)
+newYorkSession = input.session("2030-0000", "New York Session", group=groupSess)
+allowAsiaEntries = input.bool(false, "Allow entries in Asia session", group=groupSess)
+
+groupTf = "Timeframes"
+biasTf = input.timeframe("60", "HTF Bias TF", group=groupTf)
+levelTf = input.timeframe("15", "Structure TF", group=groupTf)
+
+groupStruct = "Structure / Breakout"
+swingLen = input.int(2, "Swing Length", minval=1, group=groupStruct)
+atrLen = input.int(14, "ATR Period", minval=1, group=groupStruct)
+bodyRatioMin = input.float(0.45, "Min body ratio", minval=0.1, maxval=1.0, step=0.05, group=groupStruct)
+displacementAtr = input.float(0.25, "Min displacement body (ATR)", minval=0.0, step=0.05, group=groupStruct)
+breakBufferAtr = input.float(0.10, "Breakout buffer (ATR)", minval=0.0, step=0.05, group=groupStruct)
+falseBreakWickRatio = input.float(1.20, "False break wick/body ratio", minval=0.5, step=0.05, group=groupStruct)
+maxStretchAtr = input.float(1.80, "Max stretch from EMA20 (ATR)", minval=0.5, step=0.1, group=groupStruct)
+
+groupSMC = "SMC Confluence"
+setupMode = input.string("Both", "Setup Mode", options=["Both", "Breakout", "Reversal"], group=groupSMC)
+obLookback = input.int(6, "Order block scan bars", minval=2, maxval=20, group=groupSMC)
+fvgMinAtr = input.float(0.15, "Min FVG size (ATR)", minval=0.0, step=0.05, group=groupSMC)
+useFVG = input.bool(true, "Use FVG filter", group=groupSMC)
+useOB = input.bool(true, "Use Order Block filter", group=groupSMC)
+useOTE = input.bool(true, "Use OTE filter", group=groupSMC)
+minScore = input.int(4, "Minimum confluence score", minval=2, maxval=10, group=groupSMC)
+
+groupRisk = "Risk Management"
+rr = input.float(1.6, "Risk : Reward", minval=0.5, step=0.1, group=groupRisk)
+stopPadAtr = input.float(0.20, "Stop padding (ATR)", minval=0.0, step=0.05, group=groupRisk)
+maxStopAtr = input.float(2.20, "Maximum stop size (ATR)", minval=0.5, step=0.1, group=groupRisk)
+
+groupVis = "Visuals"
+showLevels = input.bool(true, "Show active support/resistance", group=groupVis)
+showAsia = input.bool(true, "Show Asia range", group=groupVis)
+showSessionBg = input.bool(true, "Highlight entry session", group=groupVis)
+showLabels = input.bool(true, "Show reason labels", group=groupVis)
+
+//==================== HELPERS ====================//
+f_inSession(_sess) =>
+    not na(time(timeframe.period, _sess, tzInput))
+
+f_lastBearish(_lookback) =>
+    float zHigh = na
+    float zLow = na
+    for i = 1 to _lookback
+        if na(zHigh) and close[i] < open[i]
+            zHigh := open[i]
+            zLow := low[i]
+    [zHigh, zLow]
+
+f_lastBullish(_lookback) =>
+    float zHigh = na
+    float zLow = na
+    for i = 1 to _lookback
+        if na(zHigh) and close[i] > open[i]
+            zHigh := high[i]
+            zLow := open[i]
+    [zHigh, zLow]
+
+//==================== SESSIONS ====================//
+inAsia = f_inSession(asiaSession)
+inLondon = f_inSession(londonSession)
+inNewYork = f_inSession(newYorkSession)
+entrySession = allowAsiaEntries ? (inAsia or inLondon or inNewYork) : (inLondon or inNewYork)
+
+bgcolor(showSessionBg and entrySession ? color.new(color.teal, 92) : na)
+
+//==================== ASIA RANGE ====================//
+var float asiaHigh = na
+var float asiaLow = na
+var bool asiaLocked = false
+
+prevInAsia = bar_index > 0 ? inAsia[1] : false
+asiaStart = inAsia and not prevInAsia
+asiaEnd = not inAsia and prevInAsia
+
+if asiaStart
+    asiaHigh := high
+    asiaLow := low
+    asiaLocked := false
+else if inAsia
+    asiaHigh := na(asiaHigh) ? high : math.max(asiaHigh, high)
+    asiaLow := na(asiaLow) ? low : math.min(asiaLow, low)
+
+if asiaEnd and not na(asiaHigh) and not na(asiaLow)
+    asiaLocked := true
+
+bullAsiaSweep = asiaLocked and not na(asiaLow) and low < asiaLow and close > asiaLow
+bearAsiaSweep = asiaLocked and not na(asiaHigh) and high > asiaHigh and close < asiaHigh
+
+//==================== BASE DATA ====================//
+atr = ta.atr(atrLen)
+emaExec = ta.ema(close, 20)
+body = math.abs(close - open)
+bodySafe = math.max(body, syminfo.mintick)
+barRange = math.max(high - low, syminfo.mintick)
+bodyRatio = body / barRange
+upperWick = high - math.max(open, close)
+lowerWick = math.min(open, close) - low
+breakBuffer = atr * breakBufferAtr
+displacementOk = body >= atr * displacementAtr and bodyRatio >= bodyRatioMin
+notOverextendedLong = close <= emaExec + atr * maxStretchAtr
+notOverextendedShort = close >= emaExec - atr * maxStretchAtr
+
+//==================== HTF BIAS ====================//
+htfClose = request.security(syminfo.tickerid, biasTf, close, lookahead=barmerge.lookahead_off)
+htfEma20 = request.security(syminfo.tickerid, biasTf, ta.ema(close, 20), lookahead=barmerge.lookahead_off)
+htfEma50 = request.security(syminfo.tickerid, biasTf, ta.ema(close, 50), lookahead=barmerge.lookahead_off)
+
+bullBias = htfClose > htfEma20 and htfEma20 > htfEma50
+bearBias = htfClose < htfEma20 and htfEma20 < htfEma50
+
+//==================== STRUCTURE LEVELS ====================//
+levelPh = request.security(syminfo.tickerid, levelTf, ta.pivothigh(high, swingLen, swingLen), lookahead=barmerge.lookahead_off)
+levelPl = request.security(syminfo.tickerid, levelTf, ta.pivotlow(low, swingLen, swingLen), lookahead=barmerge.lookahead_off)
+
+var float activeResistance = na
+var float activeSupport = na
+
+if not na(levelPh)
+    activeResistance := levelPh
+if not na(levelPl)
+    activeSupport := levelPl
+
+validBreakUp = not na(activeResistance) and close > activeResistance + breakBuffer and close > open and displacementOk
+validBreakDown = not na(activeSupport) and close < activeSupport - breakBuffer and close < open and displacementOk
+
+retestLong = not na(activeResistance[1]) and low <= activeResistance[1] and close > activeResistance[1] and close > open and bodyRatio >= 0.35
+retestShort = not na(activeSupport[1]) and high >= activeSupport[1] and close < activeSupport[1] and close < open and bodyRatio >= 0.35
+
+falseBreakUp = not na(activeResistance) and high > activeResistance + breakBuffer and close < activeResistance and upperWick > bodySafe * falseBreakWickRatio
+falseBreakDown = not na(activeSupport) and low < activeSupport - breakBuffer and close > activeSupport and lowerWick > bodySafe * falseBreakWickRatio
+
+rejectionResistance = not na(activeResistance) and high >= activeResistance and close < activeResistance and close < open and upperWick > bodySafe
+rejectionSupport = not na(activeSupport) and low <= activeSupport and close > activeSupport and close > open and lowerWick > bodySafe
+
+//==================== FVG ====================//
+bullFvgCreated = useFVG and low > high[2] and (low - high[2]) >= atr * fvgMinAtr
+bearFvgCreated = useFVG and high < low[2] and (low[2] - high) >= atr * fvgMinAtr
+
+var float bullFvgHigh = na
+var float bullFvgLow = na
+var float bearFvgHigh = na
+var float bearFvgLow = na
+
+if bullFvgCreated
+    bullFvgHigh := low
+    bullFvgLow := high[2]
+
+if bearFvgCreated
+    bearFvgHigh := low[2]
+    bearFvgLow := high
+
+if not na(bullFvgLow) and close < bullFvgLow
+    bullFvgHigh := na
+    bullFvgLow := na
+
+if not na(bearFvgHigh) and close > bearFvgHigh
+    bearFvgHigh := na
+    bearFvgLow := na
+
+inBullFvg = useFVG and not na(bullFvgHigh) and low <= bullFvgHigh and high >= bullFvgLow
+inBearFvg = useFVG and not na(bearFvgHigh) and high >= bearFvgLow and low <= bearFvgHigh
+
+//==================== ORDER BLOCK ====================//
+[bullObHighTmp, bullObLowTmp] = f_lastBearish(obLookback)
+[bearObHighTmp, bearObLowTmp] = f_lastBullish(obLookback)
+
+var float bullObHigh = na
+var float bullObLow = na
+var float bearObHigh = na
+var float bearObLow = na
+
+if useOB and validBreakUp and not na(bullObHighTmp)
+    bullObHigh := bullObHighTmp
+    bullObLow := bullObLowTmp
+
+if useOB and validBreakDown and not na(bearObHighTmp)
+    bearObHigh := bearObHighTmp
+    bearObLow := bearObLowTmp
+
+if not na(bullObLow) and close < bullObLow
+    bullObHigh := na
+    bullObLow := na
+
+if not na(bearObHigh) and close > bearObHigh
+    bearObHigh := na
+    bearObLow := na
+
+inBullOb = useOB and not na(bullObHigh) and low <= bullObHigh and high >= bullObLow
+inBearOb = useOB and not na(bearObHigh) and high >= bearObLow and low <= bearObHigh
+
+//==================== OTE ====================//
+ph = ta.pivothigh(high, swingLen, swingLen)
+pl = ta.pivotlow(low, swingLen, swingLen)
+
+var float lastSwingHigh = na
+var float lastSwingLow = na
+var int lastSwingHighBar = na
+var int lastSwingLowBar = na
+
+if not na(ph)
+    lastSwingHigh := ph
+    lastSwingHighBar := bar_index - swingLen
+
+if not na(pl)
+    lastSwingLow := pl
+    lastSwingLowBar := bar_index - swingLen
+
+bullLegReady = useOTE and not na(lastSwingLowBar) and not na(lastSwingHighBar) and lastSwingLowBar < lastSwingHighBar and lastSwingHigh > lastSwingLow
+bearLegReady = useOTE and not na(lastSwingHighBar) and not na(lastSwingLowBar) and lastSwingHighBar < lastSwingLowBar and lastSwingHigh > lastSwingLow
+
+bullOteLow = bullLegReady ? lastSwingHigh - (lastSwingHigh - lastSwingLow) * 0.79 : na
+bullOteHigh = bullLegReady ? lastSwingHigh - (lastSwingHigh - lastSwingLow) * 0.62 : na
+bearOteLow = bearLegReady ? lastSwingLow + (lastSwingHigh - lastSwingLow) * 0.62 : na
+bearOteHigh = bearLegReady ? lastSwingLow + (lastSwingHigh - lastSwingLow) * 0.79 : na
+
+inBullOte = bullLegReady and low <= bullOteHigh and high >= bullOteLow
+inBearOte = bearLegReady and high >= bearOteLow and low <= bearOteHigh
+
+//==================== SCORE ENGINE ====================//
+hasLongZone = inBullFvg or bullFvgCreated or inBullOb or inBullOte
+hasShortZone = inBearFvg or bearFvgCreated or inBearOb or inBearOte
+
+buyScore = (
+     (bullBias ? 2 : 0) +
+     (entrySession ? 1 : 0) +
+     ((inBullFvg or bullFvgCreated) ? 1 : 0) +
+     (inBullOb ? 1 : 0) +
+     (inBullOte ? 1 : 0) +
+     (rejectionSupport ? 1 : 0) +
+     ((falseBreakDown or bullAsiaSweep) ? 1 : 0) +
+     ((validBreakUp or retestLong) ? 1 : 0)
+)
+
+sellScore = (
+     (bearBias ? 2 : 0) +
+     (entrySession ? 1 : 0) +
+     ((inBearFvg or bearFvgCreated) ? 1 : 0) +
+     (inBearOb ? 1 : 0) +
+     (inBearOte ? 1 : 0) +
+     (rejectionResistance ? 1 : 0) +
+     ((falseBreakUp or bearAsiaSweep) ? 1 : 0) +
+     ((validBreakDown or retestShort) ? 1 : 0)
+)
+
+//==================== SIGNAL ENGINE ====================//
+buyBreakoutSetup = setupMode != "Reversal" and bullBias and entrySession and notOverextendedLong and (validBreakUp or retestLong) and (hasLongZone or bullAsiaSweep or retestLong) and buyScore >= minScore
+buyReversalSetup = setupMode != "Breakout" and entrySession and notOverextendedLong and (falseBreakDown or bullAsiaSweep) and rejectionSupport and (bullBias or close > htfEma20) and hasLongZone and buyScore >= minScore
+
+sellBreakoutSetup = setupMode != "Reversal" and bearBias and entrySession and notOverextendedShort and (validBreakDown or retestShort) and (hasShortZone or bearAsiaSweep or retestShort) and sellScore >= minScore
+sellReversalSetup = setupMode != "Breakout" and entrySession and notOverextendedShort and (falseBreakUp or bearAsiaSweep) and rejectionResistance and (bearBias or close < htfEma20) and hasShortZone and sellScore >= minScore
+
+rawLongSignal = barstate.isconfirmed and strategy.position_size == 0 and (buyBreakoutSetup or buyReversalSetup)
+rawShortSignal = barstate.isconfirmed and strategy.position_size == 0 and (sellBreakoutSetup or sellReversalSetup)
+
+longSignal = rawLongSignal and not rawShortSignal
+shortSignal = rawShortSignal and not rawLongSignal
+
+//==================== RISK / EXECUTION ====================//
+longBaseStop = low
+if not na(activeSupport)
+    longBaseStop := math.min(longBaseStop, activeSupport)
+if not na(bullObLow)
+    longBaseStop := math.min(longBaseStop, bullObLow)
+if bullAsiaSweep and not na(asiaLow)
+    longBaseStop := math.min(longBaseStop, asiaLow)
+
+shortBaseStop = high
+if not na(activeResistance)
+    shortBaseStop := math.max(shortBaseStop, activeResistance)
+if not na(bearObHigh)
+    shortBaseStop := math.max(shortBaseStop, bearObHigh)
+if bearAsiaSweep and not na(asiaHigh)
+    shortBaseStop := math.max(shortBaseStop, asiaHigh)
+
+longStop = longBaseStop - atr * stopPadAtr
+shortStop = shortBaseStop + atr * stopPadAtr
+
+longRisk = close - longStop
+shortRisk = shortStop - close
+
+longRiskOk = longRisk > syminfo.mintick and longRisk <= atr * maxStopAtr
+shortRiskOk = shortRisk > syminfo.mintick and shortRisk <= atr * maxStopAtr
+
+longTp = close + longRisk * rr
+shortTp = close - shortRisk * rr
+
+if longSignal and longRiskOk
+    strategy.entry("BUY", strategy.long)
+    strategy.exit("BUY TP/SL", from_entry="BUY", stop=longStop, limit=longTp)
+
+if shortSignal and shortRiskOk
+    strategy.entry("SELL", strategy.short)
+    strategy.exit("SELL TP/SL", from_entry="SELL", stop=shortStop, limit=shortTp)
+
+//==================== VISUALS ====================//
+plot(showLevels ? activeSupport : na, "Active Support", color=color.new(color.blue, 0), style=plot.style_linebr)
+plot(showLevels ? activeResistance : na, "Active Resistance", color=color.new(color.red, 0), style=plot.style_linebr)
+plot(showAsia and asiaLocked ? asiaHigh : na, "Asia High", color=color.new(color.purple, 0), style=plot.style_linebr)
+plot(showAsia and asiaLocked ? asiaLow : na, "Asia Low", color=color.new(color.purple, 0), style=plot.style_linebr)
+
+plotshape(longSignal and longRiskOk, title="BUY Signal", style=shape.labelup, location=location.belowbar, color=color.lime, text="BUY", textcolor=color.black, size=size.small)
+plotshape(shortSignal and shortRiskOk, title="SELL Signal", style=shape.labeldown, location=location.abovebar, color=color.red, text="SELL", textcolor=color.white, size=size.small)
+
+if showLabels and longSignal and longRiskOk
+    string longReason = buyBreakoutSetup ? "BUY BOS/Retest" : "BUY Sweep"
+    longReason := longReason + "\nScore: " + str.tostring(buyScore)
+    longReason := longReason + (bullBias ? "\nHTF: Bull" : "\nHTF: Neutral")
+    longReason := longReason + ((inBullFvg or bullFvgCreated) ? "\nFVG" : "")
+    longReason := longReason + (inBullOb ? "\nOB" : "")
+    longReason := longReason + (inBullOte ? "\nOTE" : "")
+    longReason := longReason + (bullAsiaSweep ? "\nAsia Sweep" : "")
+    label.new(bar_index, low, longReason, style=label.style_label_up, color=color.new(color.lime, 0), textcolor=color.black)
+
+if showLabels and shortSignal and shortRiskOk
+    string shortReason = sellBreakoutSetup ? "SELL BOS/Retest" : "SELL Sweep"
+    shortReason := shortReason + "\nScore: " + str.tostring(sellScore)
+    shortReason := shortReason + (bearBias ? "\nHTF: Bear" : "\nHTF: Neutral")
+    shortReason := shortReason + ((inBearFvg or bearFvgCreated) ? "\nFVG" : "")
+    shortReason := shortReason + (inBearOb ? "\nOB" : "")
+    shortReason := shortReason + (inBearOte ? "\nOTE" : "")
+    shortReason := shortReason + (bearAsiaSweep ? "\nAsia Sweep" : "")
+    label.new(bar_index, high, shortReason, style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+//==================== ALERTS ====================//
+alertcondition(longSignal and longRiskOk, title="BUY XAUUSD", message="BUY confirmed on candle close")
+alertcondition(shortSignal and shortRiskOk, title="SELL XAUUSD", message="SELL confirmed on candle close")

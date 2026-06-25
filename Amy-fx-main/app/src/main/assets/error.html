@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' file: data: blob: https:; script-src 'self' 'unsafe-inline' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' file: data: blob:;">
+  <title>Amy FX Error</title>
+  <style>
+    :root{--bg:#050505;--card:#141414;--gold:#d4af37;--text:#f7f7f7;--muted:#aaa}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:22px}
+    .card{max-width:520px;width:100%;background:var(--card);border:1px solid rgba(212,175,55,.25);border-radius:24px;padding:24px;box-shadow:0 14px 44px rgba(0,0,0,.45)}
+    h1{margin:0 0 10px;color:var(--gold);font-size:24px}p{color:var(--muted);line-height:1.55}
+    button{min-height:48px;border:0;border-radius:14px;background:var(--gold);color:#111;font-weight:900;padding:0 18px}
+  </style>
+</head>
+<body>
+  <section class="card">
+    <h1>Halaman gagal dimuat</h1>
+    <p>WebView tidak bisa membuka halaman lokal. Coba kembali ke dashboard utama.</p>
+    <button onclick="location.href='file:///android_asset/index.html'">Buka Dashboard</button>
+  </section>
+</body>
+</html>

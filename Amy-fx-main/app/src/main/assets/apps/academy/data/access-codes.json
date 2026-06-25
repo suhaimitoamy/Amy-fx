@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "salt": "amy-academy-public-salt-v1",
+  "updatedAt": "2026-05-31T00:00:00.000000+00:00",
+  "codes": [
+    {
+      "label": "Initial Test Code",
+      "hash": "d251312b7499982c46fbab95732f221e559555f59a0c211a0c7b8ddfb4fcb8c2",
+      "active": false,
+      "createdAt": "2026-05-30T16:50:47.009827+00:00",
+      "expiresAt": null
+    },
+    {
+      "label": "Access Code 2026-05-31",
+      "hash": "55a52f60e029d513c29b23b3cd2aeda7ad06ef4114bb560e96451fd1d3b8688e",
+      "active": true,
+      "createdAt": "2026-05-31T00:00:00.000000+00:00",
+      "expiresAt": null
+    },
+    {
+      "label": "Downline 01",
+      "hash": "395147dd9fed9da992b1b2d73d742ee082a172af25baf768c297bc01d2128e5e",
+      "active": true,
+      "createdAt": "2026-05-31T00:00:00.000000+00:00",
+      "expiresAt": null
+    },
+    {
+      "label": "Downline 02",
+      "hash": "d133c2e785f8f525548cafb2b896560baca9368085b636f36053ea7e9b8415ca",
+      "active": true,
+      "createdAt": "2026-05-31T00:00:00.000000+00:00",
+      "expiresAt": null
+    },
+    {
+      "label": "Downline 03",
+      "hash": "03d3cec900c4f8e4d3449f88eceaa6a7957f0d20cccd4d9fa5dbeabdf88c7b08",
+      "active": true,
+      "createdAt": "2026-05-31T00:00:00.000000+00:00",
+      "expiresAt": null
+    },
+    {
+      "label": "Downline 04",
+      "hash": "1509ea706824ff5706ea694ad1504587f6c2332be5c83ffaebc427edb9cbb787",
+      "active": true,
+      "createdAt": "2026-05-31T00:00:00.000000+00:00",
+      "expiresAt": null
+    },
+    {
+      "label": "Downline 05",
+      "hash": "b5a274a7365ad50f55411bc1f961991cbedaa7b467509fa6e10d44873db9c2c0",
+      "active": true,
+      "createdAt": "2026-05-31T00:00:00.000000+00:00",
+      "expiresAt": null
+    },
+    {
+      "label": "Downline 06",
+      "hash": "83ec5c496691b299f9ed5cb24775a8a83d0bd6c0a8894d306a8bcf5577417f9b",
+      "active": true,
+      "createdAt": "2026-05-31T00:00:00.000000+00:00",
+      "expiresAt": null
+    },
+    {
+      "label": "Downline 07",
+      "hash": "6efec7fb42a19eee73d0b846d7a69e4c54151cf8a7b6cc89996ffedff1534a8f",
+      "active": true,
+      "createdAt": "2026-05-31T00:00:00.000000+00:00",
+      "expiresAt": null
+    },
+    {
+      "label": "Downline 08",
+      "hash": "260623ba62d8c2c4a8aca2c4ea11d8ae2c8a9159a0df381be8c453ff0995c3cc",
+      "active": true,
+      "createdAt": "2026-05-31T00:00:00.000000+00:00",
+      "expiresAt": null
+    },
+    {
+      "label": "Downline 09",
+      "hash": "464a61d90236202bada46d4235249565497b0f4b9cad71bf7e589cb81d517841",
+      "active": true,
+      "createdAt": "2026-05-31T00:00:00.000000+00:00",
+      "expiresAt": null
+    },
+    {
+      "label": "Downline 10",
+      "hash": "1352834d6808eff479f8fb198683f70609603f68f9107a44eaa779b8481b50e9",
+      "active": true,
+      "createdAt": "2026-05-31T00:00:00.000000+00:00",
+      "expiresAt": null
+    }
+  ]
+}

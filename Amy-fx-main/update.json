@@ -1,0 +1,19 @@
+{
+  "version": "1.2.0",
+  "versionCode": 12,
+  "releaseDate": "2026-06-25",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/v1.2.0/AmyFX-v1.2.0-release.apk",
+  "changelog": [
+    "Fix anti-spam notifikasi (cooldown 30 menit per level)",
+    "Fix deep link dari notifikasi ke Mapping",
+    "Upgrade MappingLogicCore: FVG Fresh/Mitigated, OB Fresh/Tested/Broken",
+    "Setup Score rework: 10 poin dengan breakdown transparan",
+    "Statistik jurnal lengkap: equity curve, per setup, per session",
+    "Indikator library: kategori, search, favorit",
+    "CandleStore: index SQLite, auto-cleanup, batch upsert",
+    "API key sekarang tersimpan terenkripsi (AES256-GCM)",
+    "Release build dengan R8 + signing via GitHub Secrets",
+    "Repo dibersihkan dari semua file patch sementara"
+  ],
+  "mandatory": false
+}

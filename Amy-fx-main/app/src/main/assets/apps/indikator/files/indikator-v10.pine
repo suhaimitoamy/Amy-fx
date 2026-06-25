@@ -1,0 +1,207 @@
+//@version=6
+strategy("XAUUSD Smart Context V10 - ULTIMATE", 
+     overlay = true, 
+     initial_capital = 10000, 
+     default_qty_type = strategy.percent_of_equity, 
+     default_qty_value = 1, 
+     commission_type = strategy.commission.percent, 
+     commission_value = 0.07,
+     max_labels_count = 500, 
+     max_lines_count = 500, 
+     max_boxes_count = 200)
+
+//==============================================================================
+// DESCRIPTION
+//==============================================================================
+// V10 Ultimate: The perfection of v1-v9.
+// Combines Smart Money Concepts (SMC), ICT Power of 3 (PO3), and Advanced Risk Management.
+// Optimized specifically for XAUUSD (Gold).
+//==============================================================================
+
+//==================== INPUTS: SESSIONS ====================//
+groupSess = "🕒 Sessions & Timezone"
+tzInput = input.string("Asia/Makassar", "Timezone", group = groupSess)
+asiaSession = input.session("0600-1400", "Asia Session", group = groupSess)
+londonSession = input.session("1500-2000", "London Session", group = groupSess)
+newYorkSession = input.session("2030-0000", "New York Session", group = groupSess)
+allowAsiaEntries = input.bool(false, "Allow entries in Asia session", group = groupSess)
+
+//==================== INPUTS: LOGIC ====================//
+groupLogic = "🧠 Strategy Logic"
+setupMode = input.string("Balanced", "Setup Mode", options = ["Conservative", "Balanced", "Aggressive"], group = groupLogic)
+biasTf = input.timeframe("15", "HTF Validation TF", group = groupLogic)
+levelTf = input.timeframe("5", "Entry Structure TF", group = groupLogic)
+poiMinScore = input.int(60, "Min Confluence Score (0-100)", minval = 1, maxval = 100, group = groupLogic)
+useJudasFilter = input.bool(true, "Use Judas Swing Filter (ICT)", group = groupLogic)
+
+//==================== INPUTS: RISK MANAGEMENT ====================//
+groupRisk = "🛡️ Risk Management"
+riskPercent = input.float(1.0, "Risk Per Trade (%)", minval = 0.1, step = 0.1, group = groupRisk)
+rrRatio = input.float(2.0, "Risk : Reward Ratio", minval = 1.0, step = 0.1, group = groupRisk)
+useTrailing = input.bool(true, "Use Trailing Stop", group = groupRisk)
+trailingAtrMult = input.float(2.0, "Trailing ATR Multiplier", minval = 0.5, step = 0.1, group = groupRisk)
+useBreakeven = input.bool(true, "Move to Breakeven at TP1", group = groupRisk)
+
+//==================== INPUTS: VISUALS ====================//
+groupVis = "🎨 Visuals & Dashboard"
+showDashboard = input.bool(true, "Show Ultimate Dashboard", group = groupVis)
+dashboardPos = input.string("Bottom Left", "Dashboard Position", options = ["Top Right", "Top Left", "Bottom Right", "Bottom Left"], group = groupVis)
+showLiquidity = input.bool(true, "Show Liquidity Map", group = groupVis)
+showZones = input.bool(true, "Show POI Zones (OB/FVG)", group = groupVis)
+showPdZones = input.bool(true, "Show Premium/Discount Zones", group = groupVis)
+
+//==================== HELPERS & FUNCTIONS ====================//
+f_inSession(_sess) => not na(time(timeframe.period, _sess, tzInput))
+f_dashPos(_pos) =>
+    _pos == "Top Left" ? position.top_left :
+     _pos == "Bottom Right" ? position.bottom_right :
+     _pos == "Bottom Left" ? position.bottom_left :
+     position.top_right
+
+f_price(_x) => na(_x) ? "-" : str.tostring(_x, format.mintick)
+f_grade(_score) =>
+    _score >= 85 ? "A+ (Excellent)" :
+     _score >= 75 ? "A (High Prob)" :
+     _score >= 65 ? "B (Good)" :
+     _score >= 50 ? "C (Average)" :
+     "Avoid"
+
+//==================== BASE DATA & ATR ====================//
+atr = ta.atr(14)
+body = math.abs(close - open)
+barRange = math.max(high - low, syminfo.mintick)
+bodyRatio = body / barRange
+displacementOk = body >= atr * 0.3 and bodyRatio >= 0.5
+
+//==================== SESSIONS & PO3 ====================//
+inAsia = f_inSession(asiaSession)
+inLondon = f_inSession(londonSession)
+inNewYork = f_inSession(newYorkSession)
+entrySession = allowAsiaEntries ? (inAsia or inLondon or inNewYork) : (inLondon or inNewYork)
+
+var float asiaHigh = na
+var float asiaLow = na
+if inAsia and not inAsia[1]
+    asiaHigh := high
+    asiaLow := low
+else if inAsia
+    asiaHigh := math.max(asiaHigh, high)
+    asiaLow := math.min(asiaLow, low)
+
+asiaSweepLow = not inAsia and low < asiaLow and close > asiaLow
+asiaSweepHigh = not inAsia and high > asiaHigh and close < asiaHigh
+
+// Judas Swing (Manipulation)
+isJudasWindow = (inLondon and time - time[1] < 3600000 * 2) // First 2 hours of London
+judasBull = isJudasWindow and low < asiaLow and close > asiaLow
+judasBear = isJudasWindow and high > asiaHigh and close < asiaHigh
+
+//==================== HTF BIAS (NON-REPAINT) ====================//
+htfClose = request.security(syminfo.tickerid, biasTf, close[1], lookahead = barmerge.lookahead_on)
+htfEma20 = request.security(syminfo.tickerid, biasTf, ta.ema(close, 20)[1], lookahead = barmerge.lookahead_on)
+htfEma50 = request.security(syminfo.tickerid, biasTf, ta.ema(close, 50)[1], lookahead = barmerge.lookahead_on)
+
+bullBias = htfClose > htfEma20 and htfEma20 > htfEma50
+bearBias = htfClose < htfEma20 and htfEma20 < htfEma50
+
+//==================== PREMIUM / DISCOUNT ====================//
+lookbackPD = 50
+highestPD = ta.highest(high, lookbackPD)
+lowestPD = ta.lowest(low, lookbackPD)
+eqPD = (highestPD + lowestPD) / 2
+isDiscount = close < eqPD
+isPremium = close > eqPD
+
+//==================== STRUCTURE & MSS ====================//
+swingLen = setupMode == "Conservative" ? 4 : setupMode == "Balanced" ? 3 : 2
+ph = ta.pivothigh(high, swingLen, swingLen)
+pl = ta.pivotlow(low, swingLen, swingLen)
+
+var float lastPh = na
+var float lastPl = na
+if not na(ph)
+    lastPh := ph
+if not na(pl)
+    lastPl := pl
+
+bullMss = close > lastPh and close[1] <= lastPh
+bearMss = close < lastPl and close[1] >= lastPl
+
+//==================== POI: ORDER BLOCK & FVG ====================//
+var float bullOb = na
+var float bearOb = na
+if bullMss and displacementOk
+    bullOb := low[1]
+if bearMss and displacementOk
+    bearOb := high[1]
+
+bullFvg = low > high[2] and (low - high[2]) > atr * 0.1
+bearFvg = high < low[2] and (low[2] - high) > atr * 0.1
+
+//==================== SCORE ENGINE ====================//
+score = 0
+score += bullBias or bearBias ? 20 : 0
+score += entrySession ? 15 : 0
+score += (bullMss or bearMss) ? 25 : 0
+score += (judasBull or judasBear) ? 20 : 0
+score += (bullFvg or bearFvg) ? 10 : 0
+score += (asiaSweepLow or asiaSweepHigh) ? 10 : 0
+score += (isDiscount and bullBias) or (isPremium and bearBias) ? 10 : 0
+
+grade = f_grade(score)
+
+//==================== STRATEGY EXECUTION ====================//
+longCondition = bullBias and entrySession and (bullMss or judasBull) and score >= poiMinScore and isDiscount
+shortCondition = bearBias and entrySession and (bearMss or judasBear) and score >= poiMinScore and isPremium
+
+if longCondition and strategy.position_size == 0
+    float sl = math.min(low, lastPl) - atr * 0.5
+    float tp = close + (close - sl) * rrRatio
+    strategy.entry("Long", strategy.long, comment = "V10 BUY " + grade)
+    strategy.exit("Exit Long", "Long", stop = sl, limit = tp, trail_points = useTrailing ? atr * trailingAtrMult / syminfo.mintick : na)
+
+if shortCondition and strategy.position_size == 0
+    float sl = math.max(high, lastPh) + atr * 0.5
+    float tp = close - (sl - close) * rrRatio
+    strategy.entry("Short", strategy.short, comment = "V10 SELL " + grade)
+    strategy.exit("Exit Short", "Short", stop = sl, limit = tp, trail_points = useTrailing ? atr * trailingAtrMult / syminfo.mintick : na)
+
+//==================== DASHBOARD ====================//
+var table dash = table.new(f_dashPos(dashboardPos), 2, 12, bgcolor = color.new(color.black, 20), border_width = 1, border_color = color.gray)
+if showDashboard
+    table.cell(dash, 0, 0, "V10 ULTIMATE", text_color = color.white, text_size = size.large)
+    table.cell(dash, 1, 0, "XAUUSD", text_color = color.gold, text_size = size.large)
+    
+    table.cell(dash, 0, 1, "Bias HTF (" + biasTf + ")", text_color = color.white)
+    table.cell(dash, 1, 1, bullBias ? "BULLISH" : bearBias ? "BEARISH" : "NEUTRAL", bgcolor = bullBias ? color.green : bearBias ? color.red : color.gray)
+    
+    table.cell(dash, 0, 2, "Session", text_color = color.white)
+    table.cell(dash, 1, 2, inAsia ? "ASIA" : inLondon ? "LONDON" : inNewYork ? "NY" : "OFF", bgcolor = entrySession ? color.teal : color.gray)
+    
+    table.cell(dash, 0, 3, "P/D Zone", text_color = color.white)
+    table.cell(dash, 1, 3, isDiscount ? "DISCOUNT" : isPremium ? "PREMIUM" : "EQUILIBRIUM", bgcolor = isDiscount ? color.green : isPremium ? color.red : color.gray)
+
+    table.cell(dash, 0, 4, "Confluence Score", text_color = color.white)
+    table.cell(dash, 1, 4, str.tostring(score) + " / 100", bgcolor = score >= 70 ? color.green : score >= 50 ? color.orange : color.red)
+    
+    table.cell(dash, 0, 5, "Setup Grade", text_color = color.white)
+    table.cell(dash, 1, 5, grade, text_color = color.white)
+    
+    table.cell(dash, 0, 6, "Trade Plan", text_color = color.white)
+    table.cell(dash, 1, 6, longCondition ? "LOOK FOR BUY" : shortCondition ? "LOOK FOR SELL" : "WAITING", bgcolor = longCondition ? color.green : shortCondition ? color.red : color.gray)
+
+//==================== VISUALS ====================//
+plotshape(longCondition, "Buy Signal", shape.triangleup, location.belowbar, color.green, size = size.small, text = "V10 BUY")
+plotshape(shortCondition, "Sell Signal", shape.triangledown, location.abovebar, color.red, size = size.small, text = "V10 SELL")
+
+plot(showZones ? bullOb : na, "Bull OB", color.new(color.green, 50), style = plot.style_linebr)
+plot(showZones ? bearOb : na, "Bear OB", color.new(color.red, 50), style = plot.style_linebr)
+
+// Premium/Discount Visuals
+plot(showPdZones ? highestPD : na, "PD High", color.new(color.red, 80))
+plot(showPdZones ? lowestPD : na, "PD Low", color.new(color.green, 80))
+plot(showPdZones ? eqPD : na, "PD EQ", color.new(color.gray, 80), style = plot.style_stepline)
+
+// Alerts
+alertcondition(longCondition, "V10 Buy Signal", "V10 Buy Signal on XAUUSD")
+alertcondition(shortCondition, "V10 Sell Signal", "V10 Sell Signal on XAUUSD")

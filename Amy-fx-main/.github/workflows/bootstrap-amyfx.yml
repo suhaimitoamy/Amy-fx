@@ -1,0 +1,11 @@
+name: Bootstrap Amy FX Final App (Disabled)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  disabled:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disabled
+        run: echo "Bootstrap workflow disabled. Amy-fx is now maintained directly in this repo."

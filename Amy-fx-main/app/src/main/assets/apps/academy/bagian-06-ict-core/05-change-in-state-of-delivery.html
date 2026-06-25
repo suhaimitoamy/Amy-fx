@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Change in State of Delivery — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+</head>
+<body>
+  <script>requireLogin();</script>
+  <header class="topbar hide-until-auth">
+    <nav class="nav">
+      <a class="brand" href="../index.html"><span class="brand-mark">A</span><span>Amy FX Academy</span></a>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div class="navlinks" id="navlinks">
+        <a href="../index.html">Beranda</a>
+        <a href="../daftar-materi.html">Daftar Materi</a>
+        <a href="../tentang.html">Tentang</a>
+        <a href="../glosarium/index.html">Glosarium</a>
+        
+      </div>
+    </nav>
+  </header>
+  <main class="container hide-until-auth">
+    <div class="article-layout">
+      <article class="article">
+        <div class="breadcrumb">
+          <a href="../index.html">Beranda</a> › <a href="index.html">Bagian 06 — ICT Core</a>
+        </div>
+        <div class="eyebrow">Bagian 06 — ICT Core</div>
+        <h1>Change in State of Delivery (CISD)</h1>
+
+        <p>Setelah memahami bahwa algoritma itu "mengirimkan harga" (Price Delivery), pertanyaan selanjutnya adalah: <strong>Kapan pengiriman itu berubah arah?</strong> Di sinilah kita mempelajari salah satu konsep terpenting untuk mengidentifikasi awal mula pembalikan arah, yaitu <strong>Change in State of Delivery (CISD)</strong>.</p>
+
+        <div class="image-slot" data-img-path="assets/images/lessons/05-change-in-state-of-delivery.jpg" data-prompt="Buat ilustrasi edukasi trading untuk materi 'Change in State of Delivery' dari 'Bagian 06 — ICT Core', gaya clean light website, rasio 16:9, mudah dipahami pemula, warna putih, hijau lembut, biru lembut, sedikit aksen gold. Tampilkan konsep dasar dengan ikon trading, laptop, chart sederhana, dan teks pendek yang mudah dibaca. Jangan gunakan klaim profit pasti. Cocok untuk website Amy FX Academy." data-caption="Ilustrasi Change in State of Delivery"></div>
+
+        <h2>Apa Itu CISD?</h2>
+        <p>Secara harfiah, CISD berarti "Perubahan Status Pengiriman". Ini adalah momen kritis ketika dominasi pembeli beralih ke penjual, atau sebaliknya. Dalam ICT, ini ditandai oleh bagaimana <strong>candle terakhir sebelum pembalikan</strong> dipecahkan (di-break) oleh harga yang berlawanan.</p>
+
+        <p>Kalau sebelumnya algoritma sedang dalam mode "Sell Program" (mengirim harga ke bawah untuk mencari diskon), lalu tiba-tiba terjadi CISD ke atas, maka algoritma telah berpindah ke "Buy Program" (mengirim harga ke atas untuk mencari premium/BSL).</p>
+
+        <div class="note">
+          <strong>Feynman Analogy:</strong> Bayangkan sebuah kereta barang sedang melaju kencang ke Selatan. Tiba-tiba kereta itu direm mendadak di stasiun besar, lalu kepalanya diputar dan mulai melaju ke Utara. CISD adalah "momen tepat saat kepala kereta berhasil diputar dan mulai bergerak ke arah baru".
+        </div>
+
+        <h2>Mendeteksi CISD di Chart</h2>
+        <p>Bagaimana cara melihatnya secara visual? Kuncinya ada pada melihat <em>body candle</em>, bukan sekadar sumbu (<em>wick</em>/<em>tail</em>).</p>
+
+        <ul>
+          <li><strong>Jika harga sedang turun (Down Trend):</strong> Perhatikan candle bearish (merah/hitam) terakhir. Saat ada candle bullish (hijau/putih) yang berhasil <strong>ditutup (Close) di atas harga open/high candle bearish terakhir tersebut</strong>, itulah yang disebut CISD Bullish. Algoritma telah berhenti menjual dan mulai membeli.</li>
+          <li><strong>Jika harga sedang naik (Up Trend):</strong> Perhatikan candle bullish terakhir. Saat ada candle bearish yang <strong>ditutup (Close) di bawah harga open/low candle bullish terakhir tersebut</strong>, itu adalah CISD Bearish. Algoritma beralih ke mode jual.</li>
+        </ul>
+
+        <h2>Perbedaan CISD dan MSS (Market Structure Shift)</h2>
+        <p>Banyak trader bingung antara CISD dan Market Structure Shift (MSS) yang akan kita pelajari nanti. Sederhananya:</p>
+        <p><strong>CISD terjadi LEBIH CEPAT daripada MSS.</strong> CISD hanya melihat pecahnya satu atau dua candle spesifik (Order Block), sedangkan MSS harus menembus Swing High atau Swing Low (Struktur Pasar). Oleh karena itu, CISD adalah tanda-tanda pertama bahwa market ingin berbalik arah, sebelum strukturnya benar-benar bergeser.</p>
+
+        <div class="warning">
+          <strong>Penting:</strong> Jangan jadikan semua CISD sebagai sinyal Entry! CISD yang valid HANYA terjadi di dalam area <strong>POI HTF (Point of Interest Higher Timeframe)</strong> atau setelah <strong>Liquidity Sweep (sapuan likuiditas)</strong>. Kalau CISD terjadi di tengah-tengah chart tanpa konteks, itu kemungkinan besar jebakan (fake out).
+        </div>
+
+        <h2>Cara Menggunakan CISD</h2>
+        <ol>
+          <li>Tunggu harga masuk ke area FVG atau OB di Timeframe Besar (misal H1 atau H4).</li>
+          <li>Turun ke Timeframe Kecil (misal M15 atau M5).</li>
+          <li>Amati dengan sabar. Jangan langsung Buy saat harga menyentuh POI.</li>
+          <li>Tunggu sampai terjadi <strong>Change in State of Delivery</strong> di Timeframe Kecil tersebut.</li>
+          <li>Setelah CISD terkonfirmasi, barulah kamu mencari FVG kecil yang ditinggalkan untuk melakukan Entry yang presisi.</li>
+        </ol>
+
+        <p>Di bab selanjutnya, kita akan membedah secara spesifik bagaimana bentuk CISD Bullish dan CISD Bearish di chart agar kamu lebih mahir mengenalinya.</p>
+
+        <div class="source-note">
+          Materi ini dirangkum dan disusun ulang dari bahan Materi Trading Amy ZIP serta batch PDF ICT/SMC/XAUUSD yang sudah dikirim.
+        </div>
+        <nav class="page-nav">
+          <a class="btn" href="../bagian-06-ict-core/04-price-delivery.html">← Price Delivery</a>
+          <a class="btn gold" href="../daftar-materi.html">Daftar Materi</a>
+          <a class="btn primary" href="../bagian-06-ict-core/06-cisd-bullish.html">CISD Bullish →</a>
+        </nav>
+      </article>
+      <aside class="toc-card">
+        <h3>Bagian 06 — ICT Core</h3>
+        <ul>
+          <li><a class="" href="01-apa-itu-ict.html">Apa Itu ICT</a></li>
+          <li><a class="" href="02-context-is-king.html">Context is King</a></li>
+          <li><a class="" href="03-htf-ltf.html">HTF dan LTF</a></li>
+          <li><a class="" href="04-price-delivery.html">Price Delivery</a></li>
+          <li><a class="active" href="05-change-in-state-of-delivery.html">Change in State of Delivery</a></li>
+          <li><a class="" href="06-cisd-bullish.html">CISD Bullish</a></li>
+          <li><a class="" href="07-cisd-bearish.html">CISD Bearish</a></li>
+          <li><a class="" href="08-mss-yang-valid.html">MSS yang Valid</a></li>
+          <li><a class="" href="09-sweep-lalu-mss.html">Sweep lalu MSS</a></li>
+          <li><a class="" href="10-fvg-sebagai-entry-area.html">FVG sebagai Entry Area</a></li>
+          <li><a class="" href="11-ob-fvg-combination.html">OB + FVG Combination</a></li>
+        </ul>
+      </aside>
+    </div>
+  </main>
+  <footer class="footer hide-until-auth">
+    © 2026 Amy FX Academy. Belajar Trading dari Nol sampai Mandiri.
+  </footer>
+</body>
+</html>
