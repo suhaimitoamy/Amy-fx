@@ -1,0 +1,11 @@
+{
+  "latest_version_code": 7,
+  "latest_version_name": "1.7",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/latest",
+  "release_notes": [
+    "Versi awal sistem update aplikasi",
+    "Popup Update / Batal di dalam aplikasi",
+    "Link update diarahkan ke halaman release terbaru"
+  ],
+  "force_update": false
+}
