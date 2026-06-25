@@ -36,16 +36,16 @@ class ScannerService : Service() {
     private var apiKey: String? = null
     private var setupUpper = 0.0
     private var setupLower = 0.0
-    private var entryDone = false
+    private var lastPrice = 0.0
+    private var reconnectAttempt = 0
     @Volatile private var lastTickAt = System.currentTimeMillis()
     @Volatile private var manualClose = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == "STOP_SCANNER") {
-            getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
-                .edit().putBoolean("scanner_enabled", false).apply()
+        if (intent?.action == ACTION_STOP_SCANNER) {
+            prefs().edit().putBoolean(KEY_SCANNER_ENABLED, false).apply()
             stopSocket()
             stopForeground(true)
             stopSelf()
@@ -53,45 +53,17 @@ class ScannerService : Service() {
         }
 
         createChannels()
+        loadApiKey()
+        prefs().edit().putBoolean(KEY_SCANNER_ENABLED, true).apply()
+        loadTargets(intent)
 
-        val prefs = getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
-        apiKey = prefs.getString("api_key", null)
-        prefs.edit().putBoolean("scanner_enabled", true).apply()
-
-        val savedUpper = prefs.getString("scanner_bsl_target", null)?.toDoubleOrNull() ?: 0.0
-        val savedLower = prefs.getString("scanner_ssl_target", null)?.toDoubleOrNull() ?: 0.0
-        val passedUpper = intent?.getStringExtra("bsl")?.toDoubleOrNull() ?: 0.0
-        val passedLower = intent?.getStringExtra("ssl")?.toDoubleOrNull() ?: 0.0
-        val rawUpper = if (passedUpper > 0.0) passedUpper else savedUpper
-        val rawLower = if (passedLower > 0.0) passedLower else savedLower
-
-        if (rawUpper > 0.0 && rawLower > 0.0) {
-            val nextUpper = max(rawUpper, rawLower)
-            val nextLower = min(rawUpper, rawLower)
-            if (abs(nextUpper - setupUpper) > 0.01 || abs(nextLower - setupLower) > 0.01) {
-                setupUpper = nextUpper
-                setupLower = nextLower
-                entryDone = false
-            }
-        } else if (rawUpper > 0.0 && abs(rawUpper - setupUpper) > 0.01) {
-            setupUpper = rawUpper
-            setupLower = 0.0
-            entryDone = false
-        } else if (rawLower > 0.0 && abs(rawLower - setupLower) > 0.01) {
-            setupLower = rawLower
-            setupUpper = 0.0
-            entryDone = false
-        }
-
-        if (passedUpper > 0.0 || passedLower > 0.0) {
-            prefs.edit()
-                .putString("scanner_bsl_target", if (setupUpper > 0.0) setupUpper.toString() else "")
-                .putString("scanner_ssl_target", if (setupLower > 0.0) setupLower.toString() else "")
-                .apply()
+        if (targetsExpired()) {
+            clearTargets()
+            sendInfo("Amy FX Scanner", "Target Mapping sudah lebih dari 24 jam. Buka Mapping untuk update level terbaru.")
         }
 
         if (apiKey.isNullOrBlank()) {
-            prefs.edit().putBoolean("scanner_enabled", false).apply()
+            prefs().edit().putBoolean(KEY_SCANNER_ENABLED, false).apply()
             stopForeground(true)
             stopSelf()
             return START_NOT_STICKY
@@ -101,6 +73,45 @@ class ScannerService : Service() {
         connectSocket()
         startWatchdog()
         return START_STICKY
+    }
+
+    private fun loadApiKey() {
+        val secureKey = SecurePrefs.getString(this, KEY_API_KEY, null)
+        val legacyKey = prefs().getString(KEY_API_KEY, null)
+        apiKey = secureKey ?: legacyKey
+        if (!legacyKey.isNullOrBlank() && secureKey.isNullOrBlank()) {
+            SecurePrefs.putString(this, KEY_API_KEY, legacyKey)
+        }
+    }
+
+    private fun loadTargets(intent: Intent?) {
+        val savedUpper = prefs().getString(KEY_BSL_TARGET, null)?.toDoubleOrNull() ?: 0.0
+        val savedLower = prefs().getString(KEY_SSL_TARGET, null)?.toDoubleOrNull() ?: 0.0
+        val passedUpper = intent?.getStringExtra("bsl")?.toDoubleOrNull() ?: 0.0
+        val passedLower = intent?.getStringExtra("ssl")?.toDoubleOrNull() ?: 0.0
+        val rawUpper = if (passedUpper > 0.0) passedUpper else savedUpper
+        val rawLower = if (passedLower > 0.0) passedLower else savedLower
+        val oldUpper = setupUpper
+        val oldLower = setupLower
+
+        if (rawUpper > 0.0 && rawLower > 0.0) {
+            setupUpper = max(rawUpper, rawLower)
+            setupLower = min(rawUpper, rawLower)
+        } else {
+            setupUpper = rawUpper
+            setupLower = rawLower
+        }
+
+        val changed = abs(oldUpper - setupUpper) > PRICE_EPSILON || abs(oldLower - setupLower) > PRICE_EPSILON
+        if (passedUpper > 0.0 || passedLower > 0.0 || changed) {
+            prefs().edit()
+                .putString(KEY_BSL_TARGET, if (setupUpper > 0.0) setupUpper.toString() else "")
+                .putString(KEY_SSL_TARGET, if (setupLower > 0.0) setupLower.toString() else "")
+                .putLong(KEY_TARGET_UPDATED_AT, System.currentTimeMillis())
+                .putBoolean(KEY_UPPER_ARMED, true)
+                .putBoolean(KEY_LOWER_ARMED, true)
+                .apply()
+        }
     }
 
     private fun connectSocket() {
@@ -113,9 +124,11 @@ class ScannerService : Service() {
         socket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 lastTickAt = System.currentTimeMillis()
+                reconnectAttempt = 0
                 reconnectJob?.cancel()
                 reconnectJob = null
                 webSocket.send("""{"action":"subscribe","params":{"symbols":"XAU/USD"}}""")
+                sendInfo("Amy FX Scanner", "Scanner terhubung ke live price XAU/USD.")
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
@@ -123,8 +136,9 @@ class ScannerService : Service() {
                     val json = JSONObject(text)
                     if (!json.has("price")) return
                     val price = json.getDouble("price")
+                    lastPrice = price
                     lastTickAt = System.currentTimeMillis()
-                    checkSetupEntry(price)
+                    checkTargets(price)
                 } catch (_: Exception) {
                 }
             }
@@ -141,29 +155,69 @@ class ScannerService : Service() {
         })
     }
 
-    private fun checkSetupEntry(price: Double) {
-        if (setupUpper > 0.0 && setupLower > 0.0) {
-            if (price in setupLower..setupUpper && !entryDone) {
-                entryDone = true
-                sendAlert(
-                    "AMY FX - ENTRY AREA",
-                    "Harga masuk Entry Area dari Mapping.\n\nEntry Area: ${fmt(setupLower)} - ${fmt(setupUpper)}\nHarga sekarang: ${fmt(price)}\n\nBuka Mapping untuk lihat setup, SL, TP1, dan TP2."
-                )
-            }
-        } else if (setupUpper > 0.0 && price >= setupUpper && !entryDone) {
-            entryDone = true
-            sendAlert("AMY FX - SETUP TARGET", "Harga menyentuh area atas Mapping: ${fmt(setupUpper)}. Harga sekarang: ${fmt(price)}.")
-        } else if (setupLower > 0.0 && price <= setupLower && !entryDone) {
-            entryDone = true
-            sendAlert("AMY FX - SETUP TARGET", "Harga menyentuh area bawah Mapping: ${fmt(setupLower)}. Harga sekarang: ${fmt(price)}.")
+    private fun checkTargets(price: Double) {
+        if (targetsExpired()) {
+            clearTargets()
+            startStatusNotification()
+            return
         }
+
+        if (setupUpper > 0.0) {
+            if (price < setupUpper - RESET_DISTANCE) {
+                prefs().edit().putBoolean(KEY_UPPER_ARMED, true).apply()
+            }
+            if (price >= setupUpper && prefs().getBoolean(KEY_UPPER_ARMED, true)) {
+                maybeSendTargetAlert(
+                    levelKey = "BSL_${fmt(setupUpper)}",
+                    title = "🎯 XAU/USD — BSL Tersentuh!",
+                    message = "Level: ${fmt(setupUpper)} | Harga: ${fmt(price)}\nHTF Bias: Lihat Mapping | Setup Score: Lihat Mapping\nTap untuk buka Mapping →"
+                )
+                prefs().edit().putBoolean(KEY_UPPER_ARMED, false).apply()
+            }
+        }
+
+        if (setupLower > 0.0) {
+            if (price > setupLower + RESET_DISTANCE) {
+                prefs().edit().putBoolean(KEY_LOWER_ARMED, true).apply()
+            }
+            if (price <= setupLower && prefs().getBoolean(KEY_LOWER_ARMED, true)) {
+                maybeSendTargetAlert(
+                    levelKey = "SSL_${fmt(setupLower)}",
+                    title = "🎯 XAU/USD — SSL Tersentuh!",
+                    message = "Level: ${fmt(setupLower)} | Harga: ${fmt(price)}\nHTF Bias: Lihat Mapping | Setup Score: Lihat Mapping\nTap untuk buka Mapping →"
+                )
+                prefs().edit().putBoolean(KEY_LOWER_ARMED, false).apply()
+            }
+        }
+
         startStatusNotification()
+    }
+
+    private fun maybeSendTargetAlert(levelKey: String, title: String, message: String) {
+        val now = System.currentTimeMillis()
+        val cooldownKey = "notify_cooldown_$levelKey"
+        val lastSentAt = prefs().getLong(cooldownKey, 0L)
+        if (now - lastSentAt < ALERT_COOLDOWN_MS) return
+        prefs().edit().putLong(cooldownKey, now).apply()
+        sendAlert(title, message)
     }
 
     private fun scheduleReconnect() {
         if (reconnectJob?.isActive == true) return
         reconnectJob = scope.launch {
-            delay(15_000L)
+            reconnectAttempt += 1
+            val delayMs = when (reconnectAttempt) {
+                1 -> 15_000L
+                2 -> 30_000L
+                3 -> 60_000L
+                4 -> 120_000L
+                5 -> 300_000L
+                else -> 600_000L
+            }
+            if (reconnectAttempt >= 6) {
+                sendInfo("Amy FX Scanner", "Scanner kesulitan terhubung. Reconnect otomatis tetap berjalan tiap 10 menit.")
+            }
+            delay(delayMs)
             connectSocket()
         }
     }
@@ -173,8 +227,9 @@ class ScannerService : Service() {
         watchdogJob = scope.launch {
             while (true) {
                 delay(60_000L)
-                if (System.currentTimeMillis() - lastTickAt > 120_000L) {
-                    connectSocket()
+                val noTickMs = System.currentTimeMillis() - lastTickAt
+                if (noTickMs > 120_000L) {
+                    scheduleReconnect()
                     lastTickAt = System.currentTimeMillis()
                 }
             }
@@ -182,17 +237,16 @@ class ScannerService : Service() {
     }
 
     private fun startStatusNotification() {
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
+        val intent = mappingIntent()
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-        val text = "Scanner ikut Mapping | ${targetText()}"
-        val body = "Amy FX Scanner aktif. Analisa tetap dari Mapping. Scanner memantau Entry Area setup terbaik yang dikirim Mapping.\n\n${targetText()}"
+        val priceText = if (lastPrice > 0.0) "XAU/USD: ${fmt(lastPrice)}" else "XAU/USD: menunggu tick"
+        val text = "Amy FX aktif | $priceText"
+        val body = "Scanner aktif. ${targetText()}"
         val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(this, "scanner_channel")
-                .setContentTitle("Amy FX Scanner Active")
+            Notification.Builder(this, CHANNEL_SCANNER_FOREGROUND)
+                .setContentTitle("Amy FX Scanner")
                 .setContentText(text)
                 .setStyle(Notification.BigTextStyle().bigText(body))
                 .setSmallIcon(R.drawable.ic_stat_amy_fx)
@@ -203,7 +257,7 @@ class ScannerService : Service() {
         } else {
             @Suppress("DEPRECATION")
             Notification.Builder(this)
-                .setContentTitle("Amy FX Scanner Active")
+                .setContentTitle("Amy FX Scanner")
                 .setContentText(text)
                 .setStyle(Notification.BigTextStyle().bigText(body))
                 .setSmallIcon(R.drawable.ic_stat_amy_fx)
@@ -213,22 +267,21 @@ class ScannerService : Service() {
                 .build()
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(1, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+            startForeground(FOREGROUND_NOTIFICATION_ID, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
         } else {
-            startForeground(1, notification)
+            startForeground(FOREGROUND_NOTIFICATION_ID, notification)
         }
     }
 
     private fun sendAlert(title: String, message: String) {
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
         val pendingIntent = PendingIntent.getActivity(
-            this, System.currentTimeMillis().toInt(), intent,
+            this,
+            System.currentTimeMillis().toInt(),
+            mappingIntent(),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(this, "scanner_alerts_channel_v2")
+            Notification.Builder(this, CHANNEL_TARGET_ALERT)
                 .setContentTitle(title)
                 .setContentText(message)
                 .setStyle(Notification.BigTextStyle().bigText(message))
@@ -255,28 +308,60 @@ class ScannerService : Service() {
                 .setAutoCancel(true)
                 .build()
         }
-        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        nm.notify(2 + abs(message.hashCode() % 100000), notification)
+        notificationManager().notify(TARGET_NOTIFICATION_BASE_ID + abs(message.hashCode() % 100000), notification)
+    }
+
+    private fun sendInfo(title: String, message: String) {
+        val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Notification.Builder(this, CHANNEL_INFO)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setStyle(Notification.BigTextStyle().bigText(message))
+                .setSmallIcon(R.drawable.ic_stat_amy_fx)
+                .setAutoCancel(true)
+                .build()
+        } else {
+            @Suppress("DEPRECATION")
+            Notification.Builder(this)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setStyle(Notification.BigTextStyle().bigText(message))
+                .setSmallIcon(R.drawable.ic_stat_amy_fx)
+                .setAutoCancel(true)
+                .build()
+        }
+        notificationManager().notify(INFO_NOTIFICATION_ID, notification)
     }
 
     private fun createChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val serviceChannel = NotificationChannel(
-                "scanner_channel",
-                "Background Scanner",
+                CHANNEL_SCANNER_FOREGROUND,
+                "Amy FX Scanner Foreground",
                 NotificationManager.IMPORTANCE_LOW
-            )
+            ).apply {
+                description = "Silent foreground scanner status"
+                setSound(null, null)
+            }
             val alertChannel = NotificationChannel(
-                "scanner_alerts_channel_v2",
-                "Scanner Entry Alerts",
+                CHANNEL_TARGET_ALERT,
+                "Amy FX Target Alerts",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
+                description = "BSL/SSL target touch alerts"
                 enableVibration(true)
                 enableLights(true)
             }
-            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            nm.createNotificationChannel(serviceChannel)
-            nm.createNotificationChannel(alertChannel)
+            val infoChannel = NotificationChannel(
+                CHANNEL_INFO,
+                "Amy FX Info",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Connection and scanner information"
+            }
+            notificationManager().createNotificationChannel(serviceChannel)
+            notificationManager().createNotificationChannel(alertChannel)
+            notificationManager().createNotificationChannel(infoChannel)
         }
     }
 
@@ -293,12 +378,44 @@ class ScannerService : Service() {
 
     private fun targetText(): String {
         return when {
-            setupUpper > 0.0 && setupLower > 0.0 -> "Entry ${fmt(setupLower)} - ${fmt(setupUpper)}"
-            setupUpper > 0.0 -> "Area atas ${fmt(setupUpper)}"
-            setupLower > 0.0 -> "Area bawah ${fmt(setupLower)}"
-            else -> "Menunggu Entry Area dari Mapping"
+            setupUpper > 0.0 && setupLower > 0.0 -> "Target aktif: BSL ${fmt(setupUpper)} | SSL ${fmt(setupLower)}"
+            setupUpper > 0.0 -> "Target aktif: BSL ${fmt(setupUpper)}"
+            setupLower > 0.0 -> "Target aktif: SSL ${fmt(setupLower)}"
+            else -> "Menunggu target BSL/SSL dari Mapping"
         }
     }
+
+    private fun targetsExpired(): Boolean {
+        val updatedAt = prefs().getLong(KEY_TARGET_UPDATED_AT, 0L)
+        if (updatedAt <= 0L) return false
+        return System.currentTimeMillis() - updatedAt > TARGET_EXPIRY_MS
+    }
+
+    private fun clearTargets() {
+        setupUpper = 0.0
+        setupLower = 0.0
+        prefs().edit()
+            .remove(KEY_BSL_TARGET)
+            .remove(KEY_SSL_TARGET)
+            .remove(KEY_TARGET_UPDATED_AT)
+            .putBoolean(KEY_UPPER_ARMED, true)
+            .putBoolean(KEY_LOWER_ARMED, true)
+            .apply()
+    }
+
+    private fun mappingIntent(): Intent {
+        return Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("target_url", "file:///android_asset/apps/mapping/index.html")
+            data = android.net.Uri.parse("amyfx://mapping")
+        }
+    }
+
+    private fun notificationManager(): NotificationManager {
+        return getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    }
+
+    private fun prefs() = getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
 
     private fun fmt(value: Double): String {
         if (value <= 0.0) return "-"
@@ -309,5 +426,26 @@ class ScannerService : Service() {
         stopSocket()
         scope.cancel()
         super.onDestroy()
+    }
+
+    companion object {
+        private const val ACTION_STOP_SCANNER = "STOP_SCANNER"
+        private const val KEY_API_KEY = "api_key"
+        private const val KEY_SCANNER_ENABLED = "scanner_enabled"
+        private const val KEY_BSL_TARGET = "scanner_bsl_target"
+        private const val KEY_SSL_TARGET = "scanner_ssl_target"
+        private const val KEY_TARGET_UPDATED_AT = "scanner_target_updated_at"
+        private const val KEY_UPPER_ARMED = "scanner_upper_armed"
+        private const val KEY_LOWER_ARMED = "scanner_lower_armed"
+        private const val CHANNEL_SCANNER_FOREGROUND = "amyfx_scanner_foreground"
+        private const val CHANNEL_TARGET_ALERT = "amyfx_target_alert"
+        private const val CHANNEL_INFO = "amyfx_info"
+        private const val FOREGROUND_NOTIFICATION_ID = 1
+        private const val INFO_NOTIFICATION_ID = 11
+        private const val TARGET_NOTIFICATION_BASE_ID = 1000
+        private const val ALERT_COOLDOWN_MS = 30L * 60L * 1000L
+        private const val TARGET_EXPIRY_MS = 24L * 60L * 60L * 1000L
+        private const val PRICE_EPSILON = 0.01
+        private const val RESET_DISTANCE = 0.50
     }
 }
