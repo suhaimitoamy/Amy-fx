@@ -23,11 +23,23 @@ jobs:
       - name: Install Android SDK 35
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
+      - name: Restore release keystore
+        env:
+          AMYFX_KEYSTORE_BASE64: ${{ secrets.AMYFX_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$AMYFX_KEYSTORE_BASE64" ]; then
+            echo "$AMYFX_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/amy-fx-release.keystore"
+          fi
+
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
       - name: Build release APK
         env:
+          AMYFX_KEYSTORE_PATH: ${{ runner.temp }}/amy-fx-release.keystore
+          AMYFX_KEYSTORE_PASSWORD: ${{ secrets.AMYFX_KEYSTORE_PASSWORD }}
+          AMYFX_KEY_ALIAS: ${{ secrets.AMYFX_KEY_ALIAS }}
+          AMYFX_KEY_PASSWORD: ${{ secrets.AMYFX_KEY_PASSWORD }}
           AMYFX_VERSION_NAME: "1.2.0"
           AMYFX_VERSION_CODE: "12"
         run: ./gradlew assembleRelease --no-configuration-cache --stacktrace
