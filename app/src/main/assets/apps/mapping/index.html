@@ -4,6 +4,39 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#050505"><title>Amy FX Mapping</title>
 <style>
 :root{--bg:#050505;--card:#151515;--gold:#d4af37;--text:#f6f6f6;--muted:#aaa;--green:#4ade80;--red:#ff5252;--border:rgba(212,175,55,.22)}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding-bottom:86px}button,input{font:inherit}.topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 16px) 20px 14px;background:rgba(10,10,10,.94);border-bottom:1px solid rgba(255,255,255,.07)}.brand{width:50px;height:40px;border-radius:12px;background:var(--gold);color:#111;display:grid;place-items:center;font-weight:950}.brand-title{font-size:20px;font-weight:950}.brand-sub{font-size:12px;color:var(--gold)}.status{margin-left:auto;color:var(--muted);font-weight:900}.status.on{color:var(--green)}.content{padding:16px;max-width:900px;margin:0 auto}.card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:16px;margin:0 0 16px}.hero{display:flex;justify-content:space-between;gap:14px}.kicker{color:var(--gold);font-size:12px;font-weight:900;letter-spacing:.06em}.price{font-size:28px;font-weight:950}.muted{color:var(--muted)}.tf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.tf-grid button,.action,.chip{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:var(--text);border-radius:12px;padding:13px 8px;font-weight:900}.tf-grid button.active,.action{background:var(--gold);color:#111;border-color:var(--gold)}.nav{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(15,15,15,.96);display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:10px 12px calc(env(safe-area-inset-bottom,0px) + 10px);border-top:1px solid rgba(255,255,255,.08)}.nav button{background:transparent;border:0;color:#aaa;font-weight:800;font-size:12px;display:flex;flex-direction:column;gap:3px;align-items:center}.nav button.active{color:var(--gold)}.setup-card{background:linear-gradient(180deg,#181818,#101010);border:1px solid var(--border);border-radius:18px;padding:15px;margin:12px 0}.setup-head{display:flex;justify-content:space-between;gap:10px}.setup-title{font-weight:950;color:var(--gold);font-size:16px}.badge{border:1px solid rgba(212,175,55,.35);border-radius:999px;padding:4px 9px;font-size:12px;font-weight:900;color:var(--gold);height:max-content}.badge.buy{color:var(--green);border-color:rgba(74,222,128,.38)}.badge.sell{color:var(--red);border-color:rgba(255,82,82,.38)}.num-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}.num{background:#0b0b0b;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:10px}.num small{display:block;color:var(--muted);font-size:11px;font-weight:800}.num strong{display:block;font-size:15px;margin-top:2px}.reason{margin-top:12px;line-height:1.45;color:#ddd}.concept-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.concept{background:#1b1b1b;border-radius:14px;padding:13px}.concept small{display:block;font-size:11px;font-weight:900;color:var(--gold)}.concept h3{margin:3px 0 8px;color:var(--gold);font-size:15px}.concept p{margin:0;color:var(--muted);font-size:13px;line-height:1.35}.log{background:#1e1e1e;border-left:4px solid var(--gold);padding:12px;border-radius:10px;margin:8px 0;white-space:pre-wrap}.settings input{width:100%;background:#111723;border:1px solid rgba(255,255,255,.12);border-radius:14px;color:#fff;padding:14px;margin:8px 0 14px}.warn{background:rgba(255,82,82,.11);border:1px solid rgba(255,82,82,.22);padding:12px;border-radius:12px}.killzone-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}.killzone-item{background:#0b0b0b;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:10px}.killzone-item.active{border-color:rgba(74,222,128,.55);background:rgba(74,222,128,.08)}.killzone-item b{display:block;font-size:13px}.killzone-item small{display:block;color:var(--muted);font-size:11px;margin-top:3px}.session-pill{display:inline-block;border:1px solid rgba(212,175,55,.35);border-radius:999px;padding:4px 9px;font-size:12px;font-weight:900;color:var(--gold);margin-top:6px}.session-pill.active{color:var(--green);border-color:rgba(74,222,128,.4)}@media(max-width:520px){.concept-grid,.num-grid,.killzone-grid{grid-template-columns:1fr}.price{font-size:23px}}
+
+
+/* AMYFX_SYNC_FIX_CSS_START */
+.killzone-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;margin-top:10px!important}
+.killzone-item{padding:8px!important;border-radius:12px!important;min-height:unset!important}
+.killzone-item b{font-size:12px!important;line-height:1.2!important}
+.killzone-item small{font-size:10px!important;line-height:1.2!important;margin-top:3px!important}
+.session-pill{padding:4px 9px!important;font-size:11px!important}
+
+.tf-grid,.amyfx-tf-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important}
+.tf-grid button,.amyfx-tf-grid button{min-height:42px!important;padding:8px 10px!important;border-radius:14px!important;font-size:18px!important}
+.amyfx-tf-card{position:relative!important;padding:14px!important}
+.amyfx-tf-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.amyfx-tf-title{font-size:12px;font-weight:900;color:var(--muted);letter-spacing:.3px}
+.amyfx-tf-current{font-size:12px;font-weight:900;color:var(--gold);margin-left:6px}
+.amyfx-tf-dots{width:34px;height:30px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#111;color:#fff;font-size:20px;font-weight:900;line-height:1}
+.amyfx-tf-menu{position:absolute;right:14px;top:48px;z-index:50;width:190px;background:#090909;border:1px solid rgba(212,175,55,.35);border-radius:14px;padding:10px;box-shadow:0 18px 40px rgba(0,0,0,.55)}
+.amyfx-tf-menu.hidden{display:none}
+.amyfx-tf-menu-title{font-size:11px;font-weight:900;color:var(--muted);margin-bottom:8px}
+.amyfx-tf-menu-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.amyfx-tf-menu-grid button{min-height:30px!important;padding:5px!important;border-radius:9px!important;font-size:12px!important}
+.amyfx-cache-badge{display:inline-block;margin-left:8px;border:1px solid rgba(212,175,55,.45);border-radius:999px;padding:3px 7px;font-size:10px;color:var(--gold);vertical-align:middle}
+.amyfx-status-connected{color:#4ade80!important}
+.amyfx-status-cache{color:var(--gold)!important}
+.amyfx-status-offline{color:#ef4444!important}
+
+@media(max-width:520px){
+  .killzone-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .tf-grid,.amyfx-tf-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  .tf-grid button,.amyfx-tf-grid button{min-height:40px!important;font-size:17px!important}
+}
+/* AMYFX_SYNC_FIX_CSS_END */
+
 </style>
 </head>
 <body>
@@ -15,7 +48,7 @@ const TF={M1:'1min',M5:'5min',M15:'15min',M30:'30min',H1:'1h',H4:'4h',D1:'1day',
 const state={tab:'Dashboard',tf:'M5',key:localStorage.getItem('twelve_api_key')||'',price:Number(localStorage.getItem('last_price')||0),conn:'Offline',logs:JSON.parse(localStorage.getItem('amy_mapping_logs')||'[]'),analyses:JSON.parse(localStorage.getItem('amy_mapping_analyses')||'[]'),setups:JSON.parse(localStorage.getItem('amy_mapping_setups')||'[]'),candles:{},result:null,bg:localStorage.getItem('bg_scanner')==='true',notified:JSON.parse(localStorage.getItem('amy_mapping_notified')||'{}')};
 let ws=null,reconnectTimer=null,scanTimer=null;
 const p2=v=>Number.isFinite(+v)?Number(v).toFixed(2):'-';
-function nowTime(){return new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Jakarta',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date())}
+function nowTime(){return new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Jakarta',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date())}
 function timeRange(zone,sh,sm,eh,em){let now=new Date(),fmt=new Intl.DateTimeFormat('en-CA',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now),g=t=>+fmt.find(x=>x.type===t).value;let guess=Date.UTC(g('year'),g('month')-1,g('day'),sh,sm);let txt=new Intl.DateTimeFormat('en-GB',{timeZone:zone,hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(guess));let [hh,mm]=txt.split(':').map(Number);let start=guess+((sh*60+sm)-(hh*60+mm))*60000;let end=start+(((eh*60+em)-(sh*60+sm)+(eh*60+em<=sh*60+sm?1440:0))*60000);return{start,end}}
 function sessions(){let z=[['Asian Kill Zone','Asia/Tokyo',9,0,12,0],['London Judas Swing','Europe/London',7,0,8,30],['London Open Kill Zone','Europe/London',8,0,12,0],['New York Judas Swing','America/New_York',8,0,9,30],['New York Open Kill Zone','America/New_York',8,30,11,30],['Silver Bullet','America/New_York',10,0,11,0],['Swing Session','America/New_York',13,30,16,0]];let n=Date.now();return z.map(a=>{let r=timeRange(...a.slice(1));return{name:a[0],active:n>=r.start&&n<r.end,wib:new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Jakarta',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(r.start))+' - '+new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Jakarta',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(r.end))}})}
 function curSession(){return sessions().find(x=>x.active)||{name:'Off-Session',active:false,wib:'-'}}
@@ -54,6 +87,405 @@ function toggleBg(){if(!state.key.trim()){alert('Isi API key dulu.');return}stat
 function testNotif(){let s=state.result?.bestSetup||{type:'LIQUIDITY SWEEP',dir:'BUY WATCH',tf:'M5',score:78,entryLow:2355.20,entryHigh:2356.00,sl:2353.50,tp1:2358.50,tp2:2362.00,reason:'Contoh notifikasi setup angka.'};let msg=setupText(s);if(window.Android?.showNotificationWithUrl)window.Android.showNotificationWithUrl('AMY FX — '+s.type,msg,location.href);else if(typeof Notification!=='undefined')Notification.requestPermission().then(p=>p==='granted'&&new Notification('AMY FX — '+s.type,{body:msg}))}
 function downloadLogs(){let blob=new Blob([state.logs.join('\n')],{type:'text/plain'});let url=URL.createObjectURL(blob);let a=document.createElement('a');a.href=url;a.download='amy-fx-logs.txt';a.click();URL.revokeObjectURL(url)}window.downloadLogs=downloadLogs;window.testNotif=testNotif;
 document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));render();
+
+
+/* AMYFX_SYNC_FIX_JS_START */
+(function(){
+  if(window.__amyfxSyncFixLoaded)return;
+  window.__amyfxSyncFixLoaded=true;
+
+  const TF_KEY='amyfx.selected.tf';
+  const DEFAULT_TF_KEY='amyfx.default.tf';
+  const SNAP_KEY='amyfx.mapping.last.state';
+  const SETUP_DOM_KEY='amyfx.mapping.last.setup.dom';
+  const TF_FALLBACK=['M1','M5','M15','M30','H1','H4','D1','W1'];
+
+  function wibTime(){
+    return new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Jakarta',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date());
+  }
+
+  try{
+    if(typeof nowTime==='function'){
+      nowTime=function(){return wibTime()};
+    }
+  }catch(e){}
+
+  function getState(){
+    try{return typeof state!=='undefined'&&state?state:null}catch(e){return null}
+  }
+
+  function getTFs(){
+    try{
+      if(typeof TF!=='undefined'&&TF)return Object.keys(TF);
+    }catch(e){}
+    return TF_FALLBACK;
+  }
+
+  function validTf(tf){
+    return getTFs().includes(tf);
+  }
+
+  function savedTf(){
+    const a=localStorage.getItem(TF_KEY);
+    const b=localStorage.getItem(DEFAULT_TF_KEY);
+    if(validTf(a))return a;
+    if(validTf(b))return b;
+    return null;
+  }
+
+  function setTf(tf,asDefault){
+    if(!validTf(tf))return;
+    localStorage.setItem(TF_KEY,tf);
+    if(asDefault)localStorage.setItem(DEFAULT_TF_KEY,tf);
+    const st=getState();
+    if(st)st.tf=tf;
+  }
+
+  function emptyValue(v){
+    return v===undefined||v===null||v===''||(Array.isArray(v)&&v.length===0)||(typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length===0);
+  }
+
+  function cloneState(){
+    const st=getState();
+    if(!st||typeof st!=='object')return null;
+    const out={};
+    Object.keys(st).forEach(k=>{
+      try{
+        JSON.stringify(st[k]);
+        out[k]=st[k];
+      }catch(e){}
+    });
+    return out;
+  }
+
+  function usefulState(obj){
+    try{
+      const raw=JSON.stringify(obj||{});
+      return /price|harga|setup|entry|score|xau|gold|tp|sl/i.test(raw);
+    }catch(e){
+      return false;
+    }
+  }
+
+  function hasCache(){
+    return !!localStorage.getItem(SNAP_KEY)||!!localStorage.getItem(SETUP_DOM_KEY);
+  }
+
+  function saveSnapshot(){
+    const st=cloneState();
+    if(!st||!usefulState(st))return;
+    const tf=savedTf()||(st&&st.tf)||null;
+    localStorage.setItem(SNAP_KEY,JSON.stringify({at:Date.now(),tf,state:st}));
+  }
+
+  function restoreSnapshot(){
+    const st=getState();
+    if(!st)return;
+
+    const tf=savedTf();
+    if(tf)st.tf=tf;
+
+    let snap=null;
+    try{snap=JSON.parse(localStorage.getItem(SNAP_KEY)||'null')}catch(e){}
+    if(!snap||!snap.state)return;
+
+    Object.keys(snap.state).forEach(k=>{
+      if(k==='tf')return;
+      if(emptyValue(st[k])&&!emptyValue(snap.state[k]))st[k]=snap.state[k];
+    });
+
+    st.__amyfxCacheAt=snap.at;
+  }
+
+  function stateConnected(){
+    const st=getState();
+    if(!st)return false;
+
+    const boolKeys=['connected','isConnected','goldConnected','feedConnected','priceConnected','wsConnected','socketConnected'];
+    for(const k of boolKeys){
+      if(st[k]===true)return true;
+    }
+
+    const strKeys=['status','connectionStatus','goldStatus','feedStatus','priceStatus','appStatus'];
+    const raw=strKeys.map(k=>st[k]).filter(Boolean).join(' ');
+    if(/\bconnected\b|\bonline\b/i.test(raw)&&!/\boffline\b|\bdisconnected\b/i.test(raw))return true;
+
+    return false;
+  }
+
+  function goldConnectedFromUI(){
+    const t=(document.body&&document.body.innerText)||'';
+    return /Gold Price[\s\S]{0,160}\bConnected\b/i.test(t)||/XAUUSD[\s\S]{0,160}\bConnected\b/i.test(t);
+  }
+
+  function computedStatus(){
+    if(stateConnected()||goldConnectedFromUI())return 'Connected';
+    if(hasCache())return 'Cache';
+    return 'Offline';
+  }
+
+  function forceCacheMode(){
+    const st=getState();
+    if(!st||!hasCache())return;
+
+    ['offline','isOffline','feedOffline','appOffline'].forEach(k=>{
+      if(k in st)st[k]=false;
+    });
+
+    ['status','connectionStatus','appStatus'].forEach(k=>{
+      if(k in st&&/^offline$/i.test(String(st[k])))st[k]='Cache';
+    });
+  }
+
+  function leaf(el){
+    return el&&el.children&&el.children.length===0;
+  }
+
+  function syncHeader(){
+    const status=computedStatus();
+    const cls=status==='Connected'?'amyfx-status-connected':status==='Cache'?'amyfx-status-cache':'amyfx-status-offline';
+
+    let targets=Array.from(document.querySelectorAll('header *,.header *,.topbar *,.app-header *'))
+      .filter(el=>leaf(el)&&/^(Offline|Online|Connected|Cache)$/i.test(el.textContent.trim()));
+
+    if(!targets.length){
+      targets=Array.from(document.querySelectorAll('*')).filter(el=>{
+        if(!leaf(el))return false;
+        const r=el.getBoundingClientRect();
+        return r.top>=0&&r.top<150&&r.left>window.innerWidth*0.45&&/^(Offline|Online|Connected|Cache)$/i.test(el.textContent.trim());
+      });
+    }
+
+    targets.forEach(el=>{
+      el.textContent=status;
+      el.classList.remove('amyfx-status-connected','amyfx-status-cache','amyfx-status-offline');
+      el.classList.add(cls);
+    });
+  }
+
+  function syncScanner(){
+    const status=computedStatus();
+    const scannerStatus=status==='Connected'?'ON':status==='Cache'?'CACHE':'OFF';
+
+    Array.from(document.querySelectorAll('*')).forEach(el=>{
+      if(!/Background Scanner/i.test(el.textContent||''))return;
+
+      const card=el.closest('section,.card,div')||el.parentElement;
+      if(!card)return;
+
+      Array.from(card.querySelectorAll('*')).forEach(x=>{
+        if(!leaf(x))return;
+        const tx=x.textContent.trim();
+        if(/^(ON|OFF|CACHE|Offline|Connected)$/i.test(tx)){
+          x.textContent=scannerStatus;
+          x.classList.remove('amyfx-status-connected','amyfx-status-cache','amyfx-status-offline');
+          x.classList.add(scannerStatus==='ON'?'amyfx-status-connected':scannerStatus==='CACHE'?'amyfx-status-cache':'amyfx-status-offline');
+        }
+      });
+    });
+  }
+
+  function syncClock(){
+    Array.from(document.querySelectorAll('[data-amyfx-wib-clock]')).forEach(el=>{
+      el.textContent='WIB '+wibTime();
+    });
+
+    Array.from(document.querySelectorAll('.muted,small,span,div')).forEach(el=>{
+      if(!leaf(el))return;
+      const tx=el.textContent.trim();
+      if(/^WIB \d{2}:\d{2}(:\d{2})?$/.test(tx)){
+        el.textContent='WIB '+wibTime();
+        el.setAttribute('data-amyfx-wib-clock','1');
+      }
+    });
+  }
+
+  function findTfButtons(){
+    return Array.from(document.querySelectorAll('button')).filter(b=>validTf(b.textContent.trim()));
+  }
+
+  function decorateTf(){
+    const btns=findTfButtons();
+    if(!btns.length)return;
+
+    const grid=btns[0].closest('.tf-grid')||btns[0].parentElement;
+    if(!grid)return;
+
+    grid.classList.add('amyfx-tf-grid');
+
+    const card=grid.closest('section,.card')||grid.parentElement;
+    if(!card)return;
+
+    card.classList.add('amyfx-tf-card');
+
+    const cur=savedTf()||(getState()&&getState().tf)||'M5';
+
+    btns.forEach(b=>{
+      const tf=b.textContent.trim();
+      b.classList.toggle('active',tf===cur);
+    });
+
+    let toolbar=card.querySelector('.amyfx-tf-toolbar');
+    if(!toolbar){
+      toolbar=document.createElement('div');
+      toolbar.className='amyfx-tf-toolbar';
+      toolbar.innerHTML=`<div><span class="amyfx-tf-title">Timeframe</span><span class="amyfx-tf-current">${cur}</span></div><button type="button" class="amyfx-tf-dots">⋮</button><div class="amyfx-tf-menu hidden"><div class="amyfx-tf-menu-title">Set default TF</div><div class="amyfx-tf-menu-grid"></div></div>`;
+      card.insertBefore(toolbar,grid);
+
+      const menu=toolbar.querySelector('.amyfx-tf-menu');
+      const menuGrid=toolbar.querySelector('.amyfx-tf-menu-grid');
+
+      getTFs().forEach(tf=>{
+        const b=document.createElement('button');
+        b.type='button';
+        b.textContent=tf;
+        b.onclick=()=>{
+          setTf(tf,true);
+          menu.classList.add('hidden');
+          try{
+            if(typeof runAnalysis==='function')runAnalysis(tf);
+          }catch(e){}
+          postRender();
+        };
+        menuGrid.appendChild(b);
+      });
+
+      toolbar.querySelector('.amyfx-tf-dots').onclick=()=>{
+        menu.classList.toggle('hidden');
+      };
+    }else{
+      const label=toolbar.querySelector('.amyfx-tf-current');
+      if(label)label.textContent=cur;
+    }
+  }
+
+  function findSetupCard(){
+    const head=Array.from(document.querySelectorAll('h1,h2,h3,.title,.card-title'))
+      .find(el=>/Setup Aktif/i.test(el.textContent||''));
+    if(!head)return null;
+    return head.closest('section,.card')||head.parentElement;
+  }
+
+  function setupHasData(card){
+    if(!card)return false;
+    const t=card.innerText||'';
+    if(/tidak ada setup|no setup/i.test(t))return false;
+    return /SETUP\s*\d|LIQUIDITY|ENTRY|Entry Area|Harga Sekarang|Score|TP1|TP2|SL/i.test(t);
+  }
+
+  function saveSetupDom(){
+    const card=findSetupCard();
+    if(!setupHasData(card))return false;
+    localStorage.setItem(SETUP_DOM_KEY,card.outerHTML);
+    return true;
+  }
+
+  function restoreSetupDom(){
+    if(setupHasData(findSetupCard()))return;
+
+    const html=localStorage.getItem(SETUP_DOM_KEY);
+    if(!html)return;
+
+    const card=findSetupCard();
+    if(!card)return;
+
+    card.outerHTML=html;
+
+    const restored=findSetupCard();
+    if(restored&&!restored.querySelector('.amyfx-cache-badge')){
+      const h=Array.from(restored.querySelectorAll('h1,h2,h3')).find(x=>/Setup Aktif/i.test(x.textContent||''));
+      if(h){
+        const badge=document.createElement('span');
+        badge.className='amyfx-cache-badge';
+        badge.textContent='CACHE';
+        h.appendChild(badge);
+      }
+    }
+  }
+
+  function postRender(){
+    restoreSnapshot();
+    forceCacheMode();
+    syncHeader();
+    syncScanner();
+    syncClock();
+    decorateTf();
+    if(!saveSetupDom())restoreSetupDom();
+  }
+
+  document.addEventListener('click',function(e){
+    const btn=e.target.closest('button');
+    if(!btn)return;
+    const tf=btn.textContent.trim();
+    if(validTf(tf)){
+      setTf(tf,false);
+      setTimeout(function(){
+        saveSnapshot();
+        postRender();
+      },80);
+    }
+  },true);
+
+  try{
+    if(typeof runAnalysis==='function'&&!runAnalysis.__amyfxSyncFix){
+      const oldRunAnalysis=runAnalysis;
+      runAnalysis=function(tf){
+        if(validTf(tf))setTf(tf,false);
+        restoreSnapshot();
+        forceCacheMode();
+        const out=oldRunAnalysis.apply(this,arguments);
+        setTimeout(function(){
+          saveSnapshot();
+          postRender();
+        },100);
+        return out;
+      };
+      runAnalysis.__amyfxSyncFix=true;
+    }
+  }catch(e){}
+
+  try{
+    if(typeof render==='function'&&!render.__amyfxSyncFix){
+      const oldRender=render;
+      render=function(){
+        restoreSnapshot();
+        forceCacheMode();
+        const out=oldRender.apply(this,arguments);
+        setTimeout(postRender,0);
+        return out;
+      };
+      render.__amyfxSyncFix=true;
+    }
+  }catch(e){}
+
+  restoreSnapshot();
+  forceCacheMode();
+
+  setTimeout(function(){
+    const tf=savedTf();
+    if(tf){
+      try{
+        if(typeof runAnalysis==='function')runAnalysis(tf);
+        else postRender();
+      }catch(e){
+        postRender();
+      }
+    }else{
+      postRender();
+    }
+  },0);
+
+  setInterval(function(){
+    syncClock();
+    syncHeader();
+    syncScanner();
+  },1000);
+
+  window.addEventListener('online',postRender);
+  window.addEventListener('offline',postRender);
+})();
+/* AMYFX_SYNC_FIX_JS_END */
+
 </script>
 </body>
 </html>
