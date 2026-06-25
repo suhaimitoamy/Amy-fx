@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Bagian 28 — Advanced Entry Workflow — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+</head>
+<body>
+<script>requireLogin();</script>
+<header class="topbar hide-until-auth">
+  <nav class="nav">
+    <a class="brand" href="../index.html"><span class="brand-mark">A</span><span>Amy FX Academy</span></a>
+    <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="navlinks" id="navlinks">
+      <a href="../index.html">Beranda</a>
+      <a href="../daftar-materi.html">Daftar Materi</a>
+      <a href="../tentang.html">Tentang</a>
+      <a href="../glosarium/index.html">Glosarium</a>
+      
+    </div>
+  </nav>
+</header>
+<main class="container hide-until-auth">
+  <section class="article">
+    <div class="breadcrumb"><a href="../index.html">Beranda</a> › <a href="../daftar-materi.html">Daftar Materi</a></div>
+    <div class="eyebrow">Bagian 28 — Advanced Entry Workflow</div>
+    <h1>Advanced Entry Workflow</h1>
+    <p>Alur lengkap dari validasi setup, trigger, entry, invalidation, do not chase, checklist sebelum entry, dan review.</p>
+    <div class="chapter-list">
+      <a class="chapter-row" href="01-dari-validasi-ke-trigger.html"><span><strong>Dari Validasi ke Trigger</strong><br><small>Bagian 28 — Advanced Entry Workflow</small></span><span>→</span></a><a class="chapter-row" href="02-invalidation-dan-stop-loss-melindungi-logika-trading-bukan-ego.html"><span><strong>Invalidation dan Stop Loss: Melindungi Logika Trading, Bukan Ego</strong><br><small>Bagian 28 — Advanced Entry Workflow</small></span><span>→</span></a><a class="chapter-row" href="03-do-not-chase-disiplin-menunggu-lokasi-yang-sehat.html"><span><strong>Do Not Chase: Disiplin Menunggu Lokasi yang Sehat</strong><br><small>Bagian 28 — Advanced Entry Workflow</small></span><span>→</span></a><a class="chapter-row" href="04-disiplin-eksekusi-menjalankan-rencana-tanpa-kompromi.html"><span><strong>Disiplin Eksekusi: Menjalankan Rencana Tanpa Kompromi</strong><br><small>Bagian 28 — Advanced Entry Workflow</small></span><span>→</span></a><a class="chapter-row" href="05-menyusun-trading-rules-dan-alur-baca-dari-konsep-ke-keputusan.html"><span><strong>Menyusun Trading Rules dan Alur Baca: Dari Konsep ke Keputusan</strong><br><small>Bagian 28 — Advanced Entry Workflow</small></span><span>→</span></a><a class="chapter-row" href="06-liquidity-grab-ke-mss-ke-entry-flow-chart-praktis.html"><span><strong>Liquidity Grab ke MSS ke Entry: Flow Chart Praktis</strong><br><small>Bagian 28 — Advanced Entry Workflow</small></span><span>→</span></a><a class="chapter-row" href="07-kapan-tidak-trade-seni-menunggu-peluang-berkualitas.html"><span><strong>Kapan Tidak Trade: Seni Menunggu Peluang Berkualitas</strong><br><small>Bagian 28 — Advanced Entry Workflow</small></span><span>→</span></a><a class="chapter-row" href="08-checklist-sebelum-entry-filter-terakhir-sebelum-eksekusi.html"><span><strong>Checklist Sebelum Entry: Filter Terakhir Sebelum Eksekusi</strong><br><small>Bagian 28 — Advanced Entry Workflow</small></span><span>→</span></a>
+    </div>
+  <div class="quiz-container" data-module="trade-management-advanced"></div>
+<script src="../assets/js/quiz.js"></script>
+</section>
+</main>
+<footer class="footer hide-until-auth">© 2026 Amy FX Academy. Belajar Trading dari Nol sampai Mandiri.</footer>
+</body>
+</html>

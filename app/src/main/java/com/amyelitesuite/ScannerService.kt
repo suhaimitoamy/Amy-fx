@@ -308,7 +308,7 @@ class ScannerService : Service() {
                 .setAutoCancel(true)
                 .build()
         }
-        notificationManager().notify(TARGET_NOTIFICATION_BASE_ID + abs(message.hashCode() % 100000), notification)
+        if (AmyFxNotificationGate.shouldNotify(applicationContext, "amyfx_1b2204b033", System.currentTimeMillis())) { notificationManager().notify(AmyFxNotificationGate.stableId("amyfx_1b2204b033", TARGET_NOTIFICATION_BASE_ID + abs(message.hashCode() % 100000)), notification) } // AMYFX_NOTIFY_NATIVE_FIX
     }
 
     private fun sendInfo(title: String, message: String) {
@@ -330,7 +330,7 @@ class ScannerService : Service() {
                 .setAutoCancel(true)
                 .build()
         }
-        notificationManager().notify(INFO_NOTIFICATION_ID, notification)
+        if (AmyFxNotificationGate.shouldNotify(applicationContext, "amyfx_0adf13dedd", System.currentTimeMillis())) { notificationManager().notify(AmyFxNotificationGate.stableId("amyfx_0adf13dedd", INFO_NOTIFICATION_ID), notification) } // AMYFX_NOTIFY_NATIVE_FIX
     }
 
     private fun createChannels() {

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Bagian 16 — Advanced Market Structure Reading — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+</head>
+<body>
+<script>requireLogin();</script>
+<header class="topbar hide-until-auth">
+  <nav class="nav">
+    <a class="brand" href="../index.html"><span class="brand-mark">A</span><span>Amy FX Academy</span></a>
+    <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="navlinks" id="navlinks">
+      <a href="../index.html">Beranda</a>
+      <a href="../daftar-materi.html">Daftar Materi</a>
+      <a href="../tentang.html">Tentang</a>
+      <a href="../glosarium/index.html">Glosarium</a>
+      
+    </div>
+  </nav>
+</header>
+<main class="container hide-until-auth">
+  <section class="article">
+    <div class="breadcrumb"><a href="../index.html">Beranda</a> › <a href="../daftar-materi.html">Daftar Materi</a></div>
+    <div class="eyebrow">Bagian 16 — Advanced Market Structure Reading</div>
+    <h1>Advanced Market Structure Reading</h1>
+    <p>Membaca structure lanjutan: minor/major swing, valid MSS, complex structure, dan kapan structure tidak layak dijadikan alasan entry.</p>
+    <div class="chapter-list">
+      <a class="chapter-row" href="01-struktur-minor-vs-struktur-mayor-navigasi-berlapis-dalam-pergerakan-harga.html"><span><strong>Struktur Minor vs Struktur Mayor (Navigasi Berlapis dalam Pergerakan Harga)</strong><br><small>Bagian 16 — Advanced Market Structure Reading</small></span><span>→</span></a><a class="chapter-row" href="02-valid-vs-invalid-mss-menyaring-sinyal-palsu-di-tengah-kebisingan-pasar.html"><span><strong>Valid vs Invalid MSS (Menyaring Sinyal Palsu di Tengah Kebisingan Pasar)</strong><br><small>Bagian 16 — Advanced Market Structure Reading</small></span><span>→</span></a><a class="chapter-row" href="03-inducement-vs-break-of-structure-bos.html"><span><strong>Inducement vs. Break of Structure (BOS)</strong><br><small>Bagian 16 — Advanced Market Structure Reading</small></span><span>→</span></a><a class="chapter-row" href="04-complex-structure-dan-sub-structure-memahami-lapisan-pasar-yang-berlapis.html"><span><strong>Complex Structure dan Sub-Structure (Memahami Lapisan Pasar yang Berlapis)</strong><br><small>Bagian 16 — Advanced Market Structure Reading</small></span><span>→</span></a><a class="chapter-row" href="05-high-resistance-vs-low-resistance-liquidity-run-hrlr-vs-lrlr.html"><span><strong>High Resistance vs. Low Resistance Liquidity Run (HRLR vs LRLR)</strong><br><small>Bagian 16 — Advanced Market Structure Reading</small></span><span>→</span></a><a class="chapter-row" href="06-false-displacement-dan-cara-membedakannya-menghindari-jebakan-momentum.html"><span><strong>False Displacement dan Cara Membedakannya (Menghindari Jebakan Momentum)</strong><br><small>Bagian 16 — Advanced Market Structure Reading</small></span><span>→</span></a><a class="chapter-row" href="07-irl-dan-erl-advance.html"><span><strong>IRL &amp; ERL Advance</strong><br><small>Bagian 16 — Advanced Market Structure Reading</small></span><span>→</span></a><a class="chapter-row" href="08-continuation-leg-dan-continuation-failure-menilai-kesehatan-tren.html"><span><strong>Continuation Leg dan Continuation Failure (Menilai Kesehatan Tren)</strong><br><small>Bagian 16 — Advanced Market Structure Reading</small></span><span>→</span></a>
+    </div>
+  <div class="quiz-container" data-module="advanced-entry-logic"></div>
+<script src="../assets/js/quiz.js"></script>
+</section>
+</main>
+<footer class="footer hide-until-auth">© 2026 Amy FX Academy. Belajar Trading dari Nol sampai Mandiri.</footer>
+</body>
+</html>

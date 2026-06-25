@@ -14,3 +14,130 @@ Harga: ${R(e)}`.replace(/<[^>]*>?/gm,``)),P(e=>[{id:Date.now(),type:r?`BUY`:`SEL
 
 `+e.join(`
 `),n=new Blob([t],{type:`text/plain`}),r=URL.createObjectURL(n),i=document.createElement(`a`);i.href=r,i.download=`Event_Logs_${Date.now()}.txt`,i.click(),URL.revokeObjectURL(r)}function Ee(){let e=document.getElementById(`btn-save-connect`);e&&(e.innerHTML=`<span style="display:flex;align-items:center;gap:6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z"/><circle cx="16.5" cy="7.5" r=".5"/></svg> Menyimpan...</span>`),setTimeout(()=>{Se(),e&&(e.innerHTML=`<span style="display:flex;align-items:center;gap:6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg> Terhubung!</span>`),setTimeout(()=>{e&&(e.innerHTML=`<span style="display:flex;align-items:center;gap:6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z"/><circle cx="16.5" cy="7.5" r=".5"/></svg> Save & Connect</span>`)},3e3)},500)}return N[0],(0,L.jsxs)(`div`,{className:`app`,children:[(0,L.jsxs)(`header`,{className:`topbar`,children:[(0,L.jsx)(`div`,{className:`brand-mark`,children:`XAU`}),(0,L.jsxs)(`div`,{children:[(0,L.jsx)(`div`,{className:`brand-title`,children:`XAUUSD ICT`}),(0,L.jsx)(`div`,{className:`brand-sub`,children:`PWA • MTF & Event Scanner`})]}),(0,L.jsx)(`div`,{className:g===`Connected`?`live-dot on`:g===`Fallback API`?`live-dot fallback`:g===`Reconnecting`?`live-dot yellow`:`live-dot`,children:g})]}),(0,L.jsxs)(`main`,{className:`content`,children:[e===`Dashboard`&&(0,L.jsxs)(L.Fragment,{children:[(0,L.jsxs)(`section`,{className:`hero card`,children:[(0,L.jsxs)(`div`,{children:[(0,L.jsx)(`div`,{className:`kicker`,children:`INNER CIRCLE TRADER`}),(0,L.jsxs)(`h1`,{children:[`XAU`,(0,L.jsx)(`span`,{children:`/`}),`USD`]}),(0,L.jsx)(`div`,{className:`label`,children:`WIB Time`}),(0,L.jsx)(`div`,{className:`clock`,children:ze(b)}),(0,L.jsx)(`div`,{className:`muted`,children:Be(b)})]}),(0,L.jsxs)(`div`,{className:`price-box`,children:[(0,L.jsx)(`div`,{className:`label`,children:`Gold Price`}),(0,L.jsx)(`div`,{className:`price`,children:Re(v)}),(0,L.jsx)(`div`,{className:g===`Connected`?`green`:`muted`,children:`Real-time XAU/USD`}),(0,L.jsx)(`div`,{className:_e.active?`green small`:`muted small`,children:_e.name})]})]}),(0,L.jsx)(Qe,{data:o}),(0,L.jsxs)(`div`,{className:`metrics`,children:[(0,L.jsx)(et,{v:N.length,l:`Analyses`}),(0,L.jsx)(et,{v:N.filter(e=>e.bias===`BULLISH`).length,l:`Bullish`,c:`green`}),(0,L.jsx)(et,{v:N.filter(e=>e.bias===`BEARISH`).length,l:`Bearish`,c:`red`})]}),(0,L.jsxs)(`button`,{className:`action`,onClick:()=>t(`Analyze`),children:[(0,L.jsx)(j,{size:18}),` Analisis ICT MTF`]}),(0,L.jsxs)(`section`,{className:`card`,children:[(0,L.jsx)(tt,{icon:(0,L.jsx)(ne,{size:16}),text:`Trading Sessions Auto DST`}),ve.map(e=>(0,L.jsx)(nt,{r:e},e.name))]}),(0,L.jsxs)(`section`,{className:`card`,children:[(0,L.jsx)(tt,{icon:(0,L.jsx)(ie,{size:16}),text:`ICT Concepts Covered`}),(0,L.jsx)(`div`,{className:`concept-grid`,children:(m?.concepts||$e(_e)).map(e=>{let t={...e};return t.title===`Kill Zone`&&(t.status=_e.active?`ACTIVE`:`WAIT`,t.value=_e.name),(0,L.jsx)(rt,{x:t},t.title)})})]})]}),e===`Analyze`&&(0,L.jsxs)(`div`,{style:{display:`flex`,flexDirection:`column`,gap:`20px`},children:[(0,L.jsxs)(`section`,{className:`hero card`,style:{textAlign:`center`,padding:`30px 20px`},children:[(0,L.jsx)(`div`,{className:`kicker`,children:`SMART MONEY ENGINE`}),(0,L.jsx)(`h1`,{style:{fontSize:`28px`,margin:`10px 0`,color:`var(--primary-gold)`,textShadow:`0 0 20px rgba(212,175,55,0.3)`},children:`AI Analyzer`}),(0,L.jsx)(`p`,{style:{color:`var(--text-muted)`,fontSize:`14px`,maxWidth:`250px`,margin:`0 auto`},children:`Pilih timeframe untuk memindai struktur, FVG, dan likuiditas secara instan.`}),(0,L.jsxs)(`div`,{style:{marginTop:`15px`,display:`inline-block`,background:`rgba(20,20,20,0.8)`,padding:`6px 12px`,borderRadius:`20px`,border:`1px solid rgba(255,255,255,0.05)`,fontSize:`12px`,color:`var(--primary-gold)`},children:[`📍 `,_e.name]})]}),(0,L.jsxs)(`section`,{className:`card`,children:[(0,L.jsx)(`div`,{style:{display:`grid`,gridTemplateColumns:`repeat(4, 1fr)`,gap:`8px`,marginBottom:`20px`},children:Object.keys(Le).map(e=>(0,L.jsx)(`button`,{onClick:()=>w(e),style:{background:e===S?`var(--primary-gold)`:`rgba(255,255,255,0.03)`,color:e===S?`#000`:`var(--text-main)`,border:e===S?`none`:`1px solid rgba(255,255,255,0.1)`,borderRadius:`10px`,padding:`12px 0`,fontWeight:`bold`,transition:`all 0.2s`},children:e},e))}),(0,L.jsx)(Je,{narrative:m})]})]}),e===`Terminal`&&(0,L.jsxs)(`section`,{className:`terminal`,children:[(0,L.jsx)(tt,{icon:(0,L.jsx)(A,{size:16}),text:`Live Event Scanner`}),T.map((e,t)=>(0,L.jsxs)(`div`,{className:`log`,children:[`› `,e]},t))]}),e===`History`&&(0,L.jsxs)(`section`,{className:`card`,children:[(0,L.jsx)(`div`,{className:`page-title`,children:`Event Logs (Auto Jurnal)`}),(0,L.jsx)(`p`,{className:`muted`,children:`Rekaman kejadian krusial otomatis (MSS, FVG, OB).`}),(0,L.jsxs)(`button`,{className:`action`,onClick:I,style:{margin:`10px 0`,background:`#3b82f6`,color:`#fff`},children:[(0,L.jsx)(re,{size:18}),` Download TXT`]}),(0,L.jsxs)(`div`,{style:{marginTop:`20px`,display:`flex`,flexDirection:`column`,gap:`10px`},children:[T.filter(e=>e.includes(`Momentum`)||e.includes(`Target`)||e.includes(`Harga`)||e.includes(`Terdeteksi`)||e.includes(`Dijebol`)).map((e,t)=>(0,L.jsx)(`div`,{style:{background:`#1e1e1e`,padding:`15px`,borderRadius:`10px`,borderLeft:`4px solid var(--primary-gold)`},children:e},t)),T.length===0&&(0,L.jsx)(`div`,{className:`muted`,children:`Belum ada kejadian tercatat.`})]})]}),e===`Settings`&&(0,L.jsxs)(`section`,{className:`card`,children:[(0,L.jsx)(`div`,{className:`page-title`,children:`Settings & API`}),(0,L.jsx)(`div`,{className:`label`,children:`Twelve Data API Key`}),(0,L.jsx)(`input`,{value:f,onChange:e=>p(e.target.value),placeholder:`Twelve Data API key`}),(0,L.jsx)(`button`,{id:`btn-save-connect`,className:`action`,onClick:Ee,children:(0,L.jsxs)(`span`,{style:{display:`flex`,alignItems:`center`,gap:`6px`},children:[(0,L.jsx)(k,{size:18}),` Save & Connect`]})}),(0,L.jsx)(`p`,{className:`muted`,children:`API key disimpan aman di localStorage HP Anda.`}),(0,L.jsx)(`div`,{style:{marginTop:`20px`},className:`label`,children:`Background Scanner (Native)`}),(0,L.jsx)(`button`,{className:u?`action`:`chip`,onClick:()=>{if(!u&&!f){alert(`Harap isi API Key terlebih dahulu sebelum mengaktifkan Background Scanner.`);return}d(!u),localStorage.setItem(`bg_scanner`,!u)},children:u?`📡 Background Scanner ON`:`📴 Background Scanner OFF`}),(0,L.jsx)(`p`,{className:`muted`,children:`Saat ON, pemindai akan berjalan di layar belakang dan mengirim notifikasi jika Support/Resistance jebol. Baterai mungkin lebih boros.`}),(0,L.jsx)(`div`,{style:{marginTop:`20px`},className:`label`,children:`Voice Alerts (Text-to-Speech)`}),(0,L.jsx)(`button`,{className:c?`action`:`chip`,onClick:()=>{l(!c),localStorage.setItem(`voice_alert`,!c)},children:c?`🔊 Voice Alerts ON`:`🔇 Voice Alerts OFF`}),(0,L.jsx)(`p`,{className:`muted`,children:`Aktifkan untuk mendengarkan robot suara membacakan sinyal saat aplikasi berjalan.`}),(0,L.jsx)(`div`,{style:{marginTop:`20px`},className:`label`,children:`Uji Coba Notifikasi`}),(0,L.jsx)(`button`,{className:`action`,onClick:()=>{window.Android&&window.Android.showNotificationWithUrl?window.Android.showNotificationWithUrl(`✅ Tes Berhasil`,`Notifikasi Heads-Up dengan Jalur Khusus (Deep Link) berfungsi! Klik ini akan kembali ke halaman Mapping.`,window.location.href):window.Android&&window.Android.showNotification?window.Android.showNotification(`✅ Tes Berhasil`,`Notifikasi Heads-Up berfungsi dengan baik di Android!`):Notification&&Notification.permission===`granted`?new Notification(`✅ Tes Berhasil`,{body:`Notifikasi browser berfungsi!`}):Notification?Notification.requestPermission().then(e=>{e===`granted`?new Notification(`✅ Tes Berhasil`,{body:`Notifikasi browser diaktifkan!`}):alert(`Izin notifikasi ditolak oleh browser.`)}):alert(`Browser ini tidak mendukung fitur notifikasi.`)},children:`🔔 Kirim Notifikasi Tes`}),(0,L.jsx)(`p`,{className:`muted`,children:`Klik untuk mencoba notifikasi pop-up (Heads-Up).`})]})]}),(0,L.jsxs)(`nav`,{className:`nav`,children:[(0,L.jsx)(it,{a:e===`Dashboard`,f:()=>t(`Dashboard`),i:(0,L.jsx)(E,{size:18}),l:`Dashboard`}),(0,L.jsx)(it,{a:e===`Analyze`,f:()=>t(`Analyze`),i:(0,L.jsx)(D,{size:18}),l:`Analyze`}),(0,L.jsx)(it,{a:e===`History`,f:()=>t(`History`),i:(0,L.jsx)(O,{size:18}),l:`History`}),(0,L.jsx)(it,{a:e===`Terminal`,f:()=>t(`Terminal`),i:(0,L.jsx)(A,{size:18}),l:`Terminal`}),(0,L.jsx)(it,{a:e===`Settings`,f:()=>t(`Settings`),i:(0,L.jsx)(ae,{size:18}),l:`Settings`})]})]})}(0,M.createRoot)(document.getElementById(`root`)).render((0,L.jsx)(at,{}));
+
+/* AMYFX_NOTIFY_GUARD_START */
+(function(){
+  if(window.__amyfxNotifyGuardLoaded)return;
+  window.__amyfxNotifyGuardLoaded=true;
+
+  const STORE='amyfx.notify.last.sent';
+  const COOLDOWN=5*60*1000;
+  const RESUME_MUTE=9000;
+  const MAX_ITEMS=80;
+  let muteUntil=0;
+
+  function now(){return Date.now()}
+  function norm(x){
+    return String(x||'')
+      .replace(/\d+([.,]\d+)?/g,'#')
+      .replace(/\s+/g,' ')
+      .trim()
+      .slice(0,180);
+  }
+  function kind(t,b){
+    const x=(String(t||'')+' '+String(b||'')).toLowerCase();
+    if(x.includes('scanner terhubung'))return 'scanner_connected';
+    if(x.includes('amy fx aktif'))return 'scanner_alive';
+    if(x.includes('liquidity sweep'))return 'liquidity_sweep';
+    if(x.includes('ssl')||x.includes('bsl'))return 'bsl_ssl_touched';
+    return 'amyfx_alert';
+  }
+  function key(t,b){
+    return kind(t,b)+'|'+norm(t)+'|'+norm(b);
+  }
+  function read(){
+    try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch(e){return{}}
+  }
+  function write(o){
+    const arr=Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,MAX_ITEMS);
+    localStorage.setItem(STORE,JSON.stringify(Object.fromEntries(arr)));
+  }
+  function route(t,b){
+    const k=kind(t,b);
+    if(k==='liquidity_sweep')return 'Analyze';
+    if(k==='bsl_ssl_touched')return 'Analyze';
+    if(k==='scanner_connected'||k==='scanner_alive')return 'Dashboard';
+    return 'Analyze';
+  }
+  function openRoute(t,b){
+    const r=route(t,b);
+    try{localStorage.setItem('amyfx.notification.route',r)}catch(e){}
+    try{if(typeof setTab==='function')setTab(r)}catch(e){}
+    try{window.focus()}catch(e){}
+  }
+  function allow(t,b){
+    const n=now();
+    const k=key(t,b);
+
+    if(n<muteUntil && kind(t,b)!=='scanner_alive')return false;
+
+    const last=read();
+    const prev=last[k]||0;
+    if(n-prev<COOLDOWN)return false;
+
+    last[k]=n;
+    write(last);
+    return true;
+  }
+
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden){
+      muteUntil=now()+RESUME_MUTE;
+    }
+  });
+
+  window.addEventListener('pageshow',function(){
+    muteUntil=now()+RESUME_MUTE;
+  });
+
+  try{
+    if('Notification' in window && !window.Notification.__amyfxWrapped){
+      const OriginalNotification=window.Notification;
+      const WrappedNotification=function(title,opts){
+        opts=opts||{};
+        const body=opts.body||'';
+        if(!allow(title,body))return null;
+        const n=new OriginalNotification(title,opts);
+        n.onclick=function(){openRoute(title,body)};
+        return n;
+      };
+      Object.getOwnPropertyNames(OriginalNotification).forEach(function(k){
+        try{WrappedNotification[k]=OriginalNotification[k]}catch(e){}
+      });
+      WrappedNotification.prototype=OriginalNotification.prototype;
+      WrappedNotification.__amyfxWrapped=true;
+      window.Notification=WrappedNotification;
+    }
+  }catch(e){}
+
+  function wrapBridge(obj){
+    if(!obj||obj.__amyfxNotifyBridgeWrapped)return;
+    Object.keys(obj).forEach(function(k){
+      if(!/notify|notification|alert|push/i.test(k))return;
+      if(typeof obj[k]!=='function')return;
+      const old=obj[k];
+      obj[k]=function(){
+        const args=[].slice.call(arguments);
+        const title=args[0]||'Amy FX';
+        const body=args[1]||args[0]||'';
+        if(!allow(title,body))return null;
+        try{return old.apply(this,args)}catch(e){return null}
+      };
+    });
+    obj.__amyfxNotifyBridgeWrapped=true;
+  }
+
+  function wrapAll(){
+    ['Android','AndroidBridge','AmyFX','AmyFx','Native','NotificationBridge','AppBridge'].forEach(function(n){
+      try{wrapBridge(window[n])}catch(e){}
+    });
+  }
+
+  wrapAll();
+  setInterval(wrapAll,1500);
+
+  window.__amyfxNotifyAllow=allow;
+  window.__amyfxNotifyOpenRoute=openRoute;
+})();
+/* AMYFX_NOTIFY_GUARD_END */
+

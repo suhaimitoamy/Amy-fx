@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Waktu vs Harga: Mana yang Lebih Penting — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+</head>
+<body>
+  <script>requireLogin();</script>
+  <header class="topbar hide-until-auth">
+    <nav class="nav">
+      <a class="brand" href="../index.html"><span class="brand-mark">A</span><span>Amy FX Academy</span></a>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div class="navlinks" id="navlinks">
+        <a href="../index.html">Beranda</a>
+        <a href="../daftar-materi.html">Daftar Materi</a>
+        <a href="../tentang.html">Tentang</a>
+        <a href="../glosarium/index.html">Glosarium</a>
+        
+      </div>
+    </nav>
+  </header>
+  <main class="container hide-until-auth">
+    <div class="article-layout">
+      <article class="article">
+        <div class="breadcrumb"><a href="../index.html">Beranda</a> › <a href="index.html">Bagian 23 — ICT Macro &amp; Silver Bullet Model</a></div>
+        <div class="eyebrow">Bagian 23 — ICT Macro &amp; Silver Bullet Model</div>
+        <h1>Waktu vs Harga: Mana yang Lebih Penting</h1>
+
+        <div class="image-slot" data-img-path="assets/images/lessons/23-waktu-vs-harga-mana-yang-lebih-penting.jpg" data-prompt="Buat ilustrasi edukasi trading untuk materi &#x27;Waktu vs Harga: Mana yang Lebih Penting&#x27; dari &#x27;Bagian 23 — ICT Macro &amp; Silver Bullet Model&#x27;, gaya clean light website, rasio 16:9, warna putih, hijau lembut, biru lembut, sedikit aksen gold. Tampilkan chart sederhana, area liquidity, POI, candle displacement, dan checklist trading. Jangan gunakan klaim profit pasti. Cocok untuk website Amy FX Academy." data-caption="Ilustrasi Waktu vs Harga: Mana yang Lebih Penting"></div>
+        <div class="note"><strong>Analogi gampangnya:</strong> Bayangkan kamu sedang menyaring pasir untuk mencari emas. Kalau semua pasir dianggap emas, kamu akan capek sendiri. Materi advanced mengajarkan kamu menyaring: mana yang layak ditunggu, mana yang cukup dilihat, dan mana yang harus dilewati.</div>
+
+
+        <h2>1. Fungsi Harga</h2>
+<p>Harga membantu kita melihat:</p>
+<ul>
+<li>area penting</li>
+<li>high dan low</li>
+<li>range</li>
+<li>lokasi reaksi</li>
+<li>target liquidity</li>
+</ul>
+<p>Jadi harga menjawab:</p>
+<p><strong>di mana area yang layak diperhatikan</strong></p>
+<h2>2. Fungsi Waktu</h2>
+<p>Waktu membantu kita melihat:</p>
+<ul>
+<li>kapan pasar lebih aktif</li>
+<li>kapan gerakan lebih mungkin terjadi</li>
+<li>kapan entry terlalu dini</li>
+</ul>
+<p>Jadi waktu menjawab:</p>
+<p><strong>kapan area itu lebih layak dipakai</strong></p>
+<h2>3. Kenapa Pemula Sering Salah</h2>
+<p>Pemula sering:</p>
+<ul>
+<li>benar melihat level, tetapi salah timing</li>
+<li>benar melihat waktu aktif, tetapi levelnya kosong</li>
+</ul>
+<p>Karena itu harga dan waktu tidak sebaiknya dipisahkan.</p>
+<h2>4. Kesimpulan Folder 01</h2>
+<p>Kalau kamu sampai di akhir folder ini dengan tenang, berarti sekarang kamu sudah:</p>
+<ul>
+<li>tidak terlalu kaget dengan istilah teknis</li>
+<li>paham kenapa high dan low bisa jadi target</li>
+<li>paham kenapa level yang obvious sering disapu</li>
+<li>punya jembatan menuju struktur dan liquidity yang lebih formal</li>
+</ul>
+<p>Itu sudah cukup.</p>
+<p>kamu tidak perlu merasa harus langsung mahir. Yang penting, bahasa SMC/ICT sekarang tidak lagi terdengar sepenuhnya asing.</p>
+<h2>5. Lanjut Setelah Ini</h2>
+<p>Masuk ke:</p>
+<p><strong>02 - Struktur dan liquidity</strong></p>
+<h2>Kesalahan Pemula yang Perlu Dihindari</h2>
+<p>Melompat langsung ke istilah teknis tanpa menghubungkannya dengan bentuk visual yang sederhana di chart.</p>
+<h2>Kesimpulan Bab</h2>
+<p>Transisi yang sehat terjadi saat istilah teknis tidak lagi terasa asing karena kamu sudah tahu bentuk sederhananya di chart.</p>
+
+
+        <div class="source-note">Materi ini disusun ulang dari Materi Trading Amy ZIP dan dirapikan ke gaya Amy FX Academy. Istilah teknis seperti liquidity, sweep, FVG, OB, IFVG, MSS, CISD, entry, Stop Loss, dan Take Profit tetap dipertahankan.</div>
+        <nav class="page-nav">
+          <a class="btn" href="04-true-day-open-midnight-open-dan-kill-zones.html">← True Day Open, Midnight Open, dan Kill Zones</a>
+          <a class="btn gold" href="../daftar-materi.html">Daftar Materi</a>
+          <span></span>
+        </nav>
+      </article>
+      <aside class="toc-card">
+        <h3>Bagian 23 — ICT Macro &amp; Silver Bullet Model</h3>
+        <ul><li><a class="" href="01-silver-bullet-session-ict-mencari-setup-presisi-di-waktu-emas.html">Silver Bullet Session ICT: Mencari Setup Presisi di Waktu Emas</a></li>
+<li><a class="" href="02-macro-ict-time-windows-detail-timing-di-balik-pergerakan-harga.html">Macro ICT (Time Windows): Detail Timing di Balik Pergerakan Harga</a></li>
+<li><a class="" href="03-london-kill-zone-dan-new-york-kill-zone.html">London Kill Zone dan New York Kill Zone</a></li>
+<li><a class="" href="04-true-day-open-midnight-open-dan-kill-zones.html">True Day Open, Midnight Open, dan Kill Zones</a></li>
+<li><a class="active" href="05-waktu-vs-harga-mana-yang-lebih-penting.html">Waktu vs Harga: Mana yang Lebih Penting</a></li></ul>
+      </aside>
+    </div>
+  </main>
+  <footer class="footer hide-until-auth">© 2026 Amy FX Academy. Belajar Trading dari Nol sampai Mandiri.</footer>
+</body>
+</html>

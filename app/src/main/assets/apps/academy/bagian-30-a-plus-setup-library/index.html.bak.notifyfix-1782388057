@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Bagian 30 — A+ Setup Library &amp; Full Checklist — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+</head>
+<body>
+<script>requireLogin();</script>
+<header class="topbar hide-until-auth">
+  <nav class="nav">
+    <a class="brand" href="../index.html"><span class="brand-mark">A</span><span>Amy FX Academy</span></a>
+    <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="navlinks" id="navlinks">
+      <a href="../index.html">Beranda</a>
+      <a href="../daftar-materi.html">Daftar Materi</a>
+      <a href="../tentang.html">Tentang</a>
+      <a href="../glosarium/index.html">Glosarium</a>
+      
+    </div>
+  </nav>
+</header>
+<main class="container hide-until-auth">
+  <section class="article">
+    <div class="breadcrumb"><a href="../index.html">Beranda</a> › <a href="../daftar-materi.html">Daftar Materi</a></div>
+    <div class="eyebrow">Bagian 30 — A+ Setup Library &amp; Full Checklist</div>
+    <h1>A+ Setup Library &amp; Full Checklist</h1>
+    <p>Library setup final: A+ FVG, OB, IFVG, Turtle Soup, Silver Bullet, MMXM context, dan checklist lengkap sebelum entry.</p>
+    <div class="chapter-list">
+      <a class="chapter-row" href="01-order-block-yang-high-probability.html"><span><strong>Order Block yang High Probability</strong><br><small>Bagian 30 — A+ Setup Library &amp; Full Checklist</small></span><span>→</span></a><a class="chapter-row" href="02-kapan-fvg-lebih-kuat-daripada-ob-memilih-senjata-yang-tepat.html"><span><strong>Kapan FVG Lebih Kuat daripada OB? Memilih Senjata yang Tepat</strong><br><small>Bagian 30 — A+ Setup Library &amp; Full Checklist</small></span><span>→</span></a><a class="chapter-row" href="03-kapan-ob-lebih-kuat-daripada-fvg-memilih-fondasi-yang-kokoh.html"><span><strong>Kapan OB Lebih Kuat daripada FVG? Memilih Fondasi yang Kokoh</strong><br><small>Bagian 30 — A+ Setup Library &amp; Full Checklist</small></span><span>→</span></a><a class="chapter-row" href="04-inversion-entry-model-memanfaatkan-kegagalan-menjadi-peluang.html"><span><strong>Inversion Entry Model: Memanfaatkan Kegagalan Menjadi Peluang</strong><br><small>Bagian 30 — A+ Setup Library &amp; Full Checklist</small></span><span>→</span></a><a class="chapter-row" href="05-turtle-soup-model-a-dan-model-b-memanfaatkan-jebakan-liquidity.html"><span><strong>Turtle Soup Model A dan Model B (Memanfaatkan Jebakan Liquidity)</strong><br><small>Bagian 30 — A+ Setup Library &amp; Full Checklist</small></span><span>→</span></a><a class="chapter-row" href="06-silver-bullet-session-ict-mencari-setup-presisi-di-waktu-emas.html"><span><strong>Silver Bullet Session ICT: Mencari Setup Presisi di Waktu Emas</strong><br><small>Bagian 30 — A+ Setup Library &amp; Full Checklist</small></span><span>→</span></a><a class="chapter-row" href="07-market-maker-models-mmxm-peta-besar-pengiriman-harga.html"><span><strong>Market Maker Models (MMXM): Peta Besar Pengiriman Harga</strong><br><small>Bagian 30 — A+ Setup Library &amp; Full Checklist</small></span><span>→</span></a><a class="chapter-row" href="08-checklist-sebelum-entry-filter-terakhir-sebelum-eksekusi.html"><span><strong>Checklist Sebelum Entry: Filter Terakhir Sebelum Eksekusi</strong><br><small>Bagian 30 — A+ Setup Library &amp; Full Checklist</small></span><span>→</span></a>
+    </div>
+  <div class="quiz-container" data-module="a-plus-setup-library"></div>
+<script src="../assets/js/quiz.js"></script>
+</section>
+</main>
+<footer class="footer hide-until-auth">© 2026 Amy FX Academy. Belajar Trading dari Nol sampai Mandiri.</footer>
+</body>
+</html>

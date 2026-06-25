@@ -742,7 +742,7 @@ class MainActivity : Activity() {
                     .build()
 
                 val nm = mContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                nm.notify(System.currentTimeMillis().toInt(), notification)
+                if (AmyFxNotificationGate.shouldNotify(applicationContext, "amyfx_45505c2e38", System.currentTimeMillis())) { nm.notify(AmyFxNotificationGate.stableId("amyfx_45505c2e38", System.currentTimeMillis().toInt()), notification) } // AMYFX_NOTIFY_NATIVE_FIX
             } catch (e: Exception) {
                 e.printStackTrace()
             }
