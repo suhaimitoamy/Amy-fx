@@ -1,59 +1,87 @@
 # Amy FX
 
-Amy FX adalah aplikasi Android berbasis WebView lokal untuk analisis XAU/USD, mapping market, jurnal, academy, dan library indikator TradingView.
+Amy FX adalah aplikasi Android hybrid untuk analisis XAU/USD berbasis WebView lokal + native Kotlin.
 
-Aplikasi ini berfokus pada analisis, pemantauan market, pencatatan, dan penyimpanan tools dalam satu aplikasi Android.
+Fokus aplikasi:
 
-## Status Project
+- Mapping market ICT/SMC.
+- Pemantauan target BSL/SSL lewat background scanner.
+- Notifikasi Android untuk level penting.
+- Jurnal trading.
+- Academy lokal.
+- Library indikator Pine Script.
+- Candle cache lokal memakai SQLite.
 
-Status saat ini: prototype Android trading suite.
+> Amy FX bukan aplikasi eksekusi order otomatis dan bukan nasihat keuangan.
 
-Komponen utama:
+---
 
-- Dashboard utama Android berbasis WebView lokal.
-- Module Mapping / AI Chart Analyzer untuk XAU/USD.
-- Module Jurnal.
-- Module Amy Trading Academy.
-- Library indikator TradingView / Pine Script lokal.
-- Background scanner native Android.
-- WebSocket price scanner untuk XAU/USD.
-- Notifikasi Android untuk target Mapping.
-- Local candle storage memakai SQLite.
-- Integrasi Supabase candle source.
-- Build APK melalui Gradle dan GitHub Actions.
+## Status Saat Ini
 
-## Prinsip Arsitektur Analisa
+Status repo: **stabilisasi production build tahap awal**.
 
-Mapping adalah sumber utama analisa.
+Yang sudah masuk repo:
 
-Scanner native tidak menjadi otak analisa utama. Scanner hanya menjadi pemantau background untuk target BSL / SSL yang dikirim dari Mapping.
+- Target Android SDK 35.
+- Build debug APK via GitHub Actions.
+- `BuildConfig` generation aktif.
+- R8 / ProGuard release config tersedia.
+- WebView bridge Android ↔ JavaScript.
+- Scanner foreground service.
+- Cooldown notifikasi target.
+- Expiry target Mapping.
+- Reconnect scanner bertahap.
+- SQLite candle cache cleanup.
+- Secure preferences untuk API key.
+- Core logic awal Mapping ICT.
+- Unit test dasar Mapping.
+- Dokumentasi `docs/`.
+- `update.json` untuk metadata update.
+
+Yang belum dianggap selesai penuh:
+
+- Release signing production dengan keystore asli.
+- In-app update checker aktif di UI.
+- Jurnal trading lengkap + statistik lanjutan.
+- UI/UX final semua module.
+- Integration test dan Espresso test lengkap.
+- Store listing final untuk distribusi publik.
+
+---
+
+## Struktur Repo
 
 ```text
-Mapping / AI Chart Analyzer
-└── menghitung bias, score, BSL, SSL, OB, FVG, dan status
-    └── mengirim target BSL / SSL ke Android
-        └── ScannerService memantau live price XAU/USD
-            └── notifikasi muncul saat target Mapping tersentuh
+Amy-fx/
+├── app/
+│   ├── build.gradle.kts
+│   ├── proguard-rules.pro
+│   └── src/
+│       ├── main/
+│       │   ├── AndroidManifest.xml
+│       │   ├── assets/
+│       │   │   ├── index.html
+│       │   │   ├── app.js
+│       │   │   └── apps/
+│       │   │       ├── mapping/
+│       │   │       ├── journal/
+│       │   │       ├── academy/
+│       │   │       └── indikator/
+│       │   └── java/com/amyelitesuite/
+│       └── test/
+├── docs/
+├── scripts/
+├── .github/workflows/
+├── CHANGELOG.md
+├── update.json
+└── README.md
 ```
 
-Dengan alur ini, dashboard Mapping dan alert background tidak berjalan dari dua engine analisa yang berbeda.
+---
 
-## Arsitektur Aplikasi
+## Native Android Layer
 
-```text
-Android Kotlin App
-└── MainActivity
-    └── WebView
-        ├── app/src/main/assets/index.html
-        ├── app/src/main/assets/app.js
-        └── app/src/main/assets/apps/
-            ├── mapping/
-            ├── journal/
-            ├── academy/
-            └── indikator/
-```
-
-Bagian native Android:
+File utama:
 
 ```text
 app/src/main/java/com/amyelitesuite/
@@ -61,97 +89,79 @@ app/src/main/java/com/amyelitesuite/
 ├── ScannerService.kt
 ├── BootReceiver.kt
 ├── CandleStore.kt
+├── SecurePrefs.kt
+├── MappingLogicCore.kt
+├── SupabaseCandleClient.kt
 ├── MarketDataSyncAgent.kt
-└── SupabaseCandleClient.kt
+└── UpdateChecker.kt
 ```
 
-## Module Lokal
+Tugas native layer:
+
+- Host WebView lokal.
+- JavaScript bridge `Android.*`.
+- Foreground scanner service.
+- Notification channel.
+- Deep link ke Mapping.
+- SQLite candle cache.
+- Secure API key storage.
+- File export/download.
+
+---
+
+## WebView / Assets Layer
+
+Module lokal berada di:
 
 ```text
 app/src/main/assets/apps/
-├── mapping/      # Mapping market dan AI chart analyzer
-├── journal/      # Jurnal
-├── academy/      # Materi belajar
-└── indikator/    # Library Pine Script / TradingView
+├── mapping/
+├── journal/
+├── academy/
+└── indikator/
 ```
 
-## MainActivity
-
-`MainActivity.kt` adalah wrapper utama Android.
-
-Tugas utama:
-
-- Membuka dashboard lokal dari `file:///android_asset/index.html`.
-- Menjalankan WebView untuk semua module lokal.
-- Menyediakan JavaScript bridge dengan nama `Android`.
-- Mengatur file picker.
-- Mengatur download file / blob dari WebView.
-- Menampilkan permission center.
-- Membuka permission settings Android.
-- Menghubungkan WebView dengan native scanner.
-
-JavaScript bridge menyediakan:
-
-- `goHome()`
-- `showAppToast()`
-- `triggerHaptic()`
-- `startBackgroundScanner()`
-- `stopBackgroundScanner()`
-- `getNativeCandles()`
-- `showNotification()`
-- `showNotificationWithUrl()`
-- `saveBlob()`
-- `startFile()` / `appendFileChunk()` / `finishFile()`
-
-## Background Scanner
-
-`ScannerService.kt` berjalan sebagai foreground service.
-
-Tugas utama:
-
-- Membaca API key dari `SharedPreferences`.
-- Membaca target BSL dan SSL dari Mapping.
-- Membuka WebSocket ke TwelveData.
-- Subscribe live price `XAU/USD`.
-- Mengecek apakah BSL / SSL dari Mapping sudah tersentuh.
-- Mengirim notifikasi Android saat target tersentuh.
-- Reconnect otomatis jika WebSocket mati.
-- Watchdog jika tidak ada tick terlalu lama.
-
-Scanner memakai:
+Shared asset tambahan:
 
 ```text
-wss://ws.twelvedata.com/v1/quotes/price
+app/src/main/assets/apps/shared/
+├── amyfx-common.js
+└── amyfx-design-system.css
 ```
 
-Symbol utama:
+---
+
+## Alur Mapping dan Scanner
 
 ```text
-XAU/USD
+Mapping
+└── menghasilkan target BSL/SSL
+    └── target dikirim ke Android bridge
+        └── ScannerService memantau live price XAU/USD
+            └── notifikasi muncul jika target tersentuh
+                └── tap notifikasi membuka Mapping
 ```
 
-## Logic Analisa Market
+Scanner native hanya memantau target. Logic analisa utama tetap berasal dari Mapping.
 
-Logic analisa utama berada di module `mapping`.
+---
 
-Konsep yang dianalisa Mapping:
+## Fitur Scanner
 
-- Swing high / swing low
-- BOS / CHOCH / MSS
-- Fair Value Gap (FVG)
-- Order Block (OB)
-- Buy Side Liquidity (BSL)
-- Sell Side Liquidity (SSL)
-- Premium / Discount
-- HTF bias
-- Draw on Liquidity (DOL)
-- Setup score
+- Foreground service.
+- WebSocket TwelveData.
+- Target BSL/SSL dari Mapping.
+- Cooldown alert per level.
+- Target expire otomatis.
+- Reconnect bertahap.
+- Notification channel terpisah.
+- Deep link ke Mapping.
 
-Scanner native tidak menghitung ulang bias, score, FVG, OB, atau struktur market. Scanner hanya mengikuti target dari Mapping.
+---
 
 ## Candle Storage
 
-Candle lokal disimpan memakai SQLite melalui `CandleStore.kt`.
+Candle cache memakai SQLite.
 
 ```text
 Database: amy_market_data.sqlite
@@ -159,79 +169,96 @@ Table: candles
 Primary key: symbol + timeframe + open_time
 ```
 
-Timeframe yang didukung:
+Fitur:
+
+- Insert / update candle.
+- Query candle terbaru.
+- Index query.
+- Cleanup candle lama.
+- Clear cache.
+- Storage size check.
+
+---
+
+## Mapping Logic Core
+
+File:
 
 ```text
-M1, M5, M15, M30, H1, H4, D1
+app/src/main/java/com/amyelitesuite/MappingLogicCore.kt
 ```
 
-## Supabase Candle Source
+Isi awal:
 
-`SupabaseCandleClient.kt` dipakai sebagai sumber candle tambahan / fallback.
+- Swing high / swing low.
+- BOS / CHOCH.
+- FVG.
+- Order Block.
+- Setup score breakdown.
 
-Endpoint:
+Unit test:
 
 ```text
-/rest/v1/candles
+app/src/test/java/com/amyelitesuite/
 ```
 
-Filter utama:
+---
 
-- `symbol`
-- `timeframe`
-- `open_time`
-- `limit`
+## Build APK Lokal
 
-## Mapping Module
+```bash
+chmod +x gradlew
+./gradlew assembleDebug --no-configuration-cache --stacktrace
+```
 
-Module Mapping berada di:
+Output:
 
 ```text
-app/src/main/assets/apps/mapping/
+app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Fitur utama:
+Catatan Termux:
 
-- Live price XAU/USD.
-- Fetch candle dari TwelveData REST API.
-- WebSocket live price.
-- Multi-timeframe analysis.
-- FVG detection.
-- OB detection.
-- BOS / CHOCH structure detection.
-- BSL / SSL target.
-- Premium / Discount zone.
-- Setup score.
-- History log.
-- Terminal log.
-- Background scanner toggle.
-- Native notification test.
+Build lokal hanya bisa berjalan jika Android SDK sudah tersedia dan `ANDROID_HOME` atau `local.properties` sudah benar.
 
-## Indikator Module
+---
 
-Module indikator berada di:
+## Build APK via GitHub Actions
+
+Workflow utama:
 
 ```text
-app/src/main/assets/apps/indikator/
+.github/workflows/build-apk.yml
+.github/workflows/build.yml
+.github/workflows/build-debug.yml
+.github/workflows/build-release.yml
+.github/workflows/lint-check.yml
 ```
 
-Daftar indikator:
+Artifact debug:
 
 ```text
-app/src/main/assets/apps/indikator/manifest.json
+Amy-FX-debug-apk
+Amy-FX-APK
 ```
 
-Fungsi utama:
+Release build bersifat manual sampai keystore signing production disiapkan.
 
-- Menampilkan daftar Pine Script lokal.
-- Membuka source code indikator lokal.
-- Mencari indikator.
-- Menyalin kode indikator.
-- Menyimpan kode terpilih ke localStorage.
+---
 
-## Permission Android
+## Android Config
 
-Permission yang digunakan:
+Current config:
+
+```text
+compileSdk = 35
+targetSdk = 35
+minSdk = 24
+versionName = 1.2.0
+versionCode = 12
+```
+
+Permission utama:
 
 - `INTERNET`
 - `ACCESS_NETWORK_STATE`
@@ -241,76 +268,49 @@ Permission yang digunakan:
 - `WAKE_LOCK`
 - `RECEIVE_BOOT_COMPLETED`
 - `VIBRATE`
-- `READ_EXTERNAL_STORAGE`
-- `WRITE_EXTERNAL_STORAGE`
-- `MANAGE_EXTERNAL_STORAGE`
-- `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`
+- Media read permission sesuai versi Android.
 
-## Auto Restart Scanner
+`MANAGE_EXTERNAL_STORAGE` tidak digunakan sebagai permission utama production.
 
-`BootReceiver.kt` menjalankan ulang scanner setelah:
+---
 
-- HP reboot.
-- Locked boot completed.
-- App package replaced.
-- Quick boot power on.
-
-Scanner hanya dijalankan ulang jika:
-
-- `scanner_enabled = true`
-- API key tersedia di storage lokal.
-
-## Build APK Lokal
-
-```bash
-chmod +x gradlew
-./gradlew assembleDebug --no-configuration-cache --stacktrace
-```
-
-Output APK debug:
+## Dokumentasi
 
 ```text
-app/build/outputs/apk/debug/
+docs/ARCHITECTURE.md
+docs/API_SETUP.md
+docs/RELEASE_GUIDE.md
+docs/QA_CHECKLIST.md
+docs/PRODUCTION_ROADMAP_STATUS.md
+docs/PRIVACY_POLICY.md
+docs/TERMS_OF_USE.md
+docs/STORE_LISTING_DRAFT.md
 ```
 
-## Build APK via GitHub Actions
+---
 
-Workflow:
+## Repo Hygiene
+
+File sementara tidak boleh masuk ke main branch:
 
 ```text
-.github/workflows/build-apk.yml
+/apply-*.sh
+/*.patch
+/patch_apk.py
+/fix-note.txt
+/*_FIX_NOTES.md
+/.amyfx_backup*
 ```
 
-Trigger:
+Aturan ini dicatat di `.gitignore`.
 
-- Push ke branch `main`.
-- Manual run melalui `workflow_dispatch`.
+---
 
-Artifact:
+## Catatan Distribusi
 
-```text
-Amy-FX-debug-apk
-```
+Jangan distribusikan sebagai APK production publik sebelum:
 
-## Teknologi
-
-- Kotlin
-- Android SDK 34
-- Android Gradle Plugin 8.2.0
-- Kotlin Android Plugin 1.9.0
-- WebView
-- HTML / CSS / JavaScript
-- OkHttp
-- Kotlin Coroutines
-- SQLite
-- Supabase REST
-- TwelveData REST API
-- TwelveData WebSocket
-- GitHub Actions
-
-## Batasan Saat Ini
-
-- Belum ada automated test.
-- Belum ada unit test untuk logic market structure.
-- Belum ada backtest engine di repo.
-- App belum menggunakan release signing configuration.
+- Release signing aktif dengan keystore asli.
+- QA checklist selesai.
+- Privacy Policy dan Terms final.
+- Build release signed berhasil.
