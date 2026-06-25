@@ -30,8 +30,8 @@ import android.webkit.ValueCallback
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.ConsoleMessage
-import android.content.res.Configuration
 import android.webkit.WebChromeClient
+import android.webkit.WebChromeClient.FileChooserParams
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -373,8 +373,6 @@ class MainActivity : Activity() {
             manageFilesStatusText.text = if (manageFilesOk) "✅ Kelola Semua File: aktif" else "⚠️ Kelola Semua File: belum aktif"
         }
 
-        // Permission center is non-blocking. The app can be opened for Mapping/Jurnal/Academy even if
-        // background-scanner permissions are not complete. Scanner start still checks permissions.
         permissionGate.visibility = View.GONE
         swipeRefreshLayout.isEnabled = true
 
@@ -398,8 +396,6 @@ class MainActivity : Activity() {
     }
 
     private fun hasRequiredPermissions(): Boolean {
-        // Scanner may run even if battery optimization or manage-all-files is not granted.
-        // The only hard gate for visible alerts is Android notification permission.
         return isNotificationPermissionGranted()
     }
 
@@ -511,7 +507,7 @@ class MainActivity : Activity() {
               btn.style.boxShadow = '0 6px 18px rgba(0,0,0,.35)';
               btn.onclick = function(){ if (window.Android && window.Android.goHome) { window.Android.goHome(); } else { location.href = 'file:///android_asset/index.html'; } };
               document.body.appendChild(btn);
-               document.body.style.setProperty('--amy-native-back-height','28px');
+              document.body.style.setProperty('--amy-native-back-height','28px');
             })();
         """.trimIndent(), null)
     }
@@ -555,7 +551,6 @@ class MainActivity : Activity() {
                 this@MainActivity.webView.loadUrl("file:///android_asset/index.html")
             }
         }
-
 
         @JavascriptInterface
         fun openManageFilesPermission() {
@@ -609,7 +604,8 @@ class MainActivity : Activity() {
                 val storedApiKey = prefs.getString("api_key", null)
                 if (!cleanedApiKey.isNullOrBlank() && cleanedApiKey != "undefined" && cleanedApiKey != "null") {
                     prefs.edit().putString("api_key", cleanedApiKey).putBoolean("scanner_enabled", true).apply()
-                } else if (storedApiKey.isNullOrBlank()) {
+                    SecurePrefs.putString(mContext, "api_key", cleanedApiKey)
+                } else if (storedApiKey.isNullOrBlank() && SecurePrefs.getString(mContext, "api_key", null).isNullOrBlank()) {
                     (mContext as Activity).runOnUiThread {
                         Toast.makeText(mContext, "API key belum tersedia. Buka Mapping > Settings lalu Save & Connect dulu.", Toast.LENGTH_LONG).show()
                     }
