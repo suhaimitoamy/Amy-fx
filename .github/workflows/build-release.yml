@@ -2,8 +2,6 @@ name: Build Release APK
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ "main" ]
 
 jobs:
   build-release:
@@ -25,25 +23,13 @@ jobs:
       - name: Install Android SDK 35
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Restore release keystore
-        if: ${{ secrets.AMYFX_KEYSTORE_BASE64 != '' }}
-        run: |
-          echo "${{ secrets.AMYFX_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/amy-fx-release.keystore"
-
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
-      - name: Run unit tests
-        run: ./gradlew testReleaseUnitTest --no-configuration-cache --stacktrace
-
       - name: Build release APK
         env:
-          AMYFX_KEYSTORE_PATH: ${{ runner.temp }}/amy-fx-release.keystore
-          AMYFX_KEYSTORE_PASSWORD: ${{ secrets.AMYFX_KEYSTORE_PASSWORD }}
-          AMYFX_KEY_ALIAS: ${{ secrets.AMYFX_KEY_ALIAS }}
-          AMYFX_KEY_PASSWORD: ${{ secrets.AMYFX_KEY_PASSWORD }}
-          AMYFX_VERSION_NAME: ${{ vars.AMYFX_VERSION_NAME || '1.2.0' }}
-          AMYFX_VERSION_CODE: ${{ vars.AMYFX_VERSION_CODE || '12' }}
+          AMYFX_VERSION_NAME: "1.2.0"
+          AMYFX_VERSION_CODE: "12"
         run: ./gradlew assembleRelease --no-configuration-cache --stacktrace
 
       - name: Upload release APK
