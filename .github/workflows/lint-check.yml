@@ -1,0 +1,42 @@
+name: Lint Check
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ "develop", "main" ]
+
+jobs:
+  lint-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Make Gradle executable
+        run: chmod +x ./gradlew
+
+      - name: Android lint
+        run: ./gradlew lintDebug --no-configuration-cache --stacktrace
+
+      - name: Unit tests
+        run: ./gradlew testDebugUnitTest --no-configuration-cache --stacktrace
+
+      - name: Check production TODO
+        run: |
+          if grep -RIn "TODO" app/src/main --exclude-dir=build; then
+            echo "Production TODO masih ditemukan."
+            exit 1
+          fi
