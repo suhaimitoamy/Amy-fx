@@ -18,7 +18,6 @@ public final class AmyFxNotificationGate {
 
         String key = normalize(rawKey);
 
-        if (key.startsWith("amyfx_")) return true;
 
         long now = System.currentTimeMillis();
         if (createdAt > 0 && now - createdAt > STALE_MS) return false;

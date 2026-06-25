@@ -78,7 +78,7 @@
 <script>
 const TF={M1:'1min',M5:'5min',M15:'15min',M30:'30min',H1:'1h',H4:'4h',D1:'1day',W1:'1week'};
 const state={tab:'Dashboard',tf:'M5',key:localStorage.getItem('twelve_api_key')||'',price:Number(localStorage.getItem('last_price')||0),conn:'Offline',logs:JSON.parse(localStorage.getItem('amy_mapping_logs')||'[]'),analyses:JSON.parse(localStorage.getItem('amy_mapping_analyses')||'[]'),setups:JSON.parse(localStorage.getItem('amy_mapping_setups')||'[]'),candles:{},result:null,bg:localStorage.getItem('bg_scanner')==='true',notified:JSON.parse(localStorage.getItem('amy_mapping_notified')||'{}')};
-let ws=null,reconnectTimer=null,scanTimer=null;
+let ws=null,reconnectTimer=null,scanTimer=null,lastWsTickAt=Number(localStorage.getItem('last_ws_tick_at')||0);
 const p2=v=>Number.isFinite(+v)?Number(v).toFixed(2):'-';
 function nowTime(){return new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Jakarta',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date())}
 function timeRange(zone,sh,sm,eh,em){let now=new Date(),fmt=new Intl.DateTimeFormat('en-CA',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now),g=t=>+fmt.find(x=>x.type===t).value;let guess=Date.UTC(g('year'),g('month')-1,g('day'),sh,sm);let txt=new Intl.DateTimeFormat('en-GB',{timeZone:zone,hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(guess));let [hh,mm]=txt.split(':').map(Number);let start=guess+((sh*60+sm)-(hh*60+mm))*60000;let end=start+(((eh*60+em)-(sh*60+sm)+(eh*60+em<=sh*60+sm?1440:0))*60000);return{start,end}}
@@ -104,7 +104,7 @@ async function runAnalysis(tf=state.tf){state.tf=tf;render();try{log('Memindai '
 function setupText(s){if(!s)return'';return `${fmtDir(s.dir)} ${s.tf}\nScore: ${s.score}/100\nEntry: ${p2(s.entryLow)} - ${p2(s.entryHigh)}\nSL: ${p2(s.sl)}\nTP1: ${p2(s.tp1)}\nTP2: ${p2(s.tp2)}\n${s.reason}`}
 function notifyImportant(res){let s=res?.bestSetup;if(!s||s.score<70)return;let key=`${s.type}:${s.dir}:${Math.round(s.entryLow*10)}:${Math.round(s.sl*10)}`;let last=state.notified[key]||0;if(Date.now()-last<300000)return;state.notified[key]=Date.now();localStorage.setItem('amy_mapping_notified',JSON.stringify(state.notified));let msg=setupText(s);if(window.Android?.showNotificationWithUrl)window.Android.showNotificationWithUrl('AMY FX — '+s.type,msg,location.href);else if(typeof Notification!=='undefined')Notification.requestPermission().then(p=>p==='granted'&&new Notification('AMY FX — '+s.type,{body:msg}))}
 function sendTargetsToNative(){if(state.bg&&window.Android?.startBackgroundScanner){let s=state.result?.bestSetup;if(s){let upper=Math.max(Number(s.entryLow),Number(s.entryHigh)),lower=Math.min(Number(s.entryLow),Number(s.entryHigh));window.Android.startBackgroundScanner(state.key,String(upper),String(lower));}else{let r=state.result;window.Android.startBackgroundScanner(state.key,String(r?.bsl||''),String(r?.ssl||''));}}}
-function connect(){if(!state.key.trim()){log('Masukkan API key dulu.');return}localStorage.setItem('twelve_api_key',state.key.trim());if(ws){ws.onclose=null;ws.close()}state.conn='Reconnecting';renderSoft();ws=new WebSocket(`wss://ws.twelvedata.com/v1/quotes/price?apikey=${encodeURIComponent(state.key.trim())}`);ws.onopen=()=>{state.conn='Connected';renderSoft();ws.send(JSON.stringify({action:'subscribe',params:{symbols:'XAU/USD'}}));log('WebSocket Connected.');runAnalysis(state.tf)};ws.onmessage=e=>{try{let d=JSON.parse(e.data),p=+d.price;if(p>1000&&p<10000){state.price=p;localStorage.setItem('last_price',String(p));renderAnalyzeLive();if(!scanTimer)scanTimer=setTimeout(()=>{scanTimer=null;runAnalysis(state.tf)},15000)}}catch(_){}};ws.onclose=()=>{state.conn='Offline';renderSoft();clearTimeout(reconnectTimer);reconnectTimer=setTimeout(connect,8000)};ws.onerror=()=>log('WebSocket error')}
+function connect(){if(!state.key.trim()){log('Masukkan API key dulu.');return}localStorage.setItem('twelve_api_key',state.key.trim());if(ws){ws.onclose=null;ws.close()}state.conn='Reconnecting';renderSoft();ws=new WebSocket(`wss://ws.twelvedata.com/v1/quotes/price?apikey=${encodeURIComponent(state.key.trim())}`);ws.onopen=()=>{state.conn='Connected';renderSoft();ws.send(JSON.stringify({action:'subscribe',params:{symbols:'XAU/USD'}}));log('WebSocket Connected.');runAnalysis(state.tf)};ws.onmessage=e=>{try{let d=JSON.parse(e.data),p=+d.price;if(p>1000&&p<10000){lastWsTickAt=Date.now();localStorage.setItem('last_ws_tick_at',String(lastWsTickAt));state.price=p;localStorage.setItem('last_price',String(p));renderAnalyzeLive();if(!scanTimer)scanTimer=setTimeout(()=>{scanTimer=null;runAnalysis(state.tf)},15000)}}catch(_){}};ws.onclose=()=>{state.conn='Offline';renderSoft();clearTimeout(reconnectTimer);reconnectTimer=setTimeout(connect,8000)};ws.onerror=()=>log('WebSocket error')}
 function setupCard(s,i=0){return`<div class="setup-card"><div class="setup-head"><div><div class="setup-title">SETUP ${i+1} — ${s.type}</div><div class="muted">Timeframe: ${s.tf} • Status: ${fmtStatus(s.status)}</div></div><span class="badge ${String(s.dir).includes('BUY')?'buy':'sell'}">${fmtDir(s.dir)}</span></div><div class="num-grid"><div class="num"><small>Score</small><strong>${s.score}/100</strong></div><div class="num"><small>Harga Sekarang</small><strong>${p2(s.price)}</strong></div><div class="num"><small>Entry Area</small><strong>${p2(s.entryLow)} - ${p2(s.entryHigh)}</strong></div><div class="num"><small>SL</small><strong>${p2(s.sl)}</strong></div><div class="num"><small>TP1</small><strong>${p2(s.tp1)}</strong></div><div class="num"><small>TP2</small><strong>${p2(s.tp2)}</strong></div></div><div class="reason"><b>Alasan:</b><br>${s.reason}</div></div>`}
 function dashboard(){let r=state.result,s=r?.bestSetup;return`<section class="hero card"><div><div class="kicker">AMY FX SETUP ENGINE</div><h1>XAU/USD</h1><div class="muted">WIB ${nowTime()}</div></div><div style="text-align:right"><div class="muted">Gold Price</div><div class="price">$${p2(state.price)}</div><div class="${state.conn==='Connected'?'green':'muted'}">${state.conn}</div></div></section>${killzonePanel()}<button class="action" onclick="setTab('Analyze')" style="width:100%;margin-bottom:16px">⚡ Analisis Setup</button><section class="card"><h2>Best Setup</h2>${s?setupCard(s,0):'<p class="muted">Belum ada setup. Klik Analisis Setup.</p>'}</section><section class="card"><h2>Market Concepts</h2><div class="concept-grid">${(r?.concepts||[]).map(c=>`<div class="concept"><small>${c[1]}</small><h3>${c[0]}</h3><p>${c[2]}</p></div>`).join('')||'<p class="muted">Belum ada analisis.</p>'}</div></section>`}
 
@@ -243,6 +243,7 @@ function amyDecisionCard(){
   </div><div class="decision-reason"><b>Reason:</b><br>${d.reason}</div></section>`
 }
 
+
 function validBreakInfo(){
   let r=state.result,tf=r?.tf,cs=state.candles?.[tf]||[],last=cs.at(-1),br=r?.st?.last,price=analyzeLivePrice();
 
@@ -250,8 +251,9 @@ function validBreakInfo(){
     return`<section class="card"><div class="kicker">VALID BREAK INFO</div><h2>Belum Ada Valid Break</h2><div class="break-reason">Belum ada BOS/CHOCH yang cukup jelas. Tunggu candle close yang valid.</div></section>`
   }
 
+  let breakCandle=cs[br.index]||last;
   let bullish=br.dir==='BULLISH';
-  let valid=bullish?last.close>br.price:last.close<br.price;
+  let valid=bullish?breakCandle.close>br.price:breakCandle.close<br.price;
   let failed=price&&valid?(bullish?price<br.price:price>br.price):false;
   let liveWarning=price&&!valid?(bullish?price>br.price:price<br.price):false;
 
@@ -260,14 +262,14 @@ function validBreakInfo(){
   let conclusion=failed
     ? `Break gagal dipertahankan karena harga live ${p2(price)} kembali melewati level ${p2(br.price)}. Tunggu mapping ulang.`
     : valid
-      ? `Candle close sudah valid. ${direction} masih relevan selama level break bertahan.`
+      ? `Candle break sudah close valid. ${direction} masih relevan selama level break bertahan.`
       : liveWarning
         ? `Harga live sudah melewati level break, tapi candle close belum confirm. Tunggu candle close yang valid.`
         : `Harga belum close valid melewati level ${p2(br.price)}. Tunggu konfirmasi candle close.`;
 
   return`<section class="card"><div class="kicker">VALID BREAK INFO</div><h2>${title}</h2><div class="break-grid">
     <div class="break-box"><small>Break Level</small><strong>${p2(br.price)}</strong></div>
-    <div class="break-box"><small>Candle Close</small><strong>${p2(last.close)}</strong></div>
+    <div class="break-box"><small>Candle Break Close</small><strong>${p2(breakCandle.close)}</strong></div>
     <div class="break-box"><small>Harga Live</small><strong>${p2(price)}</strong></div>
     <div class="break-box"><small>Structure</small><strong>${br.kind} ${br.dir}</strong></div>
   </div><div class="break-reason"><b>Kesimpulan:</b><br>${conclusion}</div></section>`
@@ -336,12 +338,38 @@ function history(){return`<section class="card"><h1>Event Logs</h1><button class
 function settings(){return`<section class="card settings"><h1>Settings & API</h1><label>Twelve Data API Key</label><input id="apiKey" value="${state.key}" placeholder="Twelve Data API key"><button class="action" onclick="saveConnect()" style="width:100%">🔑 Save & Connect</button><p class="muted">API key disimpan lokal di HP.</p><div class="warn"><b>Background Scanner</b><br>Jika ON, scanner akan memantau Entry Area setup terbaik dari Mapping saat aplikasi ditutup.</div><button class="${state.bg?'action':'chip'}" onclick="toggleBg()" style="width:100%;margin-top:14px">${state.bg?'📡 Background Scanner ON':'📴 Background Scanner OFF'}</button><button class="action" onclick="testNotif()" style="width:100%;margin-top:12px">🔔 Tes Notifikasi Setup</button></section>`}
 function render(){document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===state.tab));document.getElementById('conn').textContent=state.conn;document.getElementById('conn').className='status '+(state.conn==='Connected'?'on':'');document.getElementById('app').innerHTML=state.tab==='Dashboard'?dashboard():state.tab==='Analyze'?analyzeView():state.tab==='Setups'?setupsView():state.tab==='History'?history():settings()}
 function renderSoft(){let c=document.getElementById('conn');if(c){c.textContent=state.conn;c.className='status '+(state.conn==='Connected'?'on':'')}let p=document.querySelector('.price');if(p)p.textContent='$'+p2(state.price)}
+function applyAmyFxRoute(){
+  let route='';
+  try{route=decodeURIComponent((location.hash||'').replace(/^#/,''))}catch(e){}
+  try{route=route||new URLSearchParams(location.search||'').get('route')||''}catch(e){}
+  try{route=route||localStorage.getItem('amyfx.notification.route')||''}catch(e){}
+  if(['Dashboard','Analyze','Setups','History','Settings'].includes(route)){
+    state.tab=route;
+    try{localStorage.removeItem('amyfx.notification.route')}catch(e){}
+  }
+}
 function setTab(t){state.tab=t;render()}window.setTab=setTab;window.runAnalysis=runAnalysis;
+function wsLiveAlive(){
+  try{return ws&&(ws.readyState===WebSocket.OPEN||ws.readyState===WebSocket.CONNECTING)}catch(e){return false}
+}
+function autoConnectLivePrice(){
+  if(!state.key||!state.key.trim())return;
+  if(wsLiveAlive())return;
+  try{connect()}catch(e){log('Auto connect error: '+e.message)}
+}
+function livePriceWatchdog(){
+  if(!state.key||!state.key.trim())return;
+  let stale=lastWsTickAt&&Date.now()-lastWsTickAt>60000;
+  if(!wsLiveAlive()||state.conn==='Offline'||stale){
+    if(stale&&ws){try{ws.onclose=null;ws.close()}catch(e){} ws=null}
+    autoConnectLivePrice();
+  }
+}
 function saveConnect(){state.key=document.getElementById('apiKey').value.trim();localStorage.setItem('twelve_api_key',state.key);connect();sendTargetsToNative()}window.saveConnect=saveConnect;
 function toggleBg(){if(!state.key.trim()){alert('Isi API key dulu.');return}state.bg=!state.bg;save();if(state.bg)sendTargetsToNative();else window.Android?.stopBackgroundScanner?.();render()}window.toggleBg=toggleBg;
 function testNotif(){let s=state.result?.bestSetup||{type:'LIQUIDITY SWEEP',dir:'BUY WATCH',tf:'M5',score:78,entryLow:2355.20,entryHigh:2356.00,sl:2353.50,tp1:2358.50,tp2:2362.00,reason:'Contoh notifikasi setup angka.'};let msg=setupText(s);if(window.Android?.showNotificationWithUrl)window.Android.showNotificationWithUrl('AMY FX — '+s.type,msg,location.href);else if(typeof Notification!=='undefined')Notification.requestPermission().then(p=>p==='granted'&&new Notification('AMY FX — '+s.type,{body:msg}))}
 function downloadLogs(){let blob=new Blob([state.logs.join('\n')],{type:'text/plain'});let url=URL.createObjectURL(blob);let a=document.createElement('a');a.href=url;a.download='amy-fx-logs.txt';a.click();URL.revokeObjectURL(url)}window.downloadLogs=downloadLogs;window.testNotif=testNotif;
-document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));render();
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));applyAmyFxRoute();render();setTimeout(autoConnectLivePrice,600);setInterval(livePriceWatchdog,30000);
 
 
 /* AMYFX_SYNC_FIX_JS_START */
@@ -641,6 +669,18 @@ document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',(
 
   function restoreSetupDom(){
     if(setupHasData(findSetupCard()))return;
+
+    const st=getState();
+    const hasFreshResult=!!(st&&st.result&&Array.isArray(st.result.setups));
+    if(hasFreshResult){
+      let active=[];
+      try{
+        active=typeof analyzeActiveSetups==='function'?analyzeActiveSetups(st.result.setups||[]):(st.result.setups||[]);
+      }catch(e){
+        active=st.result.setups||[];
+      }
+      if(!active||active.length===0)return;
+    }
 
     const html=localStorage.getItem(SETUP_DOM_KEY);
     if(!html)return;

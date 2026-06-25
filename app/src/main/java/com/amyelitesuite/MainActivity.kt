@@ -140,6 +140,7 @@ class MainActivity : Activity() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 swipeRefreshLayout.isRefreshing = false
                 injectHomeButtonForLocalModule(url)
+                applyAmyFxRoute(this@MainActivity.intent?.getStringExtra("amyfx_route"))
             }
 
             override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
@@ -526,10 +527,26 @@ class MainActivity : Activity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
+        setIntent(intent)
         intent?.getStringExtra("target_url")?.let {
             if (webView.url != it) {
                 webView.loadUrl(it)
             }
+        }
+        applyAmyFxRoute(intent?.getStringExtra("amyfx_route"))
+    }
+
+    private fun applyAmyFxRoute(route: String?) {
+        val safeRoute = when (route) {
+            "Dashboard", "Analyze", "Setups", "History", "Settings" -> route
+            else -> return
+        }
+        if (!::webView.isInitialized) return
+        webView.post {
+            webView.evaluateJavascript(
+                "(function(){try{localStorage.setItem('amyfx.notification.route','$safeRoute');if(typeof setTab==='function')setTab('$safeRoute');}catch(e){}})();",
+                null
+            )
         }
     }
 
@@ -706,11 +723,14 @@ class MainActivity : Activity() {
         @JavascriptInterface
         fun showNotificationWithUrl(title: String, message: String, url: String?) {
             try {
+                val route = AmyFxNotificationGate.routeFor(title, message)
                 val intent = Intent(mContext, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
                     if (url != null) {
-                        putExtra("target_url", url)
+                        val routedUrl = if (url.contains("apps/mapping/index.html") && !url.contains("#")) "$url#$route" else url
+                        putExtra("target_url", routedUrl)
                     }
+                    putExtra("amyfx_route", route)
                 }
                 val requestCode = System.currentTimeMillis().toInt()
                 val pendingIntent = PendingIntent.getActivity(
@@ -742,7 +762,10 @@ class MainActivity : Activity() {
                     .build()
 
                 val nm = mContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                if (AmyFxNotificationGate.shouldNotify(applicationContext, "amyfx_45505c2e38", System.currentTimeMillis())) { nm.notify(AmyFxNotificationGate.stableId("amyfx_45505c2e38", System.currentTimeMillis().toInt()), notification) } // AMYFX_NOTIFY_NATIVE_FIX
+                val gateKey = "webview|" + title + "|" + message
+                if (AmyFxNotificationGate.shouldNotify(applicationContext, gateKey, System.currentTimeMillis())) {
+                    nm.notify(AmyFxNotificationGate.stableId(gateKey, requestCode), notification)
+                } // AMYFX_NOTIFY_NATIVE_FIX
             } catch (e: Exception) {
                 e.printStackTrace()
             }

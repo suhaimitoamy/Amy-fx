@@ -237,7 +237,7 @@ class ScannerService : Service() {
     }
 
     private fun startStatusNotification() {
-        val intent = mappingIntent()
+        val intent = mappingIntent("Dashboard")
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
@@ -277,7 +277,7 @@ class ScannerService : Service() {
         val pendingIntent = PendingIntent.getActivity(
             this,
             System.currentTimeMillis().toInt(),
-            mappingIntent(),
+            mappingIntent("Analyze"),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -308,7 +308,10 @@ class ScannerService : Service() {
                 .setAutoCancel(true)
                 .build()
         }
-        if (AmyFxNotificationGate.shouldNotify(applicationContext, "amyfx_1b2204b033", System.currentTimeMillis())) { notificationManager().notify(AmyFxNotificationGate.stableId("amyfx_1b2204b033", TARGET_NOTIFICATION_BASE_ID + abs(message.hashCode() % 100000)), notification) } // AMYFX_NOTIFY_NATIVE_FIX
+        val gateKey = "target|" + title + "|" + message
+        if (AmyFxNotificationGate.shouldNotify(applicationContext, gateKey, System.currentTimeMillis())) {
+            notificationManager().notify(AmyFxNotificationGate.stableId(gateKey, TARGET_NOTIFICATION_BASE_ID + abs(message.hashCode() % 100000)), notification)
+        } // AMYFX_NOTIFY_NATIVE_FIX
     }
 
     private fun sendInfo(title: String, message: String) {
@@ -330,7 +333,10 @@ class ScannerService : Service() {
                 .setAutoCancel(true)
                 .build()
         }
-        if (AmyFxNotificationGate.shouldNotify(applicationContext, "amyfx_0adf13dedd", System.currentTimeMillis())) { notificationManager().notify(AmyFxNotificationGate.stableId("amyfx_0adf13dedd", INFO_NOTIFICATION_ID), notification) } // AMYFX_NOTIFY_NATIVE_FIX
+        val gateKey = "info|" + title + "|" + message
+        if (AmyFxNotificationGate.shouldNotify(applicationContext, gateKey, System.currentTimeMillis())) {
+            notificationManager().notify(AmyFxNotificationGate.stableId(gateKey, INFO_NOTIFICATION_ID), notification)
+        } // AMYFX_NOTIFY_NATIVE_FIX
     }
 
     private fun createChannels() {
@@ -403,11 +409,13 @@ class ScannerService : Service() {
             .apply()
     }
 
-    private fun mappingIntent(): Intent {
+    private fun mappingIntent(route: String = "Analyze"): Intent {
+        val safeRoute = if (route == "Dashboard") "Dashboard" else "Analyze"
         return Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra("target_url", "file:///android_asset/apps/mapping/index.html")
-            data = android.net.Uri.parse("amyfx://mapping")
+            putExtra("target_url", "file:///android_asset/apps/mapping/index.html#$safeRoute")
+            putExtra("amyfx_route", safeRoute)
+            data = android.net.Uri.parse("amyfx://mapping?route=$safeRoute")
         }
     }
 
