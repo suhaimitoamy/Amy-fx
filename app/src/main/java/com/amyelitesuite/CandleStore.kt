@@ -4,8 +4,9 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import java.io.File
 
-class CandleStore(context: Context) : SQLiteOpenHelper(context, "amy_market_data.sqlite", null, 1) {
+class CandleStore(private val context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     data class Candle(
         val symbol: String,
@@ -21,6 +22,14 @@ class CandleStore(context: Context) : SQLiteOpenHelper(context, "amy_market_data
     )
 
     override fun onCreate(db: SQLiteDatabase) {
+        createTables(db)
+    }
+
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        createTables(db)
+    }
+
+    private fun createTables(db: SQLiteDatabase) {
         db.execSQL(
             """
             CREATE TABLE IF NOT EXISTS candles (
@@ -38,52 +47,28 @@ class CandleStore(context: Context) : SQLiteOpenHelper(context, "amy_market_data
             )
             """.trimIndent()
         )
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_candles_lookup ON candles(symbol, timeframe, open_time)")
-    }
-
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        onCreate(db)
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_candles_symbol_tf_time ON candles(symbol, timeframe, open_time)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_candles_timeframe_time ON candles(timeframe, open_time)")
     }
 
     fun upsert(candle: Candle) {
-        val values = ContentValues().apply {
-            put("symbol", candle.symbol)
-            put("timeframe", candle.timeframe)
-            put("open_time", candle.openTime)
-            put("close_time", candle.closeTime)
-            put("open", candle.open)
-            put("high", candle.high)
-            put("low", candle.low)
-            put("close", candle.close)
-            put("volume_tick", candle.volumeTick)
-            put("is_closed", if (candle.isClosed) 1 else 0)
-        }
+        val values = candle.toValues()
         writableDatabase.insertWithOnConflict("candles", null, values, SQLiteDatabase.CONFLICT_REPLACE)
     }
 
     fun upsertAll(candles: List<Candle>) {
+        if (candles.isEmpty()) return
         val db = writableDatabase
         db.beginTransaction()
         try {
             candles.forEach { candle ->
-                val values = ContentValues().apply {
-                    put("symbol", candle.symbol)
-                    put("timeframe", candle.timeframe)
-                    put("open_time", candle.openTime)
-                    put("close_time", candle.closeTime)
-                    put("open", candle.open)
-                    put("high", candle.high)
-                    put("low", candle.low)
-                    put("close", candle.close)
-                    put("volume_tick", candle.volumeTick)
-                    put("is_closed", if (candle.isClosed) 1 else 0)
-                }
-                db.insertWithOnConflict("candles", null, values, SQLiteDatabase.CONFLICT_REPLACE)
+                db.insertWithOnConflict("candles", null, candle.toValues(), SQLiteDatabase.CONFLICT_REPLACE)
             }
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
         }
+        cleanupExpiredCandles()
     }
 
     fun getLatest(symbol: String, timeframe: String, limit: Int): List<Candle> {
@@ -96,7 +81,7 @@ class CandleStore(context: Context) : SQLiteOpenHelper(context, "amy_market_data
             ORDER BY open_time DESC
             LIMIT ?
             """.trimIndent(),
-            arrayOf(symbol, timeframe, limit.toString())
+            arrayOf(symbol, timeframe, limit.coerceIn(1, 5000).toString())
         ).use { cursor ->
             while (cursor.moveToNext()) {
                 out.add(
@@ -143,7 +128,45 @@ class CandleStore(context: Context) : SQLiteOpenHelper(context, "amy_market_data
                 LIMIT ?
             )
             """.trimIndent(),
-            arrayOf(symbol, timeframe, symbol, timeframe, keepLatest)
+            arrayOf(symbol, timeframe, symbol, timeframe, keepLatest.coerceAtLeast(100))
         )
+    }
+
+    fun cleanupExpiredCandles(nowMillis: Long = System.currentTimeMillis()) {
+        val db = writableDatabase
+        val day = 24L * 60L * 60L * 1000L
+        val shortTfCutoff = nowMillis - (90L * day)
+        val longTfCutoff = nowMillis - (365L * day)
+        db.delete("candles", "timeframe IN (?, ?, ?, ?) AND open_time < ?", arrayOf("M1", "M5", "M15", "M30", shortTfCutoff.toString()))
+        db.delete("candles", "timeframe IN (?, ?, ?) AND open_time < ?", arrayOf("H1", "H4", "D1", longTfCutoff.toString()))
+    }
+
+    fun clearCache() {
+        writableDatabase.delete("candles", null, null)
+    }
+
+    fun getStorageSizeBytes(): Long {
+        val dbFile: File = context.getDatabasePath(DATABASE_NAME)
+        return if (dbFile.exists()) dbFile.length() else 0L
+    }
+
+    private fun Candle.toValues(): ContentValues {
+        return ContentValues().apply {
+            put("symbol", symbol)
+            put("timeframe", timeframe)
+            put("open_time", openTime)
+            put("close_time", closeTime)
+            put("open", open)
+            put("high", high)
+            put("low", low)
+            put("close", close)
+            put("volume_tick", volumeTick)
+            put("is_closed", if (isClosed) 1 else 0)
+        }
+    }
+
+    companion object {
+        private const val DATABASE_NAME = "amy_market_data.sqlite"
+        private const val DATABASE_VERSION = 2
     }
 }
