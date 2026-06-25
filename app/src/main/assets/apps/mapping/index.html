@@ -104,7 +104,7 @@ async function runAnalysis(tf=state.tf){state.tf=tf;render();try{log('Memindai '
 function setupText(s){if(!s)return'';return `${fmtDir(s.dir)} ${s.tf}\nScore: ${s.score}/100\nEntry: ${p2(s.entryLow)} - ${p2(s.entryHigh)}\nSL: ${p2(s.sl)}\nTP1: ${p2(s.tp1)}\nTP2: ${p2(s.tp2)}\n${s.reason}`}
 function notifyImportant(res){let s=res?.bestSetup;if(!s||s.score<70)return;let key=`${s.type}:${s.dir}:${Math.round(s.entryLow*10)}:${Math.round(s.sl*10)}`;let last=state.notified[key]||0;if(Date.now()-last<300000)return;state.notified[key]=Date.now();localStorage.setItem('amy_mapping_notified',JSON.stringify(state.notified));let msg=setupText(s);if(window.Android?.showNotificationWithUrl)window.Android.showNotificationWithUrl('AMY FX — '+s.type,msg,location.href);else if(typeof Notification!=='undefined')Notification.requestPermission().then(p=>p==='granted'&&new Notification('AMY FX — '+s.type,{body:msg}))}
 function sendTargetsToNative(){if(state.bg&&window.Android?.startBackgroundScanner){let s=state.result?.bestSetup;if(s){let upper=Math.max(Number(s.entryLow),Number(s.entryHigh)),lower=Math.min(Number(s.entryLow),Number(s.entryHigh));window.Android.startBackgroundScanner(state.key,String(upper),String(lower));}else{let r=state.result;window.Android.startBackgroundScanner(state.key,String(r?.bsl||''),String(r?.ssl||''));}}}
-function connect(){if(!state.key.trim()){log('Masukkan API key dulu.');return}localStorage.setItem('twelve_api_key',state.key.trim());if(ws){ws.onclose=null;ws.close()}state.conn='Reconnecting';renderSoft();ws=new WebSocket(`wss://ws.twelvedata.com/v1/quotes/price?apikey=${encodeURIComponent(state.key.trim())}`);ws.onopen=()=>{state.conn='Connected';renderSoft();ws.send(JSON.stringify({action:'subscribe',params:{symbols:'XAU/USD'}}));log('WebSocket Connected.');runAnalysis(state.tf)};ws.onmessage=e=>{try{let d=JSON.parse(e.data),p=+d.price;if(p>1000&&p<10000){state.price=p;localStorage.setItem('last_price',String(p));renderSoft();if(!scanTimer)scanTimer=setTimeout(()=>{scanTimer=null;runAnalysis(state.tf)},15000)}}catch(_){}};ws.onclose=()=>{state.conn='Offline';renderSoft();clearTimeout(reconnectTimer);reconnectTimer=setTimeout(connect,8000)};ws.onerror=()=>log('WebSocket error')}
+function connect(){if(!state.key.trim()){log('Masukkan API key dulu.');return}localStorage.setItem('twelve_api_key',state.key.trim());if(ws){ws.onclose=null;ws.close()}state.conn='Reconnecting';renderSoft();ws=new WebSocket(`wss://ws.twelvedata.com/v1/quotes/price?apikey=${encodeURIComponent(state.key.trim())}`);ws.onopen=()=>{state.conn='Connected';renderSoft();ws.send(JSON.stringify({action:'subscribe',params:{symbols:'XAU/USD'}}));log('WebSocket Connected.');runAnalysis(state.tf)};ws.onmessage=e=>{try{let d=JSON.parse(e.data),p=+d.price;if(p>1000&&p<10000){state.price=p;localStorage.setItem('last_price',String(p));renderAnalyzeLive();if(!scanTimer)scanTimer=setTimeout(()=>{scanTimer=null;runAnalysis(state.tf)},15000)}}catch(_){}};ws.onclose=()=>{state.conn='Offline';renderSoft();clearTimeout(reconnectTimer);reconnectTimer=setTimeout(connect,8000)};ws.onerror=()=>log('WebSocket error')}
 function setupCard(s,i=0){return`<div class="setup-card"><div class="setup-head"><div><div class="setup-title">SETUP ${i+1} — ${s.type}</div><div class="muted">Timeframe: ${s.tf} • Status: ${fmtStatus(s.status)}</div></div><span class="badge ${String(s.dir).includes('BUY')?'buy':'sell'}">${fmtDir(s.dir)}</span></div><div class="num-grid"><div class="num"><small>Score</small><strong>${s.score}/100</strong></div><div class="num"><small>Harga Sekarang</small><strong>${p2(s.price)}</strong></div><div class="num"><small>Entry Area</small><strong>${p2(s.entryLow)} - ${p2(s.entryHigh)}</strong></div><div class="num"><small>SL</small><strong>${p2(s.sl)}</strong></div><div class="num"><small>TP1</small><strong>${p2(s.tp1)}</strong></div><div class="num"><small>TP2</small><strong>${p2(s.tp2)}</strong></div></div><div class="reason"><b>Alasan:</b><br>${s.reason}</div></div>`}
 function dashboard(){let r=state.result,s=r?.bestSetup;return`<section class="hero card"><div><div class="kicker">AMY FX SETUP ENGINE</div><h1>XAU/USD</h1><div class="muted">WIB ${nowTime()}</div></div><div style="text-align:right"><div class="muted">Gold Price</div><div class="price">$${p2(state.price)}</div><div class="${state.conn==='Connected'?'green':'muted'}">${state.conn}</div></div></section>${killzonePanel()}<button class="action" onclick="setTab('Analyze')" style="width:100%;margin-bottom:16px">⚡ Analisis Setup</button><section class="card"><h2>Best Setup</h2>${s?setupCard(s,0):'<p class="muted">Belum ada setup. Klik Analisis Setup.</p>'}</section><section class="card"><h2>Market Concepts</h2><div class="concept-grid">${(r?.concepts||[]).map(c=>`<div class="concept"><small>${c[1]}</small><h3>${c[0]}</h3><p>${c[2]}</p></div>`).join('')||'<p class="muted">Belum ada analisis.</p>'}</div></section>`}
 
@@ -145,9 +145,64 @@ function activeBias(){
   if(bull||bear)return 'MIXED / CONFLICT';
   return 'NEUTRAL';
 }
+
+/* AMYFX_ANALYZE_LIVE_STATUS_START */
+function analyzeLivePrice(){
+  return Number(state.price||localStorage.getItem('last_price')||state.result?.price||0)
+}
+function analyzeSetupLiveState(s){
+  if(!s)return{status:'TUNGGU',fatal:false,note:'Belum ada setup aktif.'}
+
+  const price=analyzeLivePrice()
+  if(!price)return{status:fmtStatus(s.status),fatal:false,note:'Harga live belum tersedia.'}
+
+  const dir=String(s.dir||'')
+  const isBuy=dir.includes('BUY')
+  const isSell=dir.includes('SELL')
+  const lo=Math.min(Number(s.entryLow),Number(s.entryHigh))
+  const hi=Math.max(Number(s.entryLow),Number(s.entryHigh))
+  const sl=Number(s.sl)
+  const tp1=Number(s.tp1)
+  const tp2=Number(s.tp2)
+
+  if(isBuy&&Number.isFinite(sl)&&price<=sl)return{status:'SL HIT / INVALID',fatal:true,note:`Setup BUY invalid karena harga live ${p2(price)} sudah di bawah SL ${p2(sl)}.`}
+  if(isSell&&Number.isFinite(sl)&&price>=sl)return{status:'SL HIT / INVALID',fatal:true,note:`Setup SELL invalid karena harga live ${p2(price)} sudah di atas SL ${p2(sl)}.`}
+
+  if(isBuy&&((Number.isFinite(tp2)&&price>=tp2)||(Number.isFinite(tp1)&&price>=tp1)))return{status:'TP HIT',fatal:true,note:`Target BUY sudah tercapai di harga live ${p2(price)}.`}
+  if(isSell&&((Number.isFinite(tp2)&&price<=tp2)||(Number.isFinite(tp1)&&price<=tp1)))return{status:'TP HIT',fatal:true,note:`Target SELL sudah tercapai di harga live ${p2(price)}.`}
+
+  if(Number.isFinite(lo)&&Number.isFinite(hi)&&price>=lo&&price<=hi)return{status:'DALAM AREA',fatal:false,note:`Harga live ${p2(price)} sedang berada di area entry.`}
+
+  return{status:'MENUNGGU ENTRY',fatal:false,note:`Harga live ${p2(price)} belum berada di area entry ${p2(lo)} - ${p2(hi)}.`}
+}
+function analyzeActiveSetups(list){
+  return (list||[]).filter(s=>!analyzeSetupLiveState(s).fatal)
+}
+function renderAnalyzeLive(){
+  if(state.tab==='Analyze'&&state.result)render()
+  else renderSoft()
+}
+/* AMYFX_ANALYZE_LIVE_STATUS_END */
+
 function decisionData(){
   let r=state.result,s=r?.bestSetup,bias=activeBias();
+
   if(!r)return{bias:'-',direction:'TUNGGU',confidence:0,status:'TUNGGU',entry:'-',invalid:'-',target:'-',reason:'Klik timeframe untuk membuat keputusan mapping.'};
+
+  let live=s?analyzeSetupLiveState(s):null;
+
+  if(s&&live?.fatal){
+    return{
+      bias,
+      direction:'TUNGGU',
+      confidence:0,
+      status:live.status,
+      entry:`${p2(s.entryLow)} - ${p2(s.entryHigh)}`,
+      invalid:p2(s.sl),
+      target:'-',
+      reason:live.note+' Tunggu setup baru.'
+    }
+  }
 
   let rawDir=s?.dir||r.signal||'WAIT';
   let focus=fmtDir(rawDir);
@@ -159,19 +214,17 @@ function decisionData(){
   if(conflict&&confidence<70)focus='TUNGGU';
 
   let target='-';
-  if(s){
-    target=String(rawDir).includes('BUY')?`BSL ${p2(r.bsl)}`:`SSL ${p2(r.ssl)}`;
-  }
+  if(s)target=String(rawDir).includes('BUY')?`BSL ${p2(r.bsl)}`:`SSL ${p2(r.ssl)}`;
 
   let reason=s
-    ? `Bias aktif ${bias}. Setup utama membaca ${s.type}. Area entry ${p2(s.entryLow)} - ${p2(s.entryHigh)}, invalidasi ${p2(s.sl)}, target ${target}.`
-    : `Bias aktif ${bias}. Belum ada setup angka yang cukup kuat, jadi fokus utama adalah menunggu konfirmasi.`;
+    ? `Bias aktif ${bias}. Setup utama membaca ${s.type}. ${live?live.note:''} Area entry ${p2(s.entryLow)} - ${p2(s.entryHigh)}, invalidasi ${p2(s.sl)}, target ${target}.`
+    : `Bias aktif ${bias}. Belum ada setup aktif yang aman, jadi fokus utama adalah menunggu konfirmasi baru.`;
 
   return{
     bias,
-    direction:focus,
-    confidence,
-    status:s?fmtStatus(s.status):'TUNGGU',
+    direction:s?focus:'TUNGGU',
+    confidence:s?confidence:0,
+    status:s?(live?.status||fmtStatus(s.status)):'TUNGGU',
     entry:s?`${p2(s.entryLow)} - ${p2(s.entryHigh)}`:'-',
     invalid:s?p2(s.sl):'-',
     target,
@@ -189,23 +242,35 @@ function amyDecisionCard(){
     <div class="decision-box"><small>Target</small><strong>${d.target}</strong></div>
   </div><div class="decision-reason"><b>Reason:</b><br>${d.reason}</div></section>`
 }
+
 function validBreakInfo(){
-  let r=state.result,tf=r?.tf,cs=state.candles?.[tf]||[],last=cs.at(-1),br=r?.st?.last;
+  let r=state.result,tf=r?.tf,cs=state.candles?.[tf]||[],last=cs.at(-1),br=r?.st?.last,price=analyzeLivePrice();
+
   if(!r||!last||!br){
     return`<section class="card"><div class="kicker">VALID BREAK INFO</div><h2>Belum Ada Valid Break</h2><div class="break-reason">Belum ada BOS/CHOCH yang cukup jelas. Tunggu candle close yang valid.</div></section>`
   }
 
   let bullish=br.dir==='BULLISH';
   let valid=bullish?last.close>br.price:last.close<br.price;
-  let direction=bullish?'FOKUS BUY':'FOKUS SELL';
-  let closeText=bullish?'Close di atas level break':'Close di bawah level break';
+  let failed=price&&valid?(bullish?price<br.price:price>br.price):false;
+  let liveWarning=price&&!valid?(bullish?price>br.price:price<br.price):false;
 
-  return`<section class="card"><div class="kicker">VALID BREAK INFO</div><h2>${valid?'VALID BREAK':'BELUM VALID'}</h2><div class="break-grid">
+  let direction=bullish?'FOKUS BUY':'FOKUS SELL';
+  let title=failed?'BREAK FAILED':valid?'VALID BREAK':liveWarning?'LIVE BREAK WARNING':'BELUM VALID';
+  let conclusion=failed
+    ? `Break gagal dipertahankan karena harga live ${p2(price)} kembali melewati level ${p2(br.price)}. Tunggu mapping ulang.`
+    : valid
+      ? `Candle close sudah valid. ${direction} masih relevan selama level break bertahan.`
+      : liveWarning
+        ? `Harga live sudah melewati level break, tapi candle close belum confirm. Tunggu candle close yang valid.`
+        : `Harga belum close valid melewati level ${p2(br.price)}. Tunggu konfirmasi candle close.`;
+
+  return`<section class="card"><div class="kicker">VALID BREAK INFO</div><h2>${title}</h2><div class="break-grid">
     <div class="break-box"><small>Break Level</small><strong>${p2(br.price)}</strong></div>
     <div class="break-box"><small>Candle Close</small><strong>${p2(last.close)}</strong></div>
+    <div class="break-box"><small>Harga Live</small><strong>${p2(price)}</strong></div>
     <div class="break-box"><small>Structure</small><strong>${br.kind} ${br.dir}</strong></div>
-    <div class="break-box"><small>Retest</small><strong>Belum dikonfirmasi</strong></div>
-  </div><div class="break-reason"><b>Kesimpulan:</b><br>${valid?`${closeText}. Break valid, ${direction} masih aktif.`:`Harga belum close valid melewati level ${p2(br.price)}. Tunggu konfirmasi candle close.`}</div></section>`
+  </div><div class="break-reason"><b>Kesimpulan:</b><br>${conclusion}</div></section>`
 }
 function m1h4MappingTable(){
   const rows=m1h4List().map(({tf,a})=>{
@@ -224,11 +289,21 @@ function m1h4MappingTable(){
   }).join('');
   return`<section class="card"><div class="kicker">M1–H4 MAPPING TABLE</div><h2>BSL • SSL • OB • FVG</h2><div class="map-table-wrap"><table class="map-table"><thead><tr><th>TF</th><th>Bias</th><th>BSL</th><th>SSL</th><th>OB</th><th>FVG</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div></section>`
 }
+
 function aiMappingExplanation(){
   let r=state.result,s=r?.bestSetup;
   if(!r)return`<section class="card"><div class="kicker">AI MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note muted">Klik timeframe untuk membuat penjelasan mapping.</div></section>`;
 
   let liq=mapConcept(r,'Liquidity');
+  let live=s?analyzeSetupLiveState(s):null;
+
+  if(s&&live?.fatal){
+    return`<section class="card"><div class="kicker">AI MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note">
+      <p>Setup ${s.tf} sebelumnya membaca <b>${s.type}</b> dengan arah <b>${fmtDir(s.dir)}</b>.</p>
+      <p><b>${live.status}</b>: ${live.note}</p>
+      <p>Kesimpulan: setup aktif tidak layak dipakai. Tunggu mapping ulang atau setup baru.</p>
+    </div></section>`;
+  }
 
   if(!s){
     return`<section class="card"><div class="kicker">AI MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note">
@@ -239,22 +314,23 @@ function aiMappingExplanation(){
   }
 
   return`<section class="card"><div class="kicker">AI MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note">
-    <p>Mapping ${s.tf} sedang membaca <b>${s.type}</b> dengan arah <b>${fmtDir(s.dir)}</b>. Harga sekarang berada di sekitar <b>${p2(s.price)}</b>.</p>
-    <p>Area entry utama berada di <b>${p2(s.entryLow)} - ${p2(s.entryHigh)}</b>. Area ini menjadi zona penting karena berhubungan dengan struktur, liquidity, OB/FVG, atau displacement yang terdeteksi sistem.</p>
-    <p>Liquidity yang sedang diperhatikan adalah <b>BSL ${p2(r.bsl)}</b> dan <b>SSL ${p2(r.ssl)}</b>. Jika harga masuk area entry lalu memberi reaksi jelas, setup tetap valid untuk dipantau.</p>
+    <p>Mapping ${s.tf} sedang membaca <b>${s.type}</b> dengan arah <b>${fmtDir(s.dir)}</b>. Harga sekarang berada di sekitar <b>${p2(analyzeLivePrice()||s.price)}</b>.</p>
+    <p>Area entry utama berada di <b>${p2(s.entryLow)} - ${p2(s.entryHigh)}</b>. ${live?live.note:''}</p>
+    <p>Liquidity yang sedang diperhatikan adalah <b>BSL ${p2(r.bsl)}</b> dan <b>SSL ${p2(r.ssl)}</b>.</p>
     <p>Invalidasi berada di <b>${p2(s.sl)}</b>. Target awal berada di <b>${p2(s.tp1)}</b>, lalu target lanjutan di <b>${p2(s.tp2)}</b>.</p>
-    <p>Kesimpulan: <b>${fmtStatus(s.status)}</b>. Jangan paksa entry sebelum harga memberi konfirmasi di area mapping.</p>
+    <p>Kesimpulan: <b>${live?.status||fmtStatus(s.status)}</b>. Jangan paksa entry sebelum harga memberi konfirmasi di area mapping.</p>
   </div></section>`;
 }
+
 function analyzeView(){
+  const active=analyzeActiveSetups(state.result?.setups||[]);
   return`<section class="card"><div class="tf-grid">${Object.keys(TF).map(x=>`<button class="${state.tf===x?'active':''}" onclick="runAnalysis('${x}')">${x}</button>`).join('')}</div></section>
   ${amyDecisionCard()}
   ${validBreakInfo()}
   ${m1h4MappingTable()}
   ${aiMappingExplanation()}
-  <section class="card"><h2>Setup Aktif</h2>${(state.result?.setups||[]).map(setupCard).join('')||'<p class="muted">Klik timeframe untuk memuat setup angka.</p>'}</section>`
+  <section class="card"><h2>Setup Aktif</h2>${active.map(setupCard).join('')||'<p class="muted">Belum ada setup aktif yang aman. Tunggu mapping baru.</p>'}</section>`
 }
-
 function setupsView(){let list=state.setups.slice(0,20);return`<section class="card"><h1>Riwayat Setup</h1>${list.map(setupCard).join('')||'<p class="muted">Belum ada setup tersimpan.</p>'}</section>`}
 function history(){return`<section class="card"><h1>Event Logs</h1><button class="action" onclick="downloadLogs()">⇩ Download TXT</button>${state.logs.map(x=>`<div class="log">${x}</div>`).join('')||'<p class="muted">Belum ada event.</p>'}</section>`}
 function settings(){return`<section class="card settings"><h1>Settings & API</h1><label>Twelve Data API Key</label><input id="apiKey" value="${state.key}" placeholder="Twelve Data API key"><button class="action" onclick="saveConnect()" style="width:100%">🔑 Save & Connect</button><p class="muted">API key disimpan lokal di HP.</p><div class="warn"><b>Background Scanner</b><br>Jika ON, scanner akan memantau Entry Area setup terbaik dari Mapping saat aplikasi ditutup.</div><button class="${state.bg?'action':'chip'}" onclick="toggleBg()" style="width:100%;margin-top:14px">${state.bg?'📡 Background Scanner ON':'📴 Background Scanner OFF'}</button><button class="action" onclick="testNotif()" style="width:100%;margin-top:12px">🔔 Tes Notifikasi Setup</button></section>`}
