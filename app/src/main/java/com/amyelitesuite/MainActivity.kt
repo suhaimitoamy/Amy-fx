@@ -27,6 +27,10 @@ import android.view.Gravity
 import android.view.View
 import android.webkit.JavascriptInterface
 import android.webkit.ValueCallback
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.ConsoleMessage
+import android.content.res.Configuration
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -92,8 +96,8 @@ class MainActivity : Activity() {
         webSettings.cacheMode = WebSettings.LOAD_DEFAULT
         webSettings.allowFileAccess = true
         webSettings.allowContentAccess = true
-        webSettings.allowFileAccessFromFileURLs = true
-        webSettings.allowUniversalAccessFromFileURLs = true
+        webSettings.allowFileAccessFromFileURLs = false
+        webSettings.allowUniversalAccessFromFileURLs = false
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             webSettings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
         }
@@ -101,6 +105,13 @@ class MainActivity : Activity() {
         webView.addJavascriptInterface(WebAppInterface(this), "Android")
 
         webView.webChromeClient = object : WebChromeClient() {
+            override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+                if (BuildConfig.DEBUG && consoleMessage != null) {
+                    android.util.Log.d("AmyFX-WebView", "${consoleMessage.message()} @ ${consoleMessage.sourceId()}:${consoleMessage.lineNumber()}")
+                }
+                return true
+            }
+
             override fun onShowFileChooser(
                 webView: WebView?,
                 filePathCallback: ValueCallback<Array<Uri>>?,
@@ -129,6 +140,13 @@ class MainActivity : Activity() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 swipeRefreshLayout.isRefreshing = false
                 injectHomeButtonForLocalModule(url)
+            }
+
+            override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                if (request?.isForMainFrame == true) {
+                    swipeRefreshLayout.isRefreshing = false
+                    view?.loadUrl("file:///android_asset/error.html")
+                }
             }
         }
 
@@ -186,9 +204,27 @@ class MainActivity : Activity() {
         maybeRequestNotificationPermission()
     }
 
+    override fun onPause() {
+        if (::webView.isInitialized) webView.onPause()
+        super.onPause()
+    }
+
     override fun onResume() {
         super.onResume()
+        if (::webView.isInitialized) webView.onResume()
         updatePermissionGate()
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level >= TRIM_MEMORY_RUNNING_LOW && ::webView.isInitialized) {
+            webView.clearCache(false)
+        }
+    }
+
+    override fun onLowMemory() {
+        if (::webView.isInitialized) webView.clearCache(false)
+        super.onLowMemory()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -641,6 +677,29 @@ class MainActivity : Activity() {
             } catch (e: Exception) {
                 "[]"
             }
+        }
+
+        @JavascriptInterface
+        fun clearWebViewCache() {
+            (mContext as Activity).runOnUiThread {
+                this@MainActivity.webView.clearCache(true)
+                Toast.makeText(mContext, "Cache WebView dibersihkan", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        @JavascriptInterface
+        fun getScannerHealth(): String {
+            val prefs = mContext.getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
+            val enabled = prefs.getBoolean("scanner_enabled", false)
+            val targetAt = prefs.getLong("scanner_target_updated_at", 0L)
+            val bsl = prefs.getString("scanner_bsl_target", "")
+            val ssl = prefs.getString("scanner_ssl_target", "")
+            return JSONObject()
+                .put("enabled", enabled)
+                .put("targetUpdatedAt", targetAt)
+                .put("bsl", bsl)
+                .put("ssl", ssl)
+                .toString()
         }
 
         @JavascriptInterface
