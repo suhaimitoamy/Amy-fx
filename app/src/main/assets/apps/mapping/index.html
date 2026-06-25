@@ -37,6 +37,23 @@
 }
 /* AMYFX_SYNC_FIX_CSS_END */
 
+
+/* AMYFX_MAPPING_AI_CSS_START */
+.map-table-wrap{overflow-x:auto}
+.map-table{width:100%;border-collapse:separate;border-spacing:0 8px;font-size:12px}
+.map-table th{color:var(--muted);font-size:11px;text-align:left;padding:0 8px 2px;white-space:nowrap}
+.map-table td{background:#0b0b0b;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);padding:10px 8px;vertical-align:top;white-space:nowrap}
+.map-table td:first-child{border-left:1px solid rgba(255,255,255,.07);border-radius:12px 0 0 12px;font-weight:950;color:var(--gold)}
+.map-table td:last-child{border-right:1px solid rgba(255,255,255,.07);border-radius:0 12px 12px 0}
+.map-bias{font-weight:950}
+.map-bias.bullish{color:var(--green)}
+.map-bias.bearish{color:var(--red)}
+.map-bias.neutral{color:var(--muted)}
+.ai-map-note{line-height:1.55;color:#ddd}
+.ai-map-note p{margin:0 0 10px}
+.ai-map-note b{color:var(--gold)}
+/* AMYFX_MAPPING_AI_CSS_END */
+
 </style>
 </head>
 <body>
@@ -68,14 +85,74 @@ function setupObj(type,dir,tf,score,now,entryLow,entryHigh,sl,tp1,tp2,reason,ext
 function buildSetups(cs,tf,ctx){let out=[],a=Math.max(atr(cs),0.1),price=ctx.price,bsl=ctx.bsl,ssl=ctx.ssl,eq=ctx.eq,last=cs.at(-1),buffer=Math.max(a*.25,0.2);if(ctx.nearOb){let z=ctx.nearOb,dir=z.type==='BULLISH'?'BUY WATCH':'SELL WATCH',sl=dir.startsWith('BUY')?z.bottom-buffer:z.top+buffer,tp1=dir.startsWith('BUY')?Math.min(eq,bsl):Math.max(eq,ssl),tp2=dir.startsWith('BUY')?bsl:ssl;out.push(setupObj('ORDER BLOCK',dir,tf,68+(ctx.final===(dir.startsWith('BUY')?'BULLISH':'BEARISH')?8:0),price,z.bottom,z.top,sl,tp1,tp2,`${z.type} OB aktif di area ${p2(z.bottom)} - ${p2(z.top)}.`))}if(ctx.nearFvg){let z=ctx.nearFvg,dir=z.type==='BULLISH'?'BUY WATCH':'SELL WATCH',sl=dir.startsWith('BUY')?z.bottom-buffer:z.top+buffer,tp1=dir.startsWith('BUY')?Math.min(eq,bsl):Math.max(eq,ssl),tp2=dir.startsWith('BUY')?bsl:ssl;out.push(setupObj('FAIR VALUE GAP',dir,tf,66+(ctx.final===(dir.startsWith('BUY')?'BULLISH':'BEARISH')?8:0),price,z.bottom,z.top,sl,tp1,tp2,`${z.type} FVG aktif di area ${p2(z.bottom)} - ${p2(z.top)}.`))}let sw=ctx.sw,prevHigh=[...sw.highs].reverse().find(x=>x.index<cs.length-2),prevLow=[...sw.lows].reverse().find(x=>x.index<cs.length-2);if(prevLow&&last.low<prevLow.low&&last.close>prevLow.low){let e1=prevLow.low,e2=Math.max(last.close,prevLow.low+buffer),sl=last.low-buffer;out.push(setupObj('LIQUIDITY SWEEP','BUY WATCH',tf,78,price,e1,e2,sl,price+(price-sl),bsl,`SSL ${p2(prevLow.low)} disapu, low sweep ${p2(last.low)}, lalu close kembali di atas SSL.`))}if(prevHigh&&last.high>prevHigh.high&&last.close<prevHigh.high){let e1=Math.min(last.close,prevHigh.high-buffer),e2=prevHigh.high,sl=last.high+buffer;out.push(setupObj('LIQUIDITY SWEEP','SELL WATCH',tf,78,price,e1,e2,sl,price-(sl-price),ssl,`BSL ${p2(prevHigh.high)} disapu, high sweep ${p2(last.high)}, lalu close kembali di bawah BSL.`))}if(ctx.st.last){let s=ctx.st.last,dir=s.dir==='BULLISH'?'BUY WATCH':'SELL WATCH',entryLow=s.dir==='BULLISH'?s.price-buffer:s.price,entryHigh=s.dir==='BULLISH'?s.price:s.price+buffer,sl=s.dir==='BULLISH'?ctx.low-buffer:ctx.high+buffer,tp1=s.dir==='BULLISH'?Math.min(eq,bsl):Math.max(eq,ssl),tp2=s.dir==='BULLISH'?bsl:ssl;out.push(setupObj('STRUCTURE SETUP',dir,tf,s.kind==='CHOCH'?76:72,price,entryLow,entryHigh,sl,tp1,tp2,`${s.kind} ${s.dir} terkonfirmasi di level ${p2(s.price)}.`))}let body=Math.abs(last.close-last.open);if(body>=a*1.5&&bodyRatio(last)>=.6){let bull=last.close>last.open,dir=bull?'BUY WATCH':'SELL WATCH',lo=Math.min(last.open,last.close),hi=Math.max(last.open,last.close),entryLow=bull?lo+body*.35:hi-body*.65,entryHigh=bull?lo+body*.65:hi-body*.35,sl=bull?last.low-buffer:last.high+buffer,tp1=bull?price+(price-sl):price-(sl-price),tp2=bull?bsl:ssl;out.push(setupObj('DISPLACEMENT CANDLE',dir,tf,81,price,Math.min(entryLow,entryHigh),Math.max(entryLow,entryHigh),sl,tp1,tp2,`Candle ${bull?'bullish':'bearish'} besar. Open ${p2(last.open)}, close ${p2(last.close)}, body dominan.`))}return out.filter(x=>Number.isFinite(x.entryLow)&&Number.isFinite(x.entryHigh)&&Number.isFinite(x.sl)&&Number.isFinite(x.tp1)&&Number.isFinite(x.tp2)).sort((a,b)=>b.score-a.score)}
 function analyze(cs,tf,htfBiases={}){if(!cs||cs.length<30)return null;let price=state.price||cs.at(-1).close,sw=swings(cs,tf==='M1'?2:3,tf==='M1'?2:3),st=detectStructure(cs,sw),fvg=detectFvg(cs),ob=detectOB(cs,st),high=Math.max(...sw.highs.slice(-5).map(x=>x.high),...cs.slice(-50).map(x=>x.high)),low=Math.min(...sw.lows.slice(-5).map(x=>x.low),...cs.slice(-50).map(x=>x.low)),eq=(high+low)/2,zone=price>eq?'Premium':price<eq?'Discount':'Equilibrium',bsl=[...sw.highs].reverse().find(x=>x.high>price)?.high||Math.max(...cs.slice(-30).map(c=>c.high)),ssl=[...sw.lows].reverse().find(x=>x.low<price)?.low||Math.min(...cs.slice(-30).map(c=>c.low));let htfList=Object.values(htfBiases).filter(Boolean),bull=htfList.filter(x=>x==='BULLISH').length,bear=htfList.filter(x=>x==='BEARISH').length,htf=bear>bull?'BEARISH':bull>bear?'BULLISH':'NEUTRAL';let biasScore=(st.trend==='BULLISH'?1:st.trend==='BEARISH'?-1:0)+(htf==='BULLISH'?2:htf==='BEARISH'?-2:0),final=biasScore>0?'BULLISH':biasScore<0?'BEARISH':'NEUTRAL';let nearFvg=fvg.find(x=>price>=x.bottom&&price<=x.top)||fvg.at(-1),nearOb=ob.find(x=>price>=x.bottom&&price<=x.top)||ob[0];let ctx={tf,price,sw,st,nearFvg,nearOb,final,bsl,ssl,high,low,eq,zone};let setups=buildSetups(cs,tf,ctx),best=setups[0]||null,signal=best?best.dir:'WAIT',score=best?best.score:45+Math.abs(biasScore)*8;return{tf,price,final,biasScore,score,signal,zone,high,low,eq,bsl,ssl,st,htf,htfBiases,setups,bestSetup:best,concepts:[['Final Bias',final,`${final} | ${zone}`],['Structure',st.trend,st.last?`${st.last.kind} ${st.last.dir} @ ${p2(st.last.price)}`:'Belum ada break struktur'],['OB',nearOb?'ACTIVE':'WAIT',nearOb?`${nearOb.type} ${p2(nearOb.bottom)} - ${p2(nearOb.top)}`:'Tidak ada OB aktif'],['FVG',nearFvg?'ACTIVE':'WAIT',nearFvg?`${nearFvg.type} ${p2(nearFvg.bottom)} - ${p2(nearFvg.top)}`:'Tidak ada FVG aktif'],['Liquidity','ACTIVE',`BSL ${p2(bsl)} | SSL ${p2(ssl)}`],['Best Setup',best?best.status:'WAIT',best?`${best.type} ${best.score}/100`:'Belum ada setup angka']]} }
 async function fetchTf(tf){if(!state.key.trim())throw new Error('API key kosong');let url=`https://api.twelvedata.com/time_series?symbol=XAU/USD&interval=${TF[tf]}&outputsize=300&apikey=${encodeURIComponent(state.key.trim())}`;let r=await fetch(url);let d=await r.json();if(d.status==='error')throw new Error(d.message||'Fetch gagal');let arr=(d.values||[]).reverse().map(c=>({time:new Date(c.datetime).getTime()/1000,timeframe:tf,open:+c.open,high:+c.high,low:+c.low,close:+c.close,tickCount:1,isClosed:true}));state.candles[tf]=arr;return arr}
-async function runAnalysis(tf=state.tf){state.tf=tf;render();try{log('Memindai '+tf+'...');let group=tfGroup(tf);await Promise.all(group.map(x=>state.candles[x]?.length?Promise.resolve(state.candles[x]):fetchTf(x).catch(e=>[])));let htfBiases={};for(let x of group.filter(x=>x!==tf)){let mini=state.candles[x];if(mini?.length>30){let a=analyze(mini,x,{});htfBiases[x]=a?.st?.trend||'NEUTRAL'}}let res=analyze(state.candles[tf],tf,htfBiases);state.result=res;state.setups=[...(res?.setups||[]),...state.setups].slice(0,50);state.analyses=[{id:Date.now(),...res},...state.analyses].slice(0,80);save();log(`${tf} selesai: ${res.signal} score ${res.score}/100`);sendTargetsToNative();notifyImportant(res)}catch(e){log('Error '+tf+': '+e.message)}render()}
+async function runAnalysis(tf=state.tf){state.tf=tf;render();try{log('Memindai '+tf+'...');let group=tfGroup(tf),scanGroup=[...new Set([...group,'M1','M5','M15','M30','H1','H4'])];await Promise.all(scanGroup.map(x=>state.candles[x]?.length?Promise.resolve(state.candles[x]):fetchTf(x).catch(e=>[])));let htfBiases={};for(let x of group.filter(x=>x!==tf)){let mini=state.candles[x];if(mini?.length>30){let a=analyze(mini,x,{});htfBiases[x]=a?.st?.trend||'NEUTRAL'}}let res=analyze(state.candles[tf],tf,htfBiases);state.result=res;state.setups=[...(res?.setups||[]),...state.setups].slice(0,50);state.analyses=[{id:Date.now(),...res},...state.analyses].slice(0,80);save();log(`${tf} selesai: ${res.signal} score ${res.score}/100`);sendTargetsToNative();notifyImportant(res)}catch(e){log('Error '+tf+': '+e.message)}render()}
 function setupText(s){if(!s)return'';return `${s.dir} ${s.tf}\nScore: ${s.score}/100\nEntry: ${p2(s.entryLow)} - ${p2(s.entryHigh)}\nSL: ${p2(s.sl)}\nTP1: ${p2(s.tp1)}\nTP2: ${p2(s.tp2)}\n${s.reason}`}
 function notifyImportant(res){let s=res?.bestSetup;if(!s||s.score<70)return;let key=`${s.type}:${s.dir}:${Math.round(s.entryLow*10)}:${Math.round(s.sl*10)}`;let last=state.notified[key]||0;if(Date.now()-last<300000)return;state.notified[key]=Date.now();localStorage.setItem('amy_mapping_notified',JSON.stringify(state.notified));let msg=setupText(s);if(window.Android?.showNotificationWithUrl)window.Android.showNotificationWithUrl('AMY FX — '+s.type,msg,location.href);else if(typeof Notification!=='undefined')Notification.requestPermission().then(p=>p==='granted'&&new Notification('AMY FX — '+s.type,{body:msg}))}
 function sendTargetsToNative(){if(state.bg&&window.Android?.startBackgroundScanner){let s=state.result?.bestSetup;if(s){let upper=Math.max(Number(s.entryLow),Number(s.entryHigh)),lower=Math.min(Number(s.entryLow),Number(s.entryHigh));window.Android.startBackgroundScanner(state.key,String(upper),String(lower));}else{let r=state.result;window.Android.startBackgroundScanner(state.key,String(r?.bsl||''),String(r?.ssl||''));}}}
 function connect(){if(!state.key.trim()){log('Masukkan API key dulu.');return}localStorage.setItem('twelve_api_key',state.key.trim());if(ws){ws.onclose=null;ws.close()}state.conn='Reconnecting';renderSoft();ws=new WebSocket(`wss://ws.twelvedata.com/v1/quotes/price?apikey=${encodeURIComponent(state.key.trim())}`);ws.onopen=()=>{state.conn='Connected';renderSoft();ws.send(JSON.stringify({action:'subscribe',params:{symbols:'XAU/USD'}}));log('WebSocket Connected.');runAnalysis(state.tf)};ws.onmessage=e=>{try{let d=JSON.parse(e.data),p=+d.price;if(p>1000&&p<10000){state.price=p;localStorage.setItem('last_price',String(p));renderSoft();if(!scanTimer)scanTimer=setTimeout(()=>{scanTimer=null;runAnalysis(state.tf)},15000)}}catch(_){}};ws.onclose=()=>{state.conn='Offline';renderSoft();clearTimeout(reconnectTimer);reconnectTimer=setTimeout(connect,8000)};ws.onerror=()=>log('WebSocket error')}
 function setupCard(s,i=0){return`<div class="setup-card"><div class="setup-head"><div><div class="setup-title">SETUP ${i+1} — ${s.type}</div><div class="muted">Timeframe: ${s.tf} • Status: ${s.status}</div></div><span class="badge ${s.dir.startsWith('BUY')?'buy':'sell'}">${s.dir}</span></div><div class="num-grid"><div class="num"><small>Score</small><strong>${s.score}/100</strong></div><div class="num"><small>Harga Sekarang</small><strong>${p2(s.price)}</strong></div><div class="num"><small>Entry Area</small><strong>${p2(s.entryLow)} - ${p2(s.entryHigh)}</strong></div><div class="num"><small>SL</small><strong>${p2(s.sl)}</strong></div><div class="num"><small>TP1</small><strong>${p2(s.tp1)}</strong></div><div class="num"><small>TP2</small><strong>${p2(s.tp2)}</strong></div></div><div class="reason"><b>Alasan:</b><br>${s.reason}</div></div>`}
 function dashboard(){let r=state.result,s=r?.bestSetup;return`<section class="hero card"><div><div class="kicker">AMY FX SETUP ENGINE</div><h1>XAU/USD</h1><div class="muted">WIB ${nowTime()}</div></div><div style="text-align:right"><div class="muted">Gold Price</div><div class="price">$${p2(state.price)}</div><div class="${state.conn==='Connected'?'green':'muted'}">${state.conn}</div></div></section>${killzonePanel()}<button class="action" onclick="setTab('Analyze')" style="width:100%;margin-bottom:16px">⚡ Analisis Setup</button><section class="card"><h2>Best Setup</h2>${s?setupCard(s,0):'<p class="muted">Belum ada setup. Klik Analisis Setup.</p>'}</section><section class="card"><h2>Market Concepts</h2><div class="concept-grid">${(r?.concepts||[]).map(c=>`<div class="concept"><small>${c[1]}</small><h3>${c[0]}</h3><p>${c[2]}</p></div>`).join('')||'<p class="muted">Belum ada analisis.</p>'}</div></section>`}
-function analyzeView(){return`<section class="card"><div class="kicker">PILIH TIMEFRAME</div><h1>Setup Entry Mapping</h1><p class="muted">Setup yang muncul: OB, FVG, Liquidity Sweep, Structure, Displacement.</p></section>${killzonePanel()}<section class="card"><div class="tf-grid">${Object.keys(TF).map(x=>`<button class="${state.tf===x?'active':''}" onclick="runAnalysis('${x}')">${x}</button>`).join('')}</div></section><section class="card"><h2>Setup Aktif</h2>${(state.result?.setups||[]).map(setupCard).join('')||'<p class="muted">Klik timeframe untuk memuat setup angka.</p>'}</section>`}
+
+function mapMini(tf){
+  let cs=state.candles?.[tf]||[];
+  if(!cs.length||cs.length<30)return null;
+  try{return analyze(cs,tf,{})}catch(e){return null}
+}
+function mapConcept(a,name){
+  return (a?.concepts||[]).find(x=>x[0]===name)||null
+}
+function mapBiasClass(x){
+  x=String(x||'NEUTRAL').toLowerCase();
+  return x.includes('bull')?'bullish':x.includes('bear')?'bearish':'neutral'
+}
+function m1h4MappingTable(){
+  const list=['M1','M5','M15','M30','H1','H4'];
+  const rows=list.map(tf=>{
+    let a=mapMini(tf);
+    if(!a)return`<tr><td>${tf}</td><td colspan="6" class="muted">Belum dimuat</td></tr>`;
+    let ob=mapConcept(a,'OB'),fvg=mapConcept(a,'FVG');
+    let status=a.bestSetup?`${a.bestSetup.dir} ${a.bestSetup.score}/100`:a.signal;
+    return`<tr>
+      <td>${tf}</td>
+      <td><span class="map-bias ${mapBiasClass(a.final)}">${a.final}</span></td>
+      <td>${p2(a.bsl)}</td>
+      <td>${p2(a.ssl)}</td>
+      <td>${ob?ob[2]:'-'}</td>
+      <td>${fvg?fvg[2]:'-'}</td>
+      <td>${status}</td>
+    </tr>`;
+  }).join('');
+  return`<section class="card"><div class="kicker">M1–H4 MAPPING TABLE</div><h2>BSL • SSL • OB • FVG</h2><div class="map-table-wrap"><table class="map-table"><thead><tr><th>TF</th><th>Bias</th><th>BSL</th><th>SSL</th><th>OB</th><th>FVG</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div></section>`
+}
+function aiMappingExplanation(){
+  let r=state.result,s=r?.bestSetup;
+  if(!r)return`<section class="card"><div class="kicker">AI MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note muted">Klik timeframe untuk membuat penjelasan mapping.</div></section>`;
+
+  let ob=mapConcept(r,'OB'),fvg=mapConcept(r,'FVG'),liq=mapConcept(r,'Liquidity'),structure=mapConcept(r,'Structure');
+
+  if(!s){
+    return`<section class="card"><div class="kicker">AI MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note">
+      <p>Mapping ${r.tf} menunjukkan bias utama <b>${r.final}</b> dengan posisi harga berada di area <b>${r.zone}</b>.</p>
+      <p>Liquidity terdekat: <b>${liq?liq[2]:`BSL ${p2(r.bsl)} | SSL ${p2(r.ssl)}`}</b>.</p>
+      <p>Kesimpulan: belum ada setup angka yang cukup kuat. Tunggu OB, FVG, sweep liquidity, atau displacement yang lebih jelas.</p>
+    </div></section>`;
+  }
+
+  return`<section class="card"><div class="kicker">AI MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note">
+    <p>Mapping ${s.tf} sedang membaca <b>${s.type}</b> dengan arah <b>${s.dir}</b>. Harga sekarang berada di sekitar <b>${p2(s.price)}</b>.</p>
+    <p>Area entry utama berada di <b>${p2(s.entryLow)} - ${p2(s.entryHigh)}</b>. Area ini menjadi zona penting karena berhubungan dengan struktur, liquidity, OB/FVG, atau displacement yang terdeteksi sistem.</p>
+    <p>Liquidity yang sedang diperhatikan adalah <b>BSL ${p2(r.bsl)}</b> dan <b>SSL ${p2(r.ssl)}</b>. Jika harga masuk area entry lalu memberi reaksi jelas, setup tetap valid untuk dipantau.</p>
+    <p>Invalidasi berada di <b>${p2(s.sl)}</b>. Target awal berada di <b>${p2(s.tp1)}</b>, lalu target lanjutan di <b>${p2(s.tp2)}</b>.</p>
+    <p>Kesimpulan: <b>${s.status}</b>. Jangan paksa entry sebelum harga memberi konfirmasi di area mapping.</p>
+  </div></section>`;
+}
+function analyzeView(){
+  return`<section class="card"><div class="tf-grid">${Object.keys(TF).map(x=>`<button class="${state.tf===x?'active':''}" onclick="runAnalysis('${x}')">${x}</button>`).join('')}</div></section>
+  <section class="card"><h2>Setup Aktif</h2>${(state.result?.setups||[]).map(setupCard).join('')||'<p class="muted">Klik timeframe untuk memuat setup angka.</p>'}</section>
+  ${m1h4MappingTable()}
+  ${aiMappingExplanation()}`
+}
+
 function setupsView(){let list=state.setups.slice(0,20);return`<section class="card"><h1>Riwayat Setup</h1>${list.map(setupCard).join('')||'<p class="muted">Belum ada setup tersimpan.</p>'}</section>`}
 function history(){return`<section class="card"><h1>Event Logs</h1><button class="action" onclick="downloadLogs()">⇩ Download TXT</button>${state.logs.map(x=>`<div class="log">${x}</div>`).join('')||'<p class="muted">Belum ada event.</p>'}</section>`}
 function settings(){return`<section class="card settings"><h1>Settings & API</h1><label>Twelve Data API Key</label><input id="apiKey" value="${state.key}" placeholder="Twelve Data API key"><button class="action" onclick="saveConnect()" style="width:100%">🔑 Save & Connect</button><p class="muted">API key disimpan lokal di HP.</p><div class="warn"><b>Background Scanner</b><br>Jika ON, scanner akan memantau Entry Area setup terbaik dari Mapping saat aplikasi ditutup.</div><button class="${state.bg?'action':'chip'}" onclick="toggleBg()" style="width:100%;margin-top:14px">${state.bg?'📡 Background Scanner ON':'📴 Background Scanner OFF'}</button><button class="action" onclick="testNotif()" style="width:100%;margin-top:12px">🔔 Tes Notifikasi Setup</button></section>`}
@@ -206,7 +283,7 @@ document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',(
       if(st[k]===true)return true;
     }
 
-    const strKeys=['status','connectionStatus','goldStatus','feedStatus','priceStatus','appStatus'];
+    const strKeys=['conn','status','connectionStatus','goldStatus','feedStatus','priceStatus','appStatus'];
     const raw=strKeys.map(k=>st[k]).filter(Boolean).join(' ');
     if(/\bconnected\b|\bonline\b/i.test(raw)&&!/\boffline\b|\bdisconnected\b/i.test(raw))return true;
 
@@ -219,6 +296,9 @@ document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',(
   }
 
   function computedStatus(){
+    const st=getState();
+    const conn=String((st&&st.conn)||'');
+    if(/connected|online/i.test(conn)&&!/offline|disconnected|cache/i.test(conn))return 'Connected';
     if(stateConnected()||goldConnectedFromUI())return 'Connected';
     if(hasCache())return 'Cache';
     return 'Offline';
@@ -265,7 +345,8 @@ document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',(
 
   function syncScanner(){
     const status=computedStatus();
-    const scannerStatus=status==='Connected'?'ON':status==='Cache'?'CACHE':'OFF';
+    const st=getState();
+    const scannerStatus=st&&st.bg===false?'OFF':status==='Connected'?'ON':status==='Cache'?'CACHE':'OFF';
 
     Array.from(document.querySelectorAll('*')).forEach(el=>{
       if(!/Background Scanner/i.test(el.textContent||''))return;
