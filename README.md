@@ -1,51 +1,216 @@
 # Amy FX
 
-Amy FX adalah aplikasi Android hybrid untuk analisis XAU/USD berbasis WebView lokal + native Kotlin.
+Amy FX adalah aplikasi Android hybrid untuk analisis XAU/USD berbasis WebView lokal dan native Kotlin.
 
-Fokus aplikasi:
-
-- Mapping market ICT/SMC.
-- Pemantauan target BSL/SSL lewat background scanner.
-- Notifikasi Android untuk level penting.
-- Jurnal trading.
-- Academy lokal.
-- Library indikator Pine Script.
-- Candle cache lokal memakai SQLite.
-
-> Amy FX bukan aplikasi eksekusi order otomatis dan bukan nasihat keuangan.
+Aplikasi ini berfungsi sebagai alat bantu analisis, mapping, pemantauan level, jurnal, academy, dan library indikator. Amy FX bukan aplikasi eksekusi order otomatis dan bukan nasihat keuangan.
 
 ---
 
-## Status Saat Ini
+## Status Repo
 
-Status repo: **stabilisasi production build tahap awal**.
+Status saat ini: **stabilisasi fitur Mapping dan background scanner**.
 
-Yang sudah masuk repo:
+Yang sudah tersedia:
 
-- Target Android SDK 35.
-- Build debug APK via GitHub Actions.
-- `BuildConfig` generation aktif.
-- R8 / ProGuard release config tersedia.
-- WebView bridge Android ↔ JavaScript.
-- Scanner foreground service.
-- Cooldown notifikasi target.
-- Expiry target Mapping.
-- Reconnect scanner bertahap.
-- SQLite candle cache cleanup.
-- Secure preferences untuk API key.
-- Core logic awal Mapping ICT.
-- Unit test dasar Mapping.
-- Dokumentasi `docs/`.
-- `update.json` untuk metadata update.
+- Android hybrid WebView + Kotlin native layer.
+- Module Mapping untuk analisis XAU/USD.
+- Dashboard Mapping.
+- Analyze Mapping.
+- AMY FX Decision.
+- Valid Break Info.
+- Amy FX Mapping Explanation.
+- Setup Aktif.
+- History / Event Logs.
+- Settings & API.
+- Save & Connect Twelve Data API.
+- WebSocket live price XAU/USD.
+- Background Scanner ON/OFF.
+- Native foreground service untuk scanner.
+- Notifikasi Android untuk setup dan target level.
+- Deep link / route notifikasi ke Mapping.
+- Jurnal trading.
+- Academy lokal.
+- Library indikator Pine Script.
+- Candle cache lokal SQLite.
+- Secure preferences untuk API key native.
+- GitHub Actions build debug APK.
 
-Yang belum dianggap selesai penuh:
+Yang belum dianggap final production:
 
-- Release signing production dengan keystore asli.
-- In-app update checker aktif di UI.
-- Jurnal trading lengkap + statistik lanjutan.
-- UI/UX final semua module.
+- Release signing dengan keystore production asli.
+- QA lengkap semua module.
 - Integration test dan Espresso test lengkap.
+- UI/UX final semua module.
 - Store listing final untuk distribusi publik.
+
+---
+
+## Fokus Utama Saat Ini: Mapping
+
+Module utama berada di:
+
+```text
+app/src/main/assets/apps/mapping/index.html
+```
+
+Mapping bertugas membaca data XAU/USD, membuat mapping market, menampilkan bias, setup, level, dan mengirim target ke native scanner.
+
+Fitur penting Mapping:
+
+- Live price XAU/USD via WebSocket Twelve Data.
+- Auto-connect live price saat halaman Mapping dibuka jika API key sudah tersimpan.
+- Timeframe: M1, M5, M15, M30, H1, H4, D1, W1.
+- Multi-timeframe mapping M1 sampai H4.
+- Detection dasar:
+  - Swing High / Swing Low.
+  - BOS / CHOCH.
+  - Fair Value Gap.
+  - Order Block.
+  - Liquidity Sweep.
+  - Displacement Candle.
+- AMY FX Decision:
+  - Active Bias.
+  - Direction.
+  - Confidence.
+  - Status.
+  - Entry Area.
+  - Invalidation.
+  - Target.
+  - Reason.
+- Valid Break Info:
+  - Break Level.
+  - Candle Break Close.
+  - Harga Live.
+  - Structure.
+  - Kesimpulan break.
+- Amy FX Mapping Explanation.
+- Setup Aktif.
+- Riwayat Setup.
+- Event Logs.
+- Settings & API.
+
+Catatan penting: Mapping hanya memberi analisis dan level. Mapping tidak membuka posisi trading.
+
+---
+
+## Alur Mapping
+
+```text
+User buka Mapping
+└── API key dibaca dari localStorage
+    └── WebSocket live price auto-connect
+        └── data candle diambil dari Twelve Data REST API
+            └── analisis timeframe berjalan
+                └── AMY FX Decision + Setup Aktif dibuat
+                    └── target setup dikirim ke Android bridge
+                        └── Background Scanner memantau level
+                            └── notifikasi muncul saat target tersentuh
+```
+
+---
+
+## Background Scanner
+
+File native utama:
+
+```text
+app/src/main/java/com/amyelitesuite/ScannerService.kt
+```
+
+Scanner berjalan sebagai foreground service Android.
+
+Tugas scanner:
+
+- Menyimpan status scanner ON/OFF.
+- Membaca API key dari SecurePrefs / SharedPreferences.
+- Membaca target dari Mapping.
+- Membuka WebSocket Twelve Data untuk XAU/USD.
+- Memantau target atas dan bawah.
+- Mengirim notifikasi saat target tersentuh.
+- Menjalankan reconnect bertahap jika koneksi putus.
+- Menghapus target lama jika expired.
+
+Scanner tidak melakukan analisis utama. Analisis utama tetap berasal dari Mapping.
+
+---
+
+## Notification Flow
+
+File terkait:
+
+```text
+app/src/main/java/com/amyelitesuite/AmyFxNotificationGate.java
+app/src/main/java/com/amyelitesuite/MainActivity.kt
+app/src/main/java/com/amyelitesuite/ScannerService.kt
+```
+
+Fungsi notifikasi:
+
+- Menampilkan alert setup dari WebView.
+- Menampilkan alert BSL/SSL dari scanner.
+- Menampilkan info koneksi scanner.
+- Membatasi spam notifikasi dengan cooldown gate.
+- Tap notifikasi target diarahkan ke Mapping tab Analyze.
+- Tap status scanner diarahkan ke Mapping tab Dashboard.
+
+---
+
+## Native Android Layer
+
+Folder utama:
+
+```text
+app/src/main/java/com/amyelitesuite/
+```
+
+File penting:
+
+```text
+MainActivity.kt
+ScannerService.kt
+BootReceiver.kt
+CandleStore.kt
+SecurePrefs.kt
+AmyFxNotificationGate.java
+MappingLogicCore.kt
+SupabaseCandleClient.kt
+MarketDataSyncAgent.kt
+UpdateChecker.kt
+```
+
+Tugas native layer:
+
+- Host WebView lokal.
+- JavaScript bridge `Android.*`.
+- Foreground scanner service.
+- Notification channel.
+- Deep link / route ke Mapping.
+- SQLite candle cache.
+- Secure API key storage.
+- File export/download.
+
+Catatan: Supabase, SQLite, dan native bridge tidak boleh diubah jika bug tidak berhubungan langsung.
+
+---
+
+## WebView / Assets Layer
+
+Folder module lokal:
+
+```text
+app/src/main/assets/apps/
+├── mapping/
+├── journal/
+├── academy/
+└── indikator/
+```
+
+Home utama aplikasi:
+
+```text
+app/src/main/assets/index.html
+app/src/main/assets/app.js
+```
 
 ---
 
@@ -79,135 +244,10 @@ Amy-fx/
 
 ---
 
-## Native Android Layer
-
-File utama:
-
-```text
-app/src/main/java/com/amyelitesuite/
-├── MainActivity.kt
-├── ScannerService.kt
-├── BootReceiver.kt
-├── CandleStore.kt
-├── SecurePrefs.kt
-├── MappingLogicCore.kt
-├── SupabaseCandleClient.kt
-├── MarketDataSyncAgent.kt
-└── UpdateChecker.kt
-```
-
-Tugas native layer:
-
-- Host WebView lokal.
-- JavaScript bridge `Android.*`.
-- Foreground scanner service.
-- Notification channel.
-- Deep link ke Mapping.
-- SQLite candle cache.
-- Secure API key storage.
-- File export/download.
-
----
-
-## WebView / Assets Layer
-
-Module lokal berada di:
-
-```text
-app/src/main/assets/apps/
-├── mapping/
-├── journal/
-├── academy/
-└── indikator/
-```
-
-Shared asset tambahan:
-
-```text
-app/src/main/assets/apps/shared/
-├── amyfx-common.js
-└── amyfx-design-system.css
-```
-
----
-
-## Alur Mapping dan Scanner
-
-```text
-Mapping
-└── menghasilkan target BSL/SSL
-    └── target dikirim ke Android bridge
-        └── ScannerService memantau live price XAU/USD
-            └── notifikasi muncul jika target tersentuh
-                └── tap notifikasi membuka Mapping
-```
-
-Scanner native hanya memantau target. Logic analisa utama tetap berasal dari Mapping.
-
----
-
-## Fitur Scanner
-
-- Foreground service.
-- WebSocket TwelveData.
-- Target BSL/SSL dari Mapping.
-- Cooldown alert per level.
-- Target expire otomatis.
-- Reconnect bertahap.
-- Notification channel terpisah.
-- Deep link ke Mapping.
-
----
-
-## Candle Storage
-
-Candle cache memakai SQLite.
-
-```text
-Database: amy_market_data.sqlite
-Table: candles
-Primary key: symbol + timeframe + open_time
-```
-
-Fitur:
-
-- Insert / update candle.
-- Query candle terbaru.
-- Index query.
-- Cleanup candle lama.
-- Clear cache.
-- Storage size check.
-
----
-
-## Mapping Logic Core
-
-File:
-
-```text
-app/src/main/java/com/amyelitesuite/MappingLogicCore.kt
-```
-
-Isi awal:
-
-- Swing high / swing low.
-- BOS / CHOCH.
-- FVG.
-- Order Block.
-- Setup score breakdown.
-
-Unit test:
-
-```text
-app/src/test/java/com/amyelitesuite/
-```
-
----
-
 ## Build APK Lokal
 
 ```bash
-chmod +x gradlew
+chmod +x ./gradlew
 ./gradlew assembleDebug --no-configuration-cache --stacktrace
 ```
 
@@ -229,17 +269,13 @@ Workflow utama:
 
 ```text
 .github/workflows/build-apk.yml
-.github/workflows/build.yml
-.github/workflows/build-debug.yml
-.github/workflows/build-release.yml
-.github/workflows/lint-check.yml
 ```
 
 Artifact debug:
 
 ```text
-Amy-FX-debug-apk
 Amy-FX-APK
+Amy-FX-debug-apk
 ```
 
 Release build bersifat manual sampai keystore signing production disiapkan.
@@ -270,7 +306,39 @@ Permission utama:
 - `VIBRATE`
 - Media read permission sesuai versi Android.
 
-`MANAGE_EXTERNAL_STORAGE` tidak digunakan sebagai permission utama production.
+---
+
+## QA Focus
+
+Saat audit aplikasi, prioritas pengecekan:
+
+1. Mapping berjalan sesuai fungsi, bukan sekadar tampil.
+2. Harga live benar-benar bergerak setelah API key tersimpan.
+3. AMY FX Decision tidak memberi arah yang bertentangan dengan data internal.
+4. Valid Break Info memakai candle break yang benar.
+5. Setup Aktif tidak menampilkan setup lama sebagai setup baru.
+6. Background Scanner hanya ON jika user mengaktifkan.
+7. Scanner menerima target entry area yang benar.
+8. Notifikasi tidak spam.
+9. Tap notifikasi masuk ke tab yang sesuai.
+10. Navigation tab tetap lengkap: Dashboard, Analyze, Setup, History, Settings.
+11. Tidak ada fitur yang hilang setelah patch.
+12. Build GitHub Actions tetap sukses.
+
+---
+
+## Aturan Perubahan Kode
+
+Jika melakukan patch:
+
+- Jangan hapus fitur apa pun.
+- Jangan rollback kecuali diminta.
+- Jangan ubah struktur besar.
+- Jangan refactor besar.
+- Jangan tambah fitur baru tanpa alasan bug.
+- Fokus hanya bug nyata.
+- Jika fitur bermasalah, perbaiki fiturnya, bukan dihapus.
+- Jangan sentuh Supabase / SQLite / native bridge jika bug tidak berhubungan langsung.
 
 ---
 
