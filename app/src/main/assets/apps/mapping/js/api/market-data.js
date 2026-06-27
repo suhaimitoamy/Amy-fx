@@ -8,7 +8,7 @@ export let reconnectTimer = null;
 export let scanTimer = null;
 export let lastWsTickAt = Number(localStorage.getItem('last_ws_tick_at')||0);
 
-const PROXY_URL = 'https://amy-fx-proxy.vercel.app/api/twelvedata';
+const PROXY_URL = 'https://amy-fx.vercel.app/api/twelvedata';
 
 export async function fetchTf(tf){
   if(!state.key.trim()) throw new Error('API key kosong');
