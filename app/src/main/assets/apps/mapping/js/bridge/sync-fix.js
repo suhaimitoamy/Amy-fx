@@ -19,12 +19,12 @@
   }catch(e){}
 
   function getState(){
-    try{return typeof window.state!=='undefined'&&state&&statewindow.state?window.state:null}catch(e){return null}
+    try{return typeof window.state!=='undefined'&&window.state?window.state:null}catch(e){return null}
   }
 
   function getTFs(){
     try{
-      if(typeof window.TF!=='undefined'&&TF&&TFwindow.TF)return Object.keys(window.TF);
+      if(typeof window.TF!=='undefined'&&window.TF)return Object.keys(window.TF);
     }catch(e){}
     return TF_FALLBACK;
   }

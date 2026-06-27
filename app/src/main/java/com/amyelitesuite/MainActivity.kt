@@ -96,8 +96,8 @@ class MainActivity : Activity() {
         webSettings.cacheMode = WebSettings.LOAD_DEFAULT
         webSettings.allowFileAccess = true
         webSettings.allowContentAccess = true
-        webSettings.allowFileAccessFromFileURLs = false
-        webSettings.allowUniversalAccessFromFileURLs = false
+        webSettings.allowFileAccessFromFileURLs = true
+        webSettings.allowUniversalAccessFromFileURLs = true
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             webSettings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
         }
@@ -496,7 +496,7 @@ class MainActivity : Activity() {
               btn.textContent = '← Amy FX';
               btn.style.position = 'fixed';
               btn.style.left = '12px';
-              btn.style.top = '12px';
+              btn.style.bottom = '80px';
               btn.style.zIndex = '2147483647';
               btn.style.border = '1px solid rgba(212,175,55,.55)';
               btn.style.borderRadius = '999px';
