@@ -9,7 +9,7 @@ export function fmtDir(x,status='',cf=''){x=String(x||'');let d=x.includes('BUY'
 export function fmtStatus(x){x=String(x||'');return x.replace(/READY SETUP/g,'SETUP VALID').replace(/WATCH SETUP/g,'PANTAU SETUP').replace(/^WAIT$/g,'TUNGGU');}
 export function dirClass(x){x=String(x||'');return x.includes('BUY')?'buy':x.includes('SELL')?'sell':'wait';}
 
-export function setupCard(s,i=0){let q=s.qualityLabel?`<b>Quality: ${s.qualityLabel}</b> — `:'',ce=s.ce?`<br><small>CE Level: ${p2(s.ce)}</small>`:'',comp='';if(s.components){let c=s.components;comp=`<div class="num-grid" style="margin-top:10px;border-top:1px solid #333;padding-top:10px"><div class="num"><small>Model</small><strong>${c.model}</strong></div><div class="num"><small>Sweep</small><strong>${c.sweep}</strong></div><div class="num"><small>MSS</small><strong>${c.mss}</strong></div><div class="num"><small>Entry</small><strong>${c.entry}</strong></div><div class="num"><small>HTF</small><strong>${c.htf}</strong></div></div>`}let chk='';if(s.scoreChecklist){let list=s.scoreChecklist.map(x=>`<div style="font-size:12px;margin:2px 0"><span style="color:${x.passed?'#4ade80':'#f87171'}">${x.passed?'✓':'×'}</span> ${x.name} <span class="muted">+${x.score}</span></div>`).join('');chk=`<div style="margin-top:10px;border-top:1px solid #333;padding-top:10px"><b>Checklist Score: ${s.score}/100 — Grade ${s.grade||''}</b><br>${list}</div>`}let sess='';if(s.sessionContext){let sc=s.sessionContext;sess=`<div class="ai-map-note" style="margin-top:10px;font-size:12px;background:#1a1a1a;padding:8px;border-radius:4px"><b>Session: ${sc.session.replace('_',' ')}</b> — ${sc.killzone!=='NONE'?'Killzone Aktif. ':''}${sc.note}</div>`}let cfHtml='';if(s.conflictCheck){let cf=s.conflictCheck,badge=cf.conflictLevel==='NONE'?'#4ade80':cf.conflictLevel==='FATAL'||cf.conflictLevel==='HIGH'?'#f87171':'#fbbf24',cNotes=cf.conflicts.length?cf.conflicts.map(x=>x.note).join('<br>'):'Komponen utama selaras.';cfHtml=`<div style="margin-top:10px;border-top:1px solid #333;padding-top:10px;font-size:12px"><b>Conflict: <span style="color:${badge}">${cf.conflictLevel}</span> — ${cf.recommendation}</b><br><span class="muted">${cNotes}</span></div>`}let tpHtml = (Math.abs(s.tp1 - s.tp2) < 0.05) ? `<div class="num" style="grid-column: span 2"><small>Single Target</small><strong>${p2(s.tp1)}</strong></div>` : `<div class="num"><small>TP1</small><strong>${p2(s.tp1)}</strong></div><div class="num"><small>TP2</small><strong>${p2(s.tp2)}</strong></div>`;return`<div class="setup-card ${s.status.includes('READY')?'ready':s.status.includes('WATCH')?'watch':'wait'}"><div class="setup-head"><div><div class="setup-title">SETUP ${i+1} — ${s.type}</div><div class="muted">Timeframe: ${s.tf} • Status: ${fmtStatus(s.status)}</div></div><span class="badge ${String(s.dir).includes('BUY')?'buy':'sell'}">${fmtDir(s.dir,s.status,s.conflictCheck?.conflictLevel)}</span></div><div class="num-grid"><div class="num"><small>Score</small><strong>${s.score}/100</strong></div><div class="num"><small>Harga Sekarang</small><strong>${p2(s.price)}</strong></div><div class="num"><small>Entry Area</small><strong>${p2(s.entryLow)} - ${p2(s.entryHigh)}</strong></div><div class="num"><small>SL</small><strong>${p2(s.sl)}</strong></div>${tpHtml}</div>${comp}${cfHtml}${chk}${sess}<div class="reason" style="margin-top:10px"><b>Alasan:</b><br>${q}${s.reason}${ce}</div></div>`}
+export function setupCard(s,i=0){let q=s.qualityLabel?`<b>${(s.status.includes('INVALID')||s.status.includes('WAIT'))?'Component Quality':'Quality'}: ${s.qualityLabel}</b>${(s.status.includes('INVALID')||s.status.includes('WAIT'))?', Setup Status: INVALID/WAIT':''} — `:'',ce=s.ce?`<br><small>CE Level: ${p2(s.ce)}</small>`:'',comp='';if(s.components){let c=s.components;comp=`<div class="num-grid" style="margin-top:10px;border-top:1px solid #333;padding-top:10px"><div class="num"><small>Model</small><strong>${c.model}</strong></div><div class="num"><small>Sweep</small><strong>${c.sweep}</strong></div><div class="num"><small>MSS</small><strong>${c.mss}</strong></div><div class="num"><small>Entry</small><strong>${c.entry}</strong></div><div class="num"><small>HTF</small><strong>${c.htf}</strong></div></div>`}let chk='';if(s.scoreChecklist){let list=s.scoreChecklist.map(x=>`<div style="font-size:12px;margin:2px 0"><span style="color:${x.passed?'#4ade80':'#f87171'}">${x.passed?'✓':'×'}</span> ${x.name} <span class="muted">+${x.score}</span></div>`).join('');chk=`<div style="margin-top:10px;border-top:1px solid #333;padding-top:10px"><b>Checklist Score: ${s.score}/100 — Grade ${s.grade||''}</b><br>${list}</div>`}let sess='';if(s.sessionContext){let sc=s.sessionContext;sess=`<div class="ai-map-note" style="margin-top:10px;font-size:12px;background:#1a1a1a;padding:8px;border-radius:4px"><b>Session: ${sc.session.replace('_',' ')}</b> — ${sc.killzone!=='NONE'?'Killzone Aktif. ':''}${sc.note}</div>`}let cfHtml='';if(s.conflictCheck){let cf=s.conflictCheck,badge=cf.conflictLevel==='NONE'?'#4ade80':cf.conflictLevel==='FATAL'||cf.conflictLevel==='HIGH'?'#f87171':'#fbbf24',cNotes=cf.conflicts.length?cf.conflicts.map(x=>x.note).join('<br>'):'Komponen utama selaras.';cfHtml=`<div style="margin-top:10px;border-top:1px solid #333;padding-top:10px;font-size:12px"><b>Conflict: <span style="color:${badge}">${cf.conflictLevel}</span> — ${cf.recommendation}</b><br><span class="muted">${cNotes}</span></div>`}let tpHtml = s.singleTarget ? `<div class="num" style="grid-column: span 2"><small>Single Target</small><strong>${p2(s.tp1)}</strong></div>` : `<div class="num"><small>TP1</small><strong>${p2(s.tp1)}</strong></div><div class="num"><small>TP2</small><strong>${p2(s.tp2)}</strong></div>`;return`<div class="setup-card ${s.status.includes('READY')?'ready':s.status.includes('WATCH')?'watch':'wait'}"><div class="setup-head"><div><div class="setup-title">SETUP ${i+1} — ${s.type}</div><div class="muted">Timeframe: ${s.tf} • Status: ${fmtStatus(s.status)}</div></div><span class="badge ${String(s.dir).includes('BUY')?'buy':'sell'}">${fmtDir(s.dir,s.status,s.conflictCheck?.conflictLevel)}</span></div><div class="num-grid"><div class="num"><small>Score</small><strong>${s.score}/100</strong></div><div class="num"><small>Harga Sekarang</small><strong>${p2(s.price)}</strong></div><div class="num"><small>Entry Area</small><strong>${p2(s.entryLow)} - ${p2(s.entryHigh)}</strong></div><div class="num"><small>SL</small><strong>${p2(s.sl)}</strong></div>${tpHtml}</div>${comp}${cfHtml}${chk}${sess}<div class="reason" style="margin-top:10px"><b>Alasan:</b><br>${q}${s.reason}${ce}</div></div>`}
 
 export function dashboard(){let r=state.result,s=r?.bestSetup;return`<section class="hero card"><div><div class="kicker">AMY FX SETUP ENGINE</div><h1>XAU/USD</h1><div class="muted">WIB ${nowTime()}</div></div><div style="text-align:right"><div class="muted">Gold Price</div><div class="price">$${p2(state.price)}</div><div class="${state.conn==='Connected'?'green':'muted'}">${state.conn}</div></div></section>${killzonePanel()}<button class="action" onclick="setTab('Analyze')" style="width:100%;margin-bottom:16px">⚡ Analisis Setup</button><section class="card"><h2>Best Setup</h2>${s?setupCard(s,0):'<p class="muted">Belum ada setup. Klik Analisis Setup.</p>'}</section><section class="card"><h2>Market Concepts</h2><div class="concept-grid">${(r?.concepts||[]).map(c=>`<div class="concept"><small>${c[1]}</small><h3>${c[0]}</h3><p>${c[2]}</p></div>`).join('')||'<p class="muted">Belum ada analisis.</p>'}</div></section>`}
 
@@ -81,31 +81,54 @@ export function renderAnalyzeLive(){
 }
 
 export function decisionData(){
-  let r=state.result,s=r?.bestSetup,bias=activeBias();
-  if(!r)return{bias:'-',direction:'TUNGGU',confidence:0,status:'TUNGGU',entry:'-',invalid:'-',target:'-',reason:'Klik timeframe untuk membuat keputusan mapping.'};
+  let r=state.result;
+  if(!r)return{bias:'WAIT',direction:'TUNGGU',confidence:0,confLabel:'Confidence',status:'TUNGGU',entry:'-',invalid:'-',nearTarget:'-',mainTarget:'-',reason:'Belum ada data mapping.'};
+  let bias=r.final||'WAIT';
+  let s=r.bestSetup;
   let live=s?analyzeSetupLiveState(s):null;
-  if(s&&live?.fatal)return{bias,direction:'TUNGGU',confidence:0,status:live.status,entry:`${p2(s.entryLow)} - ${p2(s.entryHigh)}`,invalid:p2(s.sl),target:'-',reason:live.note+' Tunggu setup baru.'};
+  if(s&&live?.fatal)return{bias,direction:'TUNGGU',confidence:0,confLabel:'Confidence',status:live.status,entry:`${p2(s.entryLow)} - ${p2(s.entryHigh)}`,invalid:p2(s.sl),nearTarget:'-',mainTarget:'-',reason:live.note+' Tunggu setup baru.'};
   let rawDir=s?.dir||r.signal||'WAIT';
   let focus=fmtDir(rawDir,s?s.status:'',s?s.conflictCheck?.conflictLevel:'');
   let score=s?.score||r.score||0;
   let aligned=(bias==='BULLISH'&&String(rawDir).includes('BUY'))||(bias==='BEARISH'&&String(rawDir).includes('SELL'));
   let conflict=bias.includes('CONFLICT');
   let confidence=Math.max(0,Math.min(95,Math.round(score+(aligned?8:0)-(conflict?12:0))));
-  if(conflict&&confidence<70)focus='TUNGGU';
-  let target='-';
-  if(s)target=String(rawDir).includes('BUY')?`BSL ${p2(r.bsl)}`:`SSL ${p2(r.ssl)}`;
-  let reason=s?`Bias aktif ${bias}. Setup utama membaca ${s.type}. ${live?live.note:''} Area entry ${p2(s.entryLow)} - ${p2(s.entryHigh)}, invalidasi ${p2(s.sl)}, target ${target}.`:`Bias aktif ${bias}. Belum ada setup aktif yang aman, jadi fokus utama adalah menunggu konfirmasi baru.`;
-  return{bias,direction:s?focus:'TUNGGU',confidence:s?confidence:0,status:s?(live?.status||fmtStatus(s.status)):'TUNGGU',entry:s?`${p2(s.entryLow)} - ${p2(s.entryHigh)}`:'-',invalid:s?p2(s.sl):'-',target,reason}
+  let stat = s?(live?.status||fmtStatus(s.status)):'TUNGGU';
+  
+  let confLabel = 'Bias Confidence';
+  if(!s || stat.includes('WAIT') || stat.includes('INVALID') || focus.includes('ABAIKAN')){
+      confidence = 0;
+      confLabel = 'Confidence';
+  } else if(stat.includes('VALID') || stat.includes('READY')){
+      confLabel = 'Setup Confidence';
+  }
+  
+  let nearTarget='-';
+  let mainTarget='-';
+  if(s){
+     nearTarget = s.singleTarget ? `${p2(s.tp1)}` : `${p2(s.tp1)} / ${p2(s.tp2)}`;
+     mainTarget = r.liquidityHierarchy?.drawTarget ? `${r.liquidityHierarchy.drawTarget.type} ${p2(r.liquidityHierarchy.drawTarget.level)}` : (String(rawDir).includes('BUY')?`BSL ${p2(r.bsl)}`:`SSL ${p2(r.ssl)}`);
+  }
+  let reason=s?`Bias aktif ${bias}. Setup utama membaca ${s.type}. ${live?live.note:''} Area entry ${p2(s.entryLow)} - ${p2(s.entryHigh)}, invalidasi ${p2(s.sl)}.`:`Bias aktif ${bias}. Belum ada setup aktif yang aman, jadi fokus utama adalah menunggu konfirmasi baru.`;
+  return{bias,direction:s?focus:'TUNGGU',confidence,confLabel,status:stat,entry:s?`${p2(s.entryLow)} - ${p2(s.entryHigh)}`:'-',invalid:s?p2(s.sl):'-',nearTarget,mainTarget,reason}
 }
 export function amyDecisionCard(){
   let d=decisionData();
+  let targetHtml = '';
+  if (d.nearTarget === '-' && d.mainTarget === '-') {
+      targetHtml = `<div class="decision-box"><small>Target</small><strong>-</strong></div>`;
+  } else if (d.nearTarget === d.mainTarget || d.nearTarget.includes(d.mainTarget.split(' ')[1]||'none')) {
+      targetHtml = `<div class="decision-box" style="grid-column: span 2"><small>Draw Target</small><strong>${d.mainTarget}</strong></div>`;
+  } else {
+      targetHtml = `<div class="decision-box"><small>Near-term Target</small><strong>${d.nearTarget}</strong></div><div class="decision-box"><small>Main Draw Target</small><strong>${d.mainTarget}</strong></div>`;
+  }
   return`<section class="card"><div class="kicker">AMY FX DECISION</div><div class="decision-main ${dirClass(d.direction)}">${d.direction}</div><div class="decision-grid">
     <div class="decision-box"><small>Active Bias</small><strong>${d.bias}</strong></div>
-    <div class="decision-box"><small>Confidence</small><strong>${d.confidence}%</strong></div>
+    <div class="decision-box"><small>${d.confLabel}</small><strong>${d.confidence}%</strong></div>
     <div class="decision-box"><small>Status</small><strong>${d.status}</strong></div>
     <div class="decision-box"><small>Entry Area</small><strong>${d.entry}</strong></div>
     <div class="decision-box"><small>Invalidation</small><strong>${d.invalid}</strong></div>
-    <div class="decision-box"><small>Target</small><strong>${d.target}</strong></div>
+    ${targetHtml}
   </div><div class="decision-reason"><b>Reason:</b><br>${d.reason}</div></section>`
 }
 
