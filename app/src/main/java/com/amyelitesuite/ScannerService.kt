@@ -59,7 +59,7 @@ class ScannerService : Service() {
 
         if (targetsExpired()) {
             clearTargets()
-            sendInfo("Amy FX Scanner", "Target Mapping sudah lebih dari 24 jam. Buka Mapping untuk update level terbaru.")
+            sendInfo("Amy FX Scanner", "Target Mapping sudah lebih dari 4 jam. Buka Mapping untuk update level terbaru.")
         }
 
         if (apiKey.isNullOrBlank()) {
@@ -452,7 +452,7 @@ class ScannerService : Service() {
         private const val INFO_NOTIFICATION_ID = 11
         private const val TARGET_NOTIFICATION_BASE_ID = 1000
         private const val ALERT_COOLDOWN_MS = 30L * 60L * 1000L
-        private const val TARGET_EXPIRY_MS = 24L * 60L * 60L * 1000L
+        private const val TARGET_EXPIRY_MS = 4L * 60L * 60L * 1000L
         private const val PRICE_EPSILON = 0.01
         private const val RESET_DISTANCE = 2.00
     }

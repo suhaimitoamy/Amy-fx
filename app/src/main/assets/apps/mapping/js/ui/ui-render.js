@@ -43,6 +43,7 @@ export function analyzeLivePrice(){
 }
 export function analyzeSetupLiveState(s){
   if(!s)return{status:'TUNGGU',fatal:false,note:'Belum ada setup aktif.'}
+  if(s.timestamp&&Date.now()-s.timestamp>14400000)return{status:'EXPIRED',fatal:true,note:'Setup sudah kedaluwarsa (lebih dari 4 jam).'}
   const price=analyzeLivePrice()
   if(!price)return{status:fmtStatus(s.status),fatal:false,note:'Harga live belum tersedia.'}
   const dir=String(s.dir||''),isBuy=dir.includes('BUY'),isSell=dir.includes('SELL')

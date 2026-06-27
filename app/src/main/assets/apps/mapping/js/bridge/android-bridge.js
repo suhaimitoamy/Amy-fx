@@ -1,5 +1,5 @@
 import { state, save, setupText, p2 } from '../main.js';
-import { connect } from '../api/market-data.js';
+import { connect, stopLivePrice } from '../api/market-data.js';
 import { render } from '../ui/ui-render.js';
 
 export function notifyImportant(res){
@@ -39,8 +39,13 @@ export function toggleBg(){
   if(!state.key.trim()){alert('Isi API key dulu.');return}
   state.bg=!state.bg;
   save();
-  if(state.bg)sendTargetsToNative();
-  else window.Android?.stopBackgroundScanner?.();
+  if(state.bg) {
+    stopLivePrice();
+    sendTargetsToNative();
+  } else {
+    window.Android?.stopBackgroundScanner?.();
+    if(state.key.trim()) connect();
+  }
   render();
 }
 

@@ -87,6 +87,16 @@ export function connect(){
   ws.onerror=()=>log('WebSocket error');
 }
 
+export function stopLivePrice() {
+  if (ws) { ws.onclose = null; ws.close(); ws = null; }
+  clearTimeout(reconnectTimer);
+  clearTimeout(scanTimer);
+  reconnectTimer = null;
+  scanTimer = null;
+  state.conn = 'Scanner Mode';
+  renderSoft();
+}
+
 export function updateWsVars(w, r, s, l) {
   ws = w;
   reconnectTimer = r;
