@@ -454,6 +454,6 @@ class ScannerService : Service() {
         private const val ALERT_COOLDOWN_MS = 30L * 60L * 1000L
         private const val TARGET_EXPIRY_MS = 24L * 60L * 60L * 1000L
         private const val PRICE_EPSILON = 0.01
-        private const val RESET_DISTANCE = 0.50
+        private const val RESET_DISTANCE = 2.00
     }
 }
