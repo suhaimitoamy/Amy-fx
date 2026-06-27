@@ -15,18 +15,7 @@ export function notifyImportant(res){
   else if(typeof Notification!=='undefined')Notification.requestPermission().then(p=>p==='granted'&&new Notification('AMY FX — '+s.type,{body:msg}));
 }
 
-export function sendTargetsToNative(){
-  if(state.bg&&window.Android?.startBackgroundScanner){
-    let s=state.result?.bestSetup;
-    if(s){
-      let upper=Math.max(Number(s.entryLow),Number(s.entryHigh)),lower=Math.min(Number(s.entryLow),Number(s.entryHigh));
-      window.Android.startBackgroundScanner(state.key,String(upper),String(lower));
-    }else{
-      let r=state.result;
-      window.Android.startBackgroundScanner(state.key,String(r?.bsl||''),String(r?.ssl||''));
-    }
-  }
-}
+export function sendTargetsToNative(){if(state.bg&&window.Android?.startBackgroundScanner){let s=state.result?.bestSetup;if(s&&Number.isFinite(s.entryLow)&&Number.isFinite(s.entryHigh)){let upper=Math.max(Number(s.entryLow),Number(s.entryHigh)),lower=Math.min(Number(s.entryLow),Number(s.entryHigh));window.Android.startBackgroundScanner(state.key,String(upper),String(lower))}else{let r=state.result;if(r&&Number.isFinite(r.bsl)&&Number.isFinite(r.ssl)){window.Android.startBackgroundScanner(state.key,String(r.bsl),String(r.ssl))}}}}
 
 export function saveConnect(){
   state.key=document.getElementById('apiKey').value.trim();

@@ -33,44 +33,7 @@ export async function fetchTf(tf){
   return arr;
 }
 
-export async function runAnalysis(tf=state.tf){
-  if(typeof scanTimer!=='undefined'&&scanTimer){clearTimeout(scanTimer);scanTimer=null;}
-  state.tf=tf;
-  render();
-  try{
-    log('Memindai '+tf+'...');
-    let group=tfGroup(tf),scanGroup=[...new Set([...group,'M1','M5','M15','M30','H1','H4'])];
-    await Promise.all(scanGroup.map(async x => {
-      if(!state.candles[x]?.length || isCandleStale(x)) {
-        try {
-          if(state.candles[x]?.length) log('Refresh candle '+x);
-          await fetchTf(x);
-        } catch(e) { /* fallback ke lama jika gagal */ }
-      }
-      return state.candles[x]||[];
-    }));
-    let htfBiases={};
-    for(let x of group.filter(x=>x!==tf)){
-      let mini=state.candles[x];
-      if(mini?.length>30){
-        let a=analyze(mini,x,{},state.price);
-        htfBiases[x]=a?.st?.trend||'NEUTRAL';
-      }
-    }
-    let htfContext={H4:state.candles.H4,D1:state.candles.D1,W1:state.candles.W1};
-    let res=analyze(state.candles[tf],tf,htfBiases,state.price,htfContext);
-    state.result=res;
-    state.setups=[...(res?.setups||[]),...state.setups].slice(0,50);
-    state.analyses=[{id:Date.now(),...res},...state.analyses].slice(0,80);
-    save();
-    log(`${tf} selesai: ${res.signal} score ${res.score}/100`);
-    sendTargetsToNative();
-    notifyImportant(res);
-  }catch(e){
-    log('Error '+tf+': '+e.message);
-  }
-  render();
-}
+export async function runAnalysis(tf=state.tf){if(typeof scanTimer!=='undefined'&&scanTimer){clearTimeout(scanTimer);scanTimer=null}state.tf=tf;render();try{log('Memindai '+tf+'...');let group=tfGroup(tf),scanGroup=[...new Set([...group,'M1','M5','M15','M30','H1','H4'])];await Promise.all(scanGroup.map(async x=>{if(!state.candles[x]?.length||isCandleStale(x)){try{if(state.candles[x]?.length)log('Refresh candle '+x);await fetchTf(x)}catch(e){log(`Gagal ambil ${x}, pakai cache jika ada.`)}}return state.candles[x]||[]}));let htfBiases={};for(let x of group.filter(x=>x!==tf)){let mini=state.candles[x];if(mini?.length>30){let a=analyze(mini,x,{},state.price);htfBiases[x]=a?.st?.trend||'NEUTRAL'}}let htfContext={H4:state.candles.H4,D1:state.candles.D1,W1:state.candles.W1};let res=analyze(state.candles[tf],tf,htfBiases,state.price,htfContext);if(!res||!res.st){throw new Error('Hasil analyze tidak valid')}if(res.final==='WAIT'&&res.score===0)log(`Warning: Data ${tf} kurang untuk analisis.`);state.result=res;state.setups=[...(res?.setups||[]),...state.setups].slice(0,50);state.analyses=[{id:Date.now(),...res},...state.analyses].slice(0,80);save();log(`${tf} selesai: ${res.signal} score ${res.score}/100`);sendTargetsToNative();notifyImportant(res)}catch(e){log('Error '+tf+': '+e.message)}render()}
 
 export function connect(){
   if(!state.key.trim()){log('Masukkan API key dulu.');return}
