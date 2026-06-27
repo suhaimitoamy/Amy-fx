@@ -2,192 +2,101 @@
 
 Amy FX adalah aplikasi Android hybrid untuk analisis XAU/USD berbasis WebView lokal dan native Kotlin.
 
-Aplikasi ini berfungsi sebagai alat bantu analisis, mapping, pemantauan level, jurnal, academy, dan library indikator. Amy FX bukan aplikasi eksekusi order otomatis dan bukan nasihat keuangan. Sistem ini tidak memakai AI; murni menggunakan logika manual (Rules Engine) dari kerangka ICT Concepts.
+Aplikasi ini berfungsi sebagai alat bantu pemetaan (Mapping) market, pemantauan level, jurnal, academy, dan library indikator.
+
+**DISCLAIMER PENTING:**
+- Amy FX **bukan** AI trading.
+- Amy FX **bukan** robot trading (EA).
+- Amy FX **bukan** aplikasi auto-entry atau eksekusi order otomatis.
+- Amy FX **bukan** penasihat keuangan (financial advice).
+- Keputusan trading tetap dan selalu berada di tangan pengguna.
 
 ---
 
 ## Status Repo
 
-Status saat ini: **stabilisasi fitur Mapping, performa Rules Engine, dan optimasi Background Scanner**.
+Status saat ini: **ICT Professional Mapping System (Tahap Awal)**.
 
-Yang sudah tersedia & telah ditingkatkan (Terbaru):
+Mapping Amy FX bukan menggunakan Artificial Intelligence (AI) yang menebak market secara gaib, melainkan murni **Rules Engine manual yang dibangun ketat berbasis konsep ICT (Inner Circle Trader)**. 
 
-- Android hybrid WebView + Kotlin native layer.
-- Module Mapping untuk analisis XAU/USD (Rules Engine ICT murni, bukan AI).
-- Dashboard Mapping & Analisis Setup.
-- AMY FX Decision & Valid Break Info.
-- Mapping Notes (Penjelasan status setup yang informatif & transparan).
-- Logika Order Block (OB) akurat berbasis *Full Candle Wick-to-Wick*.
-- Filter Fair Value Gap (FVG) tersaring (Mitigated gap diabaikan otomatis).
-- Manajemen siklus hidup Setup (Lifecycle Memory: Setup harus masuk area entry sebelum menyentuh target TP).
-- Setup Expired Status (Batas usia target kadaluwarsa disesuaikan menjadi 4 jam).
-- Sistem caching Candle TTL lokal agar data HTF (H1, H4) tidak *stale* dan hemat kuota koneksi API.
-- Manajemen memori WebSocket yang aman (koneksi WebView diputus otomatis saat scanner native berjalan mencegah duplikasi WS).
-- Background Scanner ON/OFF native (Memantau Target Atas / Bawah Setup).
-- Notifikasi Android adaptif saat area entry target tersentuh.
-- Deep link / route notifikasi ke tab Mapping.
-- Jurnal trading, Academy lokal, Library indikator Pine Script, dan SQLite candle cache.
-- Secure preferences untuk API key native.
-- **GitHub Actions build debug APK (Jalur Build Utama)**.
-
-Yang belum dianggap final production:
-
-- Release signing dengan keystore production asli.
-- QA lengkap semua module di real device / beragam OS.
-- Integration test dan Espresso test lengkap.
-- UI/UX final semua module.
-- Store listing final untuk distribusi publik.
+Kami baru saja menyelesaikan upgrade besar-besaran (Phase 1–11) untuk menyempurnakan Rules Engine ini. Fokus saat ini adalah: **Validasi Real Market dan QA Behavior**.
 
 ---
 
-## Fokus Utama Saat Ini: Mapping
+## Fitur Mapping Terbaru (Phase 1–11)
 
-Module utama berada di:
+Sistem Mapping Amy FX kini dilengkapi dengan deteksi kontekstual ICT tingkat lanjut:
 
-```text
-app/src/main/assets/apps/mapping/index.html
-```
-
-Mapping bertugas membaca data XAU/USD, membuat mapping market, menampilkan bias, setup, level, dan mengirim target presisi ke native scanner.
-
-Fitur penting Mapping:
-
-- Live price XAU/USD via WebSocket Twelve Data.
-- Auto-connect live price saat halaman Mapping dibuka jika API key sudah tersimpan.
-- Caching cerdas dengan TTL dinamis (1 menit untuk M1 hingga 2 jam untuk D1/W1) demi efisiensi rate limit API.
-- Timeframe: M1, M5, M15, M30, H1, H4, D1, W1.
-- Deteksi struktur pasar (Swing High/Low, BOS/CHOCH).
-- Deteksi ICT Concepts (OB Full Candle, FVG Filtered, Liquidity Sweep, Displacement).
-- Status Setup berjenjang: MENUNGGU ENTRY, DALAM AREA, TP HIT, SL HIT / INVALID, EXPIRED.
-- Analisis *Lifecycle*: Sistem UI cerdas yang tak akan mencetak "TP HIT" apabila harga terbukti belum pernah mendatangi area entri (*Entry Touched*).
-
-Catatan penting: Mapping hanya memberi panduan teknikal dan level support/resisten kuantitatif. Mapping tidak membuka posisi trading.
+- **Valid Break Logic:** BOS/CHOCH hanya dianggap valid jika terjadi *body close* yang disertai *displacement* candle dominan.
+- **Sweep Only Detection:** Harga yang hanya menyapu level struktur dengan *wick* (sumbu) tidak lagi dianggap sebagai BOS/CHOCH, melainkan *Liquidity Sweep*.
+- **HTF Narrative / Daily Bias:** Mapping membaca bias arah struktur dari timeframe besar (H4, D1, W1) sebelum menentukan peluang Setup di timeframe kecil.
+- **FVG & OB Quality:** Deteksi FVG dan Order Block yang tidak hanya mencari *gap*, tetapi juga menilai statusnya: *fresh, tested, mitigated,* atau *broken*.
+- **Entry Model:** Membedakan urutan setup ICT profesional, contohnya model utama *Sweep → MSS/CHOCH → FVG*.
+- **Checklist Score Transparan:** Setup dinilai dengan poin dari 0 hingga 100 berdasarkan konfirmasi *checklist*, bukan tebakan. User bisa melihat alasan penambahan nilai secara transparan.
+- **Session / Killzone Context:** Mempertimbangkan waktu sesi market aktif (Asian, London, New York Killzone) sehingga setup di jam "mati" tidak diberikan prioritas tinggi.
+- **Liquidity Hierarchy:** Deteksi likuiditas secara spesifik, memisahkan likuiditas *internal, external, equal high/low, swept liquidity,* dan menentukan *active Draw Target*.
+- **Dealing Range + Premium / Discount Refinement:** Mengukur equilibrium dari *dealing range* struktural secara presisi agar Setup tidak terjadi di zona yang salah (misalnya nge-Buy di zona *Premium*).
+- **Setup Conflict Filter:** Mesin ini dengan sadar akan menolak atau menurunkan prioritas sebuah Setup jika terdapat pertentangan logika (contoh: Entry Model BUY, tetapi HTF Narrative sangat Bearish dan harga berada di zona Premium).
+- **Safety Fallback:** UI aman dan tidak akan *blank screen* apabila terjadi anomali (data candle kurang, koneksi buruk, API limit). Aplikasi akan beralih ke mode WAIT secara elegan.
+- **Scanner Guard:** Proteksi anti-crash yang memastikan angka tak lazim (*NaN/null/0*) tidak pernah ditransfer dari *rules engine* JS ke Android Native Scanner.
 
 ---
 
-## Alur Mapping
+## Bagaimana Mapping Bekerja?
 
-```text
-User buka Mapping
-└── API key dibaca dari localStorage
-    └── WebSocket live price auto-connect
-        └── data candle diambil dari Twelve Data (dengan pengamanan TTL Cache)
-            └── analisis timeframe / rule engine berjalan
-                └── AMY FX Decision + Setup Aktif dibuat
-                    └── lifecycle system memantau interaksi entry area
-                        └── rentang target dikirim ke Android bridge
-                            └── Background Scanner memantau level (Target Atas/Bawah)
-                                └── notifikasi dipantik saat harga tersentuh
-```
+Mapping Amy FX **tidak** sekadar mendeteksi *pattern* atau level dan langsung memberikan sinyal. Mapping ini menyusun rentetan **Konteks** selayaknya analis manusia:
+
+1. **HTF Narrative** (Ke mana arah market besar?)
+2. **Liquidity** (Di mana uang / target likuiditas berada?)
+3. **Dealing Range** (Apakah harga saat ini diskon atau mahal?)
+4. **Valid Break** (Apakah struktur harganya patah secara sah?)
+5. **FVG/OB Quality** (Apakah ada area pijakan institusi yang masih fresh?)
+6. **Entry Model** (Apakah kronologi pembentukannya rapi?)
+7. **Checklist Score** (Berapa bobot konfirmasinya?)
+8. **Conflict Filter** (Apakah ada rambu peringatan atau kontradiksi logika?)
+
+Jika semua filter ini lolos, barulah sebuah **Setup Aktif** disajikan kepada pengguna.
 
 ---
 
 ## Background Scanner
 
-File native utama:
+File native utama untuk pemantauan latar belakang:
+`app/src/main/java/com/amyelitesuite/ScannerService.kt`
 
-```text
-app/src/main/java/com/amyelitesuite/ScannerService.kt
-```
-
-Scanner berjalan sebagai foreground service Android. Fitur scanner telah dikalibrasi agar saling melengkapi dengan modul WebView:
-
-- Menyimpan status scanner ON/OFF.
-- Membaca target (Target Atas / Bawah) dari setup di Mapping.
-- Membuka WebSocket Twelve Data tersendiri. (Webview otomatis membunuh soket di JS untuk menghemat limit).
-- Memantau limit target secara konsisten di balik layar.
-- Mengirim notifikasi Android lokal ("Entry Area Atas/Bawah Tersentuh").
-- Menghapus target secara otomatis dan membatalkan status apabila telah melampaui masa 4 Jam (*Expiry Limit*).
-
-Scanner tidak menghitung ulang analisis utamanya; ia murni bertugas memantau harga terhadap area (*range*) target yang disuntikkan dari Javascript.
+**Perhatian**: Background Scanner Amy FX berjalan sebagai Android Foreground Service.
+- Scanner **hanya memantau target batas atas dan bawah** dari Setup yang **sudah divalidasi** oleh mesin Mapping.
+- Scanner **tidak menghitung ulang** analisis ICT di belakang layar.
+- Scanner **tidak** membuka posisi trading / auto-entry.
+- Scanner murni bertugas membunyikan **Notifikasi Android** apabila area *Entry* tersentuh oleh pergerakan harga riil.
 
 ---
 
-## Notification Flow
+## QA / Status Pengembangan
 
-Fungsi notifikasi:
+Rangkaian Upgrade Mapping Tahap 1 telah **SELESAI**:
 
-- Menampilkan alert setup / valid break dari WebView.
-- Menampilkan peringatan target entry area dari ScannerService.
-- Membatasi spam notifikasi secara aktif menggunakan *cooldown gate*.
-- *Deep linking*: Tap pada panel notifikasi target akan menerbangkan pengguna otomatis masuk ke tab *Analyze* atau *Dashboard* di WebView.
-
----
-
-## Native Android Layer & WebView Assets
-
-**Folder Native:** `app/src/main/java/com/amyelitesuite/`
-Menampung Activity Android, Host WebView, JS bridge (`Android.*`), layanan Scanner, kontrol Notifikasi, mekanisme Supabase & SQLite.
-
-**Folder JS Assets:** `app/src/main/assets/apps/`
-Memuat logic tampilan & engine HTML/CSS/JS. Modul sentral saat ini ada di folder `mapping/`.
-Kode inti *Rules Engine* berada di `mapping/js/engine/ict-core.js` (Logika ICT Matematis - Non-AI).
-
-Catatan: Layanan Supabase, SQLite Native, dan Native Bridge sebisa mungkin dipertahankan bentuknya, dilarang di-refactor ekstrem demi menjaga stabilitas jembatan komunikasi UI ke Sistem HP.
-
----
-
-## Struktur Repo
-
-```text
-Amy-fx/
-├── app/
-│   ├── build.gradle.kts
-│   └── src/
-│       ├── main/
-│       │   ├── AndroidManifest.xml
-│       │   ├── assets/
-│       │   │   ├── index.html
-│       │   │   └── apps/mapping/ ... dsb
-│       │   └── java/com/amyelitesuite/
-├── .github/workflows/
-└── README.md
-```
+1. [x] Phase 1: Valid Break
+2. [x] Phase 2: HTF Narrative
+3. [x] Phase 3: FVG & OB Quality
+4. [x] Phase 4: Entry Model (Sweep → MSS → FVG)
+5. [x] Phase 5: Checklist Score
+6. [x] Phase 6: Session / Killzone Logic
+7. [x] Phase 7: Liquidity Hierarchy
+8. [x] Phase 8: Dealing Range + Premium / Discount Refinement
+9. [x] Phase 9: Setup Conflict Filter
+10. [x] Phase 10: Final Stabilization + QA Mapping
+11. [x] Phase 11: Real Market Validation & QA Behavior
 
 ---
 
 ## Build APK (Wajib via GitHub Actions)
 
-Mengingat proyek hibrida ini melibatkan pengikatan aset statik HTML/JS besar-besaran, mekanisme *build APK* **utamanya dijalankan melalui pipeline GitHub Actions**.
-Sangat dihindari melakukan *local build* menggunakan Termux (Gradlew lokal) bagi pengembang dengan peranti HP atau keterbatasan spesifikasi, demi mencegah crash/freeze memori pada perangkat saat pengkompilasian.
+Sangat disarankan **TIDAK** melakukan *local build* menggunakan Gradle di peranti HP (seperti Termux) demi mencegah memori crash saat kompilasi aset Web dan Native.
 
-Workflow utama yang menangani ini ada di:
+Build APK otomatis dilakukan melalui **GitHub Actions**:
 
-```text
-.github/workflows/build-apk.yml
-```
+- **Debug APK** otomatis diproduksi oleh workflow: `.github/workflows/build-apk.yml` setiap ada perubahan pada branch `main`.
+- **Release APK** otomatis diproduksi oleh workflow: `.github/workflows/build-release.yml` apabila ada rilis baru (jika workflow tersedia).
 
-Setelah kode selesai di-*patch* dan di-*push* ke GitHub `main` branch, navigasikan peramban ke tab "Actions" di repository. Workflow akan segera memuntahkan *artifact* `Amy-FX-APK` untuk langsung dites di Android Anda.
-
----
-
-## Aturan QA & Maintenance Kode
-
-Saat memelihara atau men-debug repositori ini, jaga pedoman ketat berikut:
-- **Zero-AI Claims**: Aplikasi murni analisis struktural statis. Segala *copywriting* berbau "AI Mapping" diganti menjadi "Mapping Notes".
-- **Efisiensi Limit API**: Hindari segala bentuk pemanggilan REST (TwelveData) terus-menerus. Selalu fungsikan proteksi *TTL Cache* (`isCandleStale`) di market-data.js dan integrasi koneksi tunggal WebSockets (`stopLivePrice`).
-- **Ketepatan Setup**: Fitur sentuhan area (*lifecycle cache*) & ukuran Order Block (`Wick-to-Wick`) dijaga utuh untuk menghindari "False Miss" dan "False TP" yang merugikan pembacaan di real-market.
-
----
-
-## Repo Hygiene
-
-File ekstensi di bawah ini akan diabaikan oleh Git dan sebaiknya tidak dimasukkan ke dalam basis kode utama:
-
-```text
-/apply-*.sh
-/*.patch
-/patch_apk.py
-/fix-note.txt
-/*_FIX_NOTES.md
-/.amyfx_backup*
-```
-
----
-
-## Catatan Distribusi
-
-Dilarang mendistribusikan APK ini sebagai perangkat lunak skala publik / Production Play Store sebelum:
-- Release signing aktif dengan menggunakan keystore asli (.jks).
-- Pengujian Quality Assurance Manual terpenuhi menyeluruh.
-- Build release APK berhasil keluar dari server Github Actions (*Signed APK*).
+Untuk menginstal aplikasi, cukup buka tab "Actions" di repository GitHub ini, klik proses build terbaru yang berstatus sukses (hijau), dan unduh *Artifact*-nya.
