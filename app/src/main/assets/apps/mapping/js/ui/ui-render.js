@@ -126,12 +126,12 @@ export function m1h4MappingTable(){
 
 export function aiMappingExplanation(){
   let r=state.result,s=r?.bestSetup;
-  if(!r)return`<section class="card"><div class="kicker">AI MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note muted">Klik timeframe untuk membuat penjelasan mapping.</div></section>`;
+  if(!r)return`<section class="card"><div class="kicker">MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note muted">Klik timeframe untuk membuat penjelasan mapping.</div></section>`;
   let liq=mapConcept(r,'Liquidity');
   let live=s?analyzeSetupLiveState(s):null;
-  if(s&&live?.fatal)return`<section class="card"><div class="kicker">AI MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note"><p>Setup ${s.tf} sebelumnya membaca <b>${s.type}</b> dengan arah <b>${fmtDir(s.dir)}</b>.</p><p><b>${live.status}</b>: ${live.note}</p><p>Kesimpulan: setup aktif tidak layak dipakai. Tunggu mapping ulang atau setup baru.</p></div></section>`;
-  if(!s)return`<section class="card"><div class="kicker">AI MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note"><p>Mapping ${r.tf} menunjukkan bias utama <b>${r.final}</b> dengan posisi harga berada di area <b>${r.zone}</b>.</p><p>Liquidity terdekat: <b>${liq?liq[2]:`BSL ${p2(r.bsl)} | SSL ${p2(r.ssl)}`}</b>.</p><p>Kesimpulan: belum ada setup angka yang cukup kuat. Tunggu OB, FVG, sweep liquidity, atau displacement yang lebih jelas.</p></div></section>`;
-  return`<section class="card"><div class="kicker">AI MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note">
+  if(s&&live?.fatal)return`<section class="card"><div class="kicker">MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note"><p>Setup ${s.tf} sebelumnya membaca <b>${s.type}</b> dengan arah <b>${fmtDir(s.dir)}</b>.</p><p><b>${live.status}</b>: ${live.note}</p><p>Kesimpulan: setup aktif tidak layak dipakai. Tunggu mapping ulang atau setup baru.</p></div></section>`;
+  if(!s)return`<section class="card"><div class="kicker">MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note"><p>Mapping ${r.tf} menunjukkan bias utama <b>${r.final}</b> dengan posisi harga berada di area <b>${r.zone}</b>.</p><p>Liquidity terdekat: <b>${liq?liq[2]:`BSL ${p2(r.bsl)} | SSL ${p2(r.ssl)}`}</b>.</p><p>Kesimpulan: belum ada setup angka yang cukup kuat. Tunggu OB, FVG, sweep liquidity, atau displacement yang lebih jelas.</p></div></section>`;
+  return`<section class="card"><div class="kicker">MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note">
     <p>Mapping ${s.tf} sedang membaca <b>${s.type}</b> dengan arah <b>${fmtDir(s.dir)}</b>. Harga sekarang berada di sekitar <b>${p2(analyzeLivePrice()||s.price)}</b>.</p>
     <p>Area entry utama berada di <b>${p2(s.entryLow)} - ${p2(s.entryHigh)}</b>. ${live?live.note:''}</p>
     <p>Liquidity yang sedang diperhatikan adalah <b>BSL ${p2(r.bsl)}</b> dan <b>SSL ${p2(r.ssl)}</b>.</p>

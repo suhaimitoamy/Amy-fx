@@ -168,8 +168,8 @@ class ScannerService : Service() {
             }
             if (price >= setupUpper && prefs().getBoolean(KEY_UPPER_ARMED, true)) {
                 maybeSendTargetAlert(
-                    levelKey = "BSL_${fmt(setupUpper)}",
-                    title = "🎯 XAU/USD — BSL Tersentuh!",
+                    levelKey = "UPPER_${fmt(setupUpper)}",
+                    title = "🎯 XAU/USD — Target Atas Tersentuh!",
                     message = "Level: ${fmt(setupUpper)} | Harga: ${fmt(price)}\nHTF Bias: Lihat Mapping | Setup Score: Lihat Mapping\nTap untuk buka Mapping →"
                 )
                 prefs().edit().putBoolean(KEY_UPPER_ARMED, false).apply()
@@ -182,8 +182,8 @@ class ScannerService : Service() {
             }
             if (price <= setupLower && prefs().getBoolean(KEY_LOWER_ARMED, true)) {
                 maybeSendTargetAlert(
-                    levelKey = "SSL_${fmt(setupLower)}",
-                    title = "🎯 XAU/USD — SSL Tersentuh!",
+                    levelKey = "LOWER_${fmt(setupLower)}",
+                    title = "🎯 XAU/USD — Target Bawah Tersentuh!",
                     message = "Level: ${fmt(setupLower)} | Harga: ${fmt(price)}\nHTF Bias: Lihat Mapping | Setup Score: Lihat Mapping\nTap untuk buka Mapping →"
                 )
                 prefs().edit().putBoolean(KEY_LOWER_ARMED, false).apply()
@@ -384,10 +384,10 @@ class ScannerService : Service() {
 
     private fun targetText(): String {
         return when {
-            setupUpper > 0.0 && setupLower > 0.0 -> "Target aktif: BSL ${fmt(setupUpper)} | SSL ${fmt(setupLower)}"
-            setupUpper > 0.0 -> "Target aktif: BSL ${fmt(setupUpper)}"
-            setupLower > 0.0 -> "Target aktif: SSL ${fmt(setupLower)}"
-            else -> "Menunggu target BSL/SSL dari Mapping"
+            setupUpper > 0.0 && setupLower > 0.0 -> "Target aktif: Atas ${fmt(setupUpper)} | Bawah ${fmt(setupLower)}"
+            setupUpper > 0.0 -> "Target aktif: Atas ${fmt(setupUpper)}"
+            setupLower > 0.0 -> "Target aktif: Bawah ${fmt(setupLower)}"
+            else -> "Menunggu target area dari Mapping"
         }
     }
 
