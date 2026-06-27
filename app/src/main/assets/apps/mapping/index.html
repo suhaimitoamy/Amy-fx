@@ -685,6 +685,14 @@ document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',(
     const html=localStorage.getItem(SETUP_DOM_KEY);
     if(!html)return;
 
+    const snapRaw = localStorage.getItem(SNAP_KEY);
+    if(snapRaw) {
+      try {
+        const snap = JSON.parse(snapRaw);
+        if(Date.now() - snap.at > 24 * 60 * 60 * 1000) return;
+      } catch(e) {}
+    }
+
     const card=findSetupCard();
     if(!card)return;
 

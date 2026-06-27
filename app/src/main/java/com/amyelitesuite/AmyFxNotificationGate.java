@@ -62,6 +62,6 @@ public final class AmyFxNotificationGate {
 
     private static String normalize(String x) {
         if (x == null) return "amyfx_alert";
-        return x.replaceAll("[0-9]+([.,][0-9]+)?", "#").replaceAll("\\s+", " ").trim();
+        return x.replaceAll("\\s+", " ").trim();
     }
 }
