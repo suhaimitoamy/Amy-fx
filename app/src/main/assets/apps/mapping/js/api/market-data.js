@@ -57,7 +57,8 @@ export async function runAnalysis(tf=state.tf){
         htfBiases[x]=a?.st?.trend||'NEUTRAL';
       }
     }
-    let res=analyze(state.candles[tf],tf,htfBiases,state.price);
+    let htfContext={H4:state.candles.H4,D1:state.candles.D1,W1:state.candles.W1};
+    let res=analyze(state.candles[tf],tf,htfBiases,state.price,htfContext);
     state.result=res;
     state.setups=[...(res?.setups||[]),...state.setups].slice(0,50);
     state.analyses=[{id:Date.now(),...res},...state.analyses].slice(0,80);
