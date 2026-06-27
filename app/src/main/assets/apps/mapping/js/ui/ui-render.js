@@ -49,11 +49,27 @@ export function analyzeSetupLiveState(s){
   const dir=String(s.dir||''),isBuy=dir.includes('BUY'),isSell=dir.includes('SELL')
   const lo=Math.min(Number(s.entryLow),Number(s.entryHigh)),hi=Math.max(Number(s.entryLow),Number(s.entryHigh))
   const sl=Number(s.sl),tp1=Number(s.tp1),tp2=Number(s.tp2)
+  let lcKey=`${s.type}:${s.dir}:${s.tf}:${s.entryLow}:${s.entryHigh}:${s.sl}:${s.tp1}:${s.tp2}:${s.timestamp||0}`;
+  let lc=JSON.parse(localStorage.getItem('amy_mapping_lifecycle')||'{}');
+  let touched=lc[lcKey]===true;
   if(isBuy&&Number.isFinite(sl)&&price<=sl)return{status:'SL HIT / INVALID',fatal:true,note:`Setup BUY invalid karena harga live ${p2(price)} sudah di bawah SL ${p2(sl)}.`}
   if(isSell&&Number.isFinite(sl)&&price>=sl)return{status:'SL HIT / INVALID',fatal:true,note:`Setup SELL invalid karena harga live ${p2(price)} sudah di atas SL ${p2(sl)}.`}
-  if(isBuy&&((Number.isFinite(tp2)&&price>=tp2)||(Number.isFinite(tp1)&&price>=tp1)))return{status:'TP HIT',fatal:true,note:`Target BUY sudah tercapai di harga live ${p2(price)}.`}
-  if(isSell&&((Number.isFinite(tp2)&&price<=tp2)||(Number.isFinite(tp1)&&price<=tp1)))return{status:'TP HIT',fatal:true,note:`Target SELL sudah tercapai di harga live ${p2(price)}.`}
-  if(Number.isFinite(lo)&&Number.isFinite(hi)&&price>=lo&&price<=hi)return{status:'DALAM AREA',fatal:false,note:`Harga live ${p2(price)} sedang berada di area entry.`}
+  if(Number.isFinite(lo)&&Number.isFinite(hi)&&price>=lo&&price<=hi){
+    if(!touched){
+      lc[lcKey]=true;
+      let keys=Object.keys(lc);
+      if(keys.length>50)keys.slice(0,keys.length-30).forEach(k=>delete lc[k]);
+      localStorage.setItem('amy_mapping_lifecycle',JSON.stringify(lc));
+      touched=true;
+    }
+    return{status:'DALAM AREA',fatal:false,note:`Harga live ${p2(price)} sedang berada di area entry.`}
+  }
+  if(isBuy&&((Number.isFinite(tp2)&&price>=tp2)||(Number.isFinite(tp1)&&price>=tp1))){
+    if(touched)return{status:'TP HIT',fatal:true,note:`Target BUY sudah tercapai di harga live ${p2(price)}.`}
+  }
+  if(isSell&&((Number.isFinite(tp2)&&price<=tp2)||(Number.isFinite(tp1)&&price<=tp1))){
+    if(touched)return{status:'TP HIT',fatal:true,note:`Target SELL sudah tercapai di harga live ${p2(price)}.`}
+  }
   return{status:'MENUNGGU ENTRY',fatal:false,note:`Harga live ${p2(price)} belum berada di area entry ${p2(lo)} - ${p2(hi)}.`}
 }
 export function analyzeActiveSetups(list){

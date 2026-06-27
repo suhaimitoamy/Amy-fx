@@ -9,6 +9,17 @@ export let scanTimer = null;
 export let lastWsTickAt = Number(localStorage.getItem('last_ws_tick_at')||0);
 
 const PROXY_URL = 'https://amy-fx.vercel.app/api/twelvedata';
+let candleFetchedAt = {};
+export function isCandleStale(tf) {
+  let age = (Date.now() - (candleFetchedAt[tf]||0)) / 1000 / 60;
+  if(tf==='M1') return age >= 1;
+  if(tf==='M5') return age >= 3;
+  if(tf==='M15') return age >= 5;
+  if(tf==='M30') return age >= 10;
+  if(tf==='H1') return age >= 15;
+  if(tf==='H4') return age >= 30;
+  return age >= 120;
+}
 
 export async function fetchTf(tf){
   if(!state.key.trim()) throw new Error('API key kosong');
@@ -18,6 +29,7 @@ export async function fetchTf(tf){
   if(d.status==='error') throw new Error(d.message||'Fetch gagal');
   let arr=(d.values||[]).reverse().map(c=>({time:new Date(c.datetime).getTime()/1000,timeframe:tf,open:+c.open,high:+c.high,low:+c.low,close:+c.close,tickCount:1,isClosed:true}));
   state.candles[tf]=arr;
+  candleFetchedAt[tf]=Date.now();
   return arr;
 }
 
@@ -28,7 +40,15 @@ export async function runAnalysis(tf=state.tf){
   try{
     log('Memindai '+tf+'...');
     let group=tfGroup(tf),scanGroup=[...new Set([...group,'M1','M5','M15','M30','H1','H4'])];
-    await Promise.all(scanGroup.map(x=>state.candles[x]?.length?Promise.resolve(state.candles[x]):fetchTf(x).catch(e=>[])));
+    await Promise.all(scanGroup.map(async x => {
+      if(!state.candles[x]?.length || isCandleStale(x)) {
+        try {
+          if(state.candles[x]?.length) log('Refresh candle '+x);
+          await fetchTf(x);
+        } catch(e) { /* fallback ke lama jika gagal */ }
+      }
+      return state.candles[x]||[];
+    }));
     let htfBiases={};
     for(let x of group.filter(x=>x!==tf)){
       let mini=state.candles[x];
