@@ -109,27 +109,7 @@ export function amyDecisionCard(){
   </div><div class="decision-reason"><b>Reason:</b><br>${d.reason}</div></section>`
 }
 
-export function validBreakInfo(){
-  let r=state.result,tf=r?.tf,cs=state.candles?.[tf]||[],last=cs.at(-1),br=r?.st?.last,price=analyzeLivePrice();
-  if(!r||!last||!br)return`<section class="card"><div class="kicker">VALID BREAK INFO</div><h2>Belum Ada Valid Break</h2><div class="break-reason">Belum ada BOS/CHOCH yang cukup jelas. Tunggu candle close yang valid.</div></section>`;
-  let breakCandle=cs[br.index]||last;
-  let bullish=br.dir==='BULLISH';
-  let valid=bullish?breakCandle.close>br.price:breakCandle.close<br.price;
-  let failed=price&&valid?(bullish?price<br.price:price>br.price):false;
-  let liveWarning=price&&!valid?(bullish?price>br.price:price<br.price):false;
-  let direction=bullish?'FOKUS BUY':'FOKUS SELL';
-  let title=failed?'BREAK FAILED':valid?'VALID BREAK':liveWarning?'LIVE BREAK WARNING':'BELUM VALID';
-  let conclusion=failed?`Break gagal dipertahankan karena harga live ${p2(price)} kembali melewati level ${p2(br.price)}. Tunggu mapping ulang.`
-    :valid?`Candle break sudah close valid. ${direction} masih relevan selama level break bertahan.`
-    :liveWarning?`Harga live sudah melewati level break, tapi candle close belum confirm. Tunggu candle close yang valid.`
-    :`Harga belum close valid melewati level ${p2(br.price)}. Tunggu konfirmasi candle close.`;
-  return`<section class="card"><div class="kicker">VALID BREAK INFO</div><h2>${title}</h2><div class="break-grid">
-    <div class="break-box"><small>Break Level</small><strong>${p2(br.price)}</strong></div>
-    <div class="break-box"><small>Candle Break Close</small><strong>${p2(breakCandle.close)}</strong></div>
-    <div class="break-box"><small>Harga Live</small><strong>${p2(price)}</strong></div>
-    <div class="break-box"><small>Structure</small><strong>${br.kind} ${br.dir}</strong></div>
-  </div><div class="break-reason"><b>Kesimpulan:</b><br>${conclusion}</div></section>`
-}
+export function validBreakInfo(){let r=state.result,tf=r?.tf,cs=state.candles?.[tf]||[],last=cs.at(-1),br=r?.st?.last,price=analyzeLivePrice();if(!r||!last||!br)return`<section class="card"><div class="kicker">VALID BREAK INFO</div><h2>Belum Ada Valid Break</h2><div class="break-reason">Belum ada BOS/CHOCH yang cukup jelas. Tunggu candle close yang valid.</div></section>`;let isSweep=br.breakType==='SWEEP_ONLY'||br.sweepOnly,isFailed=br.breakType==='BREAK_FAILED'||br.failed,isValid=br.breakType==='VALID_BREAK'||br.valid,title=isFailed?'BREAK FAILED':isSweep?'SWEEP ONLY':isValid?'VALID BREAK':'WAIT',dispNote=br.hasDisplacement?' dan didukung displacement':'',conclusion=isFailed?`Break sebelumnya gagal dipertahankan karena harga kembali close melewati level break.`:(isSweep?`Harga hanya menyapu level dengan wick, tetapi close belum valid melewati struktur.`:(isValid?`Candle close sudah valid melewati level struktur${dispNote}.`:`Belum ada BOS/CHOCH valid. Tunggu candle close yang jelas.`));return`<section class="card"><div class="kicker">VALID BREAK INFO</div><h2>${title}</h2><div class="break-grid"><div class="break-box"><small>Break Level</small><strong>${p2(br.price)}</strong></div><div class="break-box"><small>High / Low</small><strong>${p2(br.candleHigh)} / ${p2(br.candleLow)}</strong></div><div class="break-box"><small>Candle Close</small><strong>${p2(br.candleClose)}</strong></div><div class="break-box"><small>Structure</small><strong>${br.kind} ${br.dir}</strong></div><div class="break-box"><small>Harga Live</small><strong>${p2(price)}</strong></div><div class="break-box"><small>Displacement</small><strong>${br.hasDisplacement?'YA':'TIDAK'} (${p2(br.bodyRatio)})</strong></div></div><div class="break-reason"><b>Kesimpulan:</b><br>${conclusion}</div></section>`}
 
 export function m1h4MappingTable(){
   const rows=m1h4List().map(({tf,a})=>{
