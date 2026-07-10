@@ -1,0 +1,251 @@
+//@version=5
+indicator("AMY Kronos Filter Bot Signal", shorttitle="AMY Kronos Bot", overlay=true, max_lines_count=200, max_labels_count=200, max_bars_back=3000)
+
+//==================== INPUTS ====================//
+amy_groupSignal = "AMY Kronos Signal"
+amy_fastLen = input.int(9, "Fast EMA", minval=1, maxval=100, group=amy_groupSignal)
+amy_slowLen = input.int(21, "Slow EMA", minval=2, maxval=200, group=amy_groupSignal)
+amy_trendLen = input.int(200, "Trend EMA", minval=20, maxval=500, group=amy_groupSignal)
+amy_useCrossSignal = input.bool(true, "Use EMA Cross Signal", group=amy_groupSignal)
+amy_useMomentumSignal = input.bool(true, "Use RSI 50 Momentum Signal", group=amy_groupSignal)
+
+amy_groupFilter = "AMY Filters"
+amy_useAdxFilter = input.bool(true, "Use ADX Filter", group=amy_groupFilter)
+amy_adxLen = input.int(14, "ADX DI Length", minval=2, maxval=50, group=amy_groupFilter)
+amy_adxSmooth = input.int(14, "ADX Smoothing", minval=2, maxval=50, group=amy_groupFilter)
+amy_adxMin = input.float(18.0, "Minimum ADX", minval=5.0, maxval=60.0, step=0.5, group=amy_groupFilter)
+amy_useEmaFilter = input.bool(true, "Use EMA 200 Trend Filter", group=amy_groupFilter)
+amy_useVwapFilter = input.bool(true, "Use VWAP Filter", group=amy_groupFilter)
+amy_useRsiFilter = input.bool(true, "Use RSI Filter", group=amy_groupFilter)
+amy_rsiLen = input.int(14, "RSI Length", minval=2, maxval=50, group=amy_groupFilter)
+amy_buyRsiMin = input.float(52.0, "BUY RSI Minimum", minval=1.0, maxval=99.0, step=0.5, group=amy_groupFilter)
+amy_buyRsiMax = input.float(75.0, "BUY RSI Maximum", minval=1.0, maxval=99.0, step=0.5, group=amy_groupFilter)
+amy_sellRsiMax = input.float(48.0, "SELL RSI Maximum", minval=1.0, maxval=99.0, step=0.5, group=amy_groupFilter)
+amy_sellRsiMin = input.float(25.0, "SELL RSI Minimum", minval=1.0, maxval=99.0, step=0.5, group=amy_groupFilter)
+
+amy_groupSnr = "AMY SNR Filter"
+amy_useSnrFilter = input.bool(false, "Use SNR Filter", group=amy_groupSnr)
+amy_showSnr = input.bool(true, "Show Nearest SNR", group=amy_groupSnr)
+amy_swingLen = input.int(5, "SNR Swing Length", minval=2, maxval=30, group=amy_groupSnr)
+amy_snrTolAtr = input.float(0.60, "SNR Tolerance ATR", minval=0.05, maxval=3.0, step=0.05, group=amy_groupSnr)
+
+amy_groupRisk = "AMY ATR TP/SL"
+amy_atrLen = input.int(14, "ATR Length", minval=2, maxval=100, group=amy_groupRisk)
+amy_slAtrMult = input.float(1.5, "SL ATR Multiplier", minval=0.2, maxval=10.0, step=0.1, group=amy_groupRisk)
+amy_rr1 = input.float(1.0, "TP1 RR", minval=0.2, maxval=10.0, step=0.1, group=amy_groupRisk)
+amy_rr2 = input.float(2.0, "TP2 RR", minval=0.5, maxval=20.0, step=0.1, group=amy_groupRisk)
+amy_extendBars = input.int(50, "TP/SL Extend Bars", minval=5, maxval=300, group=amy_groupRisk)
+
+amy_groupDisplay = "AMY Display"
+amy_showEma = input.bool(true, "Show EMA", group=amy_groupDisplay)
+amy_showVwap = input.bool(true, "Show VWAP", group=amy_groupDisplay)
+amy_showPanel = input.bool(true, "Show Dashboard", group=amy_groupDisplay)
+amy_panelPosInput = input.string("Bottom Right", "Dashboard Position", options=["Top Right", "Top Left", "Middle Right", "Middle Left", "Bottom Right", "Bottom Left", "Bottom Center"], group=amy_groupDisplay)
+amy_showLabels = input.bool(true, "Show BUY/SELL Labels", group=amy_groupDisplay)
+amy_showTradeLines = input.bool(true, "Show TP/SL Lines On Signal", group=amy_groupDisplay)
+
+//==================== CALC ====================//
+amy_emaFast = ta.ema(close, amy_fastLen)
+amy_emaSlow = ta.ema(close, amy_slowLen)
+amy_emaTrend = ta.ema(close, amy_trendLen)
+amy_vwap = ta.vwap(hlc3)
+amy_rsi = ta.rsi(close, amy_rsiLen)
+[amy_diPlus, amy_diMinus, amy_adx] = ta.dmi(amy_adxLen, amy_adxSmooth)
+amy_atr = ta.atr(amy_atrLen)
+amy_ph = ta.pivothigh(high, amy_swingLen, amy_swingLen)
+amy_pl = ta.pivotlow(low, amy_swingLen, amy_swingLen)
+
+//==================== SNR ====================//
+var float amy_lastSupport = na
+var float amy_lastResistance = na
+var line amy_supportLine = na
+var line amy_resistanceLine = na
+var label amy_supportLabel = na
+var label amy_resistanceLabel = na
+
+if not na(amy_pl)
+    amy_lastSupport := amy_pl
+    if not na(amy_supportLine)
+        line.delete(amy_supportLine)
+    if not na(amy_supportLabel)
+        label.delete(amy_supportLabel)
+    amy_supportLine := line.new(bar_index - amy_swingLen, amy_lastSupport, bar_index + amy_extendBars, amy_lastSupport, xloc=xloc.bar_index, color=color.new(color.lime, amy_showSnr ? 20 : 100), width=1)
+    amy_supportLabel := label.new(bar_index + amy_extendBars, amy_lastSupport, amy_showSnr ? "SNR Support  " + str.tostring(amy_lastSupport, format.mintick) : "", xloc=xloc.bar_index, style=label.style_label_left, color=color.new(color.lime, amy_showSnr ? 85 : 100), textcolor=color.new(color.lime, amy_showSnr ? 0 : 100), size=size.tiny)
+
+if not na(amy_ph)
+    amy_lastResistance := amy_ph
+    if not na(amy_resistanceLine)
+        line.delete(amy_resistanceLine)
+    if not na(amy_resistanceLabel)
+        label.delete(amy_resistanceLabel)
+    amy_resistanceLine := line.new(bar_index - amy_swingLen, amy_lastResistance, bar_index + amy_extendBars, amy_lastResistance, xloc=xloc.bar_index, color=color.new(color.red, amy_showSnr ? 20 : 100), width=1)
+    amy_resistanceLabel := label.new(bar_index + amy_extendBars, amy_lastResistance, amy_showSnr ? "SNR Resistance  " + str.tostring(amy_lastResistance, format.mintick) : "", xloc=xloc.bar_index, style=label.style_label_left, color=color.new(color.red, amy_showSnr ? 85 : 100), textcolor=color.new(color.red, amy_showSnr ? 0 : 100), size=size.tiny)
+
+if not na(amy_supportLine)
+    line.set_x2(amy_supportLine, bar_index + amy_extendBars)
+    line.set_color(amy_supportLine, color.new(color.lime, amy_showSnr ? 20 : 100))
+if not na(amy_supportLabel)
+    label.set_xy(amy_supportLabel, bar_index + amy_extendBars, amy_lastSupport)
+    label.set_text(amy_supportLabel, amy_showSnr ? "SNR Support  " + str.tostring(amy_lastSupport, format.mintick) : "")
+    label.set_color(amy_supportLabel, color.new(color.lime, amy_showSnr ? 85 : 100))
+    label.set_textcolor(amy_supportLabel, color.new(color.lime, amy_showSnr ? 0 : 100))
+
+if not na(amy_resistanceLine)
+    line.set_x2(amy_resistanceLine, bar_index + amy_extendBars)
+    line.set_color(amy_resistanceLine, color.new(color.red, amy_showSnr ? 20 : 100))
+if not na(amy_resistanceLabel)
+    label.set_xy(amy_resistanceLabel, bar_index + amy_extendBars, amy_lastResistance)
+    label.set_text(amy_resistanceLabel, amy_showSnr ? "SNR Resistance  " + str.tostring(amy_lastResistance, format.mintick) : "")
+    label.set_color(amy_resistanceLabel, color.new(color.red, amy_showSnr ? 85 : 100))
+    label.set_textcolor(amy_resistanceLabel, color.new(color.red, amy_showSnr ? 0 : 100))
+
+amy_nearSupport = not na(amy_lastSupport) and math.abs(close - amy_lastSupport) <= amy_atr * amy_snrTolAtr
+amy_nearResistance = not na(amy_lastResistance) and math.abs(close - amy_lastResistance) <= amy_atr * amy_snrTolAtr
+
+//==================== KRONOS-STYLE SIGNAL ====================//
+amy_crossBuy = ta.crossover(amy_emaFast, amy_emaSlow)
+amy_crossSell = ta.crossunder(amy_emaFast, amy_emaSlow)
+amy_momentumBuy = amy_emaFast > amy_emaSlow and close > amy_emaFast and ta.crossover(amy_rsi, 50)
+amy_momentumSell = amy_emaFast < amy_emaSlow and close < amy_emaFast and ta.crossunder(amy_rsi, 50)
+amy_kronosBuy = (amy_useCrossSignal and amy_crossBuy) or (amy_useMomentumSignal and amy_momentumBuy)
+amy_kronosSell = (amy_useCrossSignal and amy_crossSell) or (amy_useMomentumSignal and amy_momentumSell)
+
+amy_adxOk = not amy_useAdxFilter or amy_adx >= amy_adxMin
+amy_buyEmaOk = not amy_useEmaFilter or (close > amy_emaTrend and amy_emaFast > amy_emaSlow)
+amy_sellEmaOk = not amy_useEmaFilter or (close < amy_emaTrend and amy_emaFast < amy_emaSlow)
+amy_buyVwapOk = not amy_useVwapFilter or close > amy_vwap
+amy_sellVwapOk = not amy_useVwapFilter or close < amy_vwap
+amy_buyRsiOk = not amy_useRsiFilter or (amy_rsi >= amy_buyRsiMin and amy_rsi <= amy_buyRsiMax)
+amy_sellRsiOk = not amy_useRsiFilter or (amy_rsi <= amy_sellRsiMax and amy_rsi >= amy_sellRsiMin)
+amy_buySnrOk = not amy_useSnrFilter or amy_nearSupport
+amy_sellSnrOk = not amy_useSnrFilter or amy_nearResistance
+
+amy_buyReady = amy_kronosBuy and amy_adxOk and amy_buyEmaOk and amy_buyVwapOk and amy_buyRsiOk and amy_buySnrOk
+amy_sellReady = amy_kronosSell and amy_adxOk and amy_sellEmaOk and amy_sellVwapOk and amy_sellRsiOk and amy_sellSnrOk
+amy_buySignal = amy_buyReady and not nz(amy_buyReady[1], false)
+amy_sellSignal = amy_sellReady and not nz(amy_sellReady[1], false)
+
+//==================== SCORE ====================//
+amy_buyScore = 0
+amy_buyScore += amy_kronosBuy ? 25 : 0
+amy_buyScore += amy_adxOk ? 15 : 0
+amy_buyScore += amy_buyEmaOk ? 20 : 0
+amy_buyScore += amy_buyVwapOk ? 10 : 0
+amy_buyScore += amy_buyRsiOk ? 15 : 0
+amy_buyScore += amy_buySnrOk ? 15 : 0
+
+amy_sellScore = 0
+amy_sellScore += amy_kronosSell ? 25 : 0
+amy_sellScore += amy_adxOk ? 15 : 0
+amy_sellScore += amy_sellEmaOk ? 20 : 0
+amy_sellScore += amy_sellVwapOk ? 10 : 0
+amy_sellScore += amy_sellRsiOk ? 15 : 0
+amy_sellScore += amy_sellSnrOk ? 15 : 0
+
+amy_activeScore = math.max(amy_buyScore, amy_sellScore)
+amy_rating = amy_activeScore >= 85 ? "A" : amy_activeScore >= 70 ? "B" : amy_activeScore >= 55 ? "C" : "D"
+
+//==================== TP / SL ====================//
+amy_buyEntry = close
+amy_sellEntry = close
+amy_buySL = amy_buyEntry - amy_atr * amy_slAtrMult
+amy_sellSL = amy_sellEntry + amy_atr * amy_slAtrMult
+amy_buyRisk = amy_buyEntry - amy_buySL
+amy_sellRisk = amy_sellSL - amy_sellEntry
+amy_buyTP1 = amy_buyEntry + amy_buyRisk * amy_rr1
+amy_buyTP2 = amy_buyEntry + amy_buyRisk * amy_rr2
+amy_sellTP1 = amy_sellEntry - amy_sellRisk * amy_rr1
+amy_sellTP2 = amy_sellEntry - amy_sellRisk * amy_rr2
+
+var line amy_entryLine = na
+var line amy_slLine = na
+var line amy_tp1Line = na
+var line amy_tp2Line = na
+var label amy_tradeLabel = na
+
+if amy_showTradeLines and amy_buySignal
+    if not na(amy_entryLine)
+        line.delete(amy_entryLine)
+    if not na(amy_slLine)
+        line.delete(amy_slLine)
+    if not na(amy_tp1Line)
+        line.delete(amy_tp1Line)
+    if not na(amy_tp2Line)
+        line.delete(amy_tp2Line)
+    if not na(amy_tradeLabel)
+        label.delete(amy_tradeLabel)
+    amy_entryLine := line.new(bar_index, amy_buyEntry, bar_index + amy_extendBars, amy_buyEntry, xloc=xloc.bar_index, color=color.new(color.yellow, 0), width=2)
+    amy_slLine := line.new(bar_index, amy_buySL, bar_index + amy_extendBars, amy_buySL, xloc=xloc.bar_index, color=color.new(color.red, 0), width=2)
+    amy_tp1Line := line.new(bar_index, amy_buyTP1, bar_index + amy_extendBars, amy_buyTP1, xloc=xloc.bar_index, color=color.new(color.aqua, 0), width=1)
+    amy_tp2Line := line.new(bar_index, amy_buyTP2, bar_index + amy_extendBars, amy_buyTP2, xloc=xloc.bar_index, color=color.new(color.lime, 0), width=1)
+    amy_txt = "BUY KRONOS\nEntry: " + str.tostring(amy_buyEntry, format.mintick) + "\nSL: " + str.tostring(amy_buySL, format.mintick) + "\nTP1: " + str.tostring(amy_buyTP1, format.mintick) + "\nTP2: " + str.tostring(amy_buyTP2, format.mintick)
+    amy_tradeLabel := label.new(bar_index, low, amy_txt, xloc=xloc.bar_index, style=label.style_label_up, color=color.new(color.lime, 75), textcolor=color.lime, size=size.small)
+
+if amy_showTradeLines and amy_sellSignal
+    if not na(amy_entryLine)
+        line.delete(amy_entryLine)
+    if not na(amy_slLine)
+        line.delete(amy_slLine)
+    if not na(amy_tp1Line)
+        line.delete(amy_tp1Line)
+    if not na(amy_tp2Line)
+        line.delete(amy_tp2Line)
+    if not na(amy_tradeLabel)
+        label.delete(amy_tradeLabel)
+    amy_entryLine := line.new(bar_index, amy_sellEntry, bar_index + amy_extendBars, amy_sellEntry, xloc=xloc.bar_index, color=color.new(color.yellow, 0), width=2)
+    amy_slLine := line.new(bar_index, amy_sellSL, bar_index + amy_extendBars, amy_sellSL, xloc=xloc.bar_index, color=color.new(color.red, 0), width=2)
+    amy_tp1Line := line.new(bar_index, amy_sellTP1, bar_index + amy_extendBars, amy_sellTP1, xloc=xloc.bar_index, color=color.new(color.aqua, 0), width=1)
+    amy_tp2Line := line.new(bar_index, amy_sellTP2, bar_index + amy_extendBars, amy_sellTP2, xloc=xloc.bar_index, color=color.new(color.lime, 0), width=1)
+    amy_txt = "SELL KRONOS\nEntry: " + str.tostring(amy_sellEntry, format.mintick) + "\nSL: " + str.tostring(amy_sellSL, format.mintick) + "\nTP1: " + str.tostring(amy_sellTP1, format.mintick) + "\nTP2: " + str.tostring(amy_sellTP2, format.mintick)
+    amy_tradeLabel := label.new(bar_index, high, amy_txt, xloc=xloc.bar_index, style=label.style_label_down, color=color.new(color.red, 75), textcolor=color.red, size=size.small)
+
+//==================== PLOTS ====================//
+plot(amy_showEma ? amy_emaFast : na, title="Fast EMA", color=color.new(color.aqua, 0), linewidth=1)
+plot(amy_showEma ? amy_emaSlow : na, title="Slow EMA", color=color.new(color.orange, 0), linewidth=1)
+plot(amy_showEma ? amy_emaTrend : na, title="EMA 200", color=color.new(color.white, 0), linewidth=2)
+plot(amy_showVwap ? amy_vwap : na, title="VWAP", color=color.new(color.fuchsia, 0), linewidth=2)
+plotshape(amy_showLabels and amy_buySignal, title="BUY KRONOS", style=shape.labelup, text="BUY\nKRONOS", location=location.belowbar, color=color.new(color.lime, 0), textcolor=color.black, size=size.tiny)
+plotshape(amy_showLabels and amy_sellSignal, title="SELL KRONOS", style=shape.labeldown, text="SELL\nKRONOS", location=location.abovebar, color=color.new(color.red, 0), textcolor=color.white, size=size.tiny)
+
+//==================== DASHBOARD ====================//
+amy_panelPosition(_pos) =>
+    _pos == "Top Right" ? position.top_right :
+     _pos == "Top Left" ? position.top_left :
+     _pos == "Middle Right" ? position.middle_right :
+     _pos == "Middle Left" ? position.middle_left :
+     _pos == "Bottom Left" ? position.bottom_left :
+     _pos == "Bottom Center" ? position.bottom_center :
+     position.bottom_right
+
+var table amy_panel = table.new(position.bottom_right, 2, 9, border_width=1)
+
+if barstate.islast
+    if amy_showPanel
+        amy_status = amy_buyReady ? "BUY READY" : amy_sellReady ? "SELL READY" : "WAIT"
+        amy_statusCol = amy_buyReady ? color.lime : amy_sellReady ? color.red : color.gray
+        amy_direction = close > amy_emaTrend ? "Bullish" : close < amy_emaTrend ? "Bearish" : "Neutral"
+        table.set_position(amy_panel, amy_panelPosition(amy_panelPosInput))
+        table.cell(amy_panel, 0, 0, "AMY KRONOS BOT", text_color=color.white, bgcolor=color.new(color.blue, 35))
+        table.cell(amy_panel, 1, 0, amy_status, text_color=color.white, bgcolor=color.new(amy_statusCol, 35))
+        table.cell(amy_panel, 0, 1, "Trend EMA", text_color=color.white, bgcolor=color.new(color.black, 70))
+        table.cell(amy_panel, 1, 1, amy_direction, text_color=color.white, bgcolor=color.new(color.black, 70))
+        table.cell(amy_panel, 0, 2, "ADX", text_color=color.white, bgcolor=color.new(color.black, 70))
+        table.cell(amy_panel, 1, 2, str.tostring(amy_adx, "#.##"), text_color=color.white, bgcolor=color.new(color.black, 70))
+        table.cell(amy_panel, 0, 3, "RSI", text_color=color.white, bgcolor=color.new(color.black, 70))
+        table.cell(amy_panel, 1, 3, str.tostring(amy_rsi, "#.##"), text_color=color.white, bgcolor=color.new(color.black, 70))
+        table.cell(amy_panel, 0, 4, "VWAP", text_color=color.white, bgcolor=color.new(color.black, 70))
+        table.cell(amy_panel, 1, 4, close > amy_vwap ? "Above" : "Below", text_color=color.white, bgcolor=color.new(color.black, 70))
+        table.cell(amy_panel, 0, 5, "SNR", text_color=color.white, bgcolor=color.new(color.black, 70))
+        table.cell(amy_panel, 1, 5, amy_nearSupport ? "Near Support" : amy_nearResistance ? "Near Resistance" : "No", text_color=color.white, bgcolor=color.new(color.black, 70))
+        table.cell(amy_panel, 0, 6, "Score", text_color=color.white, bgcolor=color.new(color.black, 70))
+        table.cell(amy_panel, 1, 6, str.tostring(amy_activeScore) + " / " + amy_rating, text_color=color.white, bgcolor=color.new(color.black, 70))
+        table.cell(amy_panel, 0, 7, "ATR SL", text_color=color.white, bgcolor=color.new(color.black, 70))
+        table.cell(amy_panel, 1, 7, str.tostring(amy_atr * amy_slAtrMult, format.mintick), text_color=color.white, bgcolor=color.new(color.black, 70))
+        table.cell(amy_panel, 0, 8, "Rule", text_color=color.white, bgcolor=color.new(color.black, 70))
+        table.cell(amy_panel, 1, 8, "Kronos + ADX EMA RSI", text_color=color.white, bgcolor=color.new(color.black, 70))
+    else
+        table.clear(amy_panel, 0, 0, 1, 8)
+
+//==================== ALERTS ====================//
+alertcondition(amy_buySignal, title="AMY KRONOS BUY READY", message="AMY KRONOS BOT: BUY READY")
+alertcondition(amy_sellSignal, title="AMY KRONOS SELL READY", message="AMY KRONOS BOT: SELL READY")

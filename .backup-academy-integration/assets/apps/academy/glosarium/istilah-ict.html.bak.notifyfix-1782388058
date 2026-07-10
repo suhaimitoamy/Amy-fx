@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Istilah ICT — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+</head>
+<body>
+  <script>requireLogin();</script>
+  
+  <header class="topbar hide-until-auth">
+    <nav class="nav">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark">A</span>
+        <span>Amy FX Academy</span>
+      </a>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="navlinks" id="navlinks">
+        <a href="../index.html">Beranda</a>
+        <a href="../daftar-materi.html">Daftar Materi</a>
+        <a href="../tentang.html">Tentang</a>
+        <a href="index.html">Glosarium</a>
+        
+      </div>
+    </nav>
+  </header>
+
+  <main class="container hide-until-auth">
+    <div class="article-layout">
+      <article class="article">
+        <div class="breadcrumb">
+          <a href="../index.html">Beranda</a> / <a href="index.html">Glosarium</a> / ICT
+        </div>
+        <div class="eyebrow">Glosarium</div>
+        <h1>Istilah ICT (Inner Circle Trader)</h1>
+        <p>Konsep turunan dan spesifik dari ajaran Inner Circle Trader (Michael J. Huddleston) yang berfokus pada waktu (waktu eksekusi algoritma) dan harga (Price Delivery).</p>
+
+        <h2>PD Array (Premium Discount Array)</h2>
+        <p>Kumpulan elemen atau alat ukur dalam analisis teknikal ICT (seperti OB, FVG, Breaker, dll) yang disusun berdasarkan posisinya, apakah berada di area Premium (di atas harga ekuilibrium) atau Discount (di bawah ekuilibrium).</p>
+
+        <h2>CISD (Change in State of Delivery)</h2>
+        <p>Perubahan kondisi pengiriman harga. Ditandai ketika harga berbalik arah dan candle body (bukan sekadar sumbu/wick) berhasil ditutup (close) melewati titik awal dorongan terakhir dari market maker. Ini adalah sinyal paling awal dari potensi pembalikan arah.</p>
+
+        <h2>MSS (Market Structure Shift)</h2>
+        <p>Pergeseran struktur market. Mirip dengan Change of Character (CHoCH) di aliran SMC. Terjadi ketika harga gagal membuat Higher High dan malah menembus swing low terakhir yang valid (dalam trend naik), mengindikasikan struktur telah berubah dari Bullish ke Bearish (atau sebaliknya).</p>
+
+        <h2>Displacement</h2>
+        <p>Pergerakan harga yang sangat kuat dan impulsif, seringkali ditandai dengan candle-candle berbadan besar dan panjang. Displacement yang sejati akan meninggalkan Fair Value Gap (FVG) di belakangnya, menunjukkan adanya campur tangan institusi besar.</p>
+
+        <h2>OTE (Optimal Trade Entry)</h2>
+        <p>Titik entry paling ideal menurut ICT yang ditarik menggunakan Fibonacci Retracement dari swing low ke swing high (atau sebaliknya). Area OTE umumnya berada di antara level Fibonacci 62% hingga 79%, dengan sweet spot di angka 70.5%.</p>
+
+        <h2>NYMO (New York Midnight Open)</h2>
+        <p>Harga pembukaan pada pukul 00:00 (tengah malam) waktu New York. Garis horizontal dari harga ini sangat krusial; harga di atas NYMO dianggap mahal (premium) untuk mencari sell, sedangkan harga di bawah NYMO dianggap murah (discount) untuk mencari buy di hari itu.</p>
+
+        <h2>PO3 (Power of Three) / AMD</h2>
+        <p>Konsep yang menyatakan bahwa siklus pergerakan harga, terutama dalam satu candle (misalnya candle harian), terdiri dari 3 fase: <strong>Accumulation</strong> (sideways/pengumpulan posisi), <strong>Manipulation</strong> (dorongan palsu untuk menyapu liquidity), lalu <strong>Distribution</strong> (pergerakan harga sebenarnya menuju target utama).</p>
+
+        <h2>TGIF (Thank God It's Friday)</h2>
+        <p>Sebuah setup atau perilaku spesifik yang kerap muncul di hari Jumat. Jika dari Senin hingga Kamis harga bergerak sangat kencang ke satu arah (membentuk Weekly Profile yang ekspansif), maka pada hari Jumat harga seringkali melakukan retracement (pembalikan) sekitar 20%-30% dari total pergerakan minggu tersebut.</p>
+
+        <h2>MMXM (Market Maker Buy/Sell Model)</h2>
+        <p>Model perilaku Market Maker. MMBM (Market Maker Buy Model) membentuk kurva harga turun untuk akumulasi sebelum meroket naik, dan MMSM (Market Maker Sell Model) membentuk kurva naik untuk distribusi sebelum harga anjlok. Polanya sering bertahap seperti anak tangga.</p>
+
+        <h2>SMT (Smart Money Tool) Divergence</h2>
+        <p>Perbedaan (divergence) struktural antara dua instrumen yang berkorelasi ketat. Misalnya Euro (EURUSD) dan Poundsterling (GBPUSD) seharusnya bergerak searah. Jika EURUSD mencetak Higher High, tapi GBPUSD hanya mencetak Lower High, ketidaksesuaian ini disebut SMT Divergence dan sering menjadi indikator kuat bahwa market akan segera berbalik arah (reversal).</p>
+
+      </article>
+
+      <aside class="toc-card">
+        <h3>Kategori Glosarium</h3>
+        <ul>
+          <li><a href="index.html">Menu Utama Glosarium</a></li>
+          <li><a href="istilah-basic-trading.html">Istilah Basic</a></li>
+          <li><a href="istilah-smc.html">Istilah SMC</a></li>
+          <li><a href="istilah-ict.html" class="active">Istilah ICT</a></li>
+          <li><a href="istilah-risk-management.html">Istilah Risk Management</a></li>
+        </ul>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="footer hide-until-auth">
+    © 2026 Amy FX Academy. Belajar Trading dari Nol sampai Mandiri.
+  </footer>
+</body>
+</html>

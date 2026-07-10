@@ -1,0 +1,255 @@
+//@version=5
+indicator("AMY Breakout Retest Rejection Assistant", shorttitle="AMY BOR Retest", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=100, max_bars_back=3000)
+
+//==================== INPUTS ====================//
+amy_groupLevel = "AMY Breakout Levels"
+amy_len = input.int(5, "Swing Length", minval=2, maxval=30, group=amy_groupLevel)
+amy_maxLevels = input.int(8, "Max Levels", minval=2, maxval=30, group=amy_groupLevel)
+amy_breakAtr = input.float(0.15, "Break Close Buffer ATR", minval=0.0, step=0.05, group=amy_groupLevel)
+amy_retestAtr = input.float(0.35, "Retest Tolerance ATR", minval=0.05, step=0.05, group=amy_groupLevel)
+amy_validBars = input.int(30, "Valid Bars After Break", minval=3, maxval=200, group=amy_groupLevel)
+amy_extendBars = input.int(80, "Extend Right Bars", minval=10, maxval=500, group=amy_groupLevel)
+
+amy_groupEntry = "AMY Entry"
+amy_rejectRatio = input.float(1.1, "Rejection Wick Ratio", minval=0.2, step=0.1, group=amy_groupEntry)
+amy_slAtr = input.float(0.35, "SL Buffer ATR", minval=0.05, step=0.05, group=amy_groupEntry)
+amy_rr1 = input.float(1.0, "TP1 RR", minval=0.2, step=0.1, group=amy_groupEntry)
+amy_rr2 = input.float(2.0, "TP2 RR", minval=0.5, step=0.1, group=amy_groupEntry)
+amy_oneSignalPerBreak = input.bool(true, "One Signal Per Break", group=amy_groupEntry)
+
+amy_groupDisplay = "AMY Display"
+amy_showLevels = input.bool(true, "Show Break Levels", group=amy_groupDisplay)
+amy_showZone = input.bool(true, "Show Retest Zone", group=amy_groupDisplay)
+amy_showSignals = input.bool(true, "Show Signals", group=amy_groupDisplay)
+amy_showTradeLines = input.bool(true, "Show Entry / SL / TP Lines", group=amy_groupDisplay)
+amy_showPanel = input.bool(true, "Show Dashboard", group=amy_groupDisplay)
+
+//==================== BASE ====================//
+amy_atr = ta.atr(14)
+amy_breakBuffer = amy_atr * amy_breakAtr
+amy_retestTol = amy_atr * amy_retestAtr
+amy_body = math.abs(close - open)
+amy_bodySafe = math.max(amy_body, syminfo.mintick)
+amy_lowerWick = math.min(open, close) - low
+amy_upperWick = high - math.max(open, close)
+amy_bullReject = close > open and amy_lowerWick >= amy_bodySafe * amy_rejectRatio
+amy_bearReject = close < open and amy_upperWick >= amy_bodySafe * amy_rejectRatio
+
+//==================== STORAGE ====================//
+var float[] amy_resPrices = array.new_float()
+var int[] amy_resIndexes = array.new_int()
+var float[] amy_supPrices = array.new_float()
+var int[] amy_supIndexes = array.new_int()
+var line[] amy_resLines = array.new_line()
+var line[] amy_supLines = array.new_line()
+var label[] amy_resLabels = array.new_label()
+var label[] amy_supLabels = array.new_label()
+
+var float amy_breakLevel = na
+var int amy_breakDir = 0
+var int amy_breakBar = na
+var bool amy_breakUsed = false
+var box amy_retestBox = na
+var line amy_entryLine = na
+var line amy_slLine = na
+var line amy_tp1Line = na
+var line amy_tp2Line = na
+var label amy_tradeLabel = na
+
+amy_addLevel(_price, _idx, _dir) =>
+    if _dir == 1
+        _ln = line.new(_idx, _price, bar_index + amy_extendBars, _price, xloc=xloc.bar_index, color=color.new(color.red, 10), width=1)
+        _lb = label.new(bar_index + amy_extendBars, _price, "R  " + str.tostring(_price, format.mintick), xloc=xloc.bar_index, style=label.style_label_left, color=color.new(color.red, 85), textcolor=color.red, size=size.tiny)
+        array.unshift(amy_resPrices, _price)
+        array.unshift(amy_resIndexes, _idx)
+        array.unshift(amy_resLines, _ln)
+        array.unshift(amy_resLabels, _lb)
+        while array.size(amy_resPrices) > amy_maxLevels
+            array.pop(amy_resPrices)
+            array.pop(amy_resIndexes)
+            line.delete(array.pop(amy_resLines))
+            label.delete(array.pop(amy_resLabels))
+    if _dir == -1
+        _ln = line.new(_idx, _price, bar_index + amy_extendBars, _price, xloc=xloc.bar_index, color=color.new(color.lime, 10), width=1)
+        _lb = label.new(bar_index + amy_extendBars, _price, "S  " + str.tostring(_price, format.mintick), xloc=xloc.bar_index, style=label.style_label_left, color=color.new(color.lime, 85), textcolor=color.lime, size=size.tiny)
+        array.unshift(amy_supPrices, _price)
+        array.unshift(amy_supIndexes, _idx)
+        array.unshift(amy_supLines, _ln)
+        array.unshift(amy_supLabels, _lb)
+        while array.size(amy_supPrices) > amy_maxLevels
+            array.pop(amy_supPrices)
+            array.pop(amy_supIndexes)
+            line.delete(array.pop(amy_supLines))
+            label.delete(array.pop(amy_supLabels))
+
+amy_nearestResistance() =>
+    float _res = na
+    if array.size(amy_resPrices) > 0
+        for i = 0 to array.size(amy_resPrices) - 1
+            _p = array.get(amy_resPrices, i)
+            if _p >= close
+                _res := na(_res) ? _p : math.min(_res, _p)
+    _res
+
+amy_nearestSupport() =>
+    float _sup = na
+    if array.size(amy_supPrices) > 0
+        for i = 0 to array.size(amy_supPrices) - 1
+            _p = array.get(amy_supPrices, i)
+            if _p <= close
+                _sup := na(_sup) ? _p : math.max(_sup, _p)
+    _sup
+
+//==================== LEVEL DETECTION ====================//
+amy_ph = ta.pivothigh(high, amy_len, amy_len)
+amy_pl = ta.pivotlow(low, amy_len, amy_len)
+if not na(amy_ph)
+    amy_addLevel(amy_ph, bar_index - amy_len, 1)
+if not na(amy_pl)
+    amy_addLevel(amy_pl, bar_index - amy_len, -1)
+
+if array.size(amy_resLines) > 0
+    for i = 0 to array.size(amy_resLines) - 1
+        _ln = array.get(amy_resLines, i)
+        _lb = array.get(amy_resLabels, i)
+        _p = array.get(amy_resPrices, i)
+        line.set_x2(_ln, bar_index + amy_extendBars)
+        label.set_xy(_lb, bar_index + amy_extendBars, _p)
+        label.set_text(_lb, "R  " + str.tostring(_p, format.mintick))
+        line.set_color(_ln, amy_showLevels ? color.new(color.red, 10) : color.new(color.red, 100))
+        label.set_textcolor(_lb, amy_showLevels ? color.red : color.new(color.red, 100))
+
+if array.size(amy_supLines) > 0
+    for i = 0 to array.size(amy_supLines) - 1
+        _ln = array.get(amy_supLines, i)
+        _lb = array.get(amy_supLabels, i)
+        _p = array.get(amy_supPrices, i)
+        line.set_x2(_ln, bar_index + amy_extendBars)
+        label.set_xy(_lb, bar_index + amy_extendBars, _p)
+        label.set_text(_lb, "S  " + str.tostring(_p, format.mintick))
+        line.set_color(_ln, amy_showLevels ? color.new(color.lime, 10) : color.new(color.lime, 100))
+        label.set_textcolor(_lb, amy_showLevels ? color.lime : color.new(color.lime, 100))
+
+amy_res = amy_nearestResistance()
+amy_sup = amy_nearestSupport()
+
+//==================== BREAKOUT STATE ====================//
+amy_breakUp = not na(amy_res) and close > amy_res + amy_breakBuffer and close[1] <= amy_res + amy_breakBuffer
+amy_breakDn = not na(amy_sup) and close < amy_sup - amy_breakBuffer and close[1] >= amy_sup - amy_breakBuffer
+
+if amy_breakUp
+    amy_breakLevel := amy_res
+    amy_breakDir := 1
+    amy_breakBar := bar_index
+    amy_breakUsed := false
+
+if amy_breakDn
+    amy_breakLevel := amy_sup
+    amy_breakDir := -1
+    amy_breakBar := bar_index
+    amy_breakUsed := false
+
+amy_hasBreak = amy_breakDir != 0 and not na(amy_breakLevel) and not na(amy_breakBar)
+amy_breakFresh = amy_hasBreak and bar_index - amy_breakBar <= amy_validBars
+if amy_hasBreak and not amy_breakFresh
+    amy_breakDir := 0
+    amy_breakLevel := na
+    amy_breakBar := na
+    amy_breakUsed := false
+
+//==================== RETEST + ENTRY ====================//
+amy_retestBuy = amy_breakFresh and amy_breakDir == 1 and low <= amy_breakLevel + amy_retestTol and high >= amy_breakLevel - amy_retestTol
+amy_retestSell = amy_breakFresh and amy_breakDir == -1 and high >= amy_breakLevel - amy_retestTol and low <= amy_breakLevel + amy_retestTol
+amy_allowed = not amy_oneSignalPerBreak or not amy_breakUsed
+amy_buyReady = amy_allowed and amy_retestBuy and amy_bullReject and close >= amy_breakLevel
+amy_sellReady = amy_allowed and amy_retestSell and amy_bearReject and close <= amy_breakLevel
+amy_buySignal = amy_buyReady and not nz(amy_buyReady[1], false)
+amy_sellSignal = amy_sellReady and not nz(amy_sellReady[1], false)
+amy_missedBuy = amy_breakFresh and amy_breakDir == 1 and close > amy_breakLevel + amy_atr * 1.5 and not amy_retestBuy
+amy_missedSell = amy_breakFresh and amy_breakDir == -1 and close < amy_breakLevel - amy_atr * 1.5 and not amy_retestSell
+
+if amy_showZone and not na(amy_retestBox)
+    box.delete(amy_retestBox)
+    amy_retestBox := na
+if amy_showZone and amy_breakFresh
+    _top = amy_breakLevel + amy_retestTol
+    _btm = amy_breakLevel - amy_retestTol
+    _col = amy_breakDir == 1 ? color.new(color.lime, 91) : color.new(color.red, 91)
+    _bor = amy_breakDir == 1 ? color.new(color.lime, 45) : color.new(color.red, 45)
+    _txt = amy_breakDir == 1 ? "BUY RETEST ZONE" : "SELL RETEST ZONE"
+    amy_retestBox := box.new(amy_breakBar, _top, bar_index + amy_extendBars, _btm, xloc=xloc.bar_index, bgcolor=_col, border_color=_bor, text=_txt, text_color=_bor, text_size=size.tiny, text_halign=text.align_left)
+
+amy_buySL = amy_buyReady ? math.min(low, amy_breakLevel) - amy_atr * amy_slAtr : na
+amy_sellSL = amy_sellReady ? math.max(high, amy_breakLevel) + amy_atr * amy_slAtr : na
+amy_buyRisk = amy_buyReady ? close - amy_buySL : na
+amy_sellRisk = amy_sellReady ? amy_sellSL - close : na
+amy_buyTP1 = amy_buyReady ? close + amy_buyRisk * amy_rr1 : na
+amy_buyTP2 = amy_buyReady ? close + amy_buyRisk * amy_rr2 : na
+amy_sellTP1 = amy_sellReady ? close - amy_sellRisk * amy_rr1 : na
+amy_sellTP2 = amy_sellReady ? close - amy_sellRisk * amy_rr2 : na
+
+if amy_buySignal and amy_showTradeLines and not na(amy_buySL)
+    amy_breakUsed := true
+    if not na(amy_entryLine)
+        line.delete(amy_entryLine)
+    if not na(amy_slLine)
+        line.delete(amy_slLine)
+    if not na(amy_tp1Line)
+        line.delete(amy_tp1Line)
+    if not na(amy_tp2Line)
+        line.delete(amy_tp2Line)
+    if not na(amy_tradeLabel)
+        label.delete(amy_tradeLabel)
+    _txt = "PULLBACK BUY READY\nEntry: " + str.tostring(close, format.mintick) + "\nRetest: " + str.tostring(amy_breakLevel, format.mintick) + "\nSL: " + str.tostring(amy_buySL, format.mintick) + "\nTP1: " + str.tostring(amy_buyTP1, format.mintick) + "\nTP2: " + str.tostring(amy_buyTP2, format.mintick)
+    amy_entryLine := line.new(bar_index, close, bar_index + amy_extendBars, close, xloc=xloc.bar_index, color=color.new(color.yellow, 0), width=2)
+    amy_slLine := line.new(bar_index, amy_buySL, bar_index + amy_extendBars, amy_buySL, xloc=xloc.bar_index, color=color.new(color.red, 0), width=2)
+    amy_tp1Line := line.new(bar_index, amy_buyTP1, bar_index + amy_extendBars, amy_buyTP1, xloc=xloc.bar_index, color=color.new(color.aqua, 0), width=1)
+    amy_tp2Line := line.new(bar_index, amy_buyTP2, bar_index + amy_extendBars, amy_buyTP2, xloc=xloc.bar_index, color=color.new(color.lime, 0), width=1)
+    amy_tradeLabel := label.new(bar_index, low, _txt, xloc=xloc.bar_index, style=label.style_label_up, color=color.new(color.lime, 75), textcolor=color.lime, size=size.small)
+
+if amy_sellSignal and amy_showTradeLines and not na(amy_sellSL)
+    amy_breakUsed := true
+    if not na(amy_entryLine)
+        line.delete(amy_entryLine)
+    if not na(amy_slLine)
+        line.delete(amy_slLine)
+    if not na(amy_tp1Line)
+        line.delete(amy_tp1Line)
+    if not na(amy_tp2Line)
+        line.delete(amy_tp2Line)
+    if not na(amy_tradeLabel)
+        label.delete(amy_tradeLabel)
+    _txt = "PULLBACK SELL READY\nEntry: " + str.tostring(close, format.mintick) + "\nRetest: " + str.tostring(amy_breakLevel, format.mintick) + "\nSL: " + str.tostring(amy_sellSL, format.mintick) + "\nTP1: " + str.tostring(amy_sellTP1, format.mintick) + "\nTP2: " + str.tostring(amy_sellTP2, format.mintick)
+    amy_entryLine := line.new(bar_index, close, bar_index + amy_extendBars, close, xloc=xloc.bar_index, color=color.new(color.yellow, 0), width=2)
+    amy_slLine := line.new(bar_index, amy_sellSL, bar_index + amy_extendBars, amy_sellSL, xloc=xloc.bar_index, color=color.new(color.red, 0), width=2)
+    amy_tp1Line := line.new(bar_index, amy_sellTP1, bar_index + amy_extendBars, amy_sellTP1, xloc=xloc.bar_index, color=color.new(color.aqua, 0), width=1)
+    amy_tp2Line := line.new(bar_index, amy_sellTP2, bar_index + amy_extendBars, amy_sellTP2, xloc=xloc.bar_index, color=color.new(color.lime, 0), width=1)
+    amy_tradeLabel := label.new(bar_index, high, _txt, xloc=xloc.bar_index, style=label.style_label_down, color=color.new(color.red, 75), textcolor=color.red, size=size.small)
+
+plotshape(amy_showSignals and amy_buySignal, title="PULLBACK BUY READY", style=shape.labelup, text="PB BUY\nREADY", location=location.belowbar, color=color.new(color.lime, 0), textcolor=color.black, size=size.tiny)
+plotshape(amy_showSignals and amy_sellSignal, title="PULLBACK SELL READY", style=shape.labeldown, text="PB SELL\nREADY", location=location.abovebar, color=color.new(color.red, 0), textcolor=color.white, size=size.tiny)
+plotshape(amy_showSignals and amy_missedBuy and not nz(amy_missedBuy[1], false), title="MISSED BUY RETEST", style=shape.labeldown, text="MISSED\nBUY", location=location.abovebar, color=color.new(color.orange, 0), textcolor=color.black, size=size.tiny)
+plotshape(amy_showSignals and amy_missedSell and not nz(amy_missedSell[1], false), title="MISSED SELL RETEST", style=shape.labelup, text="MISSED\nSELL", location=location.belowbar, color=color.new(color.orange, 0), textcolor=color.black, size=size.tiny)
+
+//==================== DASHBOARD ====================//
+var table amy_panel = table.new(position.top_right, 2, 7, border_width=1)
+if barstate.islast and amy_showPanel
+    _status = amy_buyReady ? "PB BUY READY" : amy_sellReady ? "PB SELL READY" : amy_missedBuy ? "MISSED BUY" : amy_missedSell ? "MISSED SELL" : amy_breakFresh ? "WAIT RETEST" : "NO BREAK"
+    _statusCol = amy_buyReady ? color.lime : amy_sellReady ? color.red : amy_missedBuy or amy_missedSell ? color.orange : amy_breakFresh ? color.blue : color.gray
+    table.cell(amy_panel, 0, 0, "AMY BREAK RETEST", text_color=color.white, bgcolor=color.new(color.blue, 35))
+    table.cell(amy_panel, 1, 0, _status, text_color=color.white, bgcolor=color.new(_statusCol, 35))
+    table.cell(amy_panel, 0, 1, "Resistance", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 1, 1, not na(amy_res) ? str.tostring(amy_res, format.mintick) : "-", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 0, 2, "Support", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 1, 2, not na(amy_sup) ? str.tostring(amy_sup, format.mintick) : "-", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 0, 3, "Break Dir", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 1, 3, amy_breakDir == 1 ? "Bull Break" : amy_breakDir == -1 ? "Bear Break" : "None", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 0, 4, "Break Level", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 1, 4, not na(amy_breakLevel) ? str.tostring(amy_breakLevel, format.mintick) : "-", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 0, 5, "Bars Left", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 1, 5, amy_breakFresh ? str.tostring(math.max(0, amy_validBars - (bar_index - amy_breakBar))) : "-", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 0, 6, "Rule", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 1, 6, "Ready only at retest", text_color=color.white, bgcolor=color.new(color.black, 70))
+
+alertcondition(amy_buySignal, title="AMY BREAK RETEST BUY READY", message="AMY Breakout Retest: PULLBACK BUY READY")
+alertcondition(amy_sellSignal, title="AMY BREAK RETEST SELL READY", message="AMY Breakout Retest: PULLBACK SELL READY")

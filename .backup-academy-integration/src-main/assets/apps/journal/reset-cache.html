@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Reset Cache</title>
+  </head>
+  <body style="background:#050806;color:#f4fff7;font-family:system-ui;padding:24px">
+    <h3>Reset cache...</h3>
+    <p>Jika tidak otomatis kembali, buka index.html.</p>
+    <script>
+      async function resetCache() {
+        if ("serviceWorker" in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (const registration of registrations) await registration.unregister();
+        }
+        if ("caches" in window) {
+          const keys = await caches.keys();
+          for (const key of keys) await caches.delete(key);
+        }
+        location.href = "./index.html?v=20260517multiprovider-reset";
+      }
+      resetCache();
+    </script>
+  </body>
+</html>

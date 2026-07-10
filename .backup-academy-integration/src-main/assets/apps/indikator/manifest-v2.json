@@ -1,0 +1,143 @@
+{
+  "version": "2.0",
+  "categories": [
+    {
+      "id": "structure",
+      "name": "Market Structure",
+      "indicators": [
+        {
+          "id": "ict-concepts-fixed",
+          "name": "ICT Concepts Amygmgo Fixed Ready",
+          "description": "ICT/SMC market structure script",
+          "category": "structure",
+          "timeframe": "M15-H4",
+          "version": "1.0",
+          "author": "Amy FX",
+          "tags": [
+            "ict",
+            "smc",
+            "bos",
+            "choch",
+            "structure"
+          ],
+          "file": "apps/indikator/files/ICT_Concepts_amygmgo_FIXED_READY.pine",
+          "preview": ""
+        },
+        {
+          "id": "neo-wave-structure",
+          "name": "Amy Neo Wave Structure Entry Map",
+          "description": "Wave and structure entry mapping",
+          "category": "structure",
+          "timeframe": "M5-H1",
+          "version": "1.0",
+          "author": "Amy FX",
+          "tags": [
+            "structure",
+            "entry",
+            "wave"
+          ],
+          "file": "apps/indikator/files/AMY_Neo_Wave_Structure_Entry_Map.pine.txt",
+          "preview": ""
+        }
+      ]
+    },
+    {
+      "id": "liquidity",
+      "name": "Liquidity",
+      "indicators": [
+        {
+          "id": "breakout-retest",
+          "name": "Amy Breakout Retest Rejection Assistant",
+          "description": "Breakout, retest, rejection assistant",
+          "category": "liquidity",
+          "timeframe": "M1-M15",
+          "version": "1.0",
+          "author": "Amy FX",
+          "tags": [
+            "breakout",
+            "retest",
+            "liquidity"
+          ],
+          "file": "apps/indikator/files/AMY_Breakout_Retest_Rejection_Assistant.pine.txt",
+          "preview": ""
+        },
+        {
+          "id": "ict-entry-v3",
+          "name": "ICT Amy Entry Assistant V3 Break Retest Rejection",
+          "description": "ICT entry assistant with break/retest/rejection",
+          "category": "liquidity",
+          "timeframe": "M1-M30",
+          "version": "3.0",
+          "author": "Amy FX",
+          "tags": [
+            "ict",
+            "entry",
+            "liquidity",
+            "retest"
+          ],
+          "file": "apps/indikator/files/ICT_AMY_Entry_Assistant_V3_Break_Retest_Rejection.pine.txt",
+          "preview": ""
+        }
+      ]
+    },
+    {
+      "id": "fvg",
+      "name": "Fair Value Gap",
+      "indicators": [
+        {
+          "id": "ict-validated-smc",
+          "name": "ICT Validated SMC V1 Clean",
+          "description": "Validated SMC concepts with FVG support",
+          "category": "fvg",
+          "timeframe": "M5-H4",
+          "version": "1.0",
+          "author": "Amy FX",
+          "tags": [
+            "fvg",
+            "smc",
+            "ict"
+          ],
+          "file": "apps/indikator/files/ICT_Validated_SMC_v1_clean.pine",
+          "preview": ""
+        }
+      ]
+    },
+    {
+      "id": "custom",
+      "name": "Amy Custom",
+      "indicators": [
+        {
+          "id": "ultimate-suite",
+          "name": "Amy Ultimate Professional Suite",
+          "description": "Amy custom professional indicator suite",
+          "category": "custom",
+          "timeframe": "M1-D1",
+          "version": "1.0",
+          "author": "Amy FX",
+          "tags": [
+            "amy",
+            "suite",
+            "custom"
+          ],
+          "file": "apps/indikator/files/AMY_Ultimate_Professional_Suite.pine",
+          "preview": ""
+        },
+        {
+          "id": "gcx-matrix",
+          "name": "GCX Matrix V12",
+          "description": "GCX matrix indicator",
+          "category": "custom",
+          "timeframe": "M5-H4",
+          "version": "12.0",
+          "author": "Amy FX",
+          "tags": [
+            "gcx",
+            "matrix"
+          ],
+          "file": "apps/indikator/files/GCX-Matrix-V12.pine",
+          "preview": ""
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,416 @@
+amyDashV2_group = "AMY Dashboard Bias V2"
+amyDashV2_show = input.bool(true, "Show Dashboard", group=amyDashV2_group)
+amyDashV2_posInput = input.string("Bottom Right", "Dashboard Position", options=["Top Right", "Top Left", "Bottom Right", "Bottom Left"], group=amyDashV2_group)
+amyDashV2_swingLen = input.int(3, "M15 Protected Swing Length", minval=2, maxval=10, group=amyDashV2_group)
+amyDashV2_sweepFreshBars = input.int(8, "Sweep Fresh Bars", minval=3, maxval=30, group=amyDashV2_group)
+amyDashV2_nearInvalidAtr = input.float(0.35, "Near Invalid ATR", minval=0.05, maxval=2.0, step=0.05, group=amyDashV2_group)
+amyDashV2_dispMult = input.float(1.20, "Displacement Body Mult", minval=0.80, maxval=3.0, step=0.05, group=amyDashV2_group)
+amyDashV2_minSweepTicks = input.int(1, "False Sweep Filter Ticks", minval=0, maxval=20, group=amyDashV2_group)
+
+amyDashV2_pos(_pos) =>
+    _pos == "Top Left" ? position.top_left :
+     _pos == "Bottom Right" ? position.bottom_right :
+     _pos == "Bottom Left" ? position.bottom_left :
+     position.top_right
+
+amyDashV2_price(_x) =>
+    na(_x) ? "-" : str.tostring(_x, format.mintick)
+
+amyDashV2_range(_a, _b) =>
+    na(_a) or na(_b) ? "-" : amyDashV2_price(math.max(_a, _b)) + " - " + amyDashV2_price(math.min(_a, _b))
+
+amyDashV2_dist(_price, _current) =>
+    na(_price) or na(_current) ? "-" : amyDashV2_price(math.abs(_current - _price))
+
+amyDashV2_join(_a, _b) =>
+    _a == "" ? _b : _b == "" ? _a : _a + " | " + _b
+
+amyDashV2_clip(_s, _max) =>
+    str.length(_s) > _max ? str.substring(_s, 0, _max) + "..." : _s
+
+amyDashV2_engine(_swingLen, _freshBars, _nearAtr, _dispMult, _minSweepTicks) =>
+    var float _lastPH = na
+    var float _lastPL = na
+    var int _biasDir = 0
+    var int _mssDir = 0
+    var float _lockedInvalid = na
+    var float _rangeHigh = na
+    var float _rangeLow = na
+    var int _lastSweepDir = 0
+    var int _lastSweepBar = na
+    var float _sweptPrice = na
+    var float _sweepExtreme = na
+    var float _bullFvgTop = na
+    var float _bullFvgBtm = na
+    var int _bullFvgStatus = 0
+    var float _bearFvgTop = na
+    var float _bearFvgBtm = na
+    var int _bearFvgStatus = 0
+    var float _bullObTop = na
+    var float _bullObBtm = na
+    var int _bullObStatus = 0
+    var float _bearObTop = na
+    var float _bearObBtm = na
+    var int _bearObStatus = 0
+
+    _o = open[1]
+    _h = high[1]
+    _l = low[1]
+    _c = close[1]
+    _pc = close[2]
+    _bi = bar_index[1]
+    _atr = ta.atr(14)[1]
+    _body = math.abs(close[1] - open[1])
+    _meanBody = ta.sma(math.abs(close - open), 20)[1]
+
+    _ph = ta.pivothigh(high, _swingLen, _swingLen)[1]
+    _pl = ta.pivotlow(low, _swingLen, _swingLen)[1]
+
+    if not na(_ph)
+        _lastPH := _ph
+
+    if not na(_pl)
+        _lastPL := _pl
+
+    _bullMss = not na(_lastPH) and not na(_lastPL) and _c > _lastPH and _pc <= _lastPH
+    _bearMss = not na(_lastPH) and not na(_lastPL) and _c < _lastPL and _pc >= _lastPL
+
+    _invalidNow = false
+    _biasChanged = false
+
+    if _biasDir == 1 and not na(_lockedInvalid) and _c < _lockedInvalid
+        _invalidNow := true
+        if _bearMss
+            _biasDir := -1
+            _mssDir := -1
+            _lockedInvalid := _lastPH
+            _rangeHigh := _lastPH
+            _rangeLow := math.min(_lastPL, _l)
+        else
+            _biasDir := 0
+            _mssDir := 0
+        _biasChanged := true
+
+    else if _biasDir == -1 and not na(_lockedInvalid) and _c > _lockedInvalid
+        _invalidNow := true
+        if _bullMss
+            _biasDir := 1
+            _mssDir := 1
+            _lockedInvalid := _lastPL
+            _rangeHigh := math.max(_lastPH, _h)
+            _rangeLow := _lastPL
+        else
+            _biasDir := 0
+            _mssDir := 0
+        _biasChanged := true
+
+    else if _bullMss and _biasDir != 1
+        _biasDir := 1
+        _mssDir := 1
+        _lockedInvalid := _lastPL
+        _rangeHigh := math.max(_lastPH, _h)
+        _rangeLow := _lastPL
+        _biasChanged := true
+
+    else if _bearMss and _biasDir != -1
+        _biasDir := -1
+        _mssDir := -1
+        _lockedInvalid := _lastPH
+        _rangeHigh := _lastPH
+        _rangeLow := math.min(_lastPL, _l)
+        _biasChanged := true
+
+    else if _bullMss and _biasDir == 1
+        _mssDir := 1
+        _rangeHigh := na(_rangeHigh) ? math.max(_lastPH, _h) : math.max(_rangeHigh, _h)
+
+    else if _bearMss and _biasDir == -1
+        _mssDir := -1
+        _rangeLow := na(_rangeLow) ? math.min(_lastPL, _l) : math.min(_rangeLow, _l)
+
+    if _biasChanged
+        _lastSweepDir := 0
+        _lastSweepBar := na
+        _sweptPrice := na
+        _sweepExtreme := na
+
+    _nearInvalid = _biasDir == 1 and not na(_lockedInvalid) ? _c <= _lockedInvalid + _atr * _nearAtr :
+     _biasDir == -1 and not na(_lockedInvalid) ? _c >= _lockedInvalid - _atr * _nearAtr :
+     false
+
+    _invalidStatus = _biasDir == 0 and _invalidNow ? 2 : _nearInvalid ? 1 : _biasDir != 0 ? 0 : 3
+
+    _bsl = _lastPH
+    _ssl = _lastPL
+    _sweepMin = syminfo.mintick * _minSweepTicks
+
+    _bslSweepNow = not na(_bsl) and _h > _bsl and _c < _bsl and (_h - _bsl) >= _sweepMin
+    _sslSweepNow = not na(_ssl) and _l < _ssl and _c > _ssl and (_ssl - _l) >= _sweepMin
+
+    if _sslSweepNow and not _bslSweepNow
+        _lastSweepDir := 1
+        _lastSweepBar := _bi
+        _sweptPrice := _ssl
+        _sweepExtreme := _l
+
+    if _bslSweepNow and not _sslSweepNow
+        _lastSweepDir := -1
+        _lastSweepBar := _bi
+        _sweptPrice := _bsl
+        _sweepExtreme := _h
+
+    _sweepInvalidNow = (_lastSweepDir == 1 and not na(_sweptPrice) and _c < _sweptPrice) or (_lastSweepDir == -1 and not na(_sweptPrice) and _c > _sweptPrice)
+
+    if _sweepInvalidNow
+        _lastSweepDir := 0
+        _lastSweepBar := na
+
+    _sweepFresh = not na(_lastSweepBar) and _bi - _lastSweepBar <= _freshBars
+    _sweepOld = not na(_lastSweepBar) and _bi - _lastSweepBar > _freshBars
+    _sweepStatus = _sweepInvalidNow ? 3 : _sweepFresh ? 1 : _sweepOld ? 2 : 0
+
+    _dolDir = _sweepFresh and _lastSweepDir == 1 and not na(_bsl) ? 1 :
+     _sweepFresh and _lastSweepDir == -1 and not na(_ssl) ? -1 :
+     0
+
+    _dolTarget = _dolDir == 1 ? _bsl : _dolDir == -1 ? _ssl : na
+    _dolReached = (_dolDir == 1 and _h >= _dolTarget) or (_dolDir == -1 and _l <= _dolTarget)
+    _dolStatus = _dolDir == 0 ? 0 : _dolReached ? 2 : 1
+    _dolDistance = na(_dolTarget) ? na : math.abs(_dolTarget - _c)
+    _dolAlign = _dolDir == 0 or _biasDir == 0 ? 0 : _dolDir == _biasDir ? 1 : -1
+
+    _bullFvgNew = not na(high[3]) and low[1] > high[3]
+    _bearFvgNew = not na(low[3]) and high[1] < low[3]
+
+    if _bullFvgNew
+        _bullFvgTop := low[1]
+        _bullFvgBtm := high[3]
+        _bullFvgStatus := 1
+
+    if _bearFvgNew
+        _bearFvgTop := low[3]
+        _bearFvgBtm := high[1]
+        _bearFvgStatus := 1
+
+    _bullFvgTouched = _bullFvgStatus > 0 and _bullFvgStatus < 4 and not na(_bullFvgTop) and not na(_bullFvgBtm) and _l <= _bullFvgTop and _h >= _bullFvgBtm
+    _bearFvgTouched = _bearFvgStatus > 0 and _bearFvgStatus < 4 and not na(_bearFvgTop) and not na(_bearFvgBtm) and _h >= _bearFvgBtm and _l <= _bearFvgTop
+
+    if _bullFvgStatus > 0 and _bullFvgStatus < 4 and not na(_bullFvgBtm)
+        if _c < _bullFvgBtm
+            _bullFvgStatus := 4
+        else if _bullFvgTouched
+            _bullFvgStatus := 2
+        else if _bullFvgStatus == 2
+            _bullFvgStatus := 3
+
+    if _bearFvgStatus > 0 and _bearFvgStatus < 4 and not na(_bearFvgTop)
+        if _c > _bearFvgTop
+            _bearFvgStatus := 4
+        else if _bearFvgTouched
+            _bearFvgStatus := 2
+        else if _bearFvgStatus == 2
+            _bearFvgStatus := 3
+
+    _bullDisp = _c > _o and _body > _meanBody * _dispMult and _c > high[2]
+    _bearDisp = _c < _o and _body > _meanBody * _dispMult and _c < low[2]
+
+    if _bullDisp
+        _bullObTop := close[2] < open[2] ? open[2] : open[1]
+        _bullObBtm := close[2] < open[2] ? low[2] : low[1]
+        _bullObStatus := 1
+
+    if _bearDisp
+        _bearObTop := close[2] > open[2] ? high[2] : high[1]
+        _bearObBtm := close[2] > open[2] ? open[2] : open[1]
+        _bearObStatus := 1
+
+    _bullObTouched = _bullObStatus > 0 and _bullObStatus < 4 and not na(_bullObTop) and not na(_bullObBtm) and _l <= math.max(_bullObTop, _bullObBtm) and _h >= math.min(_bullObTop, _bullObBtm)
+    _bearObTouched = _bearObStatus > 0 and _bearObStatus < 4 and not na(_bearObTop) and not na(_bearObBtm) and _h >= math.min(_bearObTop, _bearObBtm) and _l <= math.max(_bearObTop, _bearObBtm)
+
+    if _bullObStatus > 0 and _bullObStatus < 4 and not na(_bullObBtm)
+        if _c < math.min(_bullObTop, _bullObBtm)
+            _bullObStatus := 4
+        else if _bullObTouched
+            _bullObStatus := 2
+        else if _bullObStatus == 2
+            _bullObStatus := 3
+
+    if _bearObStatus > 0 and _bearObStatus < 4 and not na(_bearObTop)
+        if _c > math.max(_bearObTop, _bearObBtm)
+            _bearObStatus := 4
+        else if _bearObTouched
+            _bearObStatus := 2
+        else if _bearObStatus == 2
+            _bearObStatus := 3
+
+    _rh = not na(_rangeHigh) and not na(_rangeLow) ? math.max(_rangeHigh, _rangeLow) : na
+    _rl = not na(_rangeHigh) and not na(_rangeLow) ? math.min(_rangeHigh, _rangeLow) : na
+    _rs = not na(_rh) and not na(_rl) ? math.max(_rh - _rl, syminfo.mintick) : na
+    _eq = not na(_rs) ? _rl + _rs * 0.50 : na
+    _eqLow = not na(_rs) ? _rl + _rs * 0.48 : na
+    _eqHigh = not na(_rs) ? _rl + _rs * 0.52 : na
+
+    _priceZone = na(_eqLow) or na(_eqHigh) ? 0 : _c > _eqHigh ? 1 : _c < _eqLow ? -1 : 0
+    _locStatus = _biasDir == 1 and _priceZone == -1 ? 1 :
+     _biasDir == 1 and _priceZone == 1 ? -1 :
+     _biasDir == -1 and _priceZone == 1 ? 1 :
+     _biasDir == -1 and _priceZone == -1 ? -1 :
+     0
+
+    _bullObActive = _bullObStatus > 0 and _bullObStatus < 4
+    _bullFvgActive = _bullFvgStatus > 0 and _bullFvgStatus < 4
+    _bearObActive = _bearObStatus > 0 and _bearObStatus < 4
+    _bearFvgActive = _bearFvgStatus > 0 and _bearFvgStatus < 4
+
+    _bullObHigh = _bullObActive ? math.max(_bullObTop, _bullObBtm) : na
+    _bullObLow = _bullObActive ? math.min(_bullObTop, _bullObBtm) : na
+    _bullFvgHigh = _bullFvgActive ? math.max(_bullFvgTop, _bullFvgBtm) : na
+    _bullFvgLow = _bullFvgActive ? math.min(_bullFvgTop, _bullFvgBtm) : na
+    _bearObHigh = _bearObActive ? math.max(_bearObTop, _bearObBtm) : na
+    _bearObLow = _bearObActive ? math.min(_bearObTop, _bearObBtm) : na
+    _bearFvgHigh = _bearFvgActive ? math.max(_bearFvgTop, _bearFvgBtm) : na
+    _bearFvgLow = _bearFvgActive ? math.min(_bearFvgTop, _bearFvgBtm) : na
+
+    _bullObDist = _bullObActive ? (_c >= _bullObLow and _c <= _bullObHigh ? 0.0 : math.min(math.abs(_c - _bullObHigh), math.abs(_c - _bullObLow))) : na
+    _bullFvgDist = _bullFvgActive ? (_c >= _bullFvgLow and _c <= _bullFvgHigh ? 0.0 : math.min(math.abs(_c - _bullFvgHigh), math.abs(_c - _bullFvgLow))) : na
+    _bearObDist = _bearObActive ? (_c >= _bearObLow and _c <= _bearObHigh ? 0.0 : math.min(math.abs(_c - _bearObHigh), math.abs(_c - _bearObLow))) : na
+    _bearFvgDist = _bearFvgActive ? (_c >= _bearFvgLow and _c <= _bearFvgHigh ? 0.0 : math.min(math.abs(_c - _bearFvgHigh), math.abs(_c - _bearFvgLow))) : na
+
+    int _poiType = 0
+    float _poiHigh = na
+    float _poiLow = na
+    int _poiStatus = 0
+
+    if _biasDir == 1
+        if _bullObActive and (not _bullFvgActive or _bullObDist <= _bullFvgDist)
+            _poiType := 1
+            _poiHigh := _bullObHigh
+            _poiLow := _bullObLow
+            _poiStatus := _bullObStatus
+        else if _bullFvgActive
+            _poiType := 2
+            _poiHigh := _bullFvgHigh
+            _poiLow := _bullFvgLow
+            _poiStatus := _bullFvgStatus
+
+    if _biasDir == -1
+        if _bearObActive and (not _bearFvgActive or _bearObDist <= _bearFvgDist)
+            _poiType := -1
+            _poiHigh := _bearObHigh
+            _poiLow := _bearObLow
+            _poiStatus := _bearObStatus
+        else if _bearFvgActive
+            _poiType := -2
+            _poiHigh := _bearFvgHigh
+            _poiLow := _bearFvgLow
+            _poiStatus := _bearFvgStatus
+
+    _poiMid = not na(_poiHigh) and not na(_poiLow) ? (_poiHigh + _poiLow) / 2.0 : na
+    _poiDist = not na(_poiHigh) and not na(_poiLow) ? (_c >= _poiLow and _c <= _poiHigh ? 0.0 : math.min(math.abs(_c - _poiHigh), math.abs(_c - _poiLow))) : na
+    _poiAlign = _biasDir == 0 or _poiType == 0 ? 0 : (_biasDir == 1 and _poiType > 0) or (_biasDir == -1 and _poiType < 0) ? 1 : -1
+    _poiLoc = na(_poiMid) or na(_eqLow) or na(_eqHigh) ? 0 : _poiMid > _eqHigh ? 1 : _poiMid < _eqLow ? -1 : 0
+    _poiLocationOk = (_biasDir == 1 and _poiLoc == -1) or (_biasDir == -1 and _poiLoc == 1)
+    _poiPriority = _poiType == 0 ? 0 : _poiAlign == 1 and _poiLocationOk and _dolAlign == 1 ? 2 : _poiAlign == 1 ? 1 : 0
+
+    [_o, _h, _l, _c, _lastPH, _lastPL, _biasDir, _mssDir, _bullMss, _bearMss, _lockedInvalid, _invalidStatus, _rh, _rl, _eq, _eqLow, _eqHigh, _priceZone, _locStatus, _bsl, _ssl, _lastSweepDir, _sweepStatus, _sweptPrice, _sweepExtreme, _dolDir, _dolTarget, _dolStatus, _dolDistance, _dolAlign, _poiType, _poiHigh, _poiLow, _poiMid, _poiDist, _poiStatus, _poiAlign, _poiLoc, _poiPriority]
+
+[amyDashV2_o15, amyDashV2_h15, amyDashV2_l15, amyDashV2_c15, amyDashV2_protectedHigh, amyDashV2_protectedLow, amyDashV2_biasDir, amyDashV2_mssDir, amyDashV2_bullMssNow, amyDashV2_bearMssNow, amyDashV2_invalidLevel, amyDashV2_invalidStatus, amyDashV2_rangeHigh, amyDashV2_rangeLow, amyDashV2_eq, amyDashV2_eqLow, amyDashV2_eqHigh, amyDashV2_priceZone, amyDashV2_locationStatus, amyDashV2_bsl, amyDashV2_ssl, amyDashV2_sweepDir, amyDashV2_sweepStatus, amyDashV2_sweptPrice, amyDashV2_sweepExtreme, amyDashV2_dolDir, amyDashV2_dolTarget, amyDashV2_dolStatus, amyDashV2_dolDistance, amyDashV2_dolAlign, amyDashV2_poiType, amyDashV2_poiHigh, amyDashV2_poiLow, amyDashV2_poiMid, amyDashV2_poiDistance, amyDashV2_poiStatus, amyDashV2_poiAlign, amyDashV2_poiLocation, amyDashV2_poiPriority] = request.security(syminfo.tickerid, "15", amyDashV2_engine(amyDashV2_swingLen, amyDashV2_sweepFreshBars, amyDashV2_nearInvalidAtr, amyDashV2_dispMult, amyDashV2_minSweepTicks), gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off)
+
+amyDashV2_biasText = amyDashV2_biasDir == 1 ? "BUY CTX" : amyDashV2_biasDir == -1 ? "SELL CTX" : "NO CLEAR BIAS"
+amyDashV2_arahText = amyDashV2_biasDir == 1 ? "NAIK" : amyDashV2_biasDir == -1 ? "TURUN" : "BELUM JELAS"
+amyDashV2_mssText = amyDashV2_mssDir == 1 ? "M15 Bullish" : amyDashV2_mssDir == -1 ? "M15 Bearish" : "M15 Neutral"
+
+amyDashV2_sweepText = amyDashV2_sweepDir == 1 ? "SSL Swept" : amyDashV2_sweepDir == -1 ? "BSL Swept" : "None"
+amyDashV2_sweepStatusText = amyDashV2_sweepStatus == 1 ? "Fresh" : amyDashV2_sweepStatus == 2 ? "Old" : amyDashV2_sweepStatus == 3 ? "Invalid" : "None"
+
+amyDashV2_dolText = amyDashV2_dolDir == 1 ? "Draw to BSL" : amyDashV2_dolDir == -1 ? "Draw to SSL" : "Neutral"
+amyDashV2_dolStatusText = amyDashV2_dolStatus == 2 ? "Reached" : amyDashV2_dolStatus == 1 ? "Active" : "Neutral"
+amyDashV2_dolAlignText = amyDashV2_dolAlign == 1 ? "With Bias" : amyDashV2_dolAlign == -1 ? "Against Bias" : "Neutral"
+
+amyDashV2_poiTypeText = amyDashV2_poiType == 1 ? "Bull OB" : amyDashV2_poiType == 2 ? "Bull FVG" : amyDashV2_poiType == -1 ? "Bear OB" : amyDashV2_poiType == -2 ? "Bear FVG" : "None"
+amyDashV2_poiStatusText = amyDashV2_poiStatus == 1 ? "Fresh" : amyDashV2_poiStatus == 2 ? "Active" : amyDashV2_poiStatus == 3 ? "Mitigated" : amyDashV2_poiStatus == 4 ? "Failed" : "None"
+amyDashV2_poiAlignText = amyDashV2_poiAlign == 1 ? "With Bias" : amyDashV2_poiAlign == -1 ? "Against Bias" : "Neutral"
+amyDashV2_poiLocationText = amyDashV2_poiLocation == 1 ? "Premium" : amyDashV2_poiLocation == -1 ? "Discount" : "EQ Zone"
+amyDashV2_poiPriorityText = amyDashV2_poiPriority == 2 ? "Main" : amyDashV2_poiPriority == 1 ? "Secondary" : "Ignore"
+
+amyDashV2_priceLocationText = amyDashV2_priceZone == 1 ? "Premium" : amyDashV2_priceZone == -1 ? "Discount" : "EQ Zone"
+amyDashV2_locationStatusText = amyDashV2_locationStatus == 1 ? "Healthy" : amyDashV2_locationStatus == -1 ? "Bad Location" : "Neutral"
+
+amyDashV2_invalidText = amyDashV2_invalidStatus == 2 ? "Invalid" : amyDashV2_invalidStatus == 1 ? "Near Invalid" : amyDashV2_invalidStatus == 0 ? "Valid" : "No Bias"
+
+amyDashV2_reason = ""
+amyDashV2_reason := amyDashV2_join(amyDashV2_reason, amyDashV2_mssText)
+amyDashV2_reason := amyDashV2_join(amyDashV2_reason, amyDashV2_sweepStatus == 1 ? amyDashV2_sweepText + " Fresh" : "")
+amyDashV2_reason := amyDashV2_join(amyDashV2_reason, amyDashV2_dolStatus == 1 ? amyDashV2_dolText + " " + amyDashV2_price(amyDashV2_dolTarget) : "")
+amyDashV2_reason := amyDashV2_join(amyDashV2_reason, amyDashV2_poiPriority == 2 ? amyDashV2_poiTypeText + " Main" : "")
+amyDashV2_reason := amyDashV2_reason == "" ? "Belum ada alasan kuat" : amyDashV2_reason
+
+amyDashV2_headBg = color.new(#07111D, 0)
+amyDashV2_keyBg = color.new(#0B1623, 0)
+amyDashV2_cellBg = color.new(#050B12, 0)
+amyDashV2_buyBg = color.new(color.lime, 25)
+amyDashV2_sellBg = color.new(color.red, 22)
+amyDashV2_neutralBg = color.new(color.gray, 55)
+amyDashV2_warnBg = color.new(color.orange, 20)
+
+amyDashV2_biasBg = amyDashV2_biasDir == 1 ? amyDashV2_buyBg : amyDashV2_biasDir == -1 ? amyDashV2_sellBg : amyDashV2_warnBg
+amyDashV2_dolBg = amyDashV2_dolDir == 1 ? amyDashV2_buyBg : amyDashV2_dolDir == -1 ? amyDashV2_sellBg : amyDashV2_neutralBg
+amyDashV2_invalidBg = amyDashV2_invalidStatus == 2 ? amyDashV2_sellBg : amyDashV2_invalidStatus == 1 ? amyDashV2_warnBg : amyDashV2_invalidStatus == 0 ? amyDashV2_buyBg : amyDashV2_neutralBg
+amyDashV2_locBg = amyDashV2_locationStatus == 1 ? amyDashV2_buyBg : amyDashV2_locationStatus == -1 ? amyDashV2_warnBg : amyDashV2_neutralBg
+amyDashV2_poiBg = amyDashV2_poiPriority == 2 ? (amyDashV2_poiType > 0 ? amyDashV2_buyBg : amyDashV2_sellBg) : amyDashV2_poiPriority == 1 ? amyDashV2_warnBg : amyDashV2_neutralBg
+
+var table amyDashV2_table = table.new(amyDashV2_pos(amyDashV2_posInput), 2, 16, bgcolor=color.new(color.black, 5), border_width=1, border_color=color.new(color.gray, 55))
+
+if amyDashV2_show and barstate.islast
+    table.clear(amyDashV2_table, 0, 0, 1, 15)
+
+    table.cell(amyDashV2_table, 0, 0, "AMY BIAS DASHBOARD V2", text_color=color.white, bgcolor=amyDashV2_headBg, text_size=size.tiny)
+    table.cell(amyDashV2_table, 1, 0, "M15 CLOSED", text_color=color.white, bgcolor=amyDashV2_headBg, text_size=size.tiny)
+
+    table.cell(amyDashV2_table, 0, 1, "BIAS", text_color=color.white, bgcolor=amyDashV2_keyBg, text_size=size.tiny)
+    table.cell(amyDashV2_table, 1, 1, amyDashV2_biasText + " | " + amyDashV2_arahText, text_color=color.white, bgcolor=amyDashV2_biasBg, text_size=size.tiny)
+
+    table.cell(amyDashV2_table, 0, 2, "STRUKTUR", text_color=color.white, bgcolor=amyDashV2_keyBg, text_size=size.tiny)
+    table.cell(amyDashV2_table, 1, 2, amyDashV2_mssText, text_color=color.white, bgcolor=amyDashV2_cellBg, text_size=size.tiny)
+
+    table.cell(amyDashV2_table, 0, 3, "PROTECTED", text_color=color.white, bgcolor=amyDashV2_keyBg, text_size=size.tiny)
+    table.cell(amyDashV2_table, 1, 3, "H " + amyDashV2_price(amyDashV2_protectedHigh) + " | L " + amyDashV2_price(amyDashV2_protectedLow), text_color=color.white, bgcolor=amyDashV2_cellBg, text_size=size.tiny)
+
+    table.cell(amyDashV2_table, 0, 4, "LIQUIDITY", text_color=color.white, bgcolor=amyDashV2_keyBg, text_size=size.tiny)
+    table.cell(amyDashV2_table, 1, 4, "BSL " + amyDashV2_price(amyDashV2_bsl) + " | SSL " + amyDashV2_price(amyDashV2_ssl), text_color=color.white, bgcolor=amyDashV2_cellBg, text_size=size.tiny)
+
+    table.cell(amyDashV2_table, 0, 5, "SWEEP", text_color=color.white, bgcolor=amyDashV2_keyBg, text_size=size.tiny)
+    table.cell(amyDashV2_table, 1, 5, amyDashV2_sweepText + " | " + amyDashV2_sweepStatusText, text_color=color.white, bgcolor=amyDashV2_cellBg, text_size=size.tiny)
+
+    table.cell(amyDashV2_table, 0, 6, "SWEEP PRICE", text_color=color.white, bgcolor=amyDashV2_keyBg, text_size=size.tiny)
+    table.cell(amyDashV2_table, 1, 6, "Swept " + amyDashV2_price(amyDashV2_sweptPrice) + " | Extreme " + amyDashV2_price(amyDashV2_sweepExtreme), text_color=color.white, bgcolor=amyDashV2_cellBg, text_size=size.tiny)
+
+    table.cell(amyDashV2_table, 0, 7, "DOL", text_color=color.white, bgcolor=amyDashV2_keyBg, text_size=size.tiny)
+    table.cell(amyDashV2_table, 1, 7, amyDashV2_dolText + " @ " + amyDashV2_price(amyDashV2_dolTarget) + " | " + amyDashV2_dolStatusText, text_color=color.white, bgcolor=amyDashV2_dolBg, text_size=size.tiny)
+
+    table.cell(amyDashV2_table, 0, 8, "DOL DETAIL", text_color=color.white, bgcolor=amyDashV2_keyBg, text_size=size.tiny)
+    table.cell(amyDashV2_table, 1, 8, "Dist " + amyDashV2_price(amyDashV2_dolDistance) + " | " + amyDashV2_dolAlignText, text_color=color.white, bgcolor=amyDashV2_cellBg, text_size=size.tiny)
+
+    table.cell(amyDashV2_table, 0, 9, "POI", text_color=color.white, bgcolor=amyDashV2_keyBg, text_size=size.tiny)
+    table.cell(amyDashV2_table, 1, 9, amyDashV2_poiTypeText + " | " + amyDashV2_poiStatusText + " | " + amyDashV2_poiPriorityText, text_color=color.white, bgcolor=amyDashV2_poiBg, text_size=size.tiny)
+
+    table.cell(amyDashV2_table, 0, 10, "POI PRICE", text_color=color.white, bgcolor=amyDashV2_keyBg, text_size=size.tiny)
+    table.cell(amyDashV2_table, 1, 10, amyDashV2_range(amyDashV2_poiHigh, amyDashV2_poiLow) + " | CE " + amyDashV2_price(amyDashV2_poiMid), text_color=color.white, bgcolor=amyDashV2_cellBg, text_size=size.tiny)
+
+    table.cell(amyDashV2_table, 0, 11, "POI DETAIL", text_color=color.white, bgcolor=amyDashV2_keyBg, text_size=size.tiny)
+    table.cell(amyDashV2_table, 1, 11, "Dist " + amyDashV2_price(amyDashV2_poiDistance) + " | " + amyDashV2_poiAlignText + " | " + amyDashV2_poiLocationText, text_color=color.white, bgcolor=amyDashV2_cellBg, text_size=size.tiny)
+
+    table.cell(amyDashV2_table, 0, 12, "POSISI", text_color=color.white, bgcolor=amyDashV2_keyBg, text_size=size.tiny)
+    table.cell(amyDashV2_table, 1, 12, amyDashV2_priceLocationText + " | " + amyDashV2_locationStatusText, text_color=color.white, bgcolor=amyDashV2_locBg, text_size=size.tiny)
+
+    table.cell(amyDashV2_table, 0, 13, "RANGE", text_color=color.white, bgcolor=amyDashV2_keyBg, text_size=size.tiny)
+    table.cell(amyDashV2_table, 1, 13, "H " + amyDashV2_price(amyDashV2_rangeHigh) + " | L " + amyDashV2_price(amyDashV2_rangeLow) + " | EQ " + amyDashV2_range(amyDashV2_eqHigh, amyDashV2_eqLow), text_color=color.white, bgcolor=amyDashV2_cellBg, text_size=size.tiny)
+
+    table.cell(amyDashV2_table, 0, 14, "INVALID", text_color=color.white, bgcolor=amyDashV2_keyBg, text_size=size.tiny)
+    table.cell(amyDashV2_table, 1, 14, amyDashV2_invalidText + " | Level " + amyDashV2_price(amyDashV2_invalidLevel) + " | Dist " + amyDashV2_dist(amyDashV2_invalidLevel, amyDashV2_c15), text_color=color.white, bgcolor=amyDashV2_invalidBg, text_size=size.tiny)
+
+    table.cell(amyDashV2_table, 0, 15, "ALASAN INTI", text_color=color.white, bgcolor=amyDashV2_keyBg, text_size=size.tiny)
+    table.cell(amyDashV2_table, 1, 15, amyDashV2_clip(amyDashV2_reason, 85), text_color=color.white, bgcolor=amyDashV2_cellBg, text_size=size.tiny)
+
+if not amyDashV2_show and barstate.islast
+    table.clear(amyDashV2_table, 0, 0, 1, 15)

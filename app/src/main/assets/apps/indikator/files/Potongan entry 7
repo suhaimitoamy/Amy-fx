@@ -1,0 +1,722 @@
+//==================== CUSTOM ENTRY VISUAL ENGINE ====================//
+ent_group = "Custom Entry Visual"
+ent_showEntry = input.bool(true, "Show Entry Visual", group=ent_group)
+ent_showZones = input.bool(true, "Show Execution Zone", group=ent_group)
+ent_showReady = input.bool(true, "Show READY", group=ent_group)
+ent_showReEntry = input.bool(true, "Show RE-ENTRY READY", group=ent_group)
+ent_enableTrend = input.bool(true, "Enable Trend Entry", group=ent_group)
+ent_enableReversal = input.bool(true, "Enable Reversal Entry", group=ent_group)
+ent_levelBars = input.int(25, "Level Line Bars", minval=5, maxval=100, group=ent_group)
+ent_confirmBars = input.int(3, "READY Confirm Window", minval=1, maxval=20, group=ent_group)
+ent_cooldownBars = input.int(8, "Entry Cooldown Bars", minval=0, maxval=100, group=ent_group)
+ent_lockUntilExit = input.bool(true, "Lock Until TP2 / SL", group=ent_group)
+
+ent_pipsPerPoint = input.float(10.0, "Gold Pips Per 1.00 Point", minval=1.0, step=1.0, group=ent_group)
+ent_execZonePips = input.float(60.0, "Execution Zone Max Pips", minval=10.0, step=10.0, group=ent_group)
+ent_slPadPips = input.float(20.0, "SL Padding Pips", minval=0.0, step=5.0, group=ent_group)
+ent_maxSLPips = input.float(150.0, "Max SL Pips", minval=30.0, step=10.0, group=ent_group)
+ent_tp1Pips = input.float(100.0, "TP1 Pips", minval=10.0, step=10.0, group=ent_group)
+ent_tp2Pips = input.float(200.0, "TP2 Pips", minval=20.0, step=10.0, group=ent_group)
+ent_maxDistancePips = input.float(50.0, "Max Distance From Zone Pips", minval=10.0, step=10.0, group=ent_group)
+
+ent_minHealth = input.float(50.0, "Trend Min Health", minval=0.0, maxval=100.0, step=5.0, group=ent_group)
+ent_maxTrendRisk = input.float(65.0, "Trend Max Reversal Risk", minval=0.0, maxval=100.0, step=5.0, group=ent_group)
+ent_minReversalRisk = input.float(45.0, "Reversal Min Risk", minval=0.0, maxval=100.0, step=5.0, group=ent_group)
+ent_minWeakness = input.float(20.0, "Reversal Weakness Min", minval=0.0, maxval=100.0, step=5.0, group=ent_group)
+ent_minQuality = input.float(35.0, "Entry Min Quality", minval=0.0, maxval=100.0, step=5.0, group=ent_group)  // diturunkan dari 45
+ent_minFinalGrade = input.string("C", "Minimum Final Grade", options=["A+", "A", "B", "C"], group=ent_group)
+
+ent_buyRevMaxPremiumPct = input.float(75.0, "BUY Reversal Max Premium %", minval=50.0, maxval=100.0, step=5.0, group=ent_group)
+ent_sellRevMinDiscountPct = input.float(25.0, "SELL Reversal Min Discount %", minval=0.0, maxval=50.0, step=5.0, group=ent_group)
+ent_strongReasonScore = input.int(80, "Strong Reason Score", minval=40, maxval=120, group=ent_group)
+
+ent_pivotTpWarning = input.bool(true, "Pivot-aware TP Warning", group=ent_group)
+ent_limitTPAtPivot = input.bool(false, "Limit TP At Pivot", group=ent_group)
+ent_pivotBufferPips = input.float(10.0, "Pivot TP Buffer Pips", minval=0.0, step=5.0, group=ent_group)
+
+ent_hideEntryAfterTP1 = input.bool(false, "Hide Entry After TP1", group=ent_group)
+ent_keepSLAfterTP1 = input.bool(true, "Keep SL After TP1", group=ent_group)
+
+ent_clamp(_x, _lo, _hi) =>
+    math.max(_lo, math.min(_x, _hi))
+
+ent_join(_a, _b) =>
+    _a == "" ? _b : _b == "" ? _a : _a + " + " + _b
+
+ent_pipToPrice(_pips) =>
+    _pips / ent_pipsPerPoint
+
+ent_priceToPips(_price) =>
+    _price * ent_pipsPerPoint
+
+ent_inZone(_top, _bottom) =>
+    not na(_top) and not na(_bottom) and low <= math.max(_top, _bottom) and high >= math.min(_top, _bottom)
+
+ent_distToZone(_price, _top, _bottom) =>
+    _hi = math.max(_top, _bottom)
+    _lo = math.min(_top, _bottom)
+    na(_top) or na(_bottom) ? na : _price >= _lo and _price <= _hi ? 0.0 : math.min(math.abs(_price - _hi), math.abs(_price - _lo))
+
+ent_execTop(_top, _bottom, _maxHeight) =>
+    _hi = math.max(_top, _bottom)
+    _lo = math.min(_top, _bottom)
+    _height = _hi - _lo
+    _center = ent_clamp(close, _lo, _hi)
+    _zTop = _height <= _maxHeight ? _hi : math.min(_hi, _center + _maxHeight * 0.5)
+    _zBottom = _height <= _maxHeight ? _lo : math.max(_lo, _zTop - _maxHeight)
+    _zTop := _zTop - _zBottom < _maxHeight and _zBottom == _lo ? math.min(_hi, _zBottom + _maxHeight) : _zTop
+    _zTop
+
+ent_execBottom(_top, _bottom, _maxHeight) =>
+    _hi = math.max(_top, _bottom)
+    _lo = math.min(_top, _bottom)
+    _height = _hi - _lo
+    _center = ent_clamp(close, _lo, _hi)
+    _zTop = _height <= _maxHeight ? _hi : math.min(_hi, _center + _maxHeight * 0.5)
+    _zBottom = _height <= _maxHeight ? _lo : math.max(_lo, _zTop - _maxHeight)
+    _zTop := _zTop - _zBottom < _maxHeight and _zBottom == _lo ? math.min(_hi, _zBottom + _maxHeight) : _zTop
+    _zBottom
+
+ent_qualityText(_q) =>
+    _q >= 70 ? "HIGH" : _q >= 45 ? "MODERATE" : "LOW"
+
+ent_gradeRank(_g) =>
+    _g == "A+" ? 4 : _g == "A" ? 3 : _g == "B" ? 2 : _g == "C" ? 1 : 0
+
+ent_gradePass(_g) =>
+    ent_gradeRank(_g) >= ent_gradeRank(ent_minFinalGrade)
+
+// Fungsi grade yang sudah diubah: bobot lebih halus & kontinu
+ent_calcGrade(_quality, _zoneScore, _riskPips, _distPips, _isReversal, _locationOk, _pivotWarn) =>
+    _pts = 0.0
+    // Quality: bobot dinaikkan jadi 45, dengan step halus
+    _pts += _quality >= 80 ? 45 : _quality >= 70 ? 38 : _quality >= 45 ? 28 : _quality >= 35 ? 18 : 0
+    // Zone Score: tetap dengan step
+    _pts += _zoneScore >= 80 ? 25 : _zoneScore >= 60 ? 20 : _zoneScore >= 40 ? 15 : _zoneScore >= 25 ? 10 : 0
+    // Risk: skala kontinu 0-20 pts
+    _pts += (1 - _riskPips / ent_maxSLPips) * 20
+    // Distance: skala kontinu 0-10 pts
+    _pts += (1 - _distPips / ent_maxDistancePips) * 10
+    // Reversal penalty kecil (-5)
+    _pts += _isReversal ? -5 : 0
+    // Location penalty lebih ringan (-15)
+    _pts += _locationOk ? 0 : -15
+    // Pivot warning kecil (-2)
+    _pts += _pivotWarn ? -2 : 0
+    // Threshold baru
+    _pts >= 80 ? "A+" : _pts >= 65 ? "A" : _pts >= 50 ? "B" : _pts >= 35 ? "C" : "D"
+
+ent_minAbove(_base, _cur, _lvl) =>
+    float _out = _cur
+    if not na(_lvl) and _lvl > _base
+        _out := na(_out) ? _lvl : math.min(_out, _lvl)
+    _out
+
+ent_maxBelow(_base, _cur, _lvl) =>
+    float _out = _cur
+    if not na(_lvl) and _lvl < _base
+        _out := na(_out) ? _lvl : math.max(_out, _lvl)
+    _out
+
+[ent_m5Open, ent_m5High, ent_m5Low, ent_m5Close, ent_m5OpenPrev, ent_m5ClosePrev, ent_m5Body, ent_m5MeanBody, ent_m5Time] = request.security(syminfo.tickerid, "5", [open, high, low, close, open[1], close[1], math.abs(close - open), ta.sma(math.abs(close - open), len), time], barmerge.gaps_off, barmerge.lookahead_off)
+
+ent_isM5Chart = timeframe.isminutes and timeframe.multiplier == 5
+ent_m5Closed = ent_isM5Chart ? barstate.isconfirmed : ta.change(ent_m5Time)
+
+ent_m5BodySafe = math.max(ent_m5Body, syminfo.mintick)
+ent_m5Range = math.max(ent_m5High - ent_m5Low, syminfo.mintick)
+ent_m5UpperWick = ent_m5High - math.max(ent_m5Open, ent_m5Close)
+ent_m5LowerWick = math.min(ent_m5Open, ent_m5Close) - ent_m5Low
+
+ent_m5BullEngulfing = ent_m5Close > ent_m5Open and ent_m5ClosePrev < ent_m5OpenPrev and ent_m5Close > ent_m5OpenPrev and ent_m5Open <= ent_m5ClosePrev
+ent_m5BearEngulfing = ent_m5Close < ent_m5Open and ent_m5ClosePrev > ent_m5OpenPrev and ent_m5Close < ent_m5OpenPrev and ent_m5Open >= ent_m5ClosePrev
+
+ent_m5BullRejection = ent_m5LowerWick > ent_m5BodySafe and ent_m5Close > ent_m5Open
+ent_m5BearRejection = ent_m5UpperWick > ent_m5BodySafe and ent_m5Close < ent_m5Open
+
+ent_m5BullPinbar = ent_m5LowerWick > ent_m5BodySafe * 1.5 and ent_m5Close > ent_m5Open and ent_m5Close > ent_m5Low + ent_m5Range * 0.60
+ent_m5BearPinbar = ent_m5UpperWick > ent_m5BodySafe * 1.5 and ent_m5Close < ent_m5Open and ent_m5Close < ent_m5High - ent_m5Range * 0.60
+
+ent_m5BullDisplacement = ent_m5Body > ent_m5MeanBody and ent_m5Close > ent_m5Open
+ent_m5BearDisplacement = ent_m5Body > ent_m5MeanBody and ent_m5Close < ent_m5Open
+
+ent_m5BullTrigger = ent_m5Closed and (ent_m5BullEngulfing or ent_m5BullRejection or ent_m5BullPinbar or ent_m5BullDisplacement)
+ent_m5BearTrigger = ent_m5Closed and (ent_m5BearEngulfing or ent_m5BearRejection or ent_m5BearPinbar or ent_m5BearDisplacement)
+
+ent_m5BullTriggerText = ent_m5BullEngulfing ? "M5 Bull Engulf" : ent_m5BullPinbar ? "M5 Bull Pinbar" : ent_m5BullRejection ? "M5 Bull Reject" : ent_m5BullDisplacement ? "M5 Bull Displace" : "M5 Bull"
+ent_m5BearTriggerText = ent_m5BearEngulfing ? "M5 Bear Engulf" : ent_m5BearPinbar ? "M5 Bear Pinbar" : ent_m5BearRejection ? "M5 Bear Reject" : ent_m5BearDisplacement ? "M5 Bear Displace" : "M5 Bear"
+
+ent_execMax = ent_pipToPrice(ent_execZonePips)
+
+float ent_buyZoneTop = na
+float ent_buyZoneBottom = na
+float ent_sellZoneTop = na
+float ent_sellZoneBottom = na
+float ent_buyBestDist = na
+float ent_sellBestDist = na
+
+ent_buyZoneSource = ""
+ent_sellZoneSource = ""
+ent_buyZoneScore = 0
+ent_sellZoneScore = 0
+
+ent_inBullFvg = ctx_bullFvgActive and ent_inZone(ctx_bullFvgTop, ctx_bullFvgBottom)
+ent_inBearFvg = ctx_bearFvgActive and ent_inZone(ctx_bearFvgTop, ctx_bearFvgBottom)
+ent_inBullOb = ctx_hasBullOb and ent_inZone(ctx_bullObTop, ctx_bullObBottom)
+ent_inBearOb = ctx_hasBearOb and ent_inZone(ctx_bearObTop, ctx_bearObBottom)
+
+if ent_inBullFvg
+    ent_tmpTop = ent_execTop(ctx_bullFvgTop, ctx_bullFvgBottom, ent_execMax)
+    ent_tmpBottom = ent_execBottom(ctx_bullFvgTop, ctx_bullFvgBottom, ent_execMax)
+    ent_tmpDist = ent_distToZone(close, ent_tmpTop, ent_tmpBottom)
+    ent_tmpScore = 40 + (ctx_pricePct <= 50 ? 10 : 0)
+    if ent_tmpScore > ent_buyZoneScore or (ent_tmpScore == ent_buyZoneScore and (na(ent_buyBestDist) or ent_tmpDist < ent_buyBestDist))
+        ent_buyZoneTop := ent_tmpTop
+        ent_buyZoneBottom := ent_tmpBottom
+        ent_buyBestDist := ent_tmpDist
+        ent_buyZoneScore := ent_tmpScore
+        ent_buyZoneSource := "M15 Bull FVG"
+
+if ent_inBullOb
+    ent_tmpTop = ent_execTop(ctx_bullObTop, ctx_bullObBottom, ent_execMax)
+    ent_tmpBottom = ent_execBottom(ctx_bullObTop, ctx_bullObBottom, ent_execMax)
+    ent_tmpDist = ent_distToZone(close, ent_tmpTop, ent_tmpBottom)
+    ent_tmpScore = 45 + (ctx_pricePct <= 50 ? 10 : 0)
+    if ent_tmpScore > ent_buyZoneScore or (ent_tmpScore == ent_buyZoneScore and (na(ent_buyBestDist) or ent_tmpDist < ent_buyBestDist))
+        ent_buyZoneTop := ent_tmpTop
+        ent_buyZoneBottom := ent_tmpBottom
+        ent_buyBestDist := ent_tmpDist
+        ent_buyZoneScore := ent_tmpScore
+        ent_buyZoneSource := "M15 Bull OB"
+
+if ctx_sellsideSweep
+    ent_tmpTop = ent_execTop(ctx_sellsideTop, ctx_sellsideBottom, ent_execMax)
+    ent_tmpBottom = ent_execBottom(ctx_sellsideTop, ctx_sellsideBottom, ent_execMax)
+    ent_tmpDist = ent_distToZone(close, ent_tmpTop, ent_tmpBottom)
+    ent_tmpScore = 55 + (ctx_pricePct <= 50 ? 10 : 0)
+    if ent_tmpScore > ent_buyZoneScore or (ent_tmpScore == ent_buyZoneScore and (na(ent_buyBestDist) or ent_tmpDist < ent_buyBestDist))
+        ent_buyZoneTop := ent_tmpTop
+        ent_buyZoneBottom := ent_tmpBottom
+        ent_buyBestDist := ent_tmpDist
+        ent_buyZoneScore := ent_tmpScore
+        ent_buyZoneSource := "M15 SSL Sweep"
+
+if not na(ent_buyZoneTop) and ctx_pricePct <= 25
+    ent_buyZoneSource := ent_join(ent_buyZoneSource, "Discount")
+    ent_buyZoneScore += 10
+
+if ent_inBearFvg
+    ent_tmpTop = ent_execTop(ctx_bearFvgTop, ctx_bearFvgBottom, ent_execMax)
+    ent_tmpBottom = ent_execBottom(ctx_bearFvgTop, ctx_bearFvgBottom, ent_execMax)
+    ent_tmpDist = ent_distToZone(close, ent_tmpTop, ent_tmpBottom)
+    ent_tmpScore = 40 + (ctx_pricePct >= 50 ? 10 : 0)
+    if ent_tmpScore > ent_sellZoneScore or (ent_tmpScore == ent_sellZoneScore and (na(ent_sellBestDist) or ent_tmpDist < ent_sellBestDist))
+        ent_sellZoneTop := ent_tmpTop
+        ent_sellZoneBottom := ent_tmpBottom
+        ent_sellBestDist := ent_tmpDist
+        ent_sellZoneScore := ent_tmpScore
+        ent_sellZoneSource := "M15 Bear FVG"
+
+if ent_inBearOb
+    ent_tmpTop = ent_execTop(ctx_bearObTop, ctx_bearObBottom, ent_execMax)
+    ent_tmpBottom = ent_execBottom(ctx_bearObTop, ctx_bearObBottom, ent_execMax)
+    ent_tmpDist = ent_distToZone(close, ent_tmpTop, ent_tmpBottom)
+    ent_tmpScore = 45 + (ctx_pricePct >= 50 ? 10 : 0)
+    if ent_tmpScore > ent_sellZoneScore or (ent_tmpScore == ent_sellZoneScore and (na(ent_sellBestDist) or ent_tmpDist < ent_sellBestDist))
+        ent_sellZoneTop := ent_tmpTop
+        ent_sellZoneBottom := ent_tmpBottom
+        ent_sellBestDist := ent_tmpDist
+        ent_sellZoneScore := ent_tmpScore
+        ent_sellZoneSource := "M15 Bear OB"
+
+if ctx_buysideSweep
+    ent_tmpTop = ent_execTop(ctx_buysideTop, ctx_buysideBottom, ent_execMax)
+    ent_tmpBottom = ent_execBottom(ctx_buysideTop, ctx_buysideBottom, ent_execMax)
+    ent_tmpDist = ent_distToZone(close, ent_tmpTop, ent_tmpBottom)
+    ent_tmpScore = 55 + (ctx_pricePct >= 50 ? 10 : 0)
+    if ent_tmpScore > ent_sellZoneScore or (ent_tmpScore == ent_sellZoneScore and (na(ent_sellBestDist) or ent_tmpDist < ent_sellBestDist))
+        ent_sellZoneTop := ent_tmpTop
+        ent_sellZoneBottom := ent_tmpBottom
+        ent_sellBestDist := ent_tmpDist
+        ent_sellZoneScore := ent_tmpScore
+        ent_sellZoneSource := "M15 BSL Sweep"
+
+if not na(ent_sellZoneTop) and ctx_pricePct >= 75
+    ent_sellZoneSource := ent_join(ent_sellZoneSource, "Premium")
+    ent_sellZoneScore += 10
+
+ent_buyZoneActive = not na(ent_buyZoneTop) and not na(ent_buyZoneBottom)
+ent_sellZoneActive = not na(ent_sellZoneTop) and not na(ent_sellZoneBottom)
+
+ent_invalidationOk = ctx_invalidationStatus == "VALID" or ctx_invalidationStatus == "NO BIAS"
+ent_buyInvalidBeforeEntry = ctx_biasDir == 1 and not na(ctx_biasInvalidLevel) and close <= ctx_biasInvalidLevel
+ent_sellInvalidBeforeEntry = ctx_biasDir == -1 and not na(ctx_biasInvalidLevel) and close >= ctx_biasInvalidLevel
+
+ent_trendBuyAllowed = ent_enableTrend and ctx_buyContext and ctx_healthValue >= ent_minHealth and ctx_reversalRiskValue <= ent_maxTrendRisk
+ent_trendSellAllowed = ent_enableTrend and ctx_sellContext and ctx_healthValue >= ent_minHealth and ctx_reversalRiskValue <= ent_maxTrendRisk
+
+ent_reversalBuyShape = ctx_sellsideSweep
+ent_reversalSellShape = ctx_buysideSweep
+
+ent_reversalBuyAllowed = ent_enableReversal and ent_buyZoneActive and ent_reversalBuyShape and (ctx_reversalRiskValue >= ent_minReversalRisk or ctx_sellWeaknessScore >= ent_minWeakness) and ctx_buyStrengthScore >= 25
+ent_reversalSellAllowed = ent_enableReversal and ent_sellZoneActive and ent_reversalSellShape and (ctx_reversalRiskValue >= ent_minReversalRisk or ctx_buyWeaknessScore >= ent_minWeakness) and ctx_sellStrengthScore >= 25
+
+ent_buyMode = ent_reversalBuyAllowed ? 2 : ent_trendBuyAllowed ? 1 : 0
+ent_sellMode = ent_reversalSellAllowed ? -2 : ent_trendSellAllowed ? -1 : 0
+
+ent_buyQuality = ent_buyMode == 1 ? ent_clamp(ctx_healthValue + ent_buyZoneScore * 0.35 - ctx_reversalRiskValue * 0.20, 0, 100) :
+     ent_buyMode == 2 ? ent_clamp(ctx_buyStrengthScore * 0.35 + ent_buyZoneScore * 0.55 + ctx_sellWeaknessScore * 0.20 + (ctx_pricePct <= 50 ? 10 : 0), 0, 100) :
+     0
+
+ent_sellQuality = ent_sellMode == -1 ? ent_clamp(ctx_healthValue + ent_sellZoneScore * 0.35 - ctx_reversalRiskValue * 0.20, 0, 100) :
+     ent_sellMode == -2 ? ent_clamp(ctx_sellStrengthScore * 0.35 + ent_sellZoneScore * 0.55 + ctx_buyWeaknessScore * 0.20 + (ctx_pricePct >= 50 ? 10 : 0), 0, 100) :
+     0
+
+ent_buyDistFromZonePips = ent_priceToPips(ent_distToZone(close, ent_buyZoneTop, ent_buyZoneBottom))
+ent_sellDistFromZonePips = ent_priceToPips(ent_distToZone(close, ent_sellZoneTop, ent_sellZoneBottom))
+
+ent_buyLate = ent_buyZoneActive and ent_m5BullTrigger and ent_buyDistFromZonePips > ent_maxDistancePips
+ent_sellLate = ent_sellZoneActive and ent_m5BearTrigger and ent_sellDistFromZonePips > ent_maxDistancePips
+
+ent_buySetup = ent_buyZoneActive and ent_m5BullTrigger and ent_buyQuality >= ent_minQuality and ent_buyMode != 0 and ent_invalidationOk and not ent_buyInvalidBeforeEntry and not ent_buyLate
+ent_sellSetup = ent_sellZoneActive and ent_m5BearTrigger and ent_sellQuality >= ent_minQuality and ent_sellMode != 0 and ent_invalidationOk and not ent_sellInvalidBeforeEntry and not ent_sellLate
+
+var int ent_tradeState = 0
+var float ent_activeEntry = na
+var float ent_activeSL = na
+var float ent_activeTP1 = na
+var float ent_activeTP2 = na
+var bool ent_tp1Hit = false
+var string ent_exitReason = ""
+
+var float ent_activeZoneTop = na
+var float ent_activeZoneBottom = na
+var int ent_activeSignalBar = na
+var int ent_activeBiasDir = 0
+
+var string ent_snapBias = ""
+var string ent_snapHealth = ""
+var string ent_snapQuality = ""
+var string ent_snapMode = ""
+var string ent_snapSource = ""
+var string ent_snapGrade = ""
+
+var line ent_l_entry = na
+var line ent_l_sl = na
+var line ent_l_tp1 = na
+var line ent_l_tp2 = na
+
+var label ent_lb_entry = na
+var label ent_lb_sl = na
+var label ent_lb_tp1 = na
+var label ent_lb_tp2 = na
+var label ent_lb_signal = na
+var label ent_lb_ready = na
+var label ent_lb_reentry = na
+
+var box ent_b_buyZone = na
+var box ent_b_sellZone = na
+var label ent_lb_buyZone = na
+var label ent_lb_sellZone = na
+
+if ent_showZones and ent_buyZoneActive
+    if na(ent_b_buyZone)
+        ent_b_buyZone := box.new(bar_index, ent_buyZoneTop, bar_index + ent_levelBars, ent_buyZoneBottom, bgcolor=color.new(color.lime, 88), border_color=color.new(color.lime, 35))
+    else
+        box.set_lefttop(ent_b_buyZone, bar_index, ent_buyZoneTop)
+        box.set_rightbottom(ent_b_buyZone, bar_index + ent_levelBars, ent_buyZoneBottom)
+        box.set_bgcolor(ent_b_buyZone, color.new(color.lime, 88))
+        box.set_border_color(ent_b_buyZone, color.new(color.lime, 35))
+    if na(ent_lb_buyZone)
+        ent_lb_buyZone := label.new(bar_index + ent_levelBars, math.avg(ent_buyZoneTop, ent_buyZoneBottom), "BUY EXEC ZONE | " + ent_buyZoneSource, style=label.style_label_left, color=color.new(color.lime, 85), textcolor=color.lime, size=size.tiny)
+    else
+        label.set_xy(ent_lb_buyZone, bar_index + ent_levelBars, math.avg(ent_buyZoneTop, ent_buyZoneBottom))
+        label.set_text(ent_lb_buyZone, "BUY EXEC ZONE | " + ent_buyZoneSource)
+        label.set_color(ent_lb_buyZone, color.new(color.lime, 85))
+        label.set_textcolor(ent_lb_buyZone, color.lime)
+else
+    if not na(ent_b_buyZone)
+        box.delete(ent_b_buyZone)
+        ent_b_buyZone := na
+    if not na(ent_lb_buyZone)
+        label.delete(ent_lb_buyZone)
+        ent_lb_buyZone := na
+
+if ent_showZones and ent_sellZoneActive
+    if na(ent_b_sellZone)
+        ent_b_sellZone := box.new(bar_index, ent_sellZoneTop, bar_index + ent_levelBars, ent_sellZoneBottom, bgcolor=color.new(color.red, 88), border_color=color.new(color.red, 35))
+    else
+        box.set_lefttop(ent_b_sellZone, bar_index, ent_sellZoneTop)
+        box.set_rightbottom(ent_b_sellZone, bar_index + ent_levelBars, ent_sellZoneBottom)
+        box.set_bgcolor(ent_b_sellZone, color.new(color.red, 88))
+        box.set_border_color(ent_b_sellZone, color.new(color.red, 35))
+    if na(ent_lb_sellZone)
+        ent_lb_sellZone := label.new(bar_index + ent_levelBars, math.avg(ent_sellZoneTop, ent_sellZoneBottom), "SELL EXEC ZONE | " + ent_sellZoneSource, style=label.style_label_left, color=color.new(color.red, 85), textcolor=color.red, size=size.tiny)
+    else
+        label.set_xy(ent_lb_sellZone, bar_index + ent_levelBars, math.avg(ent_sellZoneTop, ent_sellZoneBottom))
+        label.set_text(ent_lb_sellZone, "SELL EXEC ZONE | " + ent_sellZoneSource)
+        label.set_color(ent_lb_sellZone, color.new(color.red, 85))
+        label.set_textcolor(ent_lb_sellZone, color.red)
+else
+    if not na(ent_b_sellZone)
+        box.delete(ent_b_sellZone)
+        ent_b_sellZone := na
+    if not na(ent_lb_sellZone)
+        label.delete(ent_lb_sellZone)
+        ent_lb_sellZone := na
+
+ent_buyTP1Hit = ent_tradeState == 1 and not ent_tp1Hit and not na(ent_activeTP1) and high >= ent_activeTP1
+ent_sellTP1Hit = ent_tradeState == -1 and not ent_tp1Hit and not na(ent_activeTP1) and low <= ent_activeTP1
+
+if ent_buyTP1Hit or ent_sellTP1Hit
+    ent_tp1Hit := true
+    ent_exitReason := "TP1"
+    if not na(ent_l_tp1)
+        line.delete(ent_l_tp1)
+        ent_l_tp1 := na
+    if not na(ent_lb_tp1)
+        label.delete(ent_lb_tp1)
+        ent_lb_tp1 := na
+    if ent_hideEntryAfterTP1 and not na(ent_l_entry)
+        line.delete(ent_l_entry)
+        ent_l_entry := na
+    if ent_hideEntryAfterTP1 and not na(ent_lb_entry)
+        label.delete(ent_lb_entry)
+        ent_lb_entry := na
+    if not ent_keepSLAfterTP1 and not na(ent_l_sl)
+        line.delete(ent_l_sl)
+        ent_l_sl := na
+    if not ent_keepSLAfterTP1 and not na(ent_lb_sl)
+        label.delete(ent_lb_sl)
+        ent_lb_sl := na
+
+ent_buySLHit = ent_tradeState == 1 and not na(ent_activeSL) and low <= ent_activeSL
+ent_buyTP2Hit = ent_tradeState == 1 and not na(ent_activeTP2) and high >= ent_activeTP2
+ent_sellSLHit = ent_tradeState == -1 and not na(ent_activeSL) and high >= ent_activeSL
+ent_sellTP2Hit = ent_tradeState == -1 and not na(ent_activeTP2) and low <= ent_activeTP2
+
+ent_tradeClosed = ent_buySLHit or ent_buyTP2Hit or ent_sellSLHit or ent_sellTP2Hit
+
+if ent_tradeClosed
+    ent_exitReason := ent_buyTP2Hit or ent_sellTP2Hit ? "TP2" : "SL"
+
+    if not na(ent_l_entry)
+        line.delete(ent_l_entry)
+        ent_l_entry := na
+    if not na(ent_l_sl)
+        line.delete(ent_l_sl)
+        ent_l_sl := na
+    if not na(ent_l_tp1)
+        line.delete(ent_l_tp1)
+        ent_l_tp1 := na
+    if not na(ent_l_tp2)
+        line.delete(ent_l_tp2)
+        ent_l_tp2 := na
+
+    if not na(ent_lb_entry)
+        label.delete(ent_lb_entry)
+        ent_lb_entry := na
+    if not na(ent_lb_sl)
+        label.delete(ent_lb_sl)
+        ent_lb_sl := na
+    if not na(ent_lb_tp1)
+        label.delete(ent_lb_tp1)
+        ent_lb_tp1 := na
+    if not na(ent_lb_tp2)
+        label.delete(ent_lb_tp2)
+        ent_lb_tp2 := na
+    if not na(ent_lb_signal)
+        label.delete(ent_lb_signal)
+        ent_lb_signal := na
+    if not na(ent_lb_reentry)
+        label.delete(ent_lb_reentry)
+        ent_lb_reentry := na
+
+    ent_tradeState := 0
+    ent_activeEntry := na
+    ent_activeSL := na
+    ent_activeTP1 := na
+    ent_activeTP2 := na
+    ent_activeZoneTop := na
+    ent_activeZoneBottom := na
+    ent_activeSignalBar := na
+    ent_activeBiasDir := 0
+    ent_tp1Hit := false
+
+ent_flat = ent_lockUntilExit ? ent_tradeState == 0 : true
+
+var int ent_lastReadyBar = na
+var int ent_lastSignalBar = na
+var int ent_lastReEntryBar = na
+var int ent_readyDir = 0
+var int ent_readyMode = 0
+var int ent_readyBar = na
+var float ent_readyHigh = na
+var float ent_readyLow = na
+var float ent_readySLBase = na
+var float ent_readyZoneTop = na
+var float ent_readyZoneBottom = na
+var float ent_readyQuality = na
+var int ent_readyZoneScore = 0
+var string ent_readySource = ""
+var string ent_readyQualityText = ""
+
+ent_canReady = ent_flat and (na(ent_lastReadyBar) or bar_index - ent_lastReadyBar > ent_cooldownBars)
+ent_canSignal = ent_flat and (na(ent_lastSignalBar) or bar_index - ent_lastSignalBar > ent_cooldownBars)
+
+ent_buyReadySLBase = na(ent_buyZoneBottom) ? low : math.min(low, ent_buyZoneBottom)
+ent_sellReadySLBase = na(ent_sellZoneTop) ? high : math.max(high, ent_sellZoneTop)
+
+ent_readyBuyRaw = ent_showEntry and ent_canReady and ent_buySetup and (not ent_sellSetup or ent_buyQuality > ent_sellQuality + 10)
+ent_readySellRaw = ent_showEntry and ent_canReady and ent_sellSetup and (not ent_buySetup or ent_sellQuality > ent_buyQuality + 10)
+
+ent_readyBuyLateRaw = ent_showEntry and ent_canReady and ent_buyLate and ent_buyMode != 0
+ent_readySellLateRaw = ent_showEntry and ent_canReady and ent_sellLate and ent_sellMode != 0
+
+if ent_readyBuyRaw
+    ent_readyDir := 1
+    ent_readyMode := ent_buyMode
+    ent_readyBar := bar_index
+    ent_readyHigh := ent_m5High
+    ent_readyLow := ent_m5Low
+    ent_readySLBase := ent_buyReadySLBase
+    ent_readyZoneTop := ent_buyZoneTop
+    ent_readyZoneBottom := ent_buyZoneBottom
+    ent_readySource := ent_buyZoneSource + " + " + ent_m5BullTriggerText
+    ent_readyQuality := ent_buyQuality
+    ent_readyQualityText := ent_qualityText(ent_buyQuality)
+    ent_readyZoneScore := ent_buyZoneScore
+    ent_lastReadyBar := bar_index
+    if not na(ent_lb_ready)
+        label.delete(ent_lb_ready)
+    if ent_showReady
+        ent_readyText = ent_readyMode == 1 ? "READY BUY TREND" : "READY BUY REVERSAL"
+        ent_lb_ready := label.new(bar_index, low, ent_readyText + "\n" + ent_readyQualityText + " | " + ent_readySource, style=label.style_label_up, color=color.new(color.lime, 10), textcolor=color.black, size=size.tiny)
+
+if ent_readySellRaw
+    ent_readyDir := -1
+    ent_readyMode := ent_sellMode
+    ent_readyBar := bar_index
+    ent_readyHigh := ent_m5High
+    ent_readyLow := ent_m5Low
+    ent_readySLBase := ent_sellReadySLBase
+    ent_readyZoneTop := ent_sellZoneTop
+    ent_readyZoneBottom := ent_sellZoneBottom
+    ent_readySource := ent_sellZoneSource + " + " + ent_m5BearTriggerText
+    ent_readyQuality := ent_sellQuality
+    ent_readyQualityText := ent_qualityText(ent_sellQuality)
+    ent_readyZoneScore := ent_sellZoneScore
+    ent_lastReadyBar := bar_index
+    if not na(ent_lb_ready)
+        label.delete(ent_lb_ready)
+    if ent_showReady
+        ent_readyText = ent_readyMode == -1 ? "READY SELL TREND" : "READY SELL REVERSAL"
+        ent_lb_ready := label.new(bar_index, high, ent_readyText + "\n" + ent_readyQualityText + " | " + ent_readySource, style=label.style_label_down, color=color.new(color.red, 10), textcolor=color.white, size=size.tiny)
+
+if ent_readyBuyLateRaw
+    ent_lastReadyBar := bar_index
+    if not na(ent_lb_ready)
+        label.delete(ent_lb_ready)
+    if ent_showReady
+        ent_lb_ready := label.new(bar_index, low, "READY BUY LATE\nNO ENTRY - TOO FAR\n" + ent_buyZoneSource + " | " + str.tostring(ent_buyDistFromZonePips, "#") + " pips", style=label.style_label_up, color=color.new(color.orange, 10), textcolor=color.black, size=size.tiny)
+
+if ent_readySellLateRaw
+    ent_lastReadyBar := bar_index
+    if not na(ent_lb_ready)
+        label.delete(ent_lb_ready)
+    if ent_showReady
+        ent_lb_ready := label.new(bar_index, high, "READY SELL LATE\nNO ENTRY - TOO FAR\n" + ent_sellZoneSource + " | " + str.tostring(ent_sellDistFromZonePips, "#") + " pips", style=label.style_label_down, color=color.new(color.orange, 10), textcolor=color.white, size=size.tiny)
+
+ent_readyBuyActive = ent_readyDir == 1 and not na(ent_readyBar) and bar_index > ent_readyBar and bar_index - ent_readyBar <= ent_confirmBars
+ent_readySellActive = ent_readyDir == -1 and not na(ent_readyBar) and bar_index > ent_readyBar and bar_index - ent_readyBar <= ent_confirmBars
+
+ent_readyBuyStillValid = ent_readyBuyActive and close > ent_readyZoneBottom and ent_invalidationOk and not ent_buyInvalidBeforeEntry
+ent_readySellStillValid = ent_readySellActive and close < ent_readyZoneTop and ent_invalidationOk and not ent_sellInvalidBeforeEntry
+
+ent_buySignalRaw = ent_showEntry and ent_canSignal and ent_readyBuyActive and ent_readyBuyStillValid and close > ent_readyHigh and close > open and barstate.isconfirmed
+ent_sellSignalRaw = ent_showEntry and ent_canSignal and ent_readySellActive and ent_readySellStillValid and close < ent_readyLow and close < open and barstate.isconfirmed
+
+ent_slPadPrice = ent_pipToPrice(ent_slPadPips)
+ent_tp1Price = ent_pipToPrice(ent_tp1Pips)
+ent_tp2Price = ent_pipToPrice(ent_tp2Pips)
+
+ent_buyEntry = close
+ent_sellEntry = close
+
+ent_buySL = ent_readySLBase - ent_slPadPrice
+ent_sellSL = ent_readySLBase + ent_slPadPrice
+
+ent_buyRisk = ent_buyEntry - ent_buySL
+ent_sellRisk = ent_sellSL - ent_sellEntry
+
+ent_buyRiskPips = ent_priceToPips(ent_buyRisk)
+ent_sellRiskPips = ent_priceToPips(ent_sellRisk)
+
+ent_buyDistPips = ent_priceToPips(ent_distToZone(ent_buyEntry, ent_readyZoneTop, ent_readyZoneBottom))
+ent_sellDistPips = ent_priceToPips(ent_distToZone(ent_sellEntry, ent_readyZoneTop, ent_readyZoneBottom))
+
+ent_buyTP1 = ent_buyEntry + ent_tp1Price
+ent_buyTP2 = ent_buyEntry + ent_tp2Price
+ent_sellTP1 = ent_sellEntry - ent_tp1Price
+ent_sellTP2 = ent_sellEntry - ent_tp2Price
+
+float ent_buyNearestRes = na
+ent_buyNearestRes := ent_minAbove(ent_buyEntry, ent_buyNearestRes, piv_r1)
+ent_buyNearestRes := ent_minAbove(ent_buyEntry, ent_buyNearestRes, piv_r2)
+ent_buyNearestRes := ent_minAbove(ent_buyEntry, ent_buyNearestRes, piv_r3)
+ent_buyNearestRes := ent_minAbove(ent_buyEntry, ent_buyNearestRes, piv_r4)
+
+float ent_sellNearestSup = na
+ent_sellNearestSup := ent_maxBelow(ent_sellEntry, ent_sellNearestSup, piv_s1)
+ent_sellNearestSup := ent_maxBelow(ent_sellEntry, ent_sellNearestSup, piv_s2)
+ent_sellNearestSup := ent_maxBelow(ent_sellEntry, ent_sellNearestSup, piv_s3)
+ent_sellNearestSup := ent_maxBelow(ent_sellEntry, ent_sellNearestSup, piv_s4)
+
+ent_buyPivotWarn = ent_pivotTpWarning and not na(ent_buyNearestRes) and ent_buyNearestRes <= ent_buyTP2
+ent_sellPivotWarn = ent_pivotTpWarning and not na(ent_sellNearestSup) and ent_sellNearestSup >= ent_sellTP2
+
+if ent_limitTPAtPivot and ent_buyPivotWarn
+    ent_buyCap = ent_buyNearestRes - ent_pipToPrice(ent_pivotBufferPips)
+    if ent_buyCap > ent_buyEntry + syminfo.mintick
+        ent_buyTP1 := ent_buyCap < ent_buyTP1 ? ent_buyCap : ent_buyTP1
+        ent_buyTP2 := ent_buyCap < ent_buyTP2 and ent_buyCap > ent_buyTP1 ? ent_buyCap : ent_buyTP2
+
+if ent_limitTPAtPivot and ent_sellPivotWarn
+    ent_sellCap = ent_sellNearestSup + ent_pipToPrice(ent_pivotBufferPips)
+    if ent_sellCap < ent_sellEntry - syminfo.mintick
+        ent_sellTP1 := ent_sellCap > ent_sellTP1 ? ent_sellCap : ent_sellTP1
+        ent_sellTP2 := ent_sellCap > ent_sellTP2 and ent_sellCap < ent_sellTP1 ? ent_sellCap : ent_sellTP2
+
+ent_buyLocationOk = ent_readyMode != 2 or ctx_pricePct <= ent_buyRevMaxPremiumPct or ent_readyZoneScore >= ent_strongReasonScore
+ent_sellLocationOk = ent_readyMode != -2 or ctx_pricePct >= ent_sellRevMinDiscountPct or ent_readyZoneScore >= ent_strongReasonScore
+
+ent_buyRiskOk = ent_buySignalRaw and ent_buyRisk > syminfo.mintick and ent_buyRiskPips <= ent_maxSLPips
+ent_sellRiskOk = ent_sellSignalRaw and ent_sellRisk > syminfo.mintick and ent_sellRiskPips <= ent_maxSLPips
+
+ent_buyDistOk = ent_buySignalRaw and ent_buyDistPips <= ent_maxDistancePips
+ent_sellDistOk = ent_sellSignalRaw and ent_sellDistPips <= ent_maxDistancePips
+
+ent_buyQualityOk = ent_buySignalRaw and ent_readyQuality >= ent_minQuality
+ent_sellQualityOk = ent_sellSignalRaw and ent_readyQuality >= ent_minQuality
+
+// Gunakan fungsi grade yang baru
+ent_buyGrade = ent_calcGrade(ent_readyQuality, ent_readyZoneScore, ent_buyRiskPips, ent_buyDistPips, ent_readyMode == 2, ent_buyLocationOk, ent_buyPivotWarn)
+ent_sellGrade = ent_calcGrade(ent_readyQuality, ent_readyZoneScore, ent_sellRiskPips, ent_sellDistPips, ent_readyMode == -2, ent_sellLocationOk, ent_sellPivotWarn)
+
+ent_buySignal = ent_buySignalRaw and ent_buyRiskOk and ent_buyDistOk and ent_buyQualityOk and ent_buyLocationOk and ent_gradePass(ent_buyGrade)
+ent_sellSignal = ent_sellSignalRaw and ent_sellRiskOk and ent_sellDistOk and ent_sellQualityOk and ent_sellLocationOk and ent_gradePass(ent_sellGrade)
+
+if ent_readyDir != 0 and not na(ent_readyBar) and bar_index - ent_readyBar > ent_confirmBars
+    ent_readyDir := 0
+    ent_readyMode := 0
+    ent_readyBar := na
+    ent_readyHigh := na
+    ent_readyLow := na
+    ent_readySLBase := na
+    ent_readyZoneTop := na
+    ent_readyZoneBottom := na
+    ent_readyQuality := na
+    ent_readyZoneScore := 0
+    ent_readySource := ""
+    ent_readyQualityText := ""
+    if not na(ent_lb_ready)
+        label.delete(ent_lb_ready)
+        ent_lb_ready := na
+
+if ent_buySignal or ent_sellSignal
+    ent_lastSignalBar := bar_index
+
+    if not na(ent_l_entry)
+        line.delete(ent_l_entry)
+    if not na(ent_l_sl)
+        line.delete(ent_l_sl)
+    if not na(ent_l_tp1)
+        line.delete(ent_l_tp1)
+    if not na(ent_l_tp2)
+        line.delete(ent_l_tp2)
+
+    if not na(ent_lb_entry)
+        label.delete(ent_lb_entry)
+    if not na(ent_lb_sl)
+        label.delete(ent_lb_sl)
+    if not na(ent_lb_tp1)
+        label.delete(ent_lb_tp1)
+    if not na(ent_lb_tp2)
+        label.delete(ent_lb_tp2)
+    if not na(ent_lb_signal)
+        label.delete(ent_lb_signal)
+    if not na(ent_lb_ready)
+        label.delete(ent_lb_ready)
+        ent_lb_ready := na
+    if not na(ent_lb_reentry)
+        label.delete(ent_lb_reentry)
+        ent_lb_reentry := na
+
+    ent_isBuy = ent_buySignal
+    ent_signalMode = ent_readyMode
+    ent_entry = ent_isBuy ? ent_buyEntry : ent_sellEntry
+    ent_sl = ent_isBuy ? ent_buySL : ent_sellSL
+    ent_tp1 = ent_isBuy ? ent_buyTP1 : ent_sellTP1
+    ent_tp2 = ent_isBuy ? ent_buyTP2 : ent_sellTP2
+    ent_grade = ent_isBuy ? ent_buyGrade : ent_sellGrade
+    ent_riskPips = ent_isBuy ? ent_buyRiskPips : ent_sellRiskPips
+
+    ent_activeEntry := ent_entry
+    ent_activeSL := ent_sl
+    ent_activeTP1 := ent_tp1
+    ent_activeTP2 := ent_tp2
+    ent_activeZoneTop := ent_readyZoneTop
+    ent_activeZoneBottom := ent_readyZoneBottom
+    ent_activeSignalBar := bar_index
+    ent_activeBiasDir := ctx_biasDir
+    ent_tradeState := ent_isBuy ? 1 : -1
+    ent_tp1Hit := false
+    ent_exitReason := ""
+
+    ent_snapBias := ctx_contextBias
+    ent_snapHealth := ctx_healthText
+    ent_snapQuality := ent_readyQualityText
+    ent_snapMode := ent_signalMode == 1 ? "BUY TREND" : ent_signalMode == 2 ? "BUY REVERSAL" : ent_signalMode == -1 ? "SELL TREND" : "SELL REVERSAL"
+    ent_snapSource := ent_readySource
+    ent_snapGrade := ent_grade
+
+    ent_readyDir := 0
+    ent_readyMode := 0
+    ent_readyBar := na
+    ent_readyHigh := na
+    ent_readyLow := na
+    ent_readySLBase := na
+    ent_readyZoneTop := na
+    ent_readyZoneBottom := na
+    ent_readyQuality := na
+    ent_readyZoneScore := 0
+    ent_readySource := ""
+
+    ent_colEntry = ent_isBuy ? color.new(color.lime, 0) : color.new(color.red, 0)
+    ent_colSL = color.new(color.red, 0)
+    ent_colTP = ent_isBuy ? color.new(color.lime, 0) : color.new(color.red, 0)
+
+    ent_l_entry := line.new(bar_index, ent_entry, bar_index + ent_levelBars, ent_entry, color=ent_colEntry, width=2)
+    ent_l_sl := line.new(bar_index, ent_sl, bar_index + ent_levelBars, ent_sl, color=ent_colSL, width=2)
+    ent_l_tp1 := line.new(bar_index, ent_tp1, bar_index + ent_levelBars, ent_tp1, color=ent_colTP, width=1, style=line.style_dashed)
+    ent_l_tp2 := line.new(bar_index, ent_tp2, bar_index + ent_levelBars, ent_tp2, color=ent_colTP, width=1, style=line.style_dashed)
+
+    ent_signalLabelText = ent_snapMode + " | Grade " + ent_snapGrade + "\nEntry: " + str.tostring(ent_entry, format.mintick) + "\nSL: " + str.tostring(ent_sl, format.mintick) + " | " + str.tostring(ent_riskPips, "#") + " pips\nTP1: " + str.tostring(ent_tp1, format.mintick) + "\nTP2: " + str.tostring(ent_tp2, format.mintick) + "\nSource: " + ctx_clip(ent_snapSource, 34)
+
+    ent_lb_signal := label.new(bar_index, ent_isBuy ? low : high, ent_signalLabelText, style=ent_isBuy ? label.style_label_up : label.style_label_down, color=ent_colEntry, textcolor=ent_isBuy ? color.black : color.white, size=size.small)
+    ent_lb_entry := label.new(bar_index + ent_levelBars, ent_entry, "Entry: " + str.tostring(ent_entry, format.mintick), style=label.style_label_left, color=ent_colEntry, textcolor=ent_isBuy ? color.black : color.white, size=size.small)
+    ent_lb_sl := label.new(bar_index + ent_levelBars, ent_sl, "SL: " + str.tostring(ent_sl, format.mintick) + " | " + str.tostring(ent_riskPips, "#") + " pips", style=label.style_label_left, color=ent_colSL, textcolor=color.white, size=size.small)
+    ent_lb_tp1 := label.new(bar_index + ent_levelBars, ent_tp1, "TP1: " + str.tostring(ent_tp1, format.mintick) + " | " + str.tostring(ent_tp1Pips, "#") + " pips", style=label.style_label_left, color=ent_colTP, textcolor=ent_isBuy ? color.black : color.white, size=size.small)
+    ent_lb_tp2 := label.new(bar_index + ent_levelBars, ent_tp2, "TP2: " + str.tostring(ent_tp2, format.mintick) + " | " + str.tostring(ent_tp2Pips, "#") + " pips", style=label.style_label_left, color=ent_colTP, textcolor=ent_isBuy ? color.black : color.white, size=size.small)
+
+ent_sameBiasForReEntry = ent_activeBiasDir == ctx_biasDir
+ent_reEntryBuy = ent_showEntry and ent_showReEntry and ent_tradeState == 1 and not ent_tp1Hit and ent_sameBiasForReEntry and ent_invalidationOk and not na(ent_activeZoneTop) and not na(ent_activeZoneBottom) and bar_index > ent_activeSignalBar and low <= ent_activeZoneTop and high >= ent_activeZoneBottom and low > ent_activeSL and ent_m5BullTrigger and close > ent_activeZoneBottom and (na(ent_lastReEntryBar) or bar_index - ent_lastReEntryBar > ent_cooldownBars)
+ent_reEntrySell = ent_showEntry and ent_showReEntry and ent_tradeState == -1 and not ent_tp1Hit and ent_sameBiasForReEntry and ent_invalidationOk and not na(ent_activeZoneTop) and not na(ent_activeZoneBottom) and bar_index > ent_activeSignalBar and high >= ent_activeZoneBottom and low <= ent_activeZoneTop and high < ent_activeSL and ent_m5BearTrigger and close < ent_activeZoneTop and (na(ent_lastReEntryBar) or bar_index - ent_lastReEntryBar > ent_cooldownBars)
+
+if ent_reEntryBuy or ent_reEntrySell
+    ent_lastReEntryBar := bar_index
+    if not na(ent_lb_reentry)
+        label.delete(ent_lb_reentry)
+    ent_reText = ent_reEntryBuy ? "RE-ENTRY BUY READY" : "RE-ENTRY SELL READY"
+    ent_reText := ent_reText + "\nGrade: " + ent_snapGrade + "\nSource: " + ctx_clip(ent_snapSource, 30) + "\nSame Zone / Same Bias"
+    ent_lb_reentry := label.new(bar_index, ent_reEntryBuy ? low : high, ent_reText, style=ent_reEntryBuy ? label.style_label_up : label.style_label_down, color=ent_reEntryBuy ? color.new(color.lime, 15) : color.new(color.red, 15), textcolor=ent_reEntryBuy ? color.black : color.white, size=size.tiny)

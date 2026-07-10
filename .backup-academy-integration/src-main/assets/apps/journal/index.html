@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#050806">
+    <meta name="description" content="Trading Library Manager untuk mengelola materi, indikator, gambar chart, video pembelajaran, dan dokumen trading.">
+    <title>Trading Library Manager</title>
+    <link rel="stylesheet" href="./style.css?v=20260623-2">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='24' fill='%23050806'/%3E%3Cpath d='M20 62h12V36H20v26Zm22 0h12V24H42v38Zm22 0h12V44H64v18Z' fill='%2339ff88'/%3E%3Cpath d='M18 72h60' stroke='%23f4fff7' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="amy-journal-final-fix.css">
+</head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <button class="icon-button menu-button" id="openSidebarBtn" type="button" aria-label="Buka navigasi">
+          <span class="menu-icon" aria-hidden="true"></span>
+        </button>
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">TL</div>
+          <div class="brand-copy">
+            <span>Trading Library</span>
+            <h1>Manager</h1>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="icon-button" id="focusSearchBtn" type="button" aria-label="Fokus pencarian">
+            <span class="search-icon" aria-hidden="true"></span>
+          </button>
+          <button class="add-button" id="openFormBtn" type="button" aria-label="Tambah data">+</button>
+        </div>
+      </header>
+
+      <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+      <aside class="side-drawer" id="sideDrawer" aria-hidden="true" aria-label="Navigasi samping">
+        <div class="side-drawer-head">
+          <div class="side-drawer-brand">
+            <div class="brand-mark" aria-hidden="true">TL</div>
+            <div>
+              <span>Quick Menu</span>
+              <h2>Trading Library</h2>
+            </div>
+          </div>
+          <button class="icon-button side-close-button" id="closeSidebarBtn" type="button" aria-label="Tutup navigasi">×</button>
+        </div>
+        <nav class="side-drawer-menu" aria-label="Menu cepat">
+          <button class="side-nav-button" type="button" data-view="statistics">
+            <span class="nav-icon statistics-icon" aria-hidden="true"></span>
+            <span>Dasbor & Statistik</span>
+          </button>
+          <button class="side-nav-button is-active" type="button" data-view="library">
+            <span class="nav-icon library-icon" aria-hidden="true"></span>
+            <span>Library</span>
+          </button>
+          <button class="side-nav-button" type="button" data-view="media">
+            <span class="nav-icon media-icon" aria-hidden="true"></span>
+            <span>Media</span>
+          </button>
+          <button class="side-nav-button" type="button" data-view="journal">
+            <span class="nav-icon journal-icon" aria-hidden="true"></span>
+            <span>Jurnal Trading</span>
+          </button>
+          <button class="side-nav-button" type="button" data-view="notes">
+            <span class="nav-icon journal-icon" aria-hidden="true"></span>
+            <span>Catatan Pribadi</span>
+          </button>
+          <button class="side-nav-button" type="button" data-view="assistant">
+            <span class="nav-icon assistant-icon" aria-hidden="true"></span>
+            <span>Asisten</span>
+          </button>
+        </nav>
+        <div class="side-drawer-footer">
+          <strong>Menu tambahan</strong>
+          <span>Backup, Restore, PIN, arsip, dan ringkasan status berada di Dashboard / Status.</span>
+        </div>
+      </aside>
+
+      <section class="control-panel" aria-label="Filter dan pencarian">
+        <div class="search-row" style="display: flex; gap: 8px; width: 100%;">
+          <label class="search-box" for="searchInput" style="flex: 1;">
+            <span class="search-icon" aria-hidden="true"></span>
+            <input id="searchInput" type="search" autocomplete="off" placeholder="Cari materi, file, kategori, status...">
+          </label>
+          <button class="icon-button filter-toggle-btn" id="filterToggleBtn" type="button" aria-label="Toggle Filter" style="flex: 0 0 auto; width: 46px; height: 46px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+          </button>
+        </div>
+
+        <div class="filter-content" id="filterContent" hidden>
+          <div class="filter-block">
+            <div class="filter-label">Kategori</div>
+            <div class="pill-row" id="categoryPills" role="listbox" aria-label="Filter kategori"></div>
+          </div>
+
+          <div class="filter-block">
+            <div class="filter-label">Status</div>
+            <div class="pill-row compact" id="statusPills" role="listbox" aria-label="Filter status belajar"></div>
+          </div>
+
+          <div class="filter-block">
+            <div class="filter-label">Jenis File</div>
+            <div class="pill-row compact" id="typePills" role="listbox" aria-label="Filter jenis file"></div>
+          </div>
+
+          <div class="quick-controls" aria-label="Kontrol tambahan">
+            <label class="mini-field">
+              <span>Sortir</span>
+              <select id="sortSelect">
+                <option value="pinned-newest">Pin + Terbaru</option>
+                <option value="newest">Terbaru</option>
+                <option value="oldest">Terlama</option>
+                <option value="title-asc">Nama A-Z</option>
+                <option value="title-desc">Nama Z-A</option>
+                <option value="status">Status</option>
+              </select>
+            </label>
+            <label class="mini-field">
+              <span>Koleksi</span>
+              <input id="collectionFilterInput" type="search" placeholder="Semua koleksi">
+            </label>
+            <label class="toggle-field">
+              <input id="showArchivedInput" type="checkbox">
+              <span>Tampilkan Arsip</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <main class="main-content">
+        <section class="view is-active" id="libraryView" aria-labelledby="libraryHeading">
+          <div class="section-head">
+            <div>
+              <h2 id="libraryHeading">Library</h2>
+              <p id="libraryCount">0 item</p>
+            </div>
+            <div class="section-actions">
+              <button class="ghost-button" id="selectModeBtn" type="button">Pilih</button>
+              <button class="ghost-button danger" id="bulkDeleteBtn" type="button" hidden>Hapus Terpilih</button>
+              <button class="ghost-button" id="cancelSelectBtn" type="button" hidden>Batal</button>
+              <button class="ghost-button" id="clearFiltersBtn" type="button">Reset</button>
+            </div>
+          </div>
+          <div class="card-grid" id="libraryGrid"></div>
+          <div class="empty-state" id="libraryEmpty" hidden>
+            <div class="empty-mark" aria-hidden="true">+</div>
+            <h3>Library kosong</h3>
+            <p>Tambahkan materi, kode, gambar chart, video, atau dokumen pertama.</p>
+            <button class="primary-button" id="emptyAddBtn" type="button">Tambah Data</button>
+          </div>
+        </section>
+
+        <section class="view" id="codeView" aria-labelledby="codeHeading" hidden>
+          <div class="section-head">
+            <div>
+              <h2 id="codeHeading">Kode Indikator</h2>
+              <p id="codeCount">0 item</p>
+            </div>
+          </div>
+          <div class="card-grid" id="codeGrid"></div>
+          <div class="empty-state" id="codeEmpty" hidden>
+            <div class="empty-mark" aria-hidden="true">{ }</div>
+            <h3>Belum ada kode</h3>
+            <p>Simpan Pine Script, catatan indikator, atau snippet entry.</p>
+          </div>
+        </section>
+
+        <section class="view" id="mediaView" aria-labelledby="mediaHeading" hidden>
+          <div class="section-head">
+            <div>
+              <h2 id="mediaHeading">Media</h2>
+              <p id="mediaCount">0 item</p>
+            </div>
+          </div>
+          <div class="pill-row compact media-type-row" id="mediaTypePills" role="listbox" aria-label="Klasifikasi media"></div>
+          <div class="card-grid" id="mediaGrid"></div>
+          <div class="empty-state" id="mediaEmpty" hidden>
+            <div class="empty-mark" aria-hidden="true">▣</div>
+            <h3>Belum ada media</h3>
+            <p>Simpan chart setup, screenshot, video pembelajaran, atau dokumen.</p>
+          </div>
+        </section>
+
+
+        <section class="view" id="journalView" aria-labelledby="journalHeading" hidden>
+          <div class="section-head">
+            <div>
+              <h2 id="journalHeading">Jurnal</h2>
+              <p id="journalCount">0 jurnal</p>
+            </div>
+            <div class="section-actions">
+              <button class="primary-button" id="newJournalBtn" type="button">+ Jurnal Baru</button>
+            </div>
+          </div>
+
+          <form class="journal-form journal-editor" id="journalForm" hidden>
+            <input id="journalId" type="hidden">
+            <div class="form-grid">
+              <label class="field">
+                <span>Tanggal</span>
+                <input id="journalDateInput" type="date" required>
+              </label>
+              <label class="field">
+                <span>Pair / Market</span>
+                <input id="journalMarketInput" type="text" maxlength="40" placeholder="XAUUSD, BTCUSD, EURUSD">
+              </label>
+            </div>
+            <label class="field">
+              <span>Judul jurnal</span>
+              <input id="journalTitleInput" type="text" maxlength="100" required placeholder="Contoh: Evaluasi entry London session">
+            </label>
+            <div class="form-grid">
+              <label class="field">
+                <span>Setup</span>
+                <input id="journalSetupInput" type="text" maxlength="80" placeholder="OB, FVG, liquidity sweep">
+              </label>
+              <label class="field">
+                <span>Hasil</span>
+                <select id="journalResultInput">
+                  <option value="Belum selesai">Belum selesai</option>
+                  <option value="Win">Win</option>
+                  <option value="Loss">Loss</option>
+                  <option value="BE">BE</option>
+                  <option value="Tidak entry">Tidak entry</option>
+                </select>
+              </label>
+            </div>
+            <div class="form-grid">
+              <label class="field">
+                <span>Profit</span>
+                <input id="journalProfitInput" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Untung trade">
+              </label>
+              <label class="field">
+                <span>Loss</span>
+                <input id="journalLossInput" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Rugi trade">
+              </label>
+            </div>
+            <label class="field">
+              <span>Catatan & Evaluasi</span>
+              <textarea id="journalEvaluationInput" rows="6" maxlength="4800" placeholder="Tulis rencana, alasan entry, kondisi market, dan evaluasi trade di sini."></textarea>
+            </label>
+            <div class="form-grid">
+              <label class="field">
+                <span>Kesalahan</span>
+                <textarea id="journalMistakesInput" rows="3" maxlength="1600" placeholder="FOMO, entry cepat, revenge trade..."></textarea>
+              </label>
+              <label class="field">
+                <span>Pelajaran</span>
+                <textarea id="journalLessonsInput" rows="3" maxlength="1600" placeholder="Apa yang perlu diperbaiki."></textarea>
+              </label>
+            </div>
+            <label class="field">
+              <span>Emosi</span>
+              <input id="journalEmotionInput" type="text" maxlength="120" placeholder="Tenang, takut, serakah, ragu, percaya diri">
+            </label>
+            <label class="file-drop" for="journalFileInput">
+              <input id="journalFileInput" type="file" multiple accept="image/*,video/*,.mp4,.mkv,.webm,.ogg,.mov,.m4v,.3gp,.avi,.md,.txt,.doc,.docx,.pdf,.xls,.xlsx,.csv,.ppt,.pptx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/markdown,text/plain">
+              <span class="file-drop-title">Tambah lampiran jurnal</span>
+              <span class="file-drop-meta" id="journalFileMeta">Gambar chart, video, PDF, Markdown, TXT, Word, Excel, PowerPoint</span>
+            </label>
+            <p class="form-message" id="journalMessage" role="status"></p>
+            <div class="form-actions">
+              <button class="ghost-button" id="resetJournalBtn" type="button">Tutup Editor</button>
+              <button class="primary-button" type="submit">Simpan Jurnal</button>
+            </div>
+          </form>
+
+          <div class="journal-list" id="journalList"></div>
+          <div class="empty-state" id="journalEmpty" hidden>
+            <div class="empty-mark" aria-hidden="true">J</div>
+            <h3>Jurnal kosong</h3>
+            <p>Tulis jurnal teks dulu, lalu tambahkan gambar chart kapan saja.</p>
+          </div>
+        </section>
+
+        <section class="view" id="assistantView" aria-labelledby="assistantHeading" hidden>
+          
+
+          <div class="assistant-workspace">
+            
+
+            <section class="assistant-card assistant-chat-card assistant-room-card">
+              <div class="assistant-chat-headline">
+                <h3>Asisten AI</h3>
+                <button class="ghost-button danger" id="clearAssistantHistoryBtn" type="button">Hapus Riwayat</button>
+              </div>
+              <div class="assistant-chat-log" id="assistantChatLog" aria-live="polite"></div>
+              <div class="assistant-answer assistant-live-answer" id="assistantAnswer" hidden>Jawaban asisten akan muncul di sini.</div>
+              <div class="assistant-chat-bar-container">
+                <div class="assistant-quick-prompts" id="assistantQuickPrompts">
+                  <button class="quick-prompt-btn" type="button">Bantu analisa kelemahan trading saya</button>
+                  <button class="quick-prompt-btn" type="button">Apa itu Fair Value Gap?</button>
+                  <button class="quick-prompt-btn" type="button">Buka dashboard statistik</button>
+                </div>
+                <div class="assistant-chat-bar">
+                  <div class="mode-dropdown-container">
+                    <button id="modeToggleBtn" class="assistant-mode-toggle" type="button">🧠</button>
+                    <div id="modeDropdownMenu" class="mode-dropdown-menu hidden" id="assistantModeTabs">
+                      <button class="assistant-mode-tab is-active" type="button" data-assistant-mode="coach">Coach Trading</button>
+                      <button class="assistant-mode-tab" type="button" data-assistant-mode="material">Cari Materi</button>
+                      <button class="assistant-mode-tab" type="button" data-assistant-mode="action">Aksi Aplikasi</button>
+                    </div>
+                  </div>
+                  <label class="assistant-chat-input" for="assistantQuestionInput">
+                    <textarea id="assistantQuestionInput" rows="1" maxlength="1600" placeholder="Ketik pesan untuk Smart AI..."></textarea>
+                  </label>
+                  <button class="assistant-send-button" id="askAssistantBtn" type="button" aria-label="Kirim pesan">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+                  </button>
+                </div>
+              </div>
+              <p class="assistant-note">AI bisa salah. Aplikasi tetap memvalidasi aksi penting sebelum dijalankan.</p>
+            </section>
+
+            <section class="assistant-card assistant-insight-card">
+              <div class="assistant-card-headline">
+                <div>
+                  <span>Insight Cepat</span>
+                  <h3>Kebiasaan Trading</h3>
+                </div>
+                <div class="form-actions compact-actions">
+                  <button class="primary-button" id="updateInsightBtn" type="button">Update</button>
+                  <button class="ghost-button danger" id="clearInsightBtn" type="button">Hapus</button>
+                </div>
+              </div>
+              <div class="insight-box" id="insightBox">Belum ada insight. Tekan Update Insight.</div>
+            </section>
+
+            <details class="assistant-card assistant-api-settings" id="assistantApiSettings">
+              <summary>
+                <span>Pengaturan API</span>
+                <strong id="assistantApiSummary">Status koneksi AI</strong>
+              </summary>
+              <div class="assistant-api-body">
+                <label class="field">
+                  <span>Provider</span>
+                  <select id="aiProviderInput" class="input">
+                    <option value="deepseek">DeepSeek</option>
+                    <option value="gemini">Gemini</option>
+                    <option value="groq">Groq</option>
+                    <option value="openrouter" selected>OpenRouter</option>
+                    <option value="mistral">Mistral / Mimo</option>
+                    <option value="openai">OpenAI</option>
+                    <option value="custom">Custom OpenAI-Compatible</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>API Key</span>
+                  <input id="geminiApiKeyInput" type="password" autocomplete="off" placeholder="Isi API key di webpage, bukan di kode">
+                </label>
+                <label class="field">
+                  <span>Model</span>
+                  <input id="geminiModelInput" type="text" value="google/gemini-2.0-flash-001" placeholder="google/gemini-2.0-flash-001">
+                </label>
+                <label class="field" hidden>
+                  <span>Base URL Custom</span>
+                  <input id="aiBaseUrlInput" type="url" autocomplete="off" placeholder="https://domain-api-kamu.com/v1/chat/completions">
+                </label>
+                <div class="form-actions compact-actions">
+                  <button class="primary-button" id="saveGeminiKeyBtn" type="button">Simpan API</button>
+                  <button class="ghost-button" id="testGeminiBtn" type="button">Test</button>
+                  <button class="ghost-button danger" id="clearGeminiKeyBtn" type="button">Hapus API</button>
+                </div>
+                <p class="form-message" id="assistantMessage" role="status"></p>
+              </div>
+            </details>
+          </div>
+        </section>
+
+
+        <section class="view" id="statisticsView" aria-labelledby="statisticsHeading" hidden>
+          <div class="section-head">
+            <div>
+              <h2 id="statisticsHeading">Dasbor & Statistik</h2>
+              <p id="statisticsCount">Ringkasan performa dan kebiasaan trading Anda</p>
+            </div>
+            <div class="section-actions">
+              <button class="ghost-button" id="exportAllBtn" type="button">Backup</button>
+              <label class="ghost-button import-button" for="importBackupInput">Restore</label>
+              <input id="importBackupInput" type="file" accept=".zip,application/zip" hidden>
+              <button class="ghost-button" id="scanStorageBtn" type="button">Scan HP</button>
+              <input id="storageScanInput" type="file" multiple accept="image/*,video/*,.pdf,.doc,.docx,.md,.txt,.xls,.xlsx,.csv,.ppt,.pptx" hidden>
+              <button class="ghost-button" id="setPinBtn" type="button">PIN</button>
+              <button class="ghost-button danger" id="clearPinBtn" type="button">Hapus PIN</button>
+            </div>
+          </div>
+          <p class="form-message" id="scanStorageMessage" role="status"></p>
+          <div class="dashboard-grid" id="dashboardGrid"></div>
+          <div class="statistics-page" id="statisticsViewContent"></div>
+        </section>
+
+        <section class="view" id="notesView" aria-labelledby="notesHeading" hidden>
+          <div class="section-head">
+            <div>
+              <h2 id="notesHeading">Catatan Pribadi</h2>
+              <p id="notesCount">0 catatan</p>
+            </div>
+            <div class="section-actions">
+              <button class="primary-button" id="newNoteBtn" type="button">+ Catat Baru</button>
+            </div>
+          </div>
+
+          <form class="journal-form journal-editor" id="noteForm" hidden>
+            <input id="noteId" type="hidden">
+            <div class="form-grid">
+              <label class="field">
+                <span>Tanggal</span>
+                <input id="noteDateInput" type="date" required>
+              </label>
+            </div>
+            <label class="field">
+              <span>Judul Catatan</span>
+              <input id="noteTitleInput" type="text" maxlength="100" required placeholder="Apa yang Anda pikirkan/rasakan?">
+            </label>
+            <label class="field">
+              <span>Isi Curhat / Pengalaman / Target</span>
+              <textarea id="noteContentInput" rows="10" maxlength="8000" placeholder="Tulis keluh kesah, pengalaman trading hari ini, atau bebas apapun di sini..." required></textarea>
+            </label>
+            <div class="form-actions">
+              <button class="secondary-button" id="cancelNoteBtn" type="button">Batal</button>
+              <button class="primary-button" type="submit">Simpan Catatan</button>
+            </div>
+          </form>
+
+          <div class="journal-list" id="notesList" aria-live="polite"></div>
+        </section>
+      </main>
+
+
+      <!-- Floating AI popup removed: AI is focused inside Ruang Asisten. -->
+      <nav class="bottom-nav" aria-label="Navigasi utama">
+        <button class="nav-button is-active" type="button" data-view="library">
+          <span class="nav-icon library-icon" aria-hidden="true"></span>
+          <span>Library</span>
+        </button>
+        <button class="nav-button" type="button" data-view="media">
+          <span class="nav-icon media-icon" aria-hidden="true"></span>
+          <span>Media</span>
+        </button>
+        <button class="nav-button" type="button" data-view="journal">
+          <span class="nav-icon journal-icon" aria-hidden="true"></span>
+          <span>Jurnal</span>
+        </button>
+        <button class="nav-button" type="button" data-view="assistant">
+          <span class="nav-icon assistant-icon" aria-hidden="true"></span>
+          <span>Asisten</span>
+        </button>
+      </nav>
+    </div>
+
+    <dialog class="sheet-dialog" id="itemDialog">
+      <form class="item-form" id="itemForm" method="dialog">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <div class="form-head">
+          <div>
+            <span id="formMode">Tambah</span>
+            <h2>Data Trading</h2>
+          </div>
+          <button class="icon-button close-button" id="closeFormBtn" value="cancel" type="button" aria-label="Tutup">×</button>
+        </div>
+
+        <input id="itemId" type="hidden">
+
+        <label class="field">
+          <span>Judul</span>
+          <input id="titleInput" name="title" type="text" maxlength="80" required placeholder="Contoh: OB valid London session">
+        </label>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Tipe</span>
+            <select id="typeInput" name="type" required>
+              <option value="Materi Trading">Materi Trading</option>
+              <option value="Kode Indikator">Kode Indikator</option>
+              <option value="Gambar Chart">Gambar Chart</option>
+              <option value="Video Pembelajaran">Video Pembelajaran</option>
+              <option value="Dokumen">Dokumen</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Kategori</span>
+            <select id="categoryInput" name="category" required></select>
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Status</span>
+          <select id="statusInput" name="status" required></select>
+        </label>
+
+        <label class="field">
+          <span>Koleksi / Folder</span>
+          <input id="collectionInput" name="collection" type="text" maxlength="60" placeholder="Contoh: Jurnal Trading, Setup Entry, Psikologi">
+        </label>
+
+        <label class="field">
+          <span>Tag bebas</span>
+          <input id="tagsInput" name="tags" type="text" maxlength="180" placeholder="Contoh: entry, FOMO, backtest">
+        </label>
+
+        <label class="field">
+          <span>Link media/file</span>
+          <input id="mediaUrlInput" name="mediaUrl" type="url" placeholder="https://contoh.com/chart.png, video.mp4, atau dokumen.pdf">
+        </label>
+
+        <label class="file-drop" for="fileInput">
+          <input id="fileInput" type="file" multiple accept="image/*,video/*,.mp4,.mkv,.webm,.ogg,.mov,.m4v,.3gp,.avi,.md,.txt,.doc,.docx,.pdf,.xls,.xlsx,.csv,.ppt,.pptx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/markdown,text/plain">
+          <span class="file-drop-title">Pilih gambar, video, atau dokumen</span>
+          <span class="file-drop-meta" id="fileMeta">PNG, JPG, WEBP, MP4, MKV, WEBM, MD, TXT, DOC, DOCX, PDF, XLS, XLSX, CSV, PPT, PPTX</span>
+        </label>
+
+        <label class="toggle-field form-toggle">
+          <input id="compressImageInput" type="checkbox">
+          <span>Kompres gambar besar sebelum disimpan</span>
+        </label>
+
+        <div class="preview-box" id="formPreview" hidden></div>
+
+        <label class="field">
+          <span>Catatan</span>
+          <textarea id="notesInput" name="notes" rows="4" maxlength="1400" placeholder="Setup, aturan entry, alasan validasi, atau catatan belajar."></textarea>
+        </label>
+
+        <label class="field">
+          <span>Checklist belajar</span>
+          <textarea id="checklistInput" name="checklist" rows="4" maxlength="1200" placeholder="Satu checklist per baris. Awali dengan [x] untuk selesai."></textarea>
+        </label>
+
+        <label class="field code-field" id="codeField">
+          <span>Kode indikator</span>
+          <textarea id="codeInput" name="code" rows="8" spellcheck="false" placeholder="// Simpan Pine Script atau snippet indikator di sini"></textarea>
+        </label>
+
+        <p class="form-message" id="formMessage" role="status"></p>
+
+        <div class="form-actions">
+          <button class="ghost-button danger" id="deleteCurrentBtn" type="button" hidden>Hapus</button>
+          <button class="primary-button" type="submit">Simpan</button>
+        </div>
+      </form>
+    </dialog>
+
+    <template id="cardTemplate">
+      <article class="library-card">
+        <label class="select-check">
+          <input class="select-action" type="checkbox" aria-label="Pilih item">
+          <span></span>
+        </label>
+        <div class="media-slot"></div>
+        <div class="card-body">
+          <div class="card-topline">
+            <span class="category-tag"></span>
+            <span class="status-tag"></span>
+          </div>
+          <h3 class="card-title"></h3>
+          <p class="card-meta"></p>
+          <p class="file-line"></p>
+          <p class="card-tags"></p>
+          <p class="card-notes"></p>
+          <div class="checklist-preview"></div>
+          <pre class="code-preview"></pre>
+          <p class="revision-line"></p>
+        </div>
+        <div class="card-actions compact-card-actions">
+          <div class="card-menu-wrap">
+            <button class="small-button menu-toggle-action" type="button" aria-label="Menu aksi">⋮</button>
+            <div class="card-menu" hidden>
+              <button class="card-menu-item edit-action" type="button">Edit</button>
+              <button class="card-menu-item copy-action" type="button">Lihat / Salin</button>
+              <button class="card-menu-item pin-action" type="button">Pin</button>
+              <button class="card-menu-item archive-action" type="button">Arsip</button>
+              <button class="card-menu-item export-action" type="button">Export</button>
+              <button class="card-menu-item danger delete-action" type="button">Hapus</button>
+            </div>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <dialog class="sheet-dialog document-dialog" id="documentDialog">
+      <div class="document-viewer">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <div class="form-head">
+          <div>
+            <span id="documentTypeLabel">Dokumen</span>
+            <h2 id="documentTitle">Preview Dokumen</h2>
+          </div>
+          <button class="icon-button close-button" id="closeDocumentBtn" type="button" aria-label="Tutup">×</button>
+        </div>
+        <div class="document-frame" id="documentFrame"></div>
+        <div class="document-actions">
+          <button class="ghost-button" id="downloadDocumentBtn" type="button">Download</button>
+          <button class="primary-button" id="openDocumentBtn" type="button">Buka</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="fullscreen-dialog" id="fullscreenDialog">
+      <div class="fullscreen-viewer">
+        <header class="fullscreen-bar">
+          <button class="icon-button fullscreen-back" id="fullscreenBackBtn" type="button" aria-label="Kembali">‹</button>
+          <div class="fullscreen-title-wrap">
+            <span id="fullscreenMeta">Preview</span>
+            <h2 id="fullscreenTitle">Viewer</h2>
+          </div>
+          <button class="icon-button fullscreen-close" id="fullscreenCloseBtn" type="button" aria-label="Tutup">×</button>
+        </header>
+        <div class="fullscreen-stage" id="fullscreenStage"></div>
+        <button class="fullscreen-nav fullscreen-prev" id="fullscreenPrevBtn" type="button" aria-label="Gambar sebelumnya">‹</button>
+        <button class="fullscreen-nav fullscreen-next" id="fullscreenNextBtn" type="button" aria-label="Gambar berikutnya">›</button>
+        <footer class="fullscreen-footer">
+          <button class="ghost-button danger" id="fullscreenDeleteBtn" type="button">Hapus</button>
+          <button class="ghost-button" id="fullscreenAnalyzeBtn" type="button" hidden>Analisis Chart</button>
+          <button class="ghost-button" id="fullscreenExitBtn" type="button">Keluar</button>
+        </footer>
+        <div class="fullscreen-analysis" id="fullscreenAnalysis" hidden></div>
+      </div>
+    </dialog>
+
+    <script src="./jszip.min.js?v=20260623" defer></script>
+    <script src="./app.js?v=20260623" defer></script>
+  <script src="amy-journal-final-fix.js"></script>
+<script>
+/* AMYFX_NOTIFY_GUARD_START */
+(function(){
+  if(window.__amyfxNotifyGuardLoaded)return;
+  window.__amyfxNotifyGuardLoaded=true;
+
+  const STORE='amyfx.notify.last.sent';
+  const COOLDOWN=5*60*1000;
+  const RESUME_MUTE=9000;
+  const MAX_ITEMS=80;
+  let muteUntil=0;
+
+  function now(){return Date.now()}
+  function norm(x){
+    return String(x||'')
+      .replace(/\d+([.,]\d+)?/g,'#')
+      .replace(/\s+/g,' ')
+      .trim()
+      .slice(0,180);
+  }
+  function kind(t,b){
+    const x=(String(t||'')+' '+String(b||'')).toLowerCase();
+    if(x.includes('scanner terhubung'))return 'scanner_connected';
+    if(x.includes('amy fx aktif'))return 'scanner_alive';
+    if(x.includes('liquidity sweep'))return 'liquidity_sweep';
+    if(x.includes('ssl')||x.includes('bsl'))return 'bsl_ssl_touched';
+    return 'amyfx_alert';
+  }
+  function key(t,b){
+    return kind(t,b)+'|'+norm(t)+'|'+norm(b);
+  }
+  function read(){
+    try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch(e){return{}}
+  }
+  function write(o){
+    const arr=Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,MAX_ITEMS);
+    localStorage.setItem(STORE,JSON.stringify(Object.fromEntries(arr)));
+  }
+  function route(t,b){
+    const k=kind(t,b);
+    if(k==='liquidity_sweep')return 'Analyze';
+    if(k==='bsl_ssl_touched')return 'Analyze';
+    if(k==='scanner_connected'||k==='scanner_alive')return 'Dashboard';
+    return 'Analyze';
+  }
+  function openRoute(t,b){
+    const r=route(t,b);
+    try{localStorage.setItem('amyfx.notification.route',r)}catch(e){}
+    try{if(typeof setTab==='function')setTab(r)}catch(e){}
+    try{window.focus()}catch(e){}
+  }
+  function allow(t,b){
+    const n=now();
+    const k=key(t,b);
+
+    if(n<muteUntil && kind(t,b)!=='scanner_alive')return false;
+
+    const last=read();
+    const prev=last[k]||0;
+    if(n-prev<COOLDOWN)return false;
+
+    last[k]=n;
+    write(last);
+    return true;
+  }
+
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden){
+      muteUntil=now()+RESUME_MUTE;
+    }
+  });
+
+  window.addEventListener('pageshow',function(){
+    muteUntil=now()+RESUME_MUTE;
+  });
+
+  try{
+    if('Notification' in window && !window.Notification.__amyfxWrapped){
+      const OriginalNotification=window.Notification;
+      const WrappedNotification=function(title,opts){
+        opts=opts||{};
+        const body=opts.body||'';
+        if(!allow(title,body))return null;
+        const n=new OriginalNotification(title,opts);
+        n.onclick=function(){openRoute(title,body)};
+        return n;
+      };
+      Object.getOwnPropertyNames(OriginalNotification).forEach(function(k){
+        try{WrappedNotification[k]=OriginalNotification[k]}catch(e){}
+      });
+      WrappedNotification.prototype=OriginalNotification.prototype;
+      WrappedNotification.__amyfxWrapped=true;
+      window.Notification=WrappedNotification;
+    }
+  }catch(e){}
+
+  function wrapBridge(obj){
+    if(!obj||obj.__amyfxNotifyBridgeWrapped)return;
+    Object.keys(obj).forEach(function(k){
+      if(!/notify|notification|alert|push/i.test(k))return;
+      if(typeof obj[k]!=='function')return;
+      const old=obj[k];
+      obj[k]=function(){
+        const args=[].slice.call(arguments);
+        const title=args[0]||'Amy FX';
+        const body=args[1]||args[0]||'';
+        if(!allow(title,body))return null;
+        try{return old.apply(this,args)}catch(e){return null}
+      };
+    });
+    obj.__amyfxNotifyBridgeWrapped=true;
+  }
+
+  function wrapAll(){
+    ['Android','AndroidBridge','AmyFX','AmyFx','Native','NotificationBridge','AppBridge'].forEach(function(n){
+      try{wrapBridge(window[n])}catch(e){}
+    });
+  }
+
+  wrapAll();
+  setInterval(wrapAll,1500);
+
+  window.__amyfxNotifyAllow=allow;
+  window.__amyfxNotifyOpenRoute=openRoute;
+})();
+/* AMYFX_NOTIFY_GUARD_END */
+</script>
+</body>
+</html>

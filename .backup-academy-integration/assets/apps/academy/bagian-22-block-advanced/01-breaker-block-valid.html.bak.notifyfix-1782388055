@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Breaker Block Valid — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+</head>
+<body>
+  <script>requireLogin();</script>
+  <header class="topbar hide-until-auth">
+    <nav class="nav">
+      <a class="brand" href="../index.html"><span class="brand-mark">A</span><span>Amy FX Academy</span></a>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div class="navlinks" id="navlinks">
+        <a href="../index.html">Beranda</a>
+        <a href="../daftar-materi.html">Daftar Materi</a>
+        <a href="../tentang.html">Tentang</a>
+        <a href="../glosarium/index.html">Glosarium</a>
+        
+      </div>
+    </nav>
+  </header>
+  <main class="container hide-until-auth">
+    <div class="article-layout">
+      <article class="article">
+        <div class="breadcrumb"><a href="../index.html">Beranda</a> › <a href="index.html">Bagian 22 — Breaker, Mitigation, Rejection Advanced</a></div>
+        <div class="eyebrow">Bagian 22 — Breaker, Mitigation, Rejection Advanced</div>
+        <h1>Breaker Block Valid</h1>
+        
+<p>Selamat datang di materi <strong>Breaker Block Valid</strong>. Jika di materi dasar kamu sudah belajar tentang Order Block (OB) sebagai area di mana Smart Money menempatkan pesanan besar mereka, kini saatnya kita membahas saudaranya yang jauh lebih mematikan dan sering disalahpahami oleh banyak trader: <strong>Breaker Block (BB)</strong>.</p>
+<p>Secara sederhana, Breaker Block adalah Order Block yang gagal. Namun, jangan salah paham. Kegagalan ini bukan karena "analisanya salah", melainkan karena Order Block tersebut sengaja dijebol oleh institusi sebagai bagian dari manipulasi likuiditas, sebelum akhirnya harga berbalik arah dan mengkonfirmasi struktur yang baru. Ketika harga kembali ke area Order Block yang gagal tersebut, area itu berubah fungsi menjadi Breaker Block yang valid dan sangat kuat untuk kita jadikan acuan entry.</p>
+
+<h2>Apa itu Breaker Block (BB)?</h2>
+<p>Breaker Block pada dasarnya adalah konsep Order Block yang tertembus oleh pergerakan impulsif, lalu harga kembali lagi (retest) ke area tersebut sebelum melanjutkan pergerakan barunya. Mirip dengan konsep <em>Support Become Resistance</em> (SBR) atau <em>Resistance Become Support</em> (RBS) pada teknikal analisis klasik, tetapi dengan fondasi logika likuiditas institusional (Smart Money Concepts).</p>
+<p>Perbedaan mendasar antara SBR/RBS klasik dengan Breaker Block terletak pada <strong>narasi likuiditas di belakangnya</strong>. Sebuah Breaker Block yang valid dan berkategori A+ <strong>harus diawali oleh sebuah manipulasi likuiditas</strong> (stop hunt / sweep). Jika tidak ada likuiditas yang disapu sebelum Order Block tersebut jebol, maka probabilitasnya sangat rendah dan kita menyebutnya hanya sebagai kegagalan struktur biasa.</p>
+
+<div class="note"><strong>Catatan Amy:</strong> Banyak trader pemula bingung membedakan antara Mitigation Block dan Breaker Block karena bentuknya mirip. Kunci utama dari Breaker Block adalah: <strong>HARUS ADA SWEEP LIQUIDITY</strong> sebelum harga berbalik arah dan menembus Order Block tersebut. Jika tidak ada sweep liquidity (high/low sebelumnya tidak ditembus sebelum reversal), itu namanya Mitigation Block. Kita akan bahas Mitigation Block di materi selanjutnya.</div>
+
+<h2>Anatomi Bearish Breaker Block</h2>
+<p>Mari kita bayangkan anatomi dari sebuah <strong>Bearish Breaker Block</strong>. Kondisi ini sering terjadi saat pergantian tren dari bullish ke bearish di pucuk (puncak) pergerakan.</p>
+<ol>
+    <li>Harga sedang dalam tren naik dan membuat <em>Higher High</em> (HH) dan <em>Higher Low</em> (HL).</li>
+    <li>Di titik HL terakhir, terdapat sebuah <em>Bullish Order Block</em> (Down candle terakhir sebelum harga naik membuat HH).</li>
+    <li>Harga kemudian turun menuju Bullish Order Block tersebut, memantul sedikit, namun bukannya membuat <em>Higher High</em> baru, harga justru menembus kuat ke bawah dan menembus <em>Higher Low</em> tadi (Market Structure Shift / MSS).</li>
+    <li>Nah, perhatikan baik-baik: Bullish Order Block di HL yang gagal menahan harga dan akhirnya tertembus itu, sekarang beralih status menjadi <strong>Bearish Breaker Block</strong>.</li>
+    <li>Ketika harga <em>pullback</em> (naik kembali) menuju Bearish Breaker Block tersebut, di sanalah area entry Sell terbaik kita dengan target likuiditas di bawah.</li>
+</ol>
+<p>Lalu di mana bagian manipulasi likuiditasnya? Ingat, sebelum harga terjun menembus HL dan Bullish OB tersebut, harga di puncak harus terlebih dahulu menyapu likuiditas (Liquidity Sweep) dari high sebelumnya. Ini yang kita sebut sebagai "Turtle Soup" atau "Stop Hunt". Tanpa sapuan likuiditas di puncak, Breaker Block tersebut memiliki probabilitas yang rendah.</p>
+
+<h2>Anatomi Bullish Breaker Block</h2>
+<p>Kebalikan dari Bearish Breaker Block adalah <strong>Bullish Breaker Block</strong>. Proses terjadinya sama, namun arahnya terbalik.</p>
+<ol>
+    <li>Harga sedang tren turun, membuat <em>Lower Low</em> (LL) dan <em>Lower High</em> (LH).</li>
+    <li>Di area LH, terdapat <em>Bearish Order Block</em> (Up candle terakhir sebelum harga drop membuat LL).</li>
+    <li>Harga kemudian memantul sedikit dari LH, lalu membuat LL baru yang menyapu likuiditas dari <em>low</em> sebelumnya (Liquidity Sweep).</li>
+    <li>Setelah menyapu likuiditas, alih-alih melanjutkan tren turun, harga tiba-tiba berbalik arah dengan momentum impulsif dan memecahkan <em>Lower High</em> (LH) sebelumnya beserta Bearish Order Block di area tersebut (MSS).</li>
+    <li>Bearish Order Block yang tertembus tersebut kini menjadi <strong>Bullish Breaker Block</strong>.</li>
+    <li>Saat harga <em>pullback</em> turun dan menyentuh kembali Bullish Breaker Block, itu adalah konfirmasi entry Buy kita.</li>
+</ol>
+
+<div class="warning"><strong>Penting:</strong> Jangan terburu-buru menganggap setiap level SBR/RBS sebagai Breaker Block. Breaker Block yang kuat <strong>wajib</strong> ditembus dengan <em>Displacement</em> (candle besar, momentum kuat) yang sering kali menyisakan <em>Fair Value Gap</em> (FVG). Jika OB ditembus dengan candle kecil yang tersendat-sendat, area tersebut tidak valid sebagai Breaker Block karena tidak ada indikasi campur tangan institusi yang agresif.</div>
+
+<h2>Kriteria Breaker Block dengan Probabilitas A+</h2>
+<p>Dalam trading ICT dan SMC, kita tidak mengambil sembarang setup. Kita ingin setup dengan probabilitas tertinggi. Berikut adalah daftar periksa (checklist) untuk menentukan apakah sebuah Breaker Block sangat kuat dan layak dijadikan titik entry:</p>
+<ul>
+    <li><strong>Didahului oleh Liquidity Sweep:</strong> Ini syarat mutlak. Sebelum harga berbalik dan menembus OB, harga harus memanipulasi high/low sebelumnya untuk mengambil likuiditas (stop loss retail trader). Manipulasi ini memberikan "bahan bakar" bagi Smart Money untuk membalikkan arah pasar dengan keras.</li>
+    <li><strong>Displacement dan Market Structure Shift (MSS):</strong> Penembusan OB awal harus dilakukan dengan pergerakan harga yang impulsif dan cepat. Ini menandakan niat (intent) yang jelas dari institusi bahwa mereka telah berubah haluan.</li>
+    <li><strong>Kehadiran Fair Value Gap (FVG):</strong> Breaker Block terbaik adalah yang diiringi oleh terbentuknya FVG di area sekitarnya saat terjadi MSS. Perpaduan antara Breaker Block dan FVG menciptakan area <em>confluence</em> tingkat tinggi yang disebut "Unicorn Setup" oleh komunitas ICT.</li>
+    <li><strong>Kesesuaian dengan Bias Timeframe Besar (HTF):</strong> Setup Breaker Block di timeframe kecil (misalnya M5 atau M15) akan jauh lebih <em>powerful</em> jika sejalan dengan bias arah (Directional Bias) di timeframe besar (seperti H1 atau H4) dan terbentuk di zona POI (Point of Interest) timeframe besar.</li>
+    <li><strong>Premium vs Discount:</strong> Sama seperti strategi SMC lainnya, untuk Sell di Bearish Breaker, pastikan area tersebut berada di zona Premium. Untuk Buy di Bullish Breaker, pastikan area tersebut berada di zona Discount dari <em>dealing range</em> yang baru.</li>
+</ul>
+
+<h2>Psikologi di Balik Breaker Block</h2>
+<p>Mengapa Breaker Block berfungsi dengan sangat baik? Jawabannya terletak pada cara institusi besar mengelola order mereka. Saat institusi ingin membeli dalam jumlah besar (Buy), mereka butuh pihak yang bersedia menjual. Untuk memancing penjualan, mereka melakukan manipulasi ke bawah (Liquidity Sweep) agar retail trader yang menempatkan Stop Loss (Sell Stop) atau trader breakout (Sell Stop) tereksekusi.</p>
+<p>Ketika pesanan Sell dari retail tereksekusi, institusi dengan cepat memborong pesanan tersebut (Buy), yang menyebabkan harga melonjak tajam menembus <em>Bearish Order Block</em> sebelumnya. Namun, institusi mungkin masih memiliki sebagian pesanan jual yang terjebak di <em>Bearish Order Block</em> (karena mereka sebelumnya juga ikut menjual untuk mendorong harga turun menyapu likuiditas).</p>
+<p>Oleh karena itu, ketika harga turun kembali (pullback) ke <em>Bearish Order Block</em> yang kini tertembus, institusi akan <strong>menutup posisi jual mereka yang merugi</strong> pada titik impas (break-even), dan sekaligus menambah posisi beli yang baru. Inilah yang menciptakan reaksi penolakan (bounce) keras dari Breaker Block tersebut. Inilah inti dari mekanika mitigasi di Breaker Block.</p>
+
+<h2>Langkah Eksekusi Trading dengan Breaker Block</h2>
+<p>Sekarang, bagaimana cara kita menerapkannya di chart sesungguhnya? Ikuti rutinitas sederhana ini saat kamu mendapati kondisi market yang berpotensi membentuk Breaker Block:</p>
+<ol>
+    <li><strong>Identifikasi Sweep:</strong> Cari area di mana harga terlihat menjebol sebuah <em>swing high</em> atau <em>swing low</em>, tapi tidak lama kemudian gagal meneruskan tren dan justru menunjukkan perlawanan balik yang kuat.</li>
+    <li><strong>Tandai Order Block yang Gagal:</strong> Temukan candle berlawanan terakhir sebelum harga berbalik dan menembus struktur. Inilah <em>Order Block</em> asal mula yang kini akan berubah fungsi.</li>
+    <li><strong>Tunggu Konfirmasi MSS dan FVG:</strong> Pastikan <em>Order Block</em> tersebut ditembus oleh candle besar dengan momentum (Displacement) dan menyisakan FVG di belakangnya. Ini mengkonfirmasi validitas Breaker Block.</li>
+    <li><strong>Tarik Kotak pada Breaker Block:</strong> Tandai area dari ujung sumbu atas hingga sumbu bawah (atau khusus body-nya saja) pada candle <em>Order Block</em> yang tertembus tersebut. Ekstensikan garis ke kanan.</li>
+    <li><strong>Set Limit Order atau Tunggu Reaksi:</strong> Kamu bisa menempatkan <em>Buy/Sell Limit</em> di batas awal Breaker Block, atau menunggu harga memasuki area Breaker Block, menembus FVG di dekatnya, lalu masuk (entry) dengan konfirmasi timeframe lebih kecil.</li>
+    <li><strong>Penempatan Stop Loss:</strong> Untuk posisi konservatif, Stop Loss diletakkan di atas atau di bawah ujung swing ekstrim (titik manipulasi likuiditas). Namun untuk risiko yang lebih kecil, banyak trader meletakkannya tepat di atas/bawah area Breaker Block atau batas FVG. Target Profit harus rasional, seperti menyapu <em>liquidity pool</em> di seberangnya.</li>
+</ol>
+<p>Memahami Breaker Block akan membuka matamu terhadap apa yang sering disebut sebagai pergerakan palsu atau "fakeout". Yang selama ini mungkin kamu anggap sebagai indikator yang gagal (Order Block yang tembus), sebenarnya adalah peluang entry tingkat lanjut yang disiapkan oleh pergerakan Smart Money. Di materi selanjutnya, kita akan membandingkan Breaker Block dengan saudaranya, yaitu <em>Mitigation Block</em>, dan melihat kapan serta bagaimana <em>Rejection Block</em> bekerja.</p>
+        
+        <div class="source-note">Materi ini disusun berdasarkan standar eksekusi lanjutan Smart Money Concepts (SMC) & Inner Circle Trader (ICT).</div>
+        <nav class="page-nav">
+          <span></span>
+          <a class="btn gold" href="../daftar-materi.html">Daftar Materi</a>
+          <a class="btn primary" href="02-mitigation-dan-rejection-block.html">Mitigation dan Rejection Block →</a>
+        </nav>
+      </article>
+      <aside class="toc-card">
+        <h3>Bagian 22 — Breaker, Mitigation, Rejection Advanced</h3>
+        <ul>
+          <li><a class="active" href="01-breaker-block-valid.html">Breaker Block Valid</a></li>
+          <li><a class="" href="02-mitigation-dan-rejection-block.html">Mitigation dan Rejection Block</a></li>
+          <li><a class="" href="03-block-stacking.html">Block Stacking</a></li>
+          
+        </ul>
+      </aside>
+    </div>
+  </main>
+  <footer class="footer hide-until-auth">© 2026 Amy FX Academy. Belajar Trading dari Nol sampai Mandiri.</footer>
+</body>
+</html>

@@ -1,0 +1,278 @@
+//@version=5
+indicator("AMY Neo Wave Structure + Entry Map", shorttitle="AMY Neo Wave", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=100, max_bars_back=3000)
+
+//==================== INPUTS ====================//
+amy_groupCore = "AMY Neo Wave Core"
+amy_len = input.int(6, "Wave Pivot Length", minval=2, maxval=30, group=amy_groupCore)
+amy_minAtr = input.float(0.8, "Minimum Wave Size ATR", minval=0.1, step=0.1, group=amy_groupCore)
+amy_keep = input.int(12, "Keep Last Swing Points", minval=6, maxval=30, group=amy_groupCore)
+amy_strict = input.bool(false, "Strict Impulse Filter", group=amy_groupCore)
+
+amy_groupEntry = "AMY Neo Entry"
+amy_showEntry = input.bool(true, "Show Wave Entry Zone", group=amy_groupEntry)
+amy_entryMode = input.string("0.5 - 0.786", "Retracement Zone", options=["0.382 - 0.618", "0.5 - 0.786", "0.618 - 0.786"], group=amy_groupEntry)
+amy_rejectRatio = input.float(1.1, "Rejection Wick Ratio", minval=0.2, step=0.1, group=amy_groupEntry)
+amy_tolAtr = input.float(0.25, "Zone Tolerance ATR", minval=0.05, step=0.05, group=amy_groupEntry)
+amy_slAtr = input.float(0.35, "SL Buffer ATR", minval=0.05, step=0.05, group=amy_groupEntry)
+amy_rr1 = input.float(1.0, "TP1 RR", minval=0.2, step=0.1, group=amy_groupEntry)
+amy_rr2 = input.float(2.0, "TP2 RR", minval=0.5, step=0.1, group=amy_groupEntry)
+
+amy_groupDisplay = "AMY Display"
+amy_showWaves = input.bool(true, "Show Wave Lines", group=amy_groupDisplay)
+amy_showLabels = input.bool(true, "Show Wave Labels", group=amy_groupDisplay)
+amy_showPanel = input.bool(true, "Show Dashboard", group=amy_groupDisplay)
+amy_extendBars = input.int(80, "Extend Entry Lines", minval=10, maxval=300, group=amy_groupDisplay)
+
+//==================== BASE ====================//
+amy_atr = ta.atr(14)
+amy_body = math.abs(close - open)
+amy_bodySafe = math.max(amy_body, syminfo.mintick)
+amy_lowerWick = math.min(open, close) - low
+amy_upperWick = high - math.max(open, close)
+amy_bullReject = close > open and amy_lowerWick >= amy_bodySafe * amy_rejectRatio
+amy_bearReject = close < open and amy_upperWick >= amy_bodySafe * amy_rejectRatio
+amy_tol = amy_atr * amy_tolAtr
+
+//==================== STORAGE ====================//
+var int[] amy_wIdx = array.new_int()
+var float[] amy_wPrice = array.new_float()
+var int[] amy_wType = array.new_int()
+var line[] amy_waveLines = array.new_line()
+var label[] amy_waveLabels = array.new_label()
+var box amy_zoneBox = na
+var line amy_entryLine = na
+var line amy_slLine = na
+var line amy_tp1Line = na
+var line amy_tp2Line = na
+var label amy_signalLabel = na
+
+amy_addSwing(_idx, _price, _type, _atr) =>
+    bool _accepted = false
+    _sz = array.size(amy_wType)
+    if _sz == 0
+        array.push(amy_wIdx, _idx)
+        array.push(amy_wPrice, _price)
+        array.push(amy_wType, _type)
+        _accepted := true
+    else
+        _lastType = array.get(amy_wType, _sz - 1)
+        _lastPrice = array.get(amy_wPrice, _sz - 1)
+        if _lastType == _type
+            _replace = (_type == 1 and _price > _lastPrice) or (_type == -1 and _price < _lastPrice)
+            if _replace
+                array.set(amy_wIdx, _sz - 1, _idx)
+                array.set(amy_wPrice, _sz - 1, _price)
+                array.set(amy_wType, _sz - 1, _type)
+                _accepted := true
+        else
+            _largeEnough = math.abs(_price - _lastPrice) >= _atr * amy_minAtr
+            if _largeEnough
+                array.push(amy_wIdx, _idx)
+                array.push(amy_wPrice, _price)
+                array.push(amy_wType, _type)
+                _accepted := true
+    while array.size(amy_wType) > amy_keep
+        array.shift(amy_wIdx)
+        array.shift(amy_wPrice)
+        array.shift(amy_wType)
+    _accepted
+
+amy_clearDrawings() =>
+    while array.size(amy_waveLines) > 0
+        line.delete(array.pop(amy_waveLines))
+    while array.size(amy_waveLabels) > 0
+        label.delete(array.pop(amy_waveLabels))
+
+amy_waveName(_offset, _bullImpulse, _bearImpulse) =>
+    _bullImpulse or _bearImpulse ? str.tostring(_offset) : _offset == 0 ? "A" : _offset == 1 ? "B" : _offset == 2 ? "C" : str.tostring(_offset)
+
+//==================== SWING COLLECTION ====================//
+amy_ph = ta.pivothigh(high, amy_len, amy_len)
+amy_pl = ta.pivotlow(low, amy_len, amy_len)
+if not na(amy_ph)
+    amy_addSwing(bar_index - amy_len, amy_ph, 1, amy_atr)
+if not na(amy_pl)
+    amy_addSwing(bar_index - amy_len, amy_pl, -1, amy_atr)
+
+//==================== WAVE STRUCTURE ====================//
+amy_sz = array.size(amy_wType)
+bool amy_bullImpulse = false
+bool amy_bearImpulse = false
+bool amy_ruleWave2 = false
+bool amy_ruleWave3 = false
+bool amy_ruleWave4 = false
+bool amy_rulesOk = false
+float amy_w1 = na
+float amy_w2 = na
+float amy_w3 = na
+float amy_w4 = na
+float amy_w5 = na
+
+if amy_sz >= 6
+    _base = amy_sz - 6
+    _t0 = array.get(amy_wType, _base)
+    _t1 = array.get(amy_wType, _base + 1)
+    _t2 = array.get(amy_wType, _base + 2)
+    _t3 = array.get(amy_wType, _base + 3)
+    _t4 = array.get(amy_wType, _base + 4)
+    _t5 = array.get(amy_wType, _base + 5)
+    _p0 = array.get(amy_wPrice, _base)
+    _p1 = array.get(amy_wPrice, _base + 1)
+    _p2 = array.get(amy_wPrice, _base + 2)
+    _p3 = array.get(amy_wPrice, _base + 3)
+    _p4 = array.get(amy_wPrice, _base + 4)
+    _p5 = array.get(amy_wPrice, _base + 5)
+    amy_bullImpulse := _t0 == -1 and _t1 == 1 and _t2 == -1 and _t3 == 1 and _t4 == -1 and _t5 == 1
+    amy_bearImpulse := _t0 == 1 and _t1 == -1 and _t2 == 1 and _t3 == -1 and _t4 == 1 and _t5 == -1
+    amy_w1 := math.abs(_p1 - _p0)
+    amy_w2 := math.abs(_p2 - _p1)
+    amy_w3 := math.abs(_p3 - _p2)
+    amy_w4 := math.abs(_p4 - _p3)
+    amy_w5 := math.abs(_p5 - _p4)
+    amy_ruleWave3 := amy_w3 >= math.min(amy_w1, amy_w5)
+    amy_ruleWave2 := amy_bullImpulse ? _p2 > _p0 : amy_bearImpulse ? _p2 < _p0 : false
+    amy_ruleWave4 := not amy_strict or (amy_bullImpulse ? _p4 > _p1 : amy_bearImpulse ? _p4 < _p1 : false)
+    amy_rulesOk := (amy_bullImpulse or amy_bearImpulse) and amy_ruleWave2 and amy_ruleWave3 and amy_ruleWave4
+
+//==================== DRAW WAVES ====================//
+if barstate.islast and amy_showWaves
+    amy_clearDrawings()
+    if amy_sz >= 2
+        _start = math.max(0, amy_sz - 8)
+        for i = _start to amy_sz - 2
+            _x1 = array.get(amy_wIdx, i)
+            _y1 = array.get(amy_wPrice, i)
+            _x2 = array.get(amy_wIdx, i + 1)
+            _y2 = array.get(amy_wPrice, i + 1)
+            _col = _y2 > _y1 ? color.new(color.lime, 0) : color.new(color.red, 0)
+            array.push(amy_waveLines, line.new(_x1, _y1, _x2, _y2, xloc=xloc.bar_index, color=_col, width=2))
+    if amy_showLabels and amy_sz >= 1
+        _labelStart = math.max(0, amy_sz - 6)
+        for i = _labelStart to amy_sz - 1
+            _x = array.get(amy_wIdx, i)
+            _y = array.get(amy_wPrice, i)
+            _typ = array.get(amy_wType, i)
+            _offset = i - _labelStart
+            _txt = amy_waveName(_offset, amy_bullImpulse, amy_bearImpulse)
+            _style = _typ == 1 ? label.style_label_down : label.style_label_up
+            _col = _typ == 1 ? color.new(color.red, 70) : color.new(color.lime, 70)
+            _txtCol = _typ == 1 ? color.red : color.lime
+            array.push(amy_waveLabels, label.new(_x, _y, _txt, xloc=xloc.bar_index, style=_style, color=_col, textcolor=_txtCol, size=size.small))
+
+//==================== ENTRY ZONE FROM LATEST WAVE LEG ====================//
+float amy_zoneHigh = na
+float amy_zoneLow = na
+int amy_entryDir = 0
+string amy_zoneName = "NO WAVE ZONE"
+
+if amy_sz >= 2
+    _last = amy_sz - 1
+    _prev = amy_sz - 2
+    _pA = array.get(amy_wPrice, _prev)
+    _pB = array.get(amy_wPrice, _last)
+    _tA = array.get(amy_wType, _prev)
+    _tB = array.get(amy_wType, _last)
+    _range = math.abs(_pB - _pA)
+    _rFast = amy_entryMode == "0.382 - 0.618" ? 0.382 : amy_entryMode == "0.5 - 0.786" ? 0.5 : 0.618
+    _rDeep = amy_entryMode == "0.382 - 0.618" ? 0.618 : 0.786
+    if _tA == -1 and _tB == 1
+        amy_entryDir := 1
+        amy_zoneHigh := _pB - _range * _rFast
+        amy_zoneLow := _pB - _range * _rDeep
+        amy_zoneName := "BUY WAVE RETRACE"
+    if _tA == 1 and _tB == -1
+        amy_entryDir := -1
+        amy_zoneLow := _pB + _range * _rFast
+        amy_zoneHigh := _pB + _range * _rDeep
+        amy_zoneName := "SELL WAVE RETRACE"
+
+amy_inBuyZone = amy_showEntry and amy_entryDir == 1 and not na(amy_zoneHigh) and close <= amy_zoneHigh + amy_tol and close >= amy_zoneLow - amy_tol
+amy_inSellZone = amy_showEntry and amy_entryDir == -1 and not na(amy_zoneLow) and close >= amy_zoneLow - amy_tol and close <= amy_zoneHigh + amy_tol
+amy_buyReady = amy_inBuyZone and amy_bullReject
+amy_sellReady = amy_inSellZone and amy_bearReject
+amy_buySignal = amy_buyReady and not nz(amy_buyReady[1], false)
+amy_sellSignal = amy_sellReady and not nz(amy_sellReady[1], false)
+amy_missedBuy = amy_showEntry and amy_entryDir == 1 and not na(amy_zoneHigh) and close > amy_zoneHigh + amy_tol
+amy_missedSell = amy_showEntry and amy_entryDir == -1 and not na(amy_zoneLow) and close < amy_zoneLow - amy_tol
+
+if amy_showEntry and not na(amy_zoneBox)
+    box.delete(amy_zoneBox)
+    amy_zoneBox := na
+if amy_showEntry and not na(amy_zoneHigh) and not na(amy_zoneLow)
+    _boxCol = amy_entryDir == 1 ? color.new(color.lime, 91) : color.new(color.red, 91)
+    _borCol = amy_entryDir == 1 ? color.new(color.lime, 45) : color.new(color.red, 45)
+    amy_zoneBox := box.new(bar_index - 10, amy_zoneHigh, bar_index + amy_extendBars, amy_zoneLow, xloc=xloc.bar_index, bgcolor=_boxCol, border_color=_borCol, text=amy_zoneName, text_color=_borCol, text_size=size.tiny, text_halign=text.align_left)
+
+amy_buySL = amy_buyReady ? amy_zoneLow - amy_atr * amy_slAtr : na
+amy_sellSL = amy_sellReady ? amy_zoneHigh + amy_atr * amy_slAtr : na
+amy_buyRisk = amy_buyReady ? close - amy_buySL : na
+amy_sellRisk = amy_sellReady ? amy_sellSL - close : na
+amy_buyTP1 = amy_buyReady ? close + amy_buyRisk * amy_rr1 : na
+amy_buyTP2 = amy_buyReady ? close + amy_buyRisk * amy_rr2 : na
+amy_sellTP1 = amy_sellReady ? close - amy_sellRisk * amy_rr1 : na
+amy_sellTP2 = amy_sellReady ? close - amy_sellRisk * amy_rr2 : na
+
+if amy_showEntry and amy_buySignal and not na(amy_buySL)
+    if not na(amy_entryLine)
+        line.delete(amy_entryLine)
+    if not na(amy_slLine)
+        line.delete(amy_slLine)
+    if not na(amy_tp1Line)
+        line.delete(amy_tp1Line)
+    if not na(amy_tp2Line)
+        line.delete(amy_tp2Line)
+    if not na(amy_signalLabel)
+        label.delete(amy_signalLabel)
+    _txt = "NEO BUY READY\nEntry: " + str.tostring(close, format.mintick) + "\nSL: " + str.tostring(amy_buySL, format.mintick) + "\nTP1: " + str.tostring(amy_buyTP1, format.mintick) + "\nTP2: " + str.tostring(amy_buyTP2, format.mintick)
+    amy_entryLine := line.new(bar_index, close, bar_index + amy_extendBars, close, xloc=xloc.bar_index, color=color.new(color.yellow, 0), width=2)
+    amy_slLine := line.new(bar_index, amy_buySL, bar_index + amy_extendBars, amy_buySL, xloc=xloc.bar_index, color=color.new(color.red, 0), width=2)
+    amy_tp1Line := line.new(bar_index, amy_buyTP1, bar_index + amy_extendBars, amy_buyTP1, xloc=xloc.bar_index, color=color.new(color.aqua, 0), width=1)
+    amy_tp2Line := line.new(bar_index, amy_buyTP2, bar_index + amy_extendBars, amy_buyTP2, xloc=xloc.bar_index, color=color.new(color.lime, 0), width=1)
+    amy_signalLabel := label.new(bar_index, low, _txt, xloc=xloc.bar_index, style=label.style_label_up, color=color.new(color.lime, 75), textcolor=color.lime, size=size.small)
+
+if amy_showEntry and amy_sellSignal and not na(amy_sellSL)
+    if not na(amy_entryLine)
+        line.delete(amy_entryLine)
+    if not na(amy_slLine)
+        line.delete(amy_slLine)
+    if not na(amy_tp1Line)
+        line.delete(amy_tp1Line)
+    if not na(amy_tp2Line)
+        line.delete(amy_tp2Line)
+    if not na(amy_signalLabel)
+        label.delete(amy_signalLabel)
+    _txt = "NEO SELL READY\nEntry: " + str.tostring(close, format.mintick) + "\nSL: " + str.tostring(amy_sellSL, format.mintick) + "\nTP1: " + str.tostring(amy_sellTP1, format.mintick) + "\nTP2: " + str.tostring(amy_sellTP2, format.mintick)
+    amy_entryLine := line.new(bar_index, close, bar_index + amy_extendBars, close, xloc=xloc.bar_index, color=color.new(color.yellow, 0), width=2)
+    amy_slLine := line.new(bar_index, amy_sellSL, bar_index + amy_extendBars, amy_sellSL, xloc=xloc.bar_index, color=color.new(color.red, 0), width=2)
+    amy_tp1Line := line.new(bar_index, amy_sellTP1, bar_index + amy_extendBars, amy_sellTP1, xloc=xloc.bar_index, color=color.new(color.aqua, 0), width=1)
+    amy_tp2Line := line.new(bar_index, amy_sellTP2, bar_index + amy_extendBars, amy_sellTP2, xloc=xloc.bar_index, color=color.new(color.lime, 0), width=1)
+    amy_signalLabel := label.new(bar_index, high, _txt, xloc=xloc.bar_index, style=label.style_label_down, color=color.new(color.red, 75), textcolor=color.red, size=size.small)
+
+plotshape(amy_showEntry and amy_buySignal, title="NEO BUY READY", style=shape.labelup, text="NEO\nBUY", location=location.belowbar, color=color.new(color.lime, 0), textcolor=color.black, size=size.tiny)
+plotshape(amy_showEntry and amy_sellSignal, title="NEO SELL READY", style=shape.labeldown, text="NEO\nSELL", location=location.abovebar, color=color.new(color.red, 0), textcolor=color.white, size=size.tiny)
+plotshape(amy_showEntry and amy_missedBuy and not nz(amy_missedBuy[1], false), title="NEO MISSED BUY", style=shape.labeldown, text="MISSED\nBUY", location=location.abovebar, color=color.new(color.orange, 0), textcolor=color.black, size=size.tiny)
+plotshape(amy_showEntry and amy_missedSell and not nz(amy_missedSell[1], false), title="NEO MISSED SELL", style=shape.labelup, text="MISSED\nSELL", location=location.belowbar, color=color.new(color.orange, 0), textcolor=color.black, size=size.tiny)
+
+//==================== DASHBOARD ====================//
+var table amy_panel = table.new(position.top_right, 2, 7, border_width=1)
+if barstate.islast and amy_showPanel
+    _structure = amy_rulesOk ? (amy_bullImpulse ? "Bull Impulse" : "Bear Impulse") : amy_bullImpulse or amy_bearImpulse ? "Weak Impulse" : "Building"
+    _entryStatus = amy_buyReady ? "BUY READY" : amy_sellReady ? "SELL READY" : amy_missedBuy ? "MISSED BUY" : amy_missedSell ? "MISSED SELL" : "NO ENTRY"
+    _statusCol = amy_buyReady ? color.lime : amy_sellReady ? color.red : amy_missedBuy or amy_missedSell ? color.orange : color.gray
+    table.cell(amy_panel, 0, 0, "AMY NEO WAVE", text_color=color.white, bgcolor=color.new(color.blue, 35))
+    table.cell(amy_panel, 1, 0, _entryStatus, text_color=color.white, bgcolor=color.new(_statusCol, 35))
+    table.cell(amy_panel, 0, 1, "Structure", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 1, 1, _structure, text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 0, 2, "Wave 2 Rule", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 1, 2, amy_ruleWave2 ? "OK" : "Waiting", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 0, 3, "Wave 3 Rule", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 1, 3, amy_ruleWave3 ? "OK" : "Waiting", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 0, 4, "Wave 4 Rule", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 1, 4, amy_ruleWave4 ? "OK" : "Waiting", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 0, 5, "Zone", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 1, 5, not na(amy_zoneLow) ? str.tostring(amy_zoneLow, format.mintick) + " - " + str.tostring(amy_zoneHigh, format.mintick) : "-", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 0, 6, "Rule", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 1, 6, "Ready inside retrace", text_color=color.white, bgcolor=color.new(color.black, 70))
+
+alertcondition(amy_buySignal, title="AMY NEO WAVE BUY READY", message="AMY Neo Wave: BUY READY")
+alertcondition(amy_sellSignal, title="AMY NEO WAVE SELL READY", message="AMY Neo Wave: SELL READY")

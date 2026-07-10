@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Istilah SMC — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+</head>
+<body>
+  <script>requireLogin();</script>
+  
+  <header class="topbar hide-until-auth">
+    <nav class="nav">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark">A</span>
+        <span>Amy FX Academy</span>
+      </a>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="navlinks" id="navlinks">
+        <a href="../index.html">Beranda</a>
+        <a href="../daftar-materi.html">Daftar Materi</a>
+        <a href="../tentang.html">Tentang</a>
+        <a href="index.html">Glosarium</a>
+        
+      </div>
+    </nav>
+  </header>
+
+  <main class="container hide-until-auth">
+    <div class="article-layout">
+      <article class="article">
+        <div class="breadcrumb">
+          <a href="../index.html">Beranda</a> / <a href="index.html">Glosarium</a> / SMC
+        </div>
+        <div class="eyebrow">Glosarium</div>
+        <h1>Istilah SMC (Smart Money Concept)</h1>
+        <p>Konsep SMC berfokus pada cara institusi (Smart Money) menggerakkan harga untuk mencari bahan bakar (liquidity) dan memanipulasi retail trader.</p>
+
+        <h2>Liquidity (Likuiditas)</h2>
+        <p>Bahan bakar penggerak harga. Di mana ada banyak tumpukan Stop Loss atau Pending Order dari retail trader, di situlah terdapat likuiditas besar yang menjadi target Smart Money.</p>
+
+        <h2>Buy Side Liquidity (BSL)</h2>
+        <p>Likuiditas yang berada di <strong>atas</strong> resistance atau swing high. BSL berisi tumpukan Buy Stop (dari trader breakout) dan Buy Stop Loss (dari trader yang sedang posisi Sell). Smart Money sering mendorong harga ke area ini untuk mengeksekusi order Sell mereka.</p>
+
+        <h2>Sell Side Liquidity (SSL)</h2>
+        <p>Likuiditas yang berada di <strong>bawah</strong> support atau swing low. SSL berisi tumpukan Sell Stop (dari trader breakout) dan Sell Stop Loss (dari trader yang sedang posisi Buy). Smart Money sering menekan harga ke area ini untuk mengeksekusi order Buy mereka.</p>
+
+        <h2>Equal Highs (EQH)</h2>
+        <p>Dua atau lebih swing high yang tingginya hampir sama (sering disebut Double Top oleh retail). Ini adalah area Buy Side Liquidity yang sangat menggiurkan karena banyak retail trader menaruh Stop Loss tepat di atasnya.</p>
+
+        <h2>Equal Lows (EQL)</h2>
+        <p>Dua atau lebih swing low yang dalamnya hampir sama (Double Bottom). Area ini dipenuhi Sell Side Liquidity, menjadikannya target empuk untuk disapu (sweep) oleh Smart Money.</p>
+
+        <h2>Sweep (Liquidity Sweep)</h2>
+        <p>Pergerakan harga yang secara sengaja menembus level support/resistance (atau EQH/EQL) hanya sesaat, mengambil stop loss (liquidity), lalu harga berbalik arah dengan cepat meninggalkan jarum (wick) panjang.</p>
+
+        <h2>Fair Value Gap (FVG)</h2>
+        <p>Ketidakseimbangan (imbalance) pada pergerakan harga, yang terlihat dari ruang kosong antara ekor (wick) candle pertama dan ekor candle ketiga dalam rangkaian 3 candle. FVG bertindak bagai magnet; harga cenderung akan kembali untuk mengisi celah ini.</p>
+
+        <h2>Order Block (OB)</h2>
+        <p>Jejak pesanan besar dari institusi. Secara visual, OB sering ditandai sebagai candle berlawanan arah terakhir sebelum terjadinya dorongan harga yang sangat kuat (displacement) yang merusak struktur market (MSS).</p>
+
+        <h2>Premium (Area Jual)</h2>
+        <p>Bagian paruh atas dari sebuah pergerakan harga (Dealing Range). Di area Premium, harga dianggap mahal. Ini adalah zona ideal untuk mencari setup Sell.</p>
+
+        <h2>Discount (Area Beli)</h2>
+        <p>Bagian paruh bawah dari sebuah pergerakan harga. Di area Discount, harga dianggap murah. Ini adalah zona ideal untuk mencari setup Buy.</p>
+
+      </article>
+
+      <aside class="toc-card">
+        <h3>Kategori Glosarium</h3>
+        <ul>
+          <li><a href="index.html">Menu Utama Glosarium</a></li>
+          <li><a href="istilah-basic-trading.html">Istilah Basic</a></li>
+          <li><a href="istilah-smc.html" class="active">Istilah SMC</a></li>
+          <li><a href="istilah-ict.html">Istilah ICT</a></li>
+          <li><a href="istilah-risk-management.html">Istilah Risk Management</a></li>
+        </ul>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="footer hide-until-auth">
+    © 2026 Amy FX Academy. Belajar Trading dari Nol sampai Mandiri.
+  </footer>
+</body>
+</html>

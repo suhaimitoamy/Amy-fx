@@ -1,0 +1,722 @@
+//@version=5
+indicator('ICT Validated SMC v1 CLEAN', 'ICT-V CLEAN', overlay=true, max_labels_count=500, max_lines_count=500, max_boxes_count=500)
+
+// Clean copy for TradingView
+// Normal spaces only, no invisible characters.
+
+// ============================================================================
+// INPUTS
+// ============================================================================
+
+structGroup = 'Market Structure'
+swingLen = input.int(10, 'Swing Length', minval=3, maxval=50, group=structGroup)
+internalLen = input.int(5, 'Internal Structure Length', minval=2, maxval=30, group=structGroup)
+showSwings = input.bool(true, 'Show Swing Points', group=structGroup)
+showStructure = input.bool(true, 'Show BOS / CHoCH', group=structGroup)
+requireBodyClose = input.bool(false, 'Require Body Close', group=structGroup)
+
+idmGroup = 'Inducement IDM'
+showIDM = input.bool(true, 'Show Inducement Levels', group=idmGroup)
+idmColor = input.color(color.new(#FF6D00, 0), 'IDM Color', group=idmGroup)
+idmMaxCount = input.int(5, 'Max Visible IDMs', minval=1, maxval=20, group=idmGroup)
+
+liqGroup = 'Liquidity'
+showSweeps = input.bool(true, 'Show Liquidity Sweeps', group=liqGroup)
+showEQHL = input.bool(true, 'Show Equal Highs / Lows', group=liqGroup)
+eqTolerance = input.float(0.15, 'EQH/EQL Tolerance Percent', minval=0.01, maxval=1.0, step=0.01, group=liqGroup)
+sweepColor = input.color(color.new(#FFD600, 0), 'Sweep Color', group=liqGroup)
+
+fvgGroup = 'Fair Value Gap'
+showFVG = input.bool(true, 'Show FVG', group=fvgGroup)
+fvgMaxCount = input.int(8, 'Max Visible FVG', minval=1, maxval=30, group=fvgGroup)
+fvgMinATRMult = input.float(1.0, 'Min Displacement ATR', minval=0.1, maxval=5.0, step=0.1, group=fvgGroup)
+showCE = input.bool(true, 'Show CE 50 Percent', group=fvgGroup)
+showMitigatedFVG = input.bool(false, 'Show Mitigated FVG', group=fvgGroup)
+
+obGroup = 'Order Block'
+showOB = input.bool(true, 'Show Order Block', group=obGroup)
+obMaxCount = input.int(5, 'Max Visible OB', minval=1, maxval=20, group=obGroup)
+requireSweepForOB = input.bool(true, 'Require Sweep Before OB', group=obGroup)
+requireFVGForOB = input.bool(true, 'Require FVG After OB', group=obGroup)
+
+pdGroup = 'Premium Discount'
+showPD = input.bool(true, 'Show Premium Discount', group=pdGroup)
+showEQ = input.bool(true, 'Show EQ Line', group=pdGroup)
+
+slGroup = 'Session Levels'
+showSessionLevels = input.bool(true, 'Show PDH PDL PWH PWL', group=slGroup)
+
+kzGroup = 'Killzones'
+showKZ = input.bool(true, 'Show Killzones', group=kzGroup)
+kzAsian = input.bool(false, 'Asian 2000-0000 NY', group=kzGroup)
+kzLondon = input.bool(true, 'London 0200-0500 NY', group=kzGroup)
+kzNYAM = input.bool(true, 'NY AM 0830-1100 NY', group=kzGroup)
+kzNYPM = input.bool(false, 'NY PM 1300-1600 NY', group=kzGroup)
+kzTransparency = input.int(92, 'KZ Transparency', minval=70, maxval=98, group=kzGroup)
+
+sigGroup = 'Signals'
+enableSignals = input.bool(true, 'Enable Signals', group=sigGroup)
+minSigScore = input.int(4, 'Min Signal Score', minval=2, maxval=10, group=sigGroup)
+sigCooldown = input.int(10, 'Signal Cooldown Bars', minval=3, maxval=50, group=sigGroup)
+showSigSLTP = input.bool(true, 'Show SL TP', group=sigGroup)
+
+vizGroup = 'Visual'
+bullColor = input.color(color.new(#00C853, 0), 'Bullish Color', group=vizGroup)
+bearColor = input.color(color.new(#FF1744, 0), 'Bearish Color', group=vizGroup)
+fvgBullColor = input.color(color.new(#00C853, 85), 'Bullish FVG Fill', group=vizGroup)
+fvgBearColor = input.color(color.new(#FF1744, 85), 'Bearish FVG Fill', group=vizGroup)
+obBullColor = input.color(color.new(#2196F3, 80), 'Bullish OB Fill', group=vizGroup)
+obBearColor = input.color(color.new(#FF9800, 80), 'Bearish OB Fill', group=vizGroup)
+showInfoPanel = input.bool(true, 'Show Info Panel', group=vizGroup)
+labelSizeInput = input.string('small', 'Label Size', options=['tiny', 'small', 'normal', 'large'], group=vizGroup)
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+type Pivot
+    int idx
+    float price
+    bool isHigh
+    bool swept
+    string level
+
+type IDM
+    int idx
+    float price
+    bool isBullish
+    bool triggered
+    int triggerIdx
+    bool expired
+    line ln
+    label lbl
+
+type FVGZone
+    int idx
+    float top
+    float bottom
+    bool isBullish
+    bool mitigated
+    box bx
+    line ce
+
+type OBZone
+    int idx
+    float top
+    float bottom
+    bool isBullish
+    bool mitigated
+    int score
+    box bx
+    label lbl
+
+// ============================================================================
+// GLOBAL STATE
+// ============================================================================
+
+var array<Pivot> swingPivots = array.new<Pivot>()
+var array<Pivot> internalPivots = array.new<Pivot>()
+var array<IDM> idmList = array.new<IDM>()
+var array<FVGZone> fvgList = array.new<FVGZone>()
+var array<OBZone> obList = array.new<OBZone>()
+
+var bool swingBullish = true
+var float lastSwingHigh = na
+var float lastSwingLow = na
+var int lastSwingHighIdx = na
+var int lastSwingLowIdx = na
+var string lastBreakText = 'NONE'
+var int lastBreakDir = 0
+
+atrVal = ta.atr(14)
+
+// Session levels
+[slPDH, slPDL] = request.security(syminfo.tickerid, 'D', [high[1], low[1]], lookahead=barmerge.lookahead_on)
+[slPWH, slPWL] = request.security(syminfo.tickerid, 'W', [high[1], low[1]], lookahead=barmerge.lookahead_on)
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+getSize() =>
+    switch labelSizeInput
+        'tiny' => size.tiny
+        'small' => size.small
+        'normal' => size.normal
+        'large' => size.large
+        => size.small
+
+isInKillzone() =>
+    nyHour = hour(time, 'America/New_York')
+    nyMin = minute(time, 'America/New_York')
+    nyTime = nyHour * 100 + nyMin
+    inAsian = kzAsian and nyTime >= 2000
+    inLondon = kzLondon and nyTime >= 200 and nyTime < 500
+    inNYAM = kzNYAM and nyTime >= 830 and nyTime < 1100
+    inNYPM = kzNYPM and nyTime >= 1300 and nyTime < 1600
+    inAsian or inLondon or inNYAM or inNYPM
+
+getKZName() =>
+    nyHour = hour(time, 'America/New_York')
+    nyMin = minute(time, 'America/New_York')
+    nyTime = nyHour * 100 + nyMin
+    if kzNYAM and nyTime >= 830 and nyTime < 1100
+        'NY AM'
+    else if kzLondon and nyTime >= 200 and nyTime < 500
+        'London'
+    else if kzNYPM and nyTime >= 1300 and nyTime < 1600
+        'NY PM'
+    else if kzAsian and nyTime >= 2000
+        'Asian'
+    else
+        'Off Session'
+
+isPremium(float price, float rangeHigh, float rangeLow) =>
+    eq = (rangeHigh + rangeLow) / 2.0
+    price > eq
+
+isDiscount(float price, float rangeHigh, float rangeLow) =>
+    eq = (rangeHigh + rangeLow) / 2.0
+    price < eq
+
+cleanOldPivotArrays() =>
+    while array.size(swingPivots) > 120
+        array.shift(swingPivots)
+    while array.size(internalPivots) > 120
+        array.shift(internalPivots)
+
+// ============================================================================
+// SWING DETECTION
+// ============================================================================
+
+swingHighVal = ta.pivothigh(high, swingLen, swingLen)
+swingLowVal = ta.pivotlow(low, swingLen, swingLen)
+internalHighVal = ta.pivothigh(high, internalLen, internalLen)
+internalLowVal = ta.pivotlow(low, internalLen, internalLen)
+
+bool newBullBOS = false
+bool newBearBOS = false
+bool newBullCHoCH = false
+bool newBearCHoCH = false
+
+if not na(swingHighVal)
+    pIdx = bar_index - swingLen
+    cmpH = requireBodyClose ? close[swingLen] : swingHighVal
+    if not na(lastSwingHigh) and cmpH > lastSwingHigh
+        brkType = swingBullish ? 'BOS' : 'CHoCH'
+        brkCol = bullColor
+        if brkType == 'BOS'
+            newBullBOS := true
+        else
+            newBullCHoCH := true
+            swingBullish := true
+        lastBreakText := brkType + ' Bullish'
+        lastBreakDir := 1
+        if showStructure
+            line.new(lastSwingHighIdx, lastSwingHigh, pIdx, lastSwingHigh, xloc=xloc.bar_index, color=brkCol, style=brkType == 'BOS' ? line.style_solid : line.style_dashed, width=1)
+            label.new(int(math.avg(lastSwingHighIdx, pIdx)), lastSwingHigh, brkType, xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_center, color=color.new(brkCol, 88), textcolor=brkCol, size=getSize())
+    lastSwingHigh := swingHighVal
+    lastSwingHighIdx := pIdx
+    array.push(swingPivots, Pivot.new(pIdx, swingHighVal, true, false, 'swing'))
+    if showSwings
+        label.new(pIdx, swingHighVal, 'SH', xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_down, color=color.new(bearColor, 85), textcolor=bearColor, size=size.tiny)
+
+if not na(swingLowVal)
+    pIdx = bar_index - swingLen
+    cmpL = requireBodyClose ? close[swingLen] : swingLowVal
+    if not na(lastSwingLow) and cmpL < lastSwingLow
+        brkType = swingBullish ? 'CHoCH' : 'BOS'
+        brkCol = bearColor
+        if brkType == 'BOS'
+            newBearBOS := true
+        else
+            newBearCHoCH := true
+            swingBullish := false
+        lastBreakText := brkType + ' Bearish'
+        lastBreakDir := -1
+        if showStructure
+            line.new(lastSwingLowIdx, lastSwingLow, pIdx, lastSwingLow, xloc=xloc.bar_index, color=brkCol, style=brkType == 'BOS' ? line.style_solid : line.style_dashed, width=1)
+            label.new(int(math.avg(lastSwingLowIdx, pIdx)), lastSwingLow, brkType, xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_center, color=color.new(brkCol, 88), textcolor=brkCol, size=getSize())
+    lastSwingLow := swingLowVal
+    lastSwingLowIdx := pIdx
+    array.push(swingPivots, Pivot.new(pIdx, swingLowVal, false, false, 'swing'))
+    if showSwings
+        label.new(pIdx, swingLowVal, 'SL', xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_up, color=color.new(bullColor, 85), textcolor=bullColor, size=size.tiny)
+
+if not na(internalHighVal)
+    array.push(internalPivots, Pivot.new(bar_index - internalLen, internalHighVal, true, false, 'internal'))
+
+if not na(internalLowVal)
+    array.push(internalPivots, Pivot.new(bar_index - internalLen, internalLowVal, false, false, 'internal'))
+
+cleanOldPivotArrays()
+
+// ============================================================================
+// INDUCEMENT IDM
+// ============================================================================
+
+bool newIDMLevel = false
+bool newIDMTriggered = false
+
+if showIDM
+    if not na(internalLowVal) and swingBullish
+        idmPrice = internalLowVal
+        idmIdx = bar_index - internalLen
+        tooClose = not na(lastSwingLow) and math.abs(idmPrice - lastSwingLow) / idmPrice * 100.0 < 0.1
+        if not tooClose
+            idmLine = line.new(idmIdx, idmPrice, bar_index + 10, idmPrice, xloc=xloc.bar_index, extend=extend.none, color=color.new(idmColor, 45), style=line.style_dotted, width=1)
+            idmLbl = label.new(idmIdx, idmPrice, 'IDM', xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_up, color=color.new(idmColor, 85), textcolor=idmColor, size=getSize())
+            array.push(idmList, IDM.new(idmIdx, idmPrice, true, false, na, false, idmLine, idmLbl))
+            newIDMLevel := true
+
+    if not na(internalHighVal) and not swingBullish
+        idmPrice = internalHighVal
+        idmIdx = bar_index - internalLen
+        tooClose = not na(lastSwingHigh) and math.abs(idmPrice - lastSwingHigh) / idmPrice * 100.0 < 0.1
+        if not tooClose
+            idmLine = line.new(idmIdx, idmPrice, bar_index + 10, idmPrice, xloc=xloc.bar_index, extend=extend.none, color=color.new(idmColor, 45), style=line.style_dotted, width=1)
+            idmLbl = label.new(idmIdx, idmPrice, 'IDM', xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_down, color=color.new(idmColor, 85), textcolor=idmColor, size=getSize())
+            array.push(idmList, IDM.new(idmIdx, idmPrice, false, false, na, false, idmLine, idmLbl))
+            newIDMLevel := true
+
+if showIDM and array.size(idmList) > 0
+    for i = array.size(idmList) - 1 to 0
+        IDM idm = array.get(idmList, i)
+        if not idm.expired and not idm.triggered
+            if idm.isBullish and not swingBullish
+                idm.expired := true
+                line.delete(idm.ln)
+                label.delete(idm.lbl)
+            else if not idm.isBullish and swingBullish
+                idm.expired := true
+                line.delete(idm.ln)
+                label.delete(idm.lbl)
+            else
+                if idm.isBullish and low < idm.price and close > idm.price
+                    idm.triggered := true
+                    idm.triggerIdx := bar_index
+                    newIDMTriggered := true
+                    label.delete(idm.lbl)
+                    idm.lbl := label.new(bar_index, low, 'IDM TRIGGER', xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_up, color=color.new(idmColor, 70), textcolor=idmColor, size=getSize())
+                    line.set_x2(idm.ln, bar_index)
+                    line.set_style(idm.ln, line.style_solid)
+                    line.set_color(idm.ln, color.new(idmColor, 20))
+                else if not idm.isBullish and high > idm.price and close < idm.price
+                    idm.triggered := true
+                    idm.triggerIdx := bar_index
+                    newIDMTriggered := true
+                    label.delete(idm.lbl)
+                    idm.lbl := label.new(bar_index, high, 'IDM TRIGGER', xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_down, color=color.new(idmColor, 70), textcolor=idmColor, size=getSize())
+                    line.set_x2(idm.ln, bar_index)
+                    line.set_style(idm.ln, line.style_solid)
+                    line.set_color(idm.ln, color.new(idmColor, 20))
+
+        if idm.triggered and not idm.expired and bar_index - idm.triggerIdx > 20
+            idm.expired := true
+            line.delete(idm.ln)
+            label.delete(idm.lbl)
+
+        if idm.expired
+            array.remove(idmList, i)
+        else
+            array.set(idmList, i, idm)
+
+    while array.size(idmList) > idmMaxCount * 2
+        IDM oldest = array.shift(idmList)
+        line.delete(oldest.ln)
+        label.delete(oldest.lbl)
+
+// ============================================================================
+// LIQUIDITY SWEEPS AND EQH EQL
+// ============================================================================
+
+bool newSweepHigh = false
+bool newSweepLow = false
+
+if showSweeps and array.size(swingPivots) > 0
+    for i = array.size(swingPivots) - 1 to 0
+        Pivot p = array.get(swingPivots, i)
+        if not p.swept and p.idx < bar_index - 1
+            if p.isHigh and high > p.price and close < p.price
+                p.swept := true
+                array.set(swingPivots, i, p)
+                label.new(bar_index, high, 'SWEEP BSL', xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_down, color=color.new(sweepColor, 85), textcolor=sweepColor, size=getSize())
+                newSweepHigh := true
+                break
+            else if not p.isHigh and low < p.price and close > p.price
+                p.swept := true
+                array.set(swingPivots, i, p)
+                label.new(bar_index, low, 'SWEEP SSL', xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_up, color=color.new(sweepColor, 85), textcolor=sweepColor, size=getSize())
+                newSweepLow := true
+                break
+
+if showEQHL and array.size(swingPivots) >= 4
+    sz = array.size(swingPivots)
+    Pivot p1 = array.get(swingPivots, sz - 1)
+    for j = sz - 2 to math.max(sz - 8, 0)
+        Pivot p2 = array.get(swingPivots, j)
+        if p1.isHigh == p2.isHigh and p1.idx != p2.idx
+            diff = math.abs(p1.price - p2.price) / p1.price * 100.0
+            if diff <= eqTolerance
+                txt = p1.isHigh ? 'EQH' : 'EQL'
+                st = p1.isHigh ? label.style_label_down : label.style_label_up
+                col = sweepColor
+                line.new(p2.idx, p2.price, bar_index + 10, p2.price, xloc=xloc.bar_index, extend=extend.none, color=color.new(col, 50), style=line.style_dotted, width=1)
+                label.new(bar_index + 10, p2.price, txt, xloc=xloc.bar_index, yloc=yloc.price, style=st, color=color.new(col, 85), textcolor=col, size=getSize())
+                break
+
+// ============================================================================
+// FVG
+// ============================================================================
+
+bool newBullFVG = false
+bool newBearFVG = false
+
+bullFVGExists = low > high[2]
+bearFVGExists = high < low[2]
+midBody = math.abs(close[1] - open[1])
+isDisplacement = midBody >= atrVal[1] * fvgMinATRMult
+
+if showFVG and bullFVGExists and isDisplacement and close[1] > open[1]
+    top = low
+    bottom = high[2]
+    bx = box.new(bar_index - 2, top, bar_index + 12, bottom, xloc=xloc.bar_index, border_color=color.new(bullColor, 55), bgcolor=fvgBullColor)
+    line ce = na
+    if showCE
+        ce := line.new(bar_index - 2, (top + bottom) / 2.0, bar_index + 12, (top + bottom) / 2.0, xloc=xloc.bar_index, color=color.new(bullColor, 60), style=line.style_dotted, width=1)
+    array.push(fvgList, FVGZone.new(bar_index - 1, top, bottom, true, false, bx, ce))
+    newBullFVG := true
+
+if showFVG and bearFVGExists and isDisplacement and close[1] < open[1]
+    top = low[2]
+    bottom = high
+    bx = box.new(bar_index - 2, top, bar_index + 12, bottom, xloc=xloc.bar_index, border_color=color.new(bearColor, 55), bgcolor=fvgBearColor)
+    line ce = na
+    if showCE
+        ce := line.new(bar_index - 2, (top + bottom) / 2.0, bar_index + 12, (top + bottom) / 2.0, xloc=xloc.bar_index, color=color.new(bearColor, 60), style=line.style_dotted, width=1)
+    array.push(fvgList, FVGZone.new(bar_index - 1, top, bottom, false, false, bx, ce))
+    newBearFVG := true
+
+if array.size(fvgList) > 0
+    for i = array.size(fvgList) - 1 to 0
+        FVGZone f = array.get(fvgList, i)
+        if not f.mitigated
+            box.set_right(f.bx, bar_index + 12)
+            if not na(f.ce)
+                line.set_x2(f.ce, bar_index + 12)
+            if f.isBullish and close < f.bottom
+                f.mitigated := true
+                if not showMitigatedFVG
+                    box.delete(f.bx)
+                    line.delete(f.ce)
+            else if not f.isBullish and close > f.top
+                f.mitigated := true
+                if not showMitigatedFVG
+                    box.delete(f.bx)
+                    line.delete(f.ce)
+        if f.mitigated and not showMitigatedFVG
+            array.remove(fvgList, i)
+        else
+            array.set(fvgList, i, f)
+
+    while array.size(fvgList) > fvgMaxCount * 2
+        FVGZone oldF = array.shift(fvgList)
+        box.delete(oldF.bx)
+        line.delete(oldF.ce)
+
+// ============================================================================
+// SIMPLE VALIDATED ORDER BLOCK
+// ============================================================================
+
+bool newBullOB = false
+bool newBearOB = false
+int newOBScore = 0
+
+recentSweepLow = ta.barssince(newSweepLow) <= 10
+recentSweepHigh = ta.barssince(newSweepHigh) <= 10
+
+if showOB
+    if newBullFVG
+        int obOff = na
+        for k = 1 to 8
+            if close[k] < open[k]
+                obOff := k
+                break
+        if not na(obOff)
+            sweepOK = not requireSweepForOB or recentSweepLow
+            fvgOK = not requireFVGForOB or newBullFVG
+            inDiscount = not na(lastSwingHigh) and not na(lastSwingLow) ? isDiscount(low[obOff], lastSwingHigh, lastSwingLow) : true
+            score = 0
+            score += sweepOK ? 2 : 0
+            score += fvgOK ? 2 : 0
+            score += inDiscount ? 1 : 0
+            score += isInKillzone() ? 1 : 0
+            if sweepOK and fvgOK
+                top = high[obOff]
+                bottom = low[obOff]
+                bx = box.new(bar_index - obOff, top, bar_index + 15, bottom, xloc=xloc.bar_index, border_color=color.new(bullColor, 55), bgcolor=obBullColor)
+                lbl = label.new(bar_index - obOff, bottom, 'Bull OB ' + str.tostring(score), xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_up, color=color.new(bullColor, 85), textcolor=bullColor, size=getSize())
+                array.push(obList, OBZone.new(bar_index - obOff, top, bottom, true, false, score, bx, lbl))
+                newBullOB := true
+                newOBScore := score
+
+    if newBearFVG
+        int obOff = na
+        for k = 1 to 8
+            if close[k] > open[k]
+                obOff := k
+                break
+        if not na(obOff)
+            sweepOK = not requireSweepForOB or recentSweepHigh
+            fvgOK = not requireFVGForOB or newBearFVG
+            inPremium = not na(lastSwingHigh) and not na(lastSwingLow) ? isPremium(high[obOff], lastSwingHigh, lastSwingLow) : true
+            score = 0
+            score += sweepOK ? 2 : 0
+            score += fvgOK ? 2 : 0
+            score += inPremium ? 1 : 0
+            score += isInKillzone() ? 1 : 0
+            if sweepOK and fvgOK
+                top = high[obOff]
+                bottom = low[obOff]
+                bx = box.new(bar_index - obOff, top, bar_index + 15, bottom, xloc=xloc.bar_index, border_color=color.new(bearColor, 55), bgcolor=obBearColor)
+                lbl = label.new(bar_index - obOff, top, 'Bear OB ' + str.tostring(score), xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_down, color=color.new(bearColor, 85), textcolor=bearColor, size=getSize())
+                array.push(obList, OBZone.new(bar_index - obOff, top, bottom, false, false, score, bx, lbl))
+                newBearOB := true
+                newOBScore := score
+
+if array.size(obList) > 0
+    for i = array.size(obList) - 1 to 0
+        OBZone ob = array.get(obList, i)
+        if not ob.mitigated
+            box.set_right(ob.bx, bar_index + 15)
+            if ob.isBullish and close < ob.bottom
+                ob.mitigated := true
+                box.delete(ob.bx)
+                label.delete(ob.lbl)
+            else if not ob.isBullish and close > ob.top
+                ob.mitigated := true
+                box.delete(ob.bx)
+                label.delete(ob.lbl)
+        if ob.mitigated
+            array.remove(obList, i)
+        else
+            array.set(obList, i, ob)
+
+    while array.size(obList) > obMaxCount * 2
+        OBZone oldOB = array.shift(obList)
+        box.delete(oldOB.bx)
+        label.delete(oldOB.lbl)
+
+// ============================================================================
+// PREMIUM DISCOUNT AND SESSION LEVELS
+// ============================================================================
+
+var box pdPremiumBox = na
+var box pdDiscountBox = na
+var line pdEQLine = na
+var label pdEQLabel = na
+
+if showPD and not na(lastSwingHigh) and not na(lastSwingLow) and barstate.islast
+    eq = (lastSwingHigh + lastSwingLow) / 2.0
+    box.delete(pdPremiumBox)
+    box.delete(pdDiscountBox)
+    line.delete(pdEQLine)
+    label.delete(pdEQLabel)
+    pdPremiumBox := box.new(bar_index - 60, lastSwingHigh, bar_index + 10, eq, xloc=xloc.bar_index, border_color=color.new(bearColor, 100), bgcolor=color.new(bearColor, 94))
+    pdDiscountBox := box.new(bar_index - 60, eq, bar_index + 10, lastSwingLow, xloc=xloc.bar_index, border_color=color.new(bullColor, 100), bgcolor=color.new(bullColor, 94))
+    if showEQ
+        pdEQLine := line.new(bar_index - 60, eq, bar_index + 10, eq, xloc=xloc.bar_index, color=color.new(color.gray, 50), style=line.style_dotted, width=1)
+        pdEQLabel := label.new(bar_index + 10, eq, 'EQ', xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_left, color=color.new(color.gray, 90), textcolor=color.gray, size=size.tiny)
+
+var line pdhLine = na
+var line pdlLine = na
+var line pwhLine = na
+var line pwlLine = na
+var label pdhLbl = na
+var label pdlLbl = na
+var label pwhLbl = na
+var label pwlLbl = na
+
+if showSessionLevels and barstate.islast
+    line.delete(pdhLine)
+    line.delete(pdlLine)
+    line.delete(pwhLine)
+    line.delete(pwlLine)
+    label.delete(pdhLbl)
+    label.delete(pdlLbl)
+    label.delete(pwhLbl)
+    label.delete(pwlLbl)
+    if not na(slPDH)
+        pdhLine := line.new(bar_index - 80, slPDH, bar_index + 10, slPDH, xloc=xloc.bar_index, color=color.new(color.blue, 30), style=line.style_dashed, width=1)
+        pdhLbl := label.new(bar_index + 10, slPDH, 'PDH', xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_left, color=color.new(color.blue, 85), textcolor=color.blue, size=getSize())
+    if not na(slPDL)
+        pdlLine := line.new(bar_index - 80, slPDL, bar_index + 10, slPDL, xloc=xloc.bar_index, color=color.new(color.blue, 30), style=line.style_dashed, width=1)
+        pdlLbl := label.new(bar_index + 10, slPDL, 'PDL', xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_left, color=color.new(color.blue, 85), textcolor=color.blue, size=getSize())
+    if not na(slPWH)
+        pwhLine := line.new(bar_index - 80, slPWH, bar_index + 10, slPWH, xloc=xloc.bar_index, color=color.new(color.purple, 30), style=line.style_dashed, width=2)
+        pwhLbl := label.new(bar_index + 10, slPWH, 'PWH', xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_left, color=color.new(color.purple, 85), textcolor=color.purple, size=getSize())
+    if not na(slPWL)
+        pwlLine := line.new(bar_index - 80, slPWL, bar_index + 10, slPWL, xloc=xloc.bar_index, color=color.new(color.purple, 30), style=line.style_dashed, width=2)
+        pwlLbl := label.new(bar_index + 10, slPWL, 'PWL', xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_left, color=color.new(color.purple, 85), textcolor=color.purple, size=getSize())
+
+currentlyInKZ = isInKillzone()
+bgcolor(showKZ and currentlyInKZ ? color.new(color.blue, kzTransparency) : na)
+
+// ============================================================================
+// SIGNALS
+// ============================================================================
+
+var int lastLongBar = na
+var int lastShortBar = na
+var string lastSignal = 'NONE'
+var int lastSignalScore = 0
+var float lastSL = na
+var float lastTP = na
+
+bool longSignal = false
+bool shortSignal = false
+float sigSL = na
+float sigTP = na
+
+longScore = 0
+shortScore = 0
+
+longAtOB = false
+shortAtOB = false
+longAtFVG = false
+shortAtFVG = false
+
+if array.size(obList) > 0
+    for i = array.size(obList) - 1 to 0
+        OBZone ob = array.get(obList, i)
+        if not ob.mitigated
+            if ob.isBullish and low <= ob.top and close > ob.bottom
+                longAtOB := true
+                sigSL := ob.bottom
+                break
+            if not ob.isBullish and high >= ob.bottom and close < ob.top
+                shortAtOB := true
+                sigSL := ob.top
+                break
+
+if array.size(fvgList) > 0
+    for i = array.size(fvgList) - 1 to 0
+        FVGZone f = array.get(fvgList, i)
+        if not f.mitigated
+            if f.isBullish and low <= f.top and close > f.bottom
+                longAtFVG := true
+                if na(sigSL)
+                    sigSL := f.bottom
+                break
+            if not f.isBullish and high >= f.bottom and close < f.top
+                shortAtFVG := true
+                if na(sigSL)
+                    sigSL := f.top
+                break
+
+longDiscount = not na(lastSwingHigh) and not na(lastSwingLow) ? isDiscount(close, lastSwingHigh, lastSwingLow) : false
+shortPremium = not na(lastSwingHigh) and not na(lastSwingLow) ? isPremium(close, lastSwingHigh, lastSwingLow) : false
+
+longScore += longAtOB ? 2 : 0
+longScore += longAtFVG ? 1 : 0
+longScore += swingBullish ? 1 : 0
+longScore += longDiscount ? 1 : 0
+longScore += currentlyInKZ ? 1 : 0
+longScore += newIDMTriggered ? 1 : 0
+longScore += newSweepLow ? 1 : 0
+
+shortScore += shortAtOB ? 2 : 0
+shortScore += shortAtFVG ? 1 : 0
+shortScore += not swingBullish ? 1 : 0
+shortScore += shortPremium ? 1 : 0
+shortScore += currentlyInKZ ? 1 : 0
+shortScore += newIDMTriggered ? 1 : 0
+shortScore += newSweepHigh ? 1 : 0
+
+if enableSignals and barstate.isconfirmed
+    if (longAtOB or longAtFVG) and longScore >= minSigScore
+        cooldownOK = na(lastLongBar) or bar_index - lastLongBar >= sigCooldown
+        if cooldownOK
+            longSignal := true
+            lastLongBar := bar_index
+            lastSignal := 'LONG'
+            lastSignalScore := longScore
+            lastSL := sigSL
+            lastTP := lastSwingHigh
+
+    if (shortAtOB or shortAtFVG) and shortScore >= minSigScore
+        cooldownOK = na(lastShortBar) or bar_index - lastShortBar >= sigCooldown
+        if cooldownOK
+            shortSignal := true
+            lastShortBar := bar_index
+            lastSignal := 'SHORT'
+            lastSignalScore := shortScore
+            lastSL := sigSL
+            lastTP := lastSwingLow
+
+plotshape(longSignal ? low : na, title='Long Signal', style=shape.triangleup, location=location.belowbar, color=bullColor, size=size.small, text='BUY')
+plotshape(shortSignal ? high : na, title='Short Signal', style=shape.triangledown, location=location.abovebar, color=bearColor, size=size.small, text='SELL')
+
+if longSignal and showSigSLTP
+    if not na(lastSL)
+        line.new(bar_index, lastSL, bar_index + 8, lastSL, xloc=xloc.bar_index, color=color.new(bearColor, 40), style=line.style_dotted, width=1)
+        label.new(bar_index + 8, lastSL, 'SL', xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_left, color=color.new(bearColor, 90), textcolor=bearColor, size=size.tiny)
+    if not na(lastTP)
+        line.new(bar_index, lastTP, bar_index + 8, lastTP, xloc=xloc.bar_index, color=color.new(bullColor, 40), style=line.style_dotted, width=1)
+        label.new(bar_index + 8, lastTP, 'TP', xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_left, color=color.new(bullColor, 90), textcolor=bullColor, size=size.tiny)
+
+if shortSignal and showSigSLTP
+    if not na(lastSL)
+        line.new(bar_index, lastSL, bar_index + 8, lastSL, xloc=xloc.bar_index, color=color.new(bearColor, 40), style=line.style_dotted, width=1)
+        label.new(bar_index + 8, lastSL, 'SL', xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_left, color=color.new(bearColor, 90), textcolor=bearColor, size=size.tiny)
+    if not na(lastTP)
+        line.new(bar_index, lastTP, bar_index + 8, lastTP, xloc=xloc.bar_index, color=color.new(bullColor, 40), style=line.style_dotted, width=1)
+        label.new(bar_index + 8, lastTP, 'TP', xloc=xloc.bar_index, yloc=yloc.price, style=label.style_label_left, color=color.new(bullColor, 90), textcolor=bullColor, size=size.tiny)
+
+// ============================================================================
+// PANEL
+// ============================================================================
+
+if showInfoPanel and barstate.islast
+    var table panel = table.new(position.top_right, 2, 15, bgcolor=color.new(color.black, 85), border_width=1)
+    table.cell(panel, 0, 0, 'ICT Validated SMC', text_color=color.white, text_size=size.small)
+    table.cell(panel, 1, 0, 'CLEAN', text_color=color.gray, text_size=size.small)
+    table.cell(panel, 0, 1, 'Structure', text_color=color.gray, text_size=getSize())
+    table.cell(panel, 1, 1, swingBullish ? 'BULLISH' : 'BEARISH', text_color=swingBullish ? bullColor : bearColor, text_size=getSize())
+    table.cell(panel, 0, 2, 'Last Break', text_color=color.gray, text_size=getSize())
+    table.cell(panel, 1, 2, lastBreakText, text_color=lastBreakDir == 1 ? bullColor : lastBreakDir == -1 ? bearColor : color.gray, text_size=getSize())
+    table.cell(panel, 0, 3, 'IDMs', text_color=color.gray, text_size=getSize())
+    table.cell(panel, 1, 3, str.tostring(array.size(idmList)), text_color=array.size(idmList) > 0 ? idmColor : color.gray, text_size=getSize())
+    table.cell(panel, 0, 4, 'FVGs', text_color=color.gray, text_size=getSize())
+    table.cell(panel, 1, 4, str.tostring(array.size(fvgList)), text_color=color.white, text_size=getSize())
+    table.cell(panel, 0, 5, 'OBs', text_color=color.gray, text_size=getSize())
+    table.cell(panel, 1, 5, str.tostring(array.size(obList)), text_color=color.white, text_size=getSize())
+    table.cell(panel, 0, 6, 'Zone', text_color=color.gray, text_size=getSize())
+    zoneText = not na(lastSwingHigh) and not na(lastSwingLow) ? (isPremium(close, lastSwingHigh, lastSwingLow) ? 'PREMIUM' : 'DISCOUNT') : '-'
+    zoneCol = zoneText == 'PREMIUM' ? bearColor : zoneText == 'DISCOUNT' ? bullColor : color.gray
+    table.cell(panel, 1, 6, zoneText, text_color=zoneCol, text_size=getSize())
+    table.cell(panel, 0, 7, 'Session', text_color=color.gray, text_size=getSize())
+    table.cell(panel, 1, 7, getKZName(), text_color=currentlyInKZ ? color.aqua : color.gray, text_size=getSize())
+    table.cell(panel, 0, 8, 'Signal', text_color=color.gray, text_size=getSize())
+    sigCol = lastSignal == 'LONG' ? bullColor : lastSignal == 'SHORT' ? bearColor : color.gray
+    table.cell(panel, 1, 8, lastSignal + ' ' + str.tostring(lastSignalScore), text_color=sigCol, text_size=getSize())
+    table.cell(panel, 0, 9, 'SL TP', text_color=color.gray, text_size=getSize())
+    table.cell(panel, 1, 9, str.tostring(lastSL, format.mintick) + ' / ' + str.tostring(lastTP, format.mintick), text_color=color.white, text_size=getSize())
+
+// ============================================================================
+// ALERTS
+// ============================================================================
+
+alertcondition(newBullCHoCH, title='Bullish CHoCH', message='ICT-V CLEAN: Bullish CHoCH')
+alertcondition(newBearCHoCH, title='Bearish CHoCH', message='ICT-V CLEAN: Bearish CHoCH')
+alertcondition(newBullBOS, title='Bullish BOS', message='ICT-V CLEAN: Bullish BOS')
+alertcondition(newBearBOS, title='Bearish BOS', message='ICT-V CLEAN: Bearish BOS')
+alertcondition(newIDMTriggered, title='Inducement Swept', message='ICT-V CLEAN: IDM swept')
+alertcondition(newSweepHigh, title='BSL Swept', message='ICT-V CLEAN: Buy-side liquidity swept')
+alertcondition(newSweepLow, title='SSL Swept', message='ICT-V CLEAN: Sell-side liquidity swept')
+alertcondition(newBullFVG, title='Bullish FVG', message='ICT-V CLEAN: Bullish FVG formed')
+alertcondition(newBearFVG, title='Bearish FVG', message='ICT-V CLEAN: Bearish FVG formed')
+alertcondition(newBullOB, title='Bullish OB', message='ICT-V CLEAN: Bullish OB formed')
+alertcondition(newBearOB, title='Bearish OB', message='ICT-V CLEAN: Bearish OB formed')
+alertcondition(longSignal, title='Validated Long Signal', message='ICT-V CLEAN: LONG signal')
+alertcondition(shortSignal, title='Validated Short Signal', message='ICT-V CLEAN: SHORT signal')

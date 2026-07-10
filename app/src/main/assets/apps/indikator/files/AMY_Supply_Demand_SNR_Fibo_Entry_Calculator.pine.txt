@@ -1,0 +1,353 @@
+//@version=5
+indicator("AMY Supply Demand + SNR + Fibo Entry Calculator", shorttitle="AMY SD SNR Fibo", overlay=true, max_lines_count=500, max_boxes_count=300, max_labels_count=500, max_bars_back=3000)
+
+//==================== INPUTS ====================//
+amy_groupCore = "AMY Core Settings"
+amy_swingLen = input.int(5, "Swing Length", minval=2, maxval=30, group=amy_groupCore)
+amy_maxZones = input.int(6, "Max Supply/Demand Zones", minval=1, maxval=20, group=amy_groupCore)
+amy_maxSnr = input.int(8, "Max SNR Levels", minval=2, maxval=30, group=amy_groupCore)
+amy_zoneAtrPad = input.float(0.15, "Zone Minimum Size ATR", minval=0.0, step=0.05, group=amy_groupCore)
+amy_extendBars = input.int(80, "Extend Right Bars", minval=10, maxval=500, group=amy_groupCore)
+
+amy_groupEntry = "AMY Math Entry Engine"
+amy_showEntry = input.bool(true, "Show Entry Engine", group=amy_groupEntry)
+amy_useFibo = input.bool(true, "Use Fibo 0.618 - 0.786", group=amy_groupEntry)
+amy_useConfluence = input.bool(true, "Require SNR / SD Confluence", group=amy_groupEntry)
+amy_tolAtr = input.float(0.35, "Entry Tolerance ATR", minval=0.05, step=0.05, group=amy_groupEntry)
+amy_rejectRatio = input.float(1.2, "Rejection Wick Ratio", minval=0.2, step=0.1, group=amy_groupEntry)
+amy_slAtr = input.float(0.35, "SL Buffer ATR", minval=0.05, step=0.05, group=amy_groupEntry)
+amy_rr1 = input.float(1.0, "TP1 RR", minval=0.2, step=0.1, group=amy_groupEntry)
+amy_rr2 = input.float(2.0, "TP2 RR", minval=0.5, step=0.1, group=amy_groupEntry)
+amy_showTradeLines = input.bool(true, "Show Entry / SL / TP Lines", group=amy_groupEntry)
+
+amy_groupDisplay = "AMY Display"
+amy_showZones = input.bool(true, "Show Supply/Demand Zones", group=amy_groupDisplay)
+amy_showSnr = input.bool(true, "Show SNR Lines", group=amy_groupDisplay)
+amy_showFibo = input.bool(true, "Show Fibo Lines", group=amy_groupDisplay)
+amy_showPanel = input.bool(true, "Show Dashboard", group=amy_groupDisplay)
+amy_showLabels = input.bool(true, "Show Signal Labels", group=amy_groupDisplay)
+
+//==================== BASE CALC ====================//
+amy_atr = ta.atr(14)
+amy_body = math.abs(close - open)
+amy_bodySafe = math.max(amy_body, syminfo.mintick)
+amy_upperWick = high - math.max(open, close)
+amy_lowerWick = math.min(open, close) - low
+amy_bullReject = close > open and amy_lowerWick >= amy_bodySafe * amy_rejectRatio
+amy_bearReject = close < open and amy_upperWick >= amy_bodySafe * amy_rejectRatio
+amy_tol = amy_atr * amy_tolAtr
+
+//==================== STORAGE ====================//
+var box[] amy_sdBoxes = array.new_box()
+var float[] amy_sdTops = array.new_float()
+var float[] amy_sdBtms = array.new_float()
+var int[] amy_sdDirs = array.new_int()
+var label[] amy_sdLabels = array.new_label()
+
+var line[] amy_snrLines = array.new_line()
+var label[] amy_snrLabels = array.new_label()
+var float[] amy_snrPrices = array.new_float()
+var int[] amy_snrDirs = array.new_int()
+
+var line[] amy_fibLines = array.new_line()
+var label[] amy_fibLabels = array.new_label()
+var float[] amy_fibRatios = array.from(0.0, 0.382, 0.5, 0.618, 0.705, 0.786, 1.0, 1.272, 1.618)
+var string[] amy_fibNames = array.from("0", "0.382", "0.5", "0.618", "0.705", "0.786", "1", "1.272", "1.618")
+
+var float amy_prevSwingPrice = na
+var int amy_prevSwingIndex = na
+var int amy_prevSwingType = 0
+var float amy_lastSwingPrice = na
+var int amy_lastSwingIndex = na
+var int amy_lastSwingType = 0
+
+var line amy_entryLine = na
+var line amy_slLine = na
+var line amy_tp1Line = na
+var line amy_tp2Line = na
+var label amy_tradeLabel = na
+var box amy_entryZoneBox = na
+
+//==================== HELPERS ====================//
+amy_addSNR(_price, _idx, _dir) =>
+    if amy_showSnr and not na(_price)
+        _name = _dir == 1 ? "R" : "S"
+        _col = _dir == 1 ? color.new(color.red, 15) : color.new(color.lime, 15)
+        _ln = line.new(_idx, _price, bar_index + amy_extendBars, _price, xloc=xloc.bar_index, extend=extend.none, color=_col, width=1, style=line.style_solid)
+        _lb = label.new(bar_index + amy_extendBars, _price, _name + "  " + str.tostring(_price, format.mintick), xloc=xloc.bar_index, style=label.style_label_left, color=color.new(_col, 85), textcolor=_col, size=size.tiny)
+        array.unshift(amy_snrLines, _ln)
+        array.unshift(amy_snrLabels, _lb)
+        array.unshift(amy_snrPrices, _price)
+        array.unshift(amy_snrDirs, _dir)
+        while array.size(amy_snrLines) > amy_maxSnr
+            line.delete(array.pop(amy_snrLines))
+            label.delete(array.pop(amy_snrLabels))
+            array.pop(amy_snrPrices)
+            array.pop(amy_snrDirs)
+
+amy_addZone(_top, _btm, _idx, _dir) =>
+    _pad = math.max(amy_atr * amy_zoneAtrPad, syminfo.mintick)
+    _zTop = math.max(_top, _btm)
+    _zBtm = math.min(_top, _btm)
+    _mid = math.avg(_zTop, _zBtm)
+    if math.abs(_zTop - _zBtm) < _pad
+        _zTop := _mid + _pad * 0.5
+        _zBtm := _mid - _pad * 0.5
+    _col = _dir == 1 ? color.new(color.lime, 86) : color.new(color.red, 86)
+    _border = _dir == 1 ? color.new(color.lime, 35) : color.new(color.red, 35)
+    _txt = _dir == 1 ? "DEMAND" : "SUPPLY"
+    _bx = box.new(_idx, _zTop, bar_index + amy_extendBars, _zBtm, xloc=xloc.bar_index, bgcolor=amy_showZones ? _col : color.new(_col, 100), border_color=amy_showZones ? _border : color.new(_border, 100), text=amy_showZones ? _txt : "", text_color=_border, text_size=size.tiny, text_halign=text.align_left)
+    _lb = label.new(_idx, _dir == 1 ? _zBtm : _zTop, _txt, xloc=xloc.bar_index, style=_dir == 1 ? label.style_label_up : label.style_label_down, color=color.new(_border, 85), textcolor=_border, size=size.tiny)
+    array.unshift(amy_sdBoxes, _bx)
+    array.unshift(amy_sdLabels, _lb)
+    array.unshift(amy_sdTops, _zTop)
+    array.unshift(amy_sdBtms, _zBtm)
+    array.unshift(amy_sdDirs, _dir)
+    while array.size(amy_sdBoxes) > amy_maxZones
+        box.delete(array.pop(amy_sdBoxes))
+        label.delete(array.pop(amy_sdLabels))
+        array.pop(amy_sdTops)
+        array.pop(amy_sdBtms)
+        array.pop(amy_sdDirs)
+
+//==================== PIVOT, ZONE, SNR ====================//
+amy_ph = ta.pivothigh(high, amy_swingLen, amy_swingLen)
+amy_pl = ta.pivotlow(low, amy_swingLen, amy_swingLen)
+
+if not na(amy_ph)
+    amy_pIdx = bar_index - amy_swingLen
+    amy_pPrice = amy_ph
+    amy_zoneTop = high[amy_swingLen]
+    amy_zoneBtm = math.max(open[amy_swingLen], close[amy_swingLen])
+    amy_addZone(amy_zoneTop, amy_zoneBtm, amy_pIdx, -1)
+    amy_addSNR(amy_pPrice, amy_pIdx, 1)
+    if amy_lastSwingType == 1
+        if na(amy_lastSwingPrice) or amy_pPrice > amy_lastSwingPrice
+            amy_lastSwingPrice := amy_pPrice
+            amy_lastSwingIndex := amy_pIdx
+    else
+        amy_prevSwingPrice := amy_lastSwingPrice
+        amy_prevSwingIndex := amy_lastSwingIndex
+        amy_prevSwingType := amy_lastSwingType
+        amy_lastSwingPrice := amy_pPrice
+        amy_lastSwingIndex := amy_pIdx
+        amy_lastSwingType := 1
+
+if not na(amy_pl)
+    amy_pIdx = bar_index - amy_swingLen
+    amy_pPrice = amy_pl
+    amy_zoneTop = math.min(open[amy_swingLen], close[amy_swingLen])
+    amy_zoneBtm = low[amy_swingLen]
+    amy_addZone(amy_zoneTop, amy_zoneBtm, amy_pIdx, 1)
+    amy_addSNR(amy_pPrice, amy_pIdx, -1)
+    if amy_lastSwingType == -1
+        if na(amy_lastSwingPrice) or amy_pPrice < amy_lastSwingPrice
+            amy_lastSwingPrice := amy_pPrice
+            amy_lastSwingIndex := amy_pIdx
+    else
+        amy_prevSwingPrice := amy_lastSwingPrice
+        amy_prevSwingIndex := amy_lastSwingIndex
+        amy_prevSwingType := amy_lastSwingType
+        amy_lastSwingPrice := amy_pPrice
+        amy_lastSwingIndex := amy_pIdx
+        amy_lastSwingType := -1
+
+// Extend active objects and remove invalidated zones.
+if array.size(amy_sdBoxes) > 0
+    for i = array.size(amy_sdBoxes) - 1 to 0
+        _bx = array.get(amy_sdBoxes, i)
+        _dir = array.get(amy_sdDirs, i)
+        _top = array.get(amy_sdTops, i)
+        _btm = array.get(amy_sdBtms, i)
+        box.set_right(_bx, bar_index + amy_extendBars)
+        _invalid = (_dir == 1 and close < _btm) or (_dir == -1 and close > _top)
+        if _invalid
+            box.delete(array.remove(amy_sdBoxes, i))
+            label.delete(array.remove(amy_sdLabels, i))
+            array.remove(amy_sdTops, i)
+            array.remove(amy_sdBtms, i)
+            array.remove(amy_sdDirs, i)
+
+if array.size(amy_snrLines) > 0
+    for i = 0 to array.size(amy_snrLines) - 1
+        _ln = array.get(amy_snrLines, i)
+        _lb = array.get(amy_snrLabels, i)
+        _price = array.get(amy_snrPrices, i)
+        _dir = array.get(amy_snrDirs, i)
+        _name = _dir == 1 ? "R" : "S"
+        line.set_x2(_ln, bar_index + amy_extendBars)
+        label.set_xy(_lb, bar_index + amy_extendBars, _price)
+        label.set_text(_lb, _name + "  " + str.tostring(_price, format.mintick))
+
+//==================== FIBO ====================//
+amy_legReady = not na(amy_prevSwingPrice) and not na(amy_lastSwingPrice) and amy_prevSwingType != 0 and amy_lastSwingType != 0 and amy_prevSwingType != amy_lastSwingType
+amy_bullLeg = amy_legReady and amy_prevSwingType == -1 and amy_lastSwingType == 1
+amy_bearLeg = amy_legReady and amy_prevSwingType == 1 and amy_lastSwingType == -1
+amy_legRange = amy_legReady ? math.abs(amy_lastSwingPrice - amy_prevSwingPrice) : na
+
+if barstate.isfirst
+    for i = 0 to 8
+        array.push(amy_fibLines, line.new(na, na, na, na, xloc=xloc.bar_index))
+        array.push(amy_fibLabels, label.new(na, na, "", xloc=xloc.bar_index, style=label.style_label_left, size=size.tiny))
+
+if barstate.islast and amy_showFibo and amy_legReady
+    for i = 0 to array.size(amy_fibRatios) - 1
+        _ratio = array.get(amy_fibRatios, i)
+        _name = array.get(amy_fibNames, i)
+        _level = amy_prevSwingPrice + (amy_lastSwingPrice - amy_prevSwingPrice) * _ratio
+        _ln = array.get(amy_fibLines, i)
+        _lb = array.get(amy_fibLabels, i)
+        _col = _ratio == 0.618 or _ratio == 0.705 or _ratio == 0.786 ? color.new(color.orange, 0) : color.new(color.silver, 35)
+        line.set_xy1(_ln, amy_lastSwingIndex, _level)
+        line.set_xy2(_ln, bar_index + amy_extendBars, _level)
+        line.set_color(_ln, _col)
+        line.set_style(_ln, line.style_solid)
+        label.set_xy(_lb, bar_index + amy_extendBars, _level)
+        label.set_text(_lb, _name + "  " + str.tostring(_level, format.mintick))
+        label.set_color(_lb, color.new(_col, 88))
+        label.set_textcolor(_lb, _col)
+else if barstate.islast and not amy_showFibo
+    for i = 0 to array.size(amy_fibLines) - 1
+        _ln = array.get(amy_fibLines, i)
+        _lb = array.get(amy_fibLabels, i)
+        line.set_xy1(_ln, na, na)
+        line.set_xy2(_ln, na, na)
+        label.set_xy(_lb, na, na)
+
+//==================== LOCATION CONFLUENCE ====================//
+float amy_nearDemandTop = na
+float amy_nearDemandBtm = na
+float amy_nearSupplyTop = na
+float amy_nearSupplyBtm = na
+if array.size(amy_sdBoxes) > 0
+    for i = 0 to array.size(amy_sdBoxes) - 1
+        _dir = array.get(amy_sdDirs, i)
+        _top = array.get(amy_sdTops, i)
+        _btm = array.get(amy_sdBtms, i)
+        _inside = close <= _top + amy_tol and close >= _btm - amy_tol
+        if _inside and _dir == 1 and na(amy_nearDemandTop)
+            amy_nearDemandTop := _top
+            amy_nearDemandBtm := _btm
+        if _inside and _dir == -1 and na(amy_nearSupplyTop)
+            amy_nearSupplyTop := _top
+            amy_nearSupplyBtm := _btm
+
+float amy_nearestSupport = na
+float amy_nearestResistance = na
+if array.size(amy_snrPrices) > 0
+    for i = 0 to array.size(amy_snrPrices) - 1
+        _price = array.get(amy_snrPrices, i)
+        _dir = array.get(amy_snrDirs, i)
+        if _dir == -1 and _price <= close
+            amy_nearestSupport := na(amy_nearestSupport) ? _price : math.max(amy_nearestSupport, _price)
+        if _dir == 1 and _price >= close
+            amy_nearestResistance := na(amy_nearestResistance) ? _price : math.min(amy_nearestResistance, _price)
+
+amy_nearSupport = not na(amy_nearestSupport) and math.abs(close - amy_nearestSupport) <= amy_tol
+amy_nearResistance = not na(amy_nearestResistance) and math.abs(close - amy_nearestResistance) <= amy_tol
+amy_nearDemand = not na(amy_nearDemandTop)
+amy_nearSupply = not na(amy_nearSupplyTop)
+
+//==================== ENTRY ENGINE ====================//
+amy_buyZoneHigh = amy_bullLeg ? amy_lastSwingPrice - amy_legRange * 0.618 : na
+amy_buyZoneLow = amy_bullLeg ? amy_lastSwingPrice - amy_legRange * 0.786 : na
+amy_sellZoneLow = amy_bearLeg ? amy_lastSwingPrice + amy_legRange * 0.618 : na
+amy_sellZoneHigh = amy_bearLeg ? amy_lastSwingPrice + amy_legRange * 0.786 : na
+
+amy_inBuyFibo = amy_bullLeg and close >= amy_buyZoneLow - amy_tol and close <= amy_buyZoneHigh + amy_tol
+amy_inSellFibo = amy_bearLeg and close >= amy_sellZoneLow - amy_tol and close <= amy_sellZoneHigh + amy_tol
+amy_buyLocation = amy_useFibo ? amy_inBuyFibo : (amy_nearDemand or amy_nearSupport)
+amy_sellLocation = amy_useFibo ? amy_inSellFibo : (amy_nearSupply or amy_nearResistance)
+amy_buyConfluence = not amy_useConfluence or amy_nearDemand or amy_nearSupport
+amy_sellConfluence = not amy_useConfluence or amy_nearSupply or amy_nearResistance
+
+amy_buyReady = amy_showEntry and amy_buyLocation and amy_buyConfluence and amy_bullReject
+amy_sellReady = amy_showEntry and amy_sellLocation and amy_sellConfluence and amy_bearReject
+amy_missedBuy = amy_showEntry and amy_bullLeg and not na(amy_buyZoneHigh) and close > amy_buyZoneHigh + amy_tol and close < amy_lastSwingPrice
+amy_missedSell = amy_showEntry and amy_bearLeg and not na(amy_sellZoneLow) and close < amy_sellZoneLow - amy_tol and close > amy_lastSwingPrice
+
+amy_buySignal = amy_buyReady and not nz(amy_buyReady[1], false)
+amy_sellSignal = amy_sellReady and not nz(amy_sellReady[1], false)
+
+amy_buySlBase = na(amy_nearestSupport) ? amy_buyZoneLow : math.min(amy_nearestSupport, amy_buyZoneLow)
+amy_sellSlBase = na(amy_nearestResistance) ? amy_sellZoneHigh : math.max(amy_nearestResistance, amy_sellZoneHigh)
+amy_buySL = amy_buyReady ? amy_buySlBase - amy_atr * amy_slAtr : na
+amy_sellSL = amy_sellReady ? amy_sellSlBase + amy_atr * amy_slAtr : na
+amy_buyRisk = amy_buyReady ? close - amy_buySL : na
+amy_sellRisk = amy_sellReady ? amy_sellSL - close : na
+amy_buyTP1 = amy_buyReady ? close + amy_buyRisk * amy_rr1 : na
+amy_buyTP2 = amy_buyReady ? close + amy_buyRisk * amy_rr2 : na
+amy_sellTP1 = amy_sellReady ? close - amy_sellRisk * amy_rr1 : na
+amy_sellTP2 = amy_sellReady ? close - amy_sellRisk * amy_rr2 : na
+
+if amy_showEntry and not na(amy_entryZoneBox)
+    box.delete(amy_entryZoneBox)
+    amy_entryZoneBox := na
+if amy_showEntry and amy_bullLeg and not na(amy_buyZoneHigh) and not na(amy_buyZoneLow)
+    amy_entryZoneBox := box.new(bar_index - 5, amy_buyZoneHigh, bar_index + amy_extendBars, amy_buyZoneLow, xloc=xloc.bar_index, bgcolor=color.new(color.lime, 92), border_color=color.new(color.lime, 60), text="BUY MATH ZONE", text_color=color.new(color.lime, 20), text_size=size.tiny, text_halign=text.align_left)
+if amy_showEntry and amy_bearLeg and not na(amy_sellZoneHigh) and not na(amy_sellZoneLow)
+    amy_entryZoneBox := box.new(bar_index - 5, amy_sellZoneHigh, bar_index + amy_extendBars, amy_sellZoneLow, xloc=xloc.bar_index, bgcolor=color.new(color.red, 92), border_color=color.new(color.red, 60), text="SELL MATH ZONE", text_color=color.new(color.red, 20), text_size=size.tiny, text_halign=text.align_left)
+
+if amy_showTradeLines and amy_buySignal and not na(amy_buySL) and not na(amy_buyTP1) and not na(amy_buyTP2)
+    if not na(amy_entryLine)
+        line.delete(amy_entryLine)
+    if not na(amy_slLine)
+        line.delete(amy_slLine)
+    if not na(amy_tp1Line)
+        line.delete(amy_tp1Line)
+    if not na(amy_tp2Line)
+        line.delete(amy_tp2Line)
+    if not na(amy_tradeLabel)
+        label.delete(amy_tradeLabel)
+    amy_txt = "BUY READY\nEntry: " + str.tostring(close, format.mintick) + "\nSL: " + str.tostring(amy_buySL, format.mintick) + "\nTP1: " + str.tostring(amy_buyTP1, format.mintick) + "\nTP2: " + str.tostring(amy_buyTP2, format.mintick)
+    amy_entryLine := line.new(bar_index, close, bar_index + amy_extendBars, close, xloc=xloc.bar_index, color=color.new(color.yellow, 0), width=2)
+    amy_slLine := line.new(bar_index, amy_buySL, bar_index + amy_extendBars, amy_buySL, xloc=xloc.bar_index, color=color.new(color.red, 0), width=2)
+    amy_tp1Line := line.new(bar_index, amy_buyTP1, bar_index + amy_extendBars, amy_buyTP1, xloc=xloc.bar_index, color=color.new(color.aqua, 0), width=1)
+    amy_tp2Line := line.new(bar_index, amy_buyTP2, bar_index + amy_extendBars, amy_buyTP2, xloc=xloc.bar_index, color=color.new(color.lime, 0), width=1)
+    amy_tradeLabel := label.new(bar_index, low, amy_txt, xloc=xloc.bar_index, style=label.style_label_up, color=color.new(color.lime, 75), textcolor=color.lime, size=size.small)
+
+if amy_showTradeLines and amy_sellSignal and not na(amy_sellSL) and not na(amy_sellTP1) and not na(amy_sellTP2)
+    if not na(amy_entryLine)
+        line.delete(amy_entryLine)
+    if not na(amy_slLine)
+        line.delete(amy_slLine)
+    if not na(amy_tp1Line)
+        line.delete(amy_tp1Line)
+    if not na(amy_tp2Line)
+        line.delete(amy_tp2Line)
+    if not na(amy_tradeLabel)
+        label.delete(amy_tradeLabel)
+    amy_txt = "SELL READY\nEntry: " + str.tostring(close, format.mintick) + "\nSL: " + str.tostring(amy_sellSL, format.mintick) + "\nTP1: " + str.tostring(amy_sellTP1, format.mintick) + "\nTP2: " + str.tostring(amy_sellTP2, format.mintick)
+    amy_entryLine := line.new(bar_index, close, bar_index + amy_extendBars, close, xloc=xloc.bar_index, color=color.new(color.yellow, 0), width=2)
+    amy_slLine := line.new(bar_index, amy_sellSL, bar_index + amy_extendBars, amy_sellSL, xloc=xloc.bar_index, color=color.new(color.red, 0), width=2)
+    amy_tp1Line := line.new(bar_index, amy_sellTP1, bar_index + amy_extendBars, amy_sellTP1, xloc=xloc.bar_index, color=color.new(color.aqua, 0), width=1)
+    amy_tp2Line := line.new(bar_index, amy_sellTP2, bar_index + amy_extendBars, amy_sellTP2, xloc=xloc.bar_index, color=color.new(color.lime, 0), width=1)
+    amy_tradeLabel := label.new(bar_index, high, amy_txt, xloc=xloc.bar_index, style=label.style_label_down, color=color.new(color.red, 75), textcolor=color.red, size=size.small)
+
+plotshape(amy_showLabels and amy_buySignal, title="BUY READY", style=shape.labelup, text="BUY\nREADY", location=location.belowbar, color=color.new(color.lime, 0), textcolor=color.black, size=size.tiny)
+plotshape(amy_showLabels and amy_sellSignal, title="SELL READY", style=shape.labeldown, text="SELL\nREADY", location=location.abovebar, color=color.new(color.red, 0), textcolor=color.white, size=size.tiny)
+plotshape(amy_showLabels and amy_missedBuy and not nz(amy_missedBuy[1], false), title="MISSED BUY", style=shape.labeldown, text="MISSED\nBUY", location=location.abovebar, color=color.new(color.orange, 0), textcolor=color.black, size=size.tiny)
+plotshape(amy_showLabels and amy_missedSell and not nz(amy_missedSell[1], false), title="MISSED SELL", style=shape.labelup, text="MISSED\nSELL", location=location.belowbar, color=color.new(color.orange, 0), textcolor=color.black, size=size.tiny)
+
+//==================== DASHBOARD ====================//
+var table amy_panel = table.new(position.top_right, 2, 7, border_width=1)
+if barstate.islast and amy_showPanel
+    amy_status = amy_buyReady ? "BUY READY" : amy_sellReady ? "SELL READY" : amy_missedBuy ? "MISSED BUY" : amy_missedSell ? "MISSED SELL" : "NO ENTRY"
+    amy_statusCol = amy_buyReady ? color.lime : amy_sellReady ? color.red : (amy_missedBuy or amy_missedSell) ? color.orange : color.gray
+    table.cell(amy_panel, 0, 0, "AMY SD/SNR/FIBO", text_color=color.white, bgcolor=color.new(color.blue, 35))
+    table.cell(amy_panel, 1, 0, amy_status, text_color=color.white, bgcolor=color.new(amy_statusCol, 35))
+    table.cell(amy_panel, 0, 1, "Leg", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 1, 1, amy_bullLeg ? "Bullish" : amy_bearLeg ? "Bearish" : "Waiting", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 0, 2, "Buy Zone", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 1, 2, not na(amy_buyZoneLow) ? str.tostring(amy_buyZoneLow, format.mintick) + " - " + str.tostring(amy_buyZoneHigh, format.mintick) : "-", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 0, 3, "Sell Zone", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 1, 3, not na(amy_sellZoneLow) ? str.tostring(amy_sellZoneLow, format.mintick) + " - " + str.tostring(amy_sellZoneHigh, format.mintick) : "-", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 0, 4, "Near Demand/Supply", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 1, 4, amy_nearDemand ? "Demand" : amy_nearSupply ? "Supply" : "No", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 0, 5, "Near S/R", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 1, 5, amy_nearSupport ? "Support" : amy_nearResistance ? "Resistance" : "No", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 0, 6, "Rule", text_color=color.white, bgcolor=color.new(color.black, 70))
+    table.cell(amy_panel, 1, 6, "Ready only inside zone", text_color=color.white, bgcolor=color.new(color.black, 70))
+
+alertcondition(amy_buySignal, title="AMY SD/SNR/FIBO BUY READY", message="AMY SD/SNR/FIBO: BUY READY")
+alertcondition(amy_sellSignal, title="AMY SD/SNR/FIBO SELL READY", message="AMY SD/SNR/FIBO: SELL READY")

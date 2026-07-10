@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Editor — Amy FX Academy Admin</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Load site CSS for preview -->
+  <link rel="stylesheet" href="../assets/css/style.css" id="previewStylesheet">
+  <style>
+    /* Editor-specific styles */
+    body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; margin: 0; }
+    .admin-topbar { position: relative !important; flex-shrink: 0; height: auto !important; min-height: 60px; }
+    .editor-layout { display: grid; grid-template-columns: 280px 1fr 1fr; flex-grow: 1; height: auto !important; margin-top: 0 !important; overflow: hidden; position: relative; }
+    .navigator-panel { background: var(--surface-hover); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; z-index: 20; }
+    .nav-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; flex-shrink: 0; }
+    .nav-header button { flex: 1; padding: 6px; font-size: 12px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; }
+    .nav-header button.active { background: rgba(16, 185, 129, 0.1); color: var(--accent); border-color: var(--accent); }
+    .nav-body { flex-grow: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+    .nav-item { padding: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; color: var(--text); cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 6px; }
+    .nav-item:hover { border-color: var(--accent); }
+    .nav-item.dragging { opacity: 0.5; border: 1px dashed var(--accent); }
+    .nav-item.drag-over { border-top: 2px solid var(--accent); }
+    .nav-item-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; pointer-events: none; }
+    .nav-item-controls { display: flex; gap: 4px; margin-top: 4px; }
+    .nav-item-controls button { background: rgba(255,255,255,0.05); border: none; color: var(--text-muted); padding: 4px; border-radius: 4px; font-size: 11px; cursor: pointer; flex: 1; }
+    .nav-item-controls button:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    
+    @keyframes highlightFlash {
+      0% { box-shadow: 0 0 0 4px var(--accent); border-color: var(--accent); }
+      100% { box-shadow: 0 0 0 0 transparent; border-color: var(--border); }
+    }
+    .editor-block.highlight { animation: highlightFlash 2s ease-out; }
+    
+    .editor-panel { overflow-y: auto; padding: 24px; background: var(--bg); position: relative; }
+    .preview-panel { overflow-y: auto; border-left: 1px solid var(--border); background: #f4f6f1; }
+    
+    .preview-header { padding: 12px 24px; background: rgba(255,255,255,0.9); backdrop-filter: blur(5px); position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dfe3d6; color: #1a1e15; }
+    
+    .metadata-section { background: var(--surface); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 24px; display: flex; flex-direction: column; gap: 12px; }
+    .metadata-section input { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; font-family: inherit; }
+    .metadata-section input:focus { border-color: var(--accent); outline: none; }
+    .metadata-section label { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+    
+    .editor-block { position: relative; padding: 16px; margin-bottom: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); transition: all 0.2s; }
+    .editor-block.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1); }
+    .editor-block:hover { border-color: rgba(255,255,255,0.2); }
+    
+    .block-content { min-height: 24px; outline: none; font-size: 15px; }
+    .block-content[data-placeholder]:empty:before { content: attr(data-placeholder); color: var(--text-muted); pointer-events: none; }
+    
+    .block-type-indicator { position: absolute; top: -10px; left: 16px; background: var(--bg); border: 1px solid var(--border); padding: 2px 8px; border-radius: 10px; font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; cursor: pointer; z-index: 10; }
+    .block-type-indicator:hover { border-color: var(--accent); color: var(--accent); }
+    .type-dropdown-menu { position: absolute; top: 100%; left: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 4px; display: flex; flex-direction: column; gap: 2px; min-width: 120px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 100; margin-top: 4px; text-transform: none; }
+    .type-dropdown-menu div { padding: 6px 12px; font-size: 12px; color: var(--text); border-radius: 4px; cursor: pointer; text-transform: capitalize; }
+    .type-dropdown-menu div:hover { background: rgba(16, 185, 129, 0.1); color: var(--accent); }
+    
+    .block-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; opacity: 0; transition: opacity 0.2s; background: var(--surface); border-radius: 8px; border: 1px solid var(--border); padding: 2px; }
+    .editor-block:hover .block-actions, .editor-block.selected .block-actions { opacity: 1; }
+    .block-actions button { background: transparent; border: none; color: var(--text-muted); width: 24px; height: 24px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .block-actions button:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .block-actions button.delete:hover { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    
+    .add-block-btn { width: 32px; height: 32px; border-radius: 16px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; margin: -6px auto; opacity: 0; transition: opacity 0.2s; cursor: pointer; position: relative; z-index: 2; border: 2px solid var(--bg); font-weight: bold; }
+    .editor-block:hover + .add-block-btn { opacity: 1; }
+    .add-block-btn:hover { opacity: 1; transform: scale(1.1); }
+    
+    .add-block-panel { position: fixed; left: -320px; width: 280px; top: 0; bottom: 0; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 4px 0 24px rgba(0,0,0,0.5); z-index: 2000; background: var(--surface-hover); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+    .editor-layout.show-add-block .add-block-panel { left: 0; }
+    .editor-layout.show-add-block .nav-overlay { display: block; opacity: 1; pointer-events: all; }
+    
+    .image-block { text-align: center; }
+    .image-block img { max-width: 100%; max-height: 300px; border-radius: 8px; object-fit: contain; }
+    .image-block .placeholder { padding: 40px; border: 2px dashed var(--border); border-radius: 8px; color: var(--text-muted); cursor: pointer; }
+    .image-block .placeholder:hover { border-color: var(--accent); color: var(--accent); }
+    .image-controls { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; }
+    .image-controls button { background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+    .image-controls button.active { background: rgba(16, 185, 129, 0.2); color: var(--accent); border-color: var(--accent); }
+    
+    .floating-toolbar { position: absolute; background: var(--surface-hover); border: 1px solid var(--border); border-radius: 8px; padding: 4px; display: flex; gap: 4px; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: opacity 0.2s, top 0.2s, left 0.2s; }
+    .floating-toolbar button { background: transparent; border: none; color: var(--text); width: 28px; height: 28px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .floating-toolbar button:hover { background: rgba(255,255,255,0.1); }
+    
+    /* Modals */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .modal-overlay.active { opacity: 1; pointer-events: all; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.4); transform: translateY(20px); transition: transform 0.3s; }
+    .modal-overlay.active .modal { transform: translateY(0); }
+    .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 18px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+    .modal-close { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 20px; }
+    .modal-body { padding: 24px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 16px; }
+    .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; }
+    
+    .upload-area { border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .upload-area:hover, .upload-area.dragover { border-color: var(--accent); background: rgba(16, 185, 129, 0.05); }
+    .upload-area.has-image { padding: 12px; border-style: solid; }
+    .upload-area img { max-height: 200px; border-radius: 8px; }
+    
+    .tab-bar { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    .tab-btn { padding: 10px 16px; background: transparent; border: none; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; font-weight: 600; }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+    .form-group input { background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; font-family: inherit; }
+    
+    .block-content.warning-content { background: rgba(245, 158, 11, 0.1); border-left: 4px solid var(--gold); padding: 16px; }
+    .block-content.note-content { background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--accent); padding: 16px; }
+    .block-content.blockquote-content { border-left: 4px solid var(--accent); padding-left: 16px; font-style: italic; color: var(--text-muted); }
+    .block-content.code-content { background: rgba(0,0,0,0.3); padding: 16px; font-family: monospace; font-size: 14px; border-radius: 8px; border: 1px solid var(--border); }
+    
+    .preview-content { padding: 40px; }
+    
+    /* Specific overrides for block type headings in editor */
+    .editor-block[data-type="heading2"] .block-content { font-size: 24px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
+    .editor-block[data-type="heading3"] .block-content { font-size: 20px; font-weight: bold; }
+    
+    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+    .toast { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent); color: #fff; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .toast.show { transform: translateX(0); }
+    .toast.error { border-left-color: var(--danger); }
+    
+    .mobile-only { display: none !important; }
+    .nav-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .editor-layout.show-nav .nav-overlay { display: block; opacity: 1; pointer-events: all; }
+    
+    @media (max-width: 900px) {
+      .mobile-only { display: inline-flex !important; }
+      .admin-topbar { flex-direction: column; align-items: stretch; padding: 8px 12px; gap: 8px; }
+      .topbar-left { width: 100%; flex-wrap: nowrap; justify-content: flex-start; gap: 6px; align-items: center; }
+      #btnDashboard { font-size: 10px; padding: 4px 8px; height: auto; border-radius: 12px; flex-shrink: 0; border: 1px solid var(--border); }
+      #editorTitle { font-size: 13px; flex-grow: 1; white-space: normal; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
+      #btnUndo, #btnRedo { padding: 4px 8px !important; font-size: 14px !important; margin-left: 0 !important; flex-shrink: 0; }
+      
+      .topbar-right { width: 100%; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; border: 1px solid rgba(255,255,255,0.05); }
+      .topbar-right button { font-size: 10px; padding: 6px 2px; justify-content: center; height: auto; white-space: nowrap; border-radius: 6px; border: 1px solid transparent; }
+      .topbar-right button.btn-secondary { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: #fff; }
+      .topbar-right button.btn-primary { background: rgba(16, 185, 129, 0.2); border-color: var(--accent); color: var(--accent); }
+      .topbar-right button.btn-ghost { background: transparent; border-color: rgba(255,255,255,0.1); }
+      #saveStatus { grid-column: 1 / -1; margin-bottom: 2px; font-size: 10px; text-align: center; margin-right: 0 !important; }
+      
+      .editor-layout { grid-template-columns: 1fr; }
+      .navigator-panel { position: fixed; left: -320px; width: 280px; top: 0; bottom: 0; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 4px 0 24px rgba(0,0,0,0.5); z-index: 2000; }
+      .editor-layout.show-nav .navigator-panel { left: 0; }
+      .preview-panel { display: none; }
+      .editor-layout.show-preview .editor-panel { display: none; }
+      .editor-layout.show-preview .preview-panel { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="admin-topbar">
+    <div class="topbar-left">
+      <a href="index.html" class="btn btn-ghost btn-sm" id="btnDashboard">← Dashboard</a>
+      <span class="admin-title" id="editorTitle">Editor Materi</span>
+      <button class="btn btn-ghost btn-sm" id="btnUndo" title="Undo (Ctrl+Z)" disabled style="font-size: 16px; padding: 4px 8px; margin-left: 8px;">↶</button>
+      <button class="btn btn-ghost btn-sm" id="btnRedo" title="Redo (Ctrl+Y)" disabled style="font-size: 16px; padding: 4px 8px;">↷</button>
+    </div>
+    <div class="topbar-right">
+      <span class="text-muted" id="saveStatus" style="font-size:12px; margin-right:12px;"></span>
+      <button class="btn btn-ghost btn-sm" id="btnToggleAddBlock">➕ Blok</button>
+      <button class="btn btn-ghost btn-sm" id="btnImport">📥 Import</button>
+      <button class="btn btn-primary btn-sm" id="btnExport">📤 Export</button>
+      <button class="btn btn-secondary btn-sm" id="btnSaveGithub">🚀 Simpan</button>
+      <button class="btn btn-secondary btn-sm" id="btnPushGithub">🐙 GitHub</button>
+      <button class="btn btn-ghost btn-sm mobile-only" id="btnToggleNav">🧭 Navigator</button>
+      <button class="btn btn-ghost btn-sm mobile-only" id="btnTogglePreview">👁️ Preview</button>
+      <button class="btn btn-ghost btn-sm" id="btnGithubSettings" title="GitHub Settings">⚙</button>
+    </div>
+  </header>
+
+  <div class="editor-layout" id="editorLayout">
+    <div class="nav-overlay" id="navOverlay"></div>
+    
+    <!-- Add Block Panel (Drawer) -->
+    <div class="add-block-panel" id="addBlockPanel">
+      <div class="nav-header">
+        <span style="font-weight:bold; padding:6px; color:#fff; flex:1;">Pilih Blok Baru</span>
+        <button id="addBlockCloseBtn" style="flex: 0 0 32px; font-size: 24px; line-height: 1; padding: 0; background: transparent; border: none; color: var(--text-muted); cursor: pointer; display:flex; align-items: center; justify-content: center;">&times;</button>
+      </div>
+      <div class="nav-body" id="addBlockBarBody" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start;">
+        <button class="nav-item" data-type="paragraph" style="align-items:center; text-align:center;"><span class="icon" style="font-size:24px;">¶</span><span>Paragraph</span></button>
+        <button class="nav-item" data-type="heading2" style="align-items:center; text-align:center;"><span class="icon" style="font-size:24px;">H2</span><span>Heading 2</span></button>
+        <button class="nav-item" data-type="heading3" style="align-items:center; text-align:center;"><span class="icon" style="font-size:24px;">H3</span><span>Heading 3</span></button>
+        <button class="nav-item" data-type="list" style="align-items:center; text-align:center;"><span class="icon" style="font-size:24px;">≡</span><span>List</span></button>
+        <button class="nav-item" data-type="image" style="align-items:center; text-align:center;"><span class="icon" style="font-size:24px;">🖼️</span><span>Image</span></button>
+        <button class="nav-item" data-type="warning" style="align-items:center; text-align:center;"><span class="icon" style="font-size:24px;">⚠️</span><span>Warning</span></button>
+        <button class="nav-item" data-type="note" style="align-items:center; text-align:center;"><span class="icon" style="font-size:24px;">💡</span><span>Note</span></button>
+        <button class="nav-item" data-type="blockquote" style="align-items:center; text-align:center;"><span class="icon" style="font-size:24px;">❞</span><span>Quote</span></button>
+        <button class="nav-item" data-type="code" style="align-items:center; text-align:center;"><span class="icon" style="font-size:24px;">&lt;/&gt;</span><span>Code</span></button>
+      </div>
+    </div>
+    
+    <!-- Navigator Panel -->
+    <div class="navigator-panel" id="navigatorPanel">
+      <div class="nav-header">
+        <button class="active" id="navFilterAll">Semua Blok</button>
+        <button id="navFilterImage">Gambar Saja</button>
+        <button id="navCloseBtn" class="mobile-only" style="flex: 0 0 32px; font-size: 24px; line-height: 1; padding: 0; background: transparent; border: none; color: var(--text-muted); cursor: pointer; align-items: center; justify-content: center;">&times;</button>
+      </div>
+      <div class="nav-body" id="navBody">
+        <!-- Navigator items rendered via JS -->
+      </div>
+    </div>
+
+    <!-- Editor Panel -->
+    <div class="editor-panel" id="editorPanel">
+      <!-- Metadata Section -->
+      <div class="metadata-section">
+        <div class="form-group">
+          <label>Judul Materi (H1)</label>
+          <input type="text" id="metaTitle" placeholder="Contoh: Apa Itu Trading">
+        </div>
+        <div class="form-group">
+          <label>Eyebrow / Sub-kategori</label>
+          <input type="text" id="metaEyebrow" placeholder="Contoh: Bagian 01 — Pemula Nol">
+        </div>
+        <div style="display:flex; gap:12px;">
+          <div class="form-group" style="flex:1;">
+            <label>Link Sebelumnya</label>
+            <input type="text" id="metaPrevLink" placeholder="file-sebelumnya.html">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label>Link Selanjutnya</label>
+            <input type="text" id="metaNextLink" placeholder="file-selanjutnya.html">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Block Editor -->
+      <div class="blocks-container" id="blocksContainer">
+        <!-- Blocks rendered by JS -->
+      </div>
+    </div>
+
+    <!-- Preview Panel -->
+    <div class="preview-panel" id="previewPanel">
+      <div class="preview-header">
+        <span>Live Preview</span>
+        <select id="previewTheme" style="padding: 4px 8px; border-radius: 4px; border: 1px solid #ccc;">
+          <option value="">Emerald Light (Default)</option>
+          <option value="gold-luxury">Gold Luxury</option>
+          <option value="midnight-green">Midnight Green</option>
+          <option value="black-gold">Black Gold</option>
+          <option value="soft-blue">Soft Blue</option>
+        </select>
+      </div>
+      <div class="preview-content" id="previewContent">
+        <!-- Live preview rendered here -->
+      </div>
+    </div>
+  </div>
+
+  <div class="floating-toolbar" id="floatingToolbar" style="opacity: 0; pointer-events: none;">
+    <button data-format="bold"><b>B</b></button>
+    <button data-format="italic"><i>I</i></button>
+    <button data-format="insertHTML" data-value="<code>$&</code>" style="font-family:monospace">&lt;&gt;</button>
+  </div>
+
+  <!-- GitHub Settings Modal -->
+  <div class="modal-overlay" id="githubModalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <span>⚙️ Pengaturan Editor</span>
+        <button class="modal-close" id="githubModalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>GitHub Personal Access Token (PAT)</label>
+          <input type="password" id="githubTokenInput" placeholder="ghp_xxxxxxxxxxxx">
+          <div style="font-size:12px; color:var(--text-muted); margin-top:8px;">Token disimpan lokal di browser (localStorage). Pastikan token memiliki akses ke repo.</div>
+        </div>
+        <div class="form-group" style="margin-top: 16px;">
+          <label>ImgBB API Key (Gratis image hosting)</label>
+          <input type="password" id="imgbbApiKey" placeholder="Dapatkan di api.imgbb.com">
+          <div style="font-size:12px; color:var(--text-muted); margin-top:8px;">Wajib diisi agar gambar tidak menjadi base64 yang memberatkan ukuran file.</div>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 16px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border);">
+        <button class="btn btn-ghost" id="githubModalCancel">Batal</button>
+        <button class="btn btn-primary" id="githubModalSave">Simpan Token</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Upload Modal -->
+  <div class="modal-overlay" id="imageModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span>📷 Kelola Gambar</span>
+        <button class="modal-close" id="closeImageModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="upload">Upload</button>
+          <button class="tab-btn" data-tab="url">Paste URL</button>
+        </div>
+        
+        <div id="tab-upload" class="tab-content">
+          <div class="upload-area" id="dropZone">
+            <div id="uploadPlaceholder">
+              <div style="font-size: 32px; margin-bottom: 12px;">📥</div>
+              <div>Klik atau drag & drop gambar ke sini</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">Otomatis di-resize max 1200px</div>
+            </div>
+            <img id="uploadPreview" style="display:none;">
+          </div>
+        </div>
+        
+        <div id="tab-url" class="tab-content" style="display:none;">
+          <div class="form-group">
+            <label>URL Gambar</label>
+            <input type="text" id="imgUrlInput" placeholder="https://...">
+          </div>
+        </div>
+        
+        <div class="form-group" style="margin-top: 16px;">
+          <label>Caption (Opsional)</label>
+          <input type="text" id="imgCaption" placeholder="Teks kecil di bawah gambar">
+        </div>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px;">
+          <div class="form-group">
+            <label>Ukuran</label>
+            <select id="imgSize" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 8px;">
+              <option value="100%">Full (100%)</option>
+              <option value="80%">Large (80%)</option>
+              <option value="60%">Medium (60%)</option>
+              <option value="40%">Small (40%)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Posisi</label>
+            <select id="imgPosition" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 8px;">
+              <option value="center">Tengah</option>
+              <option value="left">Kiri</option>
+              <option value="right">Kanan</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="cancelImageBtn">Batal</button>
+        <button class="btn btn-primary" id="saveImageBtn">Simpan Gambar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <input type="file" id="importFileInput" accept=".html" style="display:none">
+  <input type="file" id="imageFileInput" accept="image/*" style="display:none">
+
+  <script src="js/image-manager.js"></script>
+  <script src="js/html-io.js"></script>
+  <script src="js/editor.js"></script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>SMR (Smart Money Reversal) Model (Seni Menangkap Puncak dan Lembah) — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+</head>
+<body>
+  <script>requireLogin();</script>
+  <header class="topbar hide-until-auth">
+    <nav class="nav">
+      <a class="brand" href="../index.html"><span class="brand-mark">A</span><span>Amy FX Academy</span></a>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div class="navlinks" id="navlinks">
+        <a href="../index.html">Beranda</a>
+        <a href="../daftar-materi.html">Daftar Materi</a>
+        <a href="../tentang.html">Tentang</a>
+        <a href="../glosarium/index.html">Glosarium</a>
+        
+      </div>
+    </nav>
+  </header>
+  <main class="container hide-until-auth">
+    <div class="article-layout">
+      <article class="article">
+        <div class="breadcrumb"><a href="../index.html">Beranda</a> › <a href="index.html">Bagian 25 — Turtle Soup &amp; Smart Money Reversal</a></div>
+        <div class="eyebrow">Bagian 25 — Turtle Soup &amp; Smart Money Reversal</div>
+        <h1>SMR (Smart Money Reversal) Model (Seni Menangkap Puncak dan Lembah)</h1>
+
+        <div class="image-slot" data-img-path="assets/images/lessons/25-smr-smart-money-reversal-model-seni-menangkap-puncak-dan-lembah.jpg" data-prompt="Buat ilustrasi edukasi trading untuk materi &#x27;SMR (Smart Money Reversal) Model (Seni Menangkap Puncak dan Lembah)&#x27; dari &#x27;Bagian 25 — Turtle Soup &amp; Smart Money Reversal&#x27;, gaya clean light website, rasio 16:9, warna putih, hijau lembut, biru lembut, sedikit aksen gold. Tampilkan chart sederhana, area liquidity, POI, candle displacement, dan checklist trading. Jangan gunakan klaim profit pasti. Cocok untuk website Amy FX Academy." data-caption="Ilustrasi SMR (Smart Money Reversal) Model (Seni Menangkap Puncak dan Lembah)"></div>
+
+        <div class="note"><strong>Analogi Amy:</strong> &quot;Institusi tidak membalikkan harga secara acak. Mereka membalikkan harga setelah liquidity selesai dikumpulkan. SMR Model membantu membaca momen perubahan arah tersebut.&quot;</div>
+<h2>Reversal yang Bagus Tidak Muncul Sembarangan</h2>
+<p>Banyak trader mencoba menangkap puncak dan lembah tanpa dasar yang jelas. Mereka melihat harga sudah “terlalu tinggi” atau “terlalu rendah”, lalu langsung melawan tren. Dalam banyak kasus, ini berakhir dengan kerugian karena tren sebenarnya belum selesai.</p>
+<p><strong>Smart Money Reversal (SMR) Model</strong> memberikan pendekatan yang lebih terstruktur. Alih-alih menebak, trader menunggu rangkaian kejadian yang menunjukkan bahwa <strong>Delivery</strong> telah berubah arah.</p>
+<p>Masalah yang sering terjadi adalah :</p>
+<ul>
+<li>membantu membedakan reversal asli dan koreksi sementara</li>
+<li>menggabungkan konsep <strong>Sweep, Displacement, MSS, dan Delivery</strong></li>
+<li>memberikan cara baca entry yang lebih objektif</li>
+</ul>
+<h2>1. Apa Itu Smart Money Reversal (SMR)?</h2>
+<p><strong>SMR (Smart Money Reversal)</strong> adalah proses di mana market berpindah dari satu arah delivery ke arah yang berlawanan.</p>
+<p>Ini bukan sekadar pola visual seperti double top atau double bottom. SMR adalah perubahan fungsi market:</p>
+<ul>
+<li>dari mencari <strong>Buy-Side Liquidity (BSL)</strong> menjadi mencari <strong>Sell-Side Liquidity (SSL)</strong></li>
+<li>atau sebaliknya</li>
+</ul>
+<p>Dengan kata lain:</p>
+<div class="note"><p><strong>Intinya:</strong> SMR adalah perubahan arah <em>Draw on Liquidity</em></p></div>
+<p>Reversal terjadi bukan karena harga “terlalu tinggi/rendah”, tetapi karena:</p>
+<ul>
+<li>target liquidity sebelumnya sudah tercapai</li>
+<li>market mulai mencari liquidity di sisi sebaliknya</li>
+</ul>
+<h2>2. Urutan Dasar SMR Model</h2>
+<p>SMR yang valid biasanya mengikuti urutan berikut:</p>
+<ol>
+<li><strong>HTF Context</strong></li>
+<li><strong>Liquidity Sweep</strong></li>
+<li><strong>Displacement</strong></li>
+<li><strong>Market Structure Shift (MSS)</strong></li>
+<li><strong>Retracement</strong></li>
+<li><strong>Expansion (New Delivery)</strong></li>
+</ol>
+<p>Urutan ini penting. Jika salah satu bagian hilang, kualitas reversal menurun.</p>
+<h2>3. Tahap 1 — HTF Context</h2>
+<p>Semua reversal yang kuat biasanya dimulai dari konteks <strong>Higher Timeframe</strong>.</p>
+<p>Contoh:</p>
+<ul>
+<li>harga menyentuh <strong>Daily / Weekly FVG</strong></li>
+<li>harga masuk ke <strong>Order Block HTF</strong></li>
+<li>harga mencapai <strong>BSL / SSL besar</strong></li>
+</ul>
+<p>Tanpa konteks HTF, reversal lebih berisiko menjadi noise atau hanya retracement kecil.</p>
+<h2>4. Tahap 2 — Liquidity Sweep</h2>
+<p>Setelah mencapai area penting, market biasanya melakukan <strong>Liquidity Sweep</strong>.</p>
+<p>Contoh:</p>
+<ul>
+<li>dalam bullish reversal → harga menyapu <strong>SSL</strong></li>
+<li>dalam bearish reversal → harga menyapu <strong>BSL</strong></li>
+</ul>
+<p>Fungsi sweep:</p>
+<ul>
+<li>mengambil Stop Loss</li>
+<li>menciptakan liquidity</li>
+<li>menjebak trader breakout</li>
+</ul>
+<p>Sweep sendiri belum cukup. Ini hanya langkah awal.</p>
+<h2>5. Tahap 3 — Displacement</h2>
+<p>Setelah sweep, market yang serius akan menunjukkan <strong>Displacement</strong>.</p>
+<p>Ciri:</p>
+<ul>
+<li>dorongan cepat</li>
+<li>body candle tegas</li>
+<li>menembus struktur minor</li>
+<li>sering meninggalkan <strong>FVG</strong></li>
+</ul>
+<p>Displacement menunjukkan bahwa market mulai bergerak dengan niat.</p>
+<p>Tanpa displacement, reversal belum memiliki kekuatan yang cukup.</p>
+<h2>6. Tahap 4 — Market Structure Shift (MSS)</h2>
+<p><strong>MSS</strong> adalah konfirmasi bahwa arah mulai berubah.</p>
+<p>Contoh:</p>
+<ul>
+<li>setelah sweep bawah → harga menembus swing high terdekat</li>
+<li>setelah sweep atas → harga menembus swing low terdekat</li>
+</ul>
+<p>Ini menunjukkan bahwa:</p>
+<ul>
+<li>struktur lama mulai rusak</li>
+<li>arah baru mulai terbentuk</li>
+</ul>
+<p>MSS tanpa displacement biasanya lemah. MSS dengan displacement lebih valid.</p>
+<h2>7. Tahap 5 — Retracement</h2>
+<p>Setelah displacement dan MSS, harga biasanya tidak langsung lanjut.</p>
+<p>Harga akan melakukan retracement ke area seperti:</p>
+<ul>
+<li><strong>FVG</strong></li>
+<li><strong>Order Block</strong></li>
+<li>area <strong>Premium / Discount</strong></li>
+</ul>
+<p>Di sinilah biasanya muncul peluang entry.</p>
+<p>Retracement yang sehat:</p>
+<ul>
+<li>tidak terlalu dalam</li>
+<li>masih menghormati struktur baru</li>
+<li>memberikan reaksi yang jelas</li>
+</ul>
+<h2>8. Tahap 6 — Expansion (New Delivery)</h2>
+<p>Jika semua tahap sebelumnya valid, market akan mulai <strong>Delivery ke arah baru</strong>.</p>
+<p>Contoh:</p>
+<ul>
+<li>bullish SMR → harga bergerak menuju <strong>BSL</strong></li>
+<li>bearish SMR → harga bergerak menuju <strong>SSL</strong></li>
+</ul>
+<p>Di sinilah reversal benar-benar terbukti.</p>
+<h2>Patokan Cepatnya</h2>
+<div class="note"><strong>Patokan singkat:</strong><ul><li><strong><strong>Target Awal</strong></strong> — <strong>Bullish SMR:</strong> SSL | <strong>Bearish SMR:</strong> BSL</li><li><strong><strong>Sweep</strong></strong> — <strong>Bullish SMR:</strong> Sweep low | <strong>Bearish SMR:</strong> Sweep high</li><li><strong><strong>Displacement</strong></strong> — <strong>Bullish SMR:</strong> Naik kuat | <strong>Bearish SMR:</strong> Turun kuat</li><li><strong><strong>MSS</strong></strong> — <strong>Bullish SMR:</strong> Break swing high | <strong>Bearish SMR:</strong> Break swing low</li><li><strong><strong>Retrace</strong></strong> — <strong>Bullish SMR:</strong> Discount area | <strong>Bearish SMR:</strong> Premium area</li><li><strong><strong>Target Baru</strong></strong> — <strong>Bullish SMR:</strong> BSL | <strong>Bearish SMR:</strong> SSL</li></ul></div>
+<h2>10. Hubungan dengan Delivery Sequence</h2>
+<p>SMR sebenarnya adalah perubahan dalam <strong>Delivery Sequence</strong>.</p>
+<p>Sebelum SMR:</p>
+<ul>
+<li>market dalam delivery lama</li>
+</ul>
+<p>Saat SMR:</p>
+<ul>
+<li>sweep + shift + displacement</li>
+</ul>
+<p>Setelah SMR:</p>
+<ul>
+<li>delivery baru dimulai</li>
+</ul>
+<p>Jadi SMR bukan konsep terpisah, tetapi lanjutan dari sequence yang sudah dipelajari.</p>
+<h2>11. Mengapa SMR Gagal?</h2>
+<p>Tidak semua setup menghasilkan reversal.</p>
+<p>Beberapa penyebab umum:</p>
+<h3>Tidak ada konteks HTF</h3>
+<p>Reversal dicari di tengah range tanpa level penting.</p>
+<h3>Displacement lemah</h3>
+<p>Tidak ada dorongan kuat setelah sweep.</p>
+<h3>Struktur tidak benar-benar berubah</h3>
+<p>Break hanya kecil atau tidak signifikan.</p>
+<h3>Melawan tren besar</h3>
+<p>Timeframe kecil melawan arah HTF yang kuat.</p>
+<h3>Entry terlalu cepat</h3>
+<p>Masuk saat sweep tanpa menunggu MSS.</p>
+<h2>12. Area Entry dalam SMR</h2>
+<p>Entry terbaik biasanya muncul pada:</p>
+<ul>
+<li>retracement pertama setelah MSS</li>
+<li>area <strong>FVG</strong> atau <strong>Order Block</strong></li>
+<li>zona <strong>Discount (buy)</strong> atau <strong>Premium (sell)</strong></li>
+</ul>
+<p>Prinsip:</p>
+<ul>
+<li>bukan entry di saat sweep</li>
+<li>bukan entry saat displacement</li>
+<li>tetapi entry setelah market menunjukkan arah</li>
+</ul>
+<h2>13. Kapan SMR Valid?</h2>
+<p>SMR lebih valid jika:</p>
+<ul>
+<li>ada konteks HTF jelas</li>
+<li>terjadi sweep liquidity</li>
+<li>ada displacement kuat</li>
+<li>MSS jelas</li>
+<li>retracement terukur</li>
+<li>ada target liquidity baru</li>
+</ul>
+<p>Semakin lengkap urutannya, semakin tinggi kualitas reversal.</p>
+<h2>14. Kapan SMR Tidak Layak Diambil?</h2>
+<p>Hindari jika:</p>
+<ul>
+<li>tidak ada sweep</li>
+<li>displacement lemah</li>
+<li>tidak ada MSS</li>
+<li>retracement terlalu dalam</li>
+<li>tidak ada target jelas</li>
+<li>melawan HTF kuat</li>
+</ul>
+<p>Dalam kondisi ini, kemungkinan besar itu hanya retracement.</p>
+<h2>15. Glosarium Bab 11</h2>
+<ul>
+<li><strong>SMR Model</strong>: model pembalikan berbasis aktivitas institusional</li>
+<li><strong>Liquidity Sweep</strong>: pengambilan liquidity</li>
+<li><strong>Displacement</strong>: dorongan harga kuat</li>
+<li><strong>MSS (Market Structure Shift)</strong>: perubahan struktur</li>
+<li><strong>Delivery</strong>: pergerakan menuju target liquidity</li>
+<li><strong>HTF PD Array</strong>: level penting di timeframe besar</li>
+<li><strong>Premium / Discount</strong>: area harga relatif mahal atau murah</li>
+</ul>
+<h2>16. Ringkasan Bab</h2>
+<ul>
+<li>SMR adalah perubahan arah delivery market</li>
+<li>Urutan penting: Sweep → Displacement → MSS → Retrace → Expansion</li>
+<li>Konteks HTF sangat menentukan</li>
+<li>Entry terbaik bukan di awal, tetapi setelah konfirmasi</li>
+<li>Tidak semua reversal valid tanpa struktur lengkap</li>
+</ul>
+<h2>Penutup</h2>
+<p>Dengan memahami <strong>SMR Model</strong>, kamu tidak lagi mencoba menebak puncak atau lembah. Kamu mulai menunggu perubahan struktur yang nyata. Ini membuat pendekatan kamu lebih objektif dan lebih selaras dengan cara market bergerak.</p>
+<p>Di bab berikutnya, pembahasan akan berlanjut ke variasi model reversal yang lebih spesifik, yaitu <strong>Turtle Soup Model A dan Model B</strong>.</p>
+<h2>Catatan</h2>
+<p>Buka chart kamu dan cari satu pembalikan besar. Tandai:</p>
+<ul>
+<li>area sweep</li>
+<li>titik displacement</li>
+<li>break struktur</li>
+<li>area retracement</li>
+</ul>
+<p>Dari situ kamu akan melihat bahwa reversal bukan kebetulan, tetapi proses yang berurutan.</p>
+<h2>Kesalahan Pemula yang Perlu Dihindari</h2>
+<p>Menganggap setiap candle kuat setelah break level sebagai breakout valid. Tunggu reaksi setelah liquidity diambil.</p>
+
+
+        <div class="source-note">Materi ini disusun ulang dari Materi Trading Amy ZIP dan dirapikan ke gaya Amy FX Academy. Istilah teknis seperti liquidity, sweep, FVG, OB, IFVG, MSS, CISD, entry, Stop Loss, dan Take Profit tetap dipertahankan.</div>
+        <nav class="page-nav">
+          <span></span>
+          <a class="btn gold" href="../daftar-materi.html">Daftar Materi</a>
+          <a class="btn primary" href="02-turtle-soup-model-a-dan-model-b-memanfaatkan-jebakan-liquidity.html">Turtle Soup Model A dan Model B (Memanfaatkan Jebakan Liquidity) →</a>
+        </nav>
+      </article>
+      <aside class="toc-card">
+        <h3>Bagian 25 — Turtle Soup &amp; Smart Money Reversal</h3>
+        <ul><li><a class="active" href="01-smr-smart-money-reversal-model-seni-menangkap-puncak-dan-lembah.html">SMR (Smart Money Reversal) Model (Seni Menangkap Puncak dan Lembah)</a></li>
+<li><a class="" href="02-turtle-soup-model-a-dan-model-b-memanfaatkan-jebakan-liquidity.html">Turtle Soup Model A dan Model B (Memanfaatkan Jebakan Liquidity)</a></li>
+<li><a class="" href="03-continuation-failure-dan-tanda-awal-pembalikan-seni-menjaga-keuntungan.html">Continuation Failure dan Tanda Awal Pembalikan (Seni Menjaga Keuntungan)</a></li>
+<li><a class="" href="04-false-displacement-dan-cara-membedakannya-menghindari-jebakan-momentum.html">False Displacement dan Cara Membedakannya (Menghindari Jebakan Momentum)</a></li>
+<li><a class="" href="05-change-in-state-of-delivery-cisd-memahami-perubahan-algoritma-pasar.html">Change in State of Delivery (CISD) (Memahami Perubahan Algoritma Pasar)</a></li></ul>
+      </aside>
+    </div>
+  </main>
+  <footer class="footer hide-until-auth">© 2026 Amy FX Academy. Belajar Trading dari Nol sampai Mandiri.</footer>
+</body>
+</html>

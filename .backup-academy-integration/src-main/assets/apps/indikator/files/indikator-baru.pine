@@ -1,0 +1,946 @@
+//@version=5
+indicator("XAUUSD Unified Context Router", overlay=true, max_labels_count=500, max_lines_count=500, max_boxes_count=100)
+
+//==============================================================================
+// XAUUSD UNIFIED CONTEXT ROUTER
+// Architecture:
+// 1. Context Router: session, HTF bias, structure, premium/discount.
+// 2. POI Engine: liquidity sweep, OB, FVG, OTE, pivot/PDH/PDL.
+// 3. Trigger Engine: confirmed trigger candle and ready window.
+// 4. Trade Manager: Entry, SL, TP1, TP2, pivot-aware TP warning/cap.
+// 5. Visual Layer: every major visual type has an ON/OFF setting.
+//==============================================================================
+
+//==============================================================================
+// INPUTS
+//==============================================================================
+groupVisual = "1. Visual Controls"
+showDashboard = input.bool(true, "Show Table / Dashboard", group=groupVisual)
+showLabels = input.bool(false, "Show Text Labels", group=groupVisual)
+showZoneBoxes = input.bool(true, "Show Zone Boxes", group=groupVisual)
+showLines = input.bool(true, "Show Lines", group=groupVisual)
+showKeyLevels = input.bool(true, "Show Key Level Lines", group=groupVisual)
+showTradeLines = input.bool(true, "Show Entry / SL / TP Lines", group=groupVisual)
+showProjectionLine = input.bool(false, "Show Projection Line", group=groupVisual)
+showSignals = input.bool(true, "Show BUY / SELL Signals", group=groupVisual)
+showMarkers = input.bool(false, "Show Plan / Ready Markers", group=groupVisual)
+showSessionBg = input.bool(false, "Show Session Background", group=groupVisual)
+showDataWindow = input.bool(true, "Show Scores In Data Window", group=groupVisual)
+dashboardPositionInput = input.string("Top Right", "Dashboard Position", options=["Top Right", "Top Left", "Bottom Right", "Bottom Left"], group=groupVisual)
+
+groupSession = "2. Sessions"
+tzInput = input.string("Asia/Makassar", "Session Timezone", group=groupSession)
+asiaSession = input.session("0600-1400", "Asia Session", group=groupSession)
+londonSession = input.session("1500-2000", "London Session", group=groupSession)
+newYorkSession = input.session("2030-0000", "New York Session", group=groupSession)
+allowAsiaEntries = input.bool(false, "Allow Asia Entries", group=groupSession)
+
+groupContext = "3. Context"
+biasTf = input.timeframe("60", "HTF Bias TF", group=groupContext)
+structureTf = input.timeframe("15", "Structure TF", group=groupContext)
+triggerTf = input.timeframe("5", "Trigger TF", group=groupContext)
+swingLen = input.int(4, "Swing Length", minval=2, maxval=20, group=groupContext)
+pdLookback = input.int(50, "Premium / Discount Lookback", minval=20, maxval=300, group=groupContext)
+minContextScore = input.int(55, "Minimum Context Score", minval=1, maxval=100, group=groupContext)
+minScoreEdge = input.int(8, "Minimum Buy/Sell Edge", minval=0, maxval=50, group=groupContext)
+
+groupPoi = "4. POI / Zones"
+useFVG = input.bool(true, "Use FVG", group=groupPoi)
+useOB = input.bool(true, "Use Order Block", group=groupPoi)
+useOTE = input.bool(true, "Use OTE", group=groupPoi)
+useSweeps = input.bool(true, "Use Liquidity Sweeps", group=groupPoi)
+usePivotLevels = input.bool(true, "Use Pivot / PDH / PDL", group=groupPoi)
+obLookback = input.int(8, "OB Scan Bars", minval=2, maxval=50, group=groupPoi)
+fvgMinAtr = input.float(0.10, "Minimum FVG Size ATR", minval=0.0, step=0.05, group=groupPoi)
+zonePadAtr = input.float(0.30, "Zone Padding ATR", minval=0.0, step=0.05, group=groupPoi)
+zoneBars = input.int(30, "Zone Extend Bars", minval=5, maxval=200, group=groupPoi)
+pivotTf = input.string("D", "Pivot Source TF", options=["D", "W", "M"], group=groupPoi)
+
+groupTrigger = "5. Trigger / Entry"
+confirmOnClose = input.bool(true, "Confirm On Candle Close", group=groupTrigger)
+entryMode = input.string("Balanced", "Entry Mode", options=["Aggressive", "Balanced", "Conservative"], group=groupTrigger)
+readyWindow = input.int(3, "READY Confirm Window", minval=1, maxval=20, group=groupTrigger)
+entryCooldown = input.int(8, "Entry Cooldown Bars", minval=0, maxval=100, group=groupTrigger)
+lockUntilExit = input.bool(true, "Lock Until TP2 / SL", group=groupTrigger)
+wickRatioMin = input.float(1.20, "Min Wick / Body Ratio", minval=0.2, maxval=5.0, step=0.05, group=groupTrigger)
+displacementAtr = input.float(0.35, "Min Displacement ATR", minval=0.0, maxval=5.0, step=0.05, group=groupTrigger)
+
+groupRisk = "6. Risk / Trade Manager"
+atrLen = input.int(14, "ATR Length", minval=1, maxval=100, group=groupRisk)
+slPadAtr = input.float(0.25, "SL Padding ATR", minval=0.0, step=0.05, group=groupRisk)
+maxRiskAtr = input.float(2.50, "Max SL Size ATR", minval=0.25, step=0.25, group=groupRisk)
+tp1RR = input.float(1.0, "TP1 RR", minval=0.25, step=0.25, group=groupRisk)
+tp2RR = input.float(2.0, "TP2 RR", minval=0.50, step=0.25, group=groupRisk)
+pivotAwareTP = input.bool(true, "Pivot-aware TP Warning", group=groupRisk)
+capTPAtPivot = input.bool(false, "Limit TP2 At Nearest Pivot", group=groupRisk)
+pivotBufferAtr = input.float(0.20, "Pivot TP Buffer ATR", minval=0.0, step=0.05, group=groupRisk)
+
+groupFilter = "7. No Trade Filter"
+useNoTradeFilter = input.bool(true, "Use No Trade Filter", group=groupFilter)
+manualNoTrade = input.bool(false, "Manual No Trade", group=groupFilter)
+atrSlowLen = input.int(100, "Slow ATR Length", minval=20, maxval=500, group=groupFilter)
+extremeAtrRatio = input.float(1.80, "Extreme ATR Ratio", minval=0.5, maxval=10.0, step=0.05, group=groupFilter)
+compressionAtrRatio = input.float(0.70, "Compression ATR Ratio", minval=0.1, maxval=2.0, step=0.05, group=groupFilter)
+extremeCandleAtr = input.float(1.80, "Extreme Candle ATR", minval=0.5, maxval=10.0, step=0.05, group=groupFilter)
+maxStretchAtr = input.float(1.80, "Max Stretch From EMA20 ATR", minval=0.5, step=0.1, group=groupFilter)
+
+//==============================================================================
+// HELPERS
+//==============================================================================
+f_inSession(_sess) =>
+    not na(time(timeframe.period, _sess, tzInput))
+
+f_dashPos(_pos) =>
+    _pos == "Top Left" ? position.top_left :
+     _pos == "Bottom Right" ? position.bottom_right :
+     _pos == "Bottom Left" ? position.bottom_left :
+     position.top_right
+
+f_price(_x) =>
+    na(_x) ? "-" : str.tostring(_x, format.mintick)
+
+f_pct(_x) =>
+    str.tostring(int(math.round(_x))) + "%"
+
+f_clip(_s, _max) =>
+    str.length(_s) > _max ? str.substring(_s, 0, _max) + "..." : _s
+
+f_clamp(_x, _lo, _hi) =>
+    math.max(_lo, math.min(_x, _hi))
+
+f_grade(_score) =>
+    _score >= 85 ? "A+" :
+     _score >= 75 ? "A" :
+     _score >= 60 ? "B" :
+     _score >= 45 ? "C" :
+     "D"
+
+f_join(_a, _b) =>
+    _a == "" ? _b : _b == "" ? _a : _a + " + " + _b
+
+f_inZone(_top, _bottom) =>
+    not na(_top) and not na(_bottom) and low <= math.max(_top, _bottom) and high >= math.min(_top, _bottom)
+
+f_distToZone(_price, _top, _bottom) =>
+    _hi = math.max(_top, _bottom)
+    _lo = math.min(_top, _bottom)
+    na(_top) or na(_bottom) ? na : _price >= _lo and _price <= _hi ? 0.0 : math.min(math.abs(_price - _hi), math.abs(_price - _lo))
+
+f_lastBearish(_lookback) =>
+    float zHigh = na
+    float zLow = na
+    for i = 1 to _lookback
+        if na(zHigh) and close[i] < open[i]
+            zHigh := open[i]
+            zLow := low[i]
+    [zHigh, zLow]
+
+f_lastBullish(_lookback) =>
+    float zHigh = na
+    float zLow = na
+    for i = 1 to _lookback
+        if na(zHigh) and close[i] > open[i]
+            zHigh := high[i]
+            zLow := open[i]
+    [zHigh, zLow]
+
+f_minAbove(_base, _cur, _lvl) =>
+    float _out = _cur
+    if not na(_lvl) and _lvl > _base
+        _out := na(_out) ? _lvl : math.min(_out, _lvl)
+    _out
+
+f_maxBelow(_base, _cur, _lvl) =>
+    float _out = _cur
+    if not na(_lvl) and _lvl < _base
+        _out := na(_out) ? _lvl : math.max(_out, _lvl)
+    _out
+
+f_delLine(line _ln) =>
+    if not na(_ln)
+        line.delete(_ln)
+
+f_delLabel(label _lb) =>
+    if not na(_lb)
+        label.delete(_lb)
+
+//==============================================================================
+// BASE DATA
+//==============================================================================
+atr = ta.atr(atrLen)
+atrSlow = ta.sma(atr, atrSlowLen)
+atrSafe = math.max(atr, syminfo.mintick)
+ema20 = ta.ema(close, 20)
+body = math.abs(close - open)
+bodySafe = math.max(body, syminfo.mintick)
+barRange = math.max(high - low, syminfo.mintick)
+bodyRatio = body / barRange
+upperWick = high - math.max(open, close)
+lowerWick = math.min(open, close) - low
+confirmed = confirmOnClose ? barstate.isconfirmed : true
+
+//==============================================================================
+// SESSIONS AND ASIA RANGE
+//==============================================================================
+inAsia = f_inSession(asiaSession)
+inLondon = f_inSession(londonSession)
+inNewYork = f_inSession(newYorkSession)
+entrySession = allowAsiaEntries ? (inAsia or inLondon or inNewYork) : (inLondon or inNewYork)
+sessionText = inAsia ? "ASIA" : inLondon ? "LONDON" : inNewYork ? "NEW YORK" : "OFF"
+
+var float asiaHigh = na
+var float asiaLow = na
+var bool asiaLocked = false
+asiaStart = inAsia and not inAsia[1]
+asiaEnd = not inAsia and inAsia[1]
+
+if asiaStart
+    asiaHigh := high
+    asiaLow := low
+    asiaLocked := false
+else if inAsia
+    asiaHigh := na(asiaHigh) ? high : math.max(asiaHigh, high)
+    asiaLow := na(asiaLow) ? low : math.min(asiaLow, low)
+
+if asiaEnd and not na(asiaHigh) and not na(asiaLow)
+    asiaLocked := true
+
+asiaLowSwept = useSweeps and asiaLocked and not na(asiaLow) and low < asiaLow and close > asiaLow
+asiaHighSwept = useSweeps and asiaLocked and not na(asiaHigh) and high > asiaHigh and close < asiaHigh
+
+//==============================================================================
+// HTF BIAS AND STRUCTURE
+//==============================================================================
+htfClose = request.security(syminfo.tickerid, biasTf, close[1], barmerge.gaps_off, barmerge.lookahead_on)
+htfEma20 = request.security(syminfo.tickerid, biasTf, ta.ema(close, 20)[1], barmerge.gaps_off, barmerge.lookahead_on)
+htfEma50 = request.security(syminfo.tickerid, biasTf, ta.ema(close, 50)[1], barmerge.gaps_off, barmerge.lookahead_on)
+
+bullBias = htfClose > htfEma20 and htfEma20 >= htfEma50
+bearBias = htfClose < htfEma20 and htfEma20 <= htfEma50
+biasText = bullBias ? "BULL" : bearBias ? "BEAR" : "NEUTRAL"
+
+levelPh = request.security(syminfo.tickerid, structureTf, ta.pivothigh(high, swingLen, swingLen), barmerge.gaps_off, barmerge.lookahead_off)
+levelPl = request.security(syminfo.tickerid, structureTf, ta.pivotlow(low, swingLen, swingLen), barmerge.gaps_off, barmerge.lookahead_off)
+
+var float activeResistance = na
+var float activeSupport = na
+
+if not na(levelPh)
+    activeResistance := levelPh
+if not na(levelPl)
+    activeSupport := levelPl
+
+nearSupport = not na(activeSupport) and math.abs(close - activeSupport) <= atrSafe * zonePadAtr
+nearResistance = not na(activeResistance) and math.abs(close - activeResistance) <= atrSafe * zonePadAtr
+
+breakBuffer = atrSafe * 0.10
+displacementOk = body >= atrSafe * displacementAtr and bodyRatio >= 0.45
+validBreakUp = not na(activeResistance) and close > activeResistance + breakBuffer and close > open and displacementOk
+validBreakDown = not na(activeSupport) and close < activeSupport - breakBuffer and close < open and displacementOk
+
+//==============================================================================
+// LIQUIDITY, FVG, OB, OTE
+//==============================================================================
+priorLow = ta.lowest(low[1], 10)
+priorHigh = ta.highest(high[1], 10)
+
+sellsideSweep = useSweeps and low < priorLow and close > priorLow and lowerWick > bodySafe * wickRatioMin
+buysideSweep = useSweeps and high > priorHigh and close < priorHigh and upperWick > bodySafe * wickRatioMin
+
+bullFvgCreated = useFVG and low > high[2] and (low - high[2]) >= atrSafe * fvgMinAtr
+bearFvgCreated = useFVG and high < low[2] and (low[2] - high) >= atrSafe * fvgMinAtr
+
+var float bullFvgTop = na
+var float bullFvgBottom = na
+var float bearFvgTop = na
+var float bearFvgBottom = na
+
+if bullFvgCreated
+    bullFvgTop := low
+    bullFvgBottom := high[2]
+if bearFvgCreated
+    bearFvgTop := low[2]
+    bearFvgBottom := high
+
+if not na(bullFvgBottom) and close < bullFvgBottom
+    bullFvgTop := na
+    bullFvgBottom := na
+if not na(bearFvgTop) and close > bearFvgTop
+    bearFvgTop := na
+    bearFvgBottom := na
+
+bullFvgActive = not na(bullFvgTop) and not na(bullFvgBottom)
+bearFvgActive = not na(bearFvgTop) and not na(bearFvgBottom)
+inBullFvg = bullFvgActive and f_inZone(bullFvgTop, bullFvgBottom)
+inBearFvg = bearFvgActive and f_inZone(bearFvgTop, bearFvgBottom)
+
+[bullObHighTmp, bullObLowTmp] = f_lastBearish(obLookback)
+[bearObHighTmp, bearObLowTmp] = f_lastBullish(obLookback)
+
+var float bullObTop = na
+var float bullObBottom = na
+var float bearObTop = na
+var float bearObBottom = na
+
+if useOB and (validBreakUp or (close > open and displacementOk and close > high[1])) and not na(bullObHighTmp)
+    bullObTop := bullObHighTmp
+    bullObBottom := bullObLowTmp
+
+if useOB and (validBreakDown or (close < open and displacementOk and close < low[1])) and not na(bearObHighTmp)
+    bearObTop := bearObHighTmp
+    bearObBottom := bearObLowTmp
+
+if not na(bullObBottom) and close < bullObBottom
+    bullObTop := na
+    bullObBottom := na
+if not na(bearObTop) and close > bearObTop
+    bearObTop := na
+    bearObBottom := na
+
+bullObActive = not na(bullObTop) and not na(bullObBottom)
+bearObActive = not na(bearObTop) and not na(bearObBottom)
+inBullOb = bullObActive and f_inZone(bullObTop, bullObBottom)
+inBearOb = bearObActive and f_inZone(bearObTop, bearObBottom)
+
+ph = ta.pivothigh(high, swingLen, swingLen)
+pl = ta.pivotlow(low, swingLen, swingLen)
+
+var float lastSwingHigh = na
+var float lastSwingLow = na
+var int lastSwingHighBar = na
+var int lastSwingLowBar = na
+
+if not na(ph)
+    lastSwingHigh := ph
+    lastSwingHighBar := bar_index - swingLen
+if not na(pl)
+    lastSwingLow := pl
+    lastSwingLowBar := bar_index - swingLen
+
+haveSwingRange = not na(lastSwingHigh) and not na(lastSwingLow) and lastSwingHigh > lastSwingLow
+swingRange = haveSwingRange ? lastSwingHigh - lastSwingLow : na
+upLeg = haveSwingRange and lastSwingHighBar > lastSwingLowBar
+downLeg = haveSwingRange and lastSwingLowBar > lastSwingHighBar
+
+bullOteTop = useOTE and upLeg ? lastSwingHigh - swingRange * 0.62 : na
+bullOteBottom = useOTE and upLeg ? lastSwingHigh - swingRange * 0.79 : na
+bearOteTop = useOTE and downLeg ? lastSwingLow + swingRange * 0.79 : na
+bearOteBottom = useOTE and downLeg ? lastSwingLow + swingRange * 0.62 : na
+
+inBullOte = useOTE and upLeg and f_inZone(bullOteTop, bullOteBottom)
+inBearOte = useOTE and downLeg and f_inZone(bearOteTop, bearOteBottom)
+
+//==============================================================================
+// PIVOT / DAILY LEVELS
+//==============================================================================
+pivPrevHigh = request.security(syminfo.tickerid, pivotTf, high[1], barmerge.gaps_off, barmerge.lookahead_on)
+pivPrevLow = request.security(syminfo.tickerid, pivotTf, low[1], barmerge.gaps_off, barmerge.lookahead_on)
+pivPrevClose = request.security(syminfo.tickerid, pivotTf, close[1], barmerge.gaps_off, barmerge.lookahead_on)
+dayOpen = request.security(syminfo.tickerid, "D", open, barmerge.gaps_off, barmerge.lookahead_on)
+pdh = request.security(syminfo.tickerid, "D", high[1], barmerge.gaps_off, barmerge.lookahead_on)
+pdl = request.security(syminfo.tickerid, "D", low[1], barmerge.gaps_off, barmerge.lookahead_on)
+
+pivRange = pivPrevHigh - pivPrevLow
+pivP = (pivPrevHigh + pivPrevLow + pivPrevClose) / 3.0
+pivR1 = 2.0 * pivP - pivPrevLow
+pivS1 = 2.0 * pivP - pivPrevHigh
+pivR2 = pivP + pivRange
+pivS2 = pivP - pivRange
+
+//==============================================================================
+// TRIGGER TF PRICE ACTION
+//==============================================================================
+[trigOpen, trigHigh, trigLow, trigClose, trigOpenPrev, trigClosePrev, trigBody, trigMeanBody, trigTime] = request.security(syminfo.tickerid, triggerTf, [open[1], high[1], low[1], close[1], open[2], close[2], math.abs(close[1] - open[1]), ta.sma(math.abs(close - open), 14)[1], time[1]], barmerge.gaps_off, barmerge.lookahead_on)
+
+trigRange = math.max(trigHigh - trigLow, syminfo.mintick)
+trigBodySafe = math.max(trigBody, syminfo.mintick)
+trigUpperWick = trigHigh - math.max(trigOpen, trigClose)
+trigLowerWick = math.min(trigOpen, trigClose) - trigLow
+trigNewClose = not na(trigTime) and ta.change(trigTime) != 0
+
+trigBullEngulf = trigClose > trigOpen and trigClosePrev < trigOpenPrev and trigClose > trigOpenPrev and trigOpen <= trigClosePrev
+trigBearEngulf = trigClose < trigOpen and trigClosePrev > trigOpenPrev and trigClose < trigOpenPrev and trigOpen >= trigClosePrev
+trigBullPinbar = trigLowerWick > trigBodySafe * 1.5 and trigClose > trigOpen and trigClose > trigLow + trigRange * 0.60
+trigBearPinbar = trigUpperWick > trigBodySafe * 1.5 and trigClose < trigOpen and trigClose < trigHigh - trigRange * 0.60
+trigBullReject = trigLowerWick > trigBodySafe * wickRatioMin and trigClose > trigOpen
+trigBearReject = trigUpperWick > trigBodySafe * wickRatioMin and trigClose < trigOpen
+trigBullDisplace = trigBody > trigMeanBody and trigClose > trigOpen
+trigBearDisplace = trigBody > trigMeanBody and trigClose < trigOpen
+
+triggerBuy = trigNewClose and (trigBullEngulf or trigBullPinbar or trigBullReject or trigBullDisplace)
+triggerSell = trigNewClose and (trigBearEngulf or trigBearPinbar or trigBearReject or trigBearDisplace)
+triggerBuyText = trigBullEngulf ? "Bull Engulf" : trigBullPinbar ? "Bull Pin" : trigBullReject ? "Bull Reject" : trigBullDisplace ? "Bull Displace" : "Bull Trigger"
+triggerSellText = trigBearEngulf ? "Bear Engulf" : trigBearPinbar ? "Bear Pin" : trigBearReject ? "Bear Reject" : trigBearDisplace ? "Bear Displace" : "Bear Trigger"
+
+//==============================================================================
+// MARKET STATE AND CONTEXT SCORE
+//==============================================================================
+pdHigh = ta.highest(high, pdLookback)
+pdLow = ta.lowest(low, pdLookback)
+pdRange = math.max(pdHigh - pdLow, syminfo.mintick)
+pricePct = f_clamp((close - pdLow) / pdRange * 100.0, 0.0, 100.0)
+discount = pricePct <= 40
+premium = pricePct >= 60
+
+atrRatio = not na(atrSlow) and atrSlow > 0 ? atr / atrSlow : 1.0
+extremeVol = useNoTradeFilter and atrRatio >= extremeAtrRatio
+compression = useNoTradeFilter and atrRatio <= compressionAtrRatio and body < ta.sma(body, 20) * 0.80
+extremeCandle = useNoTradeFilter and barRange >= atrSafe * extremeCandleAtr
+overextendedLong = close > ema20 + atrSafe * maxStretchAtr
+overextendedShort = close < ema20 - atrSafe * maxStretchAtr
+noTrade = useNoTradeFilter and (manualNoTrade or extremeVol or extremeCandle or compression)
+regimeText = manualNoTrade ? "MANUAL" : extremeVol ? "EXTREME VOL" : extremeCandle ? "BIG CANDLE" : compression ? "COMPRESSION" : "NORMAL"
+
+buyStrength = 0.0
+buyStrength += bullBias ? 20 : close > htfEma20 ? 10 : 0
+buyStrength += entrySession ? 10 : 0
+buyStrength += discount ? 12 : pricePct <= 50 ? 6 : 0
+buyStrength += sellsideSweep or asiaLowSwept ? 18 : 0
+buyStrength += inBullFvg ? 12 : bullFvgActive ? 6 : 0
+buyStrength += inBullOb ? 14 : bullObActive ? 7 : 0
+buyStrength += inBullOte ? 10 : 0
+buyStrength += nearSupport ? 8 : 0
+buyStrength += triggerBuy ? 10 : 0
+buyStrength += not noTrade ? 6 : 0
+
+sellStrength = 0.0
+sellStrength += bearBias ? 20 : close < htfEma20 ? 10 : 0
+sellStrength += entrySession ? 10 : 0
+sellStrength += premium ? 12 : pricePct >= 50 ? 6 : 0
+sellStrength += buysideSweep or asiaHighSwept ? 18 : 0
+sellStrength += inBearFvg ? 12 : bearFvgActive ? 6 : 0
+sellStrength += inBearOb ? 14 : bearObActive ? 7 : 0
+sellStrength += inBearOte ? 10 : 0
+sellStrength += nearResistance ? 8 : 0
+sellStrength += triggerSell ? 10 : 0
+sellStrength += not noTrade ? 6 : 0
+
+buyWeakness = 0.0
+buyWeakness += bearBias ? 20 : 0
+buyWeakness += buysideSweep or asiaHighSwept ? 15 : 0
+buyWeakness += inBearFvg or inBearOb ? 10 : 0
+buyWeakness += premium ? 8 : 0
+buyWeakness += overextendedLong ? 12 : 0
+buyWeakness += noTrade ? 30 : 0
+
+sellWeakness = 0.0
+sellWeakness += bullBias ? 20 : 0
+sellWeakness += sellsideSweep or asiaLowSwept ? 15 : 0
+sellWeakness += inBullFvg or inBullOb ? 10 : 0
+sellWeakness += discount ? 8 : 0
+sellWeakness += overextendedShort ? 12 : 0
+sellWeakness += noTrade ? 30 : 0
+
+buyScore = f_clamp(buyStrength - buyWeakness + 20, 0, 100)
+sellScore = f_clamp(sellStrength - sellWeakness + 20, 0, 100)
+scoreEdge = math.abs(buyScore - sellScore)
+
+buyContext = buyScore >= minContextScore and buyScore > sellScore + minScoreEdge
+sellContext = sellScore >= minContextScore and sellScore > buyScore + minScoreEdge
+mixedContext = buyScore >= minContextScore and sellScore >= minContextScore and scoreEdge <= minScoreEdge
+contextDir = buyContext ? 1 : sellContext ? -1 : 0
+contextText = buyContext ? "BUY CTX" : sellContext ? "SELL CTX" : mixedContext ? "MIXED" : "WAIT"
+gradeText = f_grade(math.max(buyScore, sellScore))
+
+//==============================================================================
+// ZONE ROUTER
+//==============================================================================
+float buyZoneTop = na
+float buyZoneBottom = na
+float sellZoneTop = na
+float sellZoneBottom = na
+float buyZoneDist = na
+float sellZoneDist = na
+float buyZoneScore = 0.0
+float sellZoneScore = 0.0
+string buyZoneSource = ""
+string sellZoneSource = ""
+
+if bullFvgActive
+    zTop = math.max(bullFvgTop, bullFvgBottom) + atrSafe * zonePadAtr
+    zBottom = math.min(bullFvgTop, bullFvgBottom) - atrSafe * zonePadAtr
+    zDist = f_distToZone(close, zTop, zBottom)
+    zScore = 45 + (inBullFvg ? 15 : 0) + (discount ? 10 : 0)
+    if zScore > buyZoneScore or (zScore == buyZoneScore and (na(buyZoneDist) or zDist < buyZoneDist))
+        buyZoneTop := zTop
+        buyZoneBottom := zBottom
+        buyZoneDist := zDist
+        buyZoneScore := zScore
+        buyZoneSource := "Bull FVG"
+
+if bullObActive
+    zTop = math.max(bullObTop, bullObBottom) + atrSafe * zonePadAtr
+    zBottom = math.min(bullObTop, bullObBottom) - atrSafe * zonePadAtr
+    zDist = f_distToZone(close, zTop, zBottom)
+    zScore = 50 + (inBullOb ? 15 : 0) + (discount ? 10 : 0)
+    if zScore > buyZoneScore or (zScore == buyZoneScore and (na(buyZoneDist) or zDist < buyZoneDist))
+        buyZoneTop := zTop
+        buyZoneBottom := zBottom
+        buyZoneDist := zDist
+        buyZoneScore := zScore
+        buyZoneSource := "Bull OB"
+
+if inBullOte
+    zTop = math.max(bullOteTop, bullOteBottom) + atrSafe * zonePadAtr
+    zBottom = math.min(bullOteTop, bullOteBottom) - atrSafe * zonePadAtr
+    zDist = f_distToZone(close, zTop, zBottom)
+    zScore = 48 + (discount ? 12 : 0)
+    if zScore > buyZoneScore or (zScore == buyZoneScore and (na(buyZoneDist) or zDist < buyZoneDist))
+        buyZoneTop := zTop
+        buyZoneBottom := zBottom
+        buyZoneDist := zDist
+        buyZoneScore := zScore
+        buyZoneSource := "Bull OTE"
+
+if sellsideSweep or asiaLowSwept
+    sweepBase = sellsideSweep ? priorLow : asiaLow
+    zTop = sweepBase + atrSafe * zonePadAtr
+    zBottom = sweepBase - atrSafe * zonePadAtr
+    zDist = f_distToZone(close, zTop, zBottom)
+    zScore = 60 + (discount ? 10 : 0)
+    if zScore > buyZoneScore or (zScore == buyZoneScore and (na(buyZoneDist) or zDist < buyZoneDist))
+        buyZoneTop := zTop
+        buyZoneBottom := zBottom
+        buyZoneDist := zDist
+        buyZoneScore := zScore
+        buyZoneSource := sellsideSweep ? "SSL Sweep" : "Asia Low Sweep"
+
+if not na(activeSupport)
+    zTop = activeSupport + atrSafe * zonePadAtr
+    zBottom = activeSupport - atrSafe * zonePadAtr
+    zDist = f_distToZone(close, zTop, zBottom)
+    zScore = 35 + (nearSupport ? 12 : 0) + (discount ? 8 : 0)
+    if zScore > buyZoneScore or (zScore == buyZoneScore and (na(buyZoneDist) or zDist < buyZoneDist))
+        buyZoneTop := zTop
+        buyZoneBottom := zBottom
+        buyZoneDist := zDist
+        buyZoneScore := zScore
+        buyZoneSource := "Support"
+
+if bearFvgActive
+    zTop = math.max(bearFvgTop, bearFvgBottom) + atrSafe * zonePadAtr
+    zBottom = math.min(bearFvgTop, bearFvgBottom) - atrSafe * zonePadAtr
+    zDist = f_distToZone(close, zTop, zBottom)
+    zScore = 45 + (inBearFvg ? 15 : 0) + (premium ? 10 : 0)
+    if zScore > sellZoneScore or (zScore == sellZoneScore and (na(sellZoneDist) or zDist < sellZoneDist))
+        sellZoneTop := zTop
+        sellZoneBottom := zBottom
+        sellZoneDist := zDist
+        sellZoneScore := zScore
+        sellZoneSource := "Bear FVG"
+
+if bearObActive
+    zTop = math.max(bearObTop, bearObBottom) + atrSafe * zonePadAtr
+    zBottom = math.min(bearObTop, bearObBottom) - atrSafe * zonePadAtr
+    zDist = f_distToZone(close, zTop, zBottom)
+    zScore = 50 + (inBearOb ? 15 : 0) + (premium ? 10 : 0)
+    if zScore > sellZoneScore or (zScore == sellZoneScore and (na(sellZoneDist) or zDist < sellZoneDist))
+        sellZoneTop := zTop
+        sellZoneBottom := zBottom
+        sellZoneDist := zDist
+        sellZoneScore := zScore
+        sellZoneSource := "Bear OB"
+
+if inBearOte
+    zTop = math.max(bearOteTop, bearOteBottom) + atrSafe * zonePadAtr
+    zBottom = math.min(bearOteTop, bearOteBottom) - atrSafe * zonePadAtr
+    zDist = f_distToZone(close, zTop, zBottom)
+    zScore = 48 + (premium ? 12 : 0)
+    if zScore > sellZoneScore or (zScore == sellZoneScore and (na(sellZoneDist) or zDist < sellZoneDist))
+        sellZoneTop := zTop
+        sellZoneBottom := zBottom
+        sellZoneDist := zDist
+        sellZoneScore := zScore
+        sellZoneSource := "Bear OTE"
+
+if buysideSweep or asiaHighSwept
+    sweepBase = buysideSweep ? priorHigh : asiaHigh
+    zTop = sweepBase + atrSafe * zonePadAtr
+    zBottom = sweepBase - atrSafe * zonePadAtr
+    zDist = f_distToZone(close, zTop, zBottom)
+    zScore = 60 + (premium ? 10 : 0)
+    if zScore > sellZoneScore or (zScore == sellZoneScore and (na(sellZoneDist) or zDist < sellZoneDist))
+        sellZoneTop := zTop
+        sellZoneBottom := zBottom
+        sellZoneDist := zDist
+        sellZoneScore := zScore
+        sellZoneSource := buysideSweep ? "BSL Sweep" : "Asia High Sweep"
+
+if not na(activeResistance)
+    zTop = activeResistance + atrSafe * zonePadAtr
+    zBottom = activeResistance - atrSafe * zonePadAtr
+    zDist = f_distToZone(close, zTop, zBottom)
+    zScore = 35 + (nearResistance ? 12 : 0) + (premium ? 8 : 0)
+    if zScore > sellZoneScore or (zScore == sellZoneScore and (na(sellZoneDist) or zDist < sellZoneDist))
+        sellZoneTop := zTop
+        sellZoneBottom := zBottom
+        sellZoneDist := zDist
+        sellZoneScore := zScore
+        sellZoneSource := "Resistance"
+
+buyZoneActive = not na(buyZoneTop) and not na(buyZoneBottom)
+sellZoneActive = not na(sellZoneTop) and not na(sellZoneBottom)
+inBuyZone = buyZoneActive and f_inZone(buyZoneTop, buyZoneBottom)
+inSellZone = sellZoneActive and f_inZone(sellZoneTop, sellZoneBottom)
+
+//==============================================================================
+// PLAN, READY, ENTRY, MANAGE
+//==============================================================================
+modeNeedZone = entryMode == "Conservative" ? true : entryMode == "Balanced" ? true : false
+modeNeedTrigger = entryMode == "Aggressive" ? false : true
+
+planBuy = contextDir == 1 and not noTrade and (buyZoneActive or not modeNeedZone) and not overextendedLong
+planSell = contextDir == -1 and not noTrade and (sellZoneActive or not modeNeedZone) and not overextendedShort
+
+readyBuyRaw = confirmed and planBuy and (not modeNeedTrigger or triggerBuy) and (not buyZoneActive or inBuyZone)
+readySellRaw = confirmed and planSell and (not modeNeedTrigger or triggerSell) and (not sellZoneActive or inSellZone)
+
+var int readyDir = 0
+var int readyBar = na
+var float readyHigh = na
+var float readyLow = na
+var float readyZoneTop = na
+var float readyZoneBottom = na
+var float readySLBase = na
+var float readyQuality = na
+var string readySource = ""
+var int lastReadyBar = na
+var int lastEntryBar = na
+
+canReady = na(lastReadyBar) or bar_index - lastReadyBar > entryCooldown
+canEntry = na(lastEntryBar) or bar_index - lastEntryBar > entryCooldown
+
+if readyBuyRaw and not readySellRaw and canReady
+    readyDir := 1
+    readyBar := bar_index
+    readyHigh := high
+    readyLow := low
+    readyZoneTop := buyZoneTop
+    readyZoneBottom := buyZoneBottom
+    readySLBase := buyZoneActive ? math.min(low, buyZoneBottom) : low
+    readyQuality := buyScore
+    readySource := f_join(buyZoneSource, triggerBuy ? triggerBuyText : "Context")
+    lastReadyBar := bar_index
+
+if readySellRaw and not readyBuyRaw and canReady
+    readyDir := -1
+    readyBar := bar_index
+    readyHigh := high
+    readyLow := low
+    readyZoneTop := sellZoneTop
+    readyZoneBottom := sellZoneBottom
+    readySLBase := sellZoneActive ? math.max(high, sellZoneTop) : high
+    readyQuality := sellScore
+    readySource := f_join(sellZoneSource, triggerSell ? triggerSellText : "Context")
+    lastReadyBar := bar_index
+
+readyExpired = readyDir != 0 and not na(readyBar) and bar_index - readyBar > readyWindow
+if readyExpired
+    readyDir := 0
+    readyBar := na
+    readyHigh := na
+    readyLow := na
+    readyZoneTop := na
+    readyZoneBottom := na
+    readySLBase := na
+    readyQuality := na
+    readySource := ""
+
+readyBuyActive = readyDir == 1 and not na(readyBar) and bar_index > readyBar and bar_index - readyBar <= readyWindow
+readySellActive = readyDir == -1 and not na(readyBar) and bar_index > readyBar and bar_index - readyBar <= readyWindow
+
+entryBuyRaw = confirmed and canEntry and readyBuyActive and close > readyHigh and close > open
+entrySellRaw = confirmed and canEntry and readySellActive and close < readyLow and close < open
+
+rawLongSL = readySLBase - atrSafe * slPadAtr
+rawShortSL = readySLBase + atrSafe * slPadAtr
+longRisk = close - rawLongSL
+shortRisk = rawShortSL - close
+longRiskOk = longRisk > syminfo.mintick and longRisk <= atrSafe * maxRiskAtr
+shortRiskOk = shortRisk > syminfo.mintick and shortRisk <= atrSafe * maxRiskAtr
+
+longTP1 = close + longRisk * tp1RR
+longTP2 = close + longRisk * tp2RR
+shortTP1 = close - shortRisk * tp1RR
+shortTP2 = close - shortRisk * tp2RR
+
+float nearestLongCap = na
+nearestLongCap := f_minAbove(close, nearestLongCap, activeResistance)
+nearestLongCap := f_minAbove(close, nearestLongCap, pdh)
+nearestLongCap := f_minAbove(close, nearestLongCap, pivR1)
+nearestLongCap := f_minAbove(close, nearestLongCap, pivR2)
+nearestLongCap := f_minAbove(close, nearestLongCap, priorHigh)
+
+float nearestShortCap = na
+nearestShortCap := f_maxBelow(close, nearestShortCap, activeSupport)
+nearestShortCap := f_maxBelow(close, nearestShortCap, pdl)
+nearestShortCap := f_maxBelow(close, nearestShortCap, pivS1)
+nearestShortCap := f_maxBelow(close, nearestShortCap, pivS2)
+nearestShortCap := f_maxBelow(close, nearestShortCap, priorLow)
+
+longPivotWarn = pivotAwareTP and not na(nearestLongCap) and nearestLongCap <= longTP2
+shortPivotWarn = pivotAwareTP and not na(nearestShortCap) and nearestShortCap >= shortTP2
+
+if capTPAtPivot and longPivotWarn
+    cap = nearestLongCap - atrSafe * pivotBufferAtr
+    if cap > close + syminfo.mintick
+        longTP2 := math.min(longTP2, cap)
+        longTP1 := math.min(longTP1, math.max(close + syminfo.mintick, longTP2 - syminfo.mintick))
+
+if capTPAtPivot and shortPivotWarn
+    cap = nearestShortCap + atrSafe * pivotBufferAtr
+    if cap < close - syminfo.mintick
+        shortTP2 := math.max(shortTP2, cap)
+        shortTP1 := math.max(shortTP1, math.min(close - syminfo.mintick, shortTP2 + syminfo.mintick))
+
+var int tradeState = 0
+var float activeEntry = na
+var float activeSL = na
+var float activeTP1 = na
+var float activeTP2 = na
+var bool tp1Hit = false
+var string activeSource = ""
+var string activeGrade = ""
+
+flatForEntry = lockUntilExit ? tradeState == 0 : true
+buySignal = entryBuyRaw and longRiskOk and not entrySellRaw and flatForEntry
+sellSignal = entrySellRaw and shortRiskOk and not entryBuyRaw and flatForEntry
+
+if buySignal or sellSignal
+    lastEntryBar := bar_index
+    isBuy = buySignal
+    activeEntry := close
+    activeSL := isBuy ? rawLongSL : rawShortSL
+    activeTP1 := isBuy ? longTP1 : shortTP1
+    activeTP2 := isBuy ? longTP2 : shortTP2
+    activeSource := readySource
+    activeGrade := f_grade(readyQuality)
+    tradeState := isBuy ? 1 : -1
+    tp1Hit := false
+    readyDir := 0
+    readyBar := na
+    readySource := ""
+
+buyTP1Hit = tradeState == 1 and not tp1Hit and not na(activeTP1) and high >= activeTP1
+sellTP1Hit = tradeState == -1 and not tp1Hit and not na(activeTP1) and low <= activeTP1
+if buyTP1Hit or sellTP1Hit
+    tp1Hit := true
+
+buySLHit = tradeState == 1 and not na(activeSL) and low <= activeSL
+buyTP2Hit = tradeState == 1 and not na(activeTP2) and high >= activeTP2
+sellSLHit = tradeState == -1 and not na(activeSL) and high >= activeSL
+sellTP2Hit = tradeState == -1 and not na(activeTP2) and low <= activeTP2
+
+tradeClosed = buySLHit or buyTP2Hit or sellSLHit or sellTP2Hit
+if tradeClosed
+    tradeState := 0
+    activeEntry := na
+    activeSL := na
+    activeTP1 := na
+    activeTP2 := na
+    tp1Hit := false
+
+//==============================================================================
+// VISUALS: BACKGROUND, PLOTS, BOXES, LINES, LABELS
+//==============================================================================
+bgcolor(showSessionBg and inAsia ? color.new(color.blue, 93) : na, title="Asia Session BG")
+bgcolor(showSessionBg and inLondon ? color.new(color.teal, 92) : na, title="London Session BG")
+bgcolor(showSessionBg and inNewYork ? color.new(color.orange, 92) : na, title="New York Session BG")
+
+lineVisible = showLines and showKeyLevels
+plot(lineVisible ? activeSupport : na, "Active Support", color=color.new(color.lime, 15), linewidth=2, style=plot.style_linebr)
+plot(lineVisible ? activeResistance : na, "Active Resistance", color=color.new(color.red, 15), linewidth=2, style=plot.style_linebr)
+plot(lineVisible and asiaLocked ? asiaHigh : na, "Asia High", color=color.new(color.blue, 35), style=plot.style_linebr)
+plot(lineVisible and asiaLocked ? asiaLow : na, "Asia Low", color=color.new(color.blue, 35), style=plot.style_linebr)
+plot(lineVisible and usePivotLevels ? pdh : na, "PDH", color=color.new(color.red, 55), style=plot.style_linebr)
+plot(lineVisible and usePivotLevels ? pdl : na, "PDL", color=color.new(color.lime, 55), style=plot.style_linebr)
+plot(lineVisible and usePivotLevels ? dayOpen : na, "Daily Open", color=color.new(color.gray, 40), style=plot.style_linebr)
+plot(lineVisible and usePivotLevels ? pivP : na, "Pivot P", color=color.new(color.yellow, 55), style=plot.style_linebr)
+
+plot(showDataWindow ? buyScore : na, "Buy Context Score", color=color.new(color.green, 100), display=display.data_window)
+plot(showDataWindow ? sellScore : na, "Sell Context Score", color=color.new(color.red, 100), display=display.data_window)
+plot(showDataWindow ? pricePct : na, "Premium Discount Percent", color=color.new(color.blue, 100), display=display.data_window)
+
+var box buyZoneBox = na
+var box sellZoneBox = na
+
+if showZoneBoxes and buyZoneActive and planBuy
+    if na(buyZoneBox)
+        buyZoneBox := box.new(bar_index, buyZoneTop, bar_index + zoneBars, buyZoneBottom, bgcolor=color.new(color.lime, 88), border_color=color.new(color.lime, 35), text="BUY ZONE", text_color=color.lime, text_size=size.tiny)
+    else
+        box.set_lefttop(buyZoneBox, bar_index, buyZoneTop)
+        box.set_rightbottom(buyZoneBox, bar_index + zoneBars, buyZoneBottom)
+        box.set_bgcolor(buyZoneBox, color.new(color.lime, 88))
+        box.set_border_color(buyZoneBox, color.new(color.lime, 35))
+        box.set_text(buyZoneBox, "BUY ZONE")
+else
+    if not na(buyZoneBox)
+        box.delete(buyZoneBox)
+        buyZoneBox := na
+
+if showZoneBoxes and sellZoneActive and planSell
+    if na(sellZoneBox)
+        sellZoneBox := box.new(bar_index, sellZoneTop, bar_index + zoneBars, sellZoneBottom, bgcolor=color.new(color.red, 88), border_color=color.new(color.red, 35), text="SELL ZONE", text_color=color.red, text_size=size.tiny)
+    else
+        box.set_lefttop(sellZoneBox, bar_index, sellZoneTop)
+        box.set_rightbottom(sellZoneBox, bar_index + zoneBars, sellZoneBottom)
+        box.set_bgcolor(sellZoneBox, color.new(color.red, 88))
+        box.set_border_color(sellZoneBox, color.new(color.red, 35))
+        box.set_text(sellZoneBox, "SELL ZONE")
+else
+    if not na(sellZoneBox)
+        box.delete(sellZoneBox)
+        sellZoneBox := na
+
+plotshape(showMarkers and planBuy and not readyBuyRaw, title="Plan Buy Marker", style=shape.circle, location=location.belowbar, color=color.new(color.lime, 35), size=size.tiny, text="P")
+plotshape(showMarkers and planSell and not readySellRaw, title="Plan Sell Marker", style=shape.circle, location=location.abovebar, color=color.new(color.red, 35), size=size.tiny, text="P")
+plotshape(showMarkers and readyBuyRaw, title="Ready Buy Marker", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.tiny, text="R")
+plotshape(showMarkers and readySellRaw, title="Ready Sell Marker", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny, text="R")
+plotshape(showMarkers and noTrade, title="No Trade Marker", style=shape.xcross, location=location.top, color=color.new(color.gray, 0), size=size.tiny)
+
+plotshape(showSignals and buySignal, title="BUY Signal", style=shape.labelup, location=location.belowbar, color=color.new(color.lime, 0), text="BUY", textcolor=color.black, size=size.small)
+plotshape(showSignals and sellSignal, title="SELL Signal", style=shape.labeldown, location=location.abovebar, color=color.new(color.red, 0), text="SELL", textcolor=color.white, size=size.small)
+
+var line entryLine = na
+var line slLine = na
+var line tp1Line = na
+var line tp2Line = na
+var line projectionLine = na
+var label signalLabel = na
+var label entryLabel = na
+var label slLabel = na
+var label tp1Label = na
+var label tp2Label = na
+
+if (buySignal or sellSignal)
+    f_delLine(entryLine)
+    f_delLine(slLine)
+    f_delLine(tp1Line)
+    f_delLine(tp2Line)
+    f_delLine(projectionLine)
+    f_delLabel(signalLabel)
+    f_delLabel(entryLabel)
+    f_delLabel(slLabel)
+    f_delLabel(tp1Label)
+    f_delLabel(tp2Label)
+
+    sigCol = buySignal ? color.new(color.lime, 0) : color.new(color.red, 0)
+    txtCol = buySignal ? color.black : color.white
+
+    if showLines and showTradeLines
+        entryLine := line.new(bar_index, activeEntry, bar_index + zoneBars, activeEntry, color=color.new(color.yellow, 0), width=2)
+        slLine := line.new(bar_index, activeSL, bar_index + zoneBars, activeSL, color=color.new(color.red, 0), width=2)
+        tp1Line := line.new(bar_index, activeTP1, bar_index + zoneBars, activeTP1, color=sigCol, width=1, style=line.style_dashed)
+        tp2Line := line.new(bar_index, activeTP2, bar_index + zoneBars, activeTP2, color=sigCol, width=1, style=line.style_dotted)
+
+    if showLines and showProjectionLine
+        projectionLine := line.new(bar_index, activeEntry, bar_index + 8, activeTP1, color=sigCol, width=2, style=line.style_arrow_right)
+
+    if showLabels
+        reason = (buySignal ? "BUY" : "SELL") + " | Grade " + activeGrade + "\nSource: " + f_clip(activeSource, 34) + "\nScore B/S: " + f_pct(buyScore) + " / " + f_pct(sellScore)
+        signalLabel := label.new(bar_index, buySignal ? low : high, reason, style=buySignal ? label.style_label_up : label.style_label_down, color=sigCol, textcolor=txtCol, size=size.small)
+        entryLabel := label.new(bar_index + zoneBars, activeEntry, "Entry " + f_price(activeEntry), style=label.style_label_left, color=color.new(color.yellow, 10), textcolor=color.black, size=size.tiny)
+        slLabel := label.new(bar_index + zoneBars, activeSL, "SL " + f_price(activeSL), style=label.style_label_left, color=color.new(color.red, 10), textcolor=color.white, size=size.tiny)
+        tp1Label := label.new(bar_index + zoneBars, activeTP1, "TP1 " + f_price(activeTP1), style=label.style_label_left, color=color.new(sigCol, 10), textcolor=txtCol, size=size.tiny)
+        tp2Label := label.new(bar_index + zoneBars, activeTP2, "TP2 " + f_price(activeTP2), style=label.style_label_left, color=color.new(sigCol, 35), textcolor=txtCol, size=size.tiny)
+
+if not showLines or not showTradeLines
+    f_delLine(entryLine)
+    f_delLine(slLine)
+    f_delLine(tp1Line)
+    f_delLine(tp2Line)
+    entryLine := na
+    slLine := na
+    tp1Line := na
+    tp2Line := na
+
+if not showLines or not showProjectionLine
+    f_delLine(projectionLine)
+    projectionLine := na
+
+if not showLabels
+    f_delLabel(signalLabel)
+    f_delLabel(entryLabel)
+    f_delLabel(slLabel)
+    f_delLabel(tp1Label)
+    f_delLabel(tp2Label)
+    signalLabel := na
+    entryLabel := na
+    slLabel := na
+    tp1Label := na
+    tp2Label := na
+
+//==============================================================================
+// DASHBOARD
+//==============================================================================
+dashRows = 12
+var table dash = table.new(f_dashPos(dashboardPositionInput), 2, dashRows, border_width=1, border_color=color.new(color.gray, 45), frame_color=color.new(color.black, 0), frame_width=1)
+
+dashBg = color.new(color.black, 10)
+headBg = color.new(color.rgb(15, 35, 55), 0)
+cellBg = color.new(color.rgb(8, 14, 22), 0)
+mutedBg = color.new(color.gray, 45)
+buyBg = color.new(color.green, 25)
+sellBg = color.new(color.red, 25)
+warnBg = color.new(color.orange, 20)
+
+zoneText = contextDir == 1 ? (buyZoneActive ? buyZoneSource + " " + f_price(math.min(buyZoneTop, buyZoneBottom)) + "-" + f_price(math.max(buyZoneTop, buyZoneBottom)) : "No buy zone") :
+     contextDir == -1 ? (sellZoneActive ? sellZoneSource + " " + f_price(math.min(sellZoneTop, sellZoneBottom)) + "-" + f_price(math.max(sellZoneTop, sellZoneBottom)) : "No sell zone") :
+     "No active zone"
+
+stateText = tradeState == 1 ? "LONG ACTIVE" : tradeState == -1 ? "SHORT ACTIVE" : readyDir == 1 ? "READY BUY" : readyDir == -1 ? "READY SELL" : planBuy ? "PLAN BUY" : planSell ? "PLAN SELL" : "WAIT"
+tpWarnText = longPivotWarn and (readyDir == 1 or buySignal) ? "Long TP near " + f_price(nearestLongCap) :
+     shortPivotWarn and (readyDir == -1 or sellSignal) ? "Short TP near " + f_price(nearestShortCap) :
+     "Clear"
+
+if showDashboard and barstate.islast
+    table.cell(dash, 0, 0, "UNIFIED ROUTER", text_color=color.white, bgcolor=headBg, text_size=size.tiny)
+    table.cell(dash, 1, 0, syminfo.ticker, text_color=color.white, bgcolor=headBg, text_size=size.tiny)
+
+    table.cell(dash, 0, 1, "State", text_color=color.white, bgcolor=cellBg, text_size=size.tiny)
+    table.cell(dash, 1, 1, stateText, text_color=color.white, bgcolor=buySignal or planBuy or readyDir == 1 or tradeState == 1 ? buyBg : sellSignal or planSell or readyDir == -1 or tradeState == -1 ? sellBg : mutedBg, text_size=size.tiny)
+
+    table.cell(dash, 0, 2, "Context", text_color=color.white, bgcolor=cellBg, text_size=size.tiny)
+    table.cell(dash, 1, 2, contextText + " | " + gradeText, text_color=color.white, bgcolor=contextDir == 1 ? buyBg : contextDir == -1 ? sellBg : mixedContext ? warnBg : mutedBg, text_size=size.tiny)
+
+    table.cell(dash, 0, 3, "Bias / Session", text_color=color.white, bgcolor=cellBg, text_size=size.tiny)
+    table.cell(dash, 1, 3, biasText + " | " + sessionText, text_color=color.white, bgcolor=entrySession ? cellBg : mutedBg, text_size=size.tiny)
+
+    table.cell(dash, 0, 4, "Scores", text_color=color.white, bgcolor=cellBg, text_size=size.tiny)
+    table.cell(dash, 1, 4, "B " + f_pct(buyScore) + " / S " + f_pct(sellScore), text_color=color.white, bgcolor=buyScore > sellScore ? buyBg : sellScore > buyScore ? sellBg : mutedBg, text_size=size.tiny)
+
+    table.cell(dash, 0, 5, "Zone", text_color=color.white, bgcolor=cellBg, text_size=size.tiny)
+    table.cell(dash, 1, 5, f_clip(zoneText, 42), text_color=color.white, bgcolor=cellBg, text_size=size.tiny)
+
+    table.cell(dash, 0, 6, "Sweep", text_color=color.white, bgcolor=cellBg, text_size=size.tiny)
+    table.cell(dash, 1, 6, sellsideSweep or asiaLowSwept ? "SSL / Asia Low" : buysideSweep or asiaHighSwept ? "BSL / Asia High" : "None", text_color=color.white, bgcolor=sellsideSweep or asiaLowSwept ? buyBg : buysideSweep or asiaHighSwept ? sellBg : mutedBg, text_size=size.tiny)
+
+    table.cell(dash, 0, 7, "POI", text_color=color.white, bgcolor=cellBg, text_size=size.tiny)
+    table.cell(dash, 1, 7, "FVG " + (inBullFvg ? "Bull" : inBearFvg ? "Bear" : "-") + " | OB " + (inBullOb ? "Bull" : inBearOb ? "Bear" : "-") + " | OTE " + (inBullOte ? "Bull" : inBearOte ? "Bear" : "-"), text_color=color.white, bgcolor=cellBg, text_size=size.tiny)
+
+    table.cell(dash, 0, 8, "Trigger", text_color=color.white, bgcolor=cellBg, text_size=size.tiny)
+    table.cell(dash, 1, 8, triggerBuy ? triggerBuyText : triggerSell ? triggerSellText : "Waiting", text_color=color.white, bgcolor=triggerBuy ? buyBg : triggerSell ? sellBg : mutedBg, text_size=size.tiny)
+
+    table.cell(dash, 0, 9, "Regime", text_color=color.white, bgcolor=cellBg, text_size=size.tiny)
+    table.cell(dash, 1, 9, regimeText, text_color=color.white, bgcolor=noTrade ? sellBg : buyBg, text_size=size.tiny)
+
+    table.cell(dash, 0, 10, "TP Guard", text_color=color.white, bgcolor=cellBg, text_size=size.tiny)
+    table.cell(dash, 1, 10, f_clip(tpWarnText, 42), text_color=color.white, bgcolor=tpWarnText == "Clear" ? buyBg : warnBg, text_size=size.tiny)
+
+    table.cell(dash, 0, 11, "PD / Risk", text_color=color.white, bgcolor=cellBg, text_size=size.tiny)
+    table.cell(dash, 1, 11, f_pct(pricePct) + " | ATR ratio " + str.tostring(atrRatio, "#.##"), text_color=color.white, bgcolor=cellBg, text_size=size.tiny)
+
+if not showDashboard and barstate.islast
+    table.clear(dash, 0, 0, 1, dashRows - 1)
+
+//==============================================================================
+// ALERTS
+//==============================================================================
+alertcondition(readyBuyRaw, title="Router Ready Buy", message="Unified Context Router READY BUY on {{ticker}} {{interval}}")
+alertcondition(readySellRaw, title="Router Ready Sell", message="Unified Context Router READY SELL on {{ticker}} {{interval}}")
+alertcondition(buySignal, title="Router Buy Entry", message="Unified Context Router BUY ENTRY on {{ticker}} {{interval}}")
+alertcondition(sellSignal, title="Router Sell Entry", message="Unified Context Router SELL ENTRY on {{ticker}} {{interval}}")
+alertcondition(noTrade, title="Router No Trade", message="Unified Context Router NO TRADE condition on {{ticker}} {{interval}}")
+alertcondition(buyTP1Hit or sellTP1Hit, title="Router TP1 Hit", message="Unified Context Router TP1 HIT on {{ticker}} {{interval}}")
+alertcondition(buyTP2Hit or sellTP2Hit, title="Router TP2 Hit", message="Unified Context Router TP2 HIT on {{ticker}} {{interval}}")
+alertcondition(buySLHit or sellSLHit, title="Router SL Hit", message="Unified Context Router SL HIT on {{ticker}} {{interval}}")

@@ -1,0 +1,460 @@
+//==================== CUSTOM MARKET TRANSLATOR DASHBOARD ====================//
+ctx_groupDash = "Custom Market Translator Dashboard"
+ctx_showDashboard = input.bool(true, "Show Dashboard", group=ctx_groupDash)
+ctx_dashPositionInput = input.string("Bottom Right", "Dashboard Position", options=["Top Right", "Top Left", "Bottom Right", "Bottom Left"], group=ctx_groupDash)
+ctx_dashboardMode = input.string("Simple", "Dashboard Mode", options=["Simple", "Detail"], group=ctx_groupDash)
+ctx_rangeLen = input.int(50, "Price Location Range", minval=20, maxval=300, group=ctx_groupDash)
+ctx_nearInvalidAtr = input.float(0.35, "Near Invalidation ATR", minval=0.05, maxval=2.0, step=0.05, group=ctx_groupDash)
+
+ctx_dashPos(_pos) =>
+    _pos == "Top Left" ? position.top_left :
+     _pos == "Bottom Right" ? position.bottom_right :
+     _pos == "Bottom Left" ? position.bottom_left :
+     position.top_right
+
+ctx_price(_x) =>
+    na(_x) ? "-" : str.tostring(_x, format.mintick)
+
+ctx_range(_a, _b) =>
+    na(_a) or na(_b) ? "-" : ctx_price(math.min(_a, _b)) + " - " + ctx_price(math.max(_a, _b))
+
+ctx_join(_a, _b) =>
+    _a == "" ? _b : _b == "" ? _a : _a + " + " + _b
+
+ctx_clip(_s, _max) =>
+    str.length(_s) > _max ? str.substring(_s, 0, _max) + "..." : _s
+
+ctx_clamp(_x, _lo, _hi) =>
+    math.max(_lo, math.min(_x, _hi))
+
+ctx_pct(_v) =>
+    str.tostring(int(math.round(_v))) + "%"
+
+//==================== READ VISUAL ENGINE DATA ====================//
+ctx_mssDir = MSS.dir
+ctx_mssBull = ctx_mssDir == 1
+ctx_mssBear = ctx_mssDir == -1
+ctx_mssText = ctx_mssBull ? "MSS Bullish" : ctx_mssBear ? "MSS Bearish" : "MSS Neutral"
+
+float ctx_bslTop = na
+float ctx_bslBtm = na
+bool ctx_bslActive = false
+bool ctx_bslSwept = false
+
+if b_liq_B.size() > 0
+    _bsl = b_liq_B.get(0)
+    ctx_bslTop := _bsl.bx.get_top()
+    ctx_bslBtm := _bsl.bx.get_bottom()
+    ctx_bslActive := not na(ctx_bslTop) and not na(ctx_bslBtm) and not _bsl.broken
+    ctx_bslSwept := not na(ctx_bslTop) and not na(ctx_bslBtm) and (_bsl.brokenTop or _bsl.brokenBtm or _bsl.broken)
+
+float ctx_sslTop = na
+float ctx_sslBtm = na
+bool ctx_sslActive = false
+bool ctx_sslSwept = false
+
+if b_liq_S.size() > 0
+    _ssl = b_liq_S.get(0)
+    ctx_sslTop := _ssl.bx.get_top()
+    ctx_sslBtm := _ssl.bx.get_bottom()
+    ctx_sslActive := not na(ctx_sslTop) and not na(ctx_sslBtm) and not _ssl.broken
+    ctx_sslSwept := not na(ctx_sslTop) and not na(ctx_sslBtm) and (_ssl.brokenTop or _ssl.brokenBtm or _ssl.broken)
+
+int ctx_dolDir = 0
+float ctx_dolTop = na
+float ctx_dolBtm = na
+string ctx_dolText = "NEUTRAL"
+string ctx_dolTargetText = "Belum ada DOL valid"
+string ctx_dolStatusText = "Waiting"
+
+ctx_dolDir := ctx_sslSwept and ctx_bslActive and not ctx_bslSwept ? 1 :
+     ctx_bslSwept and ctx_sslActive and not ctx_sslSwept ? -1 :
+     ctx_mssBull and ctx_bslActive and not ctx_bslSwept ? 1 :
+     ctx_mssBear and ctx_sslActive and not ctx_sslSwept ? -1 :
+     0
+
+ctx_dolTop := ctx_dolDir == 1 ? ctx_bslTop : ctx_dolDir == -1 ? ctx_sslTop : na
+ctx_dolBtm := ctx_dolDir == 1 ? ctx_bslBtm : ctx_dolDir == -1 ? ctx_sslBtm : na
+
+ctx_dolText := ctx_dolDir == 1 ? "BSL" :
+     ctx_dolDir == -1 ? "SSL" :
+     "NEUTRAL"
+
+ctx_dolTargetText := ctx_dolDir == 1 ? "Draw ke Buyside Liquidity" :
+     ctx_dolDir == -1 ? "Draw ke Sellside Liquidity" :
+     "Belum ada DOL valid"
+
+ctx_dolStatusText := ctx_dolDir == 1 ? (ctx_bslSwept ? "Swept" : ctx_bslActive ? "Active" : "Waiting") :
+     ctx_dolDir == -1 ? (ctx_sslSwept ? "Swept" : ctx_sslActive ? "Active" : "Waiting") :
+     "Waiting"
+
+float ctx_bullFvgTop = na
+float ctx_bullFvgBtm = na
+bool ctx_bullFvgActive = false
+bool ctx_bullFvgFailed = false
+
+if bFVG_UP.size() > 0
+    for i = 0 to math.min(bFVG_UP.size() - 1, bxBack)
+        _fvg = bFVG_UP.get(i)
+        _top = _fvg.box.get_top()
+        _btm = _fvg.box.get_bottom()
+        if _fvg.active and not na(_top) and not na(_btm) and not ctx_bullFvgActive
+            ctx_bullFvgTop := _top
+            ctx_bullFvgBtm := _btm
+            ctx_bullFvgActive := true
+        if not _fvg.active and not na(_top) and not na(_btm) and close < math.min(_top, _btm)
+            ctx_bullFvgFailed := true
+
+float ctx_bearFvgTop = na
+float ctx_bearFvgBtm = na
+bool ctx_bearFvgActive = false
+bool ctx_bearFvgFailed = false
+
+if bFVG_DN.size() > 0
+    for i = 0 to math.min(bFVG_DN.size() - 1, bxBack)
+        _fvg = bFVG_DN.get(i)
+        _top = _fvg.box.get_top()
+        _btm = _fvg.box.get_bottom()
+        if _fvg.active and not na(_top) and not na(_btm) and not ctx_bearFvgActive
+            ctx_bearFvgTop := _top
+            ctx_bearFvgBtm := _btm
+            ctx_bearFvgActive := true
+        if not _fvg.active and not na(_top) and not na(_btm) and close > math.max(_top, _btm)
+            ctx_bearFvgFailed := true
+
+float ctx_bullObTop = na
+float ctx_bullObBtm = na
+bool ctx_bullObActive = false
+bool ctx_bullObBreaker = false
+
+if bullish_ob.size() > 0
+    for i = 0 to bullish_ob.size() - 1
+        _ob = bullish_ob.get(i)
+        if not _ob.breaker and not ctx_bullObActive
+            ctx_bullObTop := _ob.top
+            ctx_bullObBtm := _ob.btm
+            ctx_bullObActive := true
+        if _ob.breaker
+            ctx_bullObBreaker := true
+
+float ctx_bearObTop = na
+float ctx_bearObBtm = na
+bool ctx_bearObActive = false
+bool ctx_bearObBreaker = false
+
+if bearish_ob.size() > 0
+    for i = 0 to bearish_ob.size() - 1
+        _ob = bearish_ob.get(i)
+        if not _ob.breaker and not ctx_bearObActive
+            ctx_bearObTop := _ob.top
+            ctx_bearObBtm := _ob.btm
+            ctx_bearObActive := true
+        if _ob.breaker
+            ctx_bearObBreaker := true
+
+ctx_inBullFvg = ctx_bullFvgActive and low <= math.max(ctx_bullFvgTop, ctx_bullFvgBtm) and high >= math.min(ctx_bullFvgTop, ctx_bullFvgBtm)
+ctx_inBearFvg = ctx_bearFvgActive and low <= math.max(ctx_bearFvgTop, ctx_bearFvgBtm) and high >= math.min(ctx_bearFvgTop, ctx_bearFvgBtm)
+
+ctx_inBullOb = ctx_bullObActive and low <= math.max(ctx_bullObTop, ctx_bullObBtm) and high >= math.min(ctx_bullObTop, ctx_bullObBtm)
+ctx_inBearOb = ctx_bearObActive and low <= math.max(ctx_bearObTop, ctx_bearObBtm) and high >= math.min(ctx_bearObTop, ctx_bearObBtm)
+
+ctx_viActive = Vimbal.size() > 0
+
+ctx_inKillzone = ny or ldn_open or ldn_close or asian
+ctx_killzoneText = ny ? "New York" :
+     ldn_open ? "London Open" :
+     ldn_close ? "London Close" :
+     asian ? "Asian" :
+     "Off"
+
+//==================== PRICE LOCATION / STATE ====================//
+ctx_rangeHigh = ta.highest(high, ctx_rangeLen)
+ctx_rangeLow = ta.lowest(low, ctx_rangeLen)
+ctx_rangeSize = math.max(ctx_rangeHigh - ctx_rangeLow, syminfo.mintick)
+ctx_pricePct = ctx_clamp((close - ctx_rangeLow) / ctx_rangeSize * 100.0, 0.0, 100.0)
+
+ctx_priceLocation = ctx_pricePct >= 75 ? "PREMIUM / ATAS" :
+     ctx_pricePct >= 50 ? "UPPER MID" :
+     ctx_pricePct >= 25 ? "LOWER MID" :
+     "DISCOUNT / BAWAH"
+
+ctx_atrFast = ta.atr(5)
+ctx_atrSlow = ta.sma(ctx_atrFast, 20)
+
+ctx_expansion = body > meanBody * 1.30 or ctx_atrFast > ctx_atrSlow * 1.25
+ctx_compression = body < meanBody * 0.70 and ctx_atrFast < ctx_atrSlow * 0.85
+ctx_marketState = ctx_expansion ? "EXPANSION" : ctx_compression ? "COMPRESSION" : "BALANCED"
+
+ctx_upperWick = high - math.max(open, close)
+ctx_lowerWick = math.min(open, close) - low
+ctx_bodySafe = math.max(body, syminfo.mintick)
+ctx_barRange = math.max(high - low, syminfo.mintick)
+
+ctx_bullRejection = ctx_lowerWick > ctx_bodySafe * 1.25 and close > open
+ctx_bearRejection = ctx_upperWick > ctx_bodySafe * 1.25 and close < open
+ctx_bullDisplacement = L_bodyUP
+ctx_bearDisplacement = L_bodyDN
+
+ctx_bullPA = ctx_bullRejection or ctx_bullDisplacement or vImb_Bl
+ctx_bearPA = ctx_bearRejection or ctx_bearDisplacement or vImb_Br
+
+//==================== MARKET SCORE ====================//
+ctx_buyStrengthScore = 0
+ctx_buyStrengthScore += ctx_mssBull ? 30 : 0
+ctx_buyStrengthScore += ctx_sslSwept ? 20 : 0
+ctx_buyStrengthScore += ctx_dolDir == 1 ? 15 : 0
+ctx_buyStrengthScore += ctx_inBullOb ? 15 : ctx_bullObActive ? 10 : 0
+ctx_buyStrengthScore += ctx_inBullFvg ? 15 : ctx_bullFvgActive ? 10 : 0
+ctx_buyStrengthScore += ctx_bullPA ? 15 : 0
+ctx_buyStrengthScore += ctx_pricePct <= 50 ? 10 : 0
+ctx_buyStrengthScore += ctx_inKillzone ? 5 : 0
+
+ctx_sellStrengthScore = 0
+ctx_sellStrengthScore += ctx_mssBear ? 30 : 0
+ctx_sellStrengthScore += ctx_bslSwept ? 20 : 0
+ctx_sellStrengthScore += ctx_dolDir == -1 ? 15 : 0
+ctx_sellStrengthScore += ctx_inBearOb ? 15 : ctx_bearObActive ? 10 : 0
+ctx_sellStrengthScore += ctx_inBearFvg ? 15 : ctx_bearFvgActive ? 10 : 0
+ctx_sellStrengthScore += ctx_bearPA ? 15 : 0
+ctx_sellStrengthScore += ctx_pricePct >= 50 ? 10 : 0
+ctx_sellStrengthScore += ctx_inKillzone ? 5 : 0
+
+ctx_buyWeaknessScore = 0
+ctx_buyWeaknessScore += ctx_mssBear ? 30 : 0
+ctx_buyWeaknessScore += ctx_bslSwept ? 20 : 0
+ctx_buyWeaknessScore += ctx_dolDir == -1 ? 15 : 0
+ctx_buyWeaknessScore += ctx_bearPA ? 15 : 0
+ctx_buyWeaknessScore += ctx_bearObActive ? 10 : 0
+ctx_buyWeaknessScore += ctx_bearFvgActive ? 10 : 0
+ctx_buyWeaknessScore += ctx_bullObBreaker ? 15 : 0
+ctx_buyWeaknessScore += ctx_bullFvgFailed ? 15 : 0
+ctx_buyWeaknessScore += ctx_pricePct >= 75 ? 10 : 0
+
+ctx_sellWeaknessScore = 0
+ctx_sellWeaknessScore += ctx_mssBull ? 30 : 0
+ctx_sellWeaknessScore += ctx_sslSwept ? 20 : 0
+ctx_sellWeaknessScore += ctx_dolDir == 1 ? 15 : 0
+ctx_sellWeaknessScore += ctx_bullPA ? 15 : 0
+ctx_sellWeaknessScore += ctx_bullObActive ? 10 : 0
+ctx_sellWeaknessScore += ctx_bullFvgActive ? 10 : 0
+ctx_sellWeaknessScore += ctx_bearObBreaker ? 15 : 0
+ctx_sellWeaknessScore += ctx_bearFvgFailed ? 15 : 0
+ctx_sellWeaknessScore += ctx_pricePct <= 25 ? 10 : 0
+
+ctx_buyNet = ctx_buyStrengthScore - ctx_buyWeaknessScore
+ctx_sellNet = ctx_sellStrengthScore - ctx_sellWeaknessScore
+
+ctx_marketDir = ctx_buyNet > ctx_sellNet + 10 ? 1 :
+     ctx_sellNet > ctx_buyNet + 10 ? -1 :
+     ctx_mssBull and ctx_buyNet >= ctx_sellNet ? 1 :
+     ctx_mssBear and ctx_sellNet >= ctx_buyNet ? -1 :
+     0
+
+ctx_activeStrength = ctx_marketDir == 1 ? ctx_buyStrengthScore : ctx_marketDir == -1 ? ctx_sellStrengthScore : math.max(ctx_buyStrengthScore, ctx_sellStrengthScore)
+ctx_activeWeakness = ctx_marketDir == 1 ? ctx_buyWeaknessScore : ctx_marketDir == -1 ? ctx_sellWeaknessScore : math.max(ctx_buyWeaknessScore, ctx_sellWeaknessScore)
+ctx_healthValue = ctx_clamp(ctx_activeStrength - ctx_activeWeakness + 35, 0, 100)
+
+ctx_strengthText = ctx_marketDir == 0 ? "NETRAL" :
+     ctx_healthValue >= 75 ? "KUAT" :
+     ctx_healthValue >= 55 ? "STABIL" :
+     ctx_healthValue >= 35 ? "MULAI MELEMAH" :
+     "LEMAH"
+
+ctx_marketDirText = ctx_marketDir == 1 ? "NAIK" :
+     ctx_marketDir == -1 ? "TURUN" :
+     "SIDEWAYS"
+
+ctx_marketIcon = ctx_marketDir == 1 ? "▲" :
+     ctx_marketDir == -1 ? "▼" :
+     "◆"
+
+//==================== INVALIDATION ====================//
+float ctx_bullInvalid = na
+float ctx_bearInvalid = na
+
+ctx_bullInvalid := ctx_bullObActive ? ctx_bullObBtm : ctx_sslActive ? math.min(ctx_sslTop, ctx_sslBtm) : ta.lowest(low, len)
+ctx_bearInvalid := ctx_bearObActive ? ctx_bearObTop : ctx_bslActive ? math.max(ctx_bslTop, ctx_bslBtm) : ta.highest(high, len)
+
+ctx_activeInvalid = ctx_marketDir == 1 ? ctx_bullInvalid : ctx_marketDir == -1 ? ctx_bearInvalid : na
+
+ctx_nearInvalid = ctx_marketDir == 1 and not na(ctx_activeInvalid) ? close <= ctx_activeInvalid + atr * ctx_nearInvalidAtr :
+     ctx_marketDir == -1 and not na(ctx_activeInvalid) ? close >= ctx_activeInvalid - atr * ctx_nearInvalidAtr :
+     false
+
+ctx_invalidNow = ctx_marketDir == 1 and not na(ctx_activeInvalid) ? close < ctx_activeInvalid :
+     ctx_marketDir == -1 and not na(ctx_activeInvalid) ? close > ctx_activeInvalid :
+     false
+
+ctx_invalidText = ctx_marketDir == 1 ? "Batal bullish jika tembus " + ctx_price(ctx_activeInvalid) :
+     ctx_marketDir == -1 ? "Batal bearish jika tembus " + ctx_price(ctx_activeInvalid) :
+     "Belum ada bias valid"
+
+//==================== REVERSAL WARNING ENGINE ====================//
+ctx_bearRevSigns = 0
+ctx_bearRevSigns += ctx_mssBear ? 2 : 0
+ctx_bearRevSigns += ctx_bslSwept ? 1 : 0
+ctx_bearRevSigns += ctx_dolDir == -1 ? 1 : 0
+ctx_bearRevSigns += ctx_bearPA ? 1 : 0
+ctx_bearRevSigns += ctx_bullFvgFailed ? 1 : 0
+ctx_bearRevSigns += ctx_bullObBreaker ? 1 : 0
+ctx_bearRevSigns += ctx_nearInvalid and ctx_marketDir == 1 ? 1 : 0
+ctx_bearRevSigns += ctx_pricePct >= 75 ? 1 : 0
+
+ctx_bullRevSigns = 0
+ctx_bullRevSigns += ctx_mssBull ? 2 : 0
+ctx_bullRevSigns += ctx_sslSwept ? 1 : 0
+ctx_bullRevSigns += ctx_dolDir == 1 ? 1 : 0
+ctx_bullRevSigns += ctx_bullPA ? 1 : 0
+ctx_bullRevSigns += ctx_bearFvgFailed ? 1 : 0
+ctx_bullRevSigns += ctx_bearObBreaker ? 1 : 0
+ctx_bullRevSigns += ctx_nearInvalid and ctx_marketDir == -1 ? 1 : 0
+ctx_bullRevSigns += ctx_pricePct <= 25 ? 1 : 0
+
+ctx_reversalLevel = ctx_marketDir == 1 ? ctx_bearRevSigns :
+     ctx_marketDir == -1 ? ctx_bullRevSigns :
+     math.max(ctx_bearRevSigns, ctx_bullRevSigns)
+
+ctx_reversalWarningText = ctx_marketDir == 1 ?
+     ctx_bearRevSigns >= 5 ? "REVERSAL TURUN VALID" :
+     ctx_bearRevSigns >= 3 ? "POTENSI REVERSAL TURUN" :
+     ctx_bearRevSigns >= 1 ? "TANDA AWAL SELL" :
+     "BELUM ADA REVERSAL" :
+     ctx_marketDir == -1 ?
+     ctx_bullRevSigns >= 5 ? "REVERSAL NAIK VALID" :
+     ctx_bullRevSigns >= 3 ? "POTENSI REVERSAL NAIK" :
+     ctx_bullRevSigns >= 1 ? "TANDA AWAL BUY" :
+     "BELUM ADA REVERSAL" :
+     ctx_reversalLevel >= 3 ? "REVERSAL / RANGE RISK" :
+     "BELUM ADA ARAH JELAS"
+
+ctx_reversalRiskHigh = ctx_reversalLevel >= 3
+ctx_reversalConfirmed = ctx_reversalLevel >= 5
+
+//==================== TRANSLATOR OUTPUT ====================//
+ctx_conditionText = ctx_marketDir == 1 ?
+     ctx_reversalConfirmed ? "Bullish gagal, reversal turun mulai valid" :
+     ctx_reversalRiskHigh ? "Masih bullish, tapi tanda sell mulai muncul" :
+     ctx_strengthText == "MULAI MELEMAH" ? "Masih bullish, tenaga mulai melemah" :
+     ctx_strengthText == "LEMAH" ? "Bullish lemah, jangan agresif buy" :
+     "Bullish masih dominan" :
+     ctx_marketDir == -1 ?
+     ctx_reversalConfirmed ? "Bearish gagal, reversal naik mulai valid" :
+     ctx_reversalRiskHigh ? "Masih bearish, tapi tanda buy mulai muncul" :
+     ctx_strengthText == "MULAI MELEMAH" ? "Masih bearish, tenaga mulai melemah" :
+     ctx_strengthText == "LEMAH" ? "Bearish lemah, jangan agresif sell" :
+     "Bearish masih dominan" :
+     "Market belum punya arah dominan"
+
+ctx_focusText = ctx_marketDir == 1 ?
+     ctx_reversalConfirmed ? "Stop cari buy, tunggu sell valid" :
+     ctx_reversalRiskHigh ? "Wait, jangan kejar buy di atas" :
+     ctx_pricePct >= 75 ? "Cari buy saat pullback, jangan kejar atas" :
+     ctx_compression ? "Tunggu breakout dulu" :
+     "Fokus buy saat pullback" :
+     ctx_marketDir == -1 ?
+     ctx_reversalConfirmed ? "Stop cari sell, tunggu buy valid" :
+     ctx_reversalRiskHigh ? "Wait, jangan kejar sell di bawah" :
+     ctx_pricePct <= 25 ? "Cari sell saat pullback, jangan kejar bawah" :
+     ctx_compression ? "Tunggu breakdown dulu" :
+     "Fokus sell saat retest" :
+     "Wait sampai arah jelas"
+
+ctx_reasonText = ""
+ctx_reasonText := ctx_join(ctx_reasonText, ctx_mssText)
+ctx_reasonText := ctx_join(ctx_reasonText, ctx_dolDir != 0 ? "DOL " + ctx_dolText : "")
+ctx_reasonText := ctx_join(ctx_reasonText, ctx_sslSwept ? "SSL Swept" : "")
+ctx_reasonText := ctx_join(ctx_reasonText, ctx_bslSwept ? "BSL Swept" : "")
+ctx_reasonText := ctx_join(ctx_reasonText, ctx_inBullOb ? "In Bull OB" : ctx_bullObActive ? "Bull OB Active" : "")
+ctx_reasonText := ctx_join(ctx_reasonText, ctx_inBearOb ? "In Bear OB" : ctx_bearObActive ? "Bear OB Active" : "")
+ctx_reasonText := ctx_join(ctx_reasonText, ctx_inBullFvg ? "In Bull FVG" : ctx_bullFvgActive ? "Bull FVG Active" : "")
+ctx_reasonText := ctx_join(ctx_reasonText, ctx_inBearFvg ? "In Bear FVG" : ctx_bearFvgActive ? "Bear FVG Active" : "")
+ctx_reasonText := ctx_join(ctx_reasonText, ctx_bullPA ? "Bull PA" : "")
+ctx_reasonText := ctx_join(ctx_reasonText, ctx_bearPA ? "Bear PA" : "")
+ctx_reasonText := ctx_join(ctx_reasonText, ctx_inKillzone ? ctx_killzoneText : "")
+ctx_reasonText := ctx_reasonText == "" ? "Belum ada alasan kuat" : ctx_reasonText
+
+ctx_detailText = ""
+ctx_detailText := ctx_join(ctx_detailText, "State " + ctx_marketState)
+ctx_detailText := ctx_join(ctx_detailText, "Location " + ctx_priceLocation + " " + ctx_pct(ctx_pricePct))
+ctx_detailText := ctx_join(ctx_detailText, ctx_dolDir != 0 ? ctx_dolTargetText : "")
+ctx_detailText := ctx_join(ctx_detailText, ctx_viActive ? "VI Active" : "")
+ctx_detailText := ctx_join(ctx_detailText, ctx_nearInvalid ? "Near Invalid" : "")
+ctx_detailText := ctx_join(ctx_detailText, ctx_invalidNow ? "Invalid Broken" : "")
+
+//==================== DASHBOARD STYLE ====================//
+ctx_dashTextSize = size.tiny
+ctx_headBg = color.new(#08131f, 0)
+ctx_panelBg = color.new(#050b12, 0)
+ctx_cellBg = color.new(#07111d, 0)
+ctx_mutedBg = color.new(color.gray, 45)
+ctx_greenBg = color.new(color.lime, 22)
+ctx_redBg = color.new(color.red, 18)
+ctx_orangeBg = color.new(color.orange, 15)
+ctx_blueBg = color.new(color.blue, 20)
+
+ctx_dirColor = ctx_marketDir == 1 ? ctx_greenBg : ctx_marketDir == -1 ? ctx_redBg : ctx_orangeBg
+ctx_dolColor = ctx_dolDir == 1 ? ctx_greenBg : ctx_dolDir == -1 ? ctx_redBg : ctx_mutedBg
+
+ctx_strengthColor = ctx_strengthText == "KUAT" ? ctx_greenBg :
+     ctx_strengthText == "STABIL" ? ctx_blueBg :
+     ctx_strengthText == "MULAI MELEMAH" ? ctx_orangeBg :
+     ctx_strengthText == "LEMAH" ? ctx_redBg :
+     ctx_mutedBg
+
+ctx_warningColor = ctx_reversalConfirmed ? ctx_redBg :
+     ctx_reversalRiskHigh ? ctx_orangeBg :
+     ctx_reversalLevel >= 1 ? ctx_orangeBg :
+     ctx_greenBg
+
+ctx_invalidColor = ctx_invalidNow ? ctx_redBg : ctx_nearInvalid ? ctx_orangeBg : ctx_greenBg
+ctx_focusColor = str.contains(ctx_focusText, "Wait") or str.contains(ctx_focusText, "jangan") ? ctx_orangeBg :
+     str.contains(ctx_focusText, "Stop") ? ctx_redBg :
+     ctx_dirColor
+
+var table ctx_dash = table.new(ctx_dashPos(ctx_dashPositionInput), 2, 13, bgcolor=color.new(color.black, 8), border_width=1, border_color=color.new(color.gray, 45))
+
+if ctx_showDashboard and barstate.islast
+    table.clear(ctx_dash, 0, 0, 1, 12)
+
+    table.cell(ctx_dash, 0, 0, "MARKET TRANSLATOR", text_color=color.white, bgcolor=ctx_headBg, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 0, syminfo.ticker, text_color=color.white, bgcolor=ctx_headBg, text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 1, "ARAH MARKET", text_color=color.white, bgcolor=ctx_panelBg, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 1, ctx_marketIcon + " " + ctx_marketDirText, text_color=color.white, bgcolor=ctx_dirColor, text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 2, "KEKUATAN", text_color=color.white, bgcolor=ctx_panelBg, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 2, ctx_strengthText + " | " + ctx_pct(ctx_healthValue), text_color=color.white, bgcolor=ctx_strengthColor, text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 3, "KONDISI", text_color=color.white, bgcolor=ctx_panelBg, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 3, ctx_clip(ctx_conditionText, 48), text_color=color.white, bgcolor=ctx_cellBg, text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 4, "REVERSAL WARNING", text_color=color.white, bgcolor=ctx_panelBg, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 4, ctx_reversalWarningText, text_color=color.white, bgcolor=ctx_warningColor, text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 5, "DOL", text_color=color.white, bgcolor=ctx_panelBg, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 5, ctx_dolText + " | " + ctx_dolStatusText, text_color=color.white, bgcolor=ctx_dolColor, text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 6, "POSISI HARGA", text_color=color.white, bgcolor=ctx_panelBg, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 6, ctx_priceLocation + " | " + ctx_pct(ctx_pricePct), text_color=color.white, bgcolor=ctx_cellBg, text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 7, "FOKUS", text_color=color.white, bgcolor=ctx_panelBg, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 7, ctx_clip(ctx_focusText, 48), text_color=color.white, bgcolor=ctx_focusColor, text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 8, "BATAL BIAS", text_color=color.white, bgcolor=ctx_panelBg, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 8, ctx_invalidText, text_color=color.white, bgcolor=ctx_invalidColor, text_size=ctx_dashTextSize)
+
+    table.cell(ctx_dash, 0, 9, "ALASAN INTI", text_color=color.white, bgcolor=ctx_headBg, text_size=ctx_dashTextSize)
+    table.cell(ctx_dash, 1, 9, ctx_clip(ctx_reasonText, 56), text_color=color.white, bgcolor=ctx_cellBg, text_size=ctx_dashTextSize)
+
+    if ctx_dashboardMode == "Detail"
+        table.cell(ctx_dash, 0, 10, "DETAIL", text_color=color.white, bgcolor=ctx_panelBg, text_size=ctx_dashTextSize)
+        table.cell(ctx_dash, 1, 10, ctx_clip(ctx_detailText, 56), text_color=color.white, bgcolor=ctx_cellBg, text_size=ctx_dashTextSize)
+
+        table.cell(ctx_dash, 0, 11, "POI", text_color=color.white, bgcolor=ctx_panelBg, text_size=ctx_dashTextSize)
+        table.cell(ctx_dash, 1, 11, "OB " + ctx_range(ctx_bullObActive ? ctx_bullObTop : ctx_bearObTop, ctx_bullObActive ? ctx_bullObBtm : ctx_bearObBtm) + " | FVG " + ctx_range(ctx_bullFvgActive ? ctx_bullFvgTop : ctx_bearFvgTop, ctx_bullFvgActive ? ctx_bullFvgBtm : ctx_bearFvgBtm), text_color=color.white, bgcolor=ctx_cellBg, text_size=ctx_dashTextSize)
+
+        table.cell(ctx_dash, 0, 12, "LIQUIDITY", text_color=color.white, bgcolor=ctx_panelBg, text_size=ctx_dashTextSize)
+        table.cell(ctx_dash, 1, 12, "DOL " + ctx_dolText + " | BSL " + (ctx_bslSwept ? "Swept" : ctx_bslActive ? "Active" : "None") + " | SSL " + (ctx_sslSwept ? "Swept" : ctx_sslActive ? "Active" : "None"), text_color=color.white, bgcolor=ctx_cellBg, text_size=ctx_dashTextSize)
+
+if not ctx_showDashboard and barstate.islast
+    table.clear(ctx_dash, 0, 0, 1, 12)

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Market Intel — Amy FX</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="intel-container">
+    <!-- Header -->
+    <header class="intel-header">
+      <h1>🔍 Market Intel</h1>
+      <p class="subtitle">News & Liquidity Heatmap</p>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="intel-tabs">
+      <button class="intel-tab active" data-tab="news">📰 News</button>
+      <button class="intel-tab" data-tab="heatmap">🔥 Heatmap</button>
+      <button class="intel-tab" data-tab="liquidity">💧 Liquidity</button>
+    </nav>
+
+    <!-- News Panel -->
+    <section id="panel-news" class="intel-panel active">
+      <div class="status-bar" id="news-status">🔄 Memuat berita...</div>
+      <div id="news-list" class="news-list"></div>
+    </section>
+
+    <!-- Heatmap Panel -->
+    <section id="panel-heatmap" class="intel-panel">
+      <div class="status-bar" id="heatmap-status">🔄 Menghitung heatmap...</div>
+      <div class="heatmap-info">
+        <span class="current-price" id="heatmap-price">--</span>
+        <span class="timeframe">M15</span>
+      </div>
+      <div id="heatmap-canvas" class="heatmap-canvas"></div>
+      <div class="heatmap-legend">
+        <span class="legend-item"><span class="dot res"></span> Resistance (Swing Highs)</span>
+        <span class="legend-item"><span class="dot sup"></span> Support (Swing Lows)</span>
+        <span class="legend-item"><span class="dot cur"></span> Harga Saat Ini</span>
+      </div>
+    </section>
+
+    <!-- Liquidity Panel -->
+    <section id="panel-liquidity" class="intel-panel">
+      <div class="status-bar" id="liquidity-status">🔄 Melacak liquidity...</div>
+      <div id="liquidity-list" class="liquidity-list"></div>
+    </section>
+
+    <!-- Loading -->
+    <div id="loading-overlay" class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Memuat Market Intel...</p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

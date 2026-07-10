@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Internal dan External Liquidity — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+</head>
+<body>
+  <script>requireLogin();</script>
+  <header class="topbar hide-until-auth">
+    <nav class="nav">
+      <a class="brand" href="../index.html"><span class="brand-mark">A</span><span>Amy FX Academy</span></a>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div class="navlinks" id="navlinks">
+        <a href="../index.html">Beranda</a>
+        <a href="../daftar-materi.html">Daftar Materi</a>
+        <a href="../tentang.html">Tentang</a>
+        <a href="../glosarium/index.html">Glosarium</a>
+        
+      </div>
+    </nav>
+  </header>
+  <main class="container hide-until-auth">
+    <div class="article-layout">
+      <article class="article">
+        <div class="breadcrumb"><a href="../index.html">Beranda</a> › <a href="index.html">Bagian 19 — Liquidity Masterclass</a></div>
+        <div class="eyebrow">Bagian 19 — Liquidity Masterclass</div>
+        <h1>Internal dan External Liquidity</h1>
+        
+<p>Selamat datang di materi <strong>Internal dan External Liquidity</strong>. Pembahasan ini adalah bagian paling krusial dari eksekusi tingkat lanjut dalam <strong>Liquidity Masterclass</strong>. Setelah Anda memahami apa itu likuiditas, bagaimana fungsinya sebagai target dan <em>trigger</em>, serta bagaimana membedakan <em>Sweep</em> dan <em>Run</em>, sekarang saatnya kita menyatukan semua kepingan *puzzle* tersebut. Kita akan mempelajari bagaimana algoritma (<em>Smart Money</em>) memindahkan harga dari satu titik ke titik lain secara sistematis menggunakan konsep Likuiditas Internal dan Eksternal.</p>
+
+<p>Bayangkan pergerakan pasar layaknya ritme pernapasan manusia. Anda menarik napas (mengumpulkan energi ke dalam), lalu menghembuskan napas (mengeluarkan energi keluar). Atau bayangkan sebuah karet gelang yang direntangkan ke luar batasnya, lalu dilepaskan sehingga terpental kembali ke titik tengahnya. Seperti itulah algoritma pengiriman harga (<em>Interbank Price Delivery Algorithm</em> / IPDA) bekerja. Pasar secara abadi bergerak bolak-balik antara <em>External Range Liquidity</em> (ERL) dan <em>Internal Range Liquidity</em> (IRL).</p>
+
+<h2>Apa itu External Range Liquidity (ERL)?</h2>
+
+<p><strong>External Range Liquidity</strong> adalah likuiditas yang mengendap dengan manis di <strong>luar</strong> rentang pergerakan harga saat ini. Secara spesifik, ERL terletak tepat di atas titik tertinggi (<em>Extreme Highs</em>) dan tepat di bawah titik terendah (<em>Extreme Lows</em>) dari sebuah <em>swing</em> atau *range* yang sedang kita amati.</p>
+
+<p>Mengapa disebut "Eksternal"? Karena batas-batas ini mendefinisikan perimeter dari pergerakan harga. Di area inilah para <em>retail trader</em> paling banyak menempatkan Stop Loss dan <em>Breakout Orders</em> mereka. Contoh paling umum dari letak ERL meliputi:</p>
+<ul>
+    <li><em>Previous Day High</em> (PDH) dan <em>Previous Day Low</em> (PDL)</li>
+    <li><em>Previous Week High/Low</em> atau <em>Previous Month High/Low</em></li>
+    <li><em>Major Swing Highs</em> dan <em>Major Swing Lows</em> (terutama di timeframe H4 dan Daily)</li>
+    <li><em>Equal Highs</em> (EQH) dan <em>Equal Lows</em> (EQL)</li>
+</ul>
+
+<p>Ketika harga bergerak menembus level-level eksternal ini, tujuannya biasanya adalah untuk melakukan <em>Liquidity Sweep</em> (mengambil bahan bakar Stop Loss) sebelum melakukan pembalikan arah (<em>reversal</em>).</p>
+
+<h2>Apa itu Internal Range Liquidity (IRL)?</h2>
+
+<p>Sebaliknya, <strong>Internal Range Liquidity</strong> adalah likuiditas dan inefisiensi harga yang terletak di <strong>dalam</strong> rentang pergerakan harga (<em>inside the range</em>) yang terbentuk di antara dua titik <em>External Liquidity</em> tadi.</p>
+
+<p>Ketika harga bergerak kencang ke satu arah untuk membentuk sebuah <em>range</em>, pergerakan impulsif tersebut sering kali meninggalkan ketidakseimbangan (<em>imbalance</em>) di pasar. Smart Money harus kembali ke area tersebut untuk menyeimbangkan pesanan mereka atau melakukan mitigasi (<em>mitigation</em>). Area-area ini bertindak sebagai magnet internal. Contoh paling umum dari IRL meliputi:</p>
+<ul>
+    <li><strong>Fair Value Gaps (FVG) / Imbalance:</strong> Ini adalah bentuk IRL yang paling kuat dan paling sering dicari oleh algoritma.</li>
+    <li><strong>Order Blocks (OB):</strong> Area di mana institusi menyuntikkan pesanan besar terakhir mereka sebelum pergerakan impulsif terjadi.</li>
+    <li><em>Minor/Short-term Swing Highs</em> dan <em>Lows</em> yang berada di dalam <em>range</em> utama.</li>
+</ul>
+
+<div class="note"><strong>Catatan Amy:</strong> Jika Anda masih bingung, gunakan analogi rumah. <em>External Liquidity</em> adalah pagar depan dan tembok belakang rumah Anda (batas luar). Sedangkan <em>Internal Liquidity</em> adalah perabotan, meja, dan sofa yang ada di dalam rumah tersebut (batas dalam).</div>
+
+<h2>Siklus Abadi Pergerakan Harga (The Delivery Cycle)</h2>
+
+<p>Ini adalah rahasia terbesar (<em>Holy Grail</em>) dari Smart Money Concepts: <strong>Pasar HANYA bergerak dari External Liquidity ke Internal Liquidity, dan dari Internal Liquidity kembali ke External Liquidity.</strong> Tidak ada pengecualian.</p>
+
+<p>Mari kita urai siklus algoritma ini langkah demi langkah:</p>
+
+<h3>Fase 1: Dari Eksternal ke Internal</h3>
+<p>Katakanlah harga baru saja naik dan menembus <em>Previous Day High</em> (mengambil External Liquidity). Ingat materi <em>Sweep vs Run</em>? Jika penembusan ini hanyalah sebuah <em>Sweep</em> (meninggalkan sumbu/<em>wick</em>), maka <em>Smart Money</em> baru saja mengakumulasi pesanan <em>Sell</em> (Short) secara masif dengan memakan <em>Buy Stop</em> ritel.</p>
+<p>Setelah pesanan <em>Sell</em> mereka terisi di harga premium (luar batas), ke mana algoritma akan mengarahkan harga selanjutnya? Tentu saja ke <strong>Internal Range Liquidity</strong> (IRL). Harga akan turun masuk kembali ke dalam <em>range</em> untuk mencari <em>Fair Value Gap</em> (FVG) terdekat yang ada di area diskon. FVG ini menjadi target (<em>Draw on Liquidity</em>) sementara dari pergerakan turun tersebut.</p>
+
+<h3>Fase 2: Dari Internal ke Eksternal</h3>
+<p>Kini harga terus turun dan akhirnya menyentuh (<em>tap</em>) ke dalam H4 FVG (Internal Liquidity) yang berada di area diskon. Area FVG ini adalah tempat <em>Smart Money</em> menyeimbangkan kembali neraca mereka dan mungkin mengakumulasi kembali pesanan Buy (Long) di harga murah.</p>
+<p>Begitu harga menyeimbangkan IRL ini dan menunjukkan reaksi penolakan, ke mana target algoritma berikutnya? Algoritma sekarang akan mengarahkan harga keluar menuju <strong>External Range Liquidity</strong> (ERL) yang baru. Targetnya adalah menembus <em>Swing High</em> yang baru saja terbentuk, atau mengejar <em>Previous Day High</em> berikutnya untuk mengambil kumpulan Stop Loss baru.</p>
+
+<div class="warning"><strong>Penting:</strong> Mengetahui di mana posisi Anda berada dalam siklus "Eksternal ke Internal" atau "Internal ke Eksternal" adalah inti dari penentuan Bias Harian (<em>Daily Bias</em>). Jika Anda tahu harga baru saja memantul dari IRL, maka Anda harus mencari posisi searah tren menuju ERL. Jangan melawan arus!</div>
+
+<h2>Bagaimana Menerapkannya dalam Trading Sehari-hari?</h2>
+
+<p>Pemahaman teoritis di atas akan sangat luar biasa jika diterapkan langsung ke dalam rencana eksekusi (<em>Trading Plan</em>) Anda. Berikut adalah *framework* sederhana yang bisa Anda gunakan setiap hari:</p>
+
+<p><strong>1. Petakan Batas Lapangan Anda (Mapping the Range):</strong><br>
+Buka *chart* Daily atau H4. Tandai titik tertinggi (High) dan terendah (Low) dari ayunan (*swing*) yang paling jelas saat ini. Ini adalah <em>External Liquidity</em> Anda. Kemudian, cari apakah ada FVG atau <em>Order Block</em> besar yang belum tersentuh di tengah-tengah *range* tersebut. Itu adalah <em>Internal Liquidity</em> Anda.</p>
+
+<p><strong>2. Ajukan Pertanyaan Evaluasi:</strong><br>
+Tanyakan pada *chart*: "Harga baru saja mengambil apa?"
+<ul>
+    <li>Jika harga baru saja menembus <em>External Low</em> (Sweep), maka target harga berikutnya adalah naik mencari <em>Internal FVG</em> (Premium FVG).</li>
+    <li>Jika harga baru saja turun dan mengisi <em>Internal FVG</em> di area Diskon, maka target harga berikutnya adalah terbang menembus <em>External High</em>.</li>
+</ul></p>
+
+<p><strong>3. Eksekusi Berdasarkan Konfirmasi:</strong><br>
+Misalkan harga turun dan menyentuh H4 FVG (Internal Liquidity). Jangan langsung *Buy limit* membabi buta. Turunlah ke *timeframe* M15 atau M5. Tunggu terjadinya <em>Market Structure Shift</em> (MSS) ke atas di *timeframe* kecil tersebut sebagai konfirmasi bahwa algoritma memang bereaksi terhadap IRL tersebut dan siap memulai fase ekspansi menuju ERL (Target High). Masuklah di <em>pullback</em>, dan letakkan Take Profit Anda dengan aman di atas <em>External High</em>.</p>
+
+<p>Sebagai penutup, berhentilah melihat pergerakan <em>candlestick</em> sebagai *chaos* (kekacauan) yang tidak berpola. Pasar sangat terstruktur. Ia bernapas keluar (External) dan bernapas ke dalam (Internal). Dengan mengidentifikasi siklus IRL dan ERL ini secara presisi, Anda tidak hanya memprediksi arah pasar, Anda membaca lembaran kode algoritma institusi yang sebenarnya.</p>
+        
+        <div class="source-note">Materi ini disusun berdasarkan standar eksekusi lanjutan Smart Money Concepts (SMC) & Inner Circle Trader (ICT).</div>
+        <nav class="page-nav">
+          <a class="btn" href="02-sweep-vs-run.html">← Sweep vs Run</a>
+          <a class="btn gold" href="../daftar-materi.html">Daftar Materi</a>
+          <a class="btn primary" href="../bagian-20-idm-inducement-masterclass/01-idm-sebelum-bos.html">IDM Sebelum BOS →</a>
+        </nav>
+      </article>
+      <aside class="toc-card">
+        <h3>Bagian 19 — Liquidity Masterclass</h3>
+        <ul>
+          <li><a class="" href="01-liquidity-sebagai-target-dan-trigger.html">Liquidity Sebagai Target dan Trigger</a></li>
+          <li><a class="" href="02-sweep-vs-run.html">Sweep vs Run</a></li>
+          <li><a class="active" href="03-internal-dan-external-liquidity.html">Internal dan External Liquidity</a></li>
+          
+        </ul>
+      </aside>
+    </div>
+  </main>
+  <footer class="footer hide-until-auth">© 2026 Amy FX Academy. Belajar Trading dari Nol sampai Mandiri.</footer>
+<script>
+/* AMYFX_NOTIFY_GUARD_START */
+(function(){
+  if(window.__amyfxNotifyGuardLoaded)return;
+  window.__amyfxNotifyGuardLoaded=true;
+
+  const STORE='amyfx.notify.last.sent';
+  const COOLDOWN=5*60*1000;
+  const RESUME_MUTE=9000;
+  const MAX_ITEMS=80;
+  let muteUntil=0;
+
+  function now(){return Date.now()}
+  function norm(x){
+    return String(x||'')
+      .replace(/\d+([.,]\d+)?/g,'#')
+      .replace(/\s+/g,' ')
+      .trim()
+      .slice(0,180);
+  }
+  function kind(t,b){
+    const x=(String(t||'')+' '+String(b||'')).toLowerCase();
+    if(x.includes('scanner terhubung'))return 'scanner_connected';
+    if(x.includes('amy fx aktif'))return 'scanner_alive';
+    if(x.includes('liquidity sweep'))return 'liquidity_sweep';
+    if(x.includes('ssl')||x.includes('bsl'))return 'bsl_ssl_touched';
+    return 'amyfx_alert';
+  }
+  function key(t,b){
+    return kind(t,b)+'|'+norm(t)+'|'+norm(b);
+  }
+  function read(){
+    try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch(e){return{}}
+  }
+  function write(o){
+    const arr=Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,MAX_ITEMS);
+    localStorage.setItem(STORE,JSON.stringify(Object.fromEntries(arr)));
+  }
+  function route(t,b){
+    const k=kind(t,b);
+    if(k==='liquidity_sweep')return 'Analyze';
+    if(k==='bsl_ssl_touched')return 'Analyze';
+    if(k==='scanner_connected'||k==='scanner_alive')return 'Dashboard';
+    return 'Analyze';
+  }
+  function openRoute(t,b){
+    const r=route(t,b);
+    try{localStorage.setItem('amyfx.notification.route',r)}catch(e){}
+    try{if(typeof setTab==='function')setTab(r)}catch(e){}
+    try{window.focus()}catch(e){}
+  }
+  function allow(t,b){
+    const n=now();
+    const k=key(t,b);
+
+    if(n<muteUntil && kind(t,b)!=='scanner_alive')return false;
+
+    const last=read();
+    const prev=last[k]||0;
+    if(n-prev<COOLDOWN)return false;
+
+    last[k]=n;
+    write(last);
+    return true;
+  }
+
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden){
+      muteUntil=now()+RESUME_MUTE;
+    }
+  });
+
+  window.addEventListener('pageshow',function(){
+    muteUntil=now()+RESUME_MUTE;
+  });
+
+  try{
+    if('Notification' in window && !window.Notification.__amyfxWrapped){
+      const OriginalNotification=window.Notification;
+      const WrappedNotification=function(title,opts){
+        opts=opts||{};
+        const body=opts.body||'';
+        if(!allow(title,body))return null;
+        const n=new OriginalNotification(title,opts);
+        n.onclick=function(){openRoute(title,body)};
+        return n;
+      };
+      Object.getOwnPropertyNames(OriginalNotification).forEach(function(k){
+        try{WrappedNotification[k]=OriginalNotification[k]}catch(e){}
+      });
+      WrappedNotification.prototype=OriginalNotification.prototype;
+      WrappedNotification.__amyfxWrapped=true;
+      window.Notification=WrappedNotification;
+    }
+  }catch(e){}
+
+  function wrapBridge(obj){
+    if(!obj||obj.__amyfxNotifyBridgeWrapped)return;
+    Object.keys(obj).forEach(function(k){
+      if(!/notify|notification|alert|push/i.test(k))return;
+      if(typeof obj[k]!=='function')return;
+      const old=obj[k];
+      obj[k]=function(){
+        const args=[].slice.call(arguments);
+        const title=args[0]||'Amy FX';
+        const body=args[1]||args[0]||'';
+        if(!allow(title,body))return null;
+        try{return old.apply(this,args)}catch(e){return null}
+      };
+    });
+    obj.__amyfxNotifyBridgeWrapped=true;
+  }
+
+  function wrapAll(){
+    ['Android','AndroidBridge','AmyFX','AmyFx','Native','NotificationBridge','AppBridge'].forEach(function(n){
+      try{wrapBridge(window[n])}catch(e){}
+    });
+  }
+
+  wrapAll();
+  setInterval(wrapAll,1500);
+
+  window.__amyfxNotifyAllow=allow;
+  window.__amyfxNotifyOpenRoute=openRoute;
+})();
+/* AMYFX_NOTIFY_GUARD_END */
+</script>
+</body>
+</html>

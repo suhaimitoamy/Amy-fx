@@ -1,0 +1,207 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Fibonacci OTE — Amy FX Academy</title><link rel="stylesheet" href="../assets/css/style.css"><script>const ROOT_PATH='../';</script><script src="../assets/js/auth.js"></script><script src="../assets/js/main.js" defer></script></head><body><script>requireLogin();</script><header class="topbar hide-until-auth"><nav class="nav"><a class="brand" href="../index.html"><span class="brand-mark">A</span><span>Amy FX Academy</span></a>
+<button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+<div class="navlinks" id="navlinks"><a href="../index.html">Beranda</a><a href="../daftar-materi.html">Daftar Materi</a><a href="../tentang.html">Tentang</a><a href="../glosarium/index.html">Glosarium</a></div></nav></header><main class="container hide-until-auth"><div class="article-layout"><article class="article"><div class="breadcrumb"><a href="../index.html">Beranda</a> › <a href="index.html">Bagian 09 — Entry Model</a></div><div class="eyebrow">Bagian 09 — Entry Model</div><h1>Fibonacci OTE</h1>
+
+<p>Halo, Sobat Trader! Di bab sebelumnya, kita telah menyelami konsep dasar <strong>Optimal Trade Entry (OTE)</strong>. Kita sudah sama-sama sepakat bahwa di pasar finansial, kita harus bertindak laiknya pedagang besar yang cerdik: membeli saat harga sedang diskon (murah) dan menjual saat harga sedang melambung tinggi (premium). Namun, timbul pertanyaan penting: <em>Bagaimana cara kita mengukur seberapa besar diskon tersebut secara pasti, tanpa harus menebak-nebak di atas chart?</em></p>
+
+<p>Sering kali, mata telanjang kita bisa tertipu oleh fluktuasi harga sesaat. Kadang harga baru turun sedikit, kita sudah langsung merasa itu "diskon besar-besaran". Padahal, mungkin harga baru terkoreksi 10% atau 20% dari pergerakan utamanya, dan masih punya potensi untuk turun lebih jauh. Di sinilah kita sangat membutuhkan sebuah alat ukur yang objektif, konsisten, dan matematis. Alat ukur yang menjadi senjata andalan para trader profesional ini bernama <strong>Fibonacci Retracement</strong>.</p>
+
+<div class="image-slot" data-img-path="../assets/images/lessons/06-fibonacci-ote.jpg" data-prompt="Buat ilustrasi edukasi trading untuk materi 'Fibonacci OTE' dari 'Bagian 09 — Entry Model', gaya clean light website, rasio 16:9, mudah dipahami pemula, warna putih, hijau lembut, biru lembut, sedikit aksen gold. Tampilkan chart candlestick sederhana dengan label yang jelas, panah edukatif, area penting, dan jangan terlalu ramai. Jangan gunakan klaim profit pasti. Cocok untuk website Amy FX Academy." data-caption="Ilustrasi Fibonacci OTE"></div>
+
+<h2>Fibonacci: Pita Meteran Presisi Para Trader</h2>
+
+<p>Bayangkan kamu sedang pergi ke tukang jahit profesional untuk membuat setelan jas. Apakah tukang jahit tersebut akan langsung mengambil gunting dan memotong kain mahalmu berdasarkan perkiraan mata belaka? Tentu saja tidak! Dia pasti akan mengambil pita meteran, mengukur lingkar dada, panjang lengan, dan bahu dengan sangat teliti. Ia memastikan semuanya pas, proporsional, dan presisi sebelum melakukan pemotongan pertama.</p>
+
+<p>Di dalam dunia trading, <strong>Fibonacci Retracement</strong> berfungsi layaknya pita meteran tersebut. Kita tidak boleh asal menebak di mana titik diskon terbaik (OTE) berada. Kita mengukur ayunan harga (<em>swing</em>) dari ujung ke ujung menggunakan rasio Fibonacci untuk menemukan level matematis yang paling presisi. Di level-level inilah, institusi keuangan besar (Smart Money) biasanya mulai kembali tertarik untuk mengakumulasi posisi mereka di pasar.</p>
+
+<div class="note"><strong>Catatan Penting:</strong> Konsep Fibonacci sebenarnya mengambil inspirasi dari angka-angka rasio emas (<em>golden ratio</em>) yang banyak ditemukan di alam semesta, seperti pada cangkang siput atau kelopak bunga. Namun, dalam konteks Smart Money Concepts (SMC) dan ICT, kita tidak menggunakannya sebagai hal mistis atau prediksi gaib. Kita murni menggunakannya sebagai alat pembatas wilayah (<em>zone boundary</em>) antara zona harga wajar, diskon, dan premium.</div>
+
+<h2>Settingan Angka Fibonacci Khusus OTE</h2>
+
+<p>Bila kamu pertama kali membuka alat Fibonacci Retracement bawaan di platform seperti TradingView atau MetaTrader, kamu mungkin akan merasa pusing. Akan ada banyak sekali garis warna-warni dan angka-angka <em>default</em> (0.236, 0.382, dan lain-lain) yang justru mengganggu pandangan. Mari kita buat semuanya menjadi lebih sederhana. Dalam strategi OTE, kita membuang angka-angka yang tidak relevan dan hanya mempertahankan level-level krusial berikut:</p>
+
+<ul>
+    <li><strong>0.00 (0%):</strong> Ini adalah titik akhir dari tarikan ayunan harga (<em>Swing</em>). Nantinya, level ini sering kita jadikan sebagai target awal atau Take Profit pertama kita.</li>
+    <li><strong>0.50 (50%):</strong> Ini adalah garis tengah pembatas, yang dikenal sebagai <em>Equilibrium</em> atau Titik Keseimbangan Pasar. Area di atas 0.5 disebut <em>Premium</em> (mahal), sedangkan area di bawah 0.5 disebut <em>Discount</em> (murah). Ingat, kita tidak akan pernah melakukan entry tepat di garis 0.50, ini murni sebagai penunjuk batas wilayah.</li>
+    <li><strong>0.618 / 0.62 (61.8% / 62%):</strong> Ini adalah gerbang masuk pertama menuju area diskon yang dalam. Di titik ini, radar banyak trader cerdas mulai menyala, karena diskon sebesar 62% sudah dianggap cukup menggiurkan untuk bersiap mencari peluang.</li>
+    <li><strong>0.705 (70.5%):</strong> Inilah yang kita panggil sang primadona, titik <em>Sweet Spot</em>, atau <strong>OTE (Optimal Trade Entry) sejati</strong>. Level ini adalah rasio pertengahan antara 0.618 dan 0.79. Secara statistik dan historis, institusi sangat sering menyuntikkan pesanan (<em>re-entry</em>) di sekitar area ini karena menawarkan rasio risiko dan potensi keuntungan yang luar biasa baik.</li>
+    <li><strong>0.790 (79%):</strong> Ini adalah level diskon yang paling dalam (<em>Deep Discount</em>). Ibarat acara cuci gudang besar-besaran di akhir tahun. Level ini sering menjadi garis pertahanan terakhir para <em>buyer</em> sebelum harga malah bablas, berbalik arah, dan merusak struktur (Break of Structure yang berlawanan).</li>
+    <li><strong>1.00 (100%):</strong> Ini adalah titik pangkal atau awal dari tarikan ayunan harga. Jika harga akhirnya menembus level ini, artinya skenario ide trading kita sudah <em>invalid</em> atau gagal. Oleh karena itu, kita selalu menempatkan Stop Loss sedikit di luar (di bawah/atas) level 1.00 ini demi keamanan modal.</li>
+</ul>
+
+<h2>Cara Menarik Fibonacci yang Benar (Langkah Anti-Bingung)</h2>
+
+<p>Salah satu kesalahan paling sering yang dilakukan oleh pemula (dan ini sangat membuat frustrasi) adalah terbalik saat menarik garis Fibonacci. Terkadang ditarik dari bawah ke atas, lalu di <em>trade</em> berikutnya ditarik dari atas ke bawah, sampai akhirnya bingung sendiri membaca levelnya.</p>
+
+<p>Gunakan logika sederhana yang selalu konsisten ini: <strong>Kita harus selalu menarik garis dari titik awal di mana pergerakan kuat (Impulse) itu lahir, menuju ke titik ujung di mana pergerakan tersebut sementara berhenti (Swing Extremes).</strong> Kita mengukur panjang lintasan impuls tersebut agar kita siap menangkap pantulan (<em>pullback</em>) atau koreksinya.</p>
+
+<h3>Skenario Setup Buy (Bullish)</h3>
+
+<p>Ketika tren pasar secara keseluruhan sedang naik, dan baru saja terjadi dorongan ke atas yang memecahkan struktur harga terdekat (BOS/MSS), maka fokus kita adalah mencari peluang Buy.</p>
+
+<ol>
+    <li><strong>Identifikasi Impulse Leg:</strong> Cari pergerakan dorongan harga naik yang solid, kuat, dan cepat, yang berhasil menembus High sebelumnya.</li>
+    <li><strong>Tarikan Fibonacci:</strong> Klik alat Fibonacci dari titik terendah pergerakan tersebut (<strong>Swing Low</strong>), tahan, dan seret ke titik tertinggi yang baru terbentuk (<strong>Swing High</strong>) sebelum harga mulai berbalik arah ke bawah.</li>
+    <li><strong>Tunggu Diskon Datang:</strong> Jangan terburu-buru! Biarkan harga turun (<em>pullback</em>) dengan sendirinya. Duduk santai dan tunggu sampai harga menembus level 0.50 ke bawah, dan masuk ke dalam kotak "area emas" kita, yaitu <strong>di antara 0.62 hingga 0.79</strong>.</li>
+    <li><strong>Eksekusi dengan Bijak:</strong> Jika kamu melihat ada konfirmasi tambahan di area tersebut (seperti FVG atau Order Block), barulah kita bisa mengeksekusi Buy di dalam rentang 0.62 - 0.79.</li>
+    <li><strong>Amankan Stop Loss:</strong> Selalu letakkan SL sedikit di bawah titik 1.00 (Swing Low) untuk memberi ruang bagi fluktuasi harga (<em>breathing room</em>).</li>
+</ol>
+
+<h3>Skenario Setup Sell (Bearish)</h3>
+
+<p>Sebaliknya, saat tren sedang bergerak turun tajam, dan terjadi terjunan ke bawah yang memecahkan struktur dukungan (Support), kita akan mencari peluang Sell di harga yang mahal.</p>
+
+<ol>
+    <li><strong>Identifikasi Impulse Leg:</strong> Temukan pergerakan terjun bebas (dorongan turun) yang agresif dan signifikan, yang dengan jelas menjebol Low sebelumnya.</li>
+    <li><strong>Tarikan Fibonacci:</strong> Klik alat Fibonacci mulai dari titik tertinggi pergerakan tersebut (<strong>Swing High</strong>), tahan, dan seret ke titik terendah sementara (<strong>Swing Low</strong>) sebelum harga mulai merangkak naik untuk koreksi.</li>
+    <li><strong>Tunggu Harga Masuk Premium:</strong> Biarkan harga merangkak naik (<em>pullback</em>). Tunggu dengan disiplin sampai harga melewati level keseimbangan 0.50 ke atas, dan merangsek masuk ke area premium: <strong>antara 0.62 hingga 0.79</strong>.</li>
+    <li><strong>Eksekusi Setup:</strong> Jika kondisi pendukung lainnya terpenuhi, kita dapat membuka posisi Sell di dalam kotak area 0.62 - 0.79 ini.</li>
+    <li><strong>Posisi Stop Loss:</strong> Amankan modalmu dengan meletakkan SL sedikit di atas titik 1.00 (Swing High).</li>
+</ol>
+
+<h2>Aturan Emas: Fibonacci Bukanlah Tembok Gaib!</h2>
+
+<p>Bagian terakhir ini adalah inti sari yang sangat krusial. Jika kamu bisa meresapi konsep ini, kamu akan menyelamatkan akun tradingmu dari kerugian fatal akibat kesalahan eksekusi prematur.</p>
+
+<div class="warning"><strong>PERINGATAN KERAS:</strong> Angka 0.705 pada alat Fibonacci bukanlah sebuah tembok sihir! Harga tidak akan secara ajaib memantul secara otomatis hanya karena ia kebetulan menyentuh angka 0.705. Fibonacci murni hanyalah sebuah instrumen pengukur. <strong>Jangan pernah sekalipun meletakkan pending order (Buy Limit / Sell Limit) secara membabi buta semata-mata karena harga memasuki level OTE.</strong></div>
+
+<p>Jika demikian, apa sebenarnya fungsi OTE jika bukan untuk langsung melakukan eksekusi entry?</p>
+
+<p>Fungsi utama OTE adalah sebagai <strong>Filter atau Lensa Pembesar</strong>. Saat harga mulai memasuki kotak area OTE (0.62 - 0.79), pada saat itulah kita mulai "membuka mata lebar-lebar". Kita menggunakan lensa pembesar kita untuk mencari "alasan logis dan jejak nyata" mengapa institusi besar mau masuk dan membalikkan harga di area tersebut.</p>
+
+<p>Jejak nyata itu dalam SMC dikenal sebagai <strong>PD Arrays</strong> (Premium & Discount Arrays), yang wujudnya di atas chart dapat berupa <strong>Order Block (OB)</strong> atau <strong>Fair Value Gap (FVG)</strong>. Jika di dalam area OTE 0.705 tersebut kamu kebetulan menemukan sebuah FVG yang belum terisi, atau sebuah Order Block yang masih <em>fresh</em>... BINGO! Itulah yang disebut dengan <em>Confluence</em> (pertemuan konfirmasi) tingkat dewa.</p>
+
+<p>Dengan menggabungkan hal tersebut, kamu menggunakan dua logika fundamental yang sangat kuat:<br>
+1. Harga sedang berada di area diskon terbaiknya secara historis (OTE).<br>
+2. Terdapat bukti jejak pesanan besar dari institusi yang tertinggal di dalam area diskon tersebut (FVG / OB).</p>
+
+<p>Kombinasi mematikan inilah yang akan membuat probabilitas sukses (<em>win rate</em>) dari <em>trade</em> kamu melesat tajam. Di materi-materi selanjutnya, kita akan membedah lebih rinci tentang bagaimana cara mengawinkan OTE ini dengan FVG dan Order Block agar analisamu semakin akurat dan presisi. Sekarang, buka platform trading-mu, atur alat Fibonacci-mu sesuai panduan, dan mulailah melatih matamu untuk mengenali area 0.62 - 0.79 secara konsisten!</p>
+
+<div class="source-note">Materi ini dirangkum dan disusun ulang dari bahan Materi Trading Amy ZIP serta batch PDF ICT/SMC/XAUUSD yang sudah dikirim.</div><nav class="page-nav"><a class="btn" href="../bagian-09-entry-model/05-optimal-trade-entry.html">← Optimal Trade Entry</a><a class="btn gold" href="../daftar-materi.html">Daftar Materi</a><a class="btn primary" href="../bagian-09-entry-model/07-entry-di-fvg.html">Entry di FVG →</a></nav></article><aside class="toc-card"><h3>Bagian 09 — Entry Model</h3><ul><li><a class="" href="01-jangan-cari-entry-dulu.html">Jangan Cari Entry Dulu</a></li><li><a class="" href="02-urutan-entry-yang-benar.html">Urutan Entry yang Benar</a></li><li><a class="" href="03-liquidity-grab-mss-fvg.html">Liquidity Grab, MSS, FVG</a></li><li><a class="" href="04-ict-2022-entry-model.html">ICT 2022 Entry Model</a></li><li><a class="" href="05-optimal-trade-entry.html">Optimal Trade Entry</a></li><li><a class="active" href="06-fibonacci-ote.html">Fibonacci OTE</a></li><li><a class="" href="07-entry-di-fvg.html">Entry di FVG</a></li><li><a class="" href="08-entry-di-order-block.html">Entry di Order Block</a></li><li><a class="" href="09-entry-setelah-cisd.html">Entry Setelah CISD</a></li><li><a class="" href="10-entry-setelah-retest.html">Entry Setelah Retest</a></li><li><a class="" href="11-stop-loss-berdasarkan-struktur.html">Stop Loss Berdasarkan Struktur</a></li><li><a class="" href="12-take-profit-ke-liquidity.html">Take Profit ke Liquidity</a></li><li><a class="" href="13-kapan-tidak-entry.html">Kapan Tidak Entry</a></li></ul></aside></div></main><footer class="footer hide-until-auth">© 2026 Amy FX Academy. Belajar Trading dari Nol sampai Mandiri.</footer><script>
+/* AMYFX_NOTIFY_GUARD_START */
+(function(){
+  if(window.__amyfxNotifyGuardLoaded)return;
+  window.__amyfxNotifyGuardLoaded=true;
+
+  const STORE='amyfx.notify.last.sent';
+  const COOLDOWN=5*60*1000;
+  const RESUME_MUTE=9000;
+  const MAX_ITEMS=80;
+  let muteUntil=0;
+
+  function now(){return Date.now()}
+  function norm(x){
+    return String(x||'')
+      .replace(/\d+([.,]\d+)?/g,'#')
+      .replace(/\s+/g,' ')
+      .trim()
+      .slice(0,180);
+  }
+  function kind(t,b){
+    const x=(String(t||'')+' '+String(b||'')).toLowerCase();
+    if(x.includes('scanner terhubung'))return 'scanner_connected';
+    if(x.includes('amy fx aktif'))return 'scanner_alive';
+    if(x.includes('liquidity sweep'))return 'liquidity_sweep';
+    if(x.includes('ssl')||x.includes('bsl'))return 'bsl_ssl_touched';
+    return 'amyfx_alert';
+  }
+  function key(t,b){
+    return kind(t,b)+'|'+norm(t)+'|'+norm(b);
+  }
+  function read(){
+    try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch(e){return{}}
+  }
+  function write(o){
+    const arr=Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,MAX_ITEMS);
+    localStorage.setItem(STORE,JSON.stringify(Object.fromEntries(arr)));
+  }
+  function route(t,b){
+    const k=kind(t,b);
+    if(k==='liquidity_sweep')return 'Analyze';
+    if(k==='bsl_ssl_touched')return 'Analyze';
+    if(k==='scanner_connected'||k==='scanner_alive')return 'Dashboard';
+    return 'Analyze';
+  }
+  function openRoute(t,b){
+    const r=route(t,b);
+    try{localStorage.setItem('amyfx.notification.route',r)}catch(e){}
+    try{if(typeof setTab==='function')setTab(r)}catch(e){}
+    try{window.focus()}catch(e){}
+  }
+  function allow(t,b){
+    const n=now();
+    const k=key(t,b);
+
+    if(n<muteUntil && kind(t,b)!=='scanner_alive')return false;
+
+    const last=read();
+    const prev=last[k]||0;
+    if(n-prev<COOLDOWN)return false;
+
+    last[k]=n;
+    write(last);
+    return true;
+  }
+
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden){
+      muteUntil=now()+RESUME_MUTE;
+    }
+  });
+
+  window.addEventListener('pageshow',function(){
+    muteUntil=now()+RESUME_MUTE;
+  });
+
+  try{
+    if('Notification' in window && !window.Notification.__amyfxWrapped){
+      const OriginalNotification=window.Notification;
+      const WrappedNotification=function(title,opts){
+        opts=opts||{};
+        const body=opts.body||'';
+        if(!allow(title,body))return null;
+        const n=new OriginalNotification(title,opts);
+        n.onclick=function(){openRoute(title,body)};
+        return n;
+      };
+      Object.getOwnPropertyNames(OriginalNotification).forEach(function(k){
+        try{WrappedNotification[k]=OriginalNotification[k]}catch(e){}
+      });
+      WrappedNotification.prototype=OriginalNotification.prototype;
+      WrappedNotification.__amyfxWrapped=true;
+      window.Notification=WrappedNotification;
+    }
+  }catch(e){}
+
+  function wrapBridge(obj){
+    if(!obj||obj.__amyfxNotifyBridgeWrapped)return;
+    Object.keys(obj).forEach(function(k){
+      if(!/notify|notification|alert|push/i.test(k))return;
+      if(typeof obj[k]!=='function')return;
+      const old=obj[k];
+      obj[k]=function(){
+        const args=[].slice.call(arguments);
+        const title=args[0]||'Amy FX';
+        const body=args[1]||args[0]||'';
+        if(!allow(title,body))return null;
+        try{return old.apply(this,args)}catch(e){return null}
+      };
+    });
+    obj.__amyfxNotifyBridgeWrapped=true;
+  }
+
+  function wrapAll(){
+    ['Android','AndroidBridge','AmyFX','AmyFx','Native','NotificationBridge','AppBridge'].forEach(function(n){
+      try{wrapBridge(window[n])}catch(e){}
+    });
+  }
+
+  wrapAll();
+  setInterval(wrapAll,1500);
+
+  window.__amyfxNotifyAllow=allow;
+  window.__amyfxNotifyOpenRoute=openRoute;
+})();
+/* AMYFX_NOTIFY_GUARD_END */
+</script>
+</body></html>

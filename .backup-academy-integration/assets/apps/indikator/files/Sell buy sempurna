@@ -1,0 +1,534 @@
+//@version=6
+indicator("Reversal Snapper - Upgraded Entry Accuracy", overlay=true, max_labels_count=500, max_lines_count=500)
+
+//------------------- INPUTS -------------------//
+groupSwing = "Swing Reversal"
+swing_len = input.int(5, "Swing Confirmation Length", minval=2, maxval=30, group=groupSwing)
+min_swing_move_atr = input.float(1.00, "Minimum Swing Distance ATR", minval=0.10, maxval=10.0, step=0.10, group=groupSwing)
+confirm_move_atr = input.float(0.30, "Confirmation Move ATR", minval=0.00, maxval=5.0, step=0.05, group=groupSwing)
+max_swing_age = input.int(120, "Max Swing Level Age", minval=20, maxval=2000, group=groupSwing)
+strict_alternation = input.bool(true, "Force Buy/Sell Alternation", group=groupSwing)
+show_swing_labels = input.bool(false, "Show Swing Buy/Sell", group=groupSwing)
+
+groupReady = "Ready Signal"
+show_ready_labels = input.bool(true, "Show Buy/Sell Ready", group=groupReady)
+ready_lookback = input.int(12, "Ready Extreme Lookback", minval=3, maxval=100, group=groupReady)
+ready_buy_max_pct = input.float(25.0, "Buy Ready Max Range %", minval=0.0, maxval=100.0, step=1.0, group=groupReady)
+ready_sell_min_pct = input.float(75.0, "Sell Ready Min Range %", minval=0.0, maxval=100.0, step=1.0, group=groupReady)
+ready_cooldown = input.int(8, "Ready Cooldown Bars", minval=0, maxval=100, group=groupReady)
+
+groupRbsSbr = "RBS / SBR"
+use_rbs_sbr = input.bool(true, "Use RBS / SBR", group=groupRbsSbr)
+show_breakout = input.bool(true, "Show Breakout / Breakdown Line", group=groupRbsSbr)
+break_atr_mult = input.float(0.45, "Break Strength ATR", minval=0.00, maxval=5.0, step=0.05, group=groupRbsSbr)
+break_body_mult = input.float(1.20, "Break Body Strength", minval=0.10, maxval=5.0, step=0.10, group=groupRbsSbr)
+break_body_atr_mult = input.float(0.25, "Minimum Break Body ATR", minval=0.00, maxval=5.0, step=0.05, group=groupRbsSbr)
+away_atr_mult = input.float(0.70, "Must Move Away Before Retest ATR", minval=0.05, maxval=5.0, step=0.05, group=groupRbsSbr)
+retest_atr_mult = input.float(0.22, "Retest Tolerance ATR", minval=0.05, maxval=5.0, step=0.01, group=groupRbsSbr)
+min_retest_bars = input.int(4, "Minimum Bars After Break", minval=1, maxval=50, group=groupRbsSbr)
+max_rbs_sbr_age = input.int(60, "Max RBS/SBR Age", minval=20, maxval=1000, group=groupRbsSbr)
+max_rbs_sbr_keep = input.int(30, "Max Saved RBS/SBR", minval=5, maxval=100, group=groupRbsSbr)
+consume_retest = input.bool(true, "Remove RBS/SBR After Signal", group=groupRbsSbr)
+show_rbs_sbr_labels = input.bool(true, "Show RBS/SBR Labels", group=groupRbsSbr)
+strict_rbs_sbr_alternation = input.bool(false, "Force RBS/SBR Alternation", group=groupRbsSbr)
+
+groupFilter = "Filters"
+atr_len = input.int(14, "ATR Length", minval=1, maxval=100, group=groupFilter)
+body_len = input.int(14, "Body Mean Length", minval=1, maxval=100, group=groupFilter)
+range_len = input.int(50, "Range Length", minval=10, maxval=500, group=groupFilter)
+signal_cooldown = input.int(3, "Signal Cooldown Bars", minval=0, maxval=100, group=groupFilter)
+
+groupVol = "Volatility Mode"
+use_vol_filter = input.bool(true, "Use Volatility Mode", group=groupVol)
+vol_fast_len = input.int(5, "Fast ATR Length", minval=1, maxval=50, group=groupVol)
+vol_slow_len = input.int(50, "Slow ATR Length", minval=10, maxval=300, group=groupVol)
+compression_atr_mult = input.float(0.70, "Compression ATR Ratio", minval=0.10, maxval=2.00, step=0.05, group=groupVol)
+high_vol_atr_mult = input.float(1.35, "High Volatility ATR Ratio", minval=0.50, maxval=5.00, step=0.05, group=groupVol)
+extreme_vol_atr_mult = input.float(1.80, "Extreme Volatility ATR Ratio", minval=0.50, maxval=10.00, step=0.05, group=groupVol)
+big_candle_atr_mult = input.float(1.50, "Extreme Candle Range ATR", minval=0.50, maxval=10.00, step=0.05, group=groupVol)
+disable_ready_in_extreme = input.bool(true, "Disable Ready In Extreme", group=groupVol)
+disable_ready_in_compression = input.bool(true, "Disable Ready In Compression", group=groupVol)
+show_vol_labels = input.bool(false, "Show Volatility Label", group=groupVol)
+
+groupQuality = "Quality Filter"
+use_quality_filter = input.bool(true, "Use Quality Filter", group=groupQuality)
+min_ready_quality = input.int(65, "Min Ready Quality", minval=0, maxval=100, group=groupQuality)
+min_swing_quality = input.int(60, "Min Swing Quality", minval=0, maxval=100, group=groupQuality)
+min_rbs_sbr_quality = input.int(70, "Min RBS/SBR Quality", minval=0, maxval=100, group=groupQuality)
+show_quality_text = input.bool(true, "Show Quality Text", group=groupQuality)
+
+groupVisual = "Visual"
+buy_color = input.color(color.lime, "Buy Color", group=groupVisual)
+sell_color = input.color(color.red, "Sell Color", group=groupVisual)
+ready_buy_color = input.color(color.new(color.lime, 25), "Buy Ready Color", group=groupVisual)
+ready_sell_color = input.color(color.new(color.red, 25), "Sell Ready Color", group=groupVisual)
+rbs_color = input.color(color.blue, "RBS Buy Color", group=groupVisual)
+sbr_color = input.color(color.orange, "SBR Sell Color", group=groupVisual)
+breakout_color = input.color(color.black, "Breakout Color", group=groupVisual)
+breakdown_color = input.color(color.black, "Breakdown Color", group=groupVisual)
+
+//------------------- FUNCTIONS -------------------//
+f_push_unique(float[] _levels, int[] _bars, float _level, int _bar, float _tol, int _max_keep) =>
+    if not na(_level)
+        bool _exists = false
+        if array.size(_levels) > 0
+            for i = 0 to array.size(_levels) - 1
+                if math.abs(array.get(_levels, i) - _level) <= _tol
+                    _exists := true
+        if not _exists
+            array.unshift(_levels, _level)
+            array.unshift(_bars, _bar)
+        while array.size(_levels) > _max_keep
+            array.pop(_levels)
+            array.pop(_bars)
+
+f_push_retest_level(float[] _levels, int[] _bars, bool[] _away, float _level, int _bar, float _tol, int _max_keep) =>
+    if not na(_level)
+        bool _exists = false
+        if array.size(_levels) > 0
+            for i = 0 to array.size(_levels) - 1
+                if math.abs(array.get(_levels, i) - _level) <= _tol
+                    _exists := true
+        if not _exists
+            array.unshift(_levels, _level)
+            array.unshift(_bars, _bar)
+            array.unshift(_away, false)
+        while array.size(_levels) > _max_keep
+            array.pop(_levels)
+            array.pop(_bars)
+            array.pop(_away)
+
+f_clean_expired(float[] _levels, int[] _bars, int _max_age) =>
+    if array.size(_levels) > 0
+        for i = array.size(_levels) - 1 to 0
+            if bar_index - array.get(_bars, i) > _max_age
+                array.remove(_levels, i)
+                array.remove(_bars, i)
+
+f_clean_expired_retest(float[] _levels, int[] _bars, bool[] _away, int _max_age) =>
+    if array.size(_levels) > 0
+        for i = array.size(_levels) - 1 to 0
+            if bar_index - array.get(_bars, i) > _max_age
+                array.remove(_levels, i)
+                array.remove(_bars, i)
+                array.remove(_away, i)
+
+f_remove_retest_level(float[] _levels, int[] _bars, bool[] _away, float _level, float _tol) =>
+    if array.size(_levels) > 0
+        for i = array.size(_levels) - 1 to 0
+            if math.abs(array.get(_levels, i) - _level) <= _tol
+                array.remove(_levels, i)
+                array.remove(_bars, i)
+                array.remove(_away, i)
+
+f_can_signal(int _dir, int _last_dir, int _last_bar, int _cooldown, bool _strict) =>
+    _cooldown_ok = na(_last_bar) or bar_index - _last_bar > _cooldown
+    _alternation_ok = not _strict or _last_dir != _dir
+    _cooldown_ok and _alternation_ok
+
+f_add_breakout_line(line[] _lines, label[] _labels, int _x1, float _y, int _x2, string _txt, color _col, int _max_keep) =>
+    _ln = line.new(_x1, _y, _x2, _y, xloc=xloc.bar_index, extend=extend.none, color=_col, width=1)
+    _lb = label.new(_x2, _y, _txt, xloc=xloc.bar_index, style=label.style_label_left, color=color.new(_col, 85), textcolor=_col, size=size.tiny)
+    array.unshift(_lines, _ln)
+    array.unshift(_labels, _lb)
+    while array.size(_lines) > _max_keep
+        line.delete(array.pop(_lines))
+        label.delete(array.pop(_labels))
+
+f_grade(int _q) =>
+    _q >= 85 ? "A+" : _q >= 75 ? "A" : _q >= 65 ? "B" : _q >= 55 ? "C" : "D"
+
+//------------------- CORE -------------------//
+atr_val = ta.atr(atr_len)
+atr_safe = math.max(atr_val, syminfo.mintick)
+
+body = math.abs(close - open)
+body_safe = math.max(body, syminfo.mintick)
+body_mean = ta.sma(body, body_len)
+body_mean_safe = math.max(nz(body_mean, body_safe), syminfo.mintick)
+
+bar_range = math.max(high - low, syminfo.mintick)
+upper_wick = high - math.max(open, close)
+lower_wick = math.min(open, close) - low
+
+range_high = ta.highest(high, range_len)
+range_low = ta.lowest(low, range_len)
+range_size = math.max(range_high - range_low, syminfo.mintick)
+price_pct = math.max(0.0, math.min(100.0, (close - range_low) / range_size * 100.0))
+
+vol_atr_fast = ta.atr(vol_fast_len)
+vol_atr_slow = ta.sma(vol_atr_fast, vol_slow_len)
+vol_ratio = not na(vol_atr_slow) and vol_atr_slow > 0.0 ? vol_atr_fast / vol_atr_slow : 1.0
+
+vol_compression = use_vol_filter and vol_ratio <= compression_atr_mult and body <= body_mean_safe * 0.80
+vol_extreme = use_vol_filter and (vol_ratio >= extreme_vol_atr_mult or bar_range >= atr_safe * big_candle_atr_mult)
+vol_high = use_vol_filter and not vol_extreme and vol_ratio >= high_vol_atr_mult
+vol_normal = not use_vol_filter or (not vol_compression and not vol_high and not vol_extreme)
+
+vol_mode_text = vol_extreme ? "EXTREME" : vol_high ? "HIGH VOL" : vol_compression ? "COMPRESSION" : "NORMAL"
+
+break_mult_eff = vol_extreme ? break_atr_mult * 1.50 : vol_high ? break_atr_mult * 1.25 : vol_compression ? break_atr_mult * 1.20 : break_atr_mult
+break_body_mult_eff = vol_extreme ? break_body_mult * 1.25 : vol_high ? break_body_mult * 1.15 : break_body_mult
+break_body_atr_mult_eff = vol_extreme ? break_body_atr_mult * 1.50 : vol_high ? break_body_atr_mult * 1.25 : break_body_atr_mult
+away_mult_eff = vol_extreme ? away_atr_mult * 1.25 : vol_high ? away_atr_mult * 1.15 : away_atr_mult
+retest_mult_eff = vol_extreme ? retest_atr_mult * 0.80 : vol_high ? retest_atr_mult * 0.90 : vol_compression ? retest_atr_mult * 0.85 : retest_atr_mult
+
+ready_buy_max_pct_eff = vol_high ? math.min(ready_buy_max_pct, 30.0) : ready_buy_max_pct
+ready_sell_min_pct_eff = vol_high ? math.max(ready_sell_min_pct, 70.0) : ready_sell_min_pct
+
+ready_vol_ok = not use_vol_filter or ((not vol_extreme or not disable_ready_in_extreme) and (not vol_compression or not disable_ready_in_compression))
+
+break_buffer = atr_safe * break_mult_eff
+away_buffer = atr_safe * away_mult_eff
+retest_tol = atr_safe * retest_mult_eff
+level_tol = atr_safe * 0.10
+
+//------------------- PRICE ACTION -------------------//
+bull_rejection = lower_wick > body_safe * 1.25 and close > open
+bear_rejection = upper_wick > body_safe * 1.25 and close < open
+
+bull_pinbar = lower_wick > body_safe * 1.75 and close > open and close > low + bar_range * 0.60
+bear_pinbar = upper_wick > body_safe * 1.75 and close < open and close < high - bar_range * 0.60
+
+bull_engulf = close > open and close[1] < open[1] and close > open[1] and open <= close[1]
+bear_engulf = close < open and close[1] > open[1] and close < open[1] and open >= close[1]
+
+bull_displace = body > body_mean_safe and body >= atr_safe * 0.10 and close > open
+bear_displace = body > body_mean_safe and body >= atr_safe * 0.10 and close < open
+
+bull_confirm = bull_rejection or bull_pinbar or bull_engulf or bull_displace
+bear_confirm = bear_rejection or bear_pinbar or bear_engulf or bear_displace
+
+bull_break_body_ok = close > open and body >= body_mean_safe * break_body_mult_eff and body >= atr_safe * break_body_atr_mult_eff
+bear_break_body_ok = close < open and body >= body_mean_safe * break_body_mult_eff and body >= atr_safe * break_body_atr_mult_eff
+
+//------------------- SWING DETECTION -------------------//
+ph = ta.pivothigh(high, swing_len, swing_len)
+pl = ta.pivotlow(low, swing_len, swing_len)
+
+pivot_high_bar = bar_index - swing_len
+pivot_low_bar = bar_index - swing_len
+
+//------------------- ARRAYS -------------------//
+var float[] swing_high_levels = array.new_float()
+var int[] swing_high_bars = array.new_int()
+
+var float[] swing_low_levels = array.new_float()
+var int[] swing_low_bars = array.new_int()
+
+var float[] rbs_levels = array.new_float()
+var int[] rbs_bars = array.new_int()
+var bool[] rbs_away = array.new_bool()
+
+var float[] sbr_levels = array.new_float()
+var int[] sbr_bars = array.new_int()
+var bool[] sbr_away = array.new_bool()
+
+var line[] breakout_lines = array.new_line()
+var label[] breakout_labels = array.new_label()
+
+f_clean_expired(swing_high_levels, swing_high_bars, max_swing_age)
+f_clean_expired(swing_low_levels, swing_low_bars, max_swing_age)
+f_clean_expired_retest(rbs_levels, rbs_bars, rbs_away, max_rbs_sbr_age)
+f_clean_expired_retest(sbr_levels, sbr_bars, sbr_away, max_rbs_sbr_age)
+
+//------------------- SIGNAL STATE -------------------//
+var int last_signal_dir = 0
+var int last_signal_bar = na
+var float last_signal_price = na
+
+var int last_ready_dir = 0
+var int last_ready_bar = na
+
+var label vol_label = na
+
+bool buy_ready = false
+bool sell_ready = false
+bool swing_buy = false
+bool swing_sell = false
+bool rbs_buy = false
+bool sbr_sell = false
+
+//------------------- QUALITY -------------------//
+ready_buy_quality = 0
+ready_buy_quality += bull_confirm ? 25 : 0
+ready_buy_quality += price_pct <= ready_buy_max_pct_eff ? 25 : 0
+ready_buy_quality += lower_wick > body_safe * 1.25 ? 20 : 0
+ready_buy_quality += vol_normal ? 15 : vol_high ? 8 : 0
+ready_buy_quality += bar_range <= atr_safe * big_candle_atr_mult ? 15 : 0
+
+ready_sell_quality = 0
+ready_sell_quality += bear_confirm ? 25 : 0
+ready_sell_quality += price_pct >= ready_sell_min_pct_eff ? 25 : 0
+ready_sell_quality += upper_wick > body_safe * 1.25 ? 20 : 0
+ready_sell_quality += vol_normal ? 15 : vol_high ? 8 : 0
+ready_sell_quality += bar_range <= atr_safe * big_candle_atr_mult ? 15 : 0
+
+swing_buy_quality = 0
+swing_buy_quality += not na(pl) ? 35 : 0
+swing_buy_quality += not na(pl) and close >= pl + atr_safe * confirm_move_atr ? 20 : 0
+swing_buy_quality += bull_confirm ? 20 : 0
+swing_buy_quality += price_pct <= 50 ? 15 : 0
+swing_buy_quality += not vol_extreme ? 10 : 0
+
+swing_sell_quality = 0
+swing_sell_quality += not na(ph) ? 35 : 0
+swing_sell_quality += not na(ph) and close <= ph - atr_safe * confirm_move_atr ? 20 : 0
+swing_sell_quality += bear_confirm ? 20 : 0
+swing_sell_quality += price_pct >= 50 ? 15 : 0
+swing_sell_quality += not vol_extreme ? 10 : 0
+
+//------------------- READY SIGNAL -------------------//
+ready_high = ta.highest(high, ready_lookback)
+ready_low = ta.lowest(low, ready_lookback)
+
+ready_buy_extreme = low <= ready_low + atr_safe * 0.10 and price_pct <= ready_buy_max_pct_eff
+ready_sell_extreme = high >= ready_high - atr_safe * 0.10 and price_pct >= ready_sell_min_pct_eff
+
+ready_buy_quality_ok = not use_quality_filter or ready_buy_quality >= min_ready_quality
+ready_sell_quality_ok = not use_quality_filter or ready_sell_quality >= min_ready_quality
+
+ready_buy_allowed = barstate.isconfirmed and show_ready_labels and ready_vol_ok and bull_confirm and ready_buy_extreme and ready_buy_quality_ok and (na(last_ready_bar) or bar_index - last_ready_bar > ready_cooldown or last_ready_dir != 1)
+ready_sell_allowed = barstate.isconfirmed and show_ready_labels and ready_vol_ok and bear_confirm and ready_sell_extreme and ready_sell_quality_ok and (na(last_ready_bar) or bar_index - last_ready_bar > ready_cooldown or last_ready_dir != -1)
+
+if ready_buy_allowed
+    buy_ready := true
+    last_ready_dir := 1
+    last_ready_bar := bar_index
+    ready_buy_text = show_quality_text ? "Buy Ready\n" + f_grade(ready_buy_quality) + " | " + str.tostring(ready_buy_quality) + "\n" + vol_mode_text : "Buy Ready"
+    label.new(bar_index, low, ready_buy_text, xloc=xloc.bar_index, style=label.style_label_up, color=ready_buy_color, textcolor=color.black, size=size.tiny)
+
+if ready_sell_allowed
+    sell_ready := true
+    last_ready_dir := -1
+    last_ready_bar := bar_index
+    ready_sell_text = show_quality_text ? "Sell Ready\n" + f_grade(ready_sell_quality) + " | " + str.tostring(ready_sell_quality) + "\n" + vol_mode_text : "Sell Ready"
+    label.new(bar_index, high, ready_sell_text, xloc=xloc.bar_index, style=label.style_label_down, color=ready_sell_color, textcolor=color.white, size=size.tiny)
+
+//------------------- STORE CONFIRMED SWINGS -------------------//
+if barstate.isconfirmed and not na(ph)
+    f_push_unique(swing_high_levels, swing_high_bars, ph, pivot_high_bar, level_tol, 100)
+
+if barstate.isconfirmed and not na(pl)
+    f_push_unique(swing_low_levels, swing_low_bars, pl, pivot_low_bar, level_tol, 100)
+
+//------------------- SWING SELL -------------------//
+swing_sell_quality_ok = not use_quality_filter or swing_sell_quality >= min_swing_quality
+swing_sell_move_ok = not na(ph) and (na(last_signal_price) or math.abs(ph - last_signal_price) >= atr_safe * min_swing_move_atr)
+swing_sell_confirmed = barstate.isconfirmed and not na(ph) and close <= ph - atr_safe * confirm_move_atr
+swing_sell_allowed = swing_sell_confirmed and swing_sell_move_ok and swing_sell_quality_ok and f_can_signal(-1, last_signal_dir, last_signal_bar, signal_cooldown, strict_alternation)
+
+if swing_sell_allowed
+    swing_sell := true
+    last_signal_dir := -1
+    last_signal_bar := bar_index
+    last_signal_price := ph
+    if show_swing_labels
+        swing_sell_text = show_quality_text ? "Swing Sell\n" + f_grade(swing_sell_quality) + " | " + str.tostring(swing_sell_quality) : "Swing Sell"
+        label.new(bar_index, high, swing_sell_text, xloc=xloc.bar_index, style=label.style_label_down, color=sell_color, textcolor=color.white, size=size.small)
+
+//------------------- SWING BUY -------------------//
+swing_buy_quality_ok = not use_quality_filter or swing_buy_quality >= min_swing_quality
+swing_buy_move_ok = not na(pl) and (na(last_signal_price) or math.abs(pl - last_signal_price) >= atr_safe * min_swing_move_atr)
+swing_buy_confirmed = barstate.isconfirmed and not na(pl) and close >= pl + atr_safe * confirm_move_atr
+swing_buy_allowed = swing_buy_confirmed and swing_buy_move_ok and swing_buy_quality_ok and f_can_signal(1, last_signal_dir, last_signal_bar, signal_cooldown, strict_alternation)
+
+if swing_buy_allowed
+    swing_buy := true
+    last_signal_dir := 1
+    last_signal_bar := bar_index
+    last_signal_price := pl
+    if show_swing_labels
+        swing_buy_text = show_quality_text ? "Swing Buy\n" + f_grade(swing_buy_quality) + " | " + str.tostring(swing_buy_quality) : "Swing Buy"
+        label.new(bar_index, low, swing_buy_text, xloc=xloc.bar_index, style=label.style_label_up, color=buy_color, textcolor=color.black, size=size.small)
+
+//------------------- BREAKOUT => RBS -------------------//
+if barstate.isconfirmed and use_rbs_sbr and array.size(swing_high_levels) > 0
+    int best_i = na
+    float best_lvl = na
+    float best_dist = na
+    int best_lvl_bar = na
+
+    for i = array.size(swing_high_levels) - 1 to 0
+        lvl = array.get(swing_high_levels, i)
+        lvl_bar = array.get(swing_high_bars, i)
+        crossed_up = close > lvl + break_buffer and close[1] <= lvl + break_buffer
+        valid_break = crossed_up and bull_break_body_ok and bar_index > lvl_bar
+
+        if valid_break
+            dist = math.abs(close - lvl)
+            if na(best_dist) or dist < best_dist
+                best_dist := dist
+                best_lvl := lvl
+                best_i := i
+                best_lvl_bar := lvl_bar
+
+    if not na(best_i)
+        f_push_retest_level(rbs_levels, rbs_bars, rbs_away, best_lvl, bar_index, level_tol, max_rbs_sbr_keep)
+        if show_breakout
+            f_add_breakout_line(breakout_lines, breakout_labels, best_lvl_bar, best_lvl, bar_index, "Breakout", breakout_color, 100)
+        array.remove(swing_high_levels, best_i)
+        array.remove(swing_high_bars, best_i)
+
+//------------------- BREAKDOWN => SBR -------------------//
+if barstate.isconfirmed and use_rbs_sbr and array.size(swing_low_levels) > 0
+    int best_i = na
+    float best_lvl = na
+    float best_dist = na
+    int best_lvl_bar = na
+
+    for i = array.size(swing_low_levels) - 1 to 0
+        lvl = array.get(swing_low_levels, i)
+        lvl_bar = array.get(swing_low_bars, i)
+        crossed_down = close < lvl - break_buffer and close[1] >= lvl - break_buffer
+        valid_break = crossed_down and bear_break_body_ok and bar_index > lvl_bar
+
+        if valid_break
+            dist = math.abs(close - lvl)
+            if na(best_dist) or dist < best_dist
+                best_dist := dist
+                best_lvl := lvl
+                best_i := i
+                best_lvl_bar := lvl_bar
+
+    if not na(best_i)
+        f_push_retest_level(sbr_levels, sbr_bars, sbr_away, best_lvl, bar_index, level_tol, max_rbs_sbr_keep)
+        if show_breakout
+            f_add_breakout_line(breakout_lines, breakout_labels, best_lvl_bar, best_lvl, bar_index, "Breakdown", breakdown_color, 100)
+        array.remove(swing_low_levels, best_i)
+        array.remove(swing_low_bars, best_i)
+
+//------------------- UPDATE AWAY STATE -------------------//
+if use_rbs_sbr and array.size(rbs_levels) > 0
+    for i = 0 to array.size(rbs_levels) - 1
+        lvl = array.get(rbs_levels, i)
+        brk_bar = array.get(rbs_bars, i)
+        moved_away = high >= lvl + away_buffer and bar_index > brk_bar
+        if moved_away
+            array.set(rbs_away, i, true)
+
+if use_rbs_sbr and array.size(sbr_levels) > 0
+    for i = 0 to array.size(sbr_levels) - 1
+        lvl = array.get(sbr_levels, i)
+        brk_bar = array.get(sbr_bars, i)
+        moved_away = low <= lvl - away_buffer and bar_index > brk_bar
+        if moved_away
+            array.set(sbr_away, i, true)
+
+//------------------- RBS INVALIDATION -------------------//
+if barstate.isconfirmed and use_rbs_sbr and array.size(rbs_levels) > 0
+    for i = array.size(rbs_levels) - 1 to 0
+        lvl = array.get(rbs_levels, i)
+        brk_bar = array.get(rbs_bars, i)
+        invalidated = bar_index - brk_bar >= min_retest_bars and close < lvl - retest_tol
+        if invalidated
+            array.remove(rbs_levels, i)
+            array.remove(rbs_bars, i)
+            array.remove(rbs_away, i)
+
+//------------------- SBR INVALIDATION -------------------//
+if barstate.isconfirmed and use_rbs_sbr and array.size(sbr_levels) > 0
+    for i = array.size(sbr_levels) - 1 to 0
+        lvl = array.get(sbr_levels, i)
+        brk_bar = array.get(sbr_bars, i)
+        invalidated = bar_index - brk_bar >= min_retest_bars and close > lvl + retest_tol
+        if invalidated
+            array.remove(sbr_levels, i)
+            array.remove(sbr_bars, i)
+            array.remove(sbr_away, i)
+
+//------------------- RBS BUY RETEST -------------------//
+if barstate.isconfirmed and use_rbs_sbr and array.size(rbs_levels) > 0
+    float best_lvl = na
+    float best_dist = na
+    int best_quality = 0
+
+    for i = 0 to array.size(rbs_levels) - 1
+        lvl = array.get(rbs_levels, i)
+        brk_bar = array.get(rbs_bars, i)
+        away_ok = array.get(rbs_away, i)
+        age_ok = bar_index - brk_bar >= min_retest_bars
+        retest_ok = away_ok and low <= lvl + retest_tol and close > lvl and close > open
+        confirm_ok = bull_confirm
+        q = 0
+        q += age_ok ? 15 : 0
+        q += away_ok ? 20 : 0
+        q += retest_ok ? 25 : 0
+        q += confirm_ok ? 25 : 0
+        q += not vol_extreme ? 10 : 5
+        q += close > lvl ? 5 : 0
+
+        if age_ok and retest_ok and confirm_ok and (not use_quality_filter or q >= min_rbs_sbr_quality)
+            dist = math.abs(close - lvl)
+            if na(best_dist) or dist < best_dist
+                best_dist := dist
+                best_lvl := lvl
+                best_quality := q
+
+    if not na(best_lvl) and f_can_signal(1, last_signal_dir, last_signal_bar, signal_cooldown, strict_rbs_sbr_alternation)
+        rbs_buy := true
+        last_signal_dir := 1
+        last_signal_bar := bar_index
+        last_signal_price := best_lvl
+
+        if show_rbs_sbr_labels
+            rbs_text = show_quality_text ? "RBS Buy\n" + f_grade(best_quality) + " | " + str.tostring(best_quality) + "\n" + vol_mode_text : "RBS Buy"
+            label.new(bar_index, low, rbs_text, xloc=xloc.bar_index, style=label.style_label_up, color=rbs_color, textcolor=color.white, size=size.small)
+
+        if consume_retest
+            f_remove_retest_level(rbs_levels, rbs_bars, rbs_away, best_lvl, retest_tol)
+
+//------------------- SBR SELL RETEST -------------------//
+if barstate.isconfirmed and use_rbs_sbr and array.size(sbr_levels) > 0
+    float best_lvl = na
+    float best_dist = na
+    int best_quality = 0
+
+    for i = 0 to array.size(sbr_levels) - 1
+        lvl = array.get(sbr_levels, i)
+        brk_bar = array.get(sbr_bars, i)
+        away_ok = array.get(sbr_away, i)
+        age_ok = bar_index - brk_bar >= min_retest_bars
+        retest_ok = away_ok and high >= lvl - retest_tol and close < lvl and close < open
+        confirm_ok = bear_confirm
+        q = 0
+        q += age_ok ? 15 : 0
+        q += away_ok ? 20 : 0
+        q += retest_ok ? 25 : 0
+        q += confirm_ok ? 25 : 0
+        q += not vol_extreme ? 10 : 5
+        q += close < lvl ? 5 : 0
+
+        if age_ok and retest_ok and confirm_ok and (not use_quality_filter or q >= min_rbs_sbr_quality)
+            dist = math.abs(close - lvl)
+            if na(best_dist) or dist < best_dist
+                best_dist := dist
+                best_lvl := lvl
+                best_quality := q
+
+    if not na(best_lvl) and f_can_signal(-1, last_signal_dir, last_signal_bar, signal_cooldown, strict_rbs_sbr_alternation)
+        sbr_sell := true
+        last_signal_dir := -1
+        last_signal_bar := bar_index
+        last_signal_price := best_lvl
+
+        if show_rbs_sbr_labels
+            sbr_text = show_quality_text ? "SBR Sell\n" + f_grade(best_quality) + " | " + str.tostring(best_quality) + "\n" + vol_mode_text : "SBR Sell"
+            label.new(bar_index, high, sbr_text, xloc=xloc.bar_index, style=label.style_label_down, color=sbr_color, textcolor=color.black, size=size.small)
+
+        if consume_retest
+            f_remove_retest_level(sbr_levels, sbr_bars, sbr_away, best_lvl, retest_tol)
+
+//------------------- VOLATILITY LABEL -------------------//
+if show_vol_labels and barstate.islast
+    if not na(vol_label)
+        label.delete(vol_label)
+    vol_label := label.new(bar_index, high, "VOL: " + vol_mode_text + "\nRatio: " + str.tostring(vol_ratio, "#.##"), xloc=xloc.bar_index, style=label.style_label_left, color=color.new(color.gray, 80), textcolor=color.white, size=size.tiny)
+
+//------------------- ALERTS -------------------//
+alertcondition(buy_ready, title="Buy Ready", message="Reversal Snapper: Buy Ready")
+alertcondition(sell_ready, title="Sell Ready", message="Reversal Snapper: Sell Ready")
+alertcondition(swing_buy, title="Swing Buy", message="Reversal Snapper: Swing Buy confirmed")
+alertcondition(swing_sell, title="Swing Sell", message="Reversal Snapper: Swing Sell confirmed")
+alertcondition(rbs_buy, title="RBS Buy", message="Reversal Snapper: RBS Buy retest confirmed")
+alertcondition(sbr_sell, title="SBR Sell", message="Reversal Snapper: SBR Sell retest confirmed")

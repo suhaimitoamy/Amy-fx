@@ -1,0 +1,202 @@
+//==================== CUSTOM PIVOT LEVELS ====================//
+piv_group = "Custom Pivot Levels"
+piv_show = input.bool(true, "Show Pivot Levels", group=piv_group)
+piv_tf = input.string("D", "Pivot Source TF", options=["D", "W", "M"], group=piv_group)
+piv_displayMode = input.string("Clean", "Pivot Display Mode", options=["All", "Clean", "Major Only"], group=piv_group)
+piv_showLabels = input.bool(false, "Show Pivot Labels", group=piv_group)
+piv_backBars = input.int(80, "Left Bars", minval=10, maxval=500, group=piv_group)
+piv_extendBars = input.int(40, "Right Bars", minval=5, maxval=300, group=piv_group)
+piv_lineWidth = input.int(1, "Line Width", minval=1, maxval=4, group=piv_group)
+piv_nearAtrMult = input.float(2.0, "Show Level If Near ATR", minval=0.5, step=0.5, group=piv_group)
+
+piv_rawHigh = request.security(syminfo.tickerid, piv_tf, high, barmerge.gaps_off, barmerge.lookahead_off)
+piv_rawLow = request.security(syminfo.tickerid, piv_tf, low, barmerge.gaps_off, barmerge.lookahead_off)
+piv_rawClose = request.security(syminfo.tickerid, piv_tf, close, barmerge.gaps_off, barmerge.lookahead_off)
+
+piv_newTfBar = ta.change(time(piv_tf)) != 0
+
+var float piv_prevHigh = na
+var float piv_prevLow = na
+var float piv_prevClose = na
+
+if piv_newTfBar or na(piv_prevHigh)
+    piv_prevHigh := piv_rawHigh[1]
+    piv_prevLow := piv_rawLow[1]
+    piv_prevClose := piv_rawClose[1]
+
+piv_range = piv_prevHigh - piv_prevLow
+piv_p = (piv_prevHigh + piv_prevLow + piv_prevClose) / 3.0
+
+piv_r1 = 2.0 * piv_p - piv_prevLow
+piv_s1 = 2.0 * piv_p - piv_prevHigh
+piv_r2 = piv_p + piv_range
+piv_s2 = piv_p - piv_range
+piv_r3 = piv_prevHigh + 2.0 * (piv_p - piv_prevLow)
+piv_s3 = piv_prevLow - 2.0 * (piv_prevHigh - piv_p)
+piv_r4 = piv_r3 + piv_range
+piv_s4 = piv_s3 - piv_range
+
+piv_isNear(_lvl) =>
+    not na(_lvl) and math.abs(close - _lvl) <= atr * piv_nearAtrMult
+
+piv_showLevel(_lvl, _name) =>
+    piv_displayMode == "All" ? true :
+     piv_displayMode == "Major Only" ? (_name == "PIVOT" or _name == "R1" or _name == "S1") :
+     _name == "PIVOT" or _name == "R1" or _name == "S1" or piv_isNear(_lvl)
+
+var line[] piv_lines = array.new<line>(9, na)
+var label[] piv_labels = array.new<label>(9, na)
+var string piv_lastTf = ""
+
+if piv_lastTf != piv_tf
+    for i = 0 to array.size(piv_lines) - 1
+        _oldLine = array.get(piv_lines, i)
+        _oldLabel = array.get(piv_labels, i)
+        if not na(_oldLine)
+            line.delete(_oldLine)
+            array.set(piv_lines, i, na)
+        if not na(_oldLabel)
+            label.delete(_oldLabel)
+            array.set(piv_labels, i, na)
+    piv_lastTf := piv_tf
+
+piv_draw(_idx, _price, _name, _baseColor) =>
+    line _ln = array.get(piv_lines, _idx)
+    label _lb = array.get(piv_labels, _idx)
+    _show = piv_show and not na(_price) and piv_showLevel(_price, _name)
+    _txt = _name + "  " + str.tostring(_price, format.mintick)
+    _left = math.max(0, bar_index - piv_backBars)
+    _right = bar_index + piv_extendBars
+    if _show
+        if na(_ln)
+            _ln := line.new(_left, _price, _right, _price, extend=extend.none, color=_baseColor, width=piv_lineWidth)
+        else
+            line.set_xy1(_ln, _left, _price)
+            line.set_xy2(_ln, _right, _price)
+            line.set_color(_ln, _baseColor)
+            line.set_width(_ln, piv_lineWidth)
+            line.set_style(_ln, line.style_solid)
+        if piv_showLabels
+            if na(_lb)
+                _lb := label.new(_right, _price, _txt, style=label.style_label_left, color=color.new(_baseColor, 82), textcolor=_baseColor, size=size.tiny)
+            else
+                label.set_xy(_lb, _right, _price)
+                label.set_text(_lb, _txt)
+                label.set_color(_lb, color.new(_baseColor, 82))
+                label.set_textcolor(_lb, _baseColor)
+                label.set_size(_lb, size.tiny)
+        else
+            if not na(_lb)
+                label.delete(_lb)
+                _lb := na
+    else
+        if not na(_ln)
+            line.delete(_ln)
+            _ln := na
+        if not na(_lb)
+            label.delete(_lb)
+            _lb := na
+    array.set(piv_lines, _idx, _ln)
+    array.set(piv_labels, _idx, _lb)
+
+piv_draw(0, piv_r4, "R4", color.new(color.red, 35))
+piv_draw(1, piv_r3, "R3", color.new(color.red, 30))
+piv_draw(2, piv_r2, "R2", color.new(color.red, 20))
+piv_draw(3, piv_r1, "R1", color.new(color.red, 10))
+piv_draw(4, piv_p, "PIVOT", color.new(color.blue, 0))
+piv_draw(5, piv_s1, "S1", color.new(color.lime, 10))
+piv_draw(6, piv_s2, "S2", color.new(color.lime, 20))
+piv_draw(7, piv_s3, "S3", color.new(color.lime, 30))
+piv_draw(8, piv_s4, "S4", color.new(color.lime, 35))
+
+//==================== MIDNIGHT OPEN / PDH / PDL / BSL / SSL ====================//
+liq2_group = "Midnight Open / PDH / PDL / BSL / SSL"
+liq2_show = input.bool(true, "Show Levels", group=liq2_group)
+liq2_showLabels = input.bool(false, "Show Labels", group=liq2_group)
+liq2_backBars = input.int(80, "Left Bars", minval=10, maxval=500, group=liq2_group)
+liq2_extendBars = input.int(40, "Right Bars", minval=5, maxval=300, group=liq2_group)
+liq2_lineWidth = input.int(1, "Line Width", minval=1, maxval=4, group=liq2_group)
+
+liq2_showMO = input.bool(true, "Show Midnight Open", group=liq2_group)
+liq2_showPDH = input.bool(true, "Show PDH", group=liq2_group)
+liq2_showPDL = input.bool(true, "Show PDL", group=liq2_group)
+liq2_showBSL = input.bool(false, "Show BSL", group=liq2_group)
+liq2_showSSL = input.bool(false, "Show SSL", group=liq2_group)
+
+liq2_tz = input.string("America/New_York", "Midnight Open Timezone", group=liq2_group)
+liq2_swingLen = input.int(5, "BSL / SSL Swing Length", minval=1, maxval=50, group=liq2_group)
+
+liq2_newDay = ta.change(time("D", "0000-2359", liq2_tz)) != 0
+liq2_midnightOpen = ta.valuewhen(liq2_newDay, open, 0)
+
+liq2_rawDailyHigh = request.security(syminfo.tickerid, "D", high, barmerge.gaps_off, barmerge.lookahead_off)
+liq2_rawDailyLow = request.security(syminfo.tickerid, "D", low, barmerge.gaps_off, barmerge.lookahead_off)
+
+liq2_newExchangeDay = ta.change(time("D")) != 0
+
+var float liq2_pdh = na
+var float liq2_pdl = na
+
+if liq2_newExchangeDay or na(liq2_pdh)
+    liq2_pdh := liq2_rawDailyHigh[1]
+    liq2_pdl := liq2_rawDailyLow[1]
+
+liq2_ph = ta.pivothigh(high, liq2_swingLen, liq2_swingLen)
+liq2_pl = ta.pivotlow(low, liq2_swingLen, liq2_swingLen)
+
+var float liq2_bsl = na
+var float liq2_ssl = na
+
+if not na(liq2_ph)
+    liq2_bsl := liq2_ph
+
+if not na(liq2_pl)
+    liq2_ssl := liq2_pl
+
+var line[] liq2_lines = array.new<line>(5, na)
+var label[] liq2_labels = array.new<label>(5, na)
+
+liq2_draw(_idx, _price, _name, _col, _showLevel) =>
+    line _ln = array.get(liq2_lines, _idx)
+    label _lb = array.get(liq2_labels, _idx)
+    _show = liq2_show and _showLevel and not na(_price)
+    _txt = _name + "  " + str.tostring(_price, format.mintick)
+    _left = math.max(0, bar_index - liq2_backBars)
+    _right = bar_index + liq2_extendBars
+    if _show
+        if na(_ln)
+            _ln := line.new(_left, _price, _right, _price, extend=extend.none, color=_col, width=liq2_lineWidth)
+        else
+            line.set_xy1(_ln, _left, _price)
+            line.set_xy2(_ln, _right, _price)
+            line.set_color(_ln, _col)
+            line.set_width(_ln, liq2_lineWidth)
+            line.set_style(_ln, line.style_solid)
+        if liq2_showLabels
+            if na(_lb)
+                _lb := label.new(_right, _price, _txt, style=label.style_label_left, color=color.new(_col, 82), textcolor=_col, size=size.tiny)
+            else
+                label.set_xy(_lb, _right, _price)
+                label.set_text(_lb, _txt)
+                label.set_color(_lb, color.new(_col, 82))
+                label.set_textcolor(_lb, _col)
+                label.set_size(_lb, size.tiny)
+        else
+            if not na(_lb)
+                label.delete(_lb)
+                _lb := na
+    else
+        if not na(_ln)
+            line.delete(_ln)
+            _ln := na
+        if not na(_lb)
+            label.delete(_lb)
+            _lb := na
+    array.set(liq2_lines, _idx, _ln)
+    array.set(liq2_labels, _idx, _lb)
+
+liq2_draw(0, liq2_midnightOpen, "MIDNIGHT OPEN", color.new(color.yellow, 0), liq2_showMO)
+liq2_draw(1, liq2_pdh, "PDH", color.new(color.red, 0), liq2_showPDH)
+liq2_draw(2, liq2_pdl, "PDL", color.new(color.lime, 0), liq2_showPDL)
+liq2_draw(3, liq2_bsl, "BSL", color.new(color.fuchsia, 0), liq2_showBSL)
+liq2_draw(4, liq2_ssl, "SSL", color.new(color.aqua, 0), liq2_showSSL)

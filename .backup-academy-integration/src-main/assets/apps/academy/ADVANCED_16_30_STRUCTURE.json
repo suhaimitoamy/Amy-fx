@@ -1,0 +1,259 @@
+{
+  "parts": [
+    {
+      "num": 16,
+      "folder": "bagian-16-advanced-entry-logic",
+      "title": "Advanced Market Structure Reading",
+      "chapters": [
+        "Minor vs Major Structure",
+        "Valid MSS vs False MSS",
+        "CHoCH vs MSS dalam Konteks",
+        "Internal vs External Structure",
+        "Swing yang Layak Dipakai",
+        "Displacement yang Memecah Structure",
+        "Complex Pullback",
+        "Structure dalam Range",
+        "No Trade karena Structure Rusak",
+        "Checklist Advanced Structure"
+      ]
+    },
+    {
+      "num": 17,
+      "folder": "bagian-17-fvg-masterclass",
+      "title": "Advanced Liquidity Mapping",
+      "chapters": [
+        "Liquidity Map Sebelum Market Buka",
+        "Internal vs External Liquidity Advanced",
+        "IRL dan ERL Lanjutan",
+        "Liquidity Pool yang Layak",
+        "Weak High dan Weak Low",
+        "Liquidity Run yang Valid",
+        "Liquidity Run Palsu",
+        "Draw on Liquidity Prioritas",
+        "Liquidity yang Harus Diabaikan",
+        "Checklist Liquidity Map"
+      ]
+    },
+    {
+      "num": 18,
+      "folder": "bagian-18-order-block-masterclass",
+      "title": "Advanced Sweep & Delivery Model",
+      "chapters": [
+        "Sweep vs Grab vs Run",
+        "Sweep yang Layak Diikuti",
+        "Displacement Setelah Sweep",
+        "Delivery Sequence",
+        "CISD Lanjutan",
+        "False Displacement",
+        "Continuation Leg",
+        "Continuation Failure",
+        "Reversal Setelah Failed Run",
+        "Checklist Sweep & Delivery"
+      ]
+    },
+    {
+      "num": 19,
+      "folder": "bagian-19-liquidity-masterclass",
+      "title": "POI Selection Masterclass",
+      "chapters": [
+        "POI Utama vs POI Sekunder",
+        "HTF POI dan LTF POI",
+        "POI dalam Trend",
+        "POI dalam Range",
+        "POI Terlalu Tinggi atau Rendah",
+        "POI yang Sudah Mitigated",
+        "POI Tumpang Tindih",
+        "POI yang Invalid",
+        "Kapan POI Diabaikan",
+        "Checklist Kekuatan POI"
+      ]
+    },
+    {
+      "num": 20,
+      "folder": "bagian-20-idm-inducement-masterclass",
+      "title": "FVG, OB, CE, IFVG Decision Model",
+      "chapters": [
+        "Kapan FVG Lebih Kuat",
+        "Kapan OB Lebih Kuat",
+        "CE: Consequent Encroachment",
+        "Full Fill vs CE",
+        "IFVG sebagai Model Lanjutan",
+        "Breaker + FVG Combination",
+        "OB + FVG Overlap",
+        "Volume Imbalance dan Gap",
+        "Kapan Semua POI Ditolak",
+        "Checklist Decision Model"
+      ]
+    },
+    {
+      "num": 21,
+      "folder": "bagian-21-ifvg-inversion-model",
+      "title": "Session Timing Advanced",
+      "chapters": [
+        "Asia Build vs Asia Direction",
+        "Asia Trap untuk London",
+        "London Reversal vs Continuation",
+        "New York Confirm vs Cancel",
+        "Judas Swing London vs New York",
+        "Session Transition",
+        "News Day dan Abnormal Volatility",
+        "Killzone yang Layak",
+        "Kapan Session Tidak Valid",
+        "Checklist Session Advanced"
+      ]
+    },
+    {
+      "num": 22,
+      "folder": "bagian-22-block-advanced",
+      "title": "Daily Bias & Weekly Profile Advanced",
+      "chapters": [
+        "Weekly Profile Lanjutan",
+        "Monday Range",
+        "Tuesday High/Low of Week",
+        "Wednesday High/Low of Week",
+        "TGIF Advanced",
+        "OHLC dan OLHC",
+        "PDH dan PDL sebagai Draw",
+        "Daily Draw on Liquidity",
+        "Bias yang Batal",
+        "Checklist Daily & Weekly Bias"
+      ]
+    },
+    {
+      "num": 23,
+      "folder": "bagian-23-premium-discount-advanced",
+      "title": "ICT Macro & Silver Bullet Model",
+      "chapters": [
+        "Apa yang Dimaksud Macro",
+        "Macro Time Window",
+        "Silver Bullet Context",
+        "Silver Bullet Bullish",
+        "Silver Bullet Bearish",
+        "Macro tanpa Entry",
+        "Entry Terlambat di Macro",
+        "Macro dan Draw on Liquidity",
+        "Kapan Silver Bullet Gagal",
+        "Checklist Macro & Silver Bullet"
+      ]
+    },
+    {
+      "num": 24,
+      "folder": "bagian-24-market-structure-advanced",
+      "title": "Opening Gap Model",
+      "chapters": [
+        "Apa Itu Opening Gap",
+        "NDOG",
+        "NWOG",
+        "Gap sebagai Draw",
+        "Gap sebagai POI",
+        "Gap Fill vs Gap Respect",
+        "Opening Gap dan Session",
+        "Gap yang Tidak Penting",
+        "Gap di XAUUSD",
+        "Checklist Opening Gap"
+      ]
+    },
+    {
+      "num": 25,
+      "folder": "bagian-25-session-entry-model",
+      "title": "Turtle Soup & Smart Money Reversal",
+      "chapters": [
+        "Turtle Soup Lanjutan",
+        "Turtle Soup Model A",
+        "Turtle Soup Model B",
+        "SMR: Smart Money Reversal",
+        "Failed Breakout Reversal",
+        "Entry Setelah Failed Run",
+        "Invalidation Turtle Soup",
+        "Target Turtle Soup",
+        "Kapan Turtle Soup Dihindari",
+        "Checklist Turtle Soup & SMR"
+      ]
+    },
+    {
+      "num": 26,
+      "folder": "bagian-26-xauusd-advanced-playbook",
+      "title": "OTE & Standard Deviation Targeting",
+      "chapters": [
+        "OTE sebagai Area, Bukan Sinyal",
+        "Fibonacci ICT",
+        "OTE dalam Bullish Model",
+        "OTE dalam Bearish Model",
+        "STDV Projection",
+        "Target 1, 2, 3 STDV",
+        "Stop Loss dalam OTE",
+        "Kapan OTE Tidak Dipakai",
+        "OTE dan XAUUSD",
+        "Checklist OTE & STDV"
+      ]
+    },
+    {
+      "num": 27,
+      "folder": "bagian-27-no-trade-advanced",
+      "title": "Intermarket & SMT Confirmation",
+      "chapters": [
+        "Apa Fungsi Intermarket",
+        "SMT Divergence Lanjutan",
+        "SMT Valid vs Invalid",
+        "DXY dan Gold",
+        "Correlated Pair Confirmation",
+        "SMT sebagai Filter",
+        "SMT Bukan Trigger",
+        "Timeframe untuk SMT",
+        "Kapan Intermarket Diabaikan",
+        "Checklist SMT & Intermarket"
+      ]
+    },
+    {
+      "num": 28,
+      "folder": "bagian-28-trade-management-advanced",
+      "title": "Advanced Entry Workflow",
+      "chapters": [
+        "Context Sebelum Trigger",
+        "Validasi Setup",
+        "Trigger Entry",
+        "Limit vs Market Entry",
+        "Invalidation yang Jelas",
+        "Target yang Objektif",
+        "Do Not Chase",
+        "Flowchart Entry",
+        "Review Setelah Entry",
+        "Checklist Entry Workflow"
+      ]
+    },
+    {
+      "num": 29,
+      "folder": "bagian-29-backtest-advanced",
+      "title": "Trade Management Advanced",
+      "chapters": [
+        "Setelah Entry Jangan Panik",
+        "Partial Take Profit",
+        "Hold Full Position",
+        "Move SL to BE",
+        "BE Trap",
+        "Scale-Out",
+        "Re-entry Setelah Profit",
+        "Exit Objektif vs Emosional",
+        "Membaca Trade yang Gagal",
+        "Checklist Trade Management"
+      ]
+    },
+    {
+      "num": 30,
+      "folder": "bagian-30-a-plus-setup-library",
+      "title": "A+ Setup Library & Full Checklist",
+      "chapters": [
+        "A+ FVG Setup",
+        "A+ OB Setup",
+        "A+ Liquidity Sweep Setup",
+        "A+ IFVG Setup",
+        "A+ Turtle Soup Setup",
+        "A+ Silver Bullet Setup",
+        "A+ Session Model",
+        "No-Trade Example",
+        "Full ICT Checklist",
+        "Roadmap Practice Advanced"
+      ]
+    }
+  ]
+}

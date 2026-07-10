@@ -1,0 +1,40 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Mengukur Winrate, RR, dan Drawdown — Amy FX Academy</title><link rel="stylesheet" href="../assets/css/style.css"><script>const ROOT_PATH='../';</script><script src="../assets/js/auth.js"></script><script src="../assets/js/main.js" defer></script></head><body><script>requireLogin();</script><header class="topbar hide-until-auth"><nav class="nav"><a class="brand" href="../index.html"><span class="brand-mark">A</span><span>Amy FX Academy</span></a><button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button><div class="navlinks" id="navlinks"><a href="../index.html">Beranda</a><a href="../daftar-materi.html">Daftar Materi</a><a href="../tentang.html">Tentang</a><a href="../glosarium/index.html">Glosarium</a></div></nav></header><main class="container hide-until-auth"><div class="article-layout"><article class="article"><div class="breadcrumb"><a href="../index.html">Beranda</a> › <a href="index.html">Bagian 14 — Backtesting dan Jurnal</a></div><div class="eyebrow">Bagian 14 — Backtesting dan Jurnal</div><h1>Mengukur Winrate, RR, dan Drawdown</h1>
+<p>Setelah kamu memiliki 100 data <em>trade</em> dari hasil backtesting atau forward testing, apa yang harus dilakukan dengan data tersebut? Angka-angka mentah itu tidak akan berarti apa-apa sampai kamu menerjemahkannya menjadi tiga indikator kesehatan sistem trading: <strong>Winrate, Risk-to-Reward (RR), dan Drawdown</strong>. Ketiga elemen ini adalah "rapor" dari strategimu.</p>
+<div class="image-slot" data-img-path="assets/images/lessons/09-mengukur-winrate-rr-drawdown.jpg" data-prompt="Buat ilustrasi edukasi trading untuk materi 'Mengukur Winrate, RR, dan Drawdown' dari 'Bagian 14 — Backtesting dan Jurnal', gaya clean light website, rasio 16:9, mudah dipahami pemula, warna putih, hijau lembut, biru lembut, sedikit aksen gold. Tampilkan elemen manusia/trader, checklist, jurnal, atau pengelolaan risiko dengan visual sederhana dan profesional. Jangan gunakan klaim profit pasti. Cocok untuk website Amy FX Academy." data-caption="Ilustrasi Winrate, RR, dan Drawdown"></div>
+<p>Sebagian besar pemula biasanya hanya peduli pada "Winrate" (seberapa sering mereka menang), lalu membuang strategi tersebut jika sering loss. Ini adalah pemikiran yang salah kaprah. Mari kita bongkar satu per satu cara mengukurnya dan mengapa ketiganya saling berhubungan erat.</p>
+
+<h2>1. Winrate (Tingkat Kemenangan)</h2>
+<p><strong>Winrate</strong> adalah persentase jumlah trade yang profit dibandingkan total trade. Cara menghitungnya sangat mudah:
+<br><em>(Jumlah Trade Profit / Total Trade) x 100%</em></p>
+<p>Misalnya, dari 100 kali trade, kamu menang 40 kali dan kalah 60 kali. Maka Winrate kamu adalah <strong>40%</strong>.</p>
+<div class="warning"><strong>Mitos Terbesar:</strong> "Saya butuh winrate 80%-90% untuk bisa untung." Ini SALAH BESAR! Banyak trader institusional sangat sukses hanya dengan winrate 35% - 45%. Mengapa? Jawabannya ada pada elemen kedua, yaitu RR.</div>
+
+<h2>2. Risk-to-Reward Ratio (RR)</h2>
+<p><strong>Risk-to-Reward Ratio (RR)</strong> adalah perbandingan antara jumlah uang yang kamu pertaruhkan (Risk) dengan jumlah uang yang kamu targetkan untuk dimenangkan (Reward).</p>
+<p>Jika kamu merisikokan $10 (Stop Loss) untuk mendapatkan $30 (Take Profit), maka RR kamu adalah <strong>1:3</strong>. Artinya, satu kali kemenangan bisa menutupi tiga kali kekalahan berturut-turut!</p>
+<p>Di sinilah keajaiban matematika trading terjadi (<em>Edge</em>). Mari kita kombinasikan Winrate dan RR dalam sebuah contoh simulasi dari 100 trade:</p>
+<ul>
+    <li><strong>Skenario A (Trader Winrate Tinggi, RR Rendah):</strong> Winrate 80%, RR 1:0.5 (Risk $10, Reward $5).<br>
+        Menang: 80 trade x $5 = $400<br>
+        Kalah: 20 trade x $10 = -$200<br>
+        <strong>Hasil: Untung $200.</strong> (Meski menangnya sering, untungnya lambat).</li>
+    <li><strong>Skenario B (Trader Winrate Rendah, RR Tinggi):</strong> Winrate 40%, RR 1:3 (Risk $10, Reward $30).<br>
+        Menang: 40 trade x $30 = $1,200<br>
+        Kalah: 60 trade x $10 = -$600<br>
+        <strong>Hasil: Untung $600!</strong> (Menangnya sedikit, tapi sekali menang panen besar).</li>
+</ul>
+<div class="note"><strong>Penting:</strong> Mengetahui hubungan Winrate dan RR membebaskanmu dari tekanan emosional "harus selalu benar". Kamu bisa salah lebih sering daripada benar, namun tetap berakhir dengan profit besar.</div>
+
+<h2>3. Drawdown (Penurunan Modal Maksimal)</h2>
+<p>Ini adalah metrik yang paling sering diabaikan pemula, padahal ini yang menentukan apakah kamu akan stres atau santai saat trading. <strong>Drawdown (DD)</strong> adalah penurunan terdalam dari titik puncak saldo (balance) tertinggimu sebelum akhirnya naik kembali. Drawdown biasanya dinyatakan dalam persentase.</p>
+<p>Misal, kamu mulai dengan saldo $1,000. Lalu kamu profit hingga $1,200. Tiba-tiba kamu mengalami kekalahan beruntun (<em>losing streak</em>) dan saldo turun menjadi $1,050, sebelum akhirnya profit lagi menjadi $1,300.</p>
+<p>Penurunan dari $1,200 ke $1,050 adalah sebesar $150.
+<br>Drawdown = ($150 / $1,200) x 100% = <strong>12.5%</strong>.</p>
+<p><strong>Mengapa Drawdown Penting?</strong>
+<br>Untuk mengatur ekspektasi emosimu! Dari 100 trade hasil backtest, kamu harus melihat, <em>"Berapa kali sih sistem saya ini mengalami SL berturut-turut yang paling parah?"</em></p>
+<p>Jika dari data sejarah sistemmu pernah mengalami 8 kali SL berturut-turut, kamu <strong>TIDAK BOLEH</strong> merisikokan 5% per trade. Karena jika fase 8x SL itu datang (dan pasti akan datang), Drawdown kamu akan mencapai 40% (8 x 5%). Mayoritas orang akan hancur mentalnya jika melihat modalnya hilang 40% dan akhirnya menyerah atau balas dendam.</p>
+<p>Tetapi jika kamu merisikokan 1% per trade, fase terburuk itu hanya akan memberimu 8% Drawdown. Kamu akan tetap tenang, dan membiarkan sisi probabilitas menangmu (Edge) bekerja di trade-trade selanjutnya.</p>
+
+<h2>Kesimpulan</h2>
+<p>Jangan pernah menilai sebuah strategi hanya dari seberapa sering dia menebak harga dengan benar (Winrate). Nilailah dari seberapa banyak uang yang dihasilkan saat benar dibandingkan saat salah (RR), dan seberapa dalam sistem itu bisa menjatuhkan modalmu di masa-masa sulit (Drawdown). Jika ketiga pilar ini sudah kamu kuasai secara matematis, kamu secara resmi telah lulus dari fase "berjudi" dan masuk ke fase "berbisnis".</p>
+<div class="source-note">Materi ini dirangkum dan disusun ulang dari bahan Materi Trading Amy ZIP serta batch PDF ICT/SMC/XAUUSD yang sudah dikirim.</div><nav class="page-nav"><a class="btn" href="../bagian-14-backtesting-dan-jurnal/08-review-mingguan.html">← Review Mingguan</a><a class="btn gold" href="../daftar-materi.html">Daftar Materi</a><a class="btn primary" href="../bagian-14-backtesting-dan-jurnal/10-menentukan-apakah-strategi-layak.html">Menentukan Apakah Strategi Layak →</a></nav></article><aside class="toc-card"><h3>Bagian 14 — Backtesting dan Jurnal</h3><ul><li><a class="" href="01-apa-itu-backtesting.html">Apa Itu Backtesting</a></li><li><a class="" href="02-kenapa-backtesting-wajib.html">Kenapa Backtesting Wajib</a></li><li><a class="" href="03-cara-backtest-manual.html">Cara Backtest Manual</a></li><li><a class="" href="04-template-backtesting.html">Template Backtesting</a></li><li><a class="" href="05-forward-testing.html">Forward Testing</a></li><li><a class="" href="06-demo-sebelum-live.html">Demo Sebelum Live</a></li><li><a class="" href="07-jurnal-trading.html">Jurnal Trading</a></li><li><a class="" href="08-review-mingguan.html">Review Mingguan</a></li><li><a class="active" href="09-mengukur-winrate-rr-drawdown.html">Mengukur Winrate, RR, dan Drawdown</a></li><li><a class="" href="10-menentukan-apakah-strategi-layak.html">Menentukan Apakah Strategi Layak</a></li></ul></aside></div></main><footer class="footer hide-until-auth">© 2026 Amy FX Academy. Belajar Trading dari Nol sampai Mandiri.</footer></body></html>

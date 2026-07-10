@@ -1,0 +1,108 @@
+//@version=6
+indicator("XAUUSD SnR Breakout & Retest V5 (MTF + Momentum)", overlay = true, max_labels_count = 500, max_lines_count = 500)
+
+//==================== 1. INPUTS ====================//
+grpSnR = "SnR Settings"
+levelTf = input.timeframe("15", "Structure Timeframe (MTF)", group = grpSnR)
+swingLen = input.int(3, "Swing Length", minval = 1, group = grpSnR)
+
+grpBreak = "Breakout & Retest"
+atrLen = input.int(14, "ATR Period", group = grpBreak)
+minBreakAtr = input.float(0.5, "Min Normal Breakout (ATR)", minval = 0.1, step = 0.1, group = grpBreak)
+retestBufferAtr = input.float(0.2, "Retest Zone Buffer (ATR)", minval = 0.0, step = 0.05, group = grpBreak)
+
+grpMom = "Momentum Bypass (No Retest)"
+allowMomentum = input.bool(true, "Enable Direct Momentum Entry", group = grpMom)
+momentumAtrMult = input.float(1.5, "Min Momentum Body (ATR)", minval = 1.0, step = 0.1, tooltip="Jika bodi candle menembus angka ATR ini, eksekusi langsung tanpa retest.", group = grpMom)
+
+//==================== 2. DATA & ANATOMI ====================//
+atr = ta.atr(atrLen)
+body = math.abs(close - open)
+upperWick = high - math.max(open, close)
+lowerWick = math.min(open, close) - low
+isBull = close > open
+isBear = close < open
+
+isBullPinbar = lowerWick > (body * 2) and upperWick < body
+isBearPinbar = upperWick > (body * 2) and lowerWick < body
+isBullEngulfing = isBull and open <= close[1] and close > open[1] and close[1] < open[1]
+isBearEngulfing = isBear and open >= close[1] and close < open[1] and close[1] > open[1]
+
+//==================== 3. STRUCTURE LEVELS (SNR) MTF ====================//
+levelTfIsHigher = timeframe.in_seconds(levelTf) > timeframe.in_seconds()
+levelPh = levelTfIsHigher ? request.security(syminfo.tickerid, levelTf, ta.pivothigh(high, swingLen, swingLen), lookahead = barmerge.lookahead_off) : ta.pivothigh(high, swingLen, swingLen)
+levelPl = levelTfIsHigher ? request.security(syminfo.tickerid, levelTf, ta.pivotlow(low, swingLen, swingLen), lookahead = barmerge.lookahead_off) : ta.pivotlow(low, swingLen, swingLen)
+
+var float activeRes = na
+var float activeSup = na
+var line resLine = na
+var line supLine = na
+var bool resBroken = false
+var bool supBroken = false
+
+if not na(levelPh)
+    activeRes := levelPh
+    resBroken := false 
+    resLine := line.new(bar_index, levelPh, bar_index, levelPh, color = color.new(color.red, 0), width = 2)
+
+if not na(levelPl)
+    activeSup := levelPl
+    supBroken := false 
+    supLine := line.new(bar_index, levelPl, bar_index, levelPl, color = color.new(color.blue, 0), width = 2)
+
+if not resBroken and not na(resLine)
+    line.set_x2(resLine, bar_index)
+if not supBroken and not na(supLine)
+    line.set_x2(supLine, bar_index)
+
+//==================== 4. BREAKOUT ENGINE (DUAL TRACK) ====================//
+var int tradeState = 0
+var float brokenRes = na
+var float brokenSup = na
+
+// Deteksi penembusan murni
+bool baseBreakUp = not resBroken and not na(activeRes) and close > activeRes and isBull and barstate.isconfirmed
+bool baseBreakDown = not supBroken and not na(activeSup) and close < activeSup and isBear and barstate.isconfirmed
+
+// Klasifikasi: Normal vs Momentum
+bool isNormalBreakUp = baseBreakUp and body > (atr * minBreakAtr) and (body < (atr * momentumAtrMult) or not allowMomentum)
+bool isNormalBreakDown = baseBreakDown and body > (atr * minBreakAtr) and (body < (atr * momentumAtrMult) or not allowMomentum)
+
+bool isMomentumBreakUp = baseBreakUp and body >= (atr * momentumAtrMult) and allowMomentum
+bool isMomentumBreakDown = baseBreakDown and body >= (atr * momentumAtrMult) and allowMomentum
+
+// Eksekusi Jalur Momentum (Langsung Eksekusi)
+if isMomentumBreakUp
+    resBroken := true
+    tradeState := 0 // Tidak perlu tunggu retest
+    label.new(bar_index, low, "BUY\n(MOMENTUM)", color = color.blue, textcolor = color.white, style = label.style_label_up, size = size.small)
+
+if isMomentumBreakDown
+    supBroken := true
+    tradeState := 0 // Tidak perlu tunggu retest
+    label.new(bar_index, high, "SELL\n(MOMENTUM)", color = color.fuchsia, textcolor = color.white, style = label.style_label_down, size = size.small)
+
+// Eksekusi Jalur Normal (Tunggu Retest)
+if isNormalBreakUp
+    resBroken := true 
+    tradeState := 1
+    brokenRes := activeRes
+    label.new(bar_index, high, "BREAK", color = color.gray, textcolor = color.white, style = label.style_label_down, size = size.tiny)
+
+if isNormalBreakDown
+    supBroken := true 
+    tradeState := -1
+    brokenSup := activeSup
+    label.new(bar_index, low, "BREAK", color = color.gray, textcolor = color.white, style = label.style_label_up, size = size.tiny)
+
+//==================== 5. RETEST & TRIGGER ENGINE ====================//
+bool retestBuy = tradeState == 1 and low <= brokenRes + (atr * retestBufferAtr) and close > brokenRes and (isBullPinbar or isBullEngulfing) and barstate.isconfirmed
+bool retestSell = tradeState == -1 and high >= brokenSup - (atr * retestBufferAtr) and close < brokenSup and (isBearPinbar or isBearEngulfing) and barstate.isconfirmed
+
+if retestBuy
+    tradeState := 0 
+    label.new(bar_index, low, "BUY\n(RETEST)", color = color.green, textcolor = color.white, style = label.style_label_up, size = size.small)
+
+if retestSell
+    tradeState := 0 
+    label.new(bar_index, high, "SELL\n(RETEST)", color = color.red, textcolor = color.white, style = label.style_label_down, size = size.small)

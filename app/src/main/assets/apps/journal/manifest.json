@@ -1,0 +1,26 @@
+{
+  "name": "Trading Library Manager",
+  "short_name": "Trading Library",
+  "description": "Kelola materi trading, kode indikator, gambar chart, video pembelajaran, dan dokumen secara offline.",
+  "start_url": "./index.html?v=20260517multiprovider",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050806",
+  "theme_color": "#050806",
+  "categories": ["productivity", "education", "finance"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='44' fill='%23050806'/%3E%3Cpath d='M40 126h24V74H40v52Zm44 0h24V48H84v78Zm44 0h24V88h-24v38Z' fill='%2339ff88'/%3E%3Cpath d='M36 146h120' stroke='%23f4fff7' stroke-width='12' stroke-linecap='round'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='116' fill='%23050806'/%3E%3Cpath d='M104 336h64V196h-64v140Zm120 0h64V128h-64v208Zm120 0h64V236h-64v100Z' fill='%2339ff88'/%3E%3Cpath d='M96 388h320' stroke='%23f4fff7' stroke-width='32' stroke-linecap='round'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+./.git/FETCH_HEAD
+./.git/HEAD
+./.git/config
+./.git/description
+./.git/hooks/applypatch-msg.sample
+./.git/hooks/commit-msg.sample
+./.git/hooks/fsmonitor-watchman.sample
+./.git/hooks/post-checkout
+./.git/hooks/post-commit
+./.git/hooks/post-merge
+./.git/hooks/post-update.sample
+./.git/hooks/pre-applypatch.sample
+./.git/hooks/pre-commit.sample
+./.git/hooks/pre-merge-commit.sample
+./.git/hooks/pre-push
+./.git/hooks/pre-push.sample
+./.git/hooks/pre-rebase.sample
+./.git/hooks/pre-receive.sample
+./.git/hooks/prepare-commit-msg.sample
+./.git/hooks/push-to-checkout.sample
+./.git/hooks/sendemail-validate.sample
+./.git/hooks/update.sample
+./.git/index
+./.git/info/exclude
+./.git/logs/HEAD
+./.git/logs/refs/heads/main
+./.git/logs/refs/remotes/origin/HEAD
+./.git/logs/refs/remotes/origin/fix-ict-7-trigger-logic-5661324751580416656
+./.git/logs/refs/remotes/origin/fix-trade-level-locking-6122782276043257193
+./.git/objects/pack/pack-3201aa6a381a39e6097420e2e129923c2a5b86f1.idx
+./.git/objects/pack/pack-3201aa6a381a39e6097420e2e129923c2a5b86f1.pack
+./.git/objects/pack/pack-3201aa6a381a39e6097420e2e129923c2a5b86f1.rev
+./.git/objects/pack/pack-7f6f9cb7b0dafec9284d20ef7463a97887d75fd2.idx
+./.git/objects/pack/pack-7f6f9cb7b0dafec9284d20ef7463a97887d75fd2.pack
+./.git/objects/pack/pack-7f6f9cb7b0dafec9284d20ef7463a97887d75fd2.rev
+./.git/packed-refs
+./.git/refs/heads/main
+./.git/refs/remotes/origin/HEAD
+./.git/refs/remotes/origin/fix-ict-7-trigger-logic-5661324751580416656
+./.git/refs/remotes/origin/fix-trade-level-locking-6122782276043257193
+./.github/workflows/convert-pine-v4.yml
+./.github/workflows/review-pine-v6.yml
+./GCX-Entry-Only-V1.pine
+./GCX-Matrix-V12.pine
+./ICT
+./ICT 10
+./ICT 11
+./ICT 2
+./ICT 3
+./ICT 4
+./ICT 5
+./ICT 6
+./ICT 7
+./ICT 8
+./ICT 9
+./Mastering ICT Smart Money Concepts.docx
+./Neo wave
+./README.md
+./Screenshot_20260426-211210.jpg
+./TREE.txt
+./V10
+./V11
+./V4
+./V5
+./V6
+./V7
+./V8
+./V9
+./XAUUSD-SMART-CONTEXT-IDEA.md
+./indikator-v1.pine
+./indikator-v10.pine
+./indikator-v2.pine
+./indikator-v3.pine
+./indikator-v3_v4.pine
+./scripts/convert_pine_groq.py
+./scripts/review_pine_groq.py

@@ -1,0 +1,9 @@
+:root{--amy-native-back-safe:42px}
+#amy-fx-home-button{font-size:10px!important;padding:5px 8px!important;max-width:86px!important;opacity:.88!important}
+.topbar,.app-header,.header,.library-header{padding-top:calc(env(safe-area-inset-top,0px) + 26px)!important}
+#selectModeBtn,#clearFiltersBtn{display:none!important}
+body.has-library-items #selectModeBtn{display:inline-flex!important}
+body.has-active-filter #clearFiltersBtn{display:inline-flex!important}
+#assistantView{padding-bottom:150px!important}
+.amy-ai-key-panel{margin:14px 0 18px;padding:14px;border-radius:18px;border:1px solid rgba(212,175,55,.24);background:rgba(0,0,0,.22)}
+.amy-ai-key-panel h3{margin:0 0 10px;color:#d4af37}.amy-ai-key-panel label{display:block;font-weight:800;margin-top:10px}.amy-ai-key-panel input,.amy-ai-key-panel select{width:100%;box-sizing:border-box;border:1px solid rgba(212,175,55,.25);border-radius:12px;padding:11px;background:rgba(0,0,0,.24);color:inherit}.amy-ai-key-panel button{margin-top:10px;border:0;border-radius:999px;padding:10px 16px;background:#d4af37;color:#111;font-weight:900}.amy-ai-status{font-size:12px;opacity:.72;margin-top:8px}

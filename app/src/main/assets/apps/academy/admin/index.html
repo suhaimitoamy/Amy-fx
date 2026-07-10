@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Admin — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    body{padding-top:42px}.admin-wrap{max-width:960px;margin:0 auto;padding:20px}.admin-card{background:var(--surface,#fff);border:1px solid var(--border,rgba(0,0,0,.08));border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 12px 30px rgba(0,0,0,.08)}
+    textarea,input,select{width:100%;box-sizing:border-box;border:1px solid var(--border,rgba(0,0,0,.15));border-radius:12px;padding:12px;margin:8px 0;background:rgba(255,255,255,.72);color:inherit}button{border:0;border-radius:999px;padding:11px 16px;font-weight:800;background:#d4af37;color:#111;margin:4px}.muted{opacity:.72}.row{display:flex;gap:8px;flex-wrap:wrap}
+  </style>
+</head>
+<body>
+  <main class="admin-wrap">
+    <h1>Admin Academy</h1>
+    <p class="muted">Halaman admin lokal agar menu Admin tidak error di APK.</p>
+    <section class="admin-card">
+      <h2>Catatan Admin</h2>
+      <textarea id="adminNotes" rows="8" placeholder="Tulis catatan materi, revisi, atau ide update academy..."></textarea>
+      <div class="row"><button id="saveNotes">Simpan</button><button id="clearNotes">Hapus</button></div>
+    </section>
+    <section class="admin-card">
+      <h2>Backup Data Academy</h2>
+      <p class="muted">Export/import localStorage Academy.</p>
+      <div class="row"><button id="exportData">Export</button><button id="importBtn">Import</button><input id="importFile" type="file" accept="application/json" hidden></div>
+    </section>
+    <section class="admin-card">
+      <h2>Status</h2>
+      <div id="statusBox" class="muted">Siap.</div>
+    </section>
+  </main>
+  <script>
+    const notes=document.getElementById('adminNotes'), statusBox=document.getElementById('statusBox');
+    notes.value=localStorage.getItem('amy_academy_admin_notes')||'';
+    document.getElementById('saveNotes').onclick=()=>{localStorage.setItem('amy_academy_admin_notes',notes.value);statusBox.textContent='Catatan tersimpan.'};
+    document.getElementById('clearNotes').onclick=()=>{notes.value='';localStorage.removeItem('amy_academy_admin_notes');statusBox.textContent='Catatan dihapus.'};
+    document.getElementById('exportData').onclick=()=>{const data={exportedAt:new Date().toISOString(),storage:{}};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('amy_'))data.storage[k]=localStorage.getItem(k)}const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='amy-academy-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+    document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
+    document.getElementById('importFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;const data=JSON.parse(await f.text());Object.entries(data.storage||{}).forEach(([k,v])=>localStorage.setItem(k,v));statusBox.textContent='Import selesai.'};
+  </script>
+</body>
+</html>

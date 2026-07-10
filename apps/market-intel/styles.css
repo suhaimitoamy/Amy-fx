@@ -1,0 +1,327 @@
+/* ─── Amy FX — Market Intel Styles ───────────────── */
+:root {
+  --bg: #0a0a0a;
+  --bg-card: #111111;
+  --bg-card-hover: #1a1a1a;
+  --gold: #d4af37;
+  --gold-dim: rgba(212, 175, 55, 0.15);
+  --gold-text: #c9a830;
+  --red: #e74c3c;
+  --green: #2ecc71;
+  --text: #ccc;
+  --text-dim: #888;
+  --border: #1a1a1a;
+  --radius: 10px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.intel-container {
+  max-width: 100%;
+  padding: 12px;
+}
+
+/* ─── Header ────────────────────────────── */
+.intel-header {
+  text-align: center;
+  padding: 16px 0 8px;
+  border-bottom: 1px solid var(--gold-dim);
+  margin-bottom: 8px;
+}
+.intel-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gold);
+}
+.intel-header .subtitle {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+/* ─── Tabs ──────────────────────────────── */
+.intel-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 12px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.intel-tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+}
+.intel-tab.active {
+  color: var(--gold);
+  background: var(--bg-card-hover);
+  border-bottom-color: var(--gold);
+}
+
+/* ─── Panels ────────────────────────────── */
+.intel-panel { display: none; }
+.intel-panel.active { display: block; }
+
+.status-bar {
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--text-dim);
+  background: var(--bg-card);
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+/* ─── News List ─────────────────────────── */
+.news-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.news-item {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 12px;
+  border-left: 3px solid var(--gold);
+  cursor: pointer;
+  transition: background 0.2s;
+  animation: slideIn 0.3s ease both;
+}
+.news-item:hover, .news-item:active {
+  background: var(--bg-card-hover);
+}
+.news-time {
+  font-size: 11px;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+.news-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.news-link {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 6px;
+}
+
+/* ─── Heatmap ───────────────────────────── */
+.heatmap-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.current-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gold);
+}
+.timeframe {
+  font-size: 11px;
+  color: var(--text-dim);
+  background: var(--bg-card);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.heatmap-canvas {
+  position: relative;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 8px 0;
+  min-height: 400px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.hz-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  transform: translateY(-50%);
+  height: 20px;
+}
+.hz-price {
+  font-size: 10px;
+  color: var(--text-dim);
+  width: 52px;
+  text-align: right;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+.hz-price.current {
+  color: var(--gold);
+  font-weight: 800;
+  font-size: 11px;
+}
+.hz-bars {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.hz-bar {
+  height: 8px;
+  border-radius: 2px;
+  font-size: 7px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding-left: 3px;
+  min-width: 14px;
+}
+.hz-bar.resist {
+  background: linear-gradient(90deg, rgba(231,76,60,0.8), rgba(231,76,60,0.3));
+}
+.hz-bar.support {
+  background: linear-gradient(90deg, rgba(46,204,113,0.8), rgba(46,204,113,0.3));
+}
+.hz-label {
+  font-size: 9px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.hz-now {
+  font-size: 9px;
+  color: var(--gold);
+  font-weight: 700;
+  animation: pulse 1.5s infinite;
+}
+
+.heatmap-legend {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  font-size: 10px;
+  color: var(--text-dim);
+  flex-wrap: wrap;
+}
+.legend-item { display: flex; align-items: center; gap: 4px; }
+.dot { width: 8px; height: 8px; border-radius: 2px; }
+.dot.res { background: rgba(231,76,60,0.8); }
+.dot.sup { background: rgba(46,204,113,0.8); }
+.dot.cur { background: var(--gold); }
+
+/* ─── Loading ───────────────────────────── */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: opacity 0.3s;
+}
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--gold-dim);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.loading-overlay p {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+.empty-state small {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+/* ─── Animations ────────────────────────── */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes slideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* ─── News Expand/Collapse ──────────────── */
+.news-item .news-text {
+  max-height: 4.5em;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  line-height: 1.5;
+}
+.news-item.expanded .news-text {
+  max-height: 1000px;
+}
+
+/* ─── Liquidity List ────────────────────── */
+.liquidity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.liq-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  border-left: 3px solid var(--gold-dim);
+  animation: slideIn 0.3s ease both;
+  flex-wrap: wrap;
+}
+.liq-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+.liq-badge.bsl {
+  background: rgba(231, 76, 60, 0.2);
+  color: var(--red);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+}
+.liq-badge.ssl {
+  background: rgba(46, 204, 113, 0.2);
+  color: var(--green);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+}
+.liq-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+.liq-meta {
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}

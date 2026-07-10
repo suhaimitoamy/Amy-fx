@@ -1,0 +1,286 @@
+//@version=6
+indicator("Reversal Snapper - Swing Peak Valley RBS SBR", overlay=true, max_labels_count=500)
+
+//------------------- INPUTS -------------------//
+groupSwing = "Swing Reversal"
+swing_len = input.int(5, "Swing Confirmation Length", minval=2, maxval=30, group=groupSwing)
+min_swing_move_atr = input.float(1.00, "Minimum Swing Distance ATR", minval=0.10, maxval=10.0, step=0.10, group=groupSwing)
+confirm_move_atr = input.float(0.20, "Confirmation Move ATR", minval=0.00, maxval=5.0, step=0.05, group=groupSwing)
+strict_alternation = input.bool(true, "Force Buy/Sell Alternation", group=groupSwing)
+show_swing_labels = input.bool(true, "Show Swing Buy/Sell", group=groupSwing)
+
+groupRbsSbr = "RBS / SBR"
+use_rbs_sbr = input.bool(true, "Use RBS / SBR", group=groupRbsSbr)
+break_atr_mult = input.float(0.20, "Break Strength ATR", minval=0.00, maxval=5.0, step=0.05, group=groupRbsSbr)
+retest_atr_mult = input.float(0.35, "Retest Tolerance ATR", minval=0.05, maxval=5.0, step=0.05, group=groupRbsSbr)
+min_retest_bars = input.int(2, "Minimum Bars After Break", minval=1, maxval=50, group=groupRbsSbr)
+max_rbs_sbr_age = input.int(150, "Max RBS/SBR Age", minval=20, maxval=1000, group=groupRbsSbr)
+max_rbs_sbr_keep = input.int(30, "Max Saved RBS/SBR", minval=5, maxval=100, group=groupRbsSbr)
+consume_retest = input.bool(true, "Remove RBS/SBR After Signal", group=groupRbsSbr)
+show_rbs_sbr_labels = input.bool(true, "Show RBS/SBR Labels", group=groupRbsSbr)
+
+groupFilter = "Filters"
+atr_len = input.int(14, "ATR Length", minval=1, maxval=100, group=groupFilter)
+body_len = input.int(14, "Body Mean Length", minval=1, maxval=100, group=groupFilter)
+signal_cooldown = input.int(3, "Signal Cooldown Bars", minval=0, maxval=100, group=groupFilter)
+
+groupVisual = "Visual"
+buy_color = input.color(color.lime, "Buy Color", group=groupVisual)
+sell_color = input.color(color.red, "Sell Color", group=groupVisual)
+rbs_color = input.color(color.blue, "RBS Buy Color", group=groupVisual)
+sbr_color = input.color(color.orange, "SBR Sell Color", group=groupVisual)
+
+//------------------- FUNCTIONS -------------------//
+f_push_unique(float[] _levels, int[] _bars, float _level, int _bar, float _tol, int _max_keep) =>
+    if not na(_level)
+        bool _exists = false
+        if array.size(_levels) > 0
+            for i = 0 to array.size(_levels) - 1
+                if math.abs(array.get(_levels, i) - _level) <= _tol
+                    _exists := true
+        if not _exists
+            array.unshift(_levels, _level)
+            array.unshift(_bars, _bar)
+        while array.size(_levels) > _max_keep
+            array.pop(_levels)
+            array.pop(_bars)
+
+f_clean_expired(float[] _levels, int[] _bars, int _max_age) =>
+    if array.size(_levels) > 0
+        for i = array.size(_levels) - 1 to 0
+            if bar_index - array.get(_bars, i) > _max_age
+                array.remove(_levels, i)
+                array.remove(_bars, i)
+
+f_remove_level(float[] _levels, int[] _bars, float _level, float _tol) =>
+    if array.size(_levels) > 0
+        for i = array.size(_levels) - 1 to 0
+            if math.abs(array.get(_levels, i) - _level) <= _tol
+                array.remove(_levels, i)
+                array.remove(_bars, i)
+
+f_can_signal(int _dir, int _last_dir, int _last_bar, int _cooldown, bool _strict) =>
+    _cooldown_ok = na(_last_bar) or bar_index - _last_bar > _cooldown
+    _alternation_ok = not _strict or _last_dir != _dir
+    _cooldown_ok and _alternation_ok
+
+//------------------- CORE -------------------//
+atr_val = ta.atr(atr_len)
+atr_safe = math.max(atr_val, syminfo.mintick)
+
+body = math.abs(close - open)
+body_safe = math.max(body, syminfo.mintick)
+body_mean = ta.sma(body, body_len)
+body_mean_safe = math.max(nz(body_mean, body_safe), syminfo.mintick)
+
+bar_range = math.max(high - low, syminfo.mintick)
+upper_wick = high - math.max(open, close)
+lower_wick = math.min(open, close) - low
+
+break_buffer = atr_safe * break_atr_mult
+retest_tol = atr_safe * retest_atr_mult
+level_tol = atr_safe * 0.10
+
+//------------------- PRICE ACTION -------------------//
+bull_rejection = lower_wick > body_safe * 1.25 and close > open
+bear_rejection = upper_wick > body_safe * 1.25 and close < open
+
+bull_pinbar = lower_wick > body_safe * 1.75 and close > open and close > low + bar_range * 0.60
+bear_pinbar = upper_wick > body_safe * 1.75 and close < open and close < high - bar_range * 0.60
+
+bull_engulf = close > open and close[1] < open[1] and close > open[1] and open <= close[1]
+bear_engulf = close < open and close[1] > open[1] and close < open[1] and open >= close[1]
+
+bull_displace = body > body_mean_safe and close > open
+bear_displace = body > body_mean_safe and close < open
+
+bull_confirm = bull_rejection or bull_pinbar or bull_engulf or bull_displace
+bear_confirm = bear_rejection or bear_pinbar or bear_engulf or bear_displace
+
+//------------------- SWING DETECTION -------------------//
+ph = ta.pivothigh(high, swing_len, swing_len)
+pl = ta.pivotlow(low, swing_len, swing_len)
+
+pivot_high_bar = bar_index - swing_len
+pivot_low_bar = bar_index - swing_len
+
+//------------------- LEVEL ARRAYS -------------------//
+var float[] swing_high_levels = array.new_float()
+var int[] swing_high_bars = array.new_int()
+
+var float[] swing_low_levels = array.new_float()
+var int[] swing_low_bars = array.new_int()
+
+var float[] rbs_levels = array.new_float()
+var int[] rbs_bars = array.new_int()
+
+var float[] sbr_levels = array.new_float()
+var int[] sbr_bars = array.new_int()
+
+f_clean_expired(rbs_levels, rbs_bars, max_rbs_sbr_age)
+f_clean_expired(sbr_levels, sbr_bars, max_rbs_sbr_age)
+
+//------------------- SIGNAL STATE -------------------//
+var int last_signal_dir = 0
+var int last_signal_bar = na
+var float last_signal_price = na
+
+bool swing_buy = false
+bool swing_sell = false
+bool rbs_buy = false
+bool sbr_sell = false
+
+float rbs_buy_level = na
+float sbr_sell_level = na
+
+//------------------- CONFIRMED SWING SELL -------------------//
+swing_sell_move_ok = na(last_signal_price) or math.abs(ph - last_signal_price) >= atr_safe * min_swing_move_atr
+swing_sell_confirmed = not na(ph) and close <= ph - atr_safe * confirm_move_atr
+swing_sell_allowed = swing_sell_confirmed and swing_sell_move_ok and f_can_signal(-1, last_signal_dir, last_signal_bar, signal_cooldown, strict_alternation)
+
+if swing_sell_allowed
+    swing_sell := true
+    last_signal_dir := -1
+    last_signal_bar := bar_index
+    last_signal_price := ph
+
+    f_push_unique(swing_high_levels, swing_high_bars, ph, pivot_high_bar, level_tol, 100)
+
+    if show_swing_labels
+        label.new(
+             pivot_high_bar,
+             ph,
+             "Sell",
+             xloc=xloc.bar_index,
+             style=label.style_label_down,
+             color=sell_color,
+             textcolor=color.white,
+             size=size.small
+        )
+
+//------------------- CONFIRMED SWING BUY -------------------//
+swing_buy_move_ok = na(last_signal_price) or math.abs(pl - last_signal_price) >= atr_safe * min_swing_move_atr
+swing_buy_confirmed = not na(pl) and close >= pl + atr_safe * confirm_move_atr
+swing_buy_allowed = swing_buy_confirmed and swing_buy_move_ok and f_can_signal(1, last_signal_dir, last_signal_bar, signal_cooldown, strict_alternation)
+
+if swing_buy_allowed
+    swing_buy := true
+    last_signal_dir := 1
+    last_signal_bar := bar_index
+    last_signal_price := pl
+
+    f_push_unique(swing_low_levels, swing_low_bars, pl, pivot_low_bar, level_tol, 100)
+
+    if show_swing_labels
+        label.new(
+             pivot_low_bar,
+             pl,
+             "Buy",
+             xloc=xloc.bar_index,
+             style=label.style_label_up,
+             color=buy_color,
+             textcolor=color.black,
+             size=size.small
+        )
+
+//------------------- CREATE RBS / SBR FROM BROKEN SWINGS -------------------//
+if use_rbs_sbr
+    if array.size(swing_high_levels) > 0
+        for i = 0 to array.size(swing_high_levels) - 1
+            lvl = array.get(swing_high_levels, i)
+            if close > lvl + break_buffer
+                f_push_unique(rbs_levels, rbs_bars, lvl, bar_index, level_tol, max_rbs_sbr_keep)
+
+    if array.size(swing_low_levels) > 0
+        for i = 0 to array.size(swing_low_levels) - 1
+            lvl = array.get(swing_low_levels, i)
+            if close < lvl - break_buffer
+                f_push_unique(sbr_levels, sbr_bars, lvl, bar_index, level_tol, max_rbs_sbr_keep)
+
+//------------------- RBS BUY RETEST -------------------//
+if use_rbs_sbr and array.size(rbs_levels) > 0
+    float best_lvl = na
+    float best_dist = na
+
+    for i = 0 to array.size(rbs_levels) - 1
+        lvl = array.get(rbs_levels, i)
+        brk_bar = array.get(rbs_bars, i)
+
+        age_ok = bar_index - brk_bar >= min_retest_bars
+        retest_ok = low <= lvl + retest_tol and close > lvl
+        confirm_ok = bull_confirm
+
+        if age_ok and retest_ok and confirm_ok
+            dist = math.abs(close - lvl)
+            if na(best_dist) or dist < best_dist
+                best_dist := dist
+                best_lvl := lvl
+
+    if not na(best_lvl) and f_can_signal(1, last_signal_dir, last_signal_bar, signal_cooldown, strict_alternation)
+        rbs_buy := true
+        rbs_buy_level := best_lvl
+        last_signal_dir := 1
+        last_signal_bar := bar_index
+        last_signal_price := best_lvl
+
+        if show_rbs_sbr_labels
+            label.new(
+                 bar_index,
+                 low,
+                 "RBS Buy",
+                 xloc=xloc.bar_index,
+                 style=label.style_label_up,
+                 color=rbs_color,
+                 textcolor=color.white,
+                 size=size.small
+            )
+
+        if consume_retest
+            f_remove_level(rbs_levels, rbs_bars, best_lvl, retest_tol)
+
+//------------------- SBR SELL RETEST -------------------//
+if use_rbs_sbr and array.size(sbr_levels) > 0
+    float best_lvl = na
+    float best_dist = na
+
+    for i = 0 to array.size(sbr_levels) - 1
+        lvl = array.get(sbr_levels, i)
+        brk_bar = array.get(sbr_bars, i)
+
+        age_ok = bar_index - brk_bar >= min_retest_bars
+        retest_ok = high >= lvl - retest_tol and close < lvl
+        confirm_ok = bear_confirm
+
+        if age_ok and retest_ok and confirm_ok
+            dist = math.abs(close - lvl)
+            if na(best_dist) or dist < best_dist
+                best_dist := dist
+                best_lvl := lvl
+
+    if not na(best_lvl) and f_can_signal(-1, last_signal_dir, last_signal_bar, signal_cooldown, strict_alternation)
+        sbr_sell := true
+        sbr_sell_level := best_lvl
+        last_signal_dir := -1
+        last_signal_bar := bar_index
+        last_signal_price := best_lvl
+
+        if show_rbs_sbr_labels
+            label.new(
+                 bar_index,
+                 high,
+                 "SBR Sell",
+                 xloc=xloc.bar_index,
+                 style=label.style_label_down,
+                 color=sbr_color,
+                 textcolor=color.black,
+                 size=size.small
+            )
+
+        if consume_retest
+            f_remove_level(sbr_levels, sbr_bars, best_lvl, retest_tol)
+
+//------------------- ALERTS -------------------//
+alertcondition(swing_buy, title="Swing Buy", message="Reversal Snapper: Swing Buy confirmed")
+alertcondition(swing_sell, title="Swing Sell", message="Reversal Snapper: Swing Sell confirmed")
+alertcondition(rbs_buy, title="RBS Buy", message="Reversal Snapper: RBS Buy retest confirmed")
+alertcondition(sbr_sell, title="SBR Sell", message="Reversal Snapper: SBR Sell retest confirmed")

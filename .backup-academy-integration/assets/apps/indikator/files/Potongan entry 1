@@ -1,0 +1,364 @@
+//==================== CUSTOM ENTRY VISUAL ENGINE ====================//
+ent_group = "Custom Entry Visual"
+ent_showEntry = input.bool(true, "Show Entry Visual", group=ent_group)
+ent_showReady = input.bool(true, "Show READY", group=ent_group)
+ent_levelBars = input.int(25, "Level Line Bars", minval=5, maxval=100, group=ent_group)
+ent_confirmBars = input.int(3, "READY Confirm Window", minval=1, maxval=20, group=ent_group)
+ent_slPadAtr = input.float(0.20, "SL Padding ATR", minval=0.0, step=0.05, group=ent_group)
+ent_maxRiskAtr = input.float(3.00, "Max Risk ATR", minval=0.5, step=0.25, group=ent_group)
+ent_tp1RR = input.float(1.0, "TP1 RR", minval=0.5, step=0.25, group=ent_group)
+ent_tp2RR = input.float(2.0, "TP2 RR", minval=1.0, step=0.25, group=ent_group)
+ent_cooldownBars = input.int(8, "Entry Cooldown Bars", minval=0, maxval=100, group=ent_group)
+ent_lockUntilExit = input.bool(true, "Lock Until TP2 / SL", group=ent_group)
+ent_reentryExpireBars = input.int(20, "Re-entry Expire Bars", minval=1, maxval=100, group=ent_group)
+ent_reentryMaxCount = input.int(1, "Max Re-entry Count", minval=0, maxval=5, group=ent_group)
+ent_hideEntryAfterTP1 = input.bool(false, "Hide Entry After TP1", group=ent_group)
+ent_keepSLAfterTP1 = input.bool(true, "Keep SL After TP1", group=ent_group)
+
+ent_inZone(_top, _bottom) =>
+    not na(_top) and not na(_bottom) and low <= math.max(_top, _bottom) and high >= math.min(_top, _bottom)
+
+ent_zoneOverlap(_top1, _bottom1, _top2, _bottom2) =>
+    not na(_top1) and not na(_bottom1) and not na(_top2) and not na(_bottom2) and math.max(_top1, _bottom1) >= math.min(_top2, _bottom2) and math.min(_top1, _bottom1) <= math.max(_top2, _bottom2)
+
+ent_inBullFvg = ctx_bullFvgActive and ent_inZone(ctx_bullFvgTop, ctx_bullFvgBottom)
+ent_inBearFvg = ctx_bearFvgActive and ent_inZone(ctx_bearFvgTop, ctx_bearFvgBottom)
+ent_inBullOb = ctx_hasBullOb and ent_inZone(ctx_bullObTop, ctx_bullObBottom)
+ent_inBearOb = ctx_hasBearOb and ent_inZone(ctx_bearObTop, ctx_bearObBottom)
+
+ent_bullPA = ctx_bullEngulfing or ctx_bullPinbar or ctx_bullRejection or L_bodyUP
+ent_bearPA = ctx_bearEngulfing or ctx_bearPinbar or ctx_bearRejection or L_bodyDN
+
+ent_buyLocationNormal = ent_inBullFvg or ent_inBullOb or ctx_sellsideSweep
+ent_sellLocationNormal = ent_inBearFvg or ent_inBearOb or ctx_buysideSweep
+
+var int ent_tradeState = 0
+var float ent_activeEntry = na
+var float ent_activeSL = na
+var float ent_activeTP1 = na
+var float ent_activeTP2 = na
+var bool ent_tp1Hit = false
+var string ent_exitReason = ""
+
+var float ent_activeZoneTop = na
+var float ent_activeZoneBottom = na
+
+var bool ent_reentryZoneActive = false
+var int ent_reentryDir = 0
+var float ent_reentryTop = na
+var float ent_reentryBottom = na
+var int ent_reentryStartBar = na
+var int ent_reentryCount = 0
+
+var line ent_l_entry = na
+var line ent_l_sl = na
+var line ent_l_tp1 = na
+var line ent_l_tp2 = na
+
+var label ent_lb_entry = na
+var label ent_lb_sl = na
+var label ent_lb_tp1 = na
+var label ent_lb_tp2 = na
+var label ent_lb_signal = na
+
+ent_buyReentryOverlap = ent_reentryZoneActive and ent_reentryDir == 1 and (ent_zoneOverlap(ent_reentryTop, ent_reentryBottom, ctx_bullFvgTop, ctx_bullFvgBottom) or ent_zoneOverlap(ent_reentryTop, ent_reentryBottom, ctx_bullObTop, ctx_bullObBottom) or ctx_sellsideSweep)
+ent_sellReentryOverlap = ent_reentryZoneActive and ent_reentryDir == -1 and (ent_zoneOverlap(ent_reentryTop, ent_reentryBottom, ctx_bearFvgTop, ctx_bearFvgBottom) or ent_zoneOverlap(ent_reentryTop, ent_reentryBottom, ctx_bearObTop, ctx_bearObBottom) or ctx_buysideSweep)
+
+ent_buyReentryLocation = ent_reentryZoneActive and ent_reentryDir == 1 and ent_reentryCount < ent_reentryMaxCount and ent_inZone(ent_reentryTop, ent_reentryBottom) and ctx_buyContext and ent_bullPA and ent_buyReentryOverlap
+ent_sellReentryLocation = ent_reentryZoneActive and ent_reentryDir == -1 and ent_reentryCount < ent_reentryMaxCount and ent_inZone(ent_reentryTop, ent_reentryBottom) and ctx_sellContext and ent_bearPA and ent_sellReentryOverlap
+
+ent_buyLocation = ent_buyLocationNormal or ent_buyReentryLocation
+ent_sellLocation = ent_sellLocationNormal or ent_sellReentryLocation
+
+ent_buyTP1Hit = ent_tradeState == 1 and not ent_tp1Hit and not na(ent_activeTP1) and high >= ent_activeTP1
+ent_sellTP1Hit = ent_tradeState == -1 and not ent_tp1Hit and not na(ent_activeTP1) and low <= ent_activeTP1
+
+if ent_buyTP1Hit or ent_sellTP1Hit
+    ent_tp1Hit := true
+    ent_exitReason := "TP1"
+    if not na(ent_l_tp1)
+        line.delete(ent_l_tp1)
+        ent_l_tp1 := na
+    if not na(ent_lb_tp1)
+        label.delete(ent_lb_tp1)
+        ent_lb_tp1 := na
+    if ent_hideEntryAfterTP1 and not na(ent_l_entry)
+        line.delete(ent_l_entry)
+        ent_l_entry := na
+    if ent_hideEntryAfterTP1 and not na(ent_lb_entry)
+        label.delete(ent_lb_entry)
+        ent_lb_entry := na
+    if not ent_keepSLAfterTP1 and not na(ent_l_sl)
+        line.delete(ent_l_sl)
+        ent_l_sl := na
+    if not ent_keepSLAfterTP1 and not na(ent_lb_sl)
+        label.delete(ent_lb_sl)
+        ent_lb_sl := na
+
+ent_buySLHit = ent_tradeState == 1 and not na(ent_activeSL) and low <= ent_activeSL
+ent_buyTP2Hit = ent_tradeState == 1 and not na(ent_activeTP2) and high >= ent_activeTP2
+ent_sellSLHit = ent_tradeState == -1 and not na(ent_activeSL) and high >= ent_activeSL
+ent_sellTP2Hit = ent_tradeState == -1 and not na(ent_activeTP2) and low <= ent_activeTP2
+
+ent_tradeClosed = ent_buySLHit or ent_buyTP2Hit or ent_sellSLHit or ent_sellTP2Hit
+
+if ent_tradeClosed
+    ent_exitReason := ent_buyTP2Hit or ent_sellTP2Hit ? "TP2" : "SL"
+
+    if not na(ent_l_entry)
+        line.delete(ent_l_entry)
+        ent_l_entry := na
+    if not na(ent_l_sl)
+        line.delete(ent_l_sl)
+        ent_l_sl := na
+    if not na(ent_l_tp1)
+        line.delete(ent_l_tp1)
+        ent_l_tp1 := na
+    if not na(ent_l_tp2)
+        line.delete(ent_l_tp2)
+        ent_l_tp2 := na
+
+    if not na(ent_lb_entry)
+        label.delete(ent_lb_entry)
+        ent_lb_entry := na
+    if not na(ent_lb_sl)
+        label.delete(ent_lb_sl)
+        ent_lb_sl := na
+    if not na(ent_lb_tp1)
+        label.delete(ent_lb_tp1)
+        ent_lb_tp1 := na
+    if not na(ent_lb_tp2)
+        label.delete(ent_lb_tp2)
+        ent_lb_tp2 := na
+    if not na(ent_lb_signal)
+        label.delete(ent_lb_signal)
+        ent_lb_signal := na
+
+    ent_reentryZoneActive := ent_reentryMaxCount > 0 and not na(ent_activeZoneTop) and not na(ent_activeZoneBottom)
+    ent_reentryDir := ent_tradeState
+    ent_reentryTop := ent_activeZoneTop
+    ent_reentryBottom := ent_activeZoneBottom
+    ent_reentryStartBar := bar_index
+    ent_reentryCount := 0
+
+    ent_tradeState := 0
+    ent_activeEntry := na
+    ent_activeSL := na
+    ent_activeTP1 := na
+    ent_activeTP2 := na
+    ent_activeZoneTop := na
+    ent_activeZoneBottom := na
+    ent_tp1Hit := false
+
+if ent_reentryZoneActive and not na(ent_reentryStartBar) and bar_index - ent_reentryStartBar > ent_reentryExpireBars
+    ent_reentryZoneActive := false
+    ent_reentryDir := 0
+    ent_reentryTop := na
+    ent_reentryBottom := na
+    ent_reentryStartBar := na
+    ent_reentryCount := 0
+
+if ent_reentryZoneActive and ((ent_reentryDir == 1 and not ctx_buyContext) or (ent_reentryDir == -1 and not ctx_sellContext))
+    ent_reentryZoneActive := false
+    ent_reentryDir := 0
+    ent_reentryTop := na
+    ent_reentryBottom := na
+    ent_reentryStartBar := na
+    ent_reentryCount := 0
+
+ent_flat = ent_lockUntilExit ? ent_tradeState == 0 : true
+
+var int ent_lastReadyBar = na
+var int ent_lastSignalBar = na
+
+ent_canReady = ent_flat and (na(ent_lastReadyBar) or bar_index - ent_lastReadyBar > ent_cooldownBars)
+ent_canSignal = ent_flat and (na(ent_lastSignalBar) or bar_index - ent_lastSignalBar > ent_cooldownBars)
+
+ent_buyReadySLBase = math.min(low, low[1])
+if ent_inBullOb and not na(ctx_bullObBottom)
+    ent_buyReadySLBase := math.min(ent_buyReadySLBase, ctx_bullObBottom)
+if ent_inBullFvg and not na(ctx_bullFvgBottom)
+    ent_buyReadySLBase := math.min(ent_buyReadySLBase, ctx_bullFvgBottom)
+if ctx_sellsideSweep and not na(ctx_sellsideBottom)
+    ent_buyReadySLBase := math.min(ent_buyReadySLBase, ctx_sellsideBottom)
+
+ent_sellReadySLBase = math.max(high, high[1])
+if ent_inBearOb and not na(ctx_bearObTop)
+    ent_sellReadySLBase := math.max(ent_sellReadySLBase, ctx_bearObTop)
+if ent_inBearFvg and not na(ctx_bearFvgTop)
+    ent_sellReadySLBase := math.max(ent_sellReadySLBase, ctx_bearFvgTop)
+if ctx_buysideSweep and not na(ctx_buysideTop)
+    ent_sellReadySLBase := math.max(ent_sellReadySLBase, ctx_buysideTop)
+
+ent_buyReadyZoneTop = high
+ent_buyReadyZoneBottom = low
+if ent_inBullOb
+    ent_buyReadyZoneTop := math.max(ent_buyReadyZoneTop, ctx_bullObTop)
+    ent_buyReadyZoneBottom := math.min(ent_buyReadyZoneBottom, ctx_bullObBottom)
+if ent_inBullFvg
+    ent_buyReadyZoneTop := math.max(ent_buyReadyZoneTop, ctx_bullFvgTop)
+    ent_buyReadyZoneBottom := math.min(ent_buyReadyZoneBottom, ctx_bullFvgBottom)
+if ent_buyReentryLocation
+    ent_buyReadyZoneTop := math.max(ent_buyReadyZoneTop, ent_reentryTop)
+    ent_buyReadyZoneBottom := math.min(ent_buyReadyZoneBottom, ent_reentryBottom)
+
+ent_sellReadyZoneTop = high
+ent_sellReadyZoneBottom = low
+if ent_inBearOb
+    ent_sellReadyZoneTop := math.max(ent_sellReadyZoneTop, ctx_bearObTop)
+    ent_sellReadyZoneBottom := math.min(ent_sellReadyZoneBottom, ctx_bearObBottom)
+if ent_inBearFvg
+    ent_sellReadyZoneTop := math.max(ent_sellReadyZoneTop, ctx_bearFvgTop)
+    ent_sellReadyZoneBottom := math.min(ent_sellReadyZoneBottom, ctx_bearFvgBottom)
+if ent_sellReentryLocation
+    ent_sellReadyZoneTop := math.max(ent_sellReadyZoneTop, ent_reentryTop)
+    ent_sellReadyZoneBottom := math.min(ent_sellReadyZoneBottom, ent_reentryBottom)
+
+ent_readyBuyRaw = ent_showEntry and ent_canReady and ctx_buyContext and ent_buyLocation and ent_bullPA and barstate.isconfirmed
+ent_readySellRaw = ent_showEntry and ent_canReady and ctx_sellContext and ent_sellLocation and ent_bearPA and barstate.isconfirmed
+
+var int ent_readyDir = 0
+var int ent_readyBar = na
+var float ent_readyHigh = na
+var float ent_readyLow = na
+var float ent_readySLBase = na
+var float ent_readyZoneTop = na
+var float ent_readyZoneBottom = na
+var bool ent_readyFromReentry = false
+
+if ent_readyBuyRaw and not ent_readySellRaw
+    ent_readyDir := 1
+    ent_readyBar := bar_index
+    ent_readyHigh := high
+    ent_readyLow := low
+    ent_readySLBase := ent_buyReadySLBase
+    ent_readyZoneTop := ent_buyReadyZoneTop
+    ent_readyZoneBottom := ent_buyReadyZoneBottom
+    ent_readyFromReentry := ent_buyReentryLocation
+    ent_lastReadyBar := bar_index
+
+if ent_readySellRaw and not ent_readyBuyRaw
+    ent_readyDir := -1
+    ent_readyBar := bar_index
+    ent_readyHigh := high
+    ent_readyLow := low
+    ent_readySLBase := ent_sellReadySLBase
+    ent_readyZoneTop := ent_sellReadyZoneTop
+    ent_readyZoneBottom := ent_sellReadyZoneBottom
+    ent_readyFromReentry := ent_sellReentryLocation
+    ent_lastReadyBar := bar_index
+
+ent_readyBuyActive = ent_readyDir == 1 and not na(ent_readyBar) and bar_index > ent_readyBar and bar_index - ent_readyBar <= ent_confirmBars
+ent_readySellActive = ent_readyDir == -1 and not na(ent_readyBar) and bar_index > ent_readyBar and bar_index - ent_readyBar <= ent_confirmBars
+
+ent_buySignalRaw = ent_showEntry and ent_canSignal and ent_readyBuyActive and ctx_buyContext and close > ent_readyHigh and close > open and barstate.isconfirmed
+ent_sellSignalRaw = ent_showEntry and ent_canSignal and ent_readySellActive and ctx_sellContext and close < ent_readyLow and close < open and barstate.isconfirmed
+
+ent_buyEntry = close
+ent_sellEntry = close
+
+ent_buySL = ent_readySLBase - atr * ent_slPadAtr
+ent_sellSL = ent_readySLBase + atr * ent_slPadAtr
+
+ent_buyRisk = ent_buyEntry - ent_buySL
+ent_sellRisk = ent_sellSL - ent_sellEntry
+
+ent_buyRiskOk = ent_buySignalRaw and ent_buyRisk > syminfo.mintick and ent_buyRisk <= atr * ent_maxRiskAtr
+ent_sellRiskOk = ent_sellSignalRaw and ent_sellRisk > syminfo.mintick and ent_sellRisk <= atr * ent_maxRiskAtr
+
+ent_buySignal = ent_buySignalRaw and ent_buyRiskOk
+ent_sellSignal = ent_sellSignalRaw and ent_sellRiskOk
+
+ent_buyTP1 = ent_buyEntry + ent_buyRisk * ent_tp1RR
+ent_buyTP2 = ent_buyEntry + ent_buyRisk * ent_tp2RR
+ent_sellTP1 = ent_sellEntry - ent_sellRisk * ent_tp1RR
+ent_sellTP2 = ent_sellEntry - ent_sellRisk * ent_tp2RR
+
+if ent_readyDir != 0 and not na(ent_readyBar) and bar_index - ent_readyBar > ent_confirmBars
+    ent_readyDir := 0
+    ent_readyBar := na
+    ent_readyHigh := na
+    ent_readyLow := na
+    ent_readySLBase := na
+    ent_readyZoneTop := na
+    ent_readyZoneBottom := na
+    ent_readyFromReentry := false
+
+plotshape(ent_showReady and ent_readyBuyRaw and not ent_readySellRaw, title="READY BUY", style=shape.labelup, location=location.belowbar, color=color.new(color.lime, 15), text="READY BUY", textcolor=color.black, size=size.tiny)
+plotshape(ent_showReady and ent_readySellRaw and not ent_readyBuyRaw, title="READY SELL", style=shape.labeldown, location=location.abovebar, color=color.new(color.red, 15), text="READY SELL", textcolor=color.white, size=size.tiny)
+
+if ent_buySignal or ent_sellSignal
+    ent_lastSignalBar := bar_index
+
+    if not na(ent_l_entry)
+        line.delete(ent_l_entry)
+    if not na(ent_l_sl)
+        line.delete(ent_l_sl)
+    if not na(ent_l_tp1)
+        line.delete(ent_l_tp1)
+    if not na(ent_l_tp2)
+        line.delete(ent_l_tp2)
+
+    if not na(ent_lb_entry)
+        label.delete(ent_lb_entry)
+    if not na(ent_lb_sl)
+        label.delete(ent_lb_sl)
+    if not na(ent_lb_tp1)
+        label.delete(ent_lb_tp1)
+    if not na(ent_lb_tp2)
+        label.delete(ent_lb_tp2)
+    if not na(ent_lb_signal)
+        label.delete(ent_lb_signal)
+
+    ent_isBuy = ent_buySignal
+
+    ent_entry = ent_isBuy ? ent_buyEntry : ent_sellEntry
+    ent_sl = ent_isBuy ? ent_buySL : ent_sellSL
+    ent_tp1 = ent_isBuy ? ent_buyTP1 : ent_sellTP1
+    ent_tp2 = ent_isBuy ? ent_buyTP2 : ent_sellTP2
+
+    ent_activeEntry := ent_entry
+    ent_activeSL := ent_sl
+    ent_activeTP1 := ent_tp1
+    ent_activeTP2 := ent_tp2
+    ent_activeZoneTop := ent_readyZoneTop
+    ent_activeZoneBottom := ent_readyZoneBottom
+    ent_tradeState := ent_isBuy ? 1 : -1
+    ent_tp1Hit := false
+    ent_exitReason := ""
+
+    if ent_readyFromReentry
+        ent_reentryCount += 1
+        if ent_reentryCount >= ent_reentryMaxCount
+            ent_reentryZoneActive := false
+            ent_reentryDir := 0
+            ent_reentryTop := na
+            ent_reentryBottom := na
+            ent_reentryStartBar := na
+            ent_reentryCount := 0
+
+    ent_readyDir := 0
+    ent_readyBar := na
+    ent_readyHigh := na
+    ent_readyLow := na
+    ent_readySLBase := na
+    ent_readyZoneTop := na
+    ent_readyZoneBottom := na
+    ent_readyFromReentry := false
+
+    ent_colEntry = ent_isBuy ? color.new(color.lime, 0) : color.new(color.red, 0)
+    ent_colSL = color.new(color.red, 0)
+    ent_colTP = ent_isBuy ? color.new(color.lime, 0) : color.new(color.red, 0)
+
+    ent_l_entry := line.new(bar_index, ent_entry, bar_index + ent_levelBars, ent_entry, color=ent_colEntry, width=2)
+    ent_l_sl := line.new(bar_index, ent_sl, bar_index + ent_levelBars, ent_sl, color=ent_colSL, width=2)
+    ent_l_tp1 := line.new(bar_index, ent_tp1, bar_index + ent_levelBars, ent_tp1, color=ent_colTP, width=1, style=line.style_dashed)
+    ent_l_tp2 := line.new(bar_index, ent_tp2, bar_index + ent_levelBars, ent_tp2, color=ent_colTP, width=1, style=line.style_dashed)
+
+    ent_sideText = ent_isBuy ? "BUY" : "SELL"
+
+    ent_lb_signal := label.new(bar_index, ent_isBuy ? low : high, ent_sideText, style=ent_isBuy ? label.style_label_up : label.style_label_down, color=ent_colEntry, textcolor=ent_isBuy ? color.black : color.white, size=size.normal)
+    ent_lb_entry := label.new(bar_index + ent_levelBars, ent_entry, "Entry: " + str.tostring(ent_entry, format.mintick), style=label.style_label_left, color=ent_colEntry, textcolor=ent_isBuy ? color.black : color.white, size=size.small)
+    ent_lb_sl := label.new(bar_index + ent_levelBars, ent_sl, "Stoploss: " + str.tostring(ent_sl, format.mintick), style=label.style_label_left, color=ent_colSL, textcolor=color.white, size=size.small)
+    ent_lb_tp1 := label.new(bar_index + ent_levelBars, ent_tp1, "TP1: " + str.tostring(ent_tp1, format.mintick), style=label.style_label_left, color=ent_colTP, textcolor=ent_isBuy ? color.black : color.white, size=size.small)
+    ent_lb_tp2 := label.new(bar_index + ent_levelBars, ent_tp2, "TP2: " + str.tostring(ent_tp2, format.mintick), style=label.style_label_left, color=ent_colTP, textcolor=ent_isBuy ? color.black : color.white, size=size.small)
