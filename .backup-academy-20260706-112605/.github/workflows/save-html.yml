@@ -1,0 +1,55 @@
+name: Save HTML from Admin
+
+on:
+  workflow_dispatch:
+    inputs:
+      file_path:
+        description: 'HTML file path to update'
+        required: true
+        type: string
+      content_base64:
+        description: 'Base64 encoded HTML content'
+        required: true
+        type: string
+      commit_message:
+        description: 'Commit message'
+        required: false
+        default: 'Update materi from admin'
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  save-html:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate path
+        run: |
+          FILE_PATH="${{ inputs.file_path }}"
+          if [[ "$FILE_PATH" == /* || "$FILE_PATH" == *".."* || "$FILE_PATH" != *.html ]]; then
+            echo "Invalid file path: $FILE_PATH"
+            exit 1
+          fi
+
+      - name: Write HTML file
+        run: |
+          mkdir -p "$(dirname "${{ inputs.file_path }}")"
+          echo "${{ inputs.content_base64 }}" | base64 --decode > "${{ inputs.file_path }}"
+
+      - name: Commit and push
+        run: |
+          git config user.name "Amy Trading Academy Bot"
+          git config user.email "actions@github.com"
+          git add "${{ inputs.file_path }}"
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "${{ inputs.commit_message }}"
+          git push

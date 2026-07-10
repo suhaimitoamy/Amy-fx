@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Menyusun Trading Rules dan Alur Baca: Dari Konsep ke Keputusan — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+</head>
+<body>
+  <script>requireLogin();</script>
+  <header class="topbar hide-until-auth">
+    <nav class="nav">
+      <a class="brand" href="../index.html"><span class="brand-mark">A</span><span>Amy FX Academy</span></a>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div class="navlinks" id="navlinks">
+        <a href="../index.html">Beranda</a>
+        <a href="../daftar-materi.html">Daftar Materi</a>
+        <a href="../tentang.html">Tentang</a>
+        <a href="../glosarium/index.html">Glosarium</a>
+        
+      </div>
+    </nav>
+  </header>
+  <main class="container hide-until-auth">
+    <div class="article-layout">
+      <article class="article">
+        <div class="breadcrumb"><a href="../index.html">Beranda</a> › <a href="index.html">Bagian 28 — Advanced Entry Workflow</a></div>
+        <div class="eyebrow">Bagian 28 — Advanced Entry Workflow</div>
+        <h1>Menyusun Trading Rules dan Alur Baca: Dari Konsep ke Keputusan</h1>
+
+        <div class="image-slot" data-img-path="assets/images/lessons/28-menyusun-trading-rules-dan-alur-baca-dari-konsep-ke-keputusan.jpg" data-prompt="Buat ilustrasi edukasi trading untuk materi &#x27;Menyusun Trading Rules dan Alur Baca: Dari Konsep ke Keputusan&#x27; dari &#x27;Bagian 28 — Advanced Entry Workflow&#x27;, gaya clean light website, rasio 16:9, warna putih, hijau lembut, biru lembut, sedikit aksen gold. Tampilkan chart sederhana, area liquidity, POI, candle displacement, dan checklist trading. Jangan gunakan klaim profit pasti. Cocok untuk website Amy FX Academy." data-caption="Ilustrasi Menyusun Trading Rules dan Alur Baca: Dari Konsep ke Keputusan"></div>
+
+        <div class="note"><strong>Analogi Amy:</strong> &quot;Ilmu yang banyak tanpa urutan yang benar hanya akan menciptakan kebingungan di depan layar. Trading profesional bukan tentang seberapa banyak indikator atau konsep yang kamu tahu, melainkan seberapa rapi kamu merangkai konsep-konsep tersebut menjadi satu alur berpikir yang bisa diulang setiap hari.&quot;</div>
+<h2>Masalah yang Sering Menjebak Trader</h2>
+<p>Masalah terbesar bagi banyak trader bukanlah kurangnya pengetahuan, melainkan <strong>ilmu yang tercerai-berai</strong>. Mereka tahu apa itu <em>Liquidity Sweep</em>, <em>MSS</em>, <em>FVG</em>, dan <em>Kill Zone</em>, tetapi saat membuka grafik, mereka bingung harus mulai dari mana. Akibatnya, keputusan yang diambil seringkali bersifat impulsif, tidak konsisten, dan dipengaruhi oleh emosi sesaat. Tanpa <strong>Alur Baca</strong> yang sistematis, kamu hanya sedang mengumpulkan potongan <em>puzzle</em> tanpa tahu bagaimana cara menyusunnya menjadi gambar yang utuh.</p>
+<p>Menyusun <strong>Trading Rules</strong> dan <strong>Alur Baca</strong> adalah langkah krusial untuk mengubah kamu dari seorang &quot;penganalisa&quot; menjadi seorang &quot;eksekutor&quot;. Bab ini akan mengajarkan kamu cara membangun urutan berpikir yang logis dari timeframe tinggi ke timeframe rendah, menyusun aturan main yang tidak bisa ditawar, dan menciptakan rutinitas yang membuat setiap keputusan trading kamu menjadi terukur dan profesional.</p>
+<h2>1. Kenapa kamu Butuh Alur Baca?</h2>
+<p>Pasar adalah lingkungan yang sangat dinamis dan penuh dengan informasi yang saling bertentangan. Jika kamu tidak memiliki urutan baca yang tetap, kamu akan mudah teralihkan oleh detail-detail kecil yang sebenarnya tidak relevan.</p>
+<p><strong>Manfaat Alur Baca yang Baku:</strong></p>
+<ul>
+<li><strong>Mengurangi Beban Mental:</strong> kamu tidak perlu berpikir keras &quot;apa yang harus saya lakukan sekarang?&quot; karena urutannya sudah jelas.</li>
+<li><strong>Meningkatkan Konsistensi:</strong> kamu melakukan hal yang sama berulang kali, sehingga hasil trading kamu menjadi lebih stabil.</li>
+<li><strong>Menghilangkan Emosi:</strong> Keputusan diambil berdasarkan kriteria objektif, bukan berdasarkan perasaan &quot;sepertinya harga akan naik.&quot;</li>
+</ul>
+<h2>2. Urutan Alur Baca yang Sehat (The &quot;Framework&quot;)</h2>
+<p>Gunakan urutan berikut setiap kali kamu membuka grafik untuk mencari peluang:</p>
+<ol>
+<li><strong>Bias (The Direction):</strong> Ke mana arah besar harga hari ini? (Daily/H4).</li>
+<li><strong>Target / Draw on Liquidity (The Destination):</strong> Di mana magnet harga terdekat? (BSL/SSL).</li>
+<li><strong>Lokasi (The Area):</strong> Apakah harga berada di area <em>Discount</em> (untuk Buy) atau <em>Premium</em> (untuk Sell)? Di mana POI-nya?</li>
+<li><strong>Waktu (The Window):</strong> Apakah saat ini adalah <em>Kill Zone</em> (London/New York)?</li>
+<li><strong>Konfirmasi (The Proof):</strong> Apakah ada <em>Liquidity Grab</em> dan <em>MSS</em> di timeframe rendah?</li>
+<li><strong>Eksekusi (The Action):</strong> Di mana <em>Entry</em>, <em>Stop Loss</em>, dan <em>Target</em> saya?</li>
+</ol>
+<h2>Patokan Cepatnya</h2>
+<div class="note"><strong>Patokan singkat:</strong><ul><li><strong><strong>Fokus</strong></strong> — <strong>Tahap Analisis (Persiapan):</strong> Memahami konteks dan narasi pasar | <strong>Tahap Eksekusi (Tindakan):</strong> Mencari pemicu visual dan menekan tombol</li><li><strong><strong>Timeframe</strong></strong> — <strong>Tahap Analisis (Persiapan):</strong> Biasanya Timeframe Tinggi (HTF) | <strong>Tahap Eksekusi (Tindakan):</strong> Biasanya Timeframe Rendah (LTF)</li><li><strong><strong>Pertanyaan</strong></strong> — <strong>Tahap Analisis (Persiapan):</strong> &quot;Apa yang sedang terjadi?&quot; | <strong>Tahap Eksekusi (Tindakan):</strong> &quot;Kapan saya harus masuk?&quot;</li><li><strong><strong>Sifat</strong></strong> — <strong>Tahap Analisis (Persiapan):</strong> Luas, mendalam, dan reflektif | <strong>Tahap Eksekusi (Tindakan):</strong> Cepat, tegas, dan disiplin</li><li><strong><strong>Hasil</strong></strong> — <strong>Tahap Analisis (Persiapan):</strong> Menghasilkan ide trading (<em>Setup</em>) | <strong>Tahap Eksekusi (Tindakan):</strong> Menghasilkan posisi terbuka (<em>Trade</em>)</li></ul></div>
+<h2>4. Menyusun Trading Rules Tertulis</h2>
+<p>Aturan trading kamu haruslah sederhana, jelas, dan tidak memiliki area abu-abu.</p>
+<p><strong>Contoh Trading Rules yang Kuat:</strong></p>
+<ul>
+<li>&quot;Saya hanya akan melakukan <em>Buy</em> jika Bias Daily adalah <em>Bullish</em>.&quot;</li>
+<li>&quot;Saya tidak akan melakukan <em>entry</em> di luar jam London (14:00–17:00 WIB) atau New York (19:00–22:00 WIB).&quot;</li>
+<li>&quot;Setiap <em>entry</em> harus didahului oleh pengambilan liquidity (<em>Liquidity Sweep</em>).&quot;</li>
+<li>&quot;Risiko maksimal per <em>trade</em> adalah 1% dari total modal.&quot;</li>
+<li>&quot;Jika target pertama (TP1) tercapai, saya akan memindahkan <em>Stop Loss</em> ke titik impas (<em>Break Even</em>).&quot;</li>
+</ul>
+<h2>5. Contoh Alur Baca Lengkap (XAU/Gold)</h2>
+<ol>
+<li><strong>Bias:</strong> Daily XAU menunjukkan struktur <em>Higher High</em>, Bias <em>Bullish</em>.</li>
+<li><strong>Target:</strong> Ada <em>Old High</em> di <strong>2380</strong> yang belum diambil (BSL).</li>
+<li><strong>Lokasi:</strong> Harga saat ini di <strong>2350</strong>, berada di area <em>Discount</em> dari rentang harian. Ada <em>Bullish FVG</em> di <strong>2345–2348</strong>.</li>
+<li><strong>Waktu:</strong> Jam menunjukkan pukul 14:30 WIB (London <em>Kill Zone</em>).</li>
+<li><strong>Konfirmasi:</strong> Di M5, harga menyapu <em>low</em> sesi Asia di <strong>2344</strong>, lalu melakukan MSS menembus <strong>2352</strong>.</li>
+<li><strong>Eksekusi:</strong> Pasang <em>Buy Limit</em> di <strong>2348</strong> (FVG), SL di <strong>2342</strong>, Target di <strong>2380</strong>.</li>
+</ol>
+<h2>6. Kesalahan Umum dalam Menyusun Aturan</h2>
+<ul>
+<li><strong>Terlalu Rumit:</strong> Memiliki 20 aturan yang harus dipenuhi sekaligus, sehingga kamu tidak pernah melakukan <em>entry</em>.</li>
+<li><strong>Tidak Tertulis:</strong> Aturan hanya ada di kepala, sehingga mudah dilanggar saat emosi naik.</li>
+<li><strong>Terlalu Kaku:</strong> Tidak mau menyesuaikan diri saat narasi pasar di timeframe tinggi berubah secara drastis.</li>
+<li><strong>Melanggar Aturan Sendiri:</strong> Ini adalah kesalahan fatal. Aturan dibuat untuk melindungi kamu, bukan untuk dilanggar.</li>
+</ul>
+<h2>7. Glosarium Bab 10</h2>
+<ul>
+<li><strong>Alur Baca:</strong> Urutan langkah sistematis dalam menganalisis grafik.</li>
+<li><strong>Trading Rules:</strong> Kumpulan aturan baku yang harus dipenuhi sebelum melakukan eksekusi.</li>
+<li><strong>Analysis Paralysis:</strong> Kondisi di mana trader terlalu banyak berpikir hingga tidak berani mengambil keputusan.</li>
+<li><strong>Framework:</strong> Kerangka kerja atau struktur dasar dalam melakukan sesuatu.</li>
+<li><strong>Execution Trigger:</strong> Pemicu spesifik yang menandakan saatnya melakukan tindakan.</li>
+</ul>
+<h2>8. Ringkasan Bab</h2>
+<ul>
+<li>Alur baca yang sistematis adalah kunci untuk mengurangi kebingungan dan emosi.</li>
+<li>Urutan prioritas: Bias → Target → Lokasi → Waktu → Konfirmasi → Eksekusi.</li>
+<li><em>Trading Rules</em> harus tertulis, sederhana, dan ditaati tanpa kompromi.</li>
+<li>Analisis dilakukan di timeframe tinggi, sementara eksekusi dilakukan di timeframe rendah.</li>
+<li>Kedisiplinan dalam menjalankan alur baca akan menghasilkan hasil trading yang konsisten.</li>
+</ul>
+<h2>Penutup</h2>
+<p>Saat kamu mulai memiliki alur baca yang tetap, grafik tidak lagi terlihat seperti kumpulan garis yang acak. Kamu akan mulai melihat pasar sebagai sebuah cerita yang memiliki awal, tengah, dan akhir. Kejelasan ini akan memberikan kamu kepercayaan diri yang luar biasa saat melakukan eksekusi. Di bab berikutnya, kita akan membahas <strong>OTE (Optimal Trade Entry)</strong>, sebuah teknik untuk menemukan titik masuk yang paling efisien menggunakan rasio Fibonacci.</p>
+<h2>Catatan</h2>
+<p><em>Tugas Praktik: Tuliskan Alur Baca kamu sendiri dalam selembar kertas atau dokumen digital. Gunakan urutan 6 langkah yang telah dibahas. Terapkan alur ini pada 5 peluang trading berikutnya (bisa di akun demo atau backtest). Catat apakah alur ini membuat kamu merasa lebih tenang dan teratur saat trading. Jika ada langkah yang terasa kurang pas, sesuaikan dengan gaya trading kamu.</em></p>
+
+
+        <div class="source-note">Materi ini disusun ulang dari Materi Trading Amy ZIP dan dirapikan ke gaya Amy FX Academy. Istilah teknis seperti liquidity, sweep, FVG, OB, IFVG, MSS, CISD, entry, Stop Loss, dan Take Profit tetap dipertahankan.</div>
+        <nav class="page-nav">
+          <a class="btn" href="04-disiplin-eksekusi-menjalankan-rencana-tanpa-kompromi.html">← Disiplin Eksekusi: Menjalankan Rencana Tanpa Kompromi</a>
+          <a class="btn gold" href="../daftar-materi.html">Daftar Materi</a>
+          <a class="btn primary" href="06-liquidity-grab-ke-mss-ke-entry-flow-chart-praktis.html">Liquidity Grab ke MSS ke Entry: Flow Chart Praktis →</a>
+        </nav>
+      </article>
+      <aside class="toc-card">
+        <h3>Bagian 28 — Advanced Entry Workflow</h3>
+        <ul><li><a class="" href="01-dari-validasi-ke-trigger.html">Dari Validasi ke Trigger</a></li>
+<li><a class="" href="02-invalidation-dan-stop-loss-melindungi-logika-trading-bukan-ego.html">Invalidation dan Stop Loss: Melindungi Logika Trading, Bukan Ego</a></li>
+<li><a class="" href="03-do-not-chase-disiplin-menunggu-lokasi-yang-sehat.html">Do Not Chase: Disiplin Menunggu Lokasi yang Sehat</a></li>
+<li><a class="" href="04-disiplin-eksekusi-menjalankan-rencana-tanpa-kompromi.html">Disiplin Eksekusi: Menjalankan Rencana Tanpa Kompromi</a></li>
+<li><a class="active" href="05-menyusun-trading-rules-dan-alur-baca-dari-konsep-ke-keputusan.html">Menyusun Trading Rules dan Alur Baca: Dari Konsep ke Keputusan</a></li>
+<li><a class="" href="06-liquidity-grab-ke-mss-ke-entry-flow-chart-praktis.html">Liquidity Grab ke MSS ke Entry: Flow Chart Praktis</a></li>
+<li><a class="" href="07-kapan-tidak-trade-seni-menunggu-peluang-berkualitas.html">Kapan Tidak Trade: Seni Menunggu Peluang Berkualitas</a></li>
+<li><a class="" href="08-checklist-sebelum-entry-filter-terakhir-sebelum-eksekusi.html">Checklist Sebelum Entry: Filter Terakhir Sebelum Eksekusi</a></li></ul>
+      </aside>
+    </div>
+  </main>
+  <footer class="footer hide-until-auth">© 2026 Amy FX Academy. Belajar Trading dari Nol sampai Mandiri.</footer>
+</body>
+</html>

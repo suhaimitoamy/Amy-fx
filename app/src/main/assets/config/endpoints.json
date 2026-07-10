@@ -1,0 +1,25 @@
+{
+  "endpoints": {
+    "supabase": {
+      "url": "https://wliecyxzlwhmtftnfnps.supabase.co",
+      "anonKey": "eyJhbG...0p6k"
+    },
+    "twelveData": {
+      "rest": "https://api.twelvedata.com",
+      "ws": "wss://ws.twelvedata.com/v1/quotes/price"
+    },
+    "news": {
+      "api": "/api/news",
+      "source": "SM_News_24h"
+    },
+    "heatmap": {
+      "api": "/api/heatmap",
+      "interval": "15min"
+    }
+  },
+  "candles": {
+    "defaultLimit": 300,
+    "maxLimit": 1000,
+    "defaultSymbol": "XAU/USD"
+  }
+}

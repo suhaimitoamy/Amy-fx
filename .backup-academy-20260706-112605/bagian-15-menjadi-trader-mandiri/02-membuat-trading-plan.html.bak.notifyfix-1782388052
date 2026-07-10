@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Membuat Trading Plan — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+</head>
+<body>
+  <script>requireLogin();</script>
+  <header class="topbar hide-until-auth">
+    <nav class="nav">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark">A</span><span>Amy FX Academy</span>
+      </a>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div class="navlinks" id="navlinks">
+        <a href="../index.html">Beranda</a>
+        <a href="../daftar-materi.html">Daftar Materi</a>
+        <a href="../tentang.html">Tentang</a>
+        <a href="../glosarium/index.html">Glosarium</a>
+        
+      </div>
+    </nav>
+  </header>
+  <main class="container hide-until-auth">
+    <div class="article-layout">
+      <article class="article">
+        <div class="breadcrumb">
+          <a href="../index.html">Beranda</a> › <a href="index.html">Bagian 15 — Menjadi Trader Mandiri</a>
+        </div>
+        <div class="eyebrow">Bagian 15 — Menjadi Trader Mandiri</div>
+        <h1>Membuat Trading Plan</h1>
+        
+        <p>Trading tanpa <em>Trading Plan</em> itu ibarat membangun rumah tanpa <em>blueprint</em> (cetak biru). Mungkin kamu tahu cara menyusun batu bata, tapi tanpa panduan yang jelas, rumah yang kamu bangun bisa runtuh sewaktu-waktu. Dalam trading, "runtuh" artinya akun kamu <em>Margin Call</em> atau MC.</p>
+        
+        <p>Banyak trader yang menganggap <em>Trading Plan</em> itu ribet dan membuang waktu. Padahal, justru ini adalah perisai pelindung utama yang akan menjaga kamu dari keputusan impulsif, balas dendam pada market, dan kerugian fatal. Mari kita buat <em>Trading Plan</em> yang sederhana tapi kuat.</p>
+        
+        <div class="image-slot" data-img-path="assets/images/lessons/02-membuat-trading-plan.jpg" data-prompt="Buat ilustrasi edukasi trading untuk materi 'Membuat Trading Plan' dari 'Bagian 15 — Menjadi Trader Mandiri', gaya clean light website, rasio 16:9, mudah dipahami pemula, warna putih, hijau lembut, biru lembut, sedikit aksen gold. Tampilkan konsep dasar dengan ikon trading, laptop, chart sederhana, dan teks pendek yang mudah dibaca. Jangan gunakan klaim profit pasti. Cocok untuk website Amy FX Academy." data-caption="Ilustrasi Membuat Trading Plan"></div>
+
+        <h2>Apa Itu Trading Plan?</h2>
+        <p><em>Trading Plan</em> adalah seperangkat aturan yang kamu buat sendiri saat pikiranmu sedang <strong>jernih</strong> (sebelum masuk market), dan wajib kamu patuhi saat pikiranmu sedang <strong>emosional</strong> (saat sedang <em>floating</em> profit/loss). Ini adalah dokumen tertulis, bukan cuma dihapal di kepala.</p>
+        <p>Fungsinya sederhana: membuang keraguan. Saat market bergerak cepat, kamu tidak perlu mikir "Masuk gak ya? SL di mana ya?". Kamu hanya perlu melihat <em>Plan</em>-mu: kalau syaratnya terpenuhi, masuk. Kalau tidak, diam.</p>
+
+        <h2>Komponen Wajib Trading Plan</h2>
+        <p>Sebuah <em>Trading Plan</em> yang baik tidak perlu tebal seperti skripsi. Cukup satu halaman catatan atau satu file dokumen sederhana yang berisi aturan-aturan berikut:</p>
+
+        <h3>1. Pair dan Sesi Trading (Where & When)</h3>
+        <p>Tentukan instrumen apa yang akan kamu perdagangkan dan jam berapa. Fokus itu penting.</p>
+        <ul>
+          <li><em>Contoh: "Saya hanya akan trading pair XAUUSD."</em></li>
+          <li><em>Contoh: "Saya hanya akan mencari setup pada Sesi London (14:00 - 18:00 WIB) dan Sesi New York (19:00 - 22:00 WIB)."</em></li>
+        </ul>
+
+        <h3>2. Risiko per Trade (Risk Management)</h3>
+        <p>Ini adalah pilar terpenting. Berapa maksimal uang atau persentase modal yang rela kamu hilangkan dalam satu kali transaksi?</p>
+        <ul>
+          <li><em>Contoh: "Risiko maksimum saya adalah 1% dari modal per posisi."</em></li>
+          <li><em>Contoh: "Batas kerugian harian (Daily Drawdown Limit) saya adalah 3%. Jika sudah minus 3% dalam sehari, saya stop buka chart."</em></li>
+        </ul>
+
+        <h3>3. Aturan Masuk (Entry Rules)</h3>
+        <p>Apa kondisi spesifik yang harus terjadi di chart sebelum kamu menekan tombol eksekusi? Buat sekonkret mungkin. Jangan gunakan kalimat mengambang seperti "kalau kelihatannya mau naik".</p>
+        <ul>
+          <li><em>Contoh: "Saya hanya akan masuk (Entry) jika: 1) Ada Sweep Liquidity di Timeframe H1, 2) Terjadi Change of Character (ChoCh) di M15, 3) Harga kembali ke Order Block yang valid."</em></li>
+        </ul>
+
+        <h3>4. Aturan Keluar (Exit Rules)</h3>
+        <p>Kapan kamu keluar dari market? Baik dalam keadaan rugi (Stop Loss) maupun untung (Take Profit).</p>
+        <ul>
+          <li><em>Contoh: "Stop Loss selalu diletakkan sedikit di bawah Swing Low terakhir. Take Profit minimal memiliki rasio Risk:Reward 1:2. Jika harga sudah jalan 1:1, SL akan digeser ke Breakeven."</em></li>
+        </ul>
+
+        <div class="note">
+          <strong>Tips:</strong> Ketegasan pada aturan "Keluar" sering kali lebih sulit daripada aturan "Masuk". Trader pemula sering memindahkan Stop Loss (menjauh) karena tidak rela rugi, atau buru-buru <em>close</em> posisi profit karena takut berbalik arah. Patuhi <em>Exit Rules</em>-mu!
+        </div>
+
+        <h2>Kenapa Banyak yang Gagal Mengikuti Plan?</h2>
+        <p>Menulis rencana itu mudah, mematuhinya yang butuh perjuangan. Biasanya trader gagal karena:</p>
+        <ol>
+          <li><strong>Plan terlalu rumit:</strong> Terlalu banyak indikator atau syarat yang bikin pusing sendiri.</li>
+          <li><strong>Ego yang terlalu besar:</strong> Merasa lebih pintar dari market, sehingga mengabaikan aturan dan pakai <em>feeling</em>.</li>
+          <li><strong>Tidak siap kalah:</strong> Menganggap <em>loss</em> sebagai kegagalan pribadi, bukan sebagai probabilitas statistik.</li>
+        </ol>
+
+        <div class="warning">
+          <strong>Aturan Emas:</strong> <em>Trading Plan</em> yang buruk tapi dieksekusi dengan disiplin masih lebih baik daripada <em>Trading Plan</em> jenius yang tidak pernah dipatuhi.
+        </div>
+        
+        <p>Jadikan <em>Trading Plan</em> sebagai "Bos" kamu. Dalam bisnis trading mandiri, kamu adalah pegawainya. Tugasmu bukan menebak masa depan, tugasmu hanyalah menjalankan perintah dari sang Bos (Trading Plan) tanpa protes.</p>
+
+        <div class="source-note">Materi ini dirangkum dan disusun ulang dari bahan Materi Trading Amy ZIP serta batch PDF ICT/SMC/XAUUSD yang sudah dikirim.</div>
+        
+        <nav class="page-nav">
+          <a class="btn" href="../bagian-15-menjadi-trader-mandiri/01-dari-belajar-ke-eksekusi.html">← Dari Belajar ke Eksekusi</a>
+          <a class="btn gold" href="../daftar-materi.html">Daftar Materi</a>
+          <a class="btn primary" href="../bagian-15-menjadi-trader-mandiri/03-membuat-playbook-pribadi.html">Membuat Playbook Pribadi →</a>
+        </nav>
+      </article>
+      <aside class="toc-card">
+        <h3>Bagian 15 — Menjadi Trader Mandiri</h3>
+        <ul>
+          <li><a class="" href="01-dari-belajar-ke-eksekusi.html">Dari Belajar ke Eksekusi</a></li>
+          <li><a class="active" href="02-membuat-trading-plan.html">Membuat Trading Plan</a></li>
+          <li><a class="" href="03-membuat-playbook-pribadi.html">Membuat Playbook Pribadi</a></li>
+          <li><a class="" href="04-rutinitas-sebelum-trading.html">Rutinitas Sebelum Trading</a></li>
+          <li><a class="" href="05-rutinitas-setelah-trading.html">Rutinitas Setelah Trading</a></li>
+          <li><a class="" href="06-kapan-harus-istirahat.html">Kapan Harus Istirahat</a></li>
+          <li><a class="" href="07-cara-mengembangkan-sistem.html">Cara Mengembangkan Sistem</a></li>
+          <li><a class="" href="08-jangan-bergantung-sinyal.html">Jangan Bergantung Sinyal</a></li>
+          <li><a class="" href="09-roadmap-live-trading.html">Roadmap Live Trading</a></li>
+        </ul>
+      </aside>
+    </div>
+  </main>
+  <footer class="footer hide-until-auth">© 2026 Amy FX Academy. Belajar Trading dari Nol sampai Mandiri.</footer>
+</body>
+</html>

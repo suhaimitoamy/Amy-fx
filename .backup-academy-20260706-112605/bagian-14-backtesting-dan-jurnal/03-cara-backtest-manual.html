@@ -1,0 +1,165 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Cara Backtest Manual — Amy FX Academy</title><link rel="stylesheet" href="../assets/css/style.css"><script>const ROOT_PATH='../';</script><script src="../assets/js/auth.js"></script><script src="../assets/js/main.js" defer></script></head><body><script>requireLogin();</script><header class="topbar hide-until-auth"><nav class="nav"><a class="brand" href="../index.html"><span class="brand-mark">A</span><span>Amy FX Academy</span></a><button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button><div class="navlinks" id="navlinks"><a href="../index.html">Beranda</a><a href="../daftar-materi.html">Daftar Materi</a><a href="../tentang.html">Tentang</a><a href="../glosarium/index.html">Glosarium</a></div></nav></header><main class="container hide-until-auth"><div class="article-layout"><article class="article"><div class="breadcrumb"><a href="../index.html">Beranda</a> › <a href="index.html">Bagian 14 — Backtesting dan Jurnal</a></div><div class="eyebrow">Bagian 14 — Backtesting dan Jurnal</div><h1>Cara Backtest Manual</h1>
+<p>Setelah kamu mengerti mengapa backtesting itu wajib, pertanyaan selanjutnya adalah: <em>"Lalu, bagaimana cara memulainya?"</em> Bagi pemula, tidak perlu langsung membeli perangkat lunak (software) backtesting yang mahal atau belajar coding untuk membuat robot. Cara paling efektif untuk belajar di awal adalah dengan <strong>Backtest Manual</strong>.</p>
+<div class="image-slot" data-img-path="assets/images/lessons/03-cara-backtest-manual.jpg" data-prompt="Buat ilustrasi edukasi trading untuk materi 'Cara Backtest Manual' dari 'Bagian 14 — Backtesting dan Jurnal', gaya clean light website, rasio 16:9, mudah dipahami pemula, warna putih, hijau lembut, biru lembut, sedikit aksen gold. Tampilkan konsep dasar dengan ikon trading, laptop, chart sederhana, dan teks pendek yang mudah dibaca. Jangan gunakan klaim profit pasti. Cocok untuk website Amy FX Academy." data-caption="Ilustrasi Cara Backtest Manual"></div>
+<p>Backtest manual berarti kamu sendiri yang menggeser chart ke masa lalu, mengamati pergerakan harga satu per satu (seolah-olah sedang <em>live</em>), mencari setup sesuai dengan strategi kamu, lalu mencatat hasilnya. Proses ini sedikit memakan waktu, tapi dampaknya terhadap "jam terbang" visualmu (screen time) sangatlah luar biasa.</p>
+
+<h2>Persiapan Sebelum Memulai</h2>
+<p>Sebelum kamu membuka chart, pastikan tiga hal ini sudah siap:</p>
+<ol>
+    <li><strong>Platform Charting:</strong> Gunakan TradingView. Kamu bisa menggunakan fitur <em>Bar Replay</em> (memotong chart masa depan) jika kamu pengguna berbayar. Jika gratisan, kamu cukup menggeser chart ke kiri secara manual dan perlahan menggesernya ke kanan dengan tombol panah (Arrow Right) di keyboard.</li>
+    <li><strong>SOP (Standard Operating Procedure) yang Jelas:</strong> Jangan backtest hanya berdasarkan insting (feeling). Kamu harus punya aturan tertulis: Bagaimana cara menentukan arah (bias)? Apa konfirmasi entry-nya? Di mana letak SL dan TP? Jika aturannya masih mengambang, hasil backtest-mu tidak akan valid.</li>
+    <li><strong>Alat Pencatat (Jurnal):</strong> Siapkan Spreadsheet (Excel / Google Sheets) atau minimal buku catatan kosong.</li>
+</ol>
+
+<h2>Langkah-langkah Eksekusi Backtest Manual</h2>
+
+<h3>Langkah 1: Tentukan Batas Waktu Mundur</h3>
+<p>Pilih satu pair, misalnya EURUSD. Geser chart ke masa lalu (misal 3 bulan atau 6 bulan yang lalu). Jangan pilih-pilih bulan tertentu hanya karena grafiknya terlihat bagus. Turun di tanggal acak, lalu potong chart di area tersebut menggunakan <em>Bar Replay</em> (jika ada), atau sembunyikan sisi kanan layar dengan kertas agar matamu tidak "mencuri pandang" ke masa depan.</p>
+<div class="warning"><strong>Peringatan:</strong> Jika kamu sudah tahu bahwa harga akan naik (karena tidak sengaja melihat ujung chart), backtest kamu akan bias. Kamu akan tiba-tiba mencari alasan untuk "Buy" saja. Jujurlah pada diri sendiri.</div>
+
+<h3>Langkah 2: Lakukan Analisa Top-Down</h3>
+<p>Mulailah dari Timeframe Besar (misalnya Daily atau H4) untuk menentukan Bias Harian. Apakah harga sedang tren naik (bullish), turun (bearish), atau ranging? Tentukan di mana area Liquidity atau Order Block yang mungkin dituju harga.</p>
+
+<h3>Langkah 3: Geser Harga Candle Demi Candle</h3>
+<p>Turun ke Timeframe eksekusi kamu (misalnya M15 atau M5). Tekan panah kanan (Right Arrow) di keyboard perlahan untuk memunculkan satu per satu candle baru. Amati bagaimana harga bergerak. Perhatikan waktu (sesi trading). Ingat, jika strategi kamu hanya beroperasi di Sesi London dan New York, abaikan pergerakan di Sesi Asia.</p>
+
+<h3>Langkah 4: Temukan Setup dan Ambil Keputusan</h3>
+<p>Ketika harga membentuk kriteria entry sesuai dengan SOP kamu, berhentilah menggeser chart! Gunakan <em>Long Position</em> atau <em>Short Position tool</em> di TradingView. Letakkan level Entry, Stop Loss, dan Take Profit di chart secara presisi sesuai aturanmu.</p>
+<p>Setelah terpasang, barulah lanjutkan menggeser candle ke kanan untuk melihat apakah harga mengenai Entry kamu, lalu apakah berakhir menyentuh SL atau TP.</p>
+
+<h3>Langkah 5: Catat dan Evaluasi (Journaling)</h3>
+<p>Apapun hasilnya, <strong>catat di jurnalmu</strong>. Jangan abaikan trade yang rugi dengan alasan, <em>"Ah, yang ini nggak kehitung, aku salah lihat."</em> Masukkan ke data!</p>
+<p>Catat tanggal, jam, RR, hasil akhir, serta ambil <em>screenshot</em> sebelum entry dan sesudah hasilnya keluar. Kamu butuh data mentah ini untuk dievaluasi nantinya.</p>
+<div class="note"><strong>Tips:</strong> Saat manual backtest, sangat wajar jika kamu menemukan "kebingungan" di awal. "Ini masuk setup nggak ya?" Kalau kamu bingung, berarti SOP strategimu kurang spesifik. Perjelas lagi aturannya.</div>
+
+<h2>Target dari Latihan Ini</h2>
+<p>Lakukan proses ini secara berulang minimal untuk 100 kali setup (bukan 100 hari, tapi 100 kali mengambil peluang trading). Saat kamu sudah mencatat 100 <em>trades</em> dengan aturan yang persis sama, kamu baru bisa menilai apakah sistem trading tersebut layak dilanjutkan (profitable) atau harus dibuang.</p>
+<p>Melalui Cara Backtest Manual, matamu akan sangat terbiasa mengenali pola (pattern recognition). Nantinya, saat kamu melihat pergerakan harga di <em>live market</em>, otakmu secara otomatis akan merespons dengan cepat karena sudah melihat pola yang sama terbentuk berulang-ulang di masa lalu.</p>
+<div class="source-note">Materi ini dirangkum dan disusun ulang dari bahan Materi Trading Amy ZIP serta batch PDF ICT/SMC/XAUUSD yang sudah dikirim.</div><nav class="page-nav"><a class="btn" href="../bagian-14-backtesting-dan-jurnal/02-kenapa-backtesting-wajib.html">← Kenapa Backtesting Wajib</a><a class="btn gold" href="../daftar-materi.html">Daftar Materi</a><a class="btn primary" href="../bagian-14-backtesting-dan-jurnal/04-template-backtesting.html">Template Backtesting →</a></nav></article><aside class="toc-card"><h3>Bagian 14 — Backtesting dan Jurnal</h3><ul><li><a class="" href="01-apa-itu-backtesting.html">Apa Itu Backtesting</a></li><li><a class="" href="02-kenapa-backtesting-wajib.html">Kenapa Backtesting Wajib</a></li><li><a class="active" href="03-cara-backtest-manual.html">Cara Backtest Manual</a></li><li><a class="" href="04-template-backtesting.html">Template Backtesting</a></li><li><a class="" href="05-forward-testing.html">Forward Testing</a></li><li><a class="" href="06-demo-sebelum-live.html">Demo Sebelum Live</a></li><li><a class="" href="07-jurnal-trading.html">Jurnal Trading</a></li><li><a class="" href="08-review-mingguan.html">Review Mingguan</a></li><li><a class="" href="09-mengukur-winrate-rr-drawdown.html">Mengukur Winrate, RR, dan Drawdown</a></li><li><a class="" href="10-menentukan-apakah-strategi-layak.html">Menentukan Apakah Strategi Layak</a></li></ul></aside></div></main><footer class="footer hide-until-auth">© 2026 Amy FX Academy. Belajar Trading dari Nol sampai Mandiri.</footer><script>
+/* AMYFX_NOTIFY_GUARD_START */
+(function(){
+  if(window.__amyfxNotifyGuardLoaded)return;
+  window.__amyfxNotifyGuardLoaded=true;
+
+  const STORE='amyfx.notify.last.sent';
+  const COOLDOWN=5*60*1000;
+  const RESUME_MUTE=9000;
+  const MAX_ITEMS=80;
+  let muteUntil=0;
+
+  function now(){return Date.now()}
+  function norm(x){
+    return String(x||'')
+      .replace(/\d+([.,]\d+)?/g,'#')
+      .replace(/\s+/g,' ')
+      .trim()
+      .slice(0,180);
+  }
+  function kind(t,b){
+    const x=(String(t||'')+' '+String(b||'')).toLowerCase();
+    if(x.includes('scanner terhubung'))return 'scanner_connected';
+    if(x.includes('amy fx aktif'))return 'scanner_alive';
+    if(x.includes('liquidity sweep'))return 'liquidity_sweep';
+    if(x.includes('ssl')||x.includes('bsl'))return 'bsl_ssl_touched';
+    return 'amyfx_alert';
+  }
+  function key(t,b){
+    return kind(t,b)+'|'+norm(t)+'|'+norm(b);
+  }
+  function read(){
+    try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch(e){return{}}
+  }
+  function write(o){
+    const arr=Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,MAX_ITEMS);
+    localStorage.setItem(STORE,JSON.stringify(Object.fromEntries(arr)));
+  }
+  function route(t,b){
+    const k=kind(t,b);
+    if(k==='liquidity_sweep')return 'Analyze';
+    if(k==='bsl_ssl_touched')return 'Analyze';
+    if(k==='scanner_connected'||k==='scanner_alive')return 'Dashboard';
+    return 'Analyze';
+  }
+  function openRoute(t,b){
+    const r=route(t,b);
+    try{localStorage.setItem('amyfx.notification.route',r)}catch(e){}
+    try{if(typeof setTab==='function')setTab(r)}catch(e){}
+    try{window.focus()}catch(e){}
+  }
+  function allow(t,b){
+    const n=now();
+    const k=key(t,b);
+
+    if(n<muteUntil && kind(t,b)!=='scanner_alive')return false;
+
+    const last=read();
+    const prev=last[k]||0;
+    if(n-prev<COOLDOWN)return false;
+
+    last[k]=n;
+    write(last);
+    return true;
+  }
+
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden){
+      muteUntil=now()+RESUME_MUTE;
+    }
+  });
+
+  window.addEventListener('pageshow',function(){
+    muteUntil=now()+RESUME_MUTE;
+  });
+
+  try{
+    if('Notification' in window && !window.Notification.__amyfxWrapped){
+      const OriginalNotification=window.Notification;
+      const WrappedNotification=function(title,opts){
+        opts=opts||{};
+        const body=opts.body||'';
+        if(!allow(title,body))return null;
+        const n=new OriginalNotification(title,opts);
+        n.onclick=function(){openRoute(title,body)};
+        return n;
+      };
+      Object.getOwnPropertyNames(OriginalNotification).forEach(function(k){
+        try{WrappedNotification[k]=OriginalNotification[k]}catch(e){}
+      });
+      WrappedNotification.prototype=OriginalNotification.prototype;
+      WrappedNotification.__amyfxWrapped=true;
+      window.Notification=WrappedNotification;
+    }
+  }catch(e){}
+
+  function wrapBridge(obj){
+    if(!obj||obj.__amyfxNotifyBridgeWrapped)return;
+    Object.keys(obj).forEach(function(k){
+      if(!/notify|notification|alert|push/i.test(k))return;
+      if(typeof obj[k]!=='function')return;
+      const old=obj[k];
+      obj[k]=function(){
+        const args=[].slice.call(arguments);
+        const title=args[0]||'Amy FX';
+        const body=args[1]||args[0]||'';
+        if(!allow(title,body))return null;
+        try{return old.apply(this,args)}catch(e){return null}
+      };
+    });
+    obj.__amyfxNotifyBridgeWrapped=true;
+  }
+
+  function wrapAll(){
+    ['Android','AndroidBridge','AmyFX','AmyFx','Native','NotificationBridge','AppBridge'].forEach(function(n){
+      try{wrapBridge(window[n])}catch(e){}
+    });
+  }
+
+  wrapAll();
+  setInterval(wrapAll,1500);
+
+  window.__amyfxNotifyAllow=allow;
+  window.__amyfxNotifyOpenRoute=openRoute;
+})();
+/* AMYFX_NOTIFY_GUARD_END */
+</script>
+</body></html>

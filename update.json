@@ -1,0 +1,17 @@
+{
+  "version": "1.2.0",
+  "versionCode": 12,
+  "releaseDate": "2026-06-25",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/v1.2.0/AmyFX-v1.2.0-release.apk",
+  "changelog": [
+    "Upgrade target SDK ke 35",
+    "Tambah konfigurasi release build dengan R8",
+    "Tambah encrypted preferences untuk API key",
+    "Tambah cooldown notifikasi 30 menit per level",
+    "Tambah expiry target Mapping 24 jam",
+    "Tambah reconnect scanner bertahap",
+    "Tambah core logic ICT dan unit test dasar",
+    "Tambah cleanup SQLite candle cache"
+  ],
+  "mandatory": false
+}

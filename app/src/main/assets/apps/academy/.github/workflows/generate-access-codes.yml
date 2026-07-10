@@ -1,0 +1,48 @@
+name: Generate Access Codes
+
+on:
+  workflow_dispatch:
+    inputs:
+      count:
+        description: 'Jumlah kode yang ingin dibuat'
+        required: true
+        default: '5'
+      prefix:
+        description: 'Prefix kode, contoh AMY'
+        required: true
+        default: 'AMY'
+      expires_at:
+        description: 'Tanggal expired ISO opsional, contoh 2026-12-31T23:59:59Z'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Generate codes
+        env:
+          CODE_COUNT: ${{ github.event.inputs.count }}
+          CODE_PREFIX: ${{ github.event.inputs.prefix }}
+          EXPIRES_AT: ${{ github.event.inputs.expires_at }}
+        run: node tools/generate-access-codes.js
+      - name: Upload plaintext codes as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-access-codes
+          path: generated-access-codes.txt
+      - name: Commit hashed codes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/access-codes.json
+          git commit -m "Generate access codes" || echo "No changes to commit"
+          git push

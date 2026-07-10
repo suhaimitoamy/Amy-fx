@@ -1,0 +1,305 @@
+diff --git a/app/build.gradle.kts b/app/build.gradle.kts
+--- a/app/build.gradle.kts
++++ b/app/build.gradle.kts
+@@ -14,8 +14,8 @@ android {
+         applicationId = "com.amyelitesuite"
+         minSdk = 24
+         targetSdk = 34
+-        versionCode = 4
+-        versionName = "1.3"
++        versionCode = 5
++        versionName = "1.4"
+     }
+ 
+     buildTypes {
+diff --git a/app/src/main/assets/app.js b/app/src/main/assets/app.js
+--- a/app/src/main/assets/app.js
++++ b/app/src/main/assets/app.js
+@@ -119,8 +119,14 @@ document.addEventListener('DOMContentLoaded', () => {
+   function renderIndicatorList(category = 'Semua', query = '') {
+     const list = document.getElementById('indicator-list');
+     if (!list) return;
+-    const filtered = indicators.filter(item => (category === 'Semua' || item.category === category) && (item.name.toLowerCase().includes(query.toLowerCase()) || item.desc.toLowerCase().includes(query.toLowerCase())));
++    const safeQuery = String(query || '').toLowerCase();
++    const filtered = indicators.filter(item => {
++      const itemCategory = String(item.category || '');
++      const itemName = String(item.name || '').toLowerCase();
++      const itemDesc = String(item.desc || '').toLowerCase();
++      return (category === 'Semua' || itemCategory === category) && (itemName.includes(safeQuery) || itemDesc.includes(safeQuery));
++    });
+     list.innerHTML = filtered.map(item => {
+       const originalIndex = indicators.indexOf(item);
+       return `<button class="indicator-item" data-select-indicator="${originalIndex}">${icon('code')}<span><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.desc)}</small></span><span class="chevron">›</span></button>`;
+@@ -129,8 +135,8 @@ document.addEventListener('DOMContentLoaded', () => {
+ 
+   async function renderIndikator() {
+     setActive('proyek');
+-    const categoryOptions = ['Semua', ...new Set(indicators.map(i => i.category))];
+-    const pillsHTML = categoryOptions.map(cat => `<button class="pill ${cat === 'Semua' ? 'active' : ''}" data-filter="${cat}">${cat}</button>`).join('');
++    const categoryOptions = ['Semua', ...new Set(indicators.map(i => String(i.category || 'Lainnya')))];
++    const pillsHTML = categoryOptions.map(cat => `<button class="pill ${cat === 'Semua' ? 'active' : ''}" data-filter="${escapeHtml(cat)}">${escapeHtml(cat)}</button>`).join('');
+ 
+     mainContent.innerHTML = `<div class="page-header row"><button class="back-btn" data-nav="proyek">‹</button><h2>Indikator TradingView</h2></div><input id="indicator-search" class="search-input" placeholder="Cari indikator..."><div class="pill-row">${pillsHTML}</div><div id="indicator-list" class="indicator-list slide-up"></div><section class="code-panel"><span class="badge">Terpilih</span><h3>${escapeHtml(selectedIndicator.name)}</h3><p>${escapeHtml(selectedIndicator.desc)}</p><pre id="code-display"></pre><div class="actions"><button class="action-btn" data-save-code>Simpan Kode</button><button class="action-btn primary" data-copy-code>Salin Kode</button></div></section>`;
+     const codeDisplay = document.getElementById('code-display');
+diff --git a/app/src/main/assets/apps/journal/app.js b/app/src/main/assets/apps/journal/app.js
+--- a/app/src/main/assets/apps/journal/app.js
++++ b/app/src/main/assets/apps/journal/app.js
+@@ -63,6 +63,7 @@ const state = {
+   mediaType: "Semua",
+   query: "",
+   collectionFilter: "",
++  learningStatusFilter: "",
+   sort: "pinned-newest",
+   showArchived: false,
+   view: "library",
+@@ -562,6 +563,7 @@ function loadSettings() {
+     state.query = saved.query || "";
+     state.collectionFilter = saved.collectionFilter || "";
+     state.sort = saved.sort || "pinned-newest";
++    state.learningStatusFilter = saved.learningStatusFilter || "";
+     state.showArchived = Boolean(saved.showArchived);
+     state.view = saved.view === "code" ? "library" : (saved.view || "library");
+     dom.searchInput.value = state.query;
+@@ -583,6 +585,7 @@ function saveSettings() {
+     query: state.query,
+     collectionFilter: state.collectionFilter,
+     sort: state.sort,
++    learningStatusFilter: state.learningStatusFilter,
+     showArchived: state.showArchived,
+     view: state.view
+   }));
+@@ -593,6 +596,7 @@ function renderPills() {
+   renderPillSet(dom.categoryPills, ["Semua", ...categories], state.category, (value) => {
+     state.category = value;
++    state.learningStatusFilter = "";
+     resetGridLimits();
+     saveSettings();
+     renderPills();
+@@ -601,6 +605,7 @@ function renderPills() {
+ 
+   renderPillSet(dom.statusPills, ["Semua", ...statuses], state.status, (value) => {
+     state.status = value;
++    state.learningStatusFilter = "";
+     resetGridLimits();
+     saveSettings();
+     renderPills();
+@@ -609,6 +614,7 @@ function renderPills() {
+ 
+   renderPillSet(dom.typePills, fileTypes, state.fileType, (value) => {
+     state.fileType = value;
++    state.learningStatusFilter = "";
+     resetGridLimits();
+     saveSettings();
+     renderPills();
+@@ -617,6 +623,7 @@ function renderPills() {
+ 
+   renderPillSet(dom.mediaTypePills, fileTypes.filter((value) => value !== "Kode"), state.mediaType, (value) => {
+     state.mediaType = value;
++    state.learningStatusFilter = "";
+     resetGridLimits();
+     saveSettings();
+     renderPills();
+@@ -812,6 +819,7 @@ function getFilteredItems(items) {
+     state.mediaType,
+     state.collectionFilter,
+     state.query,
++    state.learningStatusFilter,
+     state.sort,
+     state.showArchived
+   ].join("|") : "";
+@@ -828,6 +836,7 @@ function getFilteredItems(items) {
+     .filter((item) => state.status === "Semua" || item.status === state.status)
+     .filter((item) => state.fileType === "Semua" || getItemFileType(item) === state.fileType || (state.fileType === "Dokumen" && isDocumentItem(item)))
+     .filter((item) => !collectionQuery || String(item.collection || "").toLowerCase().includes(collectionQuery))
++    .filter((item) => state.learningStatusFilter !== "learned" || ["Dipelajari", "Dipakai", "Selesai"].includes(item.status))
+     .filter((item) => {
+       if (!query) return true;
+       return [
+@@ -1418,6 +1427,7 @@ function bindDashboardInteractions() {
+       }
+       if (filter === "Video" || filter === "PDF" || filter === "Gambar") {
+         state.fileType = filter;
++        state.learningStatusFilter = "";
+         state.status = "Semua";
+         state.sort = "pinned-newest";
+         resetGridLimits();
+@@ -1430,6 +1440,7 @@ function bindDashboardInteractions() {
+       if (filter === "Belum dibaca") {
+         state.status = "Belum dibaca";
+         state.fileType = "Semua";
++        state.learningStatusFilter = "";
+         resetGridLimits();
+         saveSettings();
+         renderPills();
+@@ -1437,8 +1448,9 @@ function bindDashboardInteractions() {
+         return;
+       }
+       if (filter === "Sudah dibaca") {
+-        state.status = "Selesai";
++        state.status = "Semua";
+         state.fileType = "Semua";
++        state.learningStatusFilter = "learned";
+         resetGridLimits();
+         saveSettings();
+         renderPills();
+@@ -2334,13 +2346,35 @@ async function deleteItemsByIds(ids) {
+   return true;
+ }
+ 
++async function copyTextSafe(text) {
++  try {
++    if (navigator.clipboard && window.isSecureContext) {
++      await navigator.clipboard.writeText(text);
++      return true;
++    }
++  } catch {}
++  try {
++    const ta = document.createElement("textarea");
++    ta.value = text;
++    ta.setAttribute("readonly", "");
++    ta.style.position = "fixed";
++    ta.style.opacity = "0";
++    document.body.appendChild(ta);
++    ta.select();
++    const ok = document.execCommand("copy");
++    ta.remove();
++    return ok;
++  } catch {
++    return false;
++  }
++}
++
+ async function copyCode(item, button) {
+   if (!item.code) return;
+-  try {
+-    await navigator.clipboard.writeText(item.code);
++  const ok = await copyTextSafe(item.code);
++  if (ok) {
+     pulseButton(button, "Tersalin");
+-  } catch {
++  } else {
+     pulseButton(button, "Gagal");
+   }
+ }
+diff --git a/app/src/main/assets/apps/academy/assets/js/main.js b/app/src/main/assets/apps/academy/assets/js/main.js
+--- a/app/src/main/assets/apps/academy/assets/js/main.js
++++ b/app/src/main/assets/apps/academy/assets/js/main.js
+@@ -255,12 +255,16 @@
+   }
+ 
+   function trackReadingProgress() {
+     var article = document.querySelector('.article-layout .article, .article');
+-    if (article) {
+-      var h1 = article.querySelector('h1');
+-      if (h1) {
+-        localStorage.setItem('amy_last_opened_title', h1.textContent);
+-        localStorage.setItem('amy_last_opened_url', window.location.href);
+-      }
++    if (!article) return;
++    var path = window.location.pathname || '';
++    var isChapterPage = /\/\d{2}-[^/]+\.html$/i.test(path);
++    var isIndexLike = /\/(index|daftar-materi|tentang)\.html$/i.test(path) || article.querySelector('.chapter-list');
++    if (!isChapterPage || isIndexLike) return;
++    var h1 = article.querySelector('h1');
++    if (h1) {
++      localStorage.setItem('amy_last_opened_title', h1.textContent);
++      localStorage.setItem('amy_last_opened_url', window.location.href);
+     }
+   }
+diff --git a/app/src/main/assets/apps/mapping/index.html b/app/src/main/assets/apps/mapping/index.html
+--- a/app/src/main/assets/apps/mapping/index.html
++++ b/app/src/main/assets/apps/mapping/index.html
+@@ -7,8 +7,22 @@
+     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+     <meta name="theme-color" content="#0F111A" />
+     <title>Amy FX Analyzer</title>
++    <script>
++      if (typeof window.Notification === "undefined") {
++        const SafeNotification = function(title, options) {
++          return { title, options: options || {}, onclick: null, close() {} };
++        };
++        SafeNotification.permission = "denied";
++        SafeNotification.requestPermission = function() { return Promise.resolve("denied"); };
++        window.Notification = SafeNotification;
++      }
++    </script>
+     <script type="module" crossorigin src="./assets/index-DKwJega-.js"></script>
+     <link rel="stylesheet" crossorigin href="./assets/index-Dc-k40KW.css">
+   </head>
+@@ -24,5 +38,77 @@
+         let btn = e.target.closest('button, a, .card, .nav-btn, .action-btn, .clickable');
+         if (btn) window.triggerHaptic(20);
+       });
++
++      // Runtime bridge fix for APK mode: the React bundle does not expose raw bslTarget/sslTarget,
++      // so the native scanner gets refreshed from the visible Mapping narrative text.
++      (function() {
++        const state = { lastBsl: "", lastSsl: "", lastKey: "", lastScannerSync: 0 };
++
++        function readTargetsFromText() {
++          const text = document.body ? document.body.innerText || "" : "";
++          const bsl = text.match(/Buy-Side Liquidity \(BSL\)[^0-9]*(\d+(?:\.\d+)?)/i);
++          const ssl = text.match(/Sell-Side Liquidity \(SSL\)[^0-9]*(\d+(?:\.\d+)?)/i);
++          return {
++            bsl: bsl ? bsl[1] : "",
++            ssl: ssl ? ssl[1] : ""
++          };
++        }
++
++        function syncNativeScannerTargets() {
++          try {
++            if (!window.Android || typeof window.Android.startBackgroundScanner !== "function") return;
++            if (localStorage.getItem("bg_scanner") !== "true") return;
++            const key = (localStorage.getItem("twelve_api_key") || "").trim();
++            if (!key) return;
++            const targets = readTargetsFromText();
++            if (!targets.bsl && !targets.ssl) return;
++            const changed = targets.bsl !== state.lastBsl || targets.ssl !== state.lastSsl || key !== state.lastKey;
++            const stale = Date.now() - state.lastScannerSync > 60000;
++            if (!changed && !stale) return;
++            state.lastBsl = targets.bsl;
++            state.lastSsl = targets.ssl;
++            state.lastKey = key;
++            state.lastScannerSync = Date.now();
++            window.Android.startBackgroundScanner(key, targets.bsl || "", targets.ssl || "");
++          } catch (e) {}
++        }
++
++        function normalizeAlertKey(title, message) {
++          return String(title || "") + "|" + String(message || "")
++            .replace(/\d+(?:\.\d+)?/g, "#")
++            .replace(/\([^)]*\d[^)]*\)/g, "(#)")
++            .replace(/\s+/g, " ")
++            .trim();
++        }
++
++        function wrapAndroidNotifications() {
++          if (!window.Android || window.Android.__amyFxWrapped) return;
++          const last = new Map();
++          ["showNotificationWithUrl", "showNotification"].forEach(function(name) {
++            if (typeof window.Android[name] !== "function") return;
++            const original = window.Android[name].bind(window.Android);
++            window.Android[name] = function(title, message) {
++              const key = normalizeAlertKey(title, message);
++              const now = Date.now();
++              const previous = last.get(key) || 0;
++              if (now - previous < 300000) return;
++              last.set(key, now);
++              return original.apply(null, arguments);
++            };
++          });
++          window.Android.__amyFxWrapped = true;
++        }
++
++        wrapAndroidNotifications();
++        setInterval(function() {
++          wrapAndroidNotifications();
++          syncNativeScannerTargets();
++        }, 5000);
++        document.addEventListener("visibilitychange", function() {
++          if (document.visibilityState === "visible") syncNativeScannerTargets();
++        });
++      })();
+     </script>
+   </body>
+ </html>

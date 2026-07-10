@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Draw on Liquidity — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+</head>
+<body>
+  <script>requireLogin();</script>
+  <header class="topbar hide-until-auth">
+    <nav class="nav">
+      <a class="brand" href="../index.html"><span class="brand-mark">A</span><span>Amy FX Academy</span></a>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div class="navlinks" id="navlinks">
+        <a href="../index.html">Beranda</a>
+        <a href="../daftar-materi.html">Daftar Materi</a>
+        <a href="../tentang.html">Tentang</a>
+        <a href="../glosarium/index.html">Glosarium</a>
+        
+      </div>
+    </nav>
+  </header>
+  <main class="container hide-until-auth">
+    <div class="article-layout">
+      <article class="article">
+        <div class="breadcrumb"><a href="../index.html">Beranda</a> › <a href="index.html">Bagian 17 — Advanced Liquidity Mapping</a></div>
+        <div class="eyebrow">Bagian 17 — Advanced Liquidity Mapping</div>
+        <h1>Draw on Liquidity</h1>
+
+        <div class="image-slot" data-img-path="assets/images/lessons/17-draw-on-liquidity.jpg" data-prompt="Buat ilustrasi edukasi trading untuk materi &#x27;Draw on Liquidity&#x27; dari &#x27;Bagian 17 — Advanced Liquidity Mapping&#x27;, gaya clean light website, rasio 16:9, warna putih, hijau lembut, biru lembut, sedikit aksen gold. Tampilkan chart sederhana, area liquidity, POI, candle displacement, dan checklist trading. Jangan gunakan klaim profit pasti. Cocok untuk website Amy FX Academy." data-caption="Ilustrasi Draw on Liquidity"></div>
+        <div class="note"><strong>Analogi gampangnya:</strong> Bayangkan market seperti orang yang mau mengambil barang di rak. Kadang dia cuma menyentuh rak, kadang mengambil satu barang, dan kadang memborong sampai rak kosong. Sweep, grab, dan run juga seperti itu: bentuknya mirip, tapi niatnya berbeda.</div>
+
+
+        <h2>1. Arti Sederhananya</h2>
+<p>Kalau ada beberapa area liquidity di chart, market tidak selalu tertarik ke semuanya sekaligus.</p>
+<p>Biasanya ada satu area yang paling logis untuk menjadi target berikutnya.</p>
+<p>Itulah yang disebut <code>draw on liquidity</code>.</p>
+<h2>2. Contoh Bentuk Target</h2>
+<p>Target itu bisa berupa:</p>
+<ul>
+<li>swing high</li>
+<li>swing low</li>
+<li>equal highs</li>
+<li>equal lows</li>
+<li>previous high</li>
+<li>previous low</li>
+</ul>
+<p>Yang penting bukan namanya, tetapi logikanya:</p>
+<ul>
+<li>area mana yang masih obvious</li>
+<li>area mana yang belum diambil</li>
+<li>area mana yang paling dekat atau paling penting</li>
+</ul>
+<h2>3. Kenapa Konsep Ini Berguna</h2>
+<p>Kalau terbiasa mencari <code>draw on liquidity</code>, kamu akan lebih mudah:</p>
+<ul>
+<li>menentukan bias</li>
+<li>menentukan target</li>
+<li>menghindari entry melawan arah yang lebih logis</li>
+</ul>
+<h2>4. Cara Berlatih</h2>
+<p>Saat buka chart, biasakan bertanya:</p>
+<ol>
+<li>high penting di mana</li>
+<li>low penting di mana</li>
+<li>mana yang sudah diambil</li>
+<li>mana yang belum diambil</li>
+<li>mana yang paling mungkin menjadi target berikutnya</li>
+</ol>
+<p>Kalau lima pertanyaan ini bisa dijawab, pembacaan chart kamu akan jauh lebih terarah.</p>
+<h2>5. Lanjut Setelah Ini</h2>
+<p>Bab-bab berikutnya akan mulai memperdalam jenis liquidity lain dan perubahan struktur yang lebih detail.</p>
+<h2>Kesalahan Pemula yang Perlu Dihindari</h2>
+<p>Membaca semua break sebagai perubahan arah. Struktur kecil bisa berubah tanpa mengubah struktur besar.</p>
+<h2>Kesimpulan Bab</h2>
+<p>Struktur membantu membaca arah, sedangkan liquidity membantu membaca target. Keduanya harus dipakai bersama.</p>
+
+
+        <div class="source-note">Materi ini disusun ulang dari Materi Trading Amy ZIP dan dirapikan ke gaya Amy FX Academy. Istilah teknis seperti liquidity, sweep, FVG, OB, IFVG, MSS, CISD, entry, Stop Loss, dan Take Profit tetap dipertahankan.</div>
+        <nav class="page-nav">
+          <a class="btn" href="02-equal-highs-dan-equal-lows.html">← Equal Highs dan Equal Lows</a>
+          <a class="btn gold" href="../daftar-materi.html">Daftar Materi</a>
+          <a class="btn primary" href="04-internal-dan-external-liquidity-memetakan-target-kecil-vs-target-besar.html">Internal dan External Liquidity (Memetakan Target Kecil vs Target Besar) →</a>
+        </nav>
+      </article>
+      <aside class="toc-card">
+        <h3>Bagian 17 — Advanced Liquidity Mapping</h3>
+        <ul><li><a class="" href="01-buy-side-liquidity-dan-sell-side-liquidity.html">Buy-Side Liquidity dan Sell-Side Liquidity</a></li>
+<li><a class="" href="02-equal-highs-dan-equal-lows.html">Equal Highs dan Equal Lows</a></li>
+<li><a class="active" href="03-draw-on-liquidity.html">Draw on Liquidity</a></li>
+<li><a class="" href="04-internal-dan-external-liquidity-memetakan-target-kecil-vs-target-besar.html">Internal dan External Liquidity (Memetakan Target Kecil vs Target Besar)</a></li>
+<li><a class="" href="05-liquidity-void-dan-cara-mengisinya-memahami-ketidakseimbangan-harga-yang-impulsi.html">Liquidity Void dan Cara Mengisinya (Memahami Imbalance Harga yang Impulsif)</a></li>
+<li><a class="" href="06-trendline-liquidity-dan-retail-patterns-membongkar-jebakan-pola-ritel.html">Trendline Liquidity dan Retail Patterns (Membongkar Jebakan Pola Ritel)</a></li>
+<li><a class="" href="07-high-resistance-vs-low-resistance-liquidity-run-hrlr-vs-lrlr.html">High Resistance vs. Low Resistance Liquidity Run (HRLR vs LRLR)</a></li>
+<li><a class="" href="08-irl-dan-erl-advance.html">IRL &amp; ERL Advance</a></li></ul>
+      </aside>
+    </div>
+  </main>
+  <footer class="footer hide-until-auth">© 2026 Amy FX Academy. Belajar Trading dari Nol sampai Mandiri.</footer>
+</body>
+</html>

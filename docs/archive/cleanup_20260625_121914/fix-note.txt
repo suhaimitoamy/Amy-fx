@@ -1,0 +1,1 @@
+Fix project card clicks and replace fallback icons with internal app icons.

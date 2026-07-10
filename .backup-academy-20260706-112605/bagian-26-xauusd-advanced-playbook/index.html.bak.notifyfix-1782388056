@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Bagian 26 — OTE &amp; Standard Deviation Targeting — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+</head>
+<body>
+<script>requireLogin();</script>
+<header class="topbar hide-until-auth">
+  <nav class="nav">
+    <a class="brand" href="../index.html"><span class="brand-mark">A</span><span>Amy FX Academy</span></a>
+    <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="navlinks" id="navlinks">
+      <a href="../index.html">Beranda</a>
+      <a href="../daftar-materi.html">Daftar Materi</a>
+      <a href="../tentang.html">Tentang</a>
+      <a href="../glosarium/index.html">Glosarium</a>
+      
+    </div>
+  </nav>
+</header>
+<main class="container hide-until-auth">
+  <section class="article">
+    <div class="breadcrumb"><a href="../index.html">Beranda</a> › <a href="../daftar-materi.html">Daftar Materi</a></div>
+    <div class="eyebrow">Bagian 26 — OTE &amp; Standard Deviation Targeting</div>
+    <h1>OTE &amp; Standard Deviation Targeting</h1>
+    <p>Memakai OTE, Fibonacci ICT, premium/discount, STDV projection, dan target ke liquidity secara lebih objektif.</p>
+    <div class="chapter-list">
+      <a class="chapter-row" href="01-ote-optimal-trade-entry-menemukan-titik-masuk-paling-efisien.html"><span><strong>OTE: Optimal Trade Entry: Menemukan Titik Masuk Paling Efisien</strong><br><small>Bagian 26 — OTE &amp; Standard Deviation Targeting</small></span><span>→</span></a><a class="chapter-row" href="02-proyeksi-target-dengan-standard-deviation-fibonacci.html"><span><strong>Proyeksi Target dengan Standard Deviation Fibonacci</strong><br><small>Bagian 26 — OTE &amp; Standard Deviation Targeting</small></span><span>→</span></a><a class="chapter-row" href="03-dealing-range-premium-dan-discount.html"><span><strong>Dealing Range, Premium, dan Discount</strong><br><small>Bagian 26 — OTE &amp; Standard Deviation Targeting</small></span><span>→</span></a><a class="chapter-row" href="04-consequent-encroachment-ce-presisi-di-jantung-imbalance.html"><span><strong>Consequent Encroachment (CE): Presisi di Jantung Imbalance</strong><br><small>Bagian 26 — OTE &amp; Standard Deviation Targeting</small></span><span>→</span></a><a class="chapter-row" href="05-target-dan-partial-take-profit-mengelola-hasil-secara-objektif.html"><span><strong>Target dan Partial Take Profit: Mengelola Hasil Secara Objektif</strong><br><small>Bagian 26 — OTE &amp; Standard Deviation Targeting</small></span><span>→</span></a>
+    </div>
+  <div class="quiz-container" data-module="xauusd-advanced-playbook"></div>
+<script src="../assets/js/quiz.js"></script>
+</section>
+</main>
+<footer class="footer hide-until-auth">© 2026 Amy FX Academy. Belajar Trading dari Nol sampai Mandiri.</footer>
+</body>
+</html>
