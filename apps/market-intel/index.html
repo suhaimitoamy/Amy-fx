@@ -4,10 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Market Intel — Amy FX</title>
+  <link rel="stylesheet" href="../shared/market-intelligence.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="intel-container">
+    <section id="market-command-strip" class="amy-command-strip" aria-label="Market command strip"></section>
     <!-- Header -->
     <header class="intel-header">
       <h1>🔍 Market Intel</h1>
@@ -20,6 +22,8 @@
       <button class="intel-tab" data-tab="heatmap">🔥 Heatmap</button>
       <button class="intel-tab" data-tab="liquidity">💧 Liquidity</button>
     </nav>
+
+    <section id="intel-briefing" class="amy-briefing" aria-live="polite"></section>
 
     <!-- News Panel -->
     <section id="panel-news" class="intel-panel active">
@@ -55,6 +59,7 @@
     </div>
   </div>
 
+  <script src="../shared/market-intelligence.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

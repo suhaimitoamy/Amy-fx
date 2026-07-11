@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-07-11 — Mapping Logic Production Hardening
+
+- Prevented swept liquidity from becoming active again after price reversal.
+- Replaced latest-ATR historical validation with point-in-time ATR.
+- Required sweep candles to close back inside the liquidity level.
+- Raised minimum setup RR to 1:2 and made violations fatal.
+- Combined HTF structure with Premium/Discount location.
+- Fixed Silver Bullet precedence inside the New York session.
+- Added seven production-engine regression tests.
+
+## 2026-07-11 — Institutional Intelligence UI
+
+- Added shared XAU/USD Market Command Strip to Market Intel and Mapping.
+- Added rule-based Market Briefing combining liquidity, Mapping, session, and news risk.
+- Upgraded Liquidity Node Map with proximity/freshness strength and Nearest Draw emphasis.
+- Added Setup Lifecycle Rail for Sweep → MSS → FVG/OB → Entry → Target.
+- Added request cancellation, visibility-aware refresh, reduced-motion handling, and targeted Mapping live-price updates.
+
 ## 2026-07-10 — Stability Pass
 
 ## 2026-07-11 — Mockup UI Pass

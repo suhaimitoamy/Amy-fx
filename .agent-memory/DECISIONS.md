@@ -1,5 +1,25 @@
 # Technical Decisions
 
+## 2026-07-11
+
+### Mapping Production Logic
+- Liquidity state is historical and irreversible within the loaded candle set: once a post-origin candle sweeps a level, that level cannot return to ACTIVE.
+- Structure displacement uses point-in-time ATR from candles available before the breakout.
+- Valid liquidity sweeps require both wick penetration and a close back inside the swept range.
+- Minimum accepted setup RR is 1:2; lower RR is a fatal conflict and INVALID.
+- HTF structure owns directional bias; Premium/Discount is an alignment filter, not a standalone direction signal.
+- Silver Bullet takes precedence over the broader New York Killzone during 10:00–11:00 New York time.
+
+### Institutional Intelligence UI
+- Market Intel and Mapping share a local `AmyFXIntel` snapshot/event layer.
+- The shared layer is presentation-only and does not replace or modify the ICT rules engine.
+- Market briefing remains deterministic and rule-based; it must not be presented as AI or an execution signal.
+- Market Intel requests are cancellable per panel and pause while the WebView is hidden.
+
+### Mapping Render Performance
+- Live price ticks update targeted DOM nodes instead of fully rebuilding the Analyze view.
+- Connection and scanner synchronization use explicit selectors; full-document scanning is not allowed in the recurring one-second task.
+
 ## 2026-07-10
 
 ### Notification Ownership

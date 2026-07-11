@@ -1,5 +1,32 @@
 # Bug History
 
+## Fixed Mapping Logic Defects — 2026-07-11
+
+### Historical Liquidity Reactivation
+- **Severity:** High
+- **Cause:** Mapping classified liquidity from current price only, allowing previously swept levels to become active again after price returned.
+- **Fix:** BSL/SSL and EQH/EQL now scan every closed candle after their origin index and preserve `SWEPT` state.
+
+### Historical ATR Regime Contamination
+- **Severity:** High
+- **Cause:** All historical structure breaks used the latest 14-candle ATR.
+- **Fix:** Each breakout now uses ATR calculated only from candles preceding that breakout.
+
+### Loose Sweep and RR Validation
+- **Severity:** High
+- **Cause:** The primary sweep model did not require a close back inside the level, and RR below 1:2 could survive filtering.
+- **Fix:** Sweep requires wick penetration plus reclaim close; RR below 2.0 is a fatal conflict.
+
+### HTF Location-Only Bias
+- **Severity:** High
+- **Cause:** Discount automatically implied bullish and Premium automatically implied bearish.
+- **Fix:** Confirmed HTF structure determines direction; Premium/Discount now measures alignment and entry quality.
+
+### Unreachable Silver Bullet Window
+- **Severity:** Medium
+- **Cause:** New York Killzone matched before its nested Silver Bullet window.
+- **Fix:** Silver Bullet is evaluated first.
+
 ## Fixed Bugs
 
 ### Mapping Closed-Candle Contamination

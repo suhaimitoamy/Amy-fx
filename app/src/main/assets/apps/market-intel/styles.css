@@ -31,6 +31,8 @@ body {
   padding: 12px;
 }
 
+.intel-container > .amy-command-strip { top: 0; }
+
 /* ─── Header ────────────────────────────── */
 .intel-header {
   text-align: center;
@@ -367,6 +369,7 @@ body {
   align-items: center;
   width: 50%;
   position: relative;
+  opacity: calc(.56 + var(--strength) * .44);
 }
 .liq-node-wrapper:nth-child(odd) {
   align-self: flex-start;
@@ -405,16 +408,19 @@ body {
   width: 140px;
   position: relative;
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  transform: scale(var(--node-scale,1));
   animation: slideIn 0.3s ease both;
 }
 .node-card.bsl {
   border-top: 2px solid var(--red);
-  box-shadow: 0 -4px 15px rgba(231,76,60,0.15);
+  box-shadow: 0 -4px 18px rgba(231,76,60,.2);
 }
 .node-card.ssl {
   border-bottom: 2px solid var(--green);
-  box-shadow: 0 4px 15px rgba(46,204,113,0.15);
+  box-shadow: 0 4px 18px rgba(46,204,113,.2);
 }
+.node-card.nearest-draw{border-color:var(--gold);box-shadow:0 0 20px rgba(212,175,55,.28)}
+.nearest-label{margin:-2px 0 7px;text-align:center;color:var(--gold);font:800 8px/1 'Courier New',monospace;letter-spacing:.8px}
 
 .node-head {
   display: flex;
@@ -476,3 +482,5 @@ body {
 .bsl-dot { background: var(--red); }
 .ssl-dot { background: var(--green); }
 .leg-active { display: inline-block; }
+
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}

@@ -69,10 +69,12 @@ function livePriceWatchdog(){
 
 function initApp() {
   document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
+  window.AmyFXIntel?.mountStrip(document.getElementById('mapping-command-strip'));
   applyAmyFxRoute();
   render();
   setTimeout(autoConnectLivePrice,600);
   setInterval(livePriceWatchdog,30000);
+  document.addEventListener('visibilitychange',()=>document.body.classList.toggle('webview-idle',document.hidden));
 }
 
 if (document.readyState === 'loading') {

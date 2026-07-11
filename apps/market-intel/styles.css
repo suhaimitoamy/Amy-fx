@@ -23,12 +23,15 @@ body {
   font-size: 14px;
   min-height: 100vh;
   overflow-x: hidden;
+  overscroll-behavior-y: none;
 }
 
 .intel-container {
   max-width: 100%;
   padding: 12px;
 }
+
+.intel-container > .amy-command-strip { top: 0; }
 
 /* ─── Header ────────────────────────────── */
 .intel-header {
@@ -152,62 +155,87 @@ body {
   border: 1px solid var(--border);
 }
 
-.hz-row {
-  position: absolute;
-  left: 0;
-  right: 0;
+/* ─── Price Ladder Heatmap ─── */
+.ladder-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 8px;
-  transform: translateY(-50%);
-  height: 20px;
+  gap: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.02);
 }
-.hz-price {
-  font-size: 10px;
-  color: var(--text-dim);
-  width: 52px;
-  text-align: right;
+.ladder-row.ladder-now {
+  background: rgba(212, 175, 55, 0.05);
+}
+.ladder-price-col {
+  width: 65px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
   flex-shrink: 0;
-  font-weight: 600;
 }
-.hz-price.current {
-  color: var(--gold);
+.ladder-price {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
   font-weight: 800;
-  font-size: 11px;
+  color: var(--text-dim);
 }
-.hz-bars {
+.ladder-now .ladder-price {
+  color: var(--gold);
+  text-shadow: 0 0 5px rgba(212, 175, 55, 0.4);
+}
+.ladder-now-indicator {
+  font-size: 10px;
+  color: var(--gold);
+  animation: pulse 1.5s infinite;
+}
+.ladder-blocks-col {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  align-items: center;
+  border-left: 2px solid rgba(255,255,255,0.06);
+  padding-left: 8px;
+  min-height: 20px;
 }
-.hz-bar {
-  height: 8px;
-  border-radius: 2px;
-  font-size: 7px;
-  color: #fff;
+.ladder-blocks {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+.heat-block {
+  width: 6px;
+  height: 14px;
+  border-radius: 1px;
+}
+.block-resist {
+  background: #ff4c4c;
+  box-shadow: 0 0 6px rgba(255, 76, 76, 0.4);
+}
+.block-support {
+  background: #00d97e;
+  box-shadow: 0 0 6px rgba(0, 217, 126, 0.4);
+}
+.ladder-meta-col {
+  width: 70px;
   display: flex;
   align-items: center;
-  padding-left: 3px;
-  min-width: 14px;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
 }
-.hz-bar.resist {
-  background: linear-gradient(90deg, rgba(231,76,60,0.8), rgba(231,76,60,0.3));
-}
-.hz-bar.support {
-  background: linear-gradient(90deg, rgba(46,204,113,0.8), rgba(46,204,113,0.3));
-}
-.hz-label {
+.ladder-label {
   font-size: 9px;
-  color: var(--text-dim);
-  white-space: nowrap;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.06);
+  color: #bbb;
+  text-transform: uppercase;
 }
-.hz-now {
-  font-size: 9px;
-  color: var(--gold);
-  font-weight: 700;
-  animation: pulse 1.5s infinite;
+.ladder-vol {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  font-weight: 800;
+  color: #ddd;
 }
 
 .heatmap-legend {
@@ -278,50 +306,181 @@ body {
   max-height: 1000px;
 }
 
-/* ─── Liquidity List ────────────────────── */
-.liquidity-list {
+/* ─── Node Map Dual Cluster Liquidity ─── */
+.liq-network {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  position: relative;
+  padding: 20px 0;
+  overflow: hidden;
+  gap: 16px;
 }
-.liq-card {
+.liq-network::before {
+  content: '';
+  position: absolute;
+  top: 30px;
+  bottom: 30px;
+  left: 50%;
+  width: 2px;
+  margin-left: -1px;
+  background: linear-gradient(to bottom, rgba(231,76,60,0.5), var(--gold), rgba(46,204,113,0.5));
+  z-index: 1;
+}
+
+.liq-center {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #1a1500 0%, #050505 80%);
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.4), inset 0 0 15px rgba(212, 175, 55, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  position: relative;
+  animation: pulse 2s infinite;
+}
+.liq-center span {
+  font-size: 11px;
+  color: var(--gold);
+  letter-spacing: 1px;
+}
+.liq-center strong {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 15px;
+  color: #fff;
+  text-shadow: 0 0 8px rgba(255,255,255,0.5);
+  margin-top: 4px;
+}
+
+.liq-branch {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  z-index: 5;
+  position: relative;
+}
+.liq-node-wrapper {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: 10px 12px;
-  border-left: 3px solid var(--gold-dim);
-  animation: slideIn 0.3s ease both;
-  flex-wrap: wrap;
+  width: 50%;
+  position: relative;
+  opacity: calc(.56 + var(--strength) * .44);
 }
-.liq-badge {
+.liq-node-wrapper:nth-child(odd) {
+  align-self: flex-start;
+  justify-content: flex-end;
+  padding-right: 25px;
+}
+.liq-node-wrapper:nth-child(even) {
+  align-self: flex-end;
+  justify-content: flex-start;
+  padding-left: 25px;
+}
+
+/* Connectors */
+.liq-node-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 25px;
+  height: 2px;
+  z-index: 1;
+}
+.liq-node-wrapper:nth-child(odd)::after {
+  right: 0;
+  background: linear-gradient(to right, transparent, var(--gold));
+}
+.liq-node-wrapper:nth-child(even)::after {
+  left: 0;
+  background: linear-gradient(to left, transparent, var(--gold));
+}
+
+.node-card {
+  background: #0a0a0a;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 10px 12px;
+  width: 140px;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  transform: scale(var(--node-scale,1));
+  animation: slideIn 0.3s ease both;
+}
+.node-card.bsl {
+  border-top: 2px solid var(--red);
+  box-shadow: 0 -4px 18px rgba(231,76,60,.2);
+}
+.node-card.ssl {
+  border-bottom: 2px solid var(--green);
+  box-shadow: 0 4px 18px rgba(46,204,113,.2);
+}
+.node-card.nearest-draw{border-color:var(--gold);box-shadow:0 0 20px rgba(212,175,55,.28)}
+.nearest-label{margin:-2px 0 7px;text-align:center;color:var(--gold);font:800 8px/1 'Courier New',monospace;letter-spacing:.8px}
+
+.node-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.node-badge {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
   padding: 2px 6px;
   border-radius: 4px;
-  text-transform: uppercase;
+}
+.node-card.bsl .node-badge { background: rgba(231,76,60,0.2); color: var(--red); }
+.node-card.ssl .node-badge { background: rgba(46,204,113,0.2); color: var(--green); }
+.node-active {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 6px var(--gold);
+}
+
+.node-price {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 16px;
+  font-weight: 900;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 8px;
   letter-spacing: 0.5px;
-  flex-shrink: 0;
 }
-.liq-badge.bsl {
-  background: rgba(231, 76, 60, 0.2);
-  color: var(--red);
-  border: 1px solid rgba(231, 76, 60, 0.3);
-}
-.liq-badge.ssl {
-  background: rgba(46, 204, 113, 0.2);
-  color: var(--green);
-  border: 1px solid rgba(46, 204, 113, 0.3);
-}
-.liq-price {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--gold);
-  flex-shrink: 0;
-}
-.liq-meta {
-  font-size: 11px;
+.node-card.bsl .node-price { color: #ff8a8a; }
+.node-card.ssl .node-price { color: #8affad; }
+
+.node-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
   color: var(--text-dim);
-  white-space: nowrap;
 }
+.node-stat {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.liq-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px;
+  margin-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  font-size: 10px;
+  color: var(--text-dim);
+  justify-content: center;
+}
+.leg-item { display: flex; align-items: center; gap: 6px; }
+.leg-dot { width: 8px; height: 8px; border-radius: 2px; }
+.bsl-dot { background: var(--red); }
+.ssl-dot { background: var(--green); }
+.leg-active { display: inline-block; }
+
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}

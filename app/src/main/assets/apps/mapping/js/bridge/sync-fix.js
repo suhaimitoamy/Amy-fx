@@ -156,7 +156,7 @@
     const status=computedStatus();
     const cls=status==='Connected'?'amyfx-status-connected':status==='Cache'?'amyfx-status-cache':'amyfx-status-offline';
 
-    let targets=Array.from(document.querySelectorAll('header *,.header *,.topbar *,.app-header *'))
+    let targets=Array.from(document.querySelectorAll('#conn,[data-connection-status],header .status,.topbar .status'))
       .filter(el=>leaf(el)&&/^(Offline|Online|Connected|Cache)$/i.test(el.textContent.trim()));
 
     if(!targets.length){
@@ -179,7 +179,13 @@
     const st=getState();
     const scannerStatus=st&&st.bg?'ON':'OFF';
 
-    Array.from(document.querySelectorAll('*')).forEach(el=>{
+    const direct=Array.from(document.querySelectorAll('[data-scanner-status]'));
+    if(direct.length){
+      direct.forEach(el=>{el.textContent=scannerStatus==='ON'?'📡 Background Scanner ON':'📴 Background Scanner OFF'});
+      return;
+    }
+
+    Array.from(document.querySelectorAll('.settings,.scanner-card')).forEach(el=>{
       if(!/Background Scanner/i.test(el.textContent||''))return;
 
       const card=el.closest('section,.card,div')||el.parentElement;
@@ -198,9 +204,11 @@
   }
 
   function syncClock(){
-    Array.from(document.querySelectorAll('[data-amyfx-wib-clock]')).forEach(el=>{
+    const tracked=Array.from(document.querySelectorAll('[data-amyfx-wib-clock]'));
+    tracked.forEach(el=>{
       el.textContent='WIB '+wibTime();
     });
+    if(tracked.length)return;
 
     Array.from(document.querySelectorAll('.muted,small,span,div')).forEach(el=>{
       if(!leaf(el))return;
@@ -409,8 +417,6 @@
 
   setInterval(function(){
     syncClock();
-    syncHeader();
-    syncScanner();
   },1000);
 
   window.addEventListener('online',postRender);

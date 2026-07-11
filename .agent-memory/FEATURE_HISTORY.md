@@ -1,5 +1,16 @@
 # Feature History
 
+## Mapping Logic Production Hardening
+- **Date:** 2026-07-11
+- **Status:** ✅ Implemented
+- **Description:** Added historical liquidity sweep tracking, point-in-time ATR, strict sweep reclaim validation, minimum 1:2 RR rejection, structure-aware HTF narrative, active Silver Bullet routing, and seven JavaScript regression tests against the production engine.
+
+## Institutional Market Intelligence Upgrade
+- **Date:** 2026-07-11
+- **Status:** ✅ Implemented
+- **Description:** Added a shared Market Command Strip, deterministic Intel Briefing, distance-weighted Liquidity Magnetic Spine, Mapping Setup Lifecycle Rail, background-aware Market Intel refresh, request cancellation, and targeted live-price rendering for Android WebView performance.
+- **Scope:** Additive UI/shared modules only. Heatmap computation, liquidity endpoint logic, ICT rules engine, and native scanner ownership remain unchanged.
+
 ## Admin Academy Link Fix
 - **Date:** 2026-07-10
 - **Status:** ✅ Implemented

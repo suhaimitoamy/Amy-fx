@@ -11,19 +11,43 @@ const REFRESH_INTERVAL = 60 * 1000; // Auto-refresh setiap 1 menit
 
 // ─── State ───────────────────────────────────────────────
 let currentTab = 'news';
+const requestControllers = {};
+const panelLoadedAt = {};
+
+function beginRequest(panel) {
+  if (requestControllers[panel]) requestControllers[panel].abort();
+  requestControllers[panel] = new AbortController();
+  return requestControllers[panel].signal;
+}
+
+function shouldRefresh(panel, maxAge = 30000) {
+  return !panelLoadedAt[panel] || Date.now() - panelLoadedAt[panel] > maxAge;
+}
 
 // ─── Init ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  window.AmyFXIntel?.mountStrip(document.getElementById('market-command-strip'));
+  window.AmyFXIntel?.mountBriefing(document.getElementById('intel-briefing'));
   setupTabs();
   loadNews();
   loadHeatmap();
 
   // Auto-refresh
   setInterval(() => {
+    if (document.hidden) return;
     if (currentTab === 'news') loadNews(true);
     else if (currentTab === 'heatmap') loadHeatmap(true);
     else if (currentTab === 'liquidity') loadLiquidity(true);
   }, REFRESH_INTERVAL);
+
+  document.addEventListener('visibilitychange', () => {
+    document.body.classList.toggle('webview-idle', document.hidden);
+    if (!document.hidden) {
+      if (currentTab === 'news' && shouldRefresh('news', REFRESH_INTERVAL)) loadNews(true);
+      if (currentTab === 'heatmap' && shouldRefresh('heatmap', REFRESH_INTERVAL)) loadHeatmap(true);
+      if (currentTab === 'liquidity' && shouldRefresh('liquidity', REFRESH_INTERVAL)) loadLiquidity(true);
+    }
+  });
 });
 
 // ─── Tab Navigation ──────────────────────────────────────
@@ -39,9 +63,9 @@ function setupTabs() {
       btn.classList.add('active');
       document.getElementById(`panel-${tab}`).classList.add('active');
 
-      if (tab === 'heatmap') loadHeatmap();
-      else if (tab === 'liquidity') loadLiquidity();
-      else loadNews();
+      if (tab === 'heatmap' && shouldRefresh('heatmap')) loadHeatmap();
+      else if (tab === 'liquidity' && shouldRefresh('liquidity')) loadLiquidity();
+      else if (tab === 'news' && shouldRefresh('news')) loadNews();
     });
   });
 }
@@ -53,7 +77,7 @@ async function loadNews(silent = false) {
   if (!silent) status.textContent = '🔄 Memuat berita...';
 
   try {
-    const res = await fetch(`${API_BASE}/news?limit=10`);
+    const res = await fetch(`${API_BASE}/news?limit=10`, { signal: beginRequest('news') });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
@@ -63,17 +87,38 @@ async function loadNews(silent = false) {
       return;
     }
 
+    const sortedNews = [...data.news].sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0));
+    const latestNews = sortedNews[0];
+    if (latestNews) {
+      const currentNewsId = (latestNews.time || '') + (latestNews.text || '');
+      const lastNewsId = localStorage.getItem('amy_last_news_id');
+      
+      if (lastNewsId && lastNewsId !== currentNewsId) {
+        const title = '📰 Breaking News XAU/USD';
+        const msg = latestNews.text || 'Berita baru telah tiba.';
+        if (window.Android?.showNotificationWithUrl) {
+          window.Android.showNotificationWithUrl(title, msg, location.href);
+        } else if (typeof Notification !== 'undefined') {
+          Notification.requestPermission().then(p => p === 'granted' && new Notification(title, { body: msg }));
+        }
+      }
+      localStorage.setItem('amy_last_news_id', currentNewsId);
+    }
+
     status.textContent = `📰 ${data.news.length} berita relevan • ${formatTime(data.updated)}`;
-    renderNews(data.news);
+    panelLoadedAt.news = Date.now();
+    window.AmyFXIntel?.write('news', { updated: data.updated, items: sortedNews.slice(0, 10) });
+    renderNews(sortedNews);
   } catch (e) {
+    if (e.name === 'AbortError') return;
     status.textContent = '⚠️ Gagal memuat berita';
     list.innerHTML = '<div class="empty-state">⚠️ Gagal terhubung. Coba lagi nanti.</div>';
   }
 }
 
-function renderNews(news) {
+function renderNews(sortedNews) {
   const list = document.getElementById('news-list');
-  list.innerHTML = news.map((item, i) => `
+  list.innerHTML = sortedNews.map((item, i) => `
     <div class="news-item" style="animation-delay:${i * 0.05}s" onclick="this.classList.toggle('expanded')">
       <div class="news-time">${formatTime(item.time)}</div>
       <div class="news-text">${escapeHtml(item.text)}</div>
@@ -88,7 +133,7 @@ async function loadHeatmap(silent = false) {
   if (!silent) status.textContent = '🔄 Menghitung heatmap...';
 
   try {
-    const res = await fetch(`${API_BASE}/heatmap?interval=15min&outputsize=200`);
+    const res = await fetch(`${API_BASE}/heatmap?interval=15min&outputsize=200`, { signal: beginRequest('heatmap') });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
@@ -100,8 +145,11 @@ async function loadHeatmap(silent = false) {
     document.getElementById('heatmap-price').textContent =
       `💰 XAU/USD ${data.currentPrice?.toFixed(2) || '--'}`;
     status.textContent = `🔥 ${data.zones.length} zona likuiditas • ${formatTime(data.updated)}`;
+    panelLoadedAt.heatmap = Date.now();
+    window.AmyFXIntel?.write('heatmap', { updated: data.updated, currentPrice: data.currentPrice, zones: data.zones });
     renderHeatmap(data.zones, data.currentPrice);
   } catch (e) {
+    if (e.name === 'AbortError') return;
     status.textContent = '⚠️ Gagal memuat heatmap';
   }
 }
@@ -110,36 +158,45 @@ function renderHeatmap(zones, currentPrice) {
   const canvas = document.getElementById('heatmap-canvas');
   if (!zones.length) return;
 
-  // Temukan rentang harga
-  const allPrices = zones.map(z => z.price);
-  if (currentPrice) allPrices.push(currentPrice);
-  const maxPrice = Math.max(...allPrices) + 2;
-  const minPrice = Math.min(...allPrices) - 2;
-  const totalRange = maxPrice - minPrice;
+  const sortedZones = [...zones].sort((a,b) => b.price - a.price);
+  const maxActivity = Math.max(...sortedZones.map(z => z.totalActivity), 1);
 
-  // Temukan max activity untuk scaling
-  const maxActivity = Math.max(...zones.map(z => z.totalActivity), 1);
+  canvas.style.display = 'flex';
+  canvas.style.flexDirection = 'column';
+  canvas.style.gap = '0';
+  canvas.style.padding = '8px 0';
+  canvas.style.overflowY = 'auto';
 
-  canvas.innerHTML = zones.map(z => {
-    const pct = ((z.price - minPrice) / totalRange) * 100;
+  function genBlocks(count, max, isResist) {
+    if(!count || count === 0) return '';
+    const maxBlocks = 20;
+    const blocks = Math.ceil((count / max) * maxBlocks);
+    const typeClass = isResist ? 'block-resist' : 'block-support';
+    return Array(blocks).fill(`<div class="heat-block ${typeClass}"></div>`).join('');
+  }
+
+  canvas.innerHTML = sortedZones.map(z => {
     const isCurrent = z.isCurrent;
-    const resistH = z.resistCount > 0 ? (z.resistCount / maxActivity) * 60 : 0;
-    const supportH = z.supportCount > 0 ? (z.supportCount / maxActivity) * 60 : 0;
-
     return `
-      <div class="hz-row" style="top:${(100 - pct).toFixed(1)}%">
-        <span class="hz-price ${isCurrent ? 'current' : ''}">${z.price}</span>
-        <div class="hz-bars">
-          ${z.resistCount > 0 ? `<div class="hz-bar resist" style="width:${z.resistCount / maxActivity * 100}%" title="Resist: ${z.resistCount}">${z.resistCount}</div>` : ''}
-          ${z.supportCount > 0 ? `<div class="hz-bar support" style="width:${z.supportCount / maxActivity * 100}%" title="Support: ${z.supportCount}">${z.supportCount}</div>` : ''}
+      <div class="ladder-row ${isCurrent ? 'ladder-now' : ''}">
+        <div class="ladder-price-col">
+          <span class="ladder-price">${z.price}</span>
+          ${isCurrent ? '<span class="ladder-now-indicator">◀</span>' : ''}
         </div>
-        ${z.label ? `<span class="hz-label">${z.label}</span>` : ''}
-        ${isCurrent ? '<span class="hz-now">◀ HARGA</span>' : ''}
+        <div class="ladder-blocks-col">
+          <div class="ladder-blocks">
+            ${genBlocks(z.resistCount, maxActivity, true)}
+            ${genBlocks(z.supportCount, maxActivity, false)}
+          </div>
+        </div>
+        <div class="ladder-meta-col">
+          ${z.label ? `<span class="ladder-label">${z.label}</span>` : ''}
+          <span class="ladder-vol">${z.totalActivity}</span>
+        </div>
       </div>
     `;
   }).join('');
 
-  // Hapus loading
   hideLoading();
 }
 
@@ -151,7 +208,7 @@ async function loadLiquidity(silent = false) {
   if (!silent) status.textContent = '🔄 Melacak liquidity...';
 
   try {
-    const res = await fetch(`${API_BASE}/liquidity?interval=15min&outputsize=200`);
+    const res = await fetch(`${API_BASE}/liquidity?interval=15min&outputsize=200`, { signal: beginRequest('liquidity') });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
@@ -163,8 +220,11 @@ async function loadLiquidity(silent = false) {
 
     const priceStr = data.currentPrice ? data.currentPrice.toFixed(2) : '--';
     status.textContent = `💧 ${data.levels.length} level aktif • XAU/USD ${priceStr} • ${formatTime(data.updated)}`;
+    panelLoadedAt.liquidity = Date.now();
+    window.AmyFXIntel?.write('liquidity', { updated: data.updated, currentPrice: data.currentPrice, levels: data.levels });
     renderLiquidity(data.levels, data.currentPrice);
   } catch (e) {
+    if (e.name === 'AbortError') return;
     status.textContent = '⚠️ Gagal memuat liquidity';
     list.innerHTML = '<div class="empty-state">⚠️ Gagal terhubung. Coba lagi nanti.</div>';
   }
@@ -172,24 +232,65 @@ async function loadLiquidity(silent = false) {
 
 function renderLiquidity(levels, currentPrice) {
   const list = document.getElementById('liquidity-list');
-  if (!list) return;
+  const bslLevels = levels.filter(lv => lv.type === 'BSL').sort((a,b) => b.price - a.price);
+  const sslLevels = levels.filter(lv => lv.type === 'SSL').sort((a,b) => b.price - a.price);
+  const priceStr = currentPrice ? currentPrice.toFixed(2) : '--';
+  const maxDistance = Math.max(...levels.map(lv => Math.abs(Number(lv.distance) || 0)), 1);
+  const nearest = [...levels].sort((a, b) => Math.abs(a.distance) - Math.abs(b.distance))[0];
 
-  list.innerHTML = levels.map((lv, i) => {
-    const isBSL = lv.type === 'BSL';
-    const badgeClass = isBSL ? 'bsl' : 'ssl';
-    const arrow = lv.distance > 0 ? '↑' : '↓';
-    const distAbs = Math.abs(lv.distance).toFixed(2);
+  function renderNodes(arr, isBSL) {
+    return arr.map((lv, i) => {
+      const distAbs = Math.abs(lv.distance).toFixed(1);
+      const timeText = lv.candlesAgo < 4 ? 'Baru' : `${lv.candlesAgo}`;
+      const typeClass = isBSL ? 'bsl' : 'ssl';
+      const proximity = 1 - Math.min(Math.abs(Number(lv.distance) || 0) / maxDistance, 1);
+      const freshness = 1 - Math.min(Number(lv.candlesAgo || 0) / 200, 1);
+      const strength = Math.max(0.16, proximity * 0.72 + freshness * 0.28);
+      const isNearest = nearest && nearest.type === lv.type && Number(nearest.price) === Number(lv.price);
+      
+      return `
+        <div class="liq-node-wrapper" style="--distance:${Math.abs(Number(lv.distance) || 0)};--strength:${strength.toFixed(2)};--node-scale:${(0.94 + strength * 0.06).toFixed(3)};animation-delay:${i * 0.05}s">
+          <div class="node-card ${typeClass} ${isNearest ? 'nearest-draw' : ''}">
+            <div class="node-head">
+              <span class="node-badge">${lv.type}</span>
+              <span class="node-active" title="Aktif"></span>
+            </div>
+            ${isNearest ? '<div class="nearest-label">NEAREST DRAW</div>' : ''}
+            <div class="node-price">${lv.price.toFixed(2)}</div>
+            <div class="node-stats">
+              <span class="node-stat">⟷ ${distAbs}p</span>
+              <span class="node-stat">⏱ ${timeText}c</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
 
-    return `
-      <div class="liq-card" style="animation-delay:${i * 0.04}s">
-        <span class="liq-badge ${badgeClass}">${lv.type}</span>
-        <span class="liq-price">${lv.price.toFixed(2)}</span>
-        <span class="liq-meta">${arrow} ${distAbs} pips</span>
-        <span class="liq-meta">${lv.candlesAgo} candle lalu</span>
-        <span class="liq-meta">● Aktif</span>
+  list.innerHTML = `
+    <div class="liq-network">
+      <div class="liq-branch">
+        ${renderNodes(bslLevels, true)}
       </div>
-    `;
-  }).join('');
+
+      <div class="liq-center">
+        <span>XAU/USD</span>
+        <strong>${priceStr}</strong>
+      </div>
+
+      <div class="liq-branch">
+        ${renderNodes(sslLevels, false)}
+      </div>
+    </div>
+    
+    <div class="liq-legend">
+      <div class="leg-item"><span class="leg-dot bsl-dot"></span> BSL (Buy Stop)</div>
+      <div class="leg-item"><span class="leg-dot ssl-dot"></span> SSL (Sell Stop)</div>
+      <div class="leg-item">⟷ Pips Jarak</div>
+      <div class="leg-item">⏱ Usia Candle</div>
+      <div class="leg-item"><span class="node-active leg-active"></span> Aktif</div>
+    </div>
+  `;
 }
 
 // ─── Helpers ─────────────────────────────────────────────
@@ -201,7 +302,7 @@ function formatTime(iso) {
     const diff = now - d;
     if (diff < 60 * 1000) return 'Baru saja';
     if (diff < 60 * 60 * 1000) return `${Math.floor(diff / 60000)}m lalu`;
-    return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WITA';
+    return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }) + ' WIB';
   } catch { return iso; }
 }
 
