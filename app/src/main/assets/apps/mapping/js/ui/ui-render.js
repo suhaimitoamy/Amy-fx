@@ -161,10 +161,15 @@ export function historyView(){return`<section class="card"><h1>Event Logs</h1><b
 export function settingsView(){return`<section class="card settings"><h1>Settings & API</h1><label>Twelve Data API Key <span class="muted">(opsional untuk candle)</span></label><input id="apiKey" value="${state.key}" placeholder="Kosongkan jika key sudah di Vercel"><button class="action" onclick="window.saveConnect()" style="width:100%">🔑 Simpan & Hubungkan Live</button><p class="muted">Analisis candle memakai API Vercel. Key lokal hanya diperlukan untuk live price WebSocket dan Background Scanner native.</p><div class="warn"><b>Background Scanner</b><br>Jika ON, scanner akan memantau Entry Area setup terbaik dari Mapping saat aplikasi ditutup.</div><button class="${state.bg?'action':'chip'}" onclick="window.toggleBg()" style="width:100%;margin-top:14px">${state.bg?'📡 Background Scanner ON':'📴 Background Scanner OFF'}</button><button class="action" onclick="window.testNotif()" style="width:100%;margin-top:12px">🔔 Tes Notifikasi Setup</button></section>`}
 
 export function render(){
+  let opens = Array.from(document.querySelectorAll('.disclosure')).map(el => el.open);
   document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===state.tab));
   document.getElementById('conn').textContent=state.conn;
   document.getElementById('conn').className='status '+(state.conn==='Connected'?'on':'');
   document.getElementById('app').innerHTML=state.tab==='Dashboard'?dashboard():state.tab==='Analyze'?analyzeView():state.tab==='Setups'?setupsView():state.tab==='History'?historyView():settingsView();
+  let newOpens = document.querySelectorAll('.disclosure');
+  if(opens.length > 0 && state.tab === 'Analyze') {
+    opens.forEach((isOpen, i) => { if(newOpens[i]) newOpens[i].open = isOpen; });
+  }
 }
 export function renderSoft(){
   let c=document.getElementById('conn');
