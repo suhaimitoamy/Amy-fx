@@ -1,67 +1,50 @@
-/**
- * Amy FX — News API (Vercel Serverless)
- * Sumber: SM_News_24h Telegram Channel (scraping web view)
- * Cache: 5 menit via Vercel CDN
- * Filter: Hanya berita yang relevan dengan XAU/USD
- * Translate: Auto-translate ke Bahasa Indonesia via Google Translate
- */
+const SUPABASE_NEWS_FEED =
+  'https://wliecyxzlwhmtftnfnps.supabase.co/functions/v1/news-feed';
+const TELEGRAM_SOURCE = 'SM_News_24h';
 
-/**
- * Translate text dari English ke Bahasa Indonesia
- * Menggunakan Google Translate free API (gtx client)
- * Fallback: return teks asli jika gagal
- */
-async function translateToId(text) {
-  try {
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=id&dt=t&q=${encodeURIComponent(text)}`;
-    const r = await fetch(url);
-    const data = await r.json();
-    return data[0].map(chunk => chunk[0]).join('');
-  } catch (e) {
-    return text;
-  }
-}
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'GET') return res.status(405).json({ error: 'method_not_allowed' });
+
+  const requestedLimit = Number.parseInt(String(req.query.limit || '20'), 10);
+  const limit = Math.max(1, Math.min(Number.isFinite(requestedLimit) ? requestedLimit : 20, 50));
 
   try {
-    const { limit = '10' } = req.query;
-    const maxItems = Math.min(parseInt(limit) || 10, 20);
-
-    // Scrape Telegram public web view
-    const html = await fetchWithRetry(
-      `https://t.me/s/SM_News_24h?_=${Date.now()}`,
-      { headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36' } }
+    const central = await fetchJsonWithTimeout(
+      `${SUPABASE_NEWS_FEED}?limit=${limit}`,
+      { headers: { Accept: 'application/json' } },
+      9000
     );
 
-    const posts = sortNewestFirst(extractPosts(html));
-    const filtered = filterGold(posts);
-    const latest = filtered.slice(0, maxItems);
+    if (Array.isArray(central?.news) && central.news.length > 0) {
+      res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+      return res.status(200).json({
+        ...central,
+        count: central.news.length,
+        backend: 'supabase'
+      });
+    }
+  } catch (error) {
+    console.warn('Supabase news feed unavailable, using Telegram fallback:', error?.message || error);
+  }
 
-    // Translate setiap item ke Bahasa Indonesia
-    // Fallback: jika translate gagal, tetap tampilkan teks asli
-    const translated = await Promise.all(
-      latest.map(async item => ({
-        ...item,
-        textOriginal: item.text,
-        text: await translateToId(item.text)
-      }))
-    );
-
-    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+  try {
+    const fallback = await scrapeTelegram(limit);
+    res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
     return res.status(200).json({
-      source: 'SM_News_24h',
+      source: TELEGRAM_SOURCE,
       updated: new Date().toISOString(),
-      count: translated.length,
-      news: translated
+      count: fallback.length,
+      news: fallback,
+      backend: 'telegram_fallback'
     });
-
-  } catch (e) {
+  } catch (error) {
+    console.error('News API failed:', error);
     return res.status(502).json({
-      source: 'SM_News_24h',
+      source: TELEGRAM_SOURCE,
       updated: new Date().toISOString(),
       count: 0,
       news: [],
@@ -70,95 +53,119 @@ export default async function handler(req, res) {
   }
 }
 
-async function fetchWithRetry(url, opts, retries = 2) {
-  for (let i = 0; i <= retries; i++) {
-    try {
-      const res = await fetch(url, opts);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.text();
-    } catch (e) {
-      if (i === retries) throw e;
-      await new Promise(r => setTimeout(r, 1500));
-    }
+async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
   }
 }
 
-/**
- * Extract posts from Telegram web HTML
- * Pattern: data-post="SM_News_24h/ID" + message text in tgme_widget_message_text
- */
+async function fetchJsonWithTimeout(url, options = {}, timeoutMs = 10000) {
+  const response = await fetchWithTimeout(url, options, timeoutMs);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.json();
+}
+
+async function fetchTextWithRetry(url, options, retries = 2) {
+  let lastError;
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      const response = await fetchWithTimeout(url, options, 12000);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.text();
+    } catch (error) {
+      lastError = error;
+      if (attempt < retries) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+      }
+    }
+  }
+  throw lastError;
+}
+
+async function translateToId(text) {
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=id&dt=t&q=${encodeURIComponent(text)}`;
+    const response = await fetchWithTimeout(url, {}, 8000);
+    if (!response.ok) return text;
+    const data = await response.json();
+    if (!Array.isArray(data?.[0])) return text;
+    return data[0].map(chunk => chunk?.[0] || '').join('').trim() || text;
+  } catch (_) {
+    return text;
+  }
+}
+
+async function scrapeTelegram(limit) {
+  const html = await fetchTextWithRetry(
+    `https://t.me/s/${TELEGRAM_SOURCE}?_=${Date.now()}`,
+    { headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 AmyFX/1.0' } }
+  );
+
+  const latest = sortNewestFirst(filterGold(extractPosts(html))).slice(0, limit);
+  return Promise.all(latest.map(async item => ({
+    ...item,
+    textOriginal: item.text,
+    text: await translateToId(item.text)
+  })));
+}
+
 function extractPosts(html) {
   const posts = [];
-  
-  // Regex: capture post ID + message bubble content
   const msgRegex = /data-post="SM_News_24h\/(\d+)"[\s\S]*?<div class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>\s*(?:<div class="tgme_widget_message_author|<div class="tgme_widget_message_footer)/gi;
-  
+
   let match;
   while ((match = msgRegex.exec(html)) !== null) {
-    const id = match[1];
-    let text = match[2];
+    let text = match[2]
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;|&#x27;/g, "'")
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
 
-    // Bersihkan HTML
-    text = text.replace(/<br\s*\/?>/gi, '\n');
-    text = text.replace(/<[^>]+>/g, '');
-    text = text.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
-    text = text.replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-    text = text.replace(/\n{3,}/g, '\n\n').trim();
-
-    // Skip if empty
-    if (!text || text.length < 20) continue;
-
+    if (text.length < 20) continue;
     posts.push({
-      id,
+      id: match[1],
       text,
-      link: `https://t.me/SM_News_24h/${id}`,
-      // Extract time from surrounding HTML (approximate)
+      link: `https://t.me/${TELEGRAM_SOURCE}/${match[1]}`,
       time: extractTime(html, match.index, msgRegex.lastIndex)
     });
   }
-
   return posts;
 }
 
-/** Extract approximate post time from surrounding HTML */
 function extractTime(html, start, end) {
-  const messageBlock = html.slice(start, Math.min(html.length, end + 1400));
-  const currentTime = messageBlock.match(/datetime="([^"]+)"/);
-  if (currentTime) return currentTime[1];
-  const before = html.slice(Math.max(0, start - 500), start);
-  const fallbackTime = before.match(/datetime="([^"]+)"/);
-  if (fallbackTime) return fallbackTime[1];
-  return '';
+  const block = html.slice(start, Math.min(html.length, end + 1600));
+  const current = block.match(/datetime="([^"]+)"/);
+  if (current) return current[1];
+  const before = html.slice(Math.max(0, start - 700), start);
+  return before.match(/datetime="([^"]+)"/)?.[1] || '';
 }
 
-/**
- * Filter berita yang relevan untuk trader XAU/USD
- */
 const GOLD_KEYWORDS = [
-  'gold', 'goldman', 'xau', 'xauusd', 'bullion',
-  'fed', 'powell', 'fomc', 'jerome',
-  'cpi', 'inflation', 'inflasi',
-  'ppi', 'pce',
-  'nfp', 'nonfarm', 'payroll', 'employment', 'unemployment', 'jobless',
-  'gdp', 'growth', 'recession', 'resesi',
-  'rate', 'rates', 'interest rate', 'suku bunga', 'hike', 'cut', 'dovish', 'hawkish',
-  'yield', 'treasury', 'bond', 'obligasi',
-  'dollar', 'usd', 'dxy', 'index', 'indeks',
-  'geopolitical', 'war', 'perang', 'iran', 'israel', 'russia', 'ukraine', 'china',
-  'tariff', 'trade war', 'sanctions', 'sanksi',
-  'oil', 'crude', 'energy',
-  'central bank', 'ecb', 'boe', 'boj', 'pboc', 'bank sentral',
-  'safe haven', 'haven', 'hedge',
-  'brics', 'dedollarization',
-  'pmi', 'ism', 'manufacturing',
-  'retail sales', 'consumer', 'confidence', 'sentiment',
-  'trump', 'biden',
+  'gold', 'bullion', 'xau', 'xauusd', 'fed', 'fomc', 'powell', 'cpi',
+  'inflation', 'inflasi', 'ppi', 'pce', 'nfp', 'nonfarm', 'payroll',
+  'employment', 'unemployment', 'jobless', 'gdp', 'recession', 'resesi',
+  'interest rate', 'suku bunga', 'rate cut', 'rate hike', 'dovish', 'hawkish',
+  'yield', 'treasury', 'bond', 'dollar', 'usd', 'dxy', 'geopolitical',
+  'war', 'perang', 'attack', 'missile', 'iran', 'israel', 'russia',
+  'ukraine', 'china', 'tariff', 'sanctions', 'sanksi', 'oil', 'crude',
+  'central bank', 'ecb', 'boe', 'boj', 'pboc', 'safe haven', 'brics',
+  'dedollarization', 'pmi', 'ism', 'retail sales'
 ];
 
 function filterGold(posts) {
-  return posts.filter(p => {
-    const text = p.text.toLowerCase();
-    return GOLD_KEYWORDS.some(kw => text.includes(kw));
+  return posts.filter(post => {
+    const text = post.text.toLowerCase();
+    return GOLD_KEYWORDS.some(keyword => text.includes(keyword));
   });
 }
 
