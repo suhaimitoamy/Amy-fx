@@ -73,7 +73,8 @@ async function loadNews(silent = false) {
 
 function renderNews(news) {
   const list = document.getElementById('news-list');
-  list.innerHTML = news.map((item, i) => `
+  const sortedNews = [...news].sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0));
+  list.innerHTML = sortedNews.map((item, i) => `
     <div class="news-item" style="animation-delay:${i * 0.05}s" onclick="this.classList.toggle('expanded')">
       <div class="news-time">${formatTime(item.time)}</div>
       <div class="news-text">${escapeHtml(item.text)}</div>
