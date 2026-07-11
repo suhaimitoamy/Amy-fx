@@ -72,6 +72,13 @@
     card.insertBefore(badge, card.firstChild);
   }
 
+  function removeDuplicateBadges() {
+    document.querySelectorAll('.course-card').forEach(function(card){
+      const badges = card.querySelectorAll('.progress-badge');
+      for (let i = 1; i < badges.length; i++) badges[i].remove();
+    });
+  }
+
   function injectHomeModules() {
     const card30 = Array.from(document.querySelectorAll('.course-card')).find(function(card){
       const num = card.querySelector('.num');
@@ -141,6 +148,7 @@
   function run() {
     injectHomeModules();
     injectCatalogModules();
+    setTimeout(removeDuplicateBadges, 0);
   }
 
   if (document.readyState === 'loading') {
