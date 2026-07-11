@@ -96,10 +96,10 @@ class MainActivity : Activity() {
         webSettings.cacheMode = WebSettings.LOAD_DEFAULT
         webSettings.allowFileAccess = true
         webSettings.allowContentAccess = true
-        webSettings.allowFileAccessFromFileURLs = true
-        webSettings.allowUniversalAccessFromFileURLs = true
+        webSettings.allowFileAccessFromFileURLs = false
+        webSettings.allowUniversalAccessFromFileURLs = false
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            webSettings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+            webSettings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
         }
 
         webView.addJavascriptInterface(WebAppInterface(this), "Android")
@@ -137,6 +137,13 @@ class MainActivity : Activity() {
         }
 
         webView.webViewClient = object : WebViewClient() {
+            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                val urlStr = request?.url?.toString() ?: return false
+                if (urlStr.startsWith("file:///android_asset/")) return false
+                try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(urlStr))) } catch (e: Exception) {}
+                return true
+            }
+
             override fun onPageFinished(view: WebView?, url: String?) {
                 swipeRefreshLayout.isRefreshing = false
                 injectHomeButtonForLocalModule(url)
@@ -195,7 +202,7 @@ class MainActivity : Activity() {
         }
 
         val targetUrl = intent.getStringExtra("target_url")
-        if (targetUrl != null) {
+        if (targetUrl != null && targetUrl.startsWith("file:///android_asset/")) {
             webView.loadUrl(targetUrl)
         } else {
             webView.loadUrl("file:///android_asset/index.html")
@@ -297,10 +304,7 @@ class MainActivity : Activity() {
             requestNotificationPermission()
         }
 
-        val manageFilesButton = goldButton("Izinkan Kelola Semua File") {
-            openManageAllFilesAccess()
-        }
-
+        // manageFilesButton removed as MediaStore is used
         val appSettingsButton = darkButton("Buka Detail Aplikasi") {
             openAppSettings()
         }
@@ -317,7 +321,7 @@ class MainActivity : Activity() {
         container.addView(manageFilesStatusText)
         container.addView(batteryButton)
         container.addView(notificationButton)
-        container.addView(manageFilesButton)
+        // container.addView(manageFilesButton)
         container.addView(appSettingsButton)
         container.addView(recheckButton)
 
@@ -374,8 +378,8 @@ class MainActivity : Activity() {
             manageFilesStatusText.text = if (manageFilesOk) "✅ Kelola Semua File: aktif" else "⚠️ Kelola Semua File: belum aktif"
         }
 
-        permissionGate.visibility = View.GONE
-        swipeRefreshLayout.isEnabled = true
+        permissionGate.visibility = if (ready) View.GONE else View.VISIBLE
+        swipeRefreshLayout.isEnabled = ready
 
         if (forceToast) {
             Toast.makeText(this, if (ready) "Izin sudah lengkap." else "Izin scanner belum lengkap, tetapi aplikasi tetap bisa dipakai.", Toast.LENGTH_SHORT).show()
@@ -529,7 +533,7 @@ class MainActivity : Activity() {
         super.onNewIntent(intent)
         setIntent(intent)
         intent?.getStringExtra("target_url")?.let {
-            if (webView.url != it) {
+            if (webView.url != it && it.startsWith("file:///android_asset/")) {
                 webView.loadUrl(it)
             }
         }

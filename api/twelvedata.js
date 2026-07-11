@@ -1,6 +1,5 @@
 export default async function handler(req, res) {
   // Set CORS headers so the Android WebView can fetch it without issues
-  res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
@@ -14,8 +13,13 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { symbol = 'XAU/USD', interval, outputsize = '300', apikey } = req.query;
+  let { symbol = 'XAU/USD', interval, outputsize = '300', apikey } = req.query;
   const targetKey = process.env.TWELVEDATA_API_KEY || apikey;
+
+  if (symbol !== 'XAU/USD') {
+    return res.status(403).json({ status: 'error', message: 'Hanya XAU/USD yang diizinkan' });
+  }
+  outputsize = Math.min(parseInt(outputsize) || 300, 500).toString();
 
   if (!interval) {
     return res.status(400).json({ status: 'error', message: 'Interval is required' });

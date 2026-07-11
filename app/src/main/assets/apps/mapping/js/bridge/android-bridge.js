@@ -24,7 +24,7 @@ export function notifyImportant(res){
   else browserNotify('AMY FX — '+s.type,msg);
 }
 
-export function sendTargetsToNative(){if(!state.bg||!state.key.trim())return;if(state.tf!=='M15'){if(window.Android?.stopBackgroundScanner)window.Android.stopBackgroundScanner();return}if(window.Android?.startBackgroundScanner){let s=state.result?.bestSetup;if(s?.executionMode==='M15_PRECISION'&&Number.isFinite(s.entryLow)&&Number.isFinite(s.entryHigh)){let upper=Math.max(Number(s.entryLow),Number(s.entryHigh)),lower=Math.min(Number(s.entryLow),Number(s.entryHigh));window.Android.startBackgroundScanner(state.key,String(upper),String(lower))}else if(window.Android?.stopBackgroundScanner)window.Android.stopBackgroundScanner()}}
+export function sendTargetsToNative(){if(!state.bg||!state.key.trim())return;if(state.tf!=='M15'){if(window.Android?.stopBackgroundScanner)window.Android.stopBackgroundScanner();return}if(window.Android?.startBackgroundScanner){let s=state.result?.bestSetup;if(s?.executionMode==='M15_PRECISION'&&Number.isFinite(s.entryLow)&&Number.isFinite(s.entryHigh)){let upper=0.0,lower=0.0;if(s.dir.includes('SELL')){upper=Math.min(Number(s.entryLow),Number(s.entryHigh))}else if(s.dir.includes('BUY')){lower=Math.max(Number(s.entryLow),Number(s.entryHigh))}window.Android.startBackgroundScanner(state.key,String(upper),String(lower))}else if(window.Android?.stopBackgroundScanner)window.Android.stopBackgroundScanner()}}
 
 export function saveConnect(){
   state.key=document.getElementById('apiKey').value.trim();

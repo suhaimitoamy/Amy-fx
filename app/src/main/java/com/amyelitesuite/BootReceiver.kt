@@ -22,7 +22,9 @@ class BootReceiver : BroadcastReceiver() {
             Log.d("AmyFX", "BootReceiver skipped: scanner disabled")
             return
         }
-        val apiKey = prefs.getString("api_key", null)
+        val secureKey = SecurePrefs.getString(context, "api_key", null)
+        val legacyKey = prefs.getString("api_key", null)
+        val apiKey = secureKey ?: legacyKey
         if (apiKey.isNullOrBlank()) {
             Log.d("AmyFX", "BootReceiver skipped: API key empty")
             return

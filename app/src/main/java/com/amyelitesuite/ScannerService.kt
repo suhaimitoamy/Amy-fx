@@ -64,7 +64,7 @@ class ScannerService : Service() {
 
         if (targetsExpired()) {
             clearTargets()
-            sendInfo("Amy FX Scanner", "Target Mapping sudah lebih dari 4 jam. Buka Mapping untuk update level terbaru.")
+            sendInfo("Amy FX Scanner", "Target Mapping sudah lebih dari 24 jam. Buka Mapping untuk update level terbaru.")
         }
 
         if (apiKey.isNullOrBlank()) {
@@ -84,8 +84,11 @@ class ScannerService : Service() {
         val secureKey = SecurePrefs.getString(this, KEY_API_KEY, null)
         val legacyKey = prefs().getString(KEY_API_KEY, null)
         apiKey = secureKey ?: legacyKey
-        if (!legacyKey.isNullOrBlank() && secureKey.isNullOrBlank()) {
-            SecurePrefs.putString(this, KEY_API_KEY, legacyKey)
+        if (!legacyKey.isNullOrBlank()) {
+            if (secureKey.isNullOrBlank()) {
+                SecurePrefs.putString(this, KEY_API_KEY, legacyKey)
+            }
+            prefs().edit().remove(KEY_API_KEY).apply()
         }
     }
 
@@ -108,7 +111,7 @@ class ScannerService : Service() {
         }
 
         val changed = abs(oldUpper - setupUpper) > PRICE_EPSILON || abs(oldLower - setupLower) > PRICE_EPSILON
-        if (passedUpper > 0.0 || passedLower > 0.0 || changed) {
+        if (changed) {
             prefs().edit()
                 .putString(KEY_BSL_TARGET, if (setupUpper > 0.0) setupUpper.toString() else "")
                 .putString(KEY_SSL_TARGET, if (setupLower > 0.0) setupLower.toString() else "")
@@ -320,11 +323,11 @@ class ScannerService : Service() {
     }
 
     private fun sendInfo(title: String, message: String) {
-        try {
-            AmyFxNotificationGate.markNotified(applicationContext, "info|" + title + "|" + message, System.currentTimeMillis());
-        } catch (_: Exception) {}
         val gateKey = "info|" + title + "|" + message
         if (AmyFxNotificationGate.shouldNotify(applicationContext, gateKey, System.currentTimeMillis())) {
+            try {
+                AmyFxNotificationGate.markNotified(applicationContext, "info|" + title + "|" + message, System.currentTimeMillis());
+            } catch (_: Exception) {}
             val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 Notification.Builder(this, CHANNEL_INFO)
                     .setContentTitle(title)
