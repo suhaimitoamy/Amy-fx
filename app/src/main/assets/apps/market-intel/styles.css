@@ -23,6 +23,7 @@ body {
   font-size: 14px;
   min-height: 100vh;
   overflow-x: hidden;
+  overscroll-behavior-y: none;
 }
 
 .intel-container {

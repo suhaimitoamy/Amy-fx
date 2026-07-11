@@ -114,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setActive(target) {
     navBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.target === target));
+    localStorage.setItem('amy_root_tab', target);
   }
 
   function projectCard(item) {
@@ -289,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   navBtns.forEach(btn => btn.addEventListener('click', () => navigate(btn.dataset.target)));
-  navigate('beranda');
+  navigate(localStorage.getItem('amy_root_tab') || 'beranda');
 });
 
 

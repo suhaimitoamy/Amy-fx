@@ -37,7 +37,7 @@ export function setupText(s){
   return `${fmtDir(s.dir)} ${s.tf}\nScore: ${s.score}/100\nEntry: ${p2(s.entryLow)} - ${p2(s.entryHigh)}\nSL: ${p2(s.sl)}\nTP1: ${p2(s.tp1)}\nTP2: ${p2(s.tp2)}\n${s.reason}`
 }
 
-function setTab(t){state.tab=t;render()}
+function setTab(t){state.tab=t;localStorage.setItem('amy_mapping_tab',t);render()}
 window.setTab=setTab;
 window.runAnalysis=runAnalysis;
 window.render=render;

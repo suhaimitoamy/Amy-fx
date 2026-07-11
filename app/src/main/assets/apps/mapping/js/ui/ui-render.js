@@ -186,8 +186,11 @@ export function applyAmyFxRoute(){
   try{route=decodeURIComponent((location.hash||'').replace(/^#/,''))}catch(e){}
   try{route=route||new URLSearchParams(location.search||'').get('route')||''}catch(e){}
   try{route=route||localStorage.getItem('amyfx.notification.route')||''}catch(e){}
+  if(!route) route = localStorage.getItem('amy_mapping_tab') || '';
   if(['Dashboard','Analyze','Setups','History','Settings'].includes(route)){
     state.tab=route;
     try{localStorage.removeItem('amyfx.notification.route')}catch(e){}
+  } else {
+    state.tab='Dashboard';
   }
 }
