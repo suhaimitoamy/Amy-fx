@@ -170,20 +170,28 @@ async function loadLiquidity(silent = false) {
 function renderLiquidity(levels, currentPrice) {
   const list = document.getElementById('liquidity-list');
   if (!list) return;
-
   list.innerHTML = levels.map((lv, i) => {
     const isBSL = lv.type === 'BSL';
     const badgeClass = isBSL ? 'bsl' : 'ssl';
-    const arrow = lv.distance > 0 ? '↑' : '↓';
-    const distAbs = Math.abs(lv.distance).toFixed(2);
+    const arrowClass = lv.distance > 0 ? 'up' : 'down';
+    const arrow = lv.distance > 0 ? '↗' : '↘';
+    const distAbs = Math.abs(lv.distance).toFixed(1);
+    const timeText = lv.candlesAgo < 4 ? 'Baru' : `${lv.candlesAgo} cdl`;
 
     return `
-      <div class="liq-card" style="animation-delay:${i * 0.04}s">
-        <span class="liq-badge ${badgeClass}">${lv.type}</span>
-        <span class="liq-price">${lv.price.toFixed(2)}</span>
-        <span class="liq-meta">${arrow} ${distAbs} pips</span>
-        <span class="liq-meta">${lv.candlesAgo} candle lalu</span>
-        <span class="liq-meta">● Aktif</span>
+      <div class="liq-card ${badgeClass}" style="animation-delay:${i * 0.04}s">
+        <div class="liq-main">
+          <div class="liq-type-wrap">
+            <span class="liq-dot"></span>
+            <span class="liq-type-text">${lv.type}</span>
+          </div>
+          <div class="liq-price">${lv.price.toFixed(2)}</div>
+        </div>
+        <div class="liq-details">
+          <div class="liq-stat"><span class="liq-icon ${arrowClass}">${arrow}</span> ${distAbs} pips</div>
+          <div class="liq-stat">🕒 ${timeText}</div>
+          <div class="liq-status">Aktif</div>
+        </div>
       </div>
     `;
   }).join('');

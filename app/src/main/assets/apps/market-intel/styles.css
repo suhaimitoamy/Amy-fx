@@ -299,50 +299,84 @@ body {
   max-height: 1000px;
 }
 
-/* ─── Liquidity List ────────────────────── */
+/* ─── Modern Liquidity List ────────────────────── */
 .liquidity-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 }
 .liq-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255,255,255,0.04);
+  animation: slideIn 0.3s ease both;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+.liq-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 3px;
+}
+.liq-card.bsl::before { background: var(--red); box-shadow: 0 0 10px var(--red); }
+.liq-card.ssl::before { background: var(--green); box-shadow: 0 0 10px var(--green); }
+.liq-card.bsl { background: linear-gradient(90deg, rgba(231, 76, 60, 0.08), transparent 60%); border-color: rgba(231, 76, 60, 0.15); }
+.liq-card.ssl { background: linear-gradient(90deg, rgba(46, 204, 113, 0.08), transparent 60%); border-color: rgba(46, 204, 113, 0.15); }
+
+.liq-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.liq-type-wrap {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: 10px 12px;
-  border-left: 3px solid var(--gold-dim);
-  animation: slideIn 0.3s ease both;
-  flex-wrap: wrap;
+  gap: 6px;
 }
-.liq-badge {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  text-transform: uppercase;
+.liq-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+}
+.liq-card.bsl .liq-dot { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.liq-card.ssl .liq-dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.liq-type-text {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.9);
   letter-spacing: 0.5px;
-  flex-shrink: 0;
-}
-.liq-badge.bsl {
-  background: rgba(231, 76, 60, 0.2);
-  color: var(--red);
-  border: 1px solid rgba(231, 76, 60, 0.3);
-}
-.liq-badge.ssl {
-  background: rgba(46, 204, 113, 0.2);
-  color: var(--green);
-  border: 1px solid rgba(46, 204, 113, 0.3);
 }
 .liq-price {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 900;
   color: var(--gold);
-  flex-shrink: 0;
+  font-family: 'Courier New', Courier, monospace;
 }
-.liq-meta {
+.liq-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.liq-stat {
   font-size: 11px;
   color: var(--text-dim);
-  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+.liq-icon.up { color: var(--green); font-weight: 900; }
+.liq-icon.down { color: var(--red); font-weight: 900; }
+.liq-status {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(212, 175, 55, 0.15);
+  color: var(--gold);
+  font-weight: 800;
+  margin-top: 2px;
 }
