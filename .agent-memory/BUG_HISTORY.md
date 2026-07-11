@@ -155,3 +155,10 @@
 - **Problem:** Regex depends on exact Telegram HTML class names (`tgme_widget_message_text`, etc.). If Telegram changes their web view markup, scraping silently returns empty.
 - **Risk:** Medium — no monitoring or alert when this happens.
 - **Note:** Do NOT change `extractPosts()` regex unless it actually breaks. Adding diagnostic info is safer.
+
+## GitHub Actions Academy Vault Checkout Failure — 2026-07-11
+
+- **Severity:** High — APK build stopped before Gradle ran.
+- **Cause:** Both APK workflows tried to checkout the private `amy-trading-academy-vault` repository during every build, although the generated Academy assets were already committed in Amy-fx. The missing cross-repository token caused `Input required and not supplied: token`.
+- **Fix:** Removed the private Vault checkout and runtime Academy generator steps from `.github/workflows/build-apk.yml` and `.github/workflows/build-debug.yml`. APK builds now use the committed Academy assets directly.
+- **Verification:** GitHub Actions `Build Amy FX APK` run 29158586991 completed successfully.
