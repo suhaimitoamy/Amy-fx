@@ -1,0 +1,33 @@
+name: Apply Mapping WebView Fix
+
+on:
+  push:
+    branches: [ "fix-mapping-webview" ]
+    paths:
+      - "tools/apply_webview_asset_fix.py"
+      - ".github/workflows/apply-mapping-webview-fix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fix branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix-mapping-webview
+          fetch-depth: 0
+
+      - name: Apply WebView and permission fixes
+        run: python3 tools/apply_webview_asset_fix.py
+
+      - name: Commit generated source changes
+        run: |
+          git config user.name "Amy FX Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add app/build.gradle.kts app/src/main/java
+          git diff --cached --check
+          git commit -m "Fix blank Mapping with secure WebViewAssetLoader"
+          git push origin HEAD:fix-mapping-webview
