@@ -73,9 +73,9 @@
 /* AMYFX_MOCKUP_UI_CSS_START */
 .section-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .section-row h2{margin:3px 0 0;font-size:17px}
-.mapping-hero{background:linear-gradient(135deg,#171717,#0d0d0d 68%);border-color:rgba(212,175,55,.3)}
-.mapping-hero .price{font-size:27px;color:#fff}
-.mapping-hero h1{margin:5px 0 3px}
+.mapping-hero{background:linear-gradient(135deg,#171717,#0d0d0d 68%);border-color:rgba(212,175,55,.3);padding:10px 14px;margin-bottom:12px}
+.mapping-hero .price{font-size:20px;color:#fff}
+.mapping-hero h1{margin:2px 0;font-size:18px}
 .tf-card,.setup-focus,.session-card{padding:14px}
 .compact-tf{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:12px}
 .compact-tf button{min-height:38px!important;padding:8px 4px!important;font-size:13px!important}
@@ -94,5 +94,5 @@
 .session-focus span{color:var(--muted);font-size:10px}
 .session-focus.active{border-color:rgba(74,222,128,.5);background:rgba(74,222,128,.07)}
 .session-focus.active b,.session-focus.active span{color:var(--green)}
-@media(max-width:520px){.mapping-hero{gap:8px}.mapping-hero .price{font-size:22px}.session-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.mapping-hero{gap:8px}.mapping-hero .price{font-size:18px}.session-grid{grid-template-columns:1fr 1fr}}
 /* AMYFX_MOCKUP_UI_CSS_END */
