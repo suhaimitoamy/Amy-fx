@@ -49,6 +49,16 @@ function logout(){
     location.href=typeof ROOT_PATH !== 'undefined' ? ROOT_PATH+'index.html' : 'index.html';
 }
 
+/* Load the visible 31–36 Academy catalog on every Academy page. */
+(function(){
+  if(window.__amyAcademyCatalog36Loaded)return;
+  window.__amyAcademyCatalog36Loaded=true;
+  const script=document.createElement('script');
+  const root=(typeof ROOT_PATH!=='undefined')?ROOT_PATH:'';
+  script.src=root+'assets/js/catalog-36.js';
+  script.async=false;
+  document.head.appendChild(script);
+})();
 
 /* AMYFX_NOTIFY_GUARD_START */
 (function(){
