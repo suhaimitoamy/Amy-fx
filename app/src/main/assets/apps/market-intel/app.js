@@ -63,17 +63,34 @@ async function loadNews(silent = false) {
       return;
     }
 
+    const sortedNews = [...data.news].sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0));
+    const latestNews = sortedNews[0];
+    if (latestNews) {
+      const currentNewsId = (latestNews.time || '') + (latestNews.text || '');
+      const lastNewsId = localStorage.getItem('amy_last_news_id');
+      
+      if (lastNewsId && lastNewsId !== currentNewsId) {
+        const title = '📰 Breaking News XAU/USD';
+        const msg = latestNews.text || 'Berita baru telah tiba.';
+        if (window.Android?.showNotificationWithUrl) {
+          window.Android.showNotificationWithUrl(title, msg, location.href);
+        } else if (typeof Notification !== 'undefined') {
+          Notification.requestPermission().then(p => p === 'granted' && new Notification(title, { body: msg }));
+        }
+      }
+      localStorage.setItem('amy_last_news_id', currentNewsId);
+    }
+
     status.textContent = `📰 ${data.news.length} berita relevan • ${formatTime(data.updated)}`;
-    renderNews(data.news);
+    renderNews(sortedNews);
   } catch (e) {
     status.textContent = '⚠️ Gagal memuat berita';
     list.innerHTML = '<div class="empty-state">⚠️ Gagal terhubung. Coba lagi nanti.</div>';
   }
 }
 
-function renderNews(news) {
+function renderNews(sortedNews) {
   const list = document.getElementById('news-list');
-  const sortedNews = [...news].sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0));
   list.innerHTML = sortedNews.map((item, i) => `
     <div class="news-item" style="animation-delay:${i * 0.05}s" onclick="this.classList.toggle('expanded')">
       <div class="news-time">${formatTime(item.time)}</div>
