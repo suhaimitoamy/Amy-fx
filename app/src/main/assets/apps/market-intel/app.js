@@ -199,32 +199,58 @@ async function loadLiquidity(silent = false) {
 
 function renderLiquidity(levels, currentPrice) {
   const list = document.getElementById('liquidity-list');
-  if (!list) return;
-  list.innerHTML = levels.map((lv, i) => {
-    const isBSL = lv.type === 'BSL';
-    const badgeClass = isBSL ? 'bsl' : 'ssl';
-    const arrowClass = lv.distance > 0 ? 'up' : 'down';
-    const arrow = lv.distance > 0 ? '↗' : '↘';
-    const distAbs = Math.abs(lv.distance).toFixed(1);
-    const timeText = lv.candlesAgo < 4 ? 'Baru' : `${lv.candlesAgo} cdl`;
+  const bslLevels = levels.filter(lv => lv.type === 'BSL').sort((a,b) => b.price - a.price);
+  const sslLevels = levels.filter(lv => lv.type === 'SSL').sort((a,b) => b.price - a.price);
+  const priceStr = currentPrice ? currentPrice.toFixed(2) : '--';
 
-    return `
-      <div class="liq-card ${badgeClass}" style="animation-delay:${i * 0.04}s">
-        <div class="liq-main">
-          <div class="liq-type-wrap">
-            <span class="liq-dot"></span>
-            <span class="liq-type-text">${lv.type}</span>
+  function renderNodes(arr, isBSL) {
+    return arr.map((lv, i) => {
+      const distAbs = Math.abs(lv.distance).toFixed(1);
+      const timeText = lv.candlesAgo < 4 ? 'Baru' : `${lv.candlesAgo}`;
+      const typeClass = isBSL ? 'bsl' : 'ssl';
+      
+      return `
+        <div class="liq-node-wrapper" style="animation-delay:${i * 0.05}s">
+          <div class="node-card ${typeClass}">
+            <div class="node-head">
+              <span class="node-badge">${lv.type}</span>
+              <span class="node-active" title="Aktif"></span>
+            </div>
+            <div class="node-price">${lv.price.toFixed(2)}</div>
+            <div class="node-stats">
+              <span class="node-stat">⟷ ${distAbs}p</span>
+              <span class="node-stat">⏱ ${timeText}c</span>
+            </div>
           </div>
-          <div class="liq-price">${lv.price.toFixed(2)}</div>
         </div>
-        <div class="liq-details">
-          <div class="liq-stat"><span class="liq-icon ${arrowClass}">${arrow}</span> ${distAbs} pips</div>
-          <div class="liq-stat">🕒 ${timeText}</div>
-          <div class="liq-status">Aktif</div>
-        </div>
+      `;
+    }).join('');
+  }
+
+  list.innerHTML = `
+    <div class="liq-network">
+      <div class="liq-branch">
+        ${renderNodes(bslLevels, true)}
       </div>
-    `;
-  }).join('');
+
+      <div class="liq-center">
+        <span>XAU/USD</span>
+        <strong>${priceStr}</strong>
+      </div>
+
+      <div class="liq-branch">
+        ${renderNodes(sslLevels, false)}
+      </div>
+    </div>
+    
+    <div class="liq-legend">
+      <div class="leg-item"><span class="leg-dot bsl-dot"></span> BSL (Buy Stop)</div>
+      <div class="leg-item"><span class="leg-dot ssl-dot"></span> SSL (Sell Stop)</div>
+      <div class="leg-item">⟷ Pips Jarak</div>
+      <div class="leg-item">⏱ Usia Candle</div>
+      <div class="leg-item"><span class="node-active leg-active"></span> Aktif</div>
+    </div>
+  `;
 }
 
 // ─── Helpers ─────────────────────────────────────────────

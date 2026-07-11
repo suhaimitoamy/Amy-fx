@@ -304,84 +304,175 @@ body {
   max-height: 1000px;
 }
 
-/* ─── Modern Liquidity List ────────────────────── */
-.liquidity-list {
+/* ─── Node Map Dual Cluster Liquidity ─── */
+.liq-network {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  position: relative;
+  padding: 20px 0;
+  overflow: hidden;
+  gap: 16px;
 }
-.liq-card {
-  background: var(--bg-card);
+.liq-network::before {
+  content: '';
+  position: absolute;
+  top: 30px;
+  bottom: 30px;
+  left: 50%;
+  width: 2px;
+  margin-left: -1px;
+  background: linear-gradient(to bottom, rgba(231,76,60,0.5), var(--gold), rgba(46,204,113,0.5));
+  z-index: 1;
+}
+
+.liq-center {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #1a1500 0%, #050505 80%);
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.4), inset 0 0 15px rgba(212, 175, 55, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  position: relative;
+  animation: pulse 2s infinite;
+}
+.liq-center span {
+  font-size: 11px;
+  color: var(--gold);
+  letter-spacing: 1px;
+}
+.liq-center strong {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 15px;
+  color: #fff;
+  text-shadow: 0 0 8px rgba(255,255,255,0.5);
+  margin-top: 4px;
+}
+
+.liq-branch {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  z-index: 5;
+  position: relative;
+}
+.liq-node-wrapper {
+  display: flex;
+  align-items: center;
+  width: 50%;
+  position: relative;
+}
+.liq-node-wrapper:nth-child(odd) {
+  align-self: flex-start;
+  justify-content: flex-end;
+  padding-right: 25px;
+}
+.liq-node-wrapper:nth-child(even) {
+  align-self: flex-end;
+  justify-content: flex-start;
+  padding-left: 25px;
+}
+
+/* Connectors */
+.liq-node-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 25px;
+  height: 2px;
+  z-index: 1;
+}
+.liq-node-wrapper:nth-child(odd)::after {
+  right: 0;
+  background: linear-gradient(to right, transparent, var(--gold));
+}
+.liq-node-wrapper:nth-child(even)::after {
+  left: 0;
+  background: linear-gradient(to left, transparent, var(--gold));
+}
+
+.node-card {
+  background: #0a0a0a;
+  border: 1px solid rgba(255,255,255,0.06);
   border-radius: 12px;
-  padding: 12px 14px;
-  border: 1px solid rgba(255,255,255,0.04);
+  padding: 10px 12px;
+  width: 140px;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
   animation: slideIn 0.3s ease both;
+}
+.node-card.bsl {
+  border-top: 2px solid var(--red);
+  box-shadow: 0 -4px 15px rgba(231,76,60,0.15);
+}
+.node-card.ssl {
+  border-bottom: 2px solid var(--green);
+  box-shadow: 0 4px 15px rgba(46,204,113,0.15);
+}
+
+.node-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: relative;
-  overflow: hidden;
+  margin-bottom: 8px;
 }
-.liq-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; bottom: 0;
-  width: 3px;
-}
-.liq-card.bsl::before { background: var(--red); box-shadow: 0 0 10px var(--red); }
-.liq-card.ssl::before { background: var(--green); box-shadow: 0 0 10px var(--green); }
-.liq-card.bsl { background: linear-gradient(90deg, rgba(231, 76, 60, 0.08), transparent 60%); border-color: rgba(231, 76, 60, 0.15); }
-.liq-card.ssl { background: linear-gradient(90deg, rgba(46, 204, 113, 0.08), transparent 60%); border-color: rgba(46, 204, 113, 0.15); }
-
-.liq-main {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.liq-type-wrap {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.liq-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-}
-.liq-card.bsl .liq-dot { background: var(--red); box-shadow: 0 0 6px var(--red); }
-.liq-card.ssl .liq-dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
-.liq-type-text {
-  font-size: 11px;
+.node-badge {
+  font-size: 10px;
   font-weight: 800;
-  color: rgba(255,255,255,0.9);
-  letter-spacing: 0.5px;
-}
-.liq-price {
-  font-size: 18px;
-  font-weight: 900;
-  color: var(--gold);
-  font-family: 'Courier New', Courier, monospace;
-}
-.liq-details {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-}
-.liq-stat {
-  font-size: 11px;
-  color: var(--text-dim);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-weight: 600;
-}
-.liq-icon.up { color: var(--green); font-weight: 900; }
-.liq-icon.down { color: var(--red); font-weight: 900; }
-.liq-status {
-  font-size: 9px;
   padding: 2px 6px;
   border-radius: 4px;
-  background: rgba(212, 175, 55, 0.15);
-  color: var(--gold);
-  font-weight: 800;
-  margin-top: 2px;
 }
+.node-card.bsl .node-badge { background: rgba(231,76,60,0.2); color: var(--red); }
+.node-card.ssl .node-badge { background: rgba(46,204,113,0.2); color: var(--green); }
+.node-active {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 6px var(--gold);
+}
+
+.node-price {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 16px;
+  font-weight: 900;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+.node-card.bsl .node-price { color: #ff8a8a; }
+.node-card.ssl .node-price { color: #8affad; }
+
+.node-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.node-stat {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.liq-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px;
+  margin-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  font-size: 10px;
+  color: var(--text-dim);
+  justify-content: center;
+}
+.leg-item { display: flex; align-items: center; gap: 6px; }
+.leg-dot { width: 8px; height: 8px; border-radius: 2px; }
+.bsl-dot { background: var(--red); }
+.ssl-dot { background: var(--green); }
+.leg-active { display: inline-block; }
