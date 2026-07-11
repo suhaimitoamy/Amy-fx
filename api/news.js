@@ -37,7 +37,7 @@ export default async function handler(req, res) {
       { headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36' } }
     );
 
-    const posts = extractPosts(html);
+    const posts = sortNewestFirst(extractPosts(html));
     const filtered = filterGold(posts);
     const latest = filtered.slice(0, maxItems);
 
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
       }))
     );
 
-    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
     return res.status(200).json({
       source: 'SM_News_24h',
       updated: new Date().toISOString(),
@@ -113,7 +113,7 @@ function extractPosts(html) {
       text,
       link: `https://t.me/SM_News_24h/${id}`,
       // Extract time from surrounding HTML (approximate)
-      time: extractTime(html, match.index)
+      time: extractTime(html, match.index, msgRegex.lastIndex)
     });
   }
 
@@ -121,10 +121,13 @@ function extractPosts(html) {
 }
 
 /** Extract approximate post time from surrounding HTML */
-function extractTime(html, pos) {
-  const before = html.slice(Math.max(0, pos - 500), pos);
-  const timeMatch = before.match(/datetime="([^"]+)"/);
-  if (timeMatch) return timeMatch[1];
+function extractTime(html, start, end) {
+  const messageBlock = html.slice(start, Math.min(html.length, end + 1400));
+  const currentTime = messageBlock.match(/datetime="([^"]+)"/);
+  if (currentTime) return currentTime[1];
+  const before = html.slice(Math.max(0, start - 500), start);
+  const fallbackTime = before.match(/datetime="([^"]+)"/);
+  if (fallbackTime) return fallbackTime[1];
   return '';
 }
 
@@ -158,3 +161,9 @@ function filterGold(posts) {
     return GOLD_KEYWORDS.some(kw => text.includes(kw));
   });
 }
+
+function sortNewestFirst(posts) {
+  return [...posts].sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+}
+
+export { extractPosts, filterGold, sortNewestFirst };

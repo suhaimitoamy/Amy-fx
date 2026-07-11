@@ -11,8 +11,29 @@ const REFRESH_INTERVAL = 60 * 1000; // Auto-refresh setiap 1 menit
 
 // ─── State ───────────────────────────────────────────────
 let currentTab = 'news';
+let pendingNewsId = '';
+let newsRouteRetries = 0;
 const requestControllers = {};
 const panelLoadedAt = {};
+
+function newsId(item) {
+  return String(item?.id || `${item?.time || ''}:${item?.textOriginal || item?.text || ''}`);
+}
+
+function newsTargetUrl(id) {
+  const base = 'file:///android_asset/apps/market-intel/index.html';
+  return `${base}#news=${encodeURIComponent(id)}`;
+}
+
+function readNewsRoute() {
+  try {
+    const hash = (location.hash || '').replace(/^#/, '');
+    const params = new URLSearchParams(hash.includes('=') ? hash : location.search);
+    return params.get('news') || '';
+  } catch (_) {
+    return '';
+  }
+}
 
 function beginRequest(panel) {
   if (requestControllers[panel]) requestControllers[panel].abort();
@@ -26,9 +47,11 @@ function shouldRefresh(panel, maxAge = 30000) {
 
 // ─── Init ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  pendingNewsId = readNewsRoute();
   window.AmyFXIntel?.mountStrip(document.getElementById('market-command-strip'));
   window.AmyFXIntel?.mountBriefing(document.getElementById('intel-briefing'));
   setupTabs();
+  setupNewsInteractions();
   loadNews();
   loadHeatmap();
 
@@ -50,24 +73,59 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+window.addEventListener('hashchange', () => {
+  pendingNewsId = readNewsRoute();
+  if (pendingNewsId) {
+    activateTab('news');
+    if (!focusNewsItem(pendingNewsId)) loadNews(true);
+  }
+});
+
 // ─── Tab Navigation ──────────────────────────────────────
 function setupTabs() {
   document.querySelectorAll('.intel-tab').forEach(btn => {
     btn.addEventListener('click', () => {
-      const tab = btn.dataset.tab;
-      currentTab = tab;
-
-      document.querySelectorAll('.intel-tab').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.intel-panel').forEach(p => p.classList.remove('active'));
-
-      btn.classList.add('active');
-      document.getElementById(`panel-${tab}`).classList.add('active');
-
-      if (tab === 'heatmap' && shouldRefresh('heatmap')) loadHeatmap();
-      else if (tab === 'liquidity' && shouldRefresh('liquidity')) loadLiquidity();
-      else if (tab === 'news' && shouldRefresh('news')) loadNews();
+      activateTab(btn.dataset.tab);
     });
   });
+}
+
+function activateTab(tab) {
+  if (!['news', 'heatmap', 'liquidity'].includes(tab)) return;
+  currentTab = tab;
+  document.querySelectorAll('.intel-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.intel-panel').forEach(p => p.classList.toggle('active', p.id === `panel-${tab}`));
+  if (tab === 'heatmap' && shouldRefresh('heatmap')) loadHeatmap();
+  else if (tab === 'liquidity' && shouldRefresh('liquidity')) loadLiquidity();
+  else if (tab === 'news' && shouldRefresh('news')) loadNews();
+}
+
+function setupNewsInteractions() {
+  document.getElementById('news-list')?.addEventListener('click', event => {
+    const item = event.target.closest('.news-item');
+    if (!item) return;
+    item.classList.toggle('expanded');
+    item.classList.remove('news-focus');
+  });
+  document.getElementById('news-list')?.addEventListener('keydown', event => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const item = event.target.closest('.news-item');
+    if (!item) return;
+    event.preventDefault();
+    item.classList.toggle('expanded');
+    item.classList.remove('news-focus');
+  });
+}
+
+function focusNewsItem(id) {
+  if (!id) return false;
+  const item = [...document.querySelectorAll('.news-item')].find(el => el.dataset.newsId === String(id));
+  if (!item) return false;
+  item.classList.add('expanded', 'news-focus');
+  item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  pendingNewsId = '';
+  newsRouteRetries = 0;
+  return true;
 }
 
 // ─── News Loader ─────────────────────────────────────────
@@ -77,7 +135,11 @@ async function loadNews(silent = false) {
   if (!silent) status.textContent = '🔄 Memuat berita...';
 
   try {
-    const res = await fetch(`${API_BASE}/news?limit=10`, { signal: beginRequest('news') });
+    const minuteKey = Math.floor(Date.now() / 60000);
+    const res = await fetch(`${API_BASE}/news?limit=20&fresh=${minuteKey}`, {
+      signal: beginRequest('news'),
+      cache: 'no-store'
+    });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
@@ -87,19 +149,29 @@ async function loadNews(silent = false) {
       return;
     }
 
-    const sortedNews = [...data.news].sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0));
+    const sortedNews = [...data.news].sort((a, b) => {
+      const byId = Number(b.id || 0) - Number(a.id || 0);
+      return byId || new Date(b.time || 0) - new Date(a.time || 0);
+    });
     const latestNews = sortedNews[0];
     if (latestNews) {
-      const currentNewsId = (latestNews.time || '') + (latestNews.text || '');
+      const currentNewsId = newsId(latestNews);
       const lastNewsId = localStorage.getItem('amy_last_news_id');
       
       if (lastNewsId && lastNewsId !== currentNewsId) {
         const title = '📰 Breaking News XAU/USD';
         const msg = latestNews.text || 'Berita baru telah tiba.';
         if (window.Android?.showNotificationWithUrl) {
-          window.Android.showNotificationWithUrl(title, msg, location.href);
+          window.Android.showNotificationWithUrl(title, msg, newsTargetUrl(currentNewsId));
         } else if (typeof Notification !== 'undefined') {
-          Notification.requestPermission().then(p => p === 'granted' && new Notification(title, { body: msg }));
+          Notification.requestPermission().then(p => {
+            if (p !== 'granted') return;
+            const notification = new Notification(title, { body: msg, tag: `amy-news-${currentNewsId}` });
+            notification.onclick = () => {
+              window.focus();
+              location.hash = `news=${encodeURIComponent(currentNewsId)}`;
+            };
+          });
         }
       }
       localStorage.setItem('amy_last_news_id', currentNewsId);
@@ -109,6 +181,20 @@ async function loadNews(silent = false) {
     panelLoadedAt.news = Date.now();
     window.AmyFXIntel?.write('news', { updated: data.updated, items: sortedNews.slice(0, 10) });
     renderNews(sortedNews);
+    if (pendingNewsId) {
+      activateTab('news');
+      if (!focusNewsItem(pendingNewsId)) {
+        newsRouteRetries += 1;
+        if (newsRouteRetries <= 3) {
+          status.textContent = '⏳ Berita dari notifikasi sedang disinkronkan...';
+          setTimeout(() => loadNews(true), 1500);
+        } else {
+          status.textContent = '⚠️ Berita tujuan belum tersedia pada feed terbaru';
+          pendingNewsId = '';
+          newsRouteRetries = 0;
+        }
+      }
+    }
   } catch (e) {
     if (e.name === 'AbortError') return;
     status.textContent = '⚠️ Gagal memuat berita';
@@ -119,11 +205,11 @@ async function loadNews(silent = false) {
 function renderNews(sortedNews) {
   const list = document.getElementById('news-list');
   list.innerHTML = sortedNews.map((item, i) => `
-    <div class="news-item" style="animation-delay:${i * 0.05}s" onclick="this.classList.toggle('expanded')">
+    <article class="news-item" data-news-id="${escapeHtml(newsId(item))}" style="animation-delay:${i * 0.05}s" tabindex="0">
       <div class="news-time">${formatTime(item.time)}</div>
       <div class="news-text">${escapeHtml(item.text)}</div>
       <div class="news-link">Sumber: SM_News_24h</div>
-    </div>
+    </article>
   `).join('');
 }
 

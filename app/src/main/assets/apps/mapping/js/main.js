@@ -34,7 +34,8 @@ export function save(){
 }
 export function setupText(s){
   if(!s)return'';
-  return `${fmtDir(s.dir)} ${s.tf}\nScore: ${s.score}/100\nEntry: ${p2(s.entryLow)} - ${p2(s.entryHigh)}\nSL: ${p2(s.sl)}\nTP1: ${p2(s.tp1)}\nTP2: ${p2(s.tp2)}\n${s.reason}`
+  const action=s.status==='WAIT'?'Tunggu konfirmasi.':s.status==='INVALID'?'Setup tidak valid.':'Pantau harga saat masuk ke area, jangan mengejar.';
+  return `${fmtDir(s.dir)} • ${s.tf}\nKualitas: ${s.score}/100\nArea rencana: ${p2(s.entryLow)} - ${p2(s.entryHigh)}\nBatas salah: ${p2(s.sl)}\nTarget aman: ${p2(s.tp1)}\nTarget lanjutan: ${p2(s.tp2)}\n${action}\n${s.reason}`
 }
 
 function setTab(t){state.tab=t;localStorage.setItem('amy_mapping_tab',t);render()}

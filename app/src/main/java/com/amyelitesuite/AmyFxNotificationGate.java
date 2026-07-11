@@ -20,11 +20,21 @@ public class AmyFxNotificationGate {
         if (message == null) message = "";
         String t = title.toLowerCase(java.util.Locale.ROOT);
         String m = message.toLowerCase(java.util.Locale.ROOT);
+        if (t.contains("news") || t.contains("berita") || m.contains("breaking news")) return "News";
+        if (t.contains("journal") || t.contains("jurnal")) return "Journal";
+        if (t.contains("academy") || t.contains("akademi")) return "Academy";
         if (t.contains("target atas") || m.contains("bsl")) return "Analyze";
         if (t.contains("target bawah") || m.contains("ssl")) return "Analyze";
         if (t.contains("scanner") || m.contains("scanner")) return "Analyze";
         if (t.contains("kills zone") || t.contains("session")) return "Dashboard";
         return "Analyze";
+    }
+
+    public static String routeUrl(String route) {
+        if ("News".equals(route)) return "file:///android_asset/apps/market-intel/index.html#news";
+        if ("Journal".equals(route)) return "file:///android_asset/apps/journal/index.html";
+        if ("Academy".equals(route)) return "file:///android_asset/apps/academy/index.html";
+        return "file:///android_asset/apps/mapping/index.html#" + Uri.encode(route);
     }
 
     public static boolean shouldNotify(Context context, String gateKey, long nowMs) {
@@ -51,7 +61,7 @@ public class AmyFxNotificationGate {
 
     public static PendingIntent clickIntent(Context context, String title, String message) {
         String route = routeFor(title, message);
-        String url = "file:///android_asset/apps/mapping/index.html#" + Uri.encode(route);
+        String url = routeUrl(route);
         Intent intent = new Intent("amyfx.intent.action.OPEN_ROUTE");
         intent.setPackage(context.getPackageName());
         intent.putExtra("amyfx_route", route);

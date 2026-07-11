@@ -109,6 +109,17 @@ body {
 .news-item:hover, .news-item:active {
   background: var(--bg-card-hover);
 }
+
+.news-item.news-focus {
+  border-color: rgba(212, 175, 55, 0.9);
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.28), 0 0 24px rgba(212, 175, 55, 0.2);
+  animation: newsFocusPulse 1.4s ease-out;
+}
+
+@keyframes newsFocusPulse {
+  0% { transform: scale(0.985); background: rgba(212, 175, 55, 0.18); }
+  100% { transform: scale(1); }
+}
 .news-time {
   font-size: 11px;
   color: var(--gold);

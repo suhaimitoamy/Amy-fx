@@ -1,5 +1,32 @@
 # Bug History
 
+## Fixed Market Context & Notification Defects — 2026-07-11
+
+### Historical FVG ATR Contamination
+- **Severity:** High
+- **Cause:** Every historical FVG was validated with the newest ATR regime.
+- **Fix:** Each FVG now stores and uses ATR from immediately before it formed.
+
+### Fixed-Price Liquidity Tolerance
+- **Severity:** High
+- **Cause:** Equal highs/lows and level deduplication used hardcoded XAU distances regardless of volatility.
+- **Fix:** Clustering, external classification, sweep penetration, and deduplication now scale with current ATR.
+
+### Weak Order Block Origin
+- **Severity:** High
+- **Cause:** The last opposite candle could be labeled an OB even without a valid displaced break.
+- **Fix:** OB creation now requires a valid displaced break and records whether the impulse created imbalance.
+
+### News Notification Opened Generic Page
+- **Severity:** High
+- **Cause:** Notifications carried only the Market Intel page URL, not the Telegram post ID.
+- **Fix:** Notifications now deep-link to `#news=<post-id>`; Market Intel opens the News tab, expands the item, and scrolls it into view.
+
+### Newest News Missing
+- **Severity:** High
+- **Cause:** The API sliced Telegram HTML order before sorting, while item timestamps could be empty or approximate.
+- **Fix:** Posts are sorted by numeric Telegram ID before filtering/slicing and refreshed with a minute cache key.
+
 ## Fixed Mapping Logic Defects — 2026-07-11
 
 ### Historical Liquidity Reactivation

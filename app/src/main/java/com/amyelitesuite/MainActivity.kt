@@ -726,10 +726,9 @@ class MainActivity : Activity() {
                 val route = AmyFxNotificationGate.routeFor(title, message)
                 val intent = Intent(mContext, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                    if (url != null) {
-                        val routedUrl = if (url.contains("apps/mapping/index.html") && !url.contains("#")) "$url#$route" else url
-                        putExtra("target_url", routedUrl)
-                    }
+                    val destination = url ?: AmyFxNotificationGate.routeUrl(route)
+                    val routedUrl = if (destination.contains("apps/mapping/index.html") && !destination.contains("#")) "$destination#$route" else destination
+                    putExtra("target_url", routedUrl)
                     putExtra("amyfx_route", route)
                 }
                 val requestCode = System.currentTimeMillis().toInt()

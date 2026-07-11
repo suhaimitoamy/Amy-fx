@@ -58,7 +58,7 @@ function conflictContext() {
 }
 
 test('setup RR di bawah 1:2 ditolak sebagai konflik fatal', () => {
-  const setup = { dir: 'BUY WATCH', entryLow: 100, entryHigh: 101, sl: 99, tp1: 102.5, status: 'FRESH', qualityLabel: 'MEDIUM' };
+  const setup = { dir: 'BUY WATCH', tf: 'M15', entryLow: 100, entryHigh: 101, sl: 99, tp1: 102.5, tp2: 103.5, status: 'FRESH', qualityLabel: 'MEDIUM' };
   const result = engine.detectSetupConflicts(setup, conflictContext());
   assert.equal(result.hasFatalConflict, true);
   assert.equal(result.recommendation, 'INVALID');
@@ -68,9 +68,27 @@ test('setup RR di bawah 1:2 ditolak sebagai konflik fatal', () => {
 });
 
 test('setup RR tepat 1:2 tidak terkena konflik RR', () => {
-  const setup = { dir: 'BUY WATCH', entryLow: 100, entryHigh: 101, sl: 99, tp1: 103, status: 'FRESH', qualityLabel: 'MEDIUM' };
+  const setup = { dir: 'BUY WATCH', tf: 'M15', entryLow: 100, entryHigh: 101, sl: 99, tp1: 103, tp2: 105, status: 'FRESH', qualityLabel: 'MEDIUM' };
   const result = engine.detectSetupConflicts(setup, conflictContext());
   assert.equal(result.conflicts.some(x => x.type === 'RR_CONFLICT'), false);
+});
+
+test('M15 precision menghasilkan TP1 1R dan runner TP2 minimal 2R', () => {
+  const setup = { dir: 'BUY WATCH', tf: 'M15', entryLow: 100, entryHigh: 101, sl: 99, tp1: 103, tp2: 105, status: 'FRESH', qualityLabel: 'STRONG' };
+  setup.conflictCheck = engine.detectSetupConflicts(setup, conflictContext());
+  const result = engine.assignChecklist(setup, conflictContext());
+  assert.equal(result.tp1, 103);
+  assert.equal(result.tp2, 105);
+  assert.equal(result.executionMode, 'M15_PRECISION');
+  assert.deepEqual(result.tradeManagement, { tp1R:1, tp1ClosePercent:90, moveStopToBreakEven:true, tp2MinimumR:2, runnerPercent:10 });
+});
+
+test('timeframe selain M15 tetap menjadi konteks dan tidak actionable', () => {
+  const setup = { dir: 'BUY WATCH', tf: 'H1', entryLow: 100, entryHigh: 101, sl: 99, tp1: 103, tp2: 105, status: 'FRESH', qualityLabel: 'STRONG' };
+  setup.conflictCheck = engine.detectSetupConflicts(setup, conflictContext());
+  const result = engine.assignChecklist(setup, conflictContext());
+  assert.equal(result.status, 'WAIT');
+  assert.equal(result.executionMode, 'CONTEXT_ONLY');
 });
 
 test('struktur HTF lebih dominan daripada lokasi discount/premium', () => {
@@ -85,4 +103,35 @@ test('Silver Bullet aktif pada pukul 10:30 New York', () => {
   assert.equal(result.session, 'NEW_YORK');
   assert.equal(result.killzone, 'SILVER_BULLET');
   assert.equal(result.sessionQuality, 'ACTIVE');
+});
+
+test('FVG historis memakai ATR lokal saat imbalance terbentuk', () => {
+  const candles = [
+    candle(100.2, 101, 100, 100.6),
+    candle(100.5, 102.2, 100.3, 102),
+    candle(101.6, 103, 101.5, 102.5),
+    ...Array.from({ length: 16 }, (_, i) => candle(103 + i * .1, 120 + i, 102, 104 + i * .1))
+  ];
+  const fvgs = engine.detectFvg(candles, { htfBias: 'BULLISH' });
+  const historical = fvgs.find(x => x.index === 2);
+  assert.ok(historical);
+  assert.ok(historical.localAtr < 3);
+});
+
+test('Order Block ditolak jika tidak berasal dari valid break dengan displacement', () => {
+  const candles = [
+    candle(100, 101, 99, 100.5),
+    candle(100.5, 101, 99.5, 100),
+    candle(100, 102, 99.8, 101.8),
+    candle(101.8, 103, 101, 102.5)
+  ];
+  assert.deepEqual(engine.detectOB(candles, { last: { index: 2, dir: 'BULLISH', valid: false, breakType: 'SWEEP_ONLY' } }, { htfBias: 'BULLISH' }), []);
+});
+
+test('BOS atau displacement tunggal hanya menjadi konteks, bukan trigger entry', () => {
+  const setup = { type: 'STRUCTURE SETUP', dir: 'BUY WATCH', tf: 'M15', entryLow: 100, entryHigh: 101, sl: 99, tp1: 103, tp2: 105, status: 'FRESH', qualityLabel: 'STRONG' };
+  setup.conflictCheck = engine.detectSetupConflicts(setup, conflictContext());
+  const result = engine.assignChecklist(setup, conflictContext());
+  assert.equal(result.status, 'WAIT');
+  assert.equal(result.executionMode, 'CONTEXT_ONLY');
 });

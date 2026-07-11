@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-07-11 — Market Context & Notification Routing Hardening
+
+- Replaced latest-regime FVG validation with point-in-time ATR.
+- Made equal-high/equal-low, external-level, sweep, and deduplication tolerances volatility-aware.
+- Required Order Blocks to originate from a valid displaced structure break and scored their imbalance origin.
+- Anchored HTF dealing ranges to confirmed structural swings instead of the nearest level around current price.
+- Downgraded standalone BOS/CHOCH and displacement candles to context-only; they can no longer trigger execution.
+- Rewrote Mapping explanation into plain Indonesian: direction, confirmation, target, action, and risk.
+- Sorted Telegram news by numeric post ID before filtering and reduced edge-cache staleness.
+- Added per-news deep links, focused-item scrolling, bounded synchronization retry, and generic native routes for News, Journal, and Academy notifications.
+- Added five regression checks; 14 JavaScript tests now pass.
+- Revalidated January–June candles: 70.09% TP1 hit rate across 117 trades, +14.76R, profit factor 1.34, and 6.34R maximum drawdown after a $0.30 cost assumption.
+
+## 2026-07-11 — M15 Precision Mode
+
+- Restricted actionable Mapping setups and native scanner targets to M15.
+- Added TP1 at 1R, 90% profit secure, break-even runner, and TP2 ≥2R lifecycle.
+- Added TP1 Secured, Runner to TP2, TP1 + BE, and TP2 Hit live states.
+- Superseded by the stricter Market Context revalidation above.
+
 ## 2026-07-11 — Mapping Logic Production Hardening
 
 - Prevented swept liquidity from becoming active again after price reversal.

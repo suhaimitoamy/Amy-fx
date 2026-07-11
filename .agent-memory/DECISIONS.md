@@ -9,6 +9,9 @@
 - Minimum accepted setup RR is 1:2; lower RR is a fatal conflict and INVALID.
 - HTF structure owns directional bias; Premium/Discount is an alignment filter, not a standalone direction signal.
 - Silver Bullet takes precedence over the broader New York Killzone during 10:00–11:00 New York time.
+- Actionable setup generation is restricted to M15 Precision Mode; other timeframes remain analysis context only.
+- M15 Precision Mode secures TP1 at 1R, closes 90%, moves the 10% runner stop to break-even, and retains a main target of at least 2R.
+- Native Background Scanner receives targets only from an active `M15_PRECISION` setup.
 
 ### Institutional Intelligence UI
 - Market Intel and Mapping share a local `AmyFXIntel` snapshot/event layer.
@@ -19,6 +22,18 @@
 ### Mapping Render Performance
 - Live price ticks update targeted DOM nodes instead of fully rebuilding the Analyze view.
 - Connection and scanner synchronization use explicit selectors; full-document scanning is not allowed in the recurring one-second task.
+
+### Market Context Accuracy
+- FVG quality must use ATR from the candle history available when the imbalance formed.
+- Liquidity clustering and sweep penetration use ATR-scaled tolerance instead of fixed XAU price distances.
+- An Order Block is only eligible when it precedes a confirmed displaced structure break; an accompanying imbalance improves quality.
+- HTF dealing ranges are anchored to confirmed structural swings and may not be inferred from the nearest level around live price alone.
+- Standalone BOS/CHOCH and displacement are context, not executable entry triggers.
+
+### Notification Destinations
+- News notifications carry the Telegram post ID in the URL and must open, expand, and focus that exact item.
+- Telegram post ID is the authoritative newest-first ordering key; timestamp is secondary display metadata.
+- Native notifications without an explicit URL resolve to an explicit local `index.html` destination based on their module.
 
 ## 2026-07-10
 

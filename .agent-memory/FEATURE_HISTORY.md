@@ -1,5 +1,17 @@
 # Feature History
 
+## Context-Aware Mapping & Deep-Link News
+- **Date:** 2026-07-11
+- **Status:** ✅ Implemented
+- **Description:** Added point-in-time FVG ATR, volatility-scaled liquidity tolerance, displaced-origin OB validation, structurally anchored HTF ranges, context-only standalone structure events, plain-language Mapping explanation, newest-first News ordering, and exact notification-to-news deep links.
+- **Backtest:** 117 filled M15 trades, 70.09% TP1 hit rate, +14.76R after $0.30 assumed cost, profit factor 1.34, maximum drawdown 6.34R.
+
+## M15 Precision Mode
+- **Date:** 2026-07-11
+- **Status:** ✅ Implemented
+- **Description:** Restricted actionable setups to M15, added 1R TP1 protection with 90% secure and 10% break-even runner toward TP2 ≥2R, synchronized live lifecycle states, and blocked raw non-M15 scanner targets.
+- **Backtest:** Superseded by the stricter Context-Aware Mapping revalidation above.
+
 ## Mapping Logic Production Hardening
 - **Date:** 2026-07-11
 - **Status:** ✅ Implemented
