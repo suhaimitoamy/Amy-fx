@@ -122,14 +122,17 @@ function renderHeatmap(zones, currentPrice) {
   canvas.innerHTML = sortedZones.map(z => {
     const isCurrent = z.isCurrent;
     return `
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span class="hz-price ${isCurrent ? 'current' : ''}" style="font-size:12px;">${z.price}</span>
-        <div class="hz-bars" style="flex:1; display:flex; flex-direction:column; gap:2px;">
-          ${z.resistCount > 0 ? `<div class="hz-bar resist" style="width:${Math.max(5, z.resistCount / maxActivity * 100)}%">${z.resistCount}</div>` : ''}
-          ${z.supportCount > 0 ? `<div class="hz-bar support" style="width:${Math.max(5, z.supportCount / maxActivity * 100)}%">${z.supportCount}</div>` : ''}
+      <div class="heatmap-row ${isCurrent ? 'is-now' : ''}">
+        <span class="heatmap-price">${z.price}</span>
+        <div class="heatmap-glow-track">
+          ${z.resistCount > 0 ? `<div class="heat-glow resist-glow" style="width:${Math.max(5, z.resistCount / maxActivity * 100)}%; opacity:${0.4 + (z.resistCount / maxActivity * 0.6)}"></div>` : ''}
+          ${z.supportCount > 0 ? `<div class="heat-glow support-glow" style="width:${Math.max(5, z.supportCount / maxActivity * 100)}%; opacity:${0.4 + (z.supportCount / maxActivity * 0.6)}"></div>` : ''}
         </div>
-        ${z.label ? `<span class="hz-label" style="font-size:10px;">${z.label}</span>` : ''}
-        ${isCurrent ? '<span class="hz-now" style="font-size:10px;">◀ NOW</span>' : ''}
+        <div class="heatmap-meta">
+          ${z.label ? `<span class="heatmap-label">${z.label}</span>` : ''}
+          <span class="heatmap-vol">${z.totalActivity}</span>
+          ${isCurrent ? '<span class="heatmap-now">◀</span>' : ''}
+        </div>
       </div>
     `;
   }).join('');

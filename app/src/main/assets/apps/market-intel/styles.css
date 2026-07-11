@@ -153,61 +153,81 @@ body {
   border: 1px solid var(--border);
 }
 
-.hz-row {
-  position: absolute;
-  left: 0;
-  right: 0;
+/* ─── Modern Heatmap CSS ─── */
+.heatmap-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 8px;
-  transform: translateY(-50%);
-  height: 20px;
+  gap: 12px;
+  padding: 6px 0;
+  position: relative;
 }
-.hz-price {
-  font-size: 10px;
+.heatmap-row.is-now {
+  background: linear-gradient(90deg, rgba(212, 175, 55, 0.08), transparent);
+  border-radius: 8px;
+  padding-left: 8px;
+}
+.heatmap-price {
+  font-size: 13px;
+  font-weight: 800;
   color: var(--text-dim);
-  width: 52px;
+  width: 55px;
   text-align: right;
   flex-shrink: 0;
-  font-weight: 600;
+  font-family: 'Courier New', Courier, monospace;
 }
-.hz-price.current {
+.heatmap-row.is-now .heatmap-price {
   color: var(--gold);
-  font-weight: 800;
-  font-size: 11px;
+  text-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
 }
-.hz-bars {
+.heatmap-glow-track {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 3px;
+  position: relative;
+  height: 18px;
+  justify-content: center;
+  border-left: 1px solid rgba(255,255,255,0.05);
+  padding-left: 8px;
 }
-.hz-bar {
-  height: 8px;
-  border-radius: 2px;
-  font-size: 7px;
-  color: #fff;
+.heat-glow {
+  height: 6px;
+  border-radius: 4px;
+  min-width: 12px;
+  transition: width 0.4s ease, opacity 0.4s ease;
+}
+.heat-glow.resist-glow {
+  background: linear-gradient(90deg, #ff416c, #ff4b2b);
+  box-shadow: 0 0 12px rgba(255, 65, 108, 0.6);
+}
+.heat-glow.support-glow {
+  background: linear-gradient(90deg, #00b09b, #96c93d);
+  box-shadow: 0 0 12px rgba(0, 176, 155, 0.6);
+}
+.heatmap-meta {
   display: flex;
   align-items: center;
-  padding-left: 3px;
-  min-width: 14px;
+  gap: 6px;
+  width: 80px;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
-.hz-bar.resist {
-  background: linear-gradient(90deg, rgba(231,76,60,0.8), rgba(231,76,60,0.3));
-}
-.hz-bar.support {
-  background: linear-gradient(90deg, rgba(46,204,113,0.8), rgba(46,204,113,0.3));
-}
-.hz-label {
-  font-size: 9px;
+.heatmap-label {
+  font-size: 10px;
+  background: rgba(255,255,255,0.05);
+  padding: 2px 5px;
+  border-radius: 4px;
   color: var(--text-dim);
-  white-space: nowrap;
 }
-.hz-now {
-  font-size: 9px;
+.heatmap-vol {
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.7);
+}
+.heatmap-now {
+  font-size: 10px;
   color: var(--gold);
-  font-weight: 700;
+  font-weight: 900;
   animation: pulse 1.5s infinite;
 }
 
