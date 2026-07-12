@@ -8,6 +8,7 @@ export let scanTimer = null;
 export let lastWsTickAt = Number(localStorage.getItem('last_ws_tick_at') || 0);
 
 const PROXY_URL = 'https://amy-fx.vercel.app/api/twelvedata';
+const LIVE_POLL_MS = 20_000;
 let candleFetchedAt = {};
 let pollInFlight = false;
 let lastErrorLogAt = 0;
@@ -21,6 +22,16 @@ export function isCandleStale(tf) {
   if (tf === 'H1') return age >= 15;
   if (tf === 'H4') return age >= 30;
   return age >= 120;
+}
+
+function analysisRefreshDelay(tf) {
+  if (tf === 'M1') return 60_000;
+  if (tf === 'M5') return 120_000;
+  if (tf === 'M15') return 300_000;
+  if (tf === 'M30') return 600_000;
+  if (tf === 'H1') return 900_000;
+  if (tf === 'H4') return 1_800_000;
+  return 3_600_000;
 }
 
 export async function fetchTf(tf) {
@@ -55,6 +66,8 @@ export async function fetchTf(tf) {
 }
 
 export async function runAnalysis(tf = state.tf) {
+  if (document.hidden) return;
+
   if (scanTimer) {
     clearTimeout(scanTimer);
     scanTimer = null;
@@ -109,13 +122,21 @@ export async function runAnalysis(tf = state.tf) {
   render();
 }
 
+function scheduleAnalysisRefresh() {
+  if (scanTimer) return;
+  scanTimer = setTimeout(() => {
+    scanTimer = null;
+    if (!document.hidden) runAnalysis(state.tf);
+  }, analysisRefreshDelay(state.tf));
+}
+
 async function pollLivePrice() {
-  if (pollInFlight) return;
+  if (document.hidden || pollInFlight) return;
   pollInFlight = true;
 
   try {
     const response = await fetch(
-      `${PROXY_URL}?symbol=XAU/USD&interval=1min&outputsize=1&_=${Date.now()}`,
+      `${PROXY_URL}?symbol=XAU/USD&interval=1min&outputsize=1&_=${Math.floor(Date.now() / LIVE_POLL_MS)}`,
       { cache: 'no-store' }
     );
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -133,13 +154,7 @@ async function pollLivePrice() {
     state.conn = 'Connected';
     renderAnalyzeLive();
     renderSoft();
-
-    if (!scanTimer) {
-      scanTimer = setTimeout(() => {
-        scanTimer = null;
-        runAnalysis(state.tf);
-      }, 30000);
-    }
+    scheduleAnalysisRefresh();
   } catch (error) {
     state.conn = 'Offline';
     renderSoft();
@@ -157,7 +172,7 @@ export function connect() {
   state.conn = 'Connecting';
   renderSoft();
   pollLivePrice();
-  liveTimer = setInterval(pollLivePrice, 10000);
+  liveTimer = setInterval(pollLivePrice, LIVE_POLL_MS);
 
   if (!state.candles[state.tf]?.length) {
     runAnalysis(state.tf);
