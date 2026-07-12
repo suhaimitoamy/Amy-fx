@@ -17,15 +17,21 @@ class BootReceiver : BroadcastReceiver() {
         ) return
 
         val prefs = context.getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
-        prefs.edit().putBoolean("scanner_enabled", true).apply()
+        val enabled = prefs.getBoolean(KEY_SCANNER_ENABLED, false)
+        val upper = prefs.getString(KEY_BSL_TARGET, null)?.toDoubleOrNull() ?: 0.0
+        val lower = prefs.getString(KEY_SSL_TARGET, null)?.toDoubleOrNull() ?: 0.0
+        val updatedAt = prefs.getLong(KEY_TARGET_UPDATED_AT, 0L)
+        val expired = updatedAt <= 0L || System.currentTimeMillis() - updatedAt > TARGET_MAX_AGE_MS
+
+        if (!enabled || expired || (upper <= 0.0 && lower <= 0.0)) {
+            prefs.edit().putBoolean(KEY_SCANNER_ENABLED, false).apply()
+            Log.d("AmyFX", "BootReceiver skipped: no active M15 target")
+            return
+        }
 
         val serviceIntent = Intent(context, ScannerService::class.java).apply {
-            prefs.getString("scanner_bsl_target", null)
-                ?.takeIf { it.isNotBlank() }
-                ?.let { putExtra("bsl", it) }
-            prefs.getString("scanner_ssl_target", null)
-                ?.takeIf { it.isNotBlank() }
-                ?.let { putExtra("ssl", it) }
+            if (upper > 0.0) putExtra("bsl", upper.toString())
+            if (lower > 0.0) putExtra("ssl", lower.toString())
         }
 
         try {
@@ -34,9 +40,17 @@ class BootReceiver : BroadcastReceiver() {
             } else {
                 context.startService(serviceIntent)
             }
-            Log.d("AmyFX", "Automatic monitor restarted after boot/update")
+            Log.d("AmyFX", "Active M15 scanner restarted after boot/update")
         } catch (error: Exception) {
-            Log.e("AmyFX", "Unable to restart automatic monitor", error)
+            Log.e("AmyFX", "Unable to restart M15 scanner", error)
         }
+    }
+
+    companion object {
+        private const val KEY_SCANNER_ENABLED = "scanner_enabled"
+        private const val KEY_BSL_TARGET = "scanner_bsl_target"
+        private const val KEY_SSL_TARGET = "scanner_ssl_target"
+        private const val KEY_TARGET_UPDATED_AT = "scanner_target_updated_at"
+        private const val TARGET_MAX_AGE_MS = 24L * 60L * 60L * 1000L
     }
 }
