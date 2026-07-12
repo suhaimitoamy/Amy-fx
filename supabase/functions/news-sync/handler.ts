@@ -1,29 +1,12 @@
 import { cert, getApps, initializeApp } from 'npm:firebase-admin@13.0.1/app';
 import { getMessaging } from 'npm:firebase-admin@13.0.1/messaging';
+import { getNewsImpact, isRelevantNews } from '../../../lib/news-relevance.mjs';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const SOURCE = 'SM_News_24h';
 const TELEGRAM_URL = `https://t.me/s/${SOURCE}`;
 const RETRY_WINDOW_MS = 15 * 60 * 1000;
-
-const GOLD_KEYWORDS = [
-  'gold', 'bullion', 'xau', 'xauusd', 'fed', 'fomc', 'powell', 'jerome',
-  'cpi', 'inflation', 'inflasi', 'ppi', 'pce', 'nfp', 'nonfarm', 'payroll',
-  'employment', 'unemployment', 'jobless', 'gdp', 'recession', 'resesi',
-  'interest rate', 'suku bunga', 'rate cut', 'rate hike', 'dovish', 'hawkish',
-  'yield', 'treasury', 'bond', 'dollar', 'usd', 'dxy', 'geopolitical', 'war',
-  'perang', 'attack', 'missile', 'iran', 'israel', 'russia', 'ukraine', 'china',
-  'tariff', 'sanctions', 'sanksi', 'oil', 'crude', 'central bank', 'ecb', 'boe',
-  'boj', 'pboc', 'safe haven', 'brics', 'dedollarization', 'pmi', 'ism',
-  'retail sales'
-];
-
-const HIGH_IMPACT_KEYWORDS = [
-  'fomc', 'powell', 'cpi', 'nfp', 'nonfarm', 'payroll', 'pce', 'ppi',
-  'interest rate', 'rate cut', 'rate hike', 'war', 'attack', 'missile',
-  'sanctions', 'tariff', 'recession', 'gdp'
-];
 
 const dbHeaders = {
   apikey: SERVICE_ROLE_KEY,
@@ -114,16 +97,6 @@ function extractPosts(html: string) {
   }
 
   return posts.sort((a, b) => Number(b.id) - Number(a.id));
-}
-
-function relevant(text: string) {
-  const lower = text.toLowerCase();
-  return GOLD_KEYWORDS.some(keyword => lower.includes(keyword));
-}
-
-function impact(text: string) {
-  const lower = text.toLowerCase();
-  return HIGH_IMPACT_KEYWORDS.some(keyword => lower.includes(keyword)) ? 'high' : 'medium';
 }
 
 async function translate(text: string) {
@@ -344,7 +317,7 @@ export async function handler(req: Request) {
     if (!telegram.ok) throw new Error(`Telegram HTTP ${telegram.status}`);
 
     const candidates = extractPosts(await telegram.text())
-      .filter(post => relevant(post.text))
+      .filter(post => isRelevantNews(post.text))
       .slice(0, 30);
     const existing = await rest('news?select=telegram_post_id&order=id.desc&limit=300') || [];
     const existingIds = new Set(existing.map((row: any) => String(row.telegram_post_id)));
@@ -360,7 +333,7 @@ export async function handler(req: Request) {
         published_at: post.time && !Number.isNaN(Date.parse(post.time))
           ? new Date(post.time).toISOString()
           : null,
-        impact: impact(post.text),
+        impact: getNewsImpact(post.text),
         source: SOURCE,
         source_url: post.link,
         content_hash: await hash(post.text)
