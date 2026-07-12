@@ -9,7 +9,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import androidx.core.content.ContextCompat
@@ -30,72 +29,68 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
+/**
+ * Scanner ringan yang hanya hidup saat Mapping menghasilkan area M15 valid.
+ * News tidak dipolling di sini; notifikasi news diterima melalui Firebase Messaging.
+ */
 class ScannerService : Service() {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val client = OkHttpClient.Builder()
-        .connectTimeout(12, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
-        .writeTimeout(15, TimeUnit.SECONDS)
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(12, TimeUnit.SECONDS)
+        .writeTimeout(12, TimeUnit.SECONDS)
+        .retryOnConnectionFailure(true)
         .build()
 
     private var marketJob: Job? = null
-    private var newsJob: Job? = null
     private var setupUpper = 0.0
     private var setupLower = 0.0
-    private var lastPrice = 0.0
-    private var marketOnline = false
-    private var lastNotificationUpdateMs = 0L
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP_SCANNER) {
-            stopSelf()
+            prefs().edit().putBoolean(KEY_SCANNER_ENABLED, false).apply()
+            stopMonitor()
             return START_NOT_STICKY
         }
 
         createChannels()
-        prefs().edit().putBoolean(KEY_SCANNER_ENABLED, true).apply()
         loadTargets(intent)
 
-        if (targetsExpired()) clearTargets()
+        if (!hasActiveTarget() || targetsExpired()) {
+            clearTargets()
+            stopMonitor()
+            return START_NOT_STICKY
+        }
 
-        startStatusNotification(force = true)
+        prefs().edit().putBoolean(KEY_SCANNER_ENABLED, true).apply()
+        startStatusNotification()
         ensureMarketMonitor()
-        ensureNewsMonitor()
         return START_STICKY
     }
 
     private fun ensureMarketMonitor() {
         if (marketJob?.isActive == true) return
+
         marketJob = scope.launch {
             var failures = 0
             while (isActive) {
+                if (!hasActiveTarget() || targetsExpired()) {
+                    clearTargets()
+                    stopSelf()
+                    break
+                }
+
                 try {
                     pollMarket()
                     failures = 0
                     delay(MARKET_POLL_MS)
                 } catch (error: Exception) {
-                    marketOnline = false
+                    android.util.Log.w("AmyFX-Scanner", "Market polling failed", error)
                     failures += 1
-                    startStatusNotification()
-                    val retry = min(60_000L, 10_000L * failures.coerceAtMost(6))
-                    delay(retry)
+                    delay(min(MAX_RETRY_MS, RETRY_STEP_MS * failures.coerceAtMost(6)))
                 }
-            }
-        }
-    }
-
-    private fun ensureNewsMonitor() {
-        if (newsJob?.isActive == true) return
-        newsJob = scope.launch {
-            while (isActive) {
-                try {
-                    pollNews()
-                } catch (error: Exception) {
-                    android.util.Log.w("AmyFX-News", "Background news check failed", error)
-                }
-                delay(NEWS_POLL_MS)
             }
         }
     }
@@ -103,75 +98,24 @@ class ScannerService : Service() {
     private fun pollMarket() {
         val request = Request.Builder()
             .url(MARKET_URL)
-            .header("Cache-Control", "no-cache")
+            .header("Accept", "application/json")
             .build()
 
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) error("Market HTTP ${response.code}")
-            val payload = response.body?.string().orEmpty()
-            val json = JSONObject(payload)
+
+            val json = JSONObject(response.body?.string().orEmpty())
             if (json.optString("status") != "ok") {
                 error(json.optString("message", "Market response error"))
             }
+
             val values = json.optJSONArray("values") ?: error("Market values missing")
             val latest = values.optJSONObject(0) ?: error("Latest market candle missing")
             val price = latest.optString("close").toDoubleOrNull()
                 ?: latest.optDouble("close", Double.NaN)
+
             if (!price.isFinite() || price <= 0.0) error("Invalid market price")
-
-            lastPrice = price
-            marketOnline = true
             checkTargets(price)
-            startStatusNotification()
-        }
-    }
-
-    private fun pollNews() {
-        val request = Request.Builder()
-            .url(NEWS_URL)
-            .header("Cache-Control", "no-cache")
-            .build()
-
-        client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) error("News HTTP ${response.code}")
-            val json = JSONObject(response.body?.string().orEmpty())
-            val items = json.optJSONArray("news") ?: return
-            if (items.length() == 0) return
-
-            var latest: JSONObject? = null
-            var latestNumericId = Long.MIN_VALUE
-            for (index in 0 until items.length()) {
-                val item = items.optJSONObject(index) ?: continue
-                val numericId = item.optString("id").toLongOrNull()
-                if (latest == null || (numericId != null && numericId > latestNumericId)) {
-                    latest = item
-                    if (numericId != null) latestNumericId = numericId
-                }
-            }
-
-            val item = latest ?: return
-            val newsId = item.optString("id").trim()
-            if (newsId.isBlank()) return
-
-            val storedId = prefs().getString(KEY_LAST_NEWS_ID, null)
-            if (storedId == null) {
-                prefs().edit().putString(KEY_LAST_NEWS_ID, newsId).apply()
-                return
-            }
-            if (storedId == newsId) return
-
-            val body = item.optString("text").ifBlank {
-                item.optString("textOriginal", "Berita baru XAU/USD tersedia.")
-            }.take(MAX_NEWS_BODY)
-            val impact = item.optString("impact")
-            val title = if (impact.equals("high", ignoreCase = true)) {
-                "Breaking News Penting XAU/USD"
-            } else {
-                "Breaking News XAU/USD"
-            }
-
-            sendNewsNotification(title, body, newsId)
-            prefs().edit().putString(KEY_LAST_NEWS_ID, newsId).apply()
         }
     }
 
@@ -186,7 +130,6 @@ class ScannerService : Service() {
 
         val rawUpper = if (hasUpper) passedUpper else savedUpper
         val rawLower = if (hasLower) passedLower else savedLower
-
         val oldUpper = setupUpper
         val oldLower = setupLower
 
@@ -202,20 +145,25 @@ class ScannerService : Service() {
             abs(oldLower - setupLower) > PRICE_EPSILON
 
         if (changed || hasUpper || hasLower) {
-            prefs().edit()
-                .putString(KEY_BSL_TARGET, if (setupUpper > 0.0) setupUpper.toString() else "")
-                .putString(KEY_SSL_TARGET, if (setupLower > 0.0) setupLower.toString() else "")
-                .putLong(KEY_TARGET_UPDATED_AT, System.currentTimeMillis())
-                .putBoolean(KEY_UPPER_ARMED, true)
-                .putBoolean(KEY_LOWER_ARMED, true)
-                .apply()
-            startStatusNotification(force = true)
+            if (hasActiveTarget()) {
+                prefs().edit()
+                    .putString(KEY_BSL_TARGET, if (setupUpper > 0.0) setupUpper.toString() else "")
+                    .putString(KEY_SSL_TARGET, if (setupLower > 0.0) setupLower.toString() else "")
+                    .putLong(KEY_TARGET_UPDATED_AT, System.currentTimeMillis())
+                    .putBoolean(KEY_UPPER_ARMED, true)
+                    .putBoolean(KEY_LOWER_ARMED, true)
+                    .putBoolean(KEY_SCANNER_ENABLED, true)
+                    .apply()
+            } else {
+                clearTargets()
+            }
         }
     }
 
     private fun checkTargets(price: Double) {
         if (targetsExpired()) {
             clearTargets()
+            stopSelf()
             return
         }
 
@@ -250,6 +198,7 @@ class ScannerService : Service() {
 
     private fun sendTargetAlert(levelKey: String, title: String, message: String) {
         if (!canPostNotifications()) return
+
         val gateKey = "target|$levelKey"
         if (!AmyFxNotificationGate.shouldNotify(this, gateKey, System.currentTimeMillis())) return
 
@@ -279,69 +228,20 @@ class ScannerService : Service() {
         )
     }
 
-    private fun sendNewsNotification(title: String, message: String, newsId: String) {
-        if (!canPostNotifications()) return
-
-        val gateKey = AmyFxNotificationGate.newsContentKey(message)
-        if (!AmyFxNotificationGate.shouldNotify(this, gateKey, System.currentTimeMillis())) return
-
-        val targetUrl =
-            "https://appassets.androidplatform.net/assets/apps/market-intel/index.html#news=${Uri.encode(newsId)}"
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            putExtra("target_url", targetUrl)
-        }
-        val requestCode = newsId.hashCode()
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            requestCode,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val notification = Notification.Builder(this, CHANNEL_NEWS)
-            .setContentTitle(title)
-            .setContentText(message)
-            .setStyle(Notification.BigTextStyle().bigText(message))
-            .setSmallIcon(R.drawable.ic_stat_amy_fx)
-            .setContentIntent(pendingIntent)
-            .setPriority(Notification.PRIORITY_HIGH)
-            .setCategory(Notification.CATEGORY_MESSAGE)
-            .setVisibility(Notification.VISIBILITY_PUBLIC)
-            .setAutoCancel(true)
-            .build()
-
-        notificationManager().notify(
-            AmyFxNotificationGate.stableId(gateKey, requestCode),
-            notification
-        )
-    }
-
-    private fun startStatusNotification(force: Boolean = false) {
-        val now = System.currentTimeMillis()
-        if (!force && now - lastNotificationUpdateMs < STATUS_UPDATE_MIN_MS) return
-        lastNotificationUpdateMs = now
-
+    private fun startStatusNotification() {
         val pendingIntent = PendingIntent.getActivity(
             this,
             FOREGROUND_NOTIFICATION_ID,
             mappingIntent("Dashboard"),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-        val priceText = if (lastPrice > 0.0) {
-            "XAU/USD ${fmt(lastPrice)}"
-        } else {
-            "menunggu harga"
-        }
-        val connectionText = if (marketOnline) "aktif" else "menghubungkan"
+
         val notification = Notification.Builder(this, CHANNEL_SCANNER_FOREGROUND)
-            .setContentTitle("Amy FX Monitor otomatis")
-            .setContentText("Market $connectionText • $priceText")
-            .setStyle(
-                Notification.BigTextStyle().bigText(
-                    "News aktif otomatis. ${targetText()} Market $connectionText."
-                )
-            )
+            .setContentTitle("Amy FX — Pemantau area M15")
+            .setContentText(targetText())
+            .setStyle(Notification.BigTextStyle().bigText(
+                "Scanner ringan aktif hanya untuk ${targetText()} News diterima terpisah melalui push notification."
+            ))
             .setSmallIcon(R.drawable.ic_stat_amy_fx)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
@@ -364,12 +264,14 @@ class ScannerService : Service() {
 
         val serviceChannel = NotificationChannel(
             CHANNEL_SCANNER_FOREGROUND,
-            "Amy FX Monitor Otomatis",
+            "Amy FX Pemantau Area M15",
             NotificationManager.IMPORTANCE_LOW
         ).apply {
-            description = "Menjaga news dan target Mapping tetap aktif saat aplikasi ditutup"
+            description = "Aktif hanya saat ada area Mapping M15 yang perlu dipantau"
             setSound(null, null)
+            enableVibration(false)
         }
+
         val targetChannel = NotificationChannel(
             CHANNEL_TARGET_ALERT,
             "Amy FX Target Alerts",
@@ -379,19 +281,8 @@ class ScannerService : Service() {
             enableVibration(true)
             enableLights(true)
         }
-        val newsChannel = NotificationChannel(
-            CHANNEL_NEWS,
-            "Amy FX Breaking News",
-            NotificationManager.IMPORTANCE_HIGH
-        ).apply {
-            description = "Breaking news yang relevan untuk XAU/USD"
-            enableVibration(true)
-            enableLights(true)
-        }
 
-        notificationManager().createNotificationChannels(
-            listOf(serviceChannel, targetChannel, newsChannel)
-        )
+        notificationManager().createNotificationChannels(listOf(serviceChannel, targetChannel))
     }
 
     private fun mappingIntent(route: String): Intent {
@@ -400,6 +291,24 @@ class ScannerService : Service() {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("target_url", url)
             putExtra("amyfx_route", route)
+        }
+    }
+
+    private fun hasActiveTarget(): Boolean = setupUpper > 0.0 || setupLower > 0.0
+
+    private fun targetsExpired(): Boolean {
+        if (!hasActiveTarget()) return true
+        val updatedAt = prefs().getLong(KEY_TARGET_UPDATED_AT, 0L)
+        return updatedAt <= 0L || System.currentTimeMillis() - updatedAt > TARGET_MAX_AGE_MS
+    }
+
+    private fun targetText(): String {
+        return when {
+            setupUpper > 0.0 && setupLower > 0.0 ->
+                "area SELL ${fmt(setupUpper)} dan BUY ${fmt(setupLower)}"
+            setupUpper > 0.0 -> "area SELL ${fmt(setupUpper)}"
+            setupLower > 0.0 -> "area BUY ${fmt(setupLower)}"
+            else -> "area M15 aktif"
         }
     }
 
@@ -412,24 +321,15 @@ class ScannerService : Service() {
             .remove(KEY_TARGET_UPDATED_AT)
             .putBoolean(KEY_UPPER_ARMED, true)
             .putBoolean(KEY_LOWER_ARMED, true)
+            .putBoolean(KEY_SCANNER_ENABLED, false)
             .apply()
-        startStatusNotification(force = true)
     }
 
-    private fun targetsExpired(): Boolean {
-        if (setupUpper <= 0.0 && setupLower <= 0.0) return false
-        val updatedAt = prefs().getLong(KEY_TARGET_UPDATED_AT, 0L)
-        return updatedAt > 0L && System.currentTimeMillis() - updatedAt > TARGET_MAX_AGE_MS
-    }
-
-    private fun targetText(): String {
-        return when {
-            setupUpper > 0.0 && setupLower > 0.0 ->
-                "Area SELL ${fmt(setupUpper)} • BUY ${fmt(setupLower)}."
-            setupUpper > 0.0 -> "Area SELL ${fmt(setupUpper)} dipantau."
-            setupLower > 0.0 -> "Area BUY ${fmt(setupLower)} dipantau."
-            else -> "Belum ada area M15 aktif; news tetap dipantau."
-        }
+    private fun stopMonitor() {
+        marketJob?.cancel()
+        marketJob = null
+        stopForeground(true)
+        stopSelf()
     }
 
     private fun canPostNotifications(): Boolean {
@@ -438,18 +338,15 @@ class ScannerService : Service() {
             PackageManager.PERMISSION_GRANTED
     }
 
-    private fun prefs() =
-        getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
+    private fun prefs() = getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
 
     private fun notificationManager() =
         getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-    private fun fmt(value: Double) =
-        String.format(Locale.US, "%.2f", value)
+    private fun fmt(value: Double) = String.format(Locale.US, "%.2f", value)
 
     override fun onDestroy() {
         marketJob?.cancel()
-        newsJob?.cancel()
         scope.cancel()
         super.onDestroy()
     }
@@ -459,14 +356,12 @@ class ScannerService : Service() {
 
         private const val MARKET_URL =
             "https://amy-fx.vercel.app/api/twelvedata?symbol=XAU/USD&interval=1min&outputsize=1"
-        private const val NEWS_URL = "https://amy-fx.vercel.app/api/news"
-        private const val MARKET_POLL_MS = 10_000L
-        private const val NEWS_POLL_MS = 120_000L
-        private const val STATUS_UPDATE_MIN_MS = 15_000L
+        private const val MARKET_POLL_MS = 30_000L
+        private const val RETRY_STEP_MS = 15_000L
+        private const val MAX_RETRY_MS = 120_000L
         private const val TARGET_MAX_AGE_MS = 24L * 60L * 60L * 1000L
         private const val RESET_DISTANCE = 0.50
         private const val PRICE_EPSILON = 0.01
-        private const val MAX_NEWS_BODY = 900
 
         private const val KEY_SCANNER_ENABLED = "scanner_enabled"
         private const val KEY_BSL_TARGET = "scanner_bsl_target"
@@ -474,11 +369,9 @@ class ScannerService : Service() {
         private const val KEY_TARGET_UPDATED_AT = "scanner_target_updated_at"
         private const val KEY_UPPER_ARMED = "scanner_upper_armed"
         private const val KEY_LOWER_ARMED = "scanner_lower_armed"
-        private const val KEY_LAST_NEWS_ID = "scanner_last_news_id"
 
-        private const val CHANNEL_SCANNER_FOREGROUND = "amy_scanner_foreground_v3"
+        private const val CHANNEL_SCANNER_FOREGROUND = "amy_scanner_foreground_v4"
         private const val CHANNEL_TARGET_ALERT = "amy_target_alert_v4"
-        private const val CHANNEL_NEWS = "amy_news_v1"
         private const val FOREGROUND_NOTIFICATION_ID = 9101
         private const val TARGET_NOTIFICATION_BASE_ID = 9200
     }
