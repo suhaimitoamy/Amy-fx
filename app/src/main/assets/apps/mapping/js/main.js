@@ -174,23 +174,24 @@ function livePriceWatchdog() {
 
 function syncAutomaticScannerUi() {
   const button = document.querySelector('[data-scanner-status]');
+  const buttonText = '📡 Background Scanner Otomatis Aktif';
   if (button) {
-    button.textContent = '📡 Background Scanner Otomatis Aktif';
-    button.className = 'action';
+    if (button.textContent !== buttonText) button.textContent = buttonText;
+    if (!button.classList.contains('action')) button.className = 'action';
   }
 
   const settings = document.querySelector('.settings');
   if (!settings) return;
+
+  const helpText =
+    'Harga live dan Background Scanner memakai server Amy FX secara otomatis. API key lokal tidak wajib.';
   const help = settings.querySelector('p.muted');
-  if (help) {
-    help.textContent =
-      'Harga live dan Background Scanner memakai server Amy FX secara otomatis. API key lokal tidak wajib.';
-  }
+  if (help && help.textContent !== helpText) help.textContent = helpText;
+
+  const warningHtml =
+    '<b>Monitor Otomatis</b><br>News dan area M15 tetap dipantau setelah aplikasi ditutup.';
   const warning = settings.querySelector('.warn');
-  if (warning) {
-    warning.innerHTML =
-      '<b>Monitor Otomatis</b><br>News dan area M15 tetap dipantau setelah aplikasi ditutup.';
-  }
+  if (warning && warning.innerHTML !== warningHtml) warning.innerHTML = warningHtml;
 }
 
 function initApp() {
@@ -203,11 +204,8 @@ function initApp() {
   render();
   syncAutomaticScannerUi();
 
-  const app = document.getElementById('app');
-  if (app) {
-    new MutationObserver(syncAutomaticScannerUi)
-      .observe(app, { childList: true, subtree: true });
-  }
+  // MutationObserver sebelumnya menulis ulang Settings lalu memicu dirinya sendiri.
+  // Tanpa observer, navigasi tetap ringan dan semua tombol dapat menerima sentuhan.
 
   setTimeout(autoConnectLivePrice, 600);
   setInterval(livePriceWatchdog, 30000);
