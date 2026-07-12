@@ -9,11 +9,15 @@
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Perbaikan daftar materi Bagian 11 yang sebelumnya kosong",
-    "Pembaruan stabilitas minor"
+    "Jurnal Trading diperbarui dengan dashboard performa, filter, pencarian, dan pengurutan",
+    "Autosave draft jurnal dan pemulihan otomatis saat editor dibuka kembali",
+    "Trade plan baru: arah, sesi, timeframe, risk, entry, SL, TP, RR, dan checklist disiplin",
+    "Export jurnal ke CSV dan JSON serta perbaikan stabilitas pada halaman Jurnal"
   ],
   "changelog": [
-    "Perbaikan daftar materi Bagian 11 yang sebelumnya kosong",
-    "Pembaruan stabilitas minor"
+    "Jurnal Trading diperbarui dengan dashboard performa, filter, pencarian, dan pengurutan",
+    "Autosave draft jurnal dan pemulihan otomatis saat editor dibuka kembali",
+    "Trade plan baru: arah, sesi, timeframe, risk, entry, SL, TP, RR, dan checklist disiplin",
+    "Export jurnal ke CSV dan JSON serta perbaikan stabilitas pada halaman Jurnal"
   ]
 }
