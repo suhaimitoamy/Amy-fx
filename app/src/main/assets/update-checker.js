@@ -1,6 +1,6 @@
 (function () {
-  const CURRENT_VERSION_CODE = 12;
-  const CURRENT_VERSION_NAME = '1.2.0';
+  const CURRENT_VERSION_CODE = 13;
+  const CURRENT_VERSION_NAME = '1.3.0';
   const UPDATE_URL = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json';
   const DISMISS_KEY = 'amy_fx_update_dismissed_version';
   const LAST_CHECK_KEY = 'amy_fx_update_last_check';
@@ -24,6 +24,12 @@
       color: primary ? '#111' : '#fff'
     });
     return btn;
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[char]));
   }
 
   function showUpdatePopup(data, latestCode, latestName) {
@@ -61,26 +67,35 @@
       : (Array.isArray(data.changelog) ? data.changelog : []);
 
     box.innerHTML = `
-      <div style="color:#d4af37;font-weight:950;font-size:20px;margin-bottom:8px">Update Tersedia</div>
+      <div style="color:#d4af37;font-weight:950;font-size:20px;margin-bottom:8px">Update Amy FX Tersedia</div>
       <div style="color:#ddd;line-height:1.5;margin-bottom:14px">
-        Versi baru Amy FX tersedia.<br>
-        Versi kamu: <b>${CURRENT_VERSION_NAME}</b><br>
-        Versi terbaru: <b>${latestName || latestCode}</b>
+        Versi kamu: <b>${escapeHtml(CURRENT_VERSION_NAME)}</b><br>
+        Versi terbaru: <b>${escapeHtml(latestName || latestCode)}</b>
       </div>
-      <div style="background:#171717;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px;margin-bottom:16px">
+      <div style="background:#171717;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px;margin-bottom:12px">
         <div style="font-weight:900;margin-bottom:6px">Perubahan:</div>
-        ${notes.length ? '<ul style="margin:0;padding-left:18px;color:#ddd;line-height:1.5">' + notes.map(x => `<li>${String(x)}</li>`).join('') + '</ul>' : '<div style="color:#aaa">Tidak ada catatan perubahan.</div>'}
+        ${notes.length ? '<ul style="margin:0;padding-left:18px;color:#ddd;line-height:1.5">' + notes.map(x => `<li>${escapeHtml(x)}</li>`).join('') + '</ul>' : '<div style="color:#aaa">Tidak ada catatan perubahan.</div>'}
+      </div>
+      <div style="color:#aaa;font-size:12px;line-height:1.45;margin-bottom:16px">
+        Tekan Perbarui, lalu Android akan meminta konfirmasi pemasangan. Data, jurnal, dan pengaturan tetap tersimpan.
       </div>
     `;
 
     const row = document.createElement('div');
     css(row, { display: 'flex', gap: '10px' });
 
-    const updateBtn = createButton('Update', true);
+    const updateBtn = createButton('Unduh & Perbarui', true);
     const cancelBtn = createButton(forceUpdate ? 'Nanti' : 'Batal', false);
 
     updateBtn.onclick = function () {
-      window.location.href = data.apk_url || data.downloadUrl || 'https://github.com/suhaimitoamy/Amy-fx/releases/latest';
+      const downloadUrl = data.apk_url || data.downloadUrl || 'https://github.com/suhaimitoamy/Amy-fx/releases/latest';
+      updateBtn.disabled = true;
+      updateBtn.textContent = 'Membuka unduhan...';
+      window.location.href = downloadUrl;
+      setTimeout(() => {
+        updateBtn.disabled = false;
+        updateBtn.textContent = 'Unduh & Perbarui';
+      }, 4000);
     };
 
     cancelBtn.onclick = function () {
