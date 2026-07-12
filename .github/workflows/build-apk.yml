@@ -7,7 +7,6 @@ on:
     paths-ignore:
       - "update.json"
   schedule:
-    # Menjaga cache signing key tetap aktif agar tanda tangan APK tidak berubah.
     - cron: "17 3 * * 0"
 
 permissions:
@@ -21,8 +20,8 @@ jobs:
       AMYFX_KEYSTORE_PASSWORD: android
       AMYFX_KEY_ALIAS: androiddebugkey
       AMYFX_KEY_PASSWORD: android
-      AMYFX_VERSION_NAME: "1.3.0"
-      AMYFX_VERSION_CODE: "13"
+      AMYFX_VERSION_NAME: "1.3.1"
+      AMYFX_VERSION_CODE: "14"
 
     steps:
       - name: Checkout
@@ -88,7 +87,7 @@ jobs:
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Amy-FX-v1.3.0-signed-apk
+          name: Amy-FX-v1.3.1-signed-apk
           path: dist/AmyFX-latest.apk
 
       - name: Publish rolling in-app update
