@@ -2,8 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
+const filterPath = new URL('../lib/news-relevance.mjs', import.meta.url);
+const filterSource = fs.readFileSync(filterPath, 'utf8');
+const filterDataUrl = `data:text/javascript;base64,${Buffer.from(filterSource).toString('base64')}`;
+
 const apiPath = new URL('../api/news.js', import.meta.url);
-const apiSource = fs.readFileSync(apiPath, 'utf8');
+const apiSource = fs.readFileSync(apiPath, 'utf8')
+  .replace("'../lib/news-relevance.mjs'", `'${filterDataUrl}'`);
 const api = await import(`data:text/javascript;base64,${Buffer.from(apiSource).toString('base64')}`);
 
 test('news diurutkan berdasarkan ID Telegram terbaru', () => {
