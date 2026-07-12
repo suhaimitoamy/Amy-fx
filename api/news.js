@@ -1,3 +1,5 @@
+import { getNewsImpact, isRelevantNews } from '../lib/news-relevance.mjs';
+
 const SUPABASE_NEWS_FEED =
   'https://wliecyxzlwhmtftnfnps.supabase.co/functions/v1/news-feed';
 const TELEGRAM_SOURCE = 'SM_News_24h';
@@ -108,6 +110,7 @@ async function scrapeTelegram(limit) {
   const latest = sortNewestFirst(filterGold(extractPosts(html))).slice(0, limit);
   return Promise.all(latest.map(async item => ({
     ...item,
+    impact: getNewsImpact(item.text),
     textOriginal: item.text,
     text: await translateToId(item.text)
   })));
@@ -150,23 +153,8 @@ function extractTime(html, start, end) {
   return before.match(/datetime="([^"]+)"/)?.[1] || '';
 }
 
-const GOLD_KEYWORDS = [
-  'gold', 'bullion', 'xau', 'xauusd', 'fed', 'fomc', 'powell', 'cpi',
-  'inflation', 'inflasi', 'ppi', 'pce', 'nfp', 'nonfarm', 'payroll',
-  'employment', 'unemployment', 'jobless', 'gdp', 'recession', 'resesi',
-  'interest rate', 'suku bunga', 'rate cut', 'rate hike', 'dovish', 'hawkish',
-  'yield', 'treasury', 'bond', 'dollar', 'usd', 'dxy', 'geopolitical',
-  'war', 'perang', 'attack', 'missile', 'iran', 'israel', 'russia',
-  'ukraine', 'china', 'tariff', 'sanctions', 'sanksi', 'oil', 'crude',
-  'central bank', 'ecb', 'boe', 'boj', 'pboc', 'safe haven', 'brics',
-  'dedollarization', 'pmi', 'ism', 'retail sales'
-];
-
 function filterGold(posts) {
-  return posts.filter(post => {
-    const text = post.text.toLowerCase();
-    return GOLD_KEYWORDS.some(keyword => text.includes(keyword));
-  });
+  return posts.filter(post => isRelevantNews(post.text));
 }
 
 function sortNewestFirst(posts) {
