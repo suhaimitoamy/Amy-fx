@@ -34,6 +34,53 @@ function analysisRefreshDelay(tf) {
   return 3_600_000;
 }
 
+function publishMappingSnapshot(result = state.result) {
+  const intel = window.AmyFXIntel;
+  if (!intel?.write) return;
+
+  const previous = intel.read?.()?.mapping || {};
+  const price = Number(state.price || result?.price || previous.price || 0);
+  const bsl = Number(result?.bsl || previous.bsl || 0);
+  const ssl = Number(result?.ssl || previous.ssl || 0);
+  const activeTargets = Array.isArray(result?.activeLiquidityTargets)
+    ? result.activeLiquidityTargets
+    : [];
+
+  const levels = activeTargets
+    .map(item => {
+      const levelPrice = Number(item.level);
+      return {
+        type: item.type,
+        price: levelPrice,
+        distance: Number.isFinite(levelPrice) && price > 0 ? levelPrice - price : 0,
+        status: item.status || 'ACTIVE',
+        strength: item.strength || 'MEDIUM',
+        source: item.source || 'MAPPING',
+        timeframe: result?.tf || state.tf
+      };
+    })
+    .filter(item => (item.type === 'BSL' || item.type === 'SSL') && Number.isFinite(item.price) && item.price > 0);
+
+  if (!levels.some(item => item.type === 'BSL') && bsl > 0) {
+    levels.push({ type: 'BSL', price: bsl, distance: price > 0 ? bsl - price : 0, status: 'ACTIVE', source: 'MAPPING', timeframe: result?.tf || state.tf });
+  }
+  if (!levels.some(item => item.type === 'SSL') && ssl > 0) {
+    levels.push({ type: 'SSL', price: ssl, distance: price > 0 ? ssl - price : 0, status: 'ACTIVE', source: 'MAPPING', timeframe: result?.tf || state.tf });
+  }
+
+  intel.write('mapping', {
+    price,
+    bsl,
+    ssl,
+    levels,
+    timeframe: result?.tf || previous.timeframe || state.tf,
+    bias: result?.final || previous.bias || 'WAIT',
+    direction: result?.bestSetup?.dir || result?.signal || previous.direction || 'WAIT',
+    status: result?.bestSetup?.status || previous.status || 'WAIT',
+    analyzedAt: result ? Date.now() : Number(previous.analyzedAt || 0)
+  });
+}
+
 export async function fetchTf(tf) {
   const params = new URLSearchParams({
     symbol: 'XAU/USD',
@@ -113,6 +160,7 @@ export async function runAnalysis(tf = state.tf) {
     state.setups = [...(result.setups || []), ...state.setups].slice(0, 50);
     state.analyses = [{ id: Date.now(), ...result }, ...state.analyses].slice(0, 80);
     save();
+    publishMappingSnapshot(result);
     log(`${tf} selesai: ${result.signal} score ${result.score}/100`);
     sendTargetsToNative();
   } catch (error) {
@@ -152,6 +200,7 @@ async function pollLivePrice() {
     localStorage.setItem('last_price', String(price));
     state.price = price;
     state.conn = 'Connected';
+    publishMappingSnapshot();
     renderAnalyzeLive();
     renderSoft();
     scheduleAnalysisRefresh();
