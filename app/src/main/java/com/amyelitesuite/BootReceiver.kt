@@ -17,34 +17,26 @@ class BootReceiver : BroadcastReceiver() {
         ) return
 
         val prefs = context.getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
-        val scannerEnabled = prefs.getBoolean("scanner_enabled", false)
-        if (!scannerEnabled) {
-            Log.d("AmyFX", "BootReceiver skipped: scanner disabled")
-            return
-        }
-        val secureKey = SecurePrefs.getString(context, "api_key", null)
-        val legacyKey = prefs.getString("api_key", null)
-        val apiKey = secureKey ?: legacyKey
-        if (apiKey.isNullOrBlank()) {
-            Log.d("AmyFX", "BootReceiver skipped: API key empty")
-            return
+        prefs.edit().putBoolean("scanner_enabled", true).apply()
+
+        val serviceIntent = Intent(context, ScannerService::class.java).apply {
+            prefs.getString("scanner_bsl_target", null)
+                ?.takeIf { it.isNotBlank() }
+                ?.let { putExtra("bsl", it) }
+            prefs.getString("scanner_ssl_target", null)
+                ?.takeIf { it.isNotBlank() }
+                ?.let { putExtra("ssl", it) }
         }
 
-        val savedBsl = prefs.getString("scanner_bsl_target", null)
-        val savedSsl = prefs.getString("scanner_ssl_target", null)
-        val serviceIntent = Intent(context, ScannerService::class.java).apply {
-            if (!savedBsl.isNullOrBlank()) putExtra("bsl", savedBsl)
-            if (!savedSsl.isNullOrBlank()) putExtra("ssl", savedSsl)
-        }
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(serviceIntent)
             } else {
                 context.startService(serviceIntent)
             }
-            Log.d("AmyFX", "BootReceiver restarted ScannerService")
-        } catch (e: Exception) {
-            Log.e("AmyFX", "BootReceiver failed: ${e.message}")
+            Log.d("AmyFX", "Automatic monitor restarted after boot/update")
+        } catch (error: Exception) {
+            Log.e("AmyFX", "Unable to restart automatic monitor", error)
         }
     }
 }
