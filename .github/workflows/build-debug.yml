@@ -1,4 +1,4 @@
-name: Build Debug APK
+name: Internal Build Validation
 
 on:
   workflow_dispatch:
@@ -47,11 +47,5 @@ jobs:
       - name: Run Android lint
         run: ./gradlew lintDebug --no-configuration-cache
 
-      - name: Build debug APK
+      - name: Validate debug build only
         run: ./gradlew assembleDebug --no-configuration-cache --stacktrace
-
-      - name: Upload debug APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Amy-FX-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
