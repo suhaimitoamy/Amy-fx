@@ -6,11 +6,11 @@ on:
       versionName:
         description: "Version Name (e.g., 1.3.1)"
         required: true
-        default: "1.3.0"
+        default: "1.3.1"
       versionCode:
         description: "Version Code (must increase)"
         required: true
-        default: "13"
+        default: "14"
 
 jobs:
   build-release:
