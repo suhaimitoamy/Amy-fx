@@ -2,8 +2,8 @@
 
 Amy FX adalah aplikasi Android hybrid untuk pemetaan dan pemantauan market **XAU/USD**. Antarmuka utama berjalan melalui WebView lokal, sedangkan notifikasi, background scanner, penyimpanan, Firebase Messaging, download, dan pembaruan aplikasi ditangani oleh Kotlin native.
 
-> **Versi:** `1.3.9`  
-> **Version code:** `22`  
+> **Versi:** `1.4.0`  
+> **Version code:** `23`  
 > **Minimum Android:** Android 8.0 / API 26  
 > **Target SDK:** Android SDK 35  
 > **Application ID:** `com.amyelitesuite`
@@ -12,18 +12,61 @@ Amy FX adalah aplikasi Android hybrid untuk pemetaan dan pemantauan market **XAU
 
 ## Disclaimer
 
-Amy FX bukan robot trading, Expert Advisor, atau penasihat keuangan. Aplikasi tidak membuka atau menutup order otomatis dan tidak menjamin profit. Seluruh hasil Mapping, Market Outlook, berita, liquidity, dan setup merupakan alat bantu analisis. Keputusan serta risiko tetap berada pada pengguna.
+Amy FX bukan robot trading, Expert Advisor, atau penasihat keuangan. Aplikasi tidak membuka atau menutup order otomatis dan tidak menjamin profit. Seluruh hasil Mapping, Market Outlook, berita, liquidity, heatmap, dan setup merupakan alat bantu analisis. Keputusan serta risiko tetap berada pada pengguna.
 
 ## Modul Utama
 
 | Modul | Fungsi |
 |---|---|
 | **Mapping** | Struktur market, HTF bias, BSL/SSL, OB, FVG, premium/discount, valid break, setup, dan Market Outlook |
-| **Berita** | Berita relevan XAU/USD, risiko berita, heatmap, liquidity, dan market briefing |
+| **Berita** | Berita relevan XAU/USD, risiko berita, Dynamic Heatmap, liquidity, dan market briefing |
 | **Jurnal Trading** | Catatan trade, statistik performa, trade plan, evaluasi, filter, autosave, dan export |
 | **Tutorial Trading** | Materi belajar trading terstruktur di dalam aplikasi |
 | **Indikator TradingView** | Library indikator dan file Pine Script |
 | **Dashboard** | Akses cepat ke seluruh modul Amy FX |
+
+## Update v1.4.0 — Dynamic Liquidity Heatmap
+
+- Heatmap diperbarui aktif setiap **20 detik** ketika tab Heatmap terbuka.
+- Harga berjalan selalu memiliki baris sendiri dan berpindah mengikuti harga terbaru.
+- Zona lama yang sudah ditembus tidak lagi terus dianggap sebagai support atau resistance aktif.
+- Mesin membedakan **active zone, sweep + reclaim, close break, polarity flip, broken**, dan historical zone.
+- Kekuatan zona memakai bobot usia sehingga swing terbaru lebih berpengaruh daripada level lama.
+- Lebar bucket harga menyesuaikan volatilitas **ATR**, bukan selalu dipaksa ke bucket tetap `$2`.
+- Normalisasi logaritmik mencegah satu zona ekstrem membuat semua zona lain terlihat sama kecil.
+- Perubahan antar-refresh ditandai sebagai **baru, menguat, melemah, berubah, ditembus**, atau stabil.
+- Dynamic Heatmap dapat membantu mengisi BSL, SSL, liquidity pressure, dan nearest draw pada Market Briefing.
+
+## Dynamic Liquidity Heatmap
+
+Heatmap dibangun dari candle XAU/USD M15 melalui alur berikut:
+
+1. membersihkan candle OHLC yang tidak valid;
+2. menghitung ATR dan menentukan ukuran bucket adaptif;
+3. mendeteksi swing high serta swing low;
+4. menilai usia swing dengan recency weighting;
+5. memeriksa wick sweep, candle close break, reclaim, dan polarity retest;
+6. menghitung sentuhan serta rejection terbaru;
+7. memilih zona aktif yang paling relevan di atas dan di bawah harga;
+8. menghitung liquidity pressure dan draw terdekat.
+
+### Status zona
+
+- `ACTIVE` — level masih aktif dan belum kehilangan perannya.
+- `PRICE_INSIDE` — harga berjalan sedang berada di dalam zona.
+- `SWEPT_RECLAIMED` — level disapu dengan wick lalu direbut kembali.
+- `POLARITY_FLIP` — support yang ditembus berubah menjadi resistance, atau sebaliknya.
+- `BROKEN` — level telah ditembus dan tidak lagi dipakai sebagai liquidity aktif.
+- `HISTORICAL` — level dipertahankan hanya sebagai memori market dengan tampilan redup.
+
+### File utama
+
+```text
+lib/heatmap-core.mjs
+api/heatmap.js
+app/src/main/assets/apps/market-intel/heatmap-v2.js
+app/src/main/assets/apps/market-intel/heatmap-v2.css
+```
 
 ## Update v1.3.9 — Sinkronisasi Jam dan Zona Mapping
 
@@ -151,16 +194,16 @@ Jurnal Trading menyediakan:
 ## Struktur Repository
 
 ```text
-app/src/main/assets/             WebView assets
-app/src/main/assets/apps/mapping Mapping dan Market Outlook
-app/src/main/assets/apps/news    News, heatmap, dan liquidity
-app/src/main/assets/apps/journal Jurnal Trading
-app/src/main/assets/apps/academy Tutorial Trading
-app/src/main/java/               Android native Kotlin
-api/                             Vercel serverless functions
-lib/                             Shared backend logic
-tests/                           JavaScript regression tests
-.github/workflows/               CI dan build APK
+app/src/main/assets/                    WebView assets
+app/src/main/assets/apps/mapping        Mapping dan Market Outlook
+app/src/main/assets/apps/market-intel   News, Dynamic Heatmap, dan liquidity
+app/src/main/assets/apps/journal        Jurnal Trading
+app/src/main/assets/apps/academy        Tutorial Trading
+app/src/main/java/                      Android native Kotlin
+api/                                    Vercel serverless functions
+lib/                                    Shared backend logic
+tests/                                  JavaScript regression tests
+.github/workflows/                      CI dan build APK
 ```
 
 ## Backend
@@ -170,7 +213,8 @@ Endpoint utama:
 ```text
 /api/twelvedata  Harga dan candle XAU/USD
 /api/news        News Supabase dengan Telegram fallback
-/api/heatmap     Liquidity heatmap
+/api/heatmap     Dynamic Liquidity Heatmap
+/api/liquidity   Active BSL/SSL swing tracker
 ```
 
 Environment variable utama:
