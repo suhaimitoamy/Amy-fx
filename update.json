@@ -9,17 +9,17 @@
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "CHOCH pertama yang melawan tren kini dibaca sebagai transisi internal, bukan langsung membalik arah utama",
-    "Reversal baru terkonfirmasi setelah protected swing berikutnya ditembus dengan candle close valid",
-    "Break yang harga live-nya kembali melewati level struktur kini ditandai AT RISK sampai candle menutup",
-    "Panel Valid Break memisahkan percobaan struktur, struktur terkonfirmasi, dan level konfirmasi berikutnya",
-    "Setup biasa diblokir selama CHOCH masih internal; model Sweep → MSS → FVG tetap memerlukan urutan lengkap"
+    "Session Focus kini menampilkan Asia High, Asia Low, ukuran range, dan posisi harga",
+    "Status Asia High/Low membedakan belum disapu, sedang diuji, wick sweep, live break, dan candle close break",
+    "Asia Range memakai jendela ICT 20:00–00:00 New York dengan daylight saving otomatis",
+    "Halaman Analyze menampilkan Asia High/Low sebagai konteks target likuiditas yang ringkas",
+    "Timestamp candle TwelveData dinormalisasi ke UTC agar batas sesi tidak bergeser mengikuti zona waktu perangkat"
   ],
   "changelog": [
-    "CHOCH pertama yang melawan tren kini dibaca sebagai transisi internal, bukan langsung membalik arah utama",
-    "Reversal baru terkonfirmasi setelah protected swing berikutnya ditembus dengan candle close valid",
-    "Break yang harga live-nya kembali melewati level struktur kini ditandai AT RISK sampai candle menutup",
-    "Panel Valid Break memisahkan percobaan struktur, struktur terkonfirmasi, dan level konfirmasi berikutnya",
-    "Setup biasa diblokir selama CHOCH masih internal; model Sweep → MSS → FVG tetap memerlukan urutan lengkap"
+    "Session Focus kini menampilkan Asia High, Asia Low, ukuran range, dan posisi harga",
+    "Status Asia High/Low membedakan belum disapu, sedang diuji, wick sweep, live break, dan candle close break",
+    "Asia Range memakai jendela ICT 20:00–00:00 New York dengan daylight saving otomatis",
+    "Halaman Analyze menampilkan Asia High/Low sebagai konteks target likuiditas yang ringkas",
+    "Timestamp candle TwelveData dinormalisasi ke UTC agar batas sesi tidak bergeser mengikuti zona waktu perangkat"
   ]
 }
