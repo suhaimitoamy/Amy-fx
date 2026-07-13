@@ -1,18 +1,16 @@
-name: Apply and Validate Amy FX Stage 5
+name: Validate Amy FX 1.4.6 Release Candidate
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - agent/amyfx-stage5-release
-  pull_request:
-    branches:
-      - main
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: amyfx-stage5-release
+  group: amyfx-stage5-release-validation
   cancel-in-progress: true
 
 env:
@@ -25,16 +23,14 @@ env:
   AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
 jobs:
-  apply-and-validate:
-    if: github.actor != 'github-actions[bot]'
+  validate-release:
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
     steps:
-      - name: Checkout audit branch
+      - name: Checkout release candidate
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref || github.ref_name }}
           fetch-depth: 0
 
       - name: Set up JDK 17
@@ -62,7 +58,7 @@ jobs:
           path: ~/.android/debug.keystore
           key: amy-fx-debug-keystore-v1
 
-      - name: Verify existing update signing certificate
+      - name: Verify update-compatible signing certificate
         run: |
           set -euo pipefail
           if [ "${{ steps.signing-cache.outputs.cache-hit }}" != "true" ]; then
@@ -73,42 +69,18 @@ jobs:
           actual="$(keytool -list -v -keystore "$AMYFX_KEYSTORE_PATH" -storepass "$AMYFX_KEYSTORE_PASSWORD" -alias "$AMYFX_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1)"
           test "$actual" = "$AMYFX_SIGNING_CERT_SHA256"
 
-      - name: Apply stage 5 patch
-        run: |
-          python3 tools/stage5_patch.py
-          python3 tools/stage5_test_compat.py
-
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
       - name: Run JavaScript regression tests
-        run: |
-          set -o pipefail
-          node --test tests/*.test.mjs 2>&1 | tee /tmp/stage5-node-tests.log
+        run: node --test tests/*.test.mjs
 
-      - name: Upload JavaScript regression log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: stage5-node-test-log-${{ github.run_id }}
-          path: /tmp/stage5-node-tests.log
-
-      - name: Verify repository diff
+      - name: Verify repository integrity
         run: |
+          set -euo pipefail
           rm -f local.properties
-          git status --porcelain=v1 | tee /tmp/stage5-status.log
-          set -o pipefail
-          git diff --check 2>&1 | tee /tmp/stage5-diff-check.log
+          git diff --check
           test -z "$(git status --porcelain | grep -E '(^|/)(.*\.jks|.*\.keystore)$' || true)"
-
-      - name: Upload repository diff diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: stage5-diff-diagnostics-${{ github.run_id }}
-          path: |
-            /tmp/stage5-status.log
-            /tmp/stage5-diff-check.log
 
       - name: Run Android release unit tests
         run: ./gradlew testReleaseUnitTest --no-configuration-cache
@@ -135,12 +107,3 @@ jobs:
         with:
           name: Amy-FX-v1.4.6-stage5-signed-apk
           path: app/build/outputs/apk/release/app-release.apk
-
-      - name: Commit validated stage 5 changes
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "fix: harden Amy FX 1.4.6 release path"
-          git push origin HEAD:agent/amyfx-stage5-release
