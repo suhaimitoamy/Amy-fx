@@ -9,15 +9,19 @@
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Ikon kecil notifikasi Android diganti menjadi monogram AMY dalam lingkaran",
-    "Ikon default Firebase diselaraskan agar notifikasi berita dan scanner memakai identitas Amy FX yang sama",
-    "Filter berita diperluas untuk konflik, Iran, Amerika, perdamaian, geopolitik, energi, dan risiko ekonomi",
-    "Koneksi halaman Berita ke endpoint production dipulihkan dan diperkuat"
+    "Mapping memisahkan struktur lokal, bias HTF, dan keselarasan tiap timeframe",
+    "SWEEP ONLY tidak lagi ditampilkan sebagai BOS terkonfirmasi dan displacement dijelaskan sesuai konteks",
+    "BSL/SSL yang sudah disentuh harga live dikeluarkan dari target aktif serta status OB/FVG diperbarui",
+    "Setup Aktif hanya menghitung setup M15 precision yang valid, tidak kedaluwarsa, dan RR minimal 1:2",
+    "Feed candle dibersihkan dari duplikat, OHLC rusak, dan rangkaian harga beku sebelum dianalisis",
+    "Tampilan Mapping M1–H4 dan Penjelasan Mapping diperbarui agar jelas dan nyaman di layar HP"
   ],
   "changelog": [
-    "Ikon kecil notifikasi Android diganti menjadi monogram AMY dalam lingkaran",
-    "Ikon default Firebase diselaraskan agar notifikasi berita dan scanner memakai identitas Amy FX yang sama",
-    "Filter berita diperluas untuk konflik, Iran, Amerika, perdamaian, geopolitik, energi, dan risiko ekonomi",
-    "Koneksi halaman Berita ke endpoint production dipulihkan dan diperkuat"
+    "Mapping memisahkan struktur lokal, bias HTF, dan keselarasan tiap timeframe",
+    "SWEEP ONLY tidak lagi ditampilkan sebagai BOS terkonfirmasi dan displacement dijelaskan sesuai konteks",
+    "BSL/SSL yang sudah disentuh harga live dikeluarkan dari target aktif serta status OB/FVG diperbarui",
+    "Setup Aktif hanya menghitung setup M15 precision yang valid, tidak kedaluwarsa, dan RR minimal 1:2",
+    "Feed candle dibersihkan dari duplikat, OHLC rusak, dan rangkaian harga beku sebelum dianalisis",
+    "Tampilan Mapping M1–H4 dan Penjelasan Mapping diperbarui agar jelas dan nyaman di layar HP"
   ]
 }
