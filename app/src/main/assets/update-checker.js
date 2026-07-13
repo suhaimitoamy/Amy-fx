@@ -1,6 +1,6 @@
 (function () {
-  const CURRENT_VERSION_CODE = 21;
-  const CURRENT_VERSION_NAME = '1.3.8';
+  const CURRENT_VERSION_CODE = 22;
+  const CURRENT_VERSION_NAME = '1.3.9';
   const UPDATE_URL = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json';
   const DISMISS_KEY = 'amy_fx_update_dismissed_version';
   const LAST_CHECK_KEY = 'amy_fx_update_last_check';
