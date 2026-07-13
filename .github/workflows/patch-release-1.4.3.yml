@@ -1,0 +1,103 @@
+name: Prepare Amy FX 1.4.3
+
+on:
+  push:
+    branches:
+      - release/1.4.3
+    paths:
+      - .github/workflows/patch-release-1.4.3.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/1.4.3
+
+      - name: Apply version and release metadata
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          def replace_required(path, old, new):
+              file = Path(path)
+              text = file.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'target not found in {path}: {old!r}')
+              file.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          replace_required(
+              'app/build.gradle.kts',
+              'versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 25)\n        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "1.4.2"',
+              'versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 26)\n        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "1.4.3"'
+          )
+          replace_required(
+              'app/src/main/assets/app-version.js',
+              "const VERSION = Object.freeze({ name: '1.4.2', code: 25 });",
+              "const VERSION = Object.freeze({ name: '1.4.3', code: 26 });"
+          )
+          replace_required(
+              'app/src/main/assets/update-checker.js',
+              "const VERSION = window.AmyFXAppVersion || { name: '1.4.2', code: 25 };\n  const CURRENT_VERSION_CODE = Number(VERSION.code) || 25;\n  const CURRENT_VERSION_NAME = String(VERSION.name || '1.4.2');",
+              "const VERSION = window.AmyFXAppVersion || { name: '1.4.3', code: 26 };\n  const CURRENT_VERSION_CODE = Number(VERSION.code) || 26;\n  const CURRENT_VERSION_NAME = String(VERSION.name || '1.4.3');"
+          )
+          replace_required(
+              '.github/workflows/build-apk.yml',
+              'AMYFX_VERSION_NAME: "1.4.2"\n      AMYFX_VERSION_CODE: "25"',
+              'AMYFX_VERSION_NAME: "1.4.3"\n      AMYFX_VERSION_CODE: "26"'
+          )
+          release_workflow = Path('.github/workflows/build-release.yml')
+          release_text = release_workflow.read_text(encoding='utf-8')
+          release_text = release_text.replace('Version Name (e.g., 1.4.2)', 'Version Name (e.g., 1.4.3)')
+          release_text = release_text.replace('default: "1.4.2"', 'default: "1.4.3"', 1)
+          release_text = release_text.replace('default: "25"', 'default: "26"', 1)
+          release_workflow.write_text(release_text, encoding='utf-8')
+
+          updated_tests = []
+          for file in Path('tests').glob('*.test.mjs'):
+              text = file.read_text(encoding='utf-8')
+              if 'app-version.js' not in text or 'update-checker.js' not in text:
+                  continue
+              changed = (text
+                  .replace('version 1.4.2', 'version 1.4.3')
+                  .replace("1\\.4\\.2", "1\\.4\\.3")
+                  .replace('code: 25', 'code: 26'))
+              if changed != text:
+                  file.write_text(changed, encoding='utf-8')
+                  updated_tests.append(str(file))
+          if not updated_tests:
+              raise SystemExit('version regression test was not updated')
+
+          metadata = Path('update.json')
+          data = json.loads(metadata.read_text(encoding='utf-8'))
+          notes = [
+              'CHOCH pertama yang melawan tren kini dibaca sebagai transisi internal, bukan langsung membalik arah utama',
+              'Reversal baru terkonfirmasi setelah protected swing berikutnya ditembus dengan candle close valid',
+              'Break yang harga live-nya kembali melewati level struktur kini ditandai AT RISK sampai candle menutup',
+              'Panel Valid Break memisahkan percobaan struktur, struktur terkonfirmasi, dan level konfirmasi berikutnya',
+              'Setup biasa diblokir selama CHOCH masih internal; model Sweep → MSS → FVG tetap memerlukan urutan lengkap'
+          ]
+          data['release_notes'] = notes
+          data['changelog'] = notes
+          metadata.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit release preparation
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/build.gradle.kts \
+            app/src/main/assets/app-version.js \
+            app/src/main/assets/update-checker.js \
+            .github/workflows/build-apk.yml \
+            .github/workflows/build-release.yml \
+            tests update.json
+          git commit -m "release: prepare Amy FX 1.4.3 [skip ci]"
+          git push origin HEAD:release/1.4.3
