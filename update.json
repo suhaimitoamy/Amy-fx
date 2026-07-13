@@ -9,19 +9,19 @@
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Amy Market Outlook menampilkan proyeksi arah market untuk horizon 1–4 jam, sesi berjalan, dan 24 jam",
-    "Setiap outlook memiliki skenario utama, alternatif, invalidasi, target liquidity, dan jalur harga",
-    "Market Regime Detector membedakan trending, ranging, high volatility, news-driven, dan transition",
-    "Probabilitas model dibatasi dan diturunkan saat data stale, risiko berita tinggi, atau harga sudah terlalu premium/discount",
-    "Prediction Tracker menyimpan outlook sebelum market bergerak lalu mengukur akurasi arah, target hit, dan invalidasi",
-    "Akurasi historis baru ditampilkan setelah minimal 20 outlook selesai agar persentase tidak menyesatkan"
+    "Jam WIB pada Dashboard dan Session Focus sekarang memakai satu timestamp yang sama dan diperbarui serentak",
+    "Mapping menampilkan Order Block dan Fair Value Gap terdekat walaupun harga belum berada di dalam zona",
+    "Deteksi FVG diselaraskan dengan indikator ICT Concepts [amygmgo]: body di atas rata-rata, wick maksimal 36 persen body, dan pola tiga candle",
+    "Deteksi OB tampilan diselaraskan dengan swing lookback 10, break berdasarkan candle close, serta batas candle body",
+    "Status zona dibedakan menjadi belum retest, sedang diuji, termitigasi, breaker, atau invalid",
+    "Logika entry lama tidak dihapus; zona Pine-aligned dipakai sebagai informasi Mapping dan konteks market"
   ],
   "changelog": [
-    "Amy Market Outlook menampilkan proyeksi arah market untuk horizon 1–4 jam, sesi berjalan, dan 24 jam",
-    "Setiap outlook memiliki skenario utama, alternatif, invalidasi, target liquidity, dan jalur harga",
-    "Market Regime Detector membedakan trending, ranging, high volatility, news-driven, dan transition",
-    "Probabilitas model dibatasi dan diturunkan saat data stale, risiko berita tinggi, atau harga sudah terlalu premium/discount",
-    "Prediction Tracker menyimpan outlook sebelum market bergerak lalu mengukur akurasi arah, target hit, dan invalidasi",
-    "Akurasi historis baru ditampilkan setelah minimal 20 outlook selesai agar persentase tidak menyesatkan"
+    "Jam WIB pada Dashboard dan Session Focus sekarang memakai satu timestamp yang sama dan diperbarui serentak",
+    "Mapping menampilkan Order Block dan Fair Value Gap terdekat walaupun harga belum berada di dalam zona",
+    "Deteksi FVG diselaraskan dengan indikator ICT Concepts [amygmgo]: body di atas rata-rata, wick maksimal 36 persen body, dan pola tiga candle",
+    "Deteksi OB tampilan diselaraskan dengan swing lookback 10, break berdasarkan candle close, serta batas candle body",
+    "Status zona dibedakan menjadi belum retest, sedang diuji, termitigasi, breaker, atau invalid",
+    "Logika entry lama tidak dihapus; zona Pine-aligned dipakai sebagai informasi Mapping dan konteks market"
   ]
 }
