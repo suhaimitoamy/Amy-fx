@@ -5,12 +5,15 @@ on:
   push:
     branches:
       - agent/amyfx-stage5-release
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
 
 concurrency:
-  group: amyfx-stage5-release-validation
+  group: amyfx-stage5-release-validation-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
@@ -24,6 +27,7 @@ env:
 
 jobs:
   validate-release:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
