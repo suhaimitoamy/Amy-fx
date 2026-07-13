@@ -27,15 +27,15 @@ test('break historis memakai ATR lokal sebelum candle breakout', () => {
     candle(100, 101, 99.5, 100.2),
     candle(100.2, 102, 100, 101),
     candle(101, 101.5, 100.2, 101.1),
-    candle(101.5, 105, 100, 103.2),
+    candle(100.5, 105, 100, 104.5),
     ...Array.from({ length: 16 }, () => candle(103, 112, 102.5, 103.1))
   ];
   const result = engine.detectStructure(candles, {
     highs: [{ high: 102, index: 1 }], lows: []
   });
 
-  assert.equal(result.last?.breakType, 'VALID_BREAK');
-  assert.ok(result.last?.localAtr < 3);
+  assert.equal(result.lastConfirmedBreak?.breakType, 'VALID_BREAK');
+  assert.ok(result.lastConfirmedBreak?.localAtr < 3);
 });
 
 test('sweep wajib menutup kembali di dalam level', () => {
@@ -50,7 +50,15 @@ function conflictContext() {
     htfNarrative: { htfBias: 'NEUTRAL' },
     dealingRange: { currentZone: 'DISCOUNT' },
     liquidityHierarchy: { drawTarget: { type: 'BSL' } },
-    st: { last: { breakType: 'VALID_BREAK', hasDisplacement: true } },
+    st: {
+      last: {
+        breakType: 'VALID_BREAK',
+        valid: true,
+        failed: false,
+        dir: 'BULLISH',
+        hasDisplacement: true
+      }
+    },
     sessionContext: { session: 'LONDON' }
   };
 }
