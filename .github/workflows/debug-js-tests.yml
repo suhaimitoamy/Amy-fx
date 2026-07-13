@@ -1,0 +1,40 @@
+name: Debug JS Regression Tests
+
+on:
+  push:
+    branches:
+      - fix/release-1.4.2-tests
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Capture test output
+        shell: bash
+        run: |
+          set +e
+          node --test tests/*.test.mjs > test-output.log 2>&1
+          status=$?
+          cat test-output.log
+          echo "$status" > test-exit-code.txt
+          exit 0
+
+      - name: Upload diagnostic output
+        uses: actions/upload-artifact@v4
+        with:
+          name: js-test-diagnostics
+          path: |
+            test-output.log
+            test-exit-code.txt
