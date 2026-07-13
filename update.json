@@ -9,19 +9,21 @@
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Jam WIB pada Dashboard dan Session Focus sekarang memakai satu timestamp yang sama dan diperbarui serentak",
-    "Mapping menampilkan Order Block dan Fair Value Gap terdekat walaupun harga belum berada di dalam zona",
-    "Deteksi FVG diselaraskan dengan indikator ICT Concepts [amygmgo]: body di atas rata-rata, wick maksimal 36 persen body, dan pola tiga candle",
-    "Deteksi OB tampilan diselaraskan dengan swing lookback 10, break berdasarkan candle close, serta batas candle body",
-    "Status zona dibedakan menjadi belum retest, sedang diuji, termitigasi, breaker, atau invalid",
-    "Logika entry lama tidak dihapus; zona Pine-aligned dipakai sebagai informasi Mapping dan konteks market"
+    "Heatmap sekarang bereaksi terhadap perubahan market dengan pembaruan aktif setiap 20 detik",
+    "Zona lama yang sudah ditembus tidak lagi terus ditampilkan sebagai support atau resistance aktif",
+    "Heatmap mengenali sweep dan reclaim, close break, serta polarity flip support menjadi resistance atau sebaliknya",
+    "Kekuatan zona memakai bobot candle terbaru dan bucket adaptif berdasarkan volatilitas ATR",
+    "Baris harga berjalan selalu bergerak mengikuti harga terbaru dan setiap zona menampilkan status baru, menguat, melemah, berubah, atau ditembus",
+    "Normalisasi kekuatan diperbaiki agar satu zona ekstrem tidak membuat semua zona lain terlihat sama kecil",
+    "Heatmap dapat membantu mengisi BSL, SSL, liquidity pressure, dan nearest draw pada Market Briefing"
   ],
   "changelog": [
-    "Jam WIB pada Dashboard dan Session Focus sekarang memakai satu timestamp yang sama dan diperbarui serentak",
-    "Mapping menampilkan Order Block dan Fair Value Gap terdekat walaupun harga belum berada di dalam zona",
-    "Deteksi FVG diselaraskan dengan indikator ICT Concepts [amygmgo]: body di atas rata-rata, wick maksimal 36 persen body, dan pola tiga candle",
-    "Deteksi OB tampilan diselaraskan dengan swing lookback 10, break berdasarkan candle close, serta batas candle body",
-    "Status zona dibedakan menjadi belum retest, sedang diuji, termitigasi, breaker, atau invalid",
-    "Logika entry lama tidak dihapus; zona Pine-aligned dipakai sebagai informasi Mapping dan konteks market"
+    "Heatmap sekarang bereaksi terhadap perubahan market dengan pembaruan aktif setiap 20 detik",
+    "Zona lama yang sudah ditembus tidak lagi terus ditampilkan sebagai support atau resistance aktif",
+    "Heatmap mengenali sweep dan reclaim, close break, serta polarity flip support menjadi resistance atau sebaliknya",
+    "Kekuatan zona memakai bobot candle terbaru dan bucket adaptif berdasarkan volatilitas ATR",
+    "Baris harga berjalan selalu bergerak mengikuti harga terbaru dan setiap zona menampilkan status baru, menguat, melemah, berubah, atau ditembus",
+    "Normalisasi kekuatan diperbaiki agar satu zona ekstrem tidak membuat semua zona lain terlihat sama kecil",
+    "Heatmap dapat membantu mengisi BSL, SSL, liquidity pressure, dan nearest draw pada Market Briefing"
   ]
 }
