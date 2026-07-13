@@ -83,6 +83,7 @@
 
   function levelIsActive(item) {
     const status = String(item?.status || 'ACTIVE').toUpperCase();
+    if (status === 'SWEPT_RECLAIMED') return item?.active !== false;
     return item?.active !== false && !/(SWEPT|TOUCHED|INVALID|BROKEN|EXPIRED|HISTORICAL)/.test(status);
   }
 
