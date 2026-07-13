@@ -16,6 +16,10 @@ export function wibClockText(timestamp = Date.now()) {
   return WIB_FORMATTER.format(new Date(timestamp));
 }
 
+function setText(element, text) {
+  if (element && element.textContent !== text) element.textContent = text;
+}
+
 function paint(timestamp = Date.now(), force = false) {
   const time = wibClockText(timestamp);
   if (!force && time === lastSecond) return;
@@ -24,14 +28,12 @@ function paint(timestamp = Date.now(), force = false) {
   const top = document.getElementById('top-wib');
   if (top) {
     const connection = state.conn === 'Connected' ? '● Live Price' : `○ ${state.conn}`;
-    top.textContent = `${connection} • WIB ${time}`;
+    setText(top, `${connection} • WIB ${time}`);
   }
 
-  const session = document.getElementById('kz-wib');
-  if (session) session.textContent = `WIB ${time}`;
-
+  setText(document.getElementById('kz-wib'), `WIB ${time}`);
   document.querySelectorAll('[data-wib-clock]').forEach(element => {
-    element.textContent = `WIB ${time}`;
+    setText(element, `WIB ${time}`);
   });
 }
 
