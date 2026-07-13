@@ -9,19 +9,19 @@
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Mapping memisahkan struktur lokal, bias HTF, dan keselarasan tiap timeframe",
-    "SWEEP ONLY tidak lagi ditampilkan sebagai BOS terkonfirmasi dan displacement dijelaskan sesuai konteks",
-    "BSL/SSL yang sudah disentuh harga live dikeluarkan dari target aktif serta status OB/FVG diperbarui",
-    "Setup Aktif hanya menghitung setup M15 precision yang valid, tidak kedaluwarsa, dan RR minimal 1:2",
-    "Feed candle dibersihkan dari duplikat, OHLC rusak, dan rangkaian harga beku sebelum dianalisis",
-    "Tampilan Mapping M1–H4 dan Penjelasan Mapping diperbarui agar jelas dan nyaman di layar HP"
+    "Amy Market Outlook menampilkan proyeksi arah market untuk horizon 1–4 jam, sesi berjalan, dan 24 jam",
+    "Setiap outlook memiliki skenario utama, alternatif, invalidasi, target liquidity, dan jalur harga",
+    "Market Regime Detector membedakan trending, ranging, high volatility, news-driven, dan transition",
+    "Probabilitas model dibatasi dan diturunkan saat data stale, risiko berita tinggi, atau harga sudah terlalu premium/discount",
+    "Prediction Tracker menyimpan outlook sebelum market bergerak lalu mengukur akurasi arah, target hit, dan invalidasi",
+    "Akurasi historis baru ditampilkan setelah minimal 20 outlook selesai agar persentase tidak menyesatkan"
   ],
   "changelog": [
-    "Mapping memisahkan struktur lokal, bias HTF, dan keselarasan tiap timeframe",
-    "SWEEP ONLY tidak lagi ditampilkan sebagai BOS terkonfirmasi dan displacement dijelaskan sesuai konteks",
-    "BSL/SSL yang sudah disentuh harga live dikeluarkan dari target aktif serta status OB/FVG diperbarui",
-    "Setup Aktif hanya menghitung setup M15 precision yang valid, tidak kedaluwarsa, dan RR minimal 1:2",
-    "Feed candle dibersihkan dari duplikat, OHLC rusak, dan rangkaian harga beku sebelum dianalisis",
-    "Tampilan Mapping M1–H4 dan Penjelasan Mapping diperbarui agar jelas dan nyaman di layar HP"
+    "Amy Market Outlook menampilkan proyeksi arah market untuk horizon 1–4 jam, sesi berjalan, dan 24 jam",
+    "Setiap outlook memiliki skenario utama, alternatif, invalidasi, target liquidity, dan jalur harga",
+    "Market Regime Detector membedakan trending, ranging, high volatility, news-driven, dan transition",
+    "Probabilitas model dibatasi dan diturunkan saat data stale, risiko berita tinggi, atau harga sudah terlalu premium/discount",
+    "Prediction Tracker menyimpan outlook sebelum market bergerak lalu mengukur akurasi arah, target hit, dan invalidasi",
+    "Akurasi historis baru ditampilkan setelah minimal 20 outlook selesai agar persentase tidak menyesatkan"
   ]
 }
