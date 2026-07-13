@@ -9,15 +9,15 @@
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Jurnal Trading diperbarui dengan dashboard performa, filter, pencarian, dan pengurutan",
-    "Autosave draft jurnal dan pemulihan otomatis saat editor dibuka kembali",
-    "Trade plan baru: arah, sesi, timeframe, risk, entry, SL, TP, RR, dan checklist disiplin",
-    "Export jurnal ke CSV dan JSON serta perbaikan stabilitas pada halaman Jurnal"
+    "Ikon kecil notifikasi Android diganti menjadi monogram AMY dalam lingkaran",
+    "Ikon default Firebase diselaraskan agar notifikasi berita dan scanner memakai identitas Amy FX yang sama",
+    "Filter berita diperluas untuk konflik, Iran, Amerika, perdamaian, geopolitik, energi, dan risiko ekonomi",
+    "Koneksi halaman Berita ke endpoint production dipulihkan dan diperkuat"
   ],
   "changelog": [
-    "Jurnal Trading diperbarui dengan dashboard performa, filter, pencarian, dan pengurutan",
-    "Autosave draft jurnal dan pemulihan otomatis saat editor dibuka kembali",
-    "Trade plan baru: arah, sesi, timeframe, risk, entry, SL, TP, RR, dan checklist disiplin",
-    "Export jurnal ke CSV dan JSON serta perbaikan stabilitas pada halaman Jurnal"
+    "Ikon kecil notifikasi Android diganti menjadi monogram AMY dalam lingkaran",
+    "Ikon default Firebase diselaraskan agar notifikasi berita dan scanner memakai identitas Amy FX yang sama",
+    "Filter berita diperluas untuk konflik, Iran, Amerika, perdamaian, geopolitik, energi, dan risiko ekonomi",
+    "Koneksi halaman Berita ke endpoint production dipulihkan dan diperkuat"
   ]
 }
