@@ -41,6 +41,11 @@
     return { label: 'LIVE', className: 'live' };
   }
 
+  function partIsFresh(part) {
+    const storedAt = Number(part?.storedAt || 0);
+    return storedAt > 0 && Date.now() - storedAt <= MAX_AGE;
+  }
+
   function normalizeLevel(item, type, currentPrice) {
     const price = Number(item?.price ?? item?.level);
     if (!Number.isFinite(price) || price <= 0) return null;
@@ -53,25 +58,38 @@
     };
   }
 
+  function levelIsOnCorrectSide(level, type, currentPrice) {
+    if (!level || !Number.isFinite(currentPrice) || currentPrice <= 0) return Boolean(level);
+    return type === 'BSL' ? level.price > currentPrice : type === 'SSL' ? level.price < currentPrice : false;
+  }
+
+  function levelIsActive(item) {
+    const status = String(item?.status || 'ACTIVE').toUpperCase();
+    return !/(SWEPT|TOUCHED|INVALID|BROKEN|EXPIRED)/.test(status);
+  }
+
   function pickNearest(levels, type, currentPrice, fallbackPrice) {
     const candidates = (Array.isArray(levels) ? levels : [])
-      .filter(item => item?.type === type && item?.status !== 'SWEPT')
+      .filter(item => item?.type === type && levelIsActive(item))
       .map(item => normalizeLevel(item, type, currentPrice))
-      .filter(Boolean)
+      .filter(item => levelIsOnCorrectSide(item, type, currentPrice))
       .sort((a, b) => Math.abs(a.distance) - Math.abs(b.distance));
     if (candidates[0]) return candidates[0];
-    return normalizeLevel({ price: fallbackPrice }, type, currentPrice);
+    const fallback = normalizeLevel({ price: fallbackPrice }, type, currentPrice);
+    return levelIsOnCorrectSide(fallback, type, currentPrice) ? fallback : null;
   }
 
   function nearestLevels(state) {
     const mapping = state.mapping || {};
     const liquidity = state.liquidity || {};
     const currentPrice = Number(mapping.price || liquidity.currentPrice || state.heatmap?.currentPrice || 0);
+    const mappingFresh = partIsFresh(mapping);
+    const liquidityFresh = partIsFresh(liquidity);
 
-    const mappingBsl = pickNearest(mapping.levels, 'BSL', currentPrice, mapping.bsl);
-    const mappingSsl = pickNearest(mapping.levels, 'SSL', currentPrice, mapping.ssl);
-    const liquidityBsl = pickNearest(liquidity.levels, 'BSL', currentPrice, null);
-    const liquiditySsl = pickNearest(liquidity.levels, 'SSL', currentPrice, null);
+    const mappingBsl = mappingFresh ? pickNearest(mapping.levels, 'BSL', currentPrice, mapping.bsl) : null;
+    const mappingSsl = mappingFresh ? pickNearest(mapping.levels, 'SSL', currentPrice, mapping.ssl) : null;
+    const liquidityBsl = liquidityFresh ? pickNearest(liquidity.levels, 'BSL', currentPrice, null) : null;
+    const liquiditySsl = liquidityFresh ? pickNearest(liquidity.levels, 'SSL', currentPrice, null) : null;
     const mappingIsLatest = Number(mapping.storedAt || 0) >= Number(liquidity.storedAt || 0);
 
     return {
