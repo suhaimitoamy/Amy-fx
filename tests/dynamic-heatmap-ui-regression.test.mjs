@@ -14,10 +14,9 @@ function assertSyntax(url) {
   assert.equal(result.status, 0, result.stderr || result.stdout);
 }
 
-test('dynamic heatmap scripts remain syntactically valid', () => {
+test('browser heatmap scripts remain syntactically valid', () => {
   assertSyntax(uiUrl);
   assertSyntax(sharedUrl);
-  assertSyntax(apiUrl);
 });
 
 test('market intel page loads dynamic heatmap assets after legacy app script', () => {
@@ -40,6 +39,7 @@ test('dynamic heatmap refreshes independently and tracks strength changes', () =
 test('heatmap API uses dynamic lifecycle engine and short CDN cache', () => {
   const api = readFileSync(apiUrl, 'utf8');
   assert.match(api, /computeDynamicHeatmap/);
+  assert.match(api, /await import\('\.\.\/lib\/heatmap-core\.mjs'\)/);
   assert.match(api, /s-maxage=15, stale-while-revalidate=20/);
   assert.match(api, /sourceCandleTime/);
   assert.doesNotMatch(api, /const BUCKET_SIZE = 2\.0/);
