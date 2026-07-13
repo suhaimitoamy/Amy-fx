@@ -1,12 +1,25 @@
 import { state, p2 } from '../main.js';
 import { calculateAsiaRange } from './asia-range.js';
 
+const renderedMarkup = new WeakMap();
+let syncQueued = false;
+
 function currentRange() {
-  return calculateAsiaRange(
-    state.candles?.M15 || [],
-    Number(state.price || localStorage.getItem('last_price') || 0),
-    Date.now()
-  );
+  try {
+    return calculateAsiaRange(
+      state.candles?.M15 || [],
+      Number(state.price || localStorage.getItem('last_price') || 0),
+      Date.now()
+    );
+  } catch (error) {
+    console.error('Asia Range calculation failed:', error);
+    return {
+      valid: false,
+      state: 'ERROR',
+      windowLabel: '-',
+      note: 'Asia Range gagal dimuat. Mapping utama tetap dapat digunakan.'
+    };
+  }
 }
 
 function statusClass(status) {
@@ -47,6 +60,13 @@ function analyzeMarkup(range) {
     <div class="asia-range-summary">${range.summary}</div>`;
 }
 
+function setMarkupIfChanged(element, markup) {
+  if (!element || renderedMarkup.get(element) === markup) return false;
+  renderedMarkup.set(element, markup);
+  element.innerHTML = markup;
+  return true;
+}
+
 function mountDashboard(range) {
   const sessionCard = document.querySelector('.session-card');
   if (!sessionCard) return;
@@ -59,7 +79,7 @@ function mountDashboard(range) {
     if (sessionPill) sessionPill.insertAdjacentElement('afterend', block);
     else sessionCard.appendChild(block);
   }
-  block.innerHTML = dashboardMarkup(range);
+  setMarkupIfChanged(block, dashboardMarkup(range));
 }
 
 function mountAnalyze(range) {
@@ -73,7 +93,7 @@ function mountAnalyze(range) {
     strip.dataset.asiaRangeAnalyze = '';
     decisionCard.insertAdjacentElement('afterend', strip);
   }
-  strip.innerHTML = analyzeMarkup(range);
+  setMarkupIfChanged(strip, analyzeMarkup(range));
 }
 
 export function syncAsiaRangeUi() {
@@ -82,15 +102,30 @@ export function syncAsiaRangeUi() {
   mountAnalyze(range);
 }
 
+function scheduleAsiaRangeSync() {
+  if (syncQueued) return;
+  syncQueued = true;
+  const run = () => {
+    syncQueued = false;
+    try {
+      syncAsiaRangeUi();
+    } catch (error) {
+      console.error('Asia Range UI sync failed:', error);
+    }
+  };
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run);
+  else setTimeout(run, 0);
+}
+
 const app = document.getElementById('app');
 if (app) {
-  new MutationObserver(() => syncAsiaRangeUi()).observe(app, { childList: true, subtree: true });
+  new MutationObserver(scheduleAsiaRangeSync).observe(app, { childList: true, subtree: true });
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', syncAsiaRangeUi, { once: true });
+  document.addEventListener('DOMContentLoaded', scheduleAsiaRangeSync, { once: true });
 } else {
-  syncAsiaRangeUi();
+  scheduleAsiaRangeSync();
 }
 
-setInterval(syncAsiaRangeUi, 20_000);
+setInterval(scheduleAsiaRangeSync, 20_000);
