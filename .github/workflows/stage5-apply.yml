@@ -93,6 +93,23 @@ jobs:
           name: stage5-node-test-log-${{ github.run_id }}
           path: /tmp/stage5-node-tests.log
 
+      - name: Verify repository diff
+        run: |
+          rm -f local.properties
+          git status --porcelain=v1 | tee /tmp/stage5-status.log
+          set -o pipefail
+          git diff --check 2>&1 | tee /tmp/stage5-diff-check.log
+          test -z "$(git status --porcelain | grep -E '(^|/)(.*\.jks|.*\.keystore)$' || true)"
+
+      - name: Upload repository diff diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage5-diff-diagnostics-${{ github.run_id }}
+          path: |
+            /tmp/stage5-status.log
+            /tmp/stage5-diff-check.log
+
       - name: Run Android release unit tests
         run: ./gradlew testReleaseUnitTest --no-configuration-cache
 
@@ -112,23 +129,6 @@ jobs:
           actual="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/apksigner.txt | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           test -n "$actual"
           test "$actual" = "$expected"
-
-      - name: Verify repository diff
-        run: |
-          rm -f local.properties
-          git status --porcelain=v1 | tee /tmp/stage5-status.log
-          set -o pipefail
-          git diff --check 2>&1 | tee /tmp/stage5-diff-check.log
-          test -z "$(git status --porcelain | grep -E '(^|/)(.*\.jks|.*\.keystore)$' || true)"
-
-      - name: Upload repository diff diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: stage5-diff-diagnostics-${{ github.run_id }}
-          path: |
-            /tmp/stage5-status.log
-            /tmp/stage5-diff-check.log
 
       - name: Upload validated APK
         uses: actions/upload-artifact@v4
