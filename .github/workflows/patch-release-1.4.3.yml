@@ -52,17 +52,6 @@ jobs:
               "const VERSION = window.AmyFXAppVersion || { name: '1.4.2', code: 25 };\n  const CURRENT_VERSION_CODE = Number(VERSION.code) || 25;\n  const CURRENT_VERSION_NAME = String(VERSION.name || '1.4.2');",
               "const VERSION = window.AmyFXAppVersion || { name: '1.4.3', code: 26 };\n  const CURRENT_VERSION_CODE = Number(VERSION.code) || 26;\n  const CURRENT_VERSION_NAME = String(VERSION.name || '1.4.3');"
           )
-          replace_required(
-              '.github/workflows/build-apk.yml',
-              'AMYFX_VERSION_NAME: "1.4.2"\n      AMYFX_VERSION_CODE: "25"',
-              'AMYFX_VERSION_NAME: "1.4.3"\n      AMYFX_VERSION_CODE: "26"'
-          )
-          release_workflow = Path('.github/workflows/build-release.yml')
-          release_text = release_workflow.read_text(encoding='utf-8')
-          release_text = release_text.replace('Version Name (e.g., 1.4.2)', 'Version Name (e.g., 1.4.3)')
-          release_text = release_text.replace('default: "1.4.2"', 'default: "1.4.3"', 1)
-          release_text = release_text.replace('default: "25"', 'default: "26"', 1)
-          release_workflow.write_text(release_text, encoding='utf-8')
 
           updated_tests = []
           for file in Path('tests').glob('*.test.mjs'):
@@ -101,8 +90,6 @@ jobs:
           git add app/build.gradle.kts \
             app/src/main/assets/app-version.js \
             app/src/main/assets/update-checker.js \
-            .github/workflows/build-apk.yml \
-            .github/workflows/build-release.yml \
             tests update.json
           git commit -m "release: prepare Amy FX 1.4.3 [skip ci]"
           git push origin HEAD:release/1.4.3
