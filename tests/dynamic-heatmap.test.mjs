@@ -25,7 +25,7 @@ test('dynamic heatmap always inserts a current-price row', () => {
   const current = result.zones.find(zone => zone.isCurrent);
   assert.ok(current);
   assert.equal(current.status, 'LIVE_PRICE');
-  assert.equal(current.price, candles.at(-1).close);
+  assert.equal(current.price, Number(candles.at(-1).close.toFixed(2)));
 });
 
 test('a support level above current price is not kept as active support after a close break', () => {
