@@ -6,6 +6,7 @@
   let timer = 0;
   let lastPayload = null;
   let livePaintQueued = false;
+  let enginePromise = null;
 
   function safeText(value) {
     return String(value ?? '').replace(/[&<>"']/g, character => ({
@@ -23,6 +24,11 @@
     return Number.isFinite(parsed) ? parsed.toFixed(2) : '--';
   }
 
+  function loadEngine() {
+    if (!enginePromise) enginePromise = import('./heatmap-core.mjs');
+    return enginePromise;
+  }
+
   function readSnapshot() {
     try {
       const parsed = JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || '{}');
@@ -30,6 +36,10 @@
     } catch (_) {
       return {};
     }
+  }
+
+  function zoneKey(zone) {
+    return String(zone?.key || `${zone?.role || zone?.liquidityType || 'ZONE'}:${p2(zone?.price)}`);
   }
 
   function writeSnapshot(payload) {
@@ -49,10 +59,6 @@
     } catch (_) {}
   }
 
-  function zoneKey(zone) {
-    return String(zone?.key || `${zone?.role || zone?.liquidityType || 'ZONE'}:${p2(zone?.price)}`);
-  }
-
   function compareZones(zones, previous) {
     const oldMap = new Map((previous?.zones || []).map(zone => [zone.key, zone]));
     return (zones || []).map(zone => {
@@ -63,7 +69,7 @@
       const delta = score - number(old.score, 0);
       let change = 'STABIL';
       if (old.active && zone.active === false) change = 'DITEMBUS';
-      else if (old.status !== zone.status) change = 'BERUBAH';
+      else if (old.status !== zone.status || old.role !== zone.role) change = 'BERUBAH';
       else if (delta >= 0.35) change = 'MENGUAT';
       else if (delta <= -0.35) change = 'MELEMAH';
       return { ...zone, change, delta };
@@ -126,12 +132,12 @@
   function changeMarkup(zone) {
     if (zone.isCurrent) return '<span class="heat-change live">LIVE</span>';
     const delta = number(zone.delta);
-    const value = Number.isFinite(delta) && Math.abs(delta) >= 0.05
+    const suffix = Number.isFinite(delta) && Math.abs(delta) >= 0.05
       ? ` ${delta > 0 ? '+' : ''}${delta.toFixed(1)}` : '';
     const className = zone.change === 'MENGUAT' || zone.change === 'BARU' ? 'up'
       : zone.change === 'MELEMAH' || zone.change === 'DITEMBUS' ? 'down'
         : zone.change === 'BERUBAH' ? 'shift' : 'flat';
-    return `<span class="heat-change ${className}">${safeText(zone.change || 'STABIL')}${safeText(value)}</span>`;
+    return `<span class="heat-change ${className}">${safeText(zone.change || 'STABIL')}${safeText(suffix)}</span>`;
   }
 
   function roleClass(zone) {
@@ -147,11 +153,11 @@
   }
 
   function rowMarkup(zone) {
-    const role = roleClass(zone);
     const score = number(zone.score, number(zone.totalActivity, 0));
     const levelType = zone.liquidityType ? `${zone.liquidityType} · ` : '';
     const distance = zone.isCurrent ? '' : `${number(zone.distance, 0) >= 0 ? '+' : ''}${p2(zone.distance)}`;
-    return `<div class="dynamic-heat-row ${role} status-${String(zone.status || '').toLowerCase().replaceAll('_', '-')}">
+    const statusClass = String(zone.status || '').toLowerCase().replaceAll('_', '-');
+    return `<div class="dynamic-heat-row ${roleClass(zone)} status-${statusClass}">
       <div class="dynamic-heat-price">
         <strong>${p2(zone.price)}</strong>
         ${zone.isCurrent ? '<span>◀</span>' : `<small>${safeText(distance)}</small>`}
@@ -177,10 +183,18 @@
     return `${movement > 0 ? 'Naik' : 'Turun'} ${Math.abs(movement).toFixed(2)} sejak refresh sebelumnya`;
   }
 
-  function summaryMarkup(payload, previous) {
+  function ensureSummary(payload, previous) {
+    const canvas = document.getElementById('heatmap-canvas');
+    if (!canvas) return;
+    let target = document.getElementById('dynamic-heat-summary');
+    if (!target) {
+      target = document.createElement('div');
+      target.id = 'dynamic-heat-summary';
+      canvas.parentNode.insertBefore(target, canvas);
+    }
     const summary = payload.summary || {};
     const draw = summary.nearestDraw;
-    return `<div class="dynamic-heat-summary">
+    target.innerHTML = `<div class="dynamic-heat-summary">
       <div><small>TEKANAN</small><strong>${safeText(summary.pressure || 'BALANCED')}</strong></div>
       <div><small>DRAW TERDEKAT</small><strong>${draw ? `${safeText(draw.type)} ${p2(draw.price)}` : 'Belum ada'}</strong></div>
       <div><small>ZONA AKTIF</small><strong>${Number(summary.activeZones || 0)}</strong></div>
@@ -188,23 +202,11 @@
     </div>`;
   }
 
-  function ensureSummary(payload, previous) {
-    const canvas = document.getElementById('heatmap-canvas');
-    if (!canvas) return;
-    let summary = document.getElementById('dynamic-heat-summary');
-    if (!summary) {
-      summary = document.createElement('div');
-      summary.id = 'dynamic-heat-summary';
-      canvas.parentNode.insertBefore(summary, canvas);
-    }
-    summary.innerHTML = summaryMarkup(payload, previous);
-  }
-
   function renderDynamicHeatmap(payload, previous = {}) {
     const canvas = document.getElementById('heatmap-canvas');
     if (!canvas) return;
-    const liveStoredPrice = bestStoredPrice();
-    const livePrice = Number.isFinite(liveStoredPrice) ? liveStoredPrice : number(payload.currentPrice);
+    const storedPrice = bestStoredPrice();
+    const livePrice = Number.isFinite(storedPrice) ? storedPrice : number(payload.currentPrice);
     const zonesWithoutCurrent = (payload.zones || []).filter(zone => !zone.isCurrent).map(zone => ({
       ...zone,
       distance: number(zone.price) - livePrice
@@ -219,9 +221,40 @@
     ensureSummary({ ...payload, currentPrice: livePrice }, previous);
     canvas.classList.add('dynamic-heatmap-canvas');
     canvas.innerHTML = zones.map(rowMarkup).join('');
-
     const price = document.getElementById('heatmap-price');
     if (price) price.textContent = `💰 XAU/USD ${p2(livePrice)}`;
+  }
+
+  function normalizeProviderCandles(data) {
+    return (Array.isArray(data?.values) ? data.values : [])
+      .slice()
+      .reverse()
+      .map(candle => ({
+        time: candle.datetime,
+        open: Number(candle.open),
+        high: Number(candle.high),
+        low: Number(candle.low),
+        close: Number(candle.close)
+      }));
+  }
+
+  async function fetchComputedHeatmap(signal) {
+    const slot = Math.floor(Date.now() / 15000);
+    const response = await fetch(`${API_BASE}/twelvedata?interval=15min&outputsize=240&fresh=${slot}`, {
+      signal,
+      cache: 'no-store'
+    });
+    const raw = await response.json();
+    if (!response.ok || raw?.status === 'error') throw new Error(raw?.message || `HTTP ${response.status}`);
+    const candles = normalizeProviderCandles(raw);
+    const { computeDynamicHeatmap } = await loadEngine();
+    const result = computeDynamicHeatmap(candles, { swingWindow: 2, maxZonesPerSide: 6 });
+    return {
+      ...result,
+      updated: new Date().toISOString(),
+      sourceCandleTime: result.meta?.sourceCandleTime || candles.at(-1)?.time || null,
+      source: 'CLIENT_DYNAMIC_ENGINE'
+    };
   }
 
   async function loadDynamicHeatmap(silent = false) {
@@ -232,13 +265,7 @@
     try {
       controller?.abort();
       controller = new AbortController();
-      const slot = Math.floor(Date.now() / 15000);
-      const response = await fetch(`${API_BASE}/heatmap?interval=15min&outputsize=240&fresh=${slot}`, {
-        signal: controller.signal,
-        cache: 'no-store'
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      const data = await fetchComputedHeatmap(controller.signal);
       if (!Array.isArray(data.zones) || !data.zones.length) {
         status.textContent = '⚠️ Data candle belum cukup untuk heatmap';
         return;
@@ -258,12 +285,14 @@
         currentPrice: data.currentPrice,
         zones,
         summary: data.summary,
-        meta: data.meta
+        meta: data.meta,
+        source: data.source
       });
       if (typeof hideLoading === 'function') hideLoading();
     } catch (error) {
       if (error?.name === 'AbortError') return;
       status.textContent = '⚠️ Gagal memperbarui heatmap';
+      console.error('Dynamic heatmap failed', error);
     }
   }
 
@@ -272,16 +301,20 @@
     livePaintQueued = true;
     requestAnimationFrame(() => {
       livePaintQueued = false;
-      const previous = readSnapshot();
-      renderDynamicHeatmap(lastPayload, previous);
+      renderDynamicHeatmap(lastPayload, readSnapshot());
     });
   }
 
-  // Replace the original static heatmap functions before DOMContentLoaded fires.
+  // Override fungsi lama sebelum DOMContentLoaded menjalankan loader pertama.
   window.loadHeatmap = loadDynamicHeatmap;
   window.renderHeatmap = function (zones, currentPrice) {
     const previous = readSnapshot();
-    const payload = { currentPrice, zones: compareZones(zones, previous), summary: {}, updated: new Date().toISOString() };
+    const payload = {
+      currentPrice,
+      zones: compareZones(zones, previous),
+      summary: {},
+      updated: new Date().toISOString()
+    };
     lastPayload = payload;
     renderDynamicHeatmap(payload, previous);
   };
@@ -300,6 +333,9 @@
     });
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
-  else boot();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
 })();
