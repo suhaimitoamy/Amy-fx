@@ -9,17 +9,17 @@
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Logika Mapping diperketat agar valid break tidak mudah terbentuk dari candle kecil",
-    "Valid break, liquidity sweep, dan failed break sekarang dipisahkan agar bias arah lebih stabil",
-    "Urutan Sweep → MSS → FVG serta siklus Order Block telah diperbaiki",
-    "Outlook 1–4 jam, sesi, dan 24 jam kini memakai konteks, target, invalidasi, dan probabilitas masing-masing",
-    "Prediction Tracker menilai invalidasi berdasarkan candle close dan dilengkapi pengujian regresi Mapping"
+    "CHOCH pertama yang melawan tren kini dibaca sebagai transisi internal, bukan langsung membalik arah utama",
+    "Reversal baru terkonfirmasi setelah protected swing berikutnya ditembus dengan candle close valid",
+    "Break yang harga live-nya kembali melewati level struktur kini ditandai AT RISK sampai candle menutup",
+    "Panel Valid Break memisahkan percobaan struktur, struktur terkonfirmasi, dan level konfirmasi berikutnya",
+    "Setup biasa diblokir selama CHOCH masih internal; model Sweep → MSS → FVG tetap memerlukan urutan lengkap"
   ],
   "changelog": [
-    "Logika Mapping diperketat agar valid break tidak mudah terbentuk dari candle kecil",
-    "Valid break, liquidity sweep, dan failed break sekarang dipisahkan agar bias arah lebih stabil",
-    "Urutan Sweep → MSS → FVG serta siklus Order Block telah diperbaiki",
-    "Outlook 1–4 jam, sesi, dan 24 jam kini memakai konteks, target, invalidasi, dan probabilitas masing-masing",
-    "Prediction Tracker menilai invalidasi berdasarkan candle close dan dilengkapi pengujian regresi Mapping"
+    "CHOCH pertama yang melawan tren kini dibaca sebagai transisi internal, bukan langsung membalik arah utama",
+    "Reversal baru terkonfirmasi setelah protected swing berikutnya ditembus dengan candle close valid",
+    "Break yang harga live-nya kembali melewati level struktur kini ditandai AT RISK sampai candle menutup",
+    "Panel Valid Break memisahkan percobaan struktur, struktur terkonfirmasi, dan level konfirmasi berikutnya",
+    "Setup biasa diblokir selama CHOCH masih internal; model Sweep → MSS → FVG tetap memerlukan urutan lengkap"
   ]
 }
