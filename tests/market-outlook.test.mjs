@@ -1,12 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 
-const source = readFileSync(
-  new URL('../app/src/main/assets/apps/mapping/js/outlook/market-outlook-core.js', import.meta.url),
-  'utf8'
-);
-const outlook = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
+const outlookUrl = new URL('../app/src/main/assets/apps/mapping/js/outlook/market-outlook-core.js', import.meta.url);
+const outlook = await import(outlookUrl.href);
 
 function candles(start = 4000, direction = 1, count = 80) {
   return Array.from({ length: count }, (_, index) => {
