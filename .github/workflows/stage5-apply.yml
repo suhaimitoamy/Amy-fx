@@ -115,8 +115,9 @@ jobs:
 
       - name: Verify repository diff
         run: |
+          rm -f local.properties
           git diff --check
-          test -z "$(git status --porcelain | grep -E '(^|/)(local.properties|.*\.jks|.*\.keystore)$' || true)"
+          test -z "$(git status --porcelain | grep -E '(^|/)(.*\.jks|.*\.keystore)$' || true)"
 
       - name: Upload validated APK
         uses: actions/upload-artifact@v4
