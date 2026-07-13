@@ -1,8 +1,15 @@
-import { getNewsImpact, isRelevantNews } from '../lib/news-relevance.mjs';
-
 const SUPABASE_NEWS_FEED =
   'https://wliecyxzlwhmtftnfnps.supabase.co/functions/v1/news-feed';
 const TELEGRAM_SOURCE = 'SM_News_24h';
+
+let newsRelevancePromise;
+
+function loadNewsRelevance() {
+  if (!newsRelevancePromise) {
+    newsRelevancePromise = import('../lib/news-relevance.mjs');
+  }
+  return newsRelevancePromise;
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -102,12 +109,13 @@ async function translateToId(text) {
 }
 
 async function scrapeTelegram(limit) {
+  const { getNewsImpact, isRelevantNews } = await loadNewsRelevance();
   const html = await fetchTextWithRetry(
     `https://t.me/s/${TELEGRAM_SOURCE}?_=${Date.now()}`,
     { headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 AmyFX/1.0' } }
   );
 
-  const latest = sortNewestFirst(filterGold(extractPosts(html))).slice(0, limit);
+  const latest = sortNewestFirst(filterGold(extractPosts(html), isRelevantNews)).slice(0, limit);
   return Promise.all(latest.map(async item => ({
     ...item,
     impact: getNewsImpact(item.text),
@@ -153,7 +161,7 @@ function extractTime(html, start, end) {
   return before.match(/datetime="([^"]+)"/)?.[1] || '';
 }
 
-function filterGold(posts) {
+function filterGold(posts, isRelevantNews) {
   return posts.filter(post => isRelevantNews(post.text));
 }
 
