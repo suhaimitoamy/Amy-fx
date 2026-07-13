@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: amyfx-stage5-release
+  cancel-in-progress: true
+
 env:
   AMYFX_KEYSTORE_PATH: /tmp/amy-fx-signing.keystore
   AMYFX_KEYSTORE_PASSWORD: android
@@ -78,7 +82,16 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Run JavaScript regression tests
-        run: node --test tests/*.test.mjs
+        run: |
+          set -o pipefail
+          node --test tests/*.test.mjs 2>&1 | tee /tmp/stage5-node-tests.log
+
+      - name: Upload JavaScript regression log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage5-node-test-log-${{ github.run_id }}
+          path: /tmp/stage5-node-tests.log
 
       - name: Run Android release unit tests
         run: ./gradlew testReleaseUnitTest --no-configuration-cache
