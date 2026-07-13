@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const uiUrl = new URL('../app/src/main/assets/apps/mapping/js/market-outlook.js', import.meta.url);
 const coreUrl = new URL('../app/src/main/assets/apps/mapping/js/outlook/market-outlook-core.js', import.meta.url);
+const baseUrl = new URL('../app/src/main/assets/apps/mapping/js/outlook/v2/base.js', import.meta.url);
 const indexUrl = new URL('../app/src/main/assets/apps/mapping/index.html', import.meta.url);
 
 function assertSyntax(url) {
@@ -16,6 +17,7 @@ function assertSyntax(url) {
 test('market outlook JavaScript files remain syntactically valid', () => {
   assertSyntax(uiUrl);
   assertSyntax(coreUrl);
+  assertSyntax(baseUrl);
 });
 
 test('mapping page loads market outlook style and module', () => {
@@ -26,10 +28,10 @@ test('mapping page loads market outlook style and module', () => {
 
 test('outlook UI keeps the three prediction horizons and tracker threshold', () => {
   const ui = readFileSync(uiUrl, 'utf8');
-  const core = readFileSync(coreUrl, 'utf8');
-  assert.match(core, /label: '1–4 Jam'/);
-  assert.match(core, /label: 'Sesi Berjalan'/);
-  assert.match(core, /label: '24 Jam'/);
+  const base = readFileSync(baseUrl, 'utf8');
+  assert.match(base, /label: '1–4 Jam'/);
+  assert.match(base, /label: 'Sesi Berjalan'/);
+  assert.match(base, /label: '24 Jam'/);
   assert.match(ui, /Prediction Tracker/i);
   assert.match(ui, /minimal 20 outlook selesai/);
   assert.match(ui, /bukan rekomendasi entry/);
