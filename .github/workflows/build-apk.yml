@@ -1,14 +1,8 @@
 name: Build and Publish Amy FX APK
 
-# Rolling publication with metadata derived from the build version
+# Rolling publication is temporarily manual while the 1.4.4 source set is prepared.
 on:
   workflow_dispatch:
-  push:
-    branches: [ "main" ]
-    paths-ignore:
-      - "update.json"
-  schedule:
-    - cron: "17 3 * * 0"
 
 permissions:
   contents: write
@@ -21,8 +15,8 @@ jobs:
       AMYFX_KEYSTORE_PASSWORD: android
       AMYFX_KEY_ALIAS: androiddebugkey
       AMYFX_KEY_PASSWORD: android
-      AMYFX_VERSION_NAME: "1.4.3"
-      AMYFX_VERSION_CODE: "26"
+      AMYFX_VERSION_NAME: "1.4.4"
+      AMYFX_VERSION_CODE: "27"
 
     steps:
       - name: Checkout
