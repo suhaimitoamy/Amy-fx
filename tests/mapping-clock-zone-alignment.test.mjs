@@ -31,11 +31,12 @@ test('new mapping modules are syntactically valid and loaded by the page', () =>
   assert.match(html, /js\/clock-sync\.js/);
 });
 
-test('WIB clock paints dashboard and session from one timestamp', () => {
+test('WIB clock paints dashboard and session from one timestamp without observer loop', () => {
   const clock = readFileSync(clockUrl, 'utf8');
   assert.match(clock, /const time = wibClockText\(timestamp\)/);
-  assert.match(clock, /top\.textContent = `\$\{connection\} • WIB \$\{time\}`/);
-  assert.match(clock, /session\.textContent = `WIB \$\{time\}`/);
+  assert.match(clock, /setText\(top, `\$\{connection\} • WIB \$\{time\}`\)/);
+  assert.match(clock, /setText\(document\.getElementById\('kz-wib'\), `WIB \$\{time\}`\)/);
+  assert.match(clock, /element\.textContent !== text/);
   assert.doesNotMatch(clock, /wibClockText\(Date\.now\(\)\).*wibClockText\(Date\.now\(\)\)/s);
 });
 
