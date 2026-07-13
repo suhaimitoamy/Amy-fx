@@ -9,17 +9,17 @@
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Halaman Profil sekarang menampilkan versi Amy FX dan version code yang sedang terpasang",
-    "Baris Versi Aplikasi dapat ditekan untuk memeriksa pembaruan secara manual",
-    "Tombol Batal tidak lagi menyimpan penolakan permanen untuk versi update yang sama",
-    "Popup update akan diperiksa kembali ketika aplikasi dibuka atau kembali dari background",
-    "Pemeriksa update lama yang tersimpan di perangkat dibersihkan agar popup tidak terus tersembunyi"
+    "Logika Mapping diperketat agar valid break tidak mudah terbentuk dari candle kecil",
+    "Valid break, liquidity sweep, dan failed break sekarang dipisahkan agar bias arah lebih stabil",
+    "Urutan Sweep → MSS → FVG serta siklus Order Block telah diperbaiki",
+    "Outlook 1–4 jam, sesi, dan 24 jam kini memakai konteks, target, invalidasi, dan probabilitas masing-masing",
+    "Prediction Tracker menilai invalidasi berdasarkan candle close dan dilengkapi pengujian regresi Mapping"
   ],
   "changelog": [
-    "Halaman Profil sekarang menampilkan versi Amy FX dan version code yang sedang terpasang",
-    "Baris Versi Aplikasi dapat ditekan untuk memeriksa pembaruan secara manual",
-    "Tombol Batal tidak lagi menyimpan penolakan permanen untuk versi update yang sama",
-    "Popup update akan diperiksa kembali ketika aplikasi dibuka atau kembali dari background",
-    "Pemeriksa update lama yang tersimpan di perangkat dibersihkan agar popup tidak terus tersembunyi"
+    "Logika Mapping diperketat agar valid break tidak mudah terbentuk dari candle kecil",
+    "Valid break, liquidity sweep, dan failed break sekarang dipisahkan agar bias arah lebih stabil",
+    "Urutan Sweep → MSS → FVG serta siklus Order Block telah diperbaiki",
+    "Outlook 1–4 jam, sesi, dan 24 jam kini memakai konteks, target, invalidasi, dan probabilitas masing-masing",
+    "Prediction Tracker menilai invalidasi berdasarkan candle close dan dilengkapi pengujian regresi Mapping"
   ]
 }
