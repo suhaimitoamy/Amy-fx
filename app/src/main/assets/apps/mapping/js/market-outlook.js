@@ -69,7 +69,10 @@ function analyzeTimeframe(tf) {
 
 function analyses() {
   const signature = candleSignature();
-  if (signature === cachedCandleSignature && Object.keys(cachedAnalyses).length) return cachedAnalyses;
+  if (signature === cachedCandleSignature && Object.keys(cachedAnalyses).length) {
+    if (state.result?.tf) cachedAnalyses[state.result.tf] = state.result;
+    return cachedAnalyses;
+  }
   cachedCandleSignature = signature;
   cachedAnalyses = Object.fromEntries(
     ANALYSIS_TFS
@@ -254,8 +257,7 @@ function projectionSignature(projection, history) {
       direction: item.direction,
       probability: item.probability,
       target: item.primaryTarget,
-      invalidation: item.invalidation,
-      expiresAt: item.expiresAt
+      invalidation: item.invalidation
     })),
     resolved: history.filter(item => item.status === 'RESOLVED').length,
     pending: history.filter(item => item.status === 'PENDING').length
@@ -321,7 +323,7 @@ function refresh(force = false) {
 function boot() {
   refresh(true);
   clearInterval(timer);
-  timer = setInterval(() => refresh(), 1500);
+  timer = setInterval(() => refresh(), 2500);
   document.addEventListener('click', () => setTimeout(() => refresh(true), 30), true);
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) refresh(true);
