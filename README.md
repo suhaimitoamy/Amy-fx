@@ -2,9 +2,10 @@
 
 Amy FX adalah aplikasi Android hybrid untuk pemetaan dan pemantauan market **XAU/USD**. Antarmuka utama berjalan melalui WebView lokal, sedangkan fungsi Android seperti notifikasi, background scanner, penyimpanan aman, download, Firebase Messaging, dan update aplikasi ditangani oleh Kotlin native.
 
-> **Versi terbaru:** `1.3.2`  
-> **Version code:** `15`  
+> **Versi terbaru:** `1.3.6`  
+> **Version code:** `19`  
 > **Minimum Android:** Android 8.0 / API 26  
+> **Target SDK:** Android SDK 35  
 > **Application ID:** `com.amyelitesuite`
 
 [Download APK resmi Amy FX](https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk)
@@ -17,7 +18,7 @@ Amy FX:
 - tidak membuka, menutup, atau mengelola order secara otomatis;
 - tidak menjamin profit atau kemenangan trading;
 - bukan penasihat keuangan;
-- hanya menjadi alat bantu analisis, pemetaan, pemantauan level, jurnal, dan pembelajaran.
+- hanya menjadi alat bantu analisis, pemetaan, pemantauan level, jurnal, berita, dan pembelajaran.
 
 Keputusan dan risiko trading tetap berada di tangan pengguna.
 
@@ -28,29 +29,43 @@ Keputusan dan risiko trading tetap berada di tangan pengguna.
 | Modul | Fungsi |
 |---|---|
 | **Mapping** | Analisis struktur XAU/USD, BSL/SSL, HTF bias, liquidity, FVG, Order Block, setup, dan target |
-| **Market Intel** | News XAU/USD, risiko berita, liquidity heatmap, dan ringkasan market |
-| **Journal Trading** | Catatan trade, evaluasi, riwayat, dan laporan |
-| **Amy Trading Academy** | Materi pembelajaran trading di dalam aplikasi |
-| **Indicator Library** | Library indikator dan file Pine Script TradingView |
+| **Berita** | News XAU/USD, risiko berita, liquidity heatmap, liquidity panel, dan market briefing |
+| **Jurnal Trading** | Catatan trade, evaluasi, statistik performa, trade plan, pencarian, filter, dan export |
+| **Tutorial Trading** | Materi pembelajaran trading terstruktur di dalam aplikasi |
+| **Indikator TradingView** | Library indikator dan file Pine Script TradingView |
 | **Dashboard** | Akses cepat ke seluruh modul Amy FX |
 
 ---
 
-## Update Terbaru — v1.3.2
+## Update Terbaru — v1.3.6
 
-- BSL dan SSL pada command strip sekarang menampilkan **harga level terbaru**, bukan hanya tanda `--` atau jarak level.
-- Data Mapping terbaru diprioritaskan dibanding cache liquidity yang lebih lama.
-- BSL/SSL diperbarui setelah Mapping selesai melakukan analisis.
-- Harga live dan status market memperbarui tampilan tanpa menjalankan analisis penuh setiap saat.
-- Sistem **In-App Update** sudah aktif dan berhasil diuji dari v1.3.1 ke v1.3.2 tanpa uninstall.
-- APK resmi menggunakan jalur signing yang sama agar versi berikutnya dapat dipasang dengan tombol **Perbarui**.
+- Ikon kecil notifikasi Android diganti dari simbol grafik menjadi **monogram AMY dalam lingkaran**.
+- Ikon AMY dipakai sebagai default Firebase Messaging agar notifikasi News, target Mapping, dan foreground scanner memakai identitas yang sama.
+- Ikon status bar menggunakan format monokrom putih sesuai aturan Android.
+- Filter berita diperluas untuk konflik, perang, Iran, Amerika Serikat, perdamaian, diplomasi, geopolitik, energi, dan risiko ekonomi.
+- Endpoint News production dipulihkan setelah konflik ESM/CommonJS pada runtime Vercel.
+- Jalur Supabase tetap menjadi sumber utama, dengan Telegram sebagai fallback.
 
-### Perbaikan v1.3.1
+### Pembaruan v1.3.5 — Jurnal Trading
 
-- Memperbaiki halaman Mapping yang freeze.
-- Menghapus loop `MutationObserver` yang terus memicu pembaruan UI.
-- Mengembalikan fungsi tombol Dashboard, Analyze, Setup, History, dan Settings.
-- Mengurangi proses background yang tidak diperlukan saat aplikasi dibuka.
+- Dashboard performa: win rate, net P/L, profit factor, rata-rata trade, streak jurnal, dan max drawdown.
+- Pencarian jurnal berdasarkan judul, pair, setup, emosi, evaluasi, dan trade plan.
+- Filter hasil, market, periode, serta pengurutan terbaru, terlama, dan P/L.
+- Autosave serta pemulihan draft otomatis.
+- Trade plan tambahan: BUY/SELL, sesi, timeframe, risk, entry, stop loss, take profit, RR, dan checklist disiplin.
+- Validasi input untuk hasil Win/Loss, arah trade, RR, dan risiko berlebihan.
+- Export jurnal ke CSV dan JSON.
+- Fitur salin jurnal tanpa menggandakan lampiran.
+- Perbaikan kompatibilitas `CSS.escape`, `makeStatCard`, dan `filterGridItems`.
+
+### Pembaruan v1.3.4 dan Sebelumnya
+
+- Tutorial Trading memiliki katalog belajar terstruktur dengan 36 bagian.
+- Urutan materi dan halaman akses pembelajaran diperbaiki.
+- BSL dan SSL pada command strip menampilkan harga level terbaru.
+- Data Mapping terbaru diprioritaskan dibanding cache liquidity lama.
+- Sistem In-App Update aktif tanpa perlu uninstall.
+- Halaman Mapping yang sebelumnya dapat freeze sudah diperbaiki.
 
 ---
 
@@ -69,7 +84,7 @@ Alur analisis utama:
 7. Checklist score dan conflict filter.
 8. Penyusunan setup, entry area, invalidasi, dan target.
 
-### BSL dan SSL Terbaru
+### BSL dan SSL
 
 - **BSL** adalah Buy-Side Liquidity aktif di atas harga.
 - **SSL** adalah Sell-Side Liquidity aktif di bawah harga.
@@ -104,7 +119,7 @@ Scanner dibuat ringan dan tidak hidup terus-menerus tanpa alasan.
 
 ---
 
-## News dan Notifikasi
+## Berita dan Notifikasi
 
 Amy FX memakai dua jalur notifikasi berita:
 
@@ -113,7 +128,7 @@ Amy FX memakai dua jalur notifikasi berita:
 
 Fallback WorkManager:
 
-- dijadwalkan oleh Android sekitar setiap 15 menit;
+- dijadwalkan Android sekitar setiap 15 menit;
 - tidak membuka WebView;
 - tidak menjalankan foreground service permanen;
 - tidak melakukan polling setiap beberapa detik;
@@ -125,30 +140,66 @@ Endpoint News:
 https://amy-fx.vercel.app/api/news
 ```
 
-Sumber utama berasal dari backend Supabase, dengan Telegram `SM_News_24h` sebagai fallback.
+Sumber utama berasal dari backend Supabase, dengan Telegram `SM_News_24h` sebagai fallback. Modul News tidak bergantung pada Google Gemini API.
 
-### Pembaruan Backend Push Real-Time — 12 Juli 2026
+### Filter Relevansi Berita
 
-- Backend `news-sync` memeriksa sumber berita sekitar setiap 2 menit.
+Filter bersama berada di:
+
+```text
+lib/news-relevance.mjs
+```
+
+Filter mencakup:
+
+- emas, XAU/USD, bullion, USD, DXY, Fed, FOMC, CPI, PCE, NFP, yield, dan data ekonomi utama;
+- perang, konflik, serangan, rudal, drone, invasi, nuklir, eskalasi, sanksi, dan gencatan senjata;
+- Iran, Amerika Serikat, White House, Pentagon, Israel, Gaza, Rusia, Ukraina, China, Taiwan, Middle East, dan NATO;
+- perdamaian, perundingan damai, diplomasi, negosiasi, mediasi, kesepakatan, dan normalisasi hubungan;
+- minyak, OPEC, Red Sea, Selat Hormuz, gangguan pelayaran, dan risiko pasokan energi;
+- resesi, default, banking crisis, debt ceiling, government shutdown, safe haven, dan market panic.
+
+Pencocokan menggunakan normalisasi teks dan batas kata agar istilah pendek seperti `US` tidak salah cocok di dalam kata lain.
+
+### Backend Push Real-Time
+
+- Backend `news-sync` memeriksa sumber berita secara berkala.
 - Hanya berita yang lolos filter relevansi XAU/USD yang disimpan dan dikirim.
-- Berita baru dikirim langsung melalui Firebase Cloud Messaging tanpa harus membuka Market Intel.
-- Pengiriman memakai ID posting Telegram dan log per perangkat untuk mencegah notifikasi ganda.
-- Token FCM yang sudah tidak berlaku otomatis dinonaktifkan dari daftar perangkat aktif.
-- WorkManager tetap dipertahankan sebagai jalur cadangan bila push tertunda.
-- Menekan notifikasi membuka berita yang sama di halaman Market Intel.
-- Kredensial Firebase disimpan sebagai secret terenkripsi di Supabase dan tidak disimpan di repository.
-- Perbaikan backend ini tidak memerlukan pemasangan ulang APK karena penerima FCM sudah tersedia di aplikasi.
+- Berita baru dikirim melalui Firebase Cloud Messaging tanpa harus membuka aplikasi.
+- Pengiriman memakai ID posting Telegram dan gate deduplikasi untuk mencegah notifikasi ganda.
+- Token FCM yang sudah tidak berlaku dapat dinonaktifkan dari daftar perangkat aktif.
+- Menekan notifikasi membuka berita yang sama di halaman Berita.
+- Kredensial Firebase disimpan sebagai secret backend dan tidak disimpan di repository.
+
+### Ikon Notifikasi AMY
+
+Resource ikon kecil Android berada di:
+
+```text
+app/src/main/res/drawable/ic_stat_amy_fx.xml
+```
+
+Konfigurasi default Firebase berada di `AndroidManifest.xml`:
+
+```xml
+<meta-data
+    android:name="com.google.firebase.messaging.default_notification_icon"
+    android:resource="@drawable/ic_stat_amy_fx" />
+```
+
+Android menampilkan small notification icon sebagai bentuk monokrom. Karena itu logo AMY dibuat sebagai vector putih dengan background transparan.
 
 ---
 
-## Market Intel
+## Berita, Heatmap, dan Liquidity
 
-Market Intel menyediakan:
+Halaman Berita menyediakan:
 
 | Panel | Fungsi |
 |---|---|
 | **News** | Berita relevan untuk XAU/USD dan klasifikasi risiko |
 | **Liquidity Heatmap** | Zona swing dan konsentrasi liquidity dari data candle |
+| **Liquidity** | Level liquidity dan konteks posisi harga |
 | **Command Strip** | Harga XAU/USD, sesi aktif, BSL, SSL, risiko news, dan status data |
 | **Market Briefing** | Ringkasan rule-based dari Mapping, liquidity, sesi, dan news |
 
@@ -160,7 +211,7 @@ api/twelvedata.js → Proxy data candle dan harga XAU/USD
 api/heatmap.js    → Perhitungan liquidity heatmap
 ```
 
-Environment variable yang dibutuhkan di Vercel:
+Environment variable utama di Vercel:
 
 | Key | Fungsi |
 |---|---|
@@ -168,16 +219,51 @@ Environment variable yang dibutuhkan di Vercel:
 
 ---
 
+## Jurnal Trading
+
+Source aktif Jurnal Trading berada di:
+
+```text
+app/src/main/assets/apps/journal/
+```
+
+Fitur utama:
+
+- membuat, mengedit, menghapus, membuka, dan menyalin jurnal;
+- menyimpan tanggal, market, setup, hasil, profit, loss, evaluasi, kesalahan, pelajaran, dan emosi;
+- menyimpan arah, sesi, timeframe, risk, entry, SL, TP, RR, dan checklist disiplin;
+- menghitung statistik performa dari seluruh jurnal;
+- mencari, menyaring, dan mengurutkan data;
+- autosave draft lokal;
+- export CSV dan JSON;
+- penyimpanan data lokal agar tetap tersedia setelah aplikasi diperbarui.
+
+Data utama disimpan di `localStorage`, sedangkan lampiran dan media memakai mekanisme penyimpanan aplikasi yang tersedia pada modul Journal.
+
+---
+
+## Tutorial Trading
+
+Tutorial Trading menyediakan katalog pembelajaran di dalam aplikasi dengan 36 bagian. Progres belajar disimpan secara lokal pada perangkat. Source aktif berada di:
+
+```text
+app/src/main/assets/apps/academy/
+```
+
+Editor legacy masih disimpan untuk kompatibilitas internal, tetapi halaman pengguna dan admin aktif memakai alur Tutorial Trading yang sekarang.
+
+---
+
 ## Performa, Cache, dan Lazy Loading
 
-Amy FX sudah memakai beberapa mekanisme agar aplikasi tidak berat:
+Amy FX memakai beberapa mekanisme agar aplikasi tidak berat:
 
 - Asset HTML, CSS, dan JavaScript utama disimpan lokal di APK dan dilayani melalui `WebViewAssetLoader`.
-- Modul Mapping, Market Intel, Journal, Academy, dan Library baru dibuka ketika dipilih.
+- Modul Mapping, Berita, Journal, Tutorial Trading, dan Library baru dibuka ketika dipilih.
 - WebView menggunakan cache bawaan Android dengan mode `LOAD_DEFAULT`.
 - DOM storage/localStorage dipakai untuk menyimpan state, jurnal, progres, cache Mapping, dan pengaturan.
 - Candle disimpan dalam cache dan hanya dimuat ulang ketika timeframe dianggap kedaluwarsa.
-- Harga live pada halaman Mapping diperiksa sekitar setiap 20 detik ketika halaman terlihat.
+- Harga live pada halaman Mapping diperiksa berkala ketika halaman terlihat.
 - Polling dan analisis dihentikan atau dikurangi ketika WebView tidak terlihat.
 - Analisis penuh dijadwalkan berdasarkan umur timeframe, bukan setiap perubahan harga.
 - Cache WebView dapat dibersihkan otomatis saat Android melaporkan kondisi memori rendah.
@@ -196,7 +282,7 @@ Alurnya:
 2. Popup **Update Amy FX Tersedia** menampilkan versi dan catatan perubahan.
 3. Tombol **Unduh & Perbarui** membuka APK resmi terbaru.
 4. Android menampilkan pilihan **Perbarui**.
-5. Data jurnal, progres Academy, pengaturan, dan data lokal tetap tersimpan.
+5. Data jurnal, progres Tutorial Trading, pengaturan, dan data lokal tetap tersimpan.
 
 Syarat agar update dapat dipasang tanpa uninstall:
 
@@ -259,6 +345,10 @@ app/src/main/java/com/amyelitesuite/
 ├── FcmDeviceRegistrar.kt
 └── AmyFxNotificationGate.java
 
+app/src/main/res/
+├── drawable/ic_stat_amy_fx.xml
+└── mipmap*/
+
 app/src/main/assets/
 ├── index.html
 ├── app.js
@@ -274,6 +364,12 @@ api/
 ├── news.js
 ├── twelvedata.js
 └── heatmap.js
+
+lib/
+└── news-relevance.mjs
+
+supabase/functions/
+└── news-sync/
 ```
 
 ---
@@ -298,7 +394,8 @@ Workflow ini:
 - membangun signed release APK;
 - memverifikasi tanda tangan dengan `apksigner`;
 - mengunggah artifact;
-- memperbarui GitHub Release `amyfx-latest`.
+- memperbarui GitHub Release `amyfx-latest`;
+- mengaktifkan metadata In-App Update setelah APK berhasil dipublikasikan.
 
 ### Internal Build Validation
 
@@ -308,7 +405,17 @@ File:
 .github/workflows/build-debug.yml
 ```
 
-Workflow debug hanya untuk validasi internal dan tidak menjadi APK resmi pengguna.
+Workflow debug menjalankan regression test, unit test Android, lint, dan debug build sebagai validasi internal. Artifact debug bukan APK resmi pengguna.
+
+### Static Check
+
+File:
+
+```text
+.github/workflows/lint.yml
+```
+
+Workflow ini menjalankan pemeriksaan statis dan Android lint pada perubahan repository.
 
 ### Manual Release Build
 
@@ -326,17 +433,23 @@ Digunakan untuk build release manual dengan `versionName` dan `versionCode` yang
 
 | Komponen | Status |
 |---|---|
-| Android app | Aktif |
+| Android app v1.3.6 / code 19 | Aktif |
 | Mapping XAU/USD | Aktif |
 | Live price | Aktif |
 | BSL/SSL terbaru | Aktif |
 | Background target scanner | Aktif saat target M15 tersedia |
 | News di aplikasi | Aktif |
+| Filter konflik dan geopolitik | Aktif |
+| Endpoint News production | Aktif |
 | FCM news notification | Aktif sebagai jalur utama |
 | WorkManager news fallback | Aktif |
-| Market Intel / Heatmap | Aktif |
+| Ikon notifikasi monogram AMY | Aktif sejak v1.3.6 |
+| Heatmap dan Liquidity | Aktif |
+| Jurnal Trading dan statistik | Aktif |
+| Autosave draft dan export jurnal | Aktif |
+| Tutorial Trading 36 bagian | Aktif |
 | In-App Update | Aktif dan berhasil diuji |
 | Signed rolling APK | Aktif |
-| JavaScript tests | Aktif di CI |
+| JavaScript regression tests | Aktif di CI |
 | Android unit tests | Aktif di CI |
-| Android lint | Aktif di CI |
+| Android lint dan static check | Aktif di CI |
