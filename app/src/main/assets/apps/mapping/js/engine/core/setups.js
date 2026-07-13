@@ -22,6 +22,8 @@ export function detectSetupConflicts(setup, ctx) {
   else if ((bullish && drawTarget.type === 'SSL') || (!bullish && drawTarget.type === 'BSL')) conflicts.push({ type: 'LIQ_CONFLICT', level: 'HIGH', note: `Target berlawanan arah dengan draw utama (${drawTarget.type})` });
   const confirmed = activeConfirmedBreak(ctx);
   if (!confirmed) conflicts.push({ type: 'BREAK_CONFLICT', level: 'FATAL', note: 'MSS/CHOCH belum valid atau break sebelumnya sudah gagal' });
+  else if (confirmed.atRisk || confirmed.liveStatus === 'AT_RISK') conflicts.push({ type: 'BREAK_CONFLICT', level: 'FATAL', note: 'Break sedang AT RISK karena harga live kembali melewati level struktur' });
+  else if (confirmed.confirmationStage === 'TRANSITION' && setup.type !== 'SWEEP_MSS_FVG') conflicts.push({ type: 'BREAK_CONFLICT', level: 'FATAL', note: 'CHOCH masih internal; tunggu break protected swing atau model Sweep → MSS → FVG lengkap' });
   else if (confirmed.dir !== (bullish ? 'BULLISH' : 'BEARISH')) conflicts.push({ type: 'BREAK_CONFLICT', level: 'HIGH', note: 'Break struktur valid tidak searah setup' });
   const status = String(setup.status || '');
   if (status === 'BROKEN' || status === 'MITIGATED' || status.includes('INVALID')) conflicts.push({ type: 'ENTRY_CONFLICT', level: 'FATAL', note: 'Area entry sudah broken/mitigated' });
