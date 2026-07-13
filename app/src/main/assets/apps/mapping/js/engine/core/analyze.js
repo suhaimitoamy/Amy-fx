@@ -39,6 +39,45 @@ function weightedBias(htfBiases, localTrend, narrative, localStructureFailed = f
   };
 }
 
+function liveBreakState(structure, price) {
+  const event = structure?.lastEvent;
+  if (!event) return { status: 'WAIT', atRisk: false };
+  if (event.failed || event.breakType === 'BREAK_FAILED') return { status: 'FAILED', atRisk: false };
+  if (event.sweepOnly || event.breakType === 'SWEEP_ONLY') return { status: 'SWEEP', atRisk: false };
+  if (!event.valid || event.breakType !== 'VALID_BREAK') return { status: 'WAIT', atRisk: false };
+
+  const atRisk = event.dir === 'BULLISH'
+    ? Number(price) < Number(event.price)
+    : Number(price) > Number(event.price);
+  if (atRisk) return { status: 'AT_RISK', atRisk: true };
+  if (event.confirmationStage === 'TRANSITION' || event.trendConfirmed === false) {
+    return { status: 'TRANSITION', atRisk: false };
+  }
+  return { status: 'CONFIRMED', atRisk: false };
+}
+
+function decorateStructureWithLiveState(structure, price) {
+  const live = liveBreakState(structure, price);
+  const patch = event => event ? { ...event, liveStatus: live.status, atRisk: live.atRisk } : event;
+  const eventId = structure?.lastEvent?.eventId;
+  return {
+    ...structure,
+    liveStatus: live.status,
+    atRisk: live.atRisk,
+    last: patch(structure?.last),
+    lastEvent: patch(structure?.lastEvent),
+    lastConfirmedBreak: structure?.lastConfirmedBreak?.eventId === eventId
+      ? patch(structure.lastConfirmedBreak)
+      : structure?.lastConfirmedBreak,
+    lastMajorBreak: structure?.lastMajorBreak?.eventId === eventId
+      ? patch(structure.lastMajorBreak)
+      : structure?.lastMajorBreak,
+    lastInternalBreak: structure?.lastInternalBreak?.eventId === eventId
+      ? patch(structure.lastInternalBreak)
+      : structure?.lastInternalBreak
+  };
+}
+
 export function analyze(cs, tf, htfBiases = {}, currentPrice = null, htfCandles = {}) {
   if (!cs || cs.length < 30) {
     return {
@@ -54,7 +93,24 @@ export function analyze(cs, tf, htfBiases = {}, currentPrice = null, htfCandles 
       eq: 0,
       bsl: 0,
       ssl: 0,
-      st: { trend: 'NEUTRAL', confirmedTrend: 'NEUTRAL', last: null, lastConfirmedBreak: null, lastSweep: null, lastFailedBreak: null, events: [] },
+      st: {
+        trend: 'NEUTRAL',
+        confirmedTrend: 'NEUTRAL',
+        localTrend: 'NEUTRAL',
+        transitionDirection: 'NEUTRAL',
+        transitionBreak: null,
+        transitionConfirmationLevel: null,
+        liveStatus: 'WAIT',
+        atRisk: false,
+        last: null,
+        lastEvent: null,
+        lastConfirmedBreak: null,
+        lastMajorBreak: null,
+        lastInternalBreak: null,
+        lastSweep: null,
+        lastFailedBreak: null,
+        events: []
+      },
       htf: 'NEUTRAL',
       htfBiases: {},
       htfNarrative: { htfBias: 'NEUTRAL', drawOnLiquidity: 'NEUTRAL', dealingHigh: 0, dealingLow: 0, drawLevel: 0, reason: 'Data candle kurang dari 30.' },
@@ -77,7 +133,7 @@ export function analyze(cs, tf, htfBiases = {}, currentPrice = null, htfCandles 
   const price = Number(currentPrice) || cs.at(-1).close;
   const swingDepth = tf === 'M1' ? 2 : 3;
   const sw = swings(cs, swingDepth, swingDepth);
-  const st = detectStructure(cs, sw);
+  const st = decorateStructureWithLiveState(detectStructure(cs, sw), price);
   const htfNarrative = buildHtfNarrative(htfCandles, price);
   const liquidityHierarchy = buildLiquidityHierarchy(cs, sw, { price, htfNarrative });
   const dealingRange = buildDealingRange(cs, sw, htfNarrative, liquidityHierarchy, price);
@@ -93,7 +149,7 @@ export function analyze(cs, tf, htfBiases = {}, currentPrice = null, htfCandles 
   const nearFvg = fvgs.find(zone => price >= zone.bottom && price <= zone.top) || null;
   const nearOb = obs.find(zone => price >= zone.bottom && price <= zone.top) || null;
 
-  const bias = weightedBias(htfBiases, st.trend, htfNarrative, Boolean(st.lastConfirmedBreak?.failed));
+  const bias = weightedBias(htfBiases, st.confirmedTrend, htfNarrative, Boolean(st.lastMajorBreak?.failed));
   const htfDirections = Object.values(htfBiases).map(directionSign).filter(Boolean);
   const htf = htfDirections.length
     ? (htfDirections.reduce((sum, value) => sum + value, 0) > 0 ? 'BULLISH'
@@ -133,19 +189,29 @@ export function analyze(cs, tf, htfBiases = {}, currentPrice = null, htfCandles 
   const bestSetup = candidates[0] || null;
   const signal = bestSetup?.dir || 'WAIT';
   const score = bestSetup?.score || Math.round(45 + Math.abs(bias.normalized) * 20);
-  const confirmed = st.lastConfirmedBreak;
+  const confirmed = st.lastMajorBreak && !st.lastMajorBreak.failed ? st.lastMajorBreak : null;
   const latest = st.lastEvent;
+  const transition = st.transitionBreak && !st.transitionBreak.failed ? st.transitionBreak : null;
+
+  const structureDescription = transition
+    ? `Internal ${transition.kind} ${transition.dir} @ ${p2(transition.price)}; trend utama tetap ${st.confirmedTrend}`
+    : confirmed
+      ? `${confirmed.kind} ${confirmed.dir} @ ${p2(confirmed.price)}`
+      : 'Belum ada break struktur mayor yang valid';
 
   const concepts = [
     ['Dealing Range', `${dealingRange.rangeSource} | ${dealingRange.confidence}`, `High: ${p2(dealingRange.high)} Low: ${p2(dealingRange.low)}`],
     ['Premium / Discount', dealingRange.currentZone, dealingRange.reason],
     ['Liquidity Hierarchy', liquidityHierarchy.summary, liquidityHierarchy.drawTarget ? `Draw Target: ${liquidityHierarchy.drawTarget.type} @ ${p2(liquidityHierarchy.drawTarget.level)}` : 'Belum ada Draw Target jelas'],
     ['Final Bias', bias.direction, `${bias.direction} | ${dealingRange.currentZone}`],
-    ['Structure', st.trend, confirmed ? `${confirmed.kind} ${confirmed.dir} @ ${p2(confirmed.price)}` : 'Belum ada break struktur valid'],
-    ['Latest Event', latest?.breakType || 'WAIT', latest ? `${latest.dir} @ ${p2(latest.price)}` : 'Belum ada event struktur'],
+    ['Structure', st.confirmedTrend, structureDescription],
+    ['Latest Event', latest?.liveStatus || latest?.breakType || 'WAIT', latest ? `${latest.kind} ${latest.dir} @ ${p2(latest.price)}` : 'Belum ada event struktur'],
     ['OB', nearOb ? 'ACTIVE' : 'WAIT', nearOb ? `${nearOb.type} ${p2(nearOb.bottom)} - ${p2(nearOb.top)}` : 'Tidak ada OB aktif'],
     ['FVG', nearFvg ? 'ACTIVE' : 'WAIT', nearFvg ? `${nearFvg.type} ${p2(nearFvg.bottom)} - ${p2(nearFvg.top)}` : 'Tidak ada FVG aktif']
   ];
+  if (transition && Number.isFinite(Number(st.transitionConfirmationLevel))) {
+    concepts.splice(5, 0, ['Transition Confirmation', transition.dir, `Break berikutnya dibutuhkan di ${p2(st.transitionConfirmationLevel)}`]);
+  }
   if (htfNarrative.htfBias !== 'NEUTRAL' || htfNarrative.drawOnLiquidity !== 'NEUTRAL') {
     concepts.unshift(['Draw on Liquidity', htfNarrative.drawOnLiquidity, `${htfNarrative.drawOnLiquidity} @ ${p2(htfNarrative.drawLevel)}`]);
     concepts.unshift(['HTF Narrative', htfNarrative.htfBias, htfNarrative.reason]);
@@ -183,7 +249,9 @@ export function analyze(cs, tf, htfBiases = {}, currentPrice = null, htfCandles 
     premiumDiscountZone: dealingRange.currentZone,
     rangeConfidence: dealingRange.confidence,
     biasEvidence: {
-      localTrend: st.trend,
+      localTrend: st.confirmedTrend,
+      internalTrend: st.localTrend,
+      transitionDirection: st.transitionDirection,
       htfBiases,
       narrative: htfNarrative.htfBias,
       normalized: bias.normalized
