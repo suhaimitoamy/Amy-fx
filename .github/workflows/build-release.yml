@@ -4,19 +4,21 @@ on:
   workflow_dispatch:
     inputs:
       versionName:
-        description: "Version Name (e.g., 1.4.5)"
+        description: "Version Name (e.g., 1.4.6)"
         required: true
-        default: "1.4.5"
+        default: "1.4.6"
       versionCode:
         description: "Version Code (must increase)"
         required: true
-        default: "28"
+        default: "29"
+
+permissions:
+  contents: read
 
 jobs:
   build-release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    timeout-minutes: 45
     env:
       AMYFX_KEYSTORE_PATH: /tmp/amy-fx-signing.keystore
       AMYFX_KEYSTORE_PASSWORD: android
@@ -24,6 +26,7 @@ jobs:
       AMYFX_KEY_PASSWORD: android
       AMYFX_VERSION_NAME: ${{ github.event.inputs.versionName }}
       AMYFX_VERSION_CODE: ${{ github.event.inputs.versionCode }}
+      AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
     steps:
       - name: Checkout
@@ -36,7 +39,7 @@ jobs:
           java-version: "17"
           cache: gradle
 
-      - name: Setup Android SDK
+      - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
       - name: Install Android SDK 35
@@ -57,17 +60,18 @@ jobs:
             exit 1
           fi
           cp "$HOME/.android/debug.keystore" "$AMYFX_KEYSTORE_PATH"
-          keytool -list -keystore "$AMYFX_KEYSTORE_PATH" -storepass android -alias androiddebugkey >/dev/null
+          actual="$(keytool -list -v -keystore "$AMYFX_KEYSTORE_PATH" -storepass "$AMYFX_KEYSTORE_PASSWORD" -alias "$AMYFX_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1)"
+          test "$actual" = "$AMYFX_SIGNING_CERT_SHA256"
 
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
 
-      - name: Run JS regression tests
+      - name: Run JavaScript regression tests
         run: node --test tests/*.test.mjs
 
       - name: Run Android unit tests
@@ -78,6 +82,17 @@ jobs:
 
       - name: Build signed release APK
         run: ./gradlew assembleRelease --no-configuration-cache --stacktrace
+
+      - name: Verify APK identity, requested version and signer
+        run: |
+          set -euo pipefail
+          apk="app/build/outputs/apk/release/app-release.apk"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" | grep -F "package: name='com.amyelitesuite' versionCode='${AMYFX_VERSION_CODE}' versionName='${AMYFX_VERSION_NAME}'"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$apk" | tee /tmp/apksigner.txt
+          expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          actual="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/apksigner.txt | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          test -n "$actual"
+          test "$actual" = "$expected"
 
       - name: Upload signed release APK
         uses: actions/upload-artifact@v4
