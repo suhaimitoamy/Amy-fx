@@ -1,10 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 
 const enginePath = new URL('../app/src/main/assets/apps/mapping/js/engine/ict-core.js', import.meta.url);
-const source = fs.readFileSync(enginePath, 'utf8');
-const engine = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
+const engine = await import(enginePath.href);
 
 const candle = (open, high, low, close) => ({ open, high, low, close });
 
