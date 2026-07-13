@@ -6,6 +6,7 @@
   <title>Berita — Amy FX</title>
   <link rel="stylesheet" href="../shared/market-intelligence.css">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="heatmap-v2.css">
 </head>
 <body>
   <div class="intel-container">
@@ -36,13 +37,13 @@
       <div class="status-bar" id="heatmap-status">🔄 Menghitung heatmap...</div>
       <div class="heatmap-info">
         <span class="current-price" id="heatmap-price">--</span>
-        <span class="timeframe">M15</span>
+        <span class="timeframe">M15 · Dynamic</span>
       </div>
       <div id="heatmap-canvas" class="heatmap-canvas"></div>
       <div class="heatmap-legend">
-        <span class="legend-item"><span class="dot res"></span> Resistance (Swing Highs)</span>
-        <span class="legend-item"><span class="dot sup"></span> Support (Swing Lows)</span>
-        <span class="legend-item"><span class="dot cur"></span> Harga Saat Ini</span>
+        <span class="legend-item"><span class="dot res"></span> Resistance / BSL</span>
+        <span class="legend-item"><span class="dot sup"></span> Support / SSL</span>
+        <span class="legend-item"><span class="dot cur"></span> Harga Berjalan</span>
       </div>
     </section>
 
@@ -61,5 +62,6 @@
 
   <script src="../shared/market-intelligence.js"></script>
   <script src="app.js"></script>
+  <script src="heatmap-v2.js"></script>
 </body>
 </html>
