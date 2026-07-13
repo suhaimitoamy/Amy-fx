@@ -50,4 +50,12 @@ if old_request not in api_text:
     raise RuntimeError("TwelveData UTC request marker missing")
 api_path.write_text(api_text.replace(old_request, new_request, 1), encoding="utf-8")
 
+readme_path = root / "README.md"
+readme = readme_path.read_text(encoding="utf-8")
+old_release_header = "> **Versi:** `1.4.6`  \n> **Version code:** `29`"
+new_release_header = "> **Versi:** `1.4.6`\n>\n> **Version code:** `29`"
+if old_release_header not in readme:
+    raise RuntimeError("README release header marker missing")
+readme_path.write_text(readme.replace(old_release_header, new_release_header, 1), encoding="utf-8")
+
 Path(__file__).unlink()
