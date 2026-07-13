@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       versionName:
-        description: "Version Name (e.g., 1.4.3)"
+        description: "Version Name (e.g., 1.4.5)"
         required: true
-        default: "1.4.3"
+        default: "1.4.5"
       versionCode:
         description: "Version Code (must increase)"
         required: true
-        default: "26"
+        default: "28"
 
 jobs:
   build-release:

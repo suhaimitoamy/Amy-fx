@@ -9,17 +9,17 @@
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Session Focus kini menampilkan Asia High, Asia Low, ukuran range, dan posisi harga",
-    "Status Asia High/Low membedakan belum disapu, sedang diuji, wick sweep, live break, dan candle close break",
-    "Asia Range memakai jendela ICT 20:00–00:00 New York dengan daylight saving otomatis",
-    "Halaman Analyze menampilkan Asia High/Low sebagai konteks target likuiditas yang ringkas",
-    "Timestamp candle TwelveData dinormalisasi ke UTC agar batas sesi tidak bergeser mengikuti zona waktu perangkat"
+    "Memperbaiki halaman Mapping yang kosong atau freeze setelah Asia Range ditambahkan",
+    "MutationObserver Asia Range kini dijadwalkan satu kali dan tidak lagi memicu render tanpa henti",
+    "Konten Asia High dan Asia Low hanya ditulis ulang ketika datanya benar-benar berubah",
+    "Kegagalan perhitungan Asia Range tidak lagi menghentikan Dashboard Mapping utama",
+    "Ditambahkan regression test khusus untuk mencegah loop render Asia Range terulang"
   ],
   "changelog": [
-    "Session Focus kini menampilkan Asia High, Asia Low, ukuran range, dan posisi harga",
-    "Status Asia High/Low membedakan belum disapu, sedang diuji, wick sweep, live break, dan candle close break",
-    "Asia Range memakai jendela ICT 20:00–00:00 New York dengan daylight saving otomatis",
-    "Halaman Analyze menampilkan Asia High/Low sebagai konteks target likuiditas yang ringkas",
-    "Timestamp candle TwelveData dinormalisasi ke UTC agar batas sesi tidak bergeser mengikuti zona waktu perangkat"
+    "Memperbaiki halaman Mapping yang kosong atau freeze setelah Asia Range ditambahkan",
+    "MutationObserver Asia Range kini dijadwalkan satu kali dan tidak lagi memicu render tanpa henti",
+    "Konten Asia High dan Asia Low hanya ditulis ulang ketika datanya benar-benar berubah",
+    "Kegagalan perhitungan Asia Range tidak lagi menghentikan Dashboard Mapping utama",
+    "Ditambahkan regression test khusus untuk mencegah loop render Asia Range terulang"
   ]
 }
