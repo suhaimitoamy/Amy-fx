@@ -1,8 +1,14 @@
 name: Build and Publish Amy FX APK
 
-# Rolling publication is temporarily manual while the 1.4.4 source set is prepared.
+# Rolling publication with metadata derived from the build version
 on:
   workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - "update.json"
+  schedule:
+    - cron: "17 3 * * 0"
 
 permissions:
   contents: write
