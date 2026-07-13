@@ -21,8 +21,8 @@ jobs:
       AMYFX_KEYSTORE_PASSWORD: android
       AMYFX_KEY_ALIAS: androiddebugkey
       AMYFX_KEY_PASSWORD: android
-      AMYFX_VERSION_NAME: "1.3.9"
-      AMYFX_VERSION_CODE: "22"
+      AMYFX_VERSION_NAME: "1.4.0"
+      AMYFX_VERSION_CODE: "23"
 
     steps:
       - name: Checkout

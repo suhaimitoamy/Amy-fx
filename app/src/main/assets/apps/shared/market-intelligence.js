@@ -46,6 +46,24 @@
     return storedAt > 0 && Date.now() - storedAt <= MAX_AGE;
   }
 
+  function priceCandidate(part, value) {
+    const price = Number(value);
+    const storedAt = Number(part?.storedAt || 0);
+    if (!Number.isFinite(price) || price <= 0 || storedAt <= 0) return null;
+    return { price, storedAt, fresh: partIsFresh(part) };
+  }
+
+  function bestCurrentPrice(state = read()) {
+    const candidates = [
+      priceCandidate(state.mapping, state.mapping?.price),
+      priceCandidate(state.liquidity, state.liquidity?.currentPrice),
+      priceCandidate(state.heatmap, state.heatmap?.currentPrice)
+    ].filter(Boolean);
+    const fresh = candidates.filter(item => item.fresh).sort((a, b) => b.storedAt - a.storedAt);
+    const fallback = candidates.sort((a, b) => b.storedAt - a.storedAt);
+    return Number((fresh[0] || fallback[0])?.price || 0);
+  }
+
   function normalizeLevel(item, type, currentPrice) {
     const price = Number(item?.price ?? item?.level);
     if (!Number.isFinite(price) || price <= 0) return null;
@@ -65,7 +83,8 @@
 
   function levelIsActive(item) {
     const status = String(item?.status || 'ACTIVE').toUpperCase();
-    return !/(SWEPT|TOUCHED|INVALID|BROKEN|EXPIRED)/.test(status);
+    if (status === 'SWEPT_RECLAIMED') return item?.active !== false;
+    return item?.active !== false && !/(SWEPT|TOUCHED|INVALID|BROKEN|EXPIRED|HISTORICAL)/.test(status);
   }
 
   function pickNearest(levels, type, currentPrice, fallbackPrice) {
@@ -79,22 +98,43 @@
     return levelIsOnCorrectSide(fallback, type, currentPrice) ? fallback : null;
   }
 
+  function normalizedHeatmapLevels(heatmap, currentPrice) {
+    return (Array.isArray(heatmap?.zones) ? heatmap.zones : [])
+      .filter(zone => zone?.liquidityType === 'BSL' || zone?.liquidityType === 'SSL')
+      .map(zone => ({
+        ...zone,
+        type: zone.liquidityType,
+        level: Number(zone.price),
+        distance: Number(zone.price) - currentPrice
+      }));
+  }
+
   function nearestLevels(state) {
     const mapping = state.mapping || {};
     const liquidity = state.liquidity || {};
-    const currentPrice = Number(mapping.price || liquidity.currentPrice || state.heatmap?.currentPrice || 0);
+    const heatmap = state.heatmap || {};
+    const currentPrice = bestCurrentPrice(state);
     const mappingFresh = partIsFresh(mapping);
     const liquidityFresh = partIsFresh(liquidity);
+    const heatmapFresh = partIsFresh(heatmap);
 
     const mappingBsl = mappingFresh ? pickNearest(mapping.levels, 'BSL', currentPrice, mapping.bsl) : null;
     const mappingSsl = mappingFresh ? pickNearest(mapping.levels, 'SSL', currentPrice, mapping.ssl) : null;
     const liquidityBsl = liquidityFresh ? pickNearest(liquidity.levels, 'BSL', currentPrice, null) : null;
     const liquiditySsl = liquidityFresh ? pickNearest(liquidity.levels, 'SSL', currentPrice, null) : null;
-    const mappingIsLatest = Number(mapping.storedAt || 0) >= Number(liquidity.storedAt || 0);
+    const heatmapLevels = heatmapFresh ? normalizedHeatmapLevels(heatmap, currentPrice) : [];
+    const heatmapBsl = heatmapFresh ? pickNearest(heatmapLevels, 'BSL', currentPrice, heatmap.summary?.nearestBsl?.price) : null;
+    const heatmapSsl = heatmapFresh ? pickNearest(heatmapLevels, 'SSL', currentPrice, heatmap.summary?.nearestSsl?.price) : null;
+
+    const sources = [
+      { storedAt: Number(mapping.storedAt || 0), bsl: mappingBsl, ssl: mappingSsl },
+      { storedAt: Number(liquidity.storedAt || 0), bsl: liquidityBsl, ssl: liquiditySsl },
+      { storedAt: Number(heatmap.storedAt || 0), bsl: heatmapBsl, ssl: heatmapSsl }
+    ].sort((a, b) => b.storedAt - a.storedAt);
 
     return {
-      bsl: mappingIsLatest ? (mappingBsl || liquidityBsl) : (liquidityBsl || mappingBsl),
-      ssl: mappingIsLatest ? (mappingSsl || liquiditySsl) : (liquiditySsl || mappingSsl)
+      bsl: sources.find(source => source.bsl)?.bsl || null,
+      ssl: sources.find(source => source.ssl)?.ssl || null
     };
   }
 
@@ -115,8 +155,11 @@
     const { bsl, ssl } = nearestLevels(state);
     const bslDist = bsl ? Math.abs(Number(bsl.distance)) : Infinity;
     const sslDist = ssl ? Math.abs(Number(ssl.distance)) : Infinity;
-    const pressure = bslDist < sslDist ? 'ABOVE PRICE' : sslDist < bslDist ? 'BELOW PRICE' : 'BALANCED';
-    const draw = bslDist < sslDist ? bsl : ssl;
+    const heatmapPressure = String(state.heatmap?.summary?.pressure || '');
+    const pressure = bslDist < sslDist ? 'ABOVE PRICE'
+      : sslDist < bslDist ? 'BELOW PRICE'
+        : heatmapPressure || 'BALANCED';
+    const draw = bslDist < sslDist ? bsl : sslDist < bslDist ? ssl : (bsl || ssl);
     const mapping = state.mapping || {};
     const action = mapping.direction || mapping.status || 'WAIT';
     return {
@@ -137,7 +180,7 @@
       const state = read();
       const { bsl, ssl } = nearestLevels(state);
       const fresh = freshness(state);
-      const price = Number(state.mapping?.price || state.liquidity?.currentPrice || state.heatmap?.currentPrice || 0);
+      const price = bestCurrentPrice(state);
       target.innerHTML = `
         <div class="amy-command-main"><span>XAU/USD</span><strong>${price ? price.toFixed(2) : '--'}</strong></div>
         <div class="amy-command-metric"><small>SESSION</small><b>${sessionInfo().id}</b></div>
@@ -165,5 +208,16 @@
     target._amyPaint = paint;
   }
 
-  window.AmyFXIntel = { read, write, sessionInfo, freshness, nearestLevels, newsRisk, briefing, mountStrip, mountBriefing };
+  window.AmyFXIntel = {
+    read,
+    write,
+    sessionInfo,
+    freshness,
+    nearestLevels,
+    bestCurrentPrice,
+    newsRisk,
+    briefing,
+    mountStrip,
+    mountBriefing
+  };
 })();
