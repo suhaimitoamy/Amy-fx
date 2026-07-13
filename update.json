@@ -9,21 +9,17 @@
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Heatmap sekarang bereaksi terhadap perubahan market dengan pembaruan aktif setiap 20 detik",
-    "Zona lama yang sudah ditembus tidak lagi terus ditampilkan sebagai support atau resistance aktif",
-    "Heatmap mengenali sweep dan reclaim, close break, serta polarity flip support menjadi resistance atau sebaliknya",
-    "Kekuatan zona memakai bobot candle terbaru dan bucket adaptif berdasarkan volatilitas ATR",
-    "Baris harga berjalan selalu bergerak mengikuti harga terbaru dan setiap zona menampilkan status baru, menguat, melemah, berubah, atau ditembus",
-    "Normalisasi kekuatan diperbaiki agar satu zona ekstrem tidak membuat semua zona lain terlihat sama kecil",
-    "Heatmap dapat membantu mengisi BSL, SSL, liquidity pressure, dan nearest draw pada Market Briefing"
+    "Halaman Profil sekarang menampilkan versi Amy FX dan version code yang sedang terpasang",
+    "Baris Versi Aplikasi dapat ditekan untuk memeriksa pembaruan secara manual",
+    "Tombol Batal tidak lagi menyimpan penolakan permanen untuk versi update yang sama",
+    "Popup update akan diperiksa kembali ketika aplikasi dibuka atau kembali dari background",
+    "Pemeriksa update lama yang tersimpan di perangkat dibersihkan agar popup tidak terus tersembunyi"
   ],
   "changelog": [
-    "Heatmap sekarang bereaksi terhadap perubahan market dengan pembaruan aktif setiap 20 detik",
-    "Zona lama yang sudah ditembus tidak lagi terus ditampilkan sebagai support atau resistance aktif",
-    "Heatmap mengenali sweep dan reclaim, close break, serta polarity flip support menjadi resistance atau sebaliknya",
-    "Kekuatan zona memakai bobot candle terbaru dan bucket adaptif berdasarkan volatilitas ATR",
-    "Baris harga berjalan selalu bergerak mengikuti harga terbaru dan setiap zona menampilkan status baru, menguat, melemah, berubah, atau ditembus",
-    "Normalisasi kekuatan diperbaiki agar satu zona ekstrem tidak membuat semua zona lain terlihat sama kecil",
-    "Heatmap dapat membantu mengisi BSL, SSL, liquidity pressure, dan nearest draw pada Market Briefing"
+    "Halaman Profil sekarang menampilkan versi Amy FX dan version code yang sedang terpasang",
+    "Baris Versi Aplikasi dapat ditekan untuk memeriksa pembaruan secara manual",
+    "Tombol Batal tidak lagi menyimpan penolakan permanen untuk versi update yang sama",
+    "Popup update akan diperiksa kembali ketika aplikasi dibuka atau kembali dari background",
+    "Pemeriksa update lama yang tersimpan di perangkat dibersihkan agar popup tidak terus tersembunyi"
   ]
 }
