@@ -56,6 +56,8 @@ old_release_header = "> **Versi:** `1.4.6`  \n> **Version code:** `29`"
 new_release_header = "> **Versi:** `1.4.6`\n>\n> **Version code:** `29`"
 if old_release_header not in readme:
     raise RuntimeError("README release header marker missing")
-readme_path.write_text(readme.replace(old_release_header, new_release_header, 1), encoding="utf-8")
+readme = readme.replace(old_release_header, new_release_header, 1)
+readme = readme.replace("> **Version code:** `29`  \n", "> **Version code:** `29`\n", 1)
+readme_path.write_text(readme, encoding="utf-8")
 
 Path(__file__).unlink()
