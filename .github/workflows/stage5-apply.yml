@@ -70,7 +70,9 @@ jobs:
           test "$actual" = "$AMYFX_SIGNING_CERT_SHA256"
 
       - name: Apply stage 5 patch
-        run: python3 tools/stage5_patch.py
+        run: |
+          python3 tools/stage5_patch.py
+          python3 tools/stage5_test_compat.py
 
       - name: Make Gradle executable
         run: chmod +x ./gradlew
