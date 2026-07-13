@@ -2,8 +2,9 @@
 
 Amy FX adalah aplikasi Android hybrid untuk pemetaan dan pemantauan market **XAU/USD**. Antarmuka utama berjalan melalui WebView lokal, sedangkan notifikasi, background scanner, penyimpanan, Firebase Messaging, download, dan pembaruan aplikasi ditangani oleh Kotlin native.
 
-> **Versi:** `1.4.0`  
-> **Version code:** `23`  
+> **Versi:** `1.4.6`
+>
+> **Version code:** `29`
 > **Minimum Android:** Android 8.0 / API 26  
 > **Target SDK:** Android SDK 35  
 > **Application ID:** `com.amyelitesuite`

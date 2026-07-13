@@ -9,17 +9,17 @@
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Memperbaiki halaman Mapping yang kosong atau freeze setelah Asia Range ditambahkan",
-    "MutationObserver Asia Range kini dijadwalkan satu kali dan tidak lagi memicu render tanpa henti",
-    "Konten Asia High dan Asia Low hanya ditulis ulang ketika datanya benar-benar berubah",
-    "Kegagalan perhitungan Asia Range tidak lagi menghentikan Dashboard Mapping utama",
-    "Ditambahkan regression test khusus untuk mencegah loop render Asia Range terulang"
+    "Menghapus penyimpanan API key lama dari WebView dan SharedPreferences karena Mapping kini memakai proxy Amy FX",
+    "Memvalidasi metode, interval, ukuran data, timeout, dan credential server pada endpoint market",
+    "Membatasi deep-link notifikasi ke halaman lokal Amy FX dan memakai ikon notifikasi resmi",
+    "Mengunci fingerprint sertifikat APK agar pembaruan dapat dipasang tanpa menghapus aplikasi",
+    "Menstabilkan aktivasi update agar selalu memakai main terbaru dan tidak bertabrakan dengan build lain"
   ],
   "changelog": [
-    "Memperbaiki halaman Mapping yang kosong atau freeze setelah Asia Range ditambahkan",
-    "MutationObserver Asia Range kini dijadwalkan satu kali dan tidak lagi memicu render tanpa henti",
-    "Konten Asia High dan Asia Low hanya ditulis ulang ketika datanya benar-benar berubah",
-    "Kegagalan perhitungan Asia Range tidak lagi menghentikan Dashboard Mapping utama",
-    "Ditambahkan regression test khusus untuk mencegah loop render Asia Range terulang"
+    "Menghapus penyimpanan API key lama dari WebView dan SharedPreferences karena Mapping kini memakai proxy Amy FX",
+    "Memvalidasi metode, interval, ukuran data, timeout, dan credential server pada endpoint market",
+    "Membatasi deep-link notifikasi ke halaman lokal Amy FX dan memakai ikon notifikasi resmi",
+    "Mengunci fingerprint sertifikat APK agar pembaruan dapat dipasang tanpa menghapus aplikasi",
+    "Menstabilkan aktivasi update agar selalu memakai main terbaru dan tidak bertabrakan dengan build lain"
   ]
 }
