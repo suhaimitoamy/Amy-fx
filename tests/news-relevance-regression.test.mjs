@@ -62,7 +62,7 @@ test('Vercel fallback and Supabase sync both use the shared filter', async () =>
   const apiSource = await readFile(new URL('../api/news.js', import.meta.url), 'utf8');
   const syncSource = await readFile(new URL('../supabase/functions/news-sync/handler.ts', import.meta.url), 'utf8');
 
-  assert.match(apiSource, /from '\.\.\/lib\/news-relevance\.mjs'/);
+  assert.match(apiSource, /import\('\.\.\/lib\/news-relevance\.mjs'\)/);
   assert.match(apiSource, /isRelevantNews\(post\.text\)/);
   assert.match(syncSource, /from '\.\.\/\.\.\/\.\.\/lib\/news-relevance\.mjs'/);
   assert.match(syncSource, /isRelevantNews\(post\.text\)/);
