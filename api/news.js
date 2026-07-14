@@ -20,35 +20,40 @@ export default async function handler(req, res) {
 
   const requestedLimit = Number.parseInt(String(req.query.limit || '20'), 10);
   const limit = Math.max(1, Math.min(Number.isFinite(requestedLimit) ? requestedLimit : 20, 50));
+  const telegramOnly = String(req.query.source || '').toLowerCase() === 'telegram';
 
-  try {
-    const central = await fetchJsonWithTimeout(
-      `${SUPABASE_NEWS_FEED}?limit=${limit}`,
-      { headers: { Accept: 'application/json' } },
-      9000
-    );
+  if (!telegramOnly) {
+    try {
+      const central = await fetchJsonWithTimeout(
+        `${SUPABASE_NEWS_FEED}?limit=${limit}`,
+        { headers: { Accept: 'application/json' } },
+        9000
+      );
 
-    if (Array.isArray(central?.news) && central.news.length > 0) {
-      res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
-      return res.status(200).json({
-        ...central,
-        count: central.news.length,
-        backend: 'supabase'
-      });
+      if (Array.isArray(central?.news) && central.news.length > 0) {
+        res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+        return res.status(200).json({
+          ...central,
+          count: central.news.length,
+          backend: 'supabase'
+        });
+      }
+    } catch (error) {
+      console.warn('Supabase news feed unavailable, using Telegram fallback:', error?.message || error);
     }
-  } catch (error) {
-    console.warn('Supabase news feed unavailable, using Telegram fallback:', error?.message || error);
   }
 
   try {
-    const fallback = await scrapeTelegram(limit);
-    res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+    const fallback = await scrapeTelegram(limit, !telegramOnly);
+    res.setHeader('Cache-Control', telegramOnly
+      ? 'no-store'
+      : 's-maxage=30, stale-while-revalidate=60');
     return res.status(200).json({
       source: TELEGRAM_SOURCE,
       updated: new Date().toISOString(),
       count: fallback.length,
       news: fallback,
-      backend: 'telegram_fallback'
+      backend: telegramOnly ? 'telegram_direct' : 'telegram_fallback'
     });
   } catch (error) {
     console.error('News API failed:', error);
@@ -108,7 +113,7 @@ async function translateToId(text) {
   }
 }
 
-async function scrapeTelegram(limit) {
+async function scrapeTelegram(limit, shouldTranslate = true) {
   const { getNewsImpact, isRelevantNews } = await loadNewsRelevance();
   const html = await fetchTextWithRetry(
     `https://t.me/s/${TELEGRAM_SOURCE}?_=${Date.now()}`,
@@ -121,7 +126,7 @@ async function scrapeTelegram(limit) {
     impact: getNewsImpact(item.text),
     relevant: isRelevantNews(item.text),
     textOriginal: item.text,
-    text: await translateToId(item.text)
+    text: shouldTranslate ? await translateToId(item.text) : item.text
   })));
 }
 
