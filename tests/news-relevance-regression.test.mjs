@@ -76,8 +76,11 @@ test('all SM News posts are kept while relevance only gates notifications', asyn
   assert.match(apiSource, /if \(!telegramOnly\)/);
   assert.match(apiSource, /sortNewestFirst\(extractPosts\(html\)\)\.slice/);
   assert.match(apiSource, /relevant: isRelevantNews\(item\.text\)/);
-  assert.match(apiSource, /telegramOnly \? 'telegram_direct' : 'telegram_fallback'/);
-  assert.match(apiSource, /scrapeTelegram\(limit, !telegramOnly\)/);
+  assert.match(apiSource, /GITHUB_NEWS_CACHE = 'https:\/\/api\.github\.com\/repos\/suhaimitoamy\/Amy-fx\/issues\/28'/);
+  assert.match(apiSource, /amyfx-sm-news-cache-v1/);
+  assert.match(apiSource, /backend = 'github_actions_cache'/);
+  assert.match(apiSource, /fetchGithubNewsCache\(limit\)/);
+  assert.match(apiSource, /scrapeTelegram\(limit, false\)/);
   assert.match(apiSource, /cloudflare-dns\.com\/dns-query/);
   assert.match(apiSource, /fetchHttpsWithResolvedIp/);
   assert.match(apiSource, /lookup: .*callback/);
