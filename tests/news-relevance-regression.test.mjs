@@ -78,6 +78,9 @@ test('all SM News posts are kept while relevance only gates notifications', asyn
   assert.match(apiSource, /relevant: isRelevantNews\(item\.text\)/);
   assert.match(apiSource, /telegramOnly \? 'telegram_direct' : 'telegram_fallback'/);
   assert.match(apiSource, /scrapeTelegram\(limit, !telegramOnly\)/);
+  assert.match(apiSource, /cloudflare-dns\.com\/dns-query/);
+  assert.match(apiSource, /fetchHttpsWithResolvedIp/);
+  assert.match(apiSource, /lookup: .*callback/);
 
   assert.match(syncSource, /from '\.\.\/\.\.\/\.\.\/lib\/news-relevance\.mjs'/);
   assert.match(syncSource, /NEWS_SOURCE_PROXY = 'https:\/\/amy-fx\.vercel\.app\/api\/news'/);
