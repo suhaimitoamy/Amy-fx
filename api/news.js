@@ -115,10 +115,11 @@ async function scrapeTelegram(limit) {
     { headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 AmyFX/1.0' } }
   );
 
-  const latest = sortNewestFirst(filterGold(extractPosts(html), isRelevantNews)).slice(0, limit);
+  const latest = sortNewestFirst(extractPosts(html)).slice(0, limit);
   return Promise.all(latest.map(async item => ({
     ...item,
     impact: getNewsImpact(item.text),
+    relevant: isRelevantNews(item.text),
     textOriginal: item.text,
     text: await translateToId(item.text)
   })));
