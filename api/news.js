@@ -83,7 +83,7 @@ async function fetchJsonWithTimeout(url, options = {}, timeoutMs = 10000) {
   return response.json();
 }
 
-async function resolveIpv4(hostname) {
+async function resolveIpv4(hostname, depth = 0) {
   const endpoints = [
     `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(hostname)}&type=A`,
     `https://dns.google/resolve?name=${encodeURIComponent(hostname)}&type=A`
@@ -97,10 +97,16 @@ async function resolveIpv4(hostname) {
       }, 6000);
       if (!response.ok) throw new Error(`DNS HTTP ${response.status}`);
       const payload = await response.json();
-      const address = payload?.Answer?.find(
+      const answers = Array.isArray(payload?.Answer) ? payload.Answer : [];
+      const address = answers.find(
         answer => answer?.type === 1 && /^\d{1,3}(?:\.\d{1,3}){3}$/.test(answer?.data || '')
       )?.data;
       if (address) return address;
+
+      const canonical = answers.find(answer => answer?.type === 5)?.data?.replace(/\.$/, '');
+      if (canonical && canonical !== hostname && depth < 4) {
+        return resolveIpv4(canonical, depth + 1);
+      }
     } catch (error) {
       lastError = error;
     }
