@@ -5,7 +5,10 @@ import { getNewsImpact, isRelevantNews } from '../../../lib/news-relevance.mjs';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const SOURCE = 'SM_News_24h';
-const NEWS_SOURCE_PROXY = 'https://amy-fx.vercel.app/api/news';
+const TELEGRAM_WEB_BASES = [
+  'https://telegram.me/s',
+  'https://telegram.dog/s'
+];
 const RETRY_WINDOW_MS = 15 * 60 * 1000;
 
 const dbHeaders = {
@@ -92,7 +95,7 @@ function extractPosts(html: string) {
       id: match[1],
       text,
       time: extractTime(html, match.index, regex.lastIndex),
-      link: `https://t.me/${SOURCE}/${match[1]}`
+      link: `https://telegram.me/${SOURCE}/${match[1]}`
     });
   }
 
@@ -100,38 +103,31 @@ function extractPosts(html: string) {
 }
 
 async function fetchSourcePosts() {
-  const url = `${NEWS_SOURCE_PROXY}?source=telegram&limit=50&fresh=${Date.now()}`;
-  const response = await fetchTimed(url, {
-    headers: {
-      Accept: 'application/json',
-      'User-Agent': 'AmyFX-NewsSync/1.0'
+  let lastError: unknown;
+
+  for (const base of TELEGRAM_WEB_BASES) {
+    try {
+      const response = await fetchTimed(`${base}/${SOURCE}?_=${Date.now()}`, {
+        headers: {
+          Accept: 'text/html,application/xhtml+xml',
+          'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AmyFX-NewsSync/1.0'
+        }
+      }, 20000);
+      const html = await response.text();
+      if (!response.ok) {
+        throw new Error(`Telegram ${response.status}: ${html.slice(0, 300)}`);
+      }
+
+      const posts = extractPosts(html).slice(0, 50);
+      if (!posts.length) throw new Error('Telegram response contained no posts');
+      return posts;
+    } catch (error) {
+      lastError = error;
     }
-  }, 30000);
-  const text = await response.text();
-  if (!response.ok) {
-    throw new Error(`News source proxy ${response.status}: ${text.slice(0, 500)}`);
   }
 
-  let payload: any;
-  try {
-    payload = JSON.parse(text);
-  } catch (_) {
-    throw new Error('News source proxy returned invalid JSON');
-  }
-  if (!Array.isArray(payload?.news)) {
-    throw new Error('News source proxy returned no news array');
-  }
-
-  return payload.news
-    .map((item: any) => ({
-      id: String(item?.id || ''),
-      text: String(item?.textOriginal || item?.text || '').trim(),
-      time: String(item?.time || ''),
-      link: String(item?.link || '')
-    }))
-    .filter((item: any) => item.id && item.text.length >= 20)
-    .sort((a: any, b: any) => Number(b.id) - Number(a.id))
-    .slice(0, 50);
+  const message = lastError instanceof Error ? lastError.message : String(lastError || 'unknown');
+  throw new Error(`All Telegram web endpoints failed: ${message}`);
 }
 
 async function translate(text: string) {
