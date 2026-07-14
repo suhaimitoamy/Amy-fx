@@ -1,7 +1,10 @@
 const SUPABASE_NEWS_FEED =
   'https://wliecyxzlwhmtftnfnps.supabase.co/functions/v1/news-feed';
 const TELEGRAM_SOURCE = 'SM_News_24h';
-const GITHUB_NEWS_CACHE = 'https://api.github.com/repos/suhaimitoamy/Amy-fx/issues/28';
+const TELEGRAM_WEB_BASES = [
+  'https://telegram.me/s',
+  'https://telegram.dog/s'
+];
 
 let newsRelevancePromise;
 
@@ -45,20 +48,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    let fallback;
-    let backend = 'telegram_fallback';
-    if (telegramOnly) {
-      try {
-        fallback = await fetchGithubNewsCache(limit);
-        backend = 'github_actions_cache';
-      } catch (cacheError) {
-        console.warn('GitHub news cache unavailable, scraping Telegram:', cacheError?.message || cacheError);
-        fallback = await scrapeTelegram(limit, false);
-        backend = 'telegram_direct';
-      }
-    } else {
-      fallback = await scrapeTelegram(limit, true);
-    }
+    const fallback = await scrapeTelegram(limit, !telegramOnly);
     res.setHeader('Cache-Control', telegramOnly
       ? 'no-store'
       : 's-maxage=30, stale-while-revalidate=60');
@@ -67,7 +57,7 @@ export default async function handler(req, res) {
       updated: new Date().toISOString(),
       count: fallback.length,
       news: fallback,
-      backend
+      backend: telegramOnly ? 'telegram_direct' : 'telegram_fallback'
     });
   } catch (error) {
     console.error('News API failed:', error);
@@ -79,43 +69,6 @@ export default async function handler(req, res) {
       error: 'fetch_failed'
     });
   }
-}
-
-async function fetchGithubNewsCache(limit) {
-  const response = await fetchWithTimeout(`${GITHUB_NEWS_CACHE}?_=${Date.now()}`, {
-    headers: {
-      Accept: 'application/vnd.github+json',
-      'User-Agent': 'AmyFX-NewsAPI/1.0'
-    }
-  }, 10000);
-  if (!response.ok) throw new Error(`GitHub cache HTTP ${response.status}`);
-  const issue = await response.json();
-  const body = String(issue?.body || '');
-  const match = body.match(/<!-- amyfx-sm-news-cache-v1 -->\s*```json\s*([\s\S]*?)\s*```/);
-  if (!match) throw new Error('GitHub cache payload marker missing');
-
-  const payload = JSON.parse(match[1]);
-  if (!Array.isArray(payload?.news) || payload.news.length === 0) {
-    throw new Error('GitHub cache contains no news');
-  }
-  const updatedMs = Date.parse(payload.updated || '');
-  if (!Number.isFinite(updatedMs) || Date.now() - updatedMs > 20 * 60 * 1000) {
-    throw new Error('GitHub cache is stale');
-  }
-
-  const { getNewsImpact, isRelevantNews } = await loadNewsRelevance();
-  return payload.news.slice(0, limit).map(item => {
-    const original = String(item?.textOriginal || item?.text || '').trim();
-    return {
-      id: String(item?.id || ''),
-      text: original,
-      textOriginal: original,
-      time: String(item?.time || ''),
-      link: String(item?.link || ''),
-      impact: getNewsImpact(original),
-      relevant: isRelevantNews(original)
-    };
-  }).filter(item => item.id && item.text.length >= 20);
 }
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
@@ -134,124 +87,33 @@ async function fetchJsonWithTimeout(url, options = {}, timeoutMs = 10000) {
   return response.json();
 }
 
-async function resolveIpv4(hostname, depth = 0) {
-  const endpoints = [
-    `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(hostname)}&type=A`,
-    `https://dns.google/resolve?name=${encodeURIComponent(hostname)}&type=A`
-  ];
-  let lastError;
-
-  for (const endpoint of endpoints) {
-    try {
-      const response = await fetchWithTimeout(endpoint, {
-        headers: { Accept: 'application/dns-json' }
-      }, 6000);
-      if (!response.ok) throw new Error(`DNS HTTP ${response.status}`);
-      const payload = await response.json();
-      const answers = Array.isArray(payload?.Answer) ? payload.Answer : [];
-      const address = answers.find(
-        answer => answer?.type === 1 && /^\d{1,3}(?:\.\d{1,3}){3}$/.test(answer?.data || '')
-      )?.data;
-      if (address) return address;
-
-      const canonical = answers.find(answer => answer?.type === 5)?.data?.replace(/\.$/, '');
-      if (canonical && canonical !== hostname && depth < 4) {
-        return resolveIpv4(canonical, depth + 1);
-      }
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  throw lastError || new Error(`Unable to resolve ${hostname}`);
-}
-
-async function fetchHttpsWithResolvedIp(url, options = {}, timeoutMs = 12000) {
-  const target = new URL(url);
-  const address = await resolveIpv4(target.hostname);
-  const { request } = await import('node:https');
-
-  return new Promise((resolve, reject) => {
-    const req = request({
-      protocol: target.protocol,
-      hostname: target.hostname,
-      port: target.port || 443,
-      path: `${target.pathname}${target.search}`,
-      method: 'GET',
-      headers: options.headers || {},
-      servername: target.hostname,
-      lookup: (_hostname, _options, callback) => callback(null, address, 4)
-    }, response => {
-      const chunks = [];
-      response.on('data', chunk => chunks.push(Buffer.from(chunk)));
-      response.on('end', () => {
-        const text = Buffer.concat(chunks).toString('utf8');
-        const status = Number(response.statusCode || 0);
-        if (status < 200 || status >= 300) {
-          reject(new Error(`Telegram HTTP ${status}: ${text.slice(0, 200)}`));
-          return;
-        }
-        resolve(text);
-      });
-    });
-
-    req.setTimeout(timeoutMs, () => req.destroy(new Error('Telegram request timeout')));
-    req.on('error', reject);
-    req.end();
-  });
-}
-
-async function fetchTelegramThroughProxy(url) {
-  const proxies = [
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
-  ];
-  let lastError;
-
-  for (const proxyUrl of proxies) {
-    try {
-      const response = await fetchWithTimeout(proxyUrl, {
-        headers: { Accept: 'text/html,application/xhtml+xml' }
-      }, 15000);
-      if (!response.ok) throw new Error(`Proxy HTTP ${response.status}`);
-      const text = await response.text();
-      if (!text.includes(`data-post="${TELEGRAM_SOURCE}/`)) {
-        throw new Error('Proxy response did not contain Telegram posts');
-      }
-      return text;
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  throw lastError || new Error('Telegram proxy fetch failed');
-}
-
-async function fetchTelegramTextWithRetry(url, options, retries = 2) {
+async function fetchTelegramHtml(retries = 2) {
   let lastError;
   for (let attempt = 0; attempt <= retries; attempt += 1) {
-    try {
-      const response = await fetchWithTimeout(url, options, 12000);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return await response.text();
-    } catch (directError) {
+    for (const base of TELEGRAM_WEB_BASES) {
+      const url = `${base}/${TELEGRAM_SOURCE}?_=${Date.now()}`;
       try {
-        return await fetchHttpsWithResolvedIp(url, options, 12000);
-      } catch (resolvedError) {
-        try {
-          return await fetchTelegramThroughProxy(url);
-        } catch (proxyError) {
-          lastError = new Error(
-            `Telegram direct failed: ${directError?.message || directError}; resolved-IP fallback failed: ${resolvedError?.message || resolvedError}; proxy fallback failed: ${proxyError?.message || proxyError}`
-          );
+        const response = await fetchWithTimeout(url, {
+          headers: {
+            Accept: 'text/html,application/xhtml+xml',
+            'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 AmyFX/1.0'
+          }
+        }, 15000);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const html = await response.text();
+        if (!html.includes(`data-post="${TELEGRAM_SOURCE}/`)) {
+          throw new Error('Telegram response contained no posts');
         }
-      }
-      if (attempt < retries) {
-        await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+        return html;
+      } catch (error) {
+        lastError = error;
       }
     }
+    if (attempt < retries) {
+      await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+    }
   }
-  throw lastError;
+  throw lastError || new Error('Telegram fetch failed');
 }
 
 async function translateToId(text) {
@@ -269,12 +131,9 @@ async function translateToId(text) {
 
 async function scrapeTelegram(limit, shouldTranslate = true) {
   const { getNewsImpact, isRelevantNews } = await loadNewsRelevance();
-  const html = await fetchTelegramTextWithRetry(
-    `https://t.me/s/${TELEGRAM_SOURCE}?_=${Date.now()}`,
-    { headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 AmyFX/1.0' } }
-  );
-
+  const html = await fetchTelegramHtml();
   const latest = sortNewestFirst(extractPosts(html)).slice(0, limit);
+
   return Promise.all(latest.map(async item => ({
     ...item,
     impact: getNewsImpact(item.text),
@@ -290,7 +149,7 @@ function extractPosts(html) {
 
   let match;
   while ((match = msgRegex.exec(html)) !== null) {
-    let text = match[2]
+    const text = match[2]
       .replace(/<br\s*\/?>/gi, '\n')
       .replace(/<[^>]+>/g, '')
       .replace(/&amp;/g, '&')
@@ -306,7 +165,7 @@ function extractPosts(html) {
     posts.push({
       id: match[1],
       text,
-      link: `https://t.me/${TELEGRAM_SOURCE}/${match[1]}`,
+      link: `https://telegram.me/${TELEGRAM_SOURCE}/${match[1]}`,
       time: extractTime(html, match.index, msgRegex.lastIndex)
     });
   }
