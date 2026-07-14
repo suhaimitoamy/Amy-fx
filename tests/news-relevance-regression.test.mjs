@@ -72,9 +72,17 @@ test('all SM News posts are kept while relevance only gates notifications', asyn
   const syncSource = await readFile(new URL('../supabase/functions/news-sync/handler.ts', import.meta.url), 'utf8');
 
   assert.match(apiSource, /import\('\.\.\/lib\/news-relevance\.mjs'\)/);
+  assert.match(apiSource, /const telegramOnly = .*source.*telegram/);
+  assert.match(apiSource, /if \(!telegramOnly\)/);
   assert.match(apiSource, /sortNewestFirst\(extractPosts\(html\)\)\.slice/);
   assert.match(apiSource, /relevant: isRelevantNews\(item\.text\)/);
+  assert.match(apiSource, /telegramOnly \? 'telegram_direct' : 'telegram_fallback'/);
+  assert.match(apiSource, /scrapeTelegram\(limit, !telegramOnly\)/);
+
   assert.match(syncSource, /from '\.\.\/\.\.\/\.\.\/lib\/news-relevance\.mjs'/);
+  assert.match(syncSource, /NEWS_SOURCE_PROXY = 'https:\/\/amy-fx\.vercel\.app\/api\/news'/);
+  assert.match(syncSource, /source=telegram&limit=50/);
+  assert.match(syncSource, /const candidates = await fetchSourcePosts\(\)/);
   assert.doesNotMatch(syncSource, /\.filter\(post => isRelevantNews\(post\.text\)\)/);
   assert.match(syncSource, /const newsRows = \[\.\.\.newsMap\.values\(\)\]\.filter/);
   assert.match(syncSource, /isRelevantNews\(row\.text_original \|\| row\.text_indonesian \|\| ''\)/);
