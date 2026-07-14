@@ -83,15 +83,82 @@ async function fetchJsonWithTimeout(url, options = {}, timeoutMs = 10000) {
   return response.json();
 }
 
-async function fetchTextWithRetry(url, options, retries = 2) {
+async function resolveIpv4(hostname) {
+  const endpoints = [
+    `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(hostname)}&type=A`,
+    `https://dns.google/resolve?name=${encodeURIComponent(hostname)}&type=A`
+  ];
+  let lastError;
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetchWithTimeout(endpoint, {
+        headers: { Accept: 'application/dns-json' }
+      }, 6000);
+      if (!response.ok) throw new Error(`DNS HTTP ${response.status}`);
+      const payload = await response.json();
+      const address = payload?.Answer?.find(
+        answer => answer?.type === 1 && /^\d{1,3}(?:\.\d{1,3}){3}$/.test(answer?.data || '')
+      )?.data;
+      if (address) return address;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error(`Unable to resolve ${hostname}`);
+}
+
+async function fetchHttpsWithResolvedIp(url, options = {}, timeoutMs = 12000) {
+  const target = new URL(url);
+  const address = await resolveIpv4(target.hostname);
+  const { request } = await import('node:https');
+
+  return new Promise((resolve, reject) => {
+    const req = request({
+      protocol: target.protocol,
+      hostname: target.hostname,
+      port: target.port || 443,
+      path: `${target.pathname}${target.search}`,
+      method: 'GET',
+      headers: options.headers || {},
+      servername: target.hostname,
+      lookup: (_hostname, _options, callback) => callback(null, address, 4)
+    }, response => {
+      const chunks = [];
+      response.on('data', chunk => chunks.push(Buffer.from(chunk)));
+      response.on('end', () => {
+        const text = Buffer.concat(chunks).toString('utf8');
+        const status = Number(response.statusCode || 0);
+        if (status < 200 || status >= 300) {
+          reject(new Error(`Telegram HTTP ${status}: ${text.slice(0, 200)}`));
+          return;
+        }
+        resolve(text);
+      });
+    });
+
+    req.setTimeout(timeoutMs, () => req.destroy(new Error('Telegram request timeout')));
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+async function fetchTelegramTextWithRetry(url, options, retries = 2) {
   let lastError;
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     try {
       const response = await fetchWithTimeout(url, options, 12000);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return await response.text();
-    } catch (error) {
-      lastError = error;
+    } catch (directError) {
+      try {
+        return await fetchHttpsWithResolvedIp(url, options, 12000);
+      } catch (resolvedError) {
+        lastError = new Error(
+          `Telegram direct failed: ${directError?.message || directError}; resolved-IP fallback failed: ${resolvedError?.message || resolvedError}`
+        );
+      }
       if (attempt < retries) {
         await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
       }
@@ -115,7 +182,7 @@ async function translateToId(text) {
 
 async function scrapeTelegram(limit, shouldTranslate = true) {
   const { getNewsImpact, isRelevantNews } = await loadNewsRelevance();
-  const html = await fetchTextWithRetry(
+  const html = await fetchTelegramTextWithRetry(
     `https://t.me/s/${TELEGRAM_SOURCE}?_=${Date.now()}`,
     { headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 AmyFX/1.0' } }
   );
