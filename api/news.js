@@ -150,6 +150,32 @@ async function fetchHttpsWithResolvedIp(url, options = {}, timeoutMs = 12000) {
   });
 }
 
+async function fetchTelegramThroughProxy(url) {
+  const proxies = [
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+  ];
+  let lastError;
+
+  for (const proxyUrl of proxies) {
+    try {
+      const response = await fetchWithTimeout(proxyUrl, {
+        headers: { Accept: 'text/html,application/xhtml+xml' }
+      }, 15000);
+      if (!response.ok) throw new Error(`Proxy HTTP ${response.status}`);
+      const text = await response.text();
+      if (!text.includes(`data-post="${TELEGRAM_SOURCE}/`)) {
+        throw new Error('Proxy response did not contain Telegram posts');
+      }
+      return text;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error('Telegram proxy fetch failed');
+}
+
 async function fetchTelegramTextWithRetry(url, options, retries = 2) {
   let lastError;
   for (let attempt = 0; attempt <= retries; attempt += 1) {
@@ -161,9 +187,13 @@ async function fetchTelegramTextWithRetry(url, options, retries = 2) {
       try {
         return await fetchHttpsWithResolvedIp(url, options, 12000);
       } catch (resolvedError) {
-        lastError = new Error(
-          `Telegram direct failed: ${directError?.message || directError}; resolved-IP fallback failed: ${resolvedError?.message || resolvedError}`
-        );
+        try {
+          return await fetchTelegramThroughProxy(url);
+        } catch (proxyError) {
+          lastError = new Error(
+            `Telegram direct failed: ${directError?.message || directError}; resolved-IP fallback failed: ${resolvedError?.message || resolvedError}; proxy fallback failed: ${proxyError?.message || proxyError}`
+          );
+        }
       }
       if (attempt < retries) {
         await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
