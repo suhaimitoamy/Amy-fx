@@ -54,17 +54,29 @@ test('major conflict, diplomacy, and macro events are high impact', () => {
   assert.equal(getNewsImpact('American officials issue a routine statement.'), 'medium');
 });
 
+test('plural conflict wording and targeted military bases remain high impact', () => {
+  const text = `A U.S. air base in Jordan was targeted by Iranian ballistic missiles on Tuesday,
+    Iran's Islamic Revolutionary Guard Corps said, while calling on Jordanians
+    to dismantle American bases in the kingdom.`;
+  assert.equal(isRelevantNews(text), true);
+  assert.equal(getNewsImpact(text), 'high');
+  assert.ok(matchedNewsKeywords(text).includes('ballistic missiles'));
+});
+
 test('filter version is explicit for deployment tracking', () => {
   assert.match(NEWS_FILTER_VERSION, /^\d{4}-\d{2}-\d{2}\.\d+$/);
 });
 
-test('Vercel fallback and Supabase sync both use the shared filter', async () => {
+test('all SM News posts are kept while relevance only gates notifications', async () => {
   const apiSource = await readFile(new URL('../api/news.js', import.meta.url), 'utf8');
   const syncSource = await readFile(new URL('../supabase/functions/news-sync/handler.ts', import.meta.url), 'utf8');
 
   assert.match(apiSource, /import\('\.\.\/lib\/news-relevance\.mjs'\)/);
-  assert.match(apiSource, /isRelevantNews\(post\.text\)/);
+  assert.match(apiSource, /sortNewestFirst\(extractPosts\(html\)\)\.slice/);
+  assert.match(apiSource, /relevant: isRelevantNews\(item\.text\)/);
   assert.match(syncSource, /from '\.\.\/\.\.\/\.\.\/lib\/news-relevance\.mjs'/);
-  assert.match(syncSource, /isRelevantNews\(post\.text\)/);
+  assert.doesNotMatch(syncSource, /\.filter\(post => isRelevantNews\(post\.text\)\)/);
+  assert.match(syncSource, /const newsRows = \[\.\.\.newsMap\.values\(\)\]\.filter/);
+  assert.match(syncSource, /isRelevantNews\(row\.text_original \|\| row\.text_indonesian \|\| ''\)/);
   assert.match(syncSource, /getNewsImpact\(post\.text\)/);
 });
