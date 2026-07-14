@@ -1,6 +1,7 @@
 const SUPABASE_NEWS_FEED =
   'https://wliecyxzlwhmtftnfnps.supabase.co/functions/v1/news-feed';
 const TELEGRAM_SOURCE = 'SM_News_24h';
+const GITHUB_NEWS_CACHE = 'https://api.github.com/repos/suhaimitoamy/Amy-fx/issues/28';
 
 let newsRelevancePromise;
 
@@ -44,7 +45,20 @@ export default async function handler(req, res) {
   }
 
   try {
-    const fallback = await scrapeTelegram(limit, !telegramOnly);
+    let fallback;
+    let backend = 'telegram_fallback';
+    if (telegramOnly) {
+      try {
+        fallback = await fetchGithubNewsCache(limit);
+        backend = 'github_actions_cache';
+      } catch (cacheError) {
+        console.warn('GitHub news cache unavailable, scraping Telegram:', cacheError?.message || cacheError);
+        fallback = await scrapeTelegram(limit, false);
+        backend = 'telegram_direct';
+      }
+    } else {
+      fallback = await scrapeTelegram(limit, true);
+    }
     res.setHeader('Cache-Control', telegramOnly
       ? 'no-store'
       : 's-maxage=30, stale-while-revalidate=60');
@@ -53,7 +67,7 @@ export default async function handler(req, res) {
       updated: new Date().toISOString(),
       count: fallback.length,
       news: fallback,
-      backend: telegramOnly ? 'telegram_direct' : 'telegram_fallback'
+      backend
     });
   } catch (error) {
     console.error('News API failed:', error);
@@ -65,6 +79,43 @@ export default async function handler(req, res) {
       error: 'fetch_failed'
     });
   }
+}
+
+async function fetchGithubNewsCache(limit) {
+  const response = await fetchWithTimeout(`${GITHUB_NEWS_CACHE}?_=${Date.now()}`, {
+    headers: {
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'AmyFX-NewsAPI/1.0'
+    }
+  }, 10000);
+  if (!response.ok) throw new Error(`GitHub cache HTTP ${response.status}`);
+  const issue = await response.json();
+  const body = String(issue?.body || '');
+  const match = body.match(/<!-- amyfx-sm-news-cache-v1 -->\s*```json\s*([\s\S]*?)\s*```/);
+  if (!match) throw new Error('GitHub cache payload marker missing');
+
+  const payload = JSON.parse(match[1]);
+  if (!Array.isArray(payload?.news) || payload.news.length === 0) {
+    throw new Error('GitHub cache contains no news');
+  }
+  const updatedMs = Date.parse(payload.updated || '');
+  if (!Number.isFinite(updatedMs) || Date.now() - updatedMs > 20 * 60 * 1000) {
+    throw new Error('GitHub cache is stale');
+  }
+
+  const { getNewsImpact, isRelevantNews } = await loadNewsRelevance();
+  return payload.news.slice(0, limit).map(item => {
+    const original = String(item?.textOriginal || item?.text || '').trim();
+    return {
+      id: String(item?.id || ''),
+      text: original,
+      textOriginal: original,
+      time: String(item?.time || ''),
+      link: String(item?.link || ''),
+      impact: getNewsImpact(original),
+      relevant: isRelevantNews(original)
+    };
+  }).filter(item => item.id && item.text.length >= 20);
 }
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
