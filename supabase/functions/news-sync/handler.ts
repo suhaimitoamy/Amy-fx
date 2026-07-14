@@ -195,12 +195,14 @@ async function disableDevice(id: string) {
 async function pushNews(inserted: any[]) {
   const since = new Date(Date.now() - RETRY_WINDOW_MS).toISOString();
   const recent = await rest(
-    `news?select=id,telegram_post_id,text_original,text_indonesian,impact,source,created_at&created_at=gte.${encodeURIComponent(since)}&order=created_at.asc,id.asc&limit=20`
+    `news?select=id,telegram_post_id,text_original,text_indonesian,impact,source,created_at&created_at=gte.${encodeURIComponent(since)}&order=created_at.asc,id.asc&limit=50`
   ) || [];
 
   const newsMap = new Map<number, any>();
   for (const row of [...recent, ...inserted]) newsMap.set(Number(row.id), row);
-  const newsRows = [...newsMap.values()];
+  const newsRows = [...newsMap.values()].filter(
+    row => isRelevantNews(row.text_original || row.text_indonesian || '')
+  );
   const devices = await rest(
     'device_tokens?select=id,fcm_token&enabled=eq.true&order=last_seen_at.desc&limit=500'
   ) || [];
@@ -316,10 +318,8 @@ export async function handler(req: Request) {
     });
     if (!telegram.ok) throw new Error(`Telegram HTTP ${telegram.status}`);
 
-    const candidates = extractPosts(await telegram.text())
-      .filter(post => isRelevantNews(post.text))
-      .slice(0, 30);
-    const existing = await rest('news?select=telegram_post_id&order=id.desc&limit=300') || [];
+    const candidates = extractPosts(await telegram.text()).slice(0, 50);
+    const existing = await rest('news?select=telegram_post_id&order=id.desc&limit=500') || [];
     const existingIds = new Set(existing.map((row: any) => String(row.telegram_post_id)));
     const missing = candidates.filter(post => !existingIds.has(post.id));
 
