@@ -5,7 +5,7 @@ import { getNewsImpact, isRelevantNews } from '../../../lib/news-relevance.mjs';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const SOURCE = 'SM_News_24h';
-const TELEGRAM_URL = `https://t.me/s/${SOURCE}`;
+const NEWS_SOURCE_PROXY = 'https://amy-fx.vercel.app/api/news';
 const RETRY_WINDOW_MS = 15 * 60 * 1000;
 
 const dbHeaders = {
@@ -97,6 +97,41 @@ function extractPosts(html: string) {
   }
 
   return posts.sort((a, b) => Number(b.id) - Number(a.id));
+}
+
+async function fetchSourcePosts() {
+  const url = `${NEWS_SOURCE_PROXY}?source=telegram&limit=50&fresh=${Date.now()}`;
+  const response = await fetchTimed(url, {
+    headers: {
+      Accept: 'application/json',
+      'User-Agent': 'AmyFX-NewsSync/1.0'
+    }
+  }, 30000);
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`News source proxy ${response.status}: ${text.slice(0, 500)}`);
+  }
+
+  let payload: any;
+  try {
+    payload = JSON.parse(text);
+  } catch (_) {
+    throw new Error('News source proxy returned invalid JSON');
+  }
+  if (!Array.isArray(payload?.news)) {
+    throw new Error('News source proxy returned no news array');
+  }
+
+  return payload.news
+    .map((item: any) => ({
+      id: String(item?.id || ''),
+      text: String(item?.textOriginal || item?.text || '').trim(),
+      time: String(item?.time || ''),
+      link: String(item?.link || '')
+    }))
+    .filter((item: any) => item.id && item.text.length >= 20)
+    .sort((a: any, b: any) => Number(b.id) - Number(a.id))
+    .slice(0, 50);
 }
 
 async function translate(text: string) {
@@ -313,12 +348,7 @@ export async function handler(req: Request) {
     if (!(await authorized(req))) return json({ error: 'unauthorized' }, 401);
     runId = await startRun();
 
-    const telegram = await fetchTimed(`${TELEGRAM_URL}?_=${Date.now()}`, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AmyFX/1.0' }
-    });
-    if (!telegram.ok) throw new Error(`Telegram HTTP ${telegram.status}`);
-
-    const candidates = extractPosts(await telegram.text()).slice(0, 50);
+    const candidates = await fetchSourcePosts();
     const existing = await rest('news?select=telegram_post_id&order=id.desc&limit=500') || [];
     const existingIds = new Set(existing.map((row: any) => String(row.telegram_post_id)));
     const missing = candidates.filter(post => !existingIds.has(post.id));
