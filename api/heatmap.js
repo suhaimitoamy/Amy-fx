@@ -32,20 +32,19 @@ export default async function handler(req, res) {
         updated: new Date().toISOString(),
         sourceCandleTime: null,
         zones: [],
-        summary: { pressure: 'WAITING DATA', nearestDraw: null, activeZones: 0, transitionZones: 0 },
-        meta: { candleCount: 0 },
+        summary: emptySummary(),
+        meta: { candleCount: 0, accuracyProfile: 'BACKTEST_2022_2026' },
         error: 'no_data'
       });
     }
 
-    // Dynamic import keeps the Vercel function compatible with the current runtime.
     const { computeDynamicHeatmap } = await import('../lib/heatmap-core.mjs');
     const result = computeDynamicHeatmap(candles, {
       swingWindow: 2,
       maxZonesPerSide: 6
     });
+    const summary = precisionSummary(result);
 
-    // Heatmap refreshes frequently, but CDN caching prevents duplicate provider calls.
     res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=20');
     return res.status(200).json({
       symbol,
@@ -54,8 +53,14 @@ export default async function handler(req, res) {
       updated: new Date().toISOString(),
       sourceCandleTime: result.meta?.sourceCandleTime || candles.at(-1)?.time || null,
       zones: result.zones,
-      summary: result.summary,
-      meta: result.meta
+      summary,
+      meta: {
+        ...result.meta,
+        accuracyProfile: 'BACKTEST_2022_2026',
+        nearestDrawRole: 'LIQUIDITY_TARGET_ONLY',
+        primaryDistanceAtr: 1.5,
+        secondaryDistanceAtr: 3
+      }
     });
   } catch (error) {
     console.error('heatmap provider failed', error);
@@ -63,10 +68,58 @@ export default async function handler(req, res) {
       currentPrice: null,
       updated: new Date().toISOString(),
       zones: [],
-      summary: { pressure: 'WAITING DATA', nearestDraw: null, activeZones: 0, transitionZones: 0 },
+      summary: emptySummary(),
       error: 'provider_failed'
     });
   }
+}
+
+function emptySummary() {
+  return {
+    pressure: 'WAITING DATA',
+    liquidityConcentration: 'WAITING DATA',
+    directionalSignal: 'NEUTRAL',
+    directionalUse: false,
+    nearestDraw: null,
+    activeZones: 0,
+    transitionZones: 0,
+    interpretation: 'Heatmap belum memiliki data yang cukup.'
+  };
+}
+
+function classifyDraw(draw, currentPrice, atr) {
+  if (!draw || !Number.isFinite(Number(draw.price))) return null;
+  const absoluteDistance = Math.abs(Number(draw.price) - Number(currentPrice));
+  const distanceAtr = atr > 0 ? absoluteDistance / atr : null;
+  const targetClass = distanceAtr === null
+    ? 'CONTEXT_ONLY'
+    : distanceAtr <= 1.5 ? 'PRIMARY' : distanceAtr <= 3 ? 'SECONDARY' : 'CONTEXT_ONLY';
+  return {
+    ...draw,
+    absoluteDistance,
+    distanceAtr,
+    targetClass,
+    actionableAsDirection: false,
+    useAsLiquidityTarget: targetClass !== 'CONTEXT_ONLY'
+  };
+}
+
+function precisionSummary(result) {
+  const base = result?.summary || {};
+  const currentPrice = Number(result?.currentPrice || 0);
+  const atr = Number(result?.meta?.atr || 0);
+  const concentration = base.pressure || 'BALANCED';
+  return {
+    ...base,
+    pressure: concentration,
+    liquidityConcentration: concentration,
+    directionalSignal: 'NEUTRAL',
+    directionalUse: false,
+    nearestDraw: classifyDraw(base.nearestDraw, currentPrice, atr),
+    nearestBsl: classifyDraw(base.nearestBsl, currentPrice, atr),
+    nearestSsl: classifyDraw(base.nearestSsl, currentPrice, atr),
+    interpretation: 'Pressure menunjukkan konsentrasi likuiditas, bukan prediksi arah market.'
+  };
 }
 
 async function fetchCandles(symbol, interval, size, apiKey) {

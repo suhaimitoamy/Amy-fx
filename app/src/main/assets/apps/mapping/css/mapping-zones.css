@@ -7,6 +7,8 @@
 .indicator-zone-item.bullish{border-left-color:#4ade80}
 .indicator-zone-item.bearish{border-left-color:#f87171}
 .indicator-zone-item.breaker{border-left-color:#fbbf24}
+.indicator-zone-item.testing{border-left-color:#60a5fa}
+.indicator-zone-item.confirmed{border-left-color:#a78bfa}
 .indicator-zone-item.invalid{opacity:.65}
 .indicator-zone-main{min-width:0}
 .indicator-zone-main b{display:block;color:#eee;font-size:12px;line-height:1.4;overflow-wrap:anywhere}
