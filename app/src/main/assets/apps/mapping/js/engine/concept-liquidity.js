@@ -4,14 +4,16 @@ import { addEqualLevels, addSwingLevels } from './concept-level-seed.js';
 
 export { evaluateLevelConfirmation as evaluateLiquidityReclaim } from './concept-level-confirmation.js';
 
+const LIQUIDITY_SWING_LENGTH = 4;
+
 export function detectLiquidityConcepts(candles, { currentPrice = null, maxLevels = 24 } = {}) {
   const values = cleanConceptCandles(candles);
   if (values.length < 12) return [];
-  const swings = conceptSwingPoints(values, 3, 3);
+  const swings = conceptSwingPoints(values, LIQUIDITY_SWING_LENGTH, LIQUIDITY_SWING_LENGTH);
   const levels = [];
-  const { recentHighs, recentLows } = addSwingLevels(values, swings, levels);
-  addEqualLevels(values, recentHighs, 'BSL', levels);
-  addEqualLevels(values, recentLows, 'SSL', levels);
+  const { recentHighs, recentLows } = addSwingLevels(values, swings, levels, LIQUIDITY_SWING_LENGTH);
+  addEqualLevels(values, recentHighs, 'BSL', levels, LIQUIDITY_SWING_LENGTH);
+  addEqualLevels(values, recentLows, 'SSL', levels, LIQUIDITY_SWING_LENGTH);
 
   const evaluated = levels.map(level => {
     let interactionIndex = -1;
