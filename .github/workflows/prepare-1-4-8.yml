@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - release/amyfx-1.4.8-mapping-integration
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
