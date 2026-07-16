@@ -18,9 +18,6 @@ jobs:
           git fetch --depth=1 --quiet origin "${GITHUB_SHA}"
           git checkout --quiet FETCH_HEAD
 
-      - name: Show threshold assertion
-        run: grep -R -n -B 5 -A 30 "production thresholds use the fixed holdout profile" tests
-
       - name: Run Mapping regression tests
         run: |
           node --version
