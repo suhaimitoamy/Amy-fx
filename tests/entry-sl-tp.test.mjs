@@ -4,6 +4,7 @@ import {
   createM15EntryPlan,
   advanceM15EntryLifecycle
 } from '../app/src/main/assets/apps/mapping/js/engine/concept-entry-map.js';
+import { entryMapDisplayState } from '../app/src/main/assets/apps/mapping/js/ui/entry-map-status.js';
 
 const candle = (open, high, low, close, time = 0) => ({ open, high, low, close, time });
 
@@ -65,4 +66,25 @@ test('live setup expires after exactly 36 M15 candles', () => {
   assert.equal(plan.live, false);
   assert.equal(plan.lifecycleStatus, 'EXPIRED');
   assert.equal(plan.endIndex, 41);
+});
+
+test('UI status reads the candle lifecycle instead of wall-clock expiry', () => {
+  const setup = {
+    dir: 'BUY', entry: 100, sl: 98, tp1: 100.7, tp2: 103.5,
+    expiryBars: 36,
+    lifecycle: { status: 'TP1 HIT / BE', live: true, barsElapsed: 9 }
+  };
+  const display = entryMapDisplayState(setup);
+  assert.equal(display.status, 'TP1 HIT / BE');
+  assert.equal(display.terminal, false);
+  assert.match(display.note, /break-even 100\.00/);
+});
+
+test('closed Entry Map outcome is marked terminal in the UI', () => {
+  const display = entryMapDisplayState({
+    dir: 'SELL', entry: 100, sl: 102, tp1: 99.3, tp2: 96.5,
+    lifecycle: { status: 'SL HIT', live: false, barsElapsed: 4 }
+  });
+  assert.equal(display.terminal, true);
+  assert.match(display.note, /SL 102\.00/);
 });
