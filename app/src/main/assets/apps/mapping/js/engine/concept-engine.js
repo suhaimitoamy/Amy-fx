@@ -42,7 +42,7 @@ function structureEventAdapter(event, candles, trend) {
     valid,
     sweepOnly: sweep,
     failed,
-    hasDisplacement: !sweep && valid,
+    hasDisplacement: !sweep && Boolean(event.hasDisplacement),
     breakType: sweep ? 'SWEEP_ONLY' : failed ? 'BREAK_FAILED' : 'VALID_BREAK',
     structureScope: event.scope || 'INTERNAL',
     confirmationStage: event.scope === 'INTERNAL' ? 'TRANSITION' : valid ? 'CONFIRMED' : failed ? 'FAILED' : 'WAIT',
@@ -155,11 +155,12 @@ function zoneText(zone) {
 
 function structureText(structure) {
   const event = structure?.lastEvent;
-  if (!event) return 'Belum ada BOS/CHOCH atau sweep yang memenuhi threshold.';
+  if (!event) return 'Belum ada BOS/MSS atau sweep yang terkonfirmasi.';
   if (event.breakType === 'SWEEP_ONLY') {
     return `${event.kind} ${event.dir} @ ${event.price.toFixed(2)} · reclaim ${conceptNumber(event.reclaimDepthAtr, 0).toFixed(2)} ATR`;
   }
-  return `${event.kind} ${event.structureScope} ${event.dir} @ ${event.price.toFixed(2)} · penetration ${conceptNumber(event.penetrationAtr, 0).toFixed(2)} ATR`;
+  const displacement = event.hasDisplacement ? 'displacement valid' : 'close-cross tanpa displacement kuat';
+  return `${event.kind} ${event.structureScope} ${event.dir} @ ${event.price.toFixed(2)} · ${displacement} · penetration ${conceptNumber(event.penetrationAtr, 0).toFixed(2)} ATR`;
 }
 
 export function detectMarketConcepts(candles, {
@@ -202,7 +203,7 @@ export function detectMarketConcepts(candles, {
     ['BSL / SSL Sweep', latestConfirmedSweep?.status || 'WAIT', latestConfirmedSweep
       ? `${latestConfirmedSweep.type || latestConfirmedSweep.concept} @ ${Number(latestConfirmedSweep.level).toFixed(2)} · reclaim ${conceptNumber(latestConfirmedSweep.reclaimDepthAtr, 0).toFixed(2)} ATR`
       : 'Belum ada sweep terkonfirmasi dengan reclaim minimum 0,4 ATR.'],
-    ['Concept Filter', 'CONFIRMATION REQUIRED', `FVG/IFVG ≥ ${CONCEPT_THRESHOLDS.fvgMinWidthAtr.toFixed(1)} ATR · reclaim ≥ ${CONCEPT_THRESHOLDS.liquidityReclaimAtr.toFixed(1)} ATR · penetration ≥ ${CONCEPT_THRESHOLDS.structurePenetrationAtr.toFixed(1)} ATR`]
+    ['Concept Filter', 'CONFIRMATION REQUIRED', `BOS/MSS memakai close-cross swing 4/4 · displacement ≥ ${CONCEPT_THRESHOLDS.displacementBodyAtr.toFixed(1)} ATR dicatat sebagai kualitas · reclaim ≥ ${CONCEPT_THRESHOLDS.liquidityReclaimAtr.toFixed(1)} ATR`]
   ];
 
   return {
