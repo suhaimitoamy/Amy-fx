@@ -75,9 +75,8 @@ test('OB imbalance metadata never reads candles after the structure break', () =
   const values = [
     candle(100, 102, 99, 101, 0),
     candle(101, 103, 100, 102, 1),
-    candle(104, 105, 104, 105, 2),
-    candle(105, 106, 105, 106, 3),
-    candle(106, 107, 106, 107, 4)
+    candle(102, 103, 101, 102.5, 2),
+    candle(104, 105, 104, 105, 3)
   ];
   assert.equal(obCreatedImbalance(values, 0, 2, 'BULLISH'), false);
 });
