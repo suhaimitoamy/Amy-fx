@@ -3,6 +3,7 @@ import { cleanConceptCandles, conceptNumber } from './concept-candles.js';
 import { detectFvgConcepts } from './concept-fvg.js';
 import { detectLiquidityConcepts, evaluateLiquidityReclaim } from './concept-liquidity.js';
 import { detectOrderBlockConcepts } from './concept-ob.js';
+import { detectPreviousPeriodLevels, previousPeriodSnapshot } from './concept-reference-levels.js';
 import { structureDisplacementMetrics } from './concept-structure-metrics.js';
 import { detectStructureConcepts } from './concept-structure.js';
 import {
@@ -42,7 +43,7 @@ function structureEventAdapter(event, candles, trend) {
     valid,
     sweepOnly: sweep,
     failed,
-    hasDisplacement: !sweep && valid,
+    hasDisplacement: !sweep && Boolean(event.hasDisplacement),
     breakType: sweep ? 'SWEEP_ONLY' : failed ? 'BREAK_FAILED' : 'VALID_BREAK',
     structureScope: event.scope || 'INTERNAL',
     confirmationStage: event.scope === 'INTERNAL' ? 'TRANSITION' : valid ? 'CONFIRMED' : failed ? 'FAILED' : 'WAIT',
@@ -102,12 +103,13 @@ function targetFromLevel(level, price) {
     subtype: level.subtype,
     status: level.status || 'DETECTED',
     strength: level.subtype === 'EQUAL' ? 'STRONG' : 'MEDIUM',
-    source: 'AMY_CONCEPT_ENGINE_V2',
+    source: level.source || 'AMY_CONCEPT_ENGINE_V2',
     distance: Number.isFinite(price) ? value - price : 0,
     distanceFromPrice: Number.isFinite(price) ? Math.abs(value - price) : Infinity,
     originIndex: level.originIndex,
     availableIndex: level.availableIndex,
-    reclaimDepthAtr: conceptNumber(level.reclaimDepthAtr, 0)
+    reclaimDepthAtr: conceptNumber(level.reclaimDepthAtr, 0),
+    label: level.label || level.subtype || level.type
   };
 }
 
@@ -141,7 +143,7 @@ export function buildConceptLiquidityHierarchy(levels, currentPrice, htfBias = '
     htfBiasContext: htfBias,
     tolerance: { sweep: 0.01 },
     summary: drawTarget
-      ? `Target liquidity aktif terdekat adalah ${drawTarget.type} di ${drawTarget.level.toFixed(2)}; level ini bukan sinyal arah.`
+      ? `Target liquidity aktif terdekat adalah ${drawTarget.label || drawTarget.type} di ${drawTarget.level.toFixed(2)}; level ini bukan sinyal arah.`
       : 'Tidak ada BSL/SSL aktif yang belum tersapu pada sisi harga sekarang.',
     bsl: bslTarget?.level || 0,
     ssl: sslTarget?.level || 0
@@ -155,11 +157,12 @@ function zoneText(zone) {
 
 function structureText(structure) {
   const event = structure?.lastEvent;
-  if (!event) return 'Belum ada BOS/CHOCH atau sweep yang memenuhi threshold.';
+  if (!event) return 'Belum ada BOS/MSS atau sweep yang terkonfirmasi.';
   if (event.breakType === 'SWEEP_ONLY') {
     return `${event.kind} ${event.dir} @ ${event.price.toFixed(2)} · reclaim ${conceptNumber(event.reclaimDepthAtr, 0).toFixed(2)} ATR`;
   }
-  return `${event.kind} ${event.structureScope} ${event.dir} @ ${event.price.toFixed(2)} · penetration ${conceptNumber(event.penetrationAtr, 0).toFixed(2)} ATR`;
+  const displacement = event.hasDisplacement ? 'displacement valid' : 'close-cross tanpa displacement kuat';
+  return `${event.kind} ${event.structureScope} ${event.dir} @ ${event.price.toFixed(2)} · ${displacement} · penetration ${conceptNumber(event.penetrationAtr, 0).toFixed(2)} ATR`;
 }
 
 export function detectMarketConcepts(candles, {
@@ -178,10 +181,13 @@ export function detectMarketConcepts(candles, {
     htfCandles,
     maxZones: 16
   });
-  const liquidityLevels = detectLiquidityConcepts(values, {
+  const swingLiquidityLevels = detectLiquidityConcepts(values, {
     currentPrice: price,
     maxLevels: 100
   });
+  const previousPeriodLevels = detectPreviousPeriodLevels(values, htfCandles?.D1, { currentPrice: price });
+  const previousPeriods = previousPeriodSnapshot(previousPeriodLevels);
+  const liquidityLevels = [...swingLiquidityLevels, ...previousPeriodLevels];
   const liquidityHierarchy = buildConceptLiquidityHierarchy(liquidityLevels, price, htfBias);
   const nearestFairValueGaps = nearestConceptZones(fairValueGaps, price, 4);
   const nearestOrderBlocks = nearestConceptZones(orderBlocks, price, 4);
@@ -191,18 +197,27 @@ export function detectMarketConcepts(candles, {
     || structureSnapshot.sweepEvents?.filter(event => event.valid).at(-1)
     || null;
 
+  const previousDayText = previousPeriods.pdh > 0
+    ? `PDH ${previousPeriods.pdh.toFixed(2)} (${previousPeriods.pdhStatus}) · PDL ${previousPeriods.pdl.toFixed(2)} (${previousPeriods.pdlStatus})`
+    : 'Data previous day belum tersedia.';
+  const previousWeekText = previousPeriods.pwh > 0
+    ? `PWH ${previousPeriods.pwh.toFixed(2)} (${previousPeriods.pwhStatus}) · PWL ${previousPeriods.pwl.toFixed(2)} (${previousPeriods.pwlStatus})`
+    : 'Data previous week belum tersedia.';
+
   const concepts = [
     ['Structure', structure.trend, structureText(structure)],
     ['Latest Event', structure.lastEvent?.liveStatus || 'WAIT', structureText(structure)],
     ['OB', nearestOb?.status || 'WAIT', zoneText(nearestOb)],
     ['FVG', nearestFvg?.status || 'WAIT', zoneText(nearestFvg)],
+    ['Previous Day Liquidity', previousPeriods.pdhStatus, previousDayText],
+    ['Previous Week Liquidity', previousPeriods.pwhStatus, previousWeekText],
     ['Liquidity Hierarchy', liquidityHierarchy.summary, liquidityHierarchy.drawTarget
-      ? `Draw Target: ${liquidityHierarchy.drawTarget.type} @ ${liquidityHierarchy.drawTarget.level.toFixed(2)}`
+      ? `Draw Target: ${liquidityHierarchy.drawTarget.label || liquidityHierarchy.drawTarget.type} @ ${liquidityHierarchy.drawTarget.level.toFixed(2)}`
       : 'Belum ada Draw Target aktif'],
     ['BSL / SSL Sweep', latestConfirmedSweep?.status || 'WAIT', latestConfirmedSweep
       ? `${latestConfirmedSweep.type || latestConfirmedSweep.concept} @ ${Number(latestConfirmedSweep.level).toFixed(2)} · reclaim ${conceptNumber(latestConfirmedSweep.reclaimDepthAtr, 0).toFixed(2)} ATR`
       : 'Belum ada sweep terkonfirmasi dengan reclaim minimum 0,4 ATR.'],
-    ['Concept Filter', 'CONFIRMATION REQUIRED', `FVG/IFVG ≥ ${CONCEPT_THRESHOLDS.fvgMinWidthAtr.toFixed(1)} ATR · reclaim ≥ ${CONCEPT_THRESHOLDS.liquidityReclaimAtr.toFixed(1)} ATR · penetration ≥ ${CONCEPT_THRESHOLDS.structurePenetrationAtr.toFixed(1)} ATR`]
+    ['Concept Filter', 'CONFIRMATION REQUIRED', `BOS/MSS memakai close-cross swing 4/4 · displacement ≥ ${CONCEPT_THRESHOLDS.displacementBodyAtr.toFixed(1)} ATR dicatat sebagai kualitas · reclaim ≥ ${CONCEPT_THRESHOLDS.liquidityReclaimAtr.toFixed(1)} ATR`]
   ];
 
   return {
@@ -216,6 +231,13 @@ export function detectMarketConcepts(candles, {
     fairValueGaps,
     orderBlocks,
     liquidityLevels,
+    swingLiquidityLevels,
+    previousPeriodLevels,
+    previousPeriods,
+    pdh: previousPeriods.pdh,
+    pdl: previousPeriods.pdl,
+    pwh: previousPeriods.pwh,
+    pwl: previousPeriods.pwl,
     liquidityHierarchy,
     nearestFairValueGaps,
     nearestOrderBlocks,

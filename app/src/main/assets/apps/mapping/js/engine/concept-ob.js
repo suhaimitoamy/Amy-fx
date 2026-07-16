@@ -1,24 +1,30 @@
 import { CONCEPT_THRESHOLDS } from './concept-config.js';
-import { cleanConceptCandles } from './concept-candles.js';
-import { evaluateZoneLifecycle } from './concept-zone-lifecycle.js';
+import { cleanConceptCandles, conceptNumber } from './concept-candles.js';
 import { htfDirectionAt, obCreatedImbalance } from './concept-ob-helpers.js';
+
+function liveStatus(zone, currentPrice) {
+  const price = conceptNumber(currentPrice);
+  if (Number.isFinite(price) && price >= zone.bottom && price <= zone.top) return 'TESTING';
+  return zone.status;
+}
 
 export function detectOrderBlockConcepts(candles, structureSnapshot, {
   htfCandles = {},
   currentPrice = null,
-  maxZones = 12
+  maxZones = 12,
+  maxPerDirection = 2,
+  useBody = true
 } = {}) {
   const values = cleanConceptCandles(candles);
-  const events = (structureSnapshot?.structureEvents || [])
-    .filter(event => event.valid)
-    .slice(-Math.max(1, maxZones * 2));
-  const output = [];
+  const events = (structureSnapshot?.structureEvents || []).filter(event => event.valid);
+  const byIndex = new Map();
 
   for (const event of events) {
     const breakIndex = event.index;
     const direction = event.direction;
     const start = Math.max(0, breakIndex - CONCEPT_THRESHOLDS.obLookbackCandles);
     let originIndex = -1;
+
     for (let index = breakIndex - 1; index >= start; index -= 1) {
       const candle = values[index];
       const opposite = direction === 'BULLISH'
@@ -34,39 +40,78 @@ export function detectOrderBlockConcepts(candles, structureSnapshot, {
     const origin = values[originIndex];
     const imbalance = obCreatedImbalance(values, originIndex, breakIndex, direction);
     const htfDirection = htfDirectionAt(htfCandles, values[breakIndex]?.time);
-    const htfAligned = htfDirection === direction;
-    if (!imbalance || !htfAligned) continue;
-
-    const availableIndex = Math.min(values.length - 1, breakIndex + 2);
+    const bottom = useBody ? Math.min(origin.open, origin.close) : origin.low;
+    const top = useBody ? Math.max(origin.open, origin.close) : origin.high;
     const zone = {
-      id: `OB:${direction}:${breakIndex}:${origin.low.toFixed(5)}:${origin.high.toFixed(5)}`,
+      id: `OB:${direction}:${breakIndex}:${bottom.toFixed(5)}:${top.toFixed(5)}`,
       kind: 'ORDER_BLOCK',
       direction,
       type: direction,
-      bottom: origin.low,
-      top: origin.high,
-      mid: (origin.low + origin.high) / 2,
+      bottom,
+      top,
+      mid: (bottom + top) / 2,
       originIndex,
-      breakIndex,
-      availableIndex,
-      createdAt: values[availableIndex]?.time,
+      structureBreakIndex: breakIndex,
+      availableIndex: breakIndex,
+      createdAt: values[breakIndex]?.time,
       causedValidBreak: true,
-      createdImbalance: true,
-      htfAligned: true,
+      createdImbalance: imbalance,
+      htfAligned: htfDirection === direction,
       htfDirection,
       sourceStructure: event.concept,
       structureScope: event.scope,
+      touchIndex: -1,
+      confirmedIndex: -1,
+      breakIndex: -1,
+      status: 'DETECTED',
+      active: true,
+      converted: false,
       filterPassed: true,
-      filterReason: 'Valid break, imbalance, dan arah HTF sejalan.'
+      filterReason: 'Candle berlawanan terakhir sebelum close-break struktur.'
     };
-    output.push(evaluateZoneLifecycle(values, zone, {
-      breakMode: 'CLOSE',
-      convertedKind: 'BREAKER_OB',
-      currentPrice
-    }));
+    if (!byIndex.has(breakIndex)) byIndex.set(breakIndex, []);
+    byIndex.get(breakIndex).push(zone);
   }
 
-  return output
-    .sort((a, b) => (b.availableIndex || 0) - (a.availableIndex || 0))
+  const active = [];
+  for (let index = 0; index < values.length; index += 1) {
+    for (const zone of byIndex.get(index) || []) {
+      active.unshift(zone);
+      const sameDirection = active.filter(item => item.direction === zone.direction);
+      if (sameDirection.length > maxPerDirection) {
+        active.splice(active.indexOf(sameDirection.at(-1)), 1);
+      }
+    }
+
+    for (const zone of [...active]) {
+      if (index <= zone.availableIndex) continue;
+      const candle = values[index];
+      const invalid = zone.direction === 'BULLISH'
+        ? candle.close < zone.bottom
+        : candle.close > zone.top;
+      if (invalid) {
+        zone.breakIndex = index;
+        zone.status = 'INVALID';
+        zone.active = false;
+        active.splice(active.indexOf(zone), 1);
+        continue;
+      }
+
+      const touched = candle.high >= zone.bottom && candle.low <= zone.top;
+      if (touched && zone.touchIndex < 0) {
+        zone.touchIndex = index;
+        const rejected = zone.direction === 'BULLISH'
+          ? candle.close > zone.top
+          : candle.close < zone.bottom;
+        if (rejected) zone.confirmedIndex = index;
+      }
+      zone.status = zone.touchIndex < 0 ? 'DETECTED'
+        : zone.confirmedIndex === zone.touchIndex ? 'CONFIRMED_REACTION' : 'TESTING';
+    }
+  }
+
+  return active
+    .map(zone => ({ ...zone, status: liveStatus(zone, currentPrice) }))
+    .sort((a, b) => b.availableIndex - a.availableIndex)
     .slice(0, maxZones);
 }

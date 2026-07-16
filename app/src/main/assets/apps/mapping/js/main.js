@@ -45,12 +45,14 @@ export const state = {
   notified: JSON.parse(localStorage.getItem('amy_mapping_notified') || '{}')
 };
 
+const DISPLAY_TIME_ZONE = 'Asia/Makassar';
+
 export const p2 = value =>
   Number.isFinite(+value) ? Number(value).toFixed(2) : '-';
 
 export function nowTime() {
   return new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Asia/Jakarta',
+    timeZone: DISPLAY_TIME_ZONE,
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
@@ -97,22 +99,24 @@ export function sessions() {
   return zones.map(item => {
     const range = timeRange(...item.slice(1));
     const format = timestamp => new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'Asia/Jakarta',
+      timeZone: DISPLAY_TIME_ZONE,
       hour: '2-digit',
       minute: '2-digit',
       hour12: false
     }).format(new Date(timestamp));
+    const displayRange = `${format(range.start)} - ${format(range.end)}`;
     return {
       name: item[0],
       active: now >= range.start && now < range.end,
-      wib: `${format(range.start)} - ${format(range.end)}`
+      wita: displayRange,
+      wib: displayRange
     };
   });
 }
 
 export function curSession() {
   return sessions().find(item => item.active) ||
-    { name: 'Off-Session', active: false, wib: '-' };
+    { name: 'Off-Session', active: false, wita: '-', wib: '-' };
 }
 
 export function log(message) {
@@ -134,9 +138,14 @@ export function setupText(setup) {
     ? 'Tunggu konfirmasi.'
     : setup.status === 'INVALID'
       ? 'Setup tidak valid.'
-      : 'Pantau harga saat masuk ke area, jangan mengejar.';
+      : setup.lifecycle?.live === false
+        ? `Setup selesai: ${setup.lifecycle.status}.`
+        : 'Ikuti level Entry Map; jangan mengejar harga.';
+  const quality = setup.scoreMode === 'RULE_BASED' || setup.grade === 'RULE-BASED'
+    ? 'Mode: RULE-BASED'
+    : `Kualitas: ${setup.score}/100`;
   return `${fmtDir(setup.dir)} • ${setup.tf}
-Kualitas: ${setup.score}/100
+${quality}
 Area rencana: ${p2(setup.entryLow)} - ${p2(setup.entryHigh)}
 Batas salah: ${p2(setup.sl)}
 Target aman: ${p2(setup.tp1)}
