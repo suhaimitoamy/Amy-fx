@@ -1,0 +1,38 @@
+name: Apply Native Updater MainActivity Patch
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "tools/apply_native_updater_mainactivity.py"
+      - ".github/workflows/apply-native-updater-mainactivity.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feature/native-updater-1.4.11'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Apply MainActivity patch
+        run: python3 tools/apply_native_updater_mainactivity.py
+
+      - name: Commit generated bridge
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/java/com/amyelitesuite/MainActivity.kt
+          if git diff --cached --quiet; then
+            echo "Patch already applied."
+            exit 0
+          fi
+          git commit -m "feat(update): connect WebView to native updater"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
