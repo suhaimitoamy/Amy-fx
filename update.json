@@ -9,15 +9,15 @@
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Memperbaiki halaman Mapping yang freeze atau kosong pada Android WebView tertentu",
-    "Menambahkan fallback WITA UTC+8 ketika zona Asia/Makassar tidak tersedia di WebView",
-    "Menambahkan layar recovery sehingga error startup tidak lagi menghasilkan halaman hitam kosong",
-    "Mempertahankan seluruh perbaikan Mapping 1.4.8: liquidity, struktur, FVG, Order Block, dan Entry Map"
+    "Menghapus MutationObserver global yang membuat halaman Mapping merender dirinya sendiri tanpa henti",
+    "Menghapus interval sinkronisasi Entry Map setiap 750 ms dan kembali ke pola render ringan versi 1.4.7",
+    "Entry Map kini diperbarui hanya ketika isi aplikasi benar-benar dirender atau analisis berubah",
+    "Mempertahankan seluruh perbaikan logika market dari versi 1.4.8 dan 1.4.9"
   ],
   "changelog": [
-    "Memperbaiki halaman Mapping yang freeze atau kosong pada Android WebView tertentu",
-    "Menambahkan fallback WITA UTC+8 ketika zona Asia/Makassar tidak tersedia di WebView",
-    "Menambahkan layar recovery sehingga error startup tidak lagi menghasilkan halaman hitam kosong",
-    "Mempertahankan seluruh perbaikan Mapping 1.4.8: liquidity, struktur, FVG, Order Block, dan Entry Map"
+    "Menghapus MutationObserver global yang membuat halaman Mapping merender dirinya sendiri tanpa henti",
+    "Menghapus interval sinkronisasi Entry Map setiap 750 ms dan kembali ke pola render ringan versi 1.4.7",
+    "Entry Map kini diperbarui hanya ketika isi aplikasi benar-benar dirender atau analisis berubah",
+    "Mempertahankan seluruh perbaikan logika market dari versi 1.4.8 dan 1.4.9"
   ]
 }
