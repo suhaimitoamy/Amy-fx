@@ -9,17 +9,15 @@
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Memperbaiki Asia High dan Asia Low menjadi sesi 06:00–14:00 WITA tanpa lookahead",
-    "Menyelaraskan BSL, SSL, BOS, dan MSS dengan pivot 4/4 serta validasi close-cross",
-    "Menambahkan PDH, PDL, PWH, PWL serta Equal High dan Equal Low ke liquidity hierarchy",
-    "Menyelaraskan FVG, Order Block, dan Entry Map M15 beserta lifecycle SL, TP1, TP2, BE, dan expiry",
-    "Menyamakan label UI WITA dan memvalidasi regression, lint, signer, debug build, serta release build"
+    "Memperbaiki halaman Mapping yang freeze atau kosong pada Android WebView tertentu",
+    "Menambahkan fallback WITA UTC+8 ketika zona Asia/Makassar tidak tersedia di WebView",
+    "Menambahkan layar recovery sehingga error startup tidak lagi menghasilkan halaman hitam kosong",
+    "Mempertahankan seluruh perbaikan Mapping 1.4.8: liquidity, struktur, FVG, Order Block, dan Entry Map"
   ],
   "changelog": [
-    "Memperbaiki Asia High dan Asia Low menjadi sesi 06:00–14:00 WITA tanpa lookahead",
-    "Menyelaraskan BSL, SSL, BOS, dan MSS dengan pivot 4/4 serta validasi close-cross",
-    "Menambahkan PDH, PDL, PWH, PWL serta Equal High dan Equal Low ke liquidity hierarchy",
-    "Menyelaraskan FVG, Order Block, dan Entry Map M15 beserta lifecycle SL, TP1, TP2, BE, dan expiry",
-    "Menyamakan label UI WITA dan memvalidasi regression, lint, signer, debug build, serta release build"
+    "Memperbaiki halaman Mapping yang freeze atau kosong pada Android WebView tertentu",
+    "Menambahkan fallback WITA UTC+8 ketika zona Asia/Makassar tidak tersedia di WebView",
+    "Menambahkan layar recovery sehingga error startup tidak lagi menghasilkan halaman hitam kosong",
+    "Mempertahankan seluruh perbaikan Mapping 1.4.8: liquidity, struktur, FVG, Order Block, dan Entry Map"
   ]
 }
