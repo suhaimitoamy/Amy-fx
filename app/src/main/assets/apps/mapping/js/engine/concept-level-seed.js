@@ -5,7 +5,7 @@ function addLevel(list, item, tolerance) {
   list.push(item);
 }
 
-export function addSwingLevels(values, swings, levels) {
+export function addSwingLevels(values, swings, levels, confirmationBars = 4) {
   const recentHighs = swings.highs.slice(-25);
   const recentLows = swings.lows.slice(-25);
   for (const high of recentHighs) {
@@ -13,7 +13,7 @@ export function addSwingLevels(values, swings, levels) {
     addLevel(levels, {
       id: `BSL:SWING:${high.index}:${high.high.toFixed(5)}`,
       type: 'BSL', subtype: 'SWING', level: high.high,
-      originIndex: high.index, availableIndex: high.index + 3, localAtr
+      originIndex: high.index, availableIndex: high.index + confirmationBars, localAtr
     }, localAtr * 0.015);
   }
   for (const low of recentLows) {
@@ -21,13 +21,13 @@ export function addSwingLevels(values, swings, levels) {
     addLevel(levels, {
       id: `SSL:SWING:${low.index}:${low.low.toFixed(5)}`,
       type: 'SSL', subtype: 'SWING', level: low.low,
-      originIndex: low.index, availableIndex: low.index + 3, localAtr
+      originIndex: low.index, availableIndex: low.index + confirmationBars, localAtr
     }, localAtr * 0.015);
   }
   return { recentHighs, recentLows };
 }
 
-export function addEqualLevels(values, items, type, levels) {
+export function addEqualLevels(values, items, type, levels, confirmationBars = 4) {
   for (let index = 1; index < items.length; index += 1) {
     const current = items[index];
     const localAtr = Math.max(conceptAtrAtClean(values, current.index), 0.0000001);
@@ -43,7 +43,7 @@ export function addEqualLevels(values, items, type, levels) {
     addLevel(levels, {
       id: `${type}:EQUAL:${current.index}:${level.toFixed(5)}`,
       type, subtype: 'EQUAL', level,
-      originIndex: current.index, availableIndex: current.index + 3, localAtr
+      originIndex: current.index, availableIndex: current.index + confirmationBars, localAtr
     }, tolerance);
   }
 }
