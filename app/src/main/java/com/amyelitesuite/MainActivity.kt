@@ -57,6 +57,7 @@ private const val ERROR_URL = "${APP_ASSET_PREFIX}error.html"
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
+    private lateinit var nativeUpdater: NativeAppUpdater
     private lateinit var assetLoader: WebViewAssetLoader
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var rootLayout: FrameLayout
@@ -88,6 +89,7 @@ class MainActivity : Activity() {
         swipeRefreshLayout.layoutParams = matchParentParams
 
         webView = WebView(this)
+        nativeUpdater = NativeAppUpdater(this, webView)
         webView.layoutParams = matchParentParams
         swipeRefreshLayout.addView(webView)
         rootLayout.addView(swipeRefreshLayout)
@@ -241,6 +243,7 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         if (::webView.isInitialized) webView.onResume()
+        if (::nativeUpdater.isInitialized) nativeUpdater.resumePendingInstall()
         updatePermissionGate()
     }
 
@@ -619,6 +622,16 @@ class MainActivity : Activity() {
             (mContext as Activity).runOnUiThread {
                 Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show()
             }
+        }
+
+        @JavascriptInterface
+        fun startAppUpdate(downloadUrl: String?, versionName: String?, versionCode: Int) {
+            nativeUpdater.start(downloadUrl.orEmpty(), versionName.orEmpty(), versionCode)
+        }
+
+        @JavascriptInterface
+        fun cancelAppUpdate() {
+            nativeUpdater.cancel(deletePending = true)
         }
 
         @JavascriptInterface

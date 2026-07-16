@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = Object.freeze({ name: '1.4.10', code: 33 });
+  const VERSION = Object.freeze({ name: '1.4.11', code: 34 });
   window.AmyFXAppVersion = VERSION;
 
   function versionText() {

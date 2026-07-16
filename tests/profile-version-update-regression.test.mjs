@@ -22,20 +22,30 @@ test('version and update scripts remain syntactically valid', () => {
   assertSyntax(checkerUrl);
 });
 
-test('profile displays Amy FX version 1.4.10 and supports manual update checks', () => {
+test('profile displays Amy FX version 1.4.11 and supports manual update checks', () => {
   const version = source(versionUrl);
   const index = source(indexUrl);
-  assert.match(version, /name: '1\.4\.10'/);
-  assert.match(version, /code: 33/);
+  assert.match(version, /name: '1\.4\.11'/);
+  assert.match(version, /code: 34/);
   assert.match(version, /Versi Aplikasi/);
   assert.match(version, /data-profile-action=\\?"version/);
   assert.match(version, /AmyFXUpdate\?\.checkNow/);
   assert.match(index, /<script src="app-version\.js"><\/script>\s*<script src="app\.js"><\/script>\s*<script src="update-checker\.js"><\/script>/);
 });
 
-test('cancel closes update popup temporarily without persisting dismissal', () => {
+test('native updater owns download progress while browser remains a legacy fallback', () => {
   const checker = source(checkerUrl);
-  assert.match(checker, /cancelBtn\.onclick = closePopup/);
+  assert.match(checker, /window\.Android\.startAppUpdate/);
+  assert.match(checker, /window\.Android\.cancelAppUpdate/);
+  assert.match(checker, /window\.AmyFXUpdateNative/);
+  assert.match(checker, /onProgress\(percent, downloaded, total\)/);
+  assert.match(checker, /File tidak menumpuk di folder Download/);
+  assert.match(checker, /window\.location\.href = downloadUrl/);
+  assert.match(checker, /hasNativeUpdater\(\)/);
+});
+
+test('cancel never persists dismissal of a newer version', () => {
+  const checker = source(checkerUrl);
   assert.doesNotMatch(checker, /localStorage\.setItem\(['"]amy_fx_update_dismissed_version/);
   assert.doesNotMatch(checker, /localStorage\.setItem\(['"]amy_fx_update_last_check/);
   assert.match(checker, /localStorage\.removeItem\('amy_fx_update_dismissed_version'\)/);

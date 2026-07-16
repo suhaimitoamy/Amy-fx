@@ -9,15 +9,15 @@
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Menghapus MutationObserver global yang membuat halaman Mapping merender dirinya sendiri tanpa henti",
-    "Menghapus interval sinkronisasi Entry Map setiap 750 ms dan kembali ke pola render ringan versi 1.4.7",
-    "Entry Map kini diperbarui hanya ketika isi aplikasi benar-benar dirender atau analisis berubah",
-    "Mempertahankan seluruh perbaikan logika market dari versi 1.4.8 dan 1.4.9"
+    "Menambahkan download update langsung di dalam Amy FX tanpa dialihkan ke browser",
+    "Menampilkan progress unduhan, ukuran file, status verifikasi, dan tombol pembatalan",
+    "Menyimpan APK sementara di cache aplikasi sehingga tidak menumpuk di folder Download",
+    "Memverifikasi package, version code, dan sertifikat signer sebelum installer Android dibuka"
   ],
   "changelog": [
-    "Menghapus MutationObserver global yang membuat halaman Mapping merender dirinya sendiri tanpa henti",
-    "Menghapus interval sinkronisasi Entry Map setiap 750 ms dan kembali ke pola render ringan versi 1.4.7",
-    "Entry Map kini diperbarui hanya ketika isi aplikasi benar-benar dirender atau analisis berubah",
-    "Mempertahankan seluruh perbaikan logika market dari versi 1.4.8 dan 1.4.9"
+    "Menambahkan download update langsung di dalam Amy FX tanpa dialihkan ke browser",
+    "Menampilkan progress unduhan, ukuran file, status verifikasi, dan tombol pembatalan",
+    "Menyimpan APK sementara di cache aplikasi sehingga tidak menumpuk di folder Download",
+    "Memverifikasi package, version code, dan sertifikat signer sebelum installer Android dibuka"
   ]
 }
