@@ -1,0 +1,110 @@
+name: Prepare Amy FX 1.4.8 Release
+
+on:
+  push:
+    branches:
+      - release/amyfx-1.4.8-mapping-integration
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v4
+        with:
+          ref: release/amyfx-1.4.8-mapping-integration
+          fetch-depth: 0
+
+      - name: Align version and update metadata
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          def replace(path, old, new):
+              file = Path(path)
+              text = file.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'Missing expected text in {path}: {old!r}')
+              file.write_text(text.replace(old, new), encoding='utf-8')
+
+          replace('app/build.gradle.kts',
+                  'versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 30)\n        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "1.4.7"',
+                  'versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 31)\n        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "1.4.8"')
+
+          replace('app/src/main/assets/app-version.js',
+                  "const VERSION = Object.freeze({ name: '1.4.7', code: 30 });",
+                  "const VERSION = Object.freeze({ name: '1.4.8', code: 31 });")
+
+          replace('app/src/main/assets/update-checker.js',
+                  "const VERSION = window.AmyFXAppVersion || { name: '1.4.7', code: 30 };\n  const CURRENT_VERSION_CODE = Number(VERSION.code) || 30;\n  const CURRENT_VERSION_NAME = String(VERSION.name || '1.4.7');",
+                  "const VERSION = window.AmyFXAppVersion || { name: '1.4.8', code: 31 };\n  const CURRENT_VERSION_CODE = Number(VERSION.code) || 31;\n  const CURRENT_VERSION_NAME = String(VERSION.name || '1.4.8');")
+
+          replace('.github/workflows/build-apk.yml',
+                  'AMYFX_VERSION_NAME: "1.4.7"\n      AMYFX_VERSION_CODE: "30"',
+                  'AMYFX_VERSION_NAME: "1.4.8"\n      AMYFX_VERSION_CODE: "31"')
+
+          replace('.github/workflows/build-release.yml',
+                  'description: "Version Name (e.g., 1.4.7)"\n        required: true\n        default: "1.4.7"',
+                  'description: "Version Name (e.g., 1.4.8)"\n        required: true\n        default: "1.4.8"')
+          replace('.github/workflows/build-release.yml',
+                  'default: "30"',
+                  'default: "31"')
+
+          replace('.github/workflows/stage5-apply.yml',
+                  'name: Validate Amy FX 1.4.7 Release Candidate',
+                  'name: Validate Amy FX 1.4.8 Release Candidate')
+          replace('.github/workflows/stage5-apply.yml',
+                  'AMYFX_VERSION_NAME: "1.4.7"\n  AMYFX_VERSION_CODE: "30"',
+                  'AMYFX_VERSION_NAME: "1.4.8"\n  AMYFX_VERSION_CODE: "31"')
+          replace('.github/workflows/stage5-apply.yml',
+                  'Build signed Amy FX 1.4.7 APK',
+                  'Build signed Amy FX 1.4.8 APK')
+          replace('.github/workflows/stage5-apply.yml',
+                  'Amy-FX-v1.4.7-stage5-signed-apk',
+                  'Amy-FX-v1.4.8-stage5-signed-apk')
+
+          replace('tests/profile-version-update-regression.test.mjs',
+                  "test('profile displays Amy FX version 1.4.7 and supports manual update checks', () => {",
+                  "test('profile displays Amy FX version 1.4.8 and supports manual update checks', () => {")
+          replace('tests/profile-version-update-regression.test.mjs',
+                  "assert.match(version, /name: '1\\.4\\.7'/);\n  assert.match(version, /code: 30/);",
+                  "assert.match(version, /name: '1\\.4\\.8'/);\n  assert.match(version, /code: 31/);")
+
+          update_path = Path('update.json')
+          data = json.loads(update_path.read_text(encoding='utf-8'))
+          notes = [
+              'Memperbaiki Asia High dan Asia Low menjadi sesi 06:00–14:00 WITA tanpa lookahead',
+              'Menyelaraskan BSL, SSL, BOS, dan MSS dengan pivot 4/4 serta validasi close-cross',
+              'Menambahkan PDH, PDL, PWH, PWL serta Equal High dan Equal Low ke liquidity hierarchy',
+              'Menyelaraskan FVG, Order Block, dan Entry Map M15 beserta lifecycle SL, TP1, TP2, BE, dan expiry',
+              'Menyamakan label UI WITA dan memvalidasi regression, lint, signer, debug build, serta release build'
+          ]
+          data['release_notes'] = notes
+          data['changelog'] = notes
+          update_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+
+      - name: Verify version alignment
+        run: |
+          grep -F 'versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 31)' app/build.gradle.kts
+          grep -F 'versionName = System.getenv("AMYFX_VERSION_NAME") ?: "1.4.8"' app/build.gradle.kts
+          grep -F "name: '1.4.8', code: 31" app/src/main/assets/app-version.js
+          grep -F 'AMYFX_VERSION_NAME: "1.4.8"' .github/workflows/build-apk.yml .github/workflows/stage5-apply.yml
+          grep -F 'AMYFX_VERSION_CODE: "31"' .github/workflows/build-apk.yml .github/workflows/stage5-apply.yml
+
+      - name: Commit prepared release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/build.gradle.kts app/src/main/assets/app-version.js app/src/main/assets/update-checker.js update.json tests/profile-version-update-regression.test.mjs .github/workflows/build-apk.yml .github/workflows/build-release.yml .github/workflows/stage5-apply.yml
+          if git diff --cached --quiet; then
+            echo "Amy FX 1.4.8 metadata already aligned."
+            exit 0
+          fi
+          git commit -m "release: prepare Amy FX 1.4.8 mapping integration"
+          git push origin HEAD:release/amyfx-1.4.8-mapping-integration
