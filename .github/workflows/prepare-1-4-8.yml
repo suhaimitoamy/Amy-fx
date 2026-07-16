@@ -22,7 +22,7 @@ jobs:
           ref: release/amyfx-1.4.8-mapping-integration
           fetch-depth: 0
 
-      - name: Align version and update metadata
+      - name: Align application version and update metadata
         run: |
           python3 - <<'PY'
           import json
@@ -31,9 +31,11 @@ jobs:
           def replace(path, old, new):
               file = Path(path)
               text = file.read_text(encoding='utf-8')
-              if old not in text:
+              if old in text:
+                  file.write_text(text.replace(old, new), encoding='utf-8')
+                  return
+              if new not in text:
                   raise SystemExit(f'Missing expected text in {path}: {old!r}')
-              file.write_text(text.replace(old, new), encoding='utf-8')
 
           replace('app/build.gradle.kts',
                   'versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 30)\n        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "1.4.7"',
@@ -46,30 +48,6 @@ jobs:
           replace('app/src/main/assets/update-checker.js',
                   "const VERSION = window.AmyFXAppVersion || { name: '1.4.7', code: 30 };\n  const CURRENT_VERSION_CODE = Number(VERSION.code) || 30;\n  const CURRENT_VERSION_NAME = String(VERSION.name || '1.4.7');",
                   "const VERSION = window.AmyFXAppVersion || { name: '1.4.8', code: 31 };\n  const CURRENT_VERSION_CODE = Number(VERSION.code) || 31;\n  const CURRENT_VERSION_NAME = String(VERSION.name || '1.4.8');")
-
-          replace('.github/workflows/build-apk.yml',
-                  'AMYFX_VERSION_NAME: "1.4.7"\n      AMYFX_VERSION_CODE: "30"',
-                  'AMYFX_VERSION_NAME: "1.4.8"\n      AMYFX_VERSION_CODE: "31"')
-
-          replace('.github/workflows/build-release.yml',
-                  'description: "Version Name (e.g., 1.4.7)"\n        required: true\n        default: "1.4.7"',
-                  'description: "Version Name (e.g., 1.4.8)"\n        required: true\n        default: "1.4.8"')
-          replace('.github/workflows/build-release.yml',
-                  'default: "30"',
-                  'default: "31"')
-
-          replace('.github/workflows/stage5-apply.yml',
-                  'name: Validate Amy FX 1.4.7 Release Candidate',
-                  'name: Validate Amy FX 1.4.8 Release Candidate')
-          replace('.github/workflows/stage5-apply.yml',
-                  'AMYFX_VERSION_NAME: "1.4.7"\n  AMYFX_VERSION_CODE: "30"',
-                  'AMYFX_VERSION_NAME: "1.4.8"\n  AMYFX_VERSION_CODE: "31"')
-          replace('.github/workflows/stage5-apply.yml',
-                  'Build signed Amy FX 1.4.7 APK',
-                  'Build signed Amy FX 1.4.8 APK')
-          replace('.github/workflows/stage5-apply.yml',
-                  'Amy-FX-v1.4.7-stage5-signed-apk',
-                  'Amy-FX-v1.4.8-stage5-signed-apk')
 
           replace('tests/profile-version-update-regression.test.mjs',
                   "test('profile displays Amy FX version 1.4.7 and supports manual update checks', () => {",
@@ -104,9 +82,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app/build.gradle.kts app/src/main/assets/app-version.js app/src/main/assets/update-checker.js update.json tests/profile-version-update-regression.test.mjs .github/workflows/build-apk.yml .github/workflows/build-release.yml .github/workflows/stage5-apply.yml
+          git add app/build.gradle.kts app/src/main/assets/app-version.js app/src/main/assets/update-checker.js update.json tests/profile-version-update-regression.test.mjs
           if git diff --cached --quiet; then
-            echo "Amy FX 1.4.8 metadata already aligned."
+            echo "Amy FX 1.4.8 application metadata already aligned."
             exit 0
           fi
           git commit -m "release: prepare Amy FX 1.4.8 mapping integration"
