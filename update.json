@@ -9,17 +9,17 @@
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Mengaktifkan Amy Concept Engine V2 hasil validasi backtest 2022–2026 pada Mapping",
-    "Memperketat BOS dan CHOCH dengan close, displacement, dan penetration berbasis ATR",
-    "Menambahkan lifecycle FVG ke IFVG serta Order Block ke Breaker",
-    "Memperbaiki BSL, SSL, liquidity sweep, dan draw target agar tidak dianggap sebagai sinyal arah",
-    "Mempertahankan jurnal, progres Academy, pengaturan, dan data lokal saat update tanpa uninstall"
+    "Memperbaiki Asia High dan Asia Low menjadi sesi 06:00–14:00 WITA tanpa lookahead",
+    "Menyelaraskan BSL, SSL, BOS, dan MSS dengan pivot 4/4 serta validasi close-cross",
+    "Menambahkan PDH, PDL, PWH, PWL serta Equal High dan Equal Low ke liquidity hierarchy",
+    "Menyelaraskan FVG, Order Block, dan Entry Map M15 beserta lifecycle SL, TP1, TP2, BE, dan expiry",
+    "Menyamakan label UI WITA dan memvalidasi regression, lint, signer, debug build, serta release build"
   ],
   "changelog": [
-    "Mengaktifkan Amy Concept Engine V2 hasil validasi backtest 2022–2026 pada Mapping",
-    "Memperketat BOS dan CHOCH dengan close, displacement, dan penetration berbasis ATR",
-    "Menambahkan lifecycle FVG ke IFVG serta Order Block ke Breaker",
-    "Memperbaiki BSL, SSL, liquidity sweep, dan draw target agar tidak dianggap sebagai sinyal arah",
-    "Mempertahankan jurnal, progres Academy, pengaturan, dan data lokal saat update tanpa uninstall"
+    "Memperbaiki Asia High dan Asia Low menjadi sesi 06:00–14:00 WITA tanpa lookahead",
+    "Menyelaraskan BSL, SSL, BOS, dan MSS dengan pivot 4/4 serta validasi close-cross",
+    "Menambahkan PDH, PDL, PWH, PWL serta Equal High dan Equal Low ke liquidity hierarchy",
+    "Menyelaraskan FVG, Order Block, dan Entry Map M15 beserta lifecycle SL, TP1, TP2, BE, dan expiry",
+    "Menyamakan label UI WITA dan memvalidasi regression, lint, signer, debug build, serta release build"
   ]
 }
