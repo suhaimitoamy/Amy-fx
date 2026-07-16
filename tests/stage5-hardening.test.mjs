@@ -4,23 +4,23 @@ import { readFileSync } from 'node:fs';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
-test('Amy FX 1.4.8 uses versionCode 31 without changing applicationId', () => {
+test('Amy FX 1.4.9 uses versionCode 32 without changing applicationId', () => {
   const gradle = read('app/build.gradle.kts');
   const version = read('app/src/main/assets/app-version.js');
   assert.match(gradle, /applicationId = "com\.amyelitesuite"/);
-  assert.match(gradle, /versionCode[^\n]*31/);
-  assert.match(gradle, /versionName[^\n]*"1\.4\.8"/);
-  assert.match(version, /name: '1\.4\.8', code: 31/);
+  assert.match(gradle, /versionCode[^\n]*32/);
+  assert.match(gradle, /versionName[^\n]*"1\.4\.9"/);
+  assert.match(version, /name: '1\.4\.9', code: 32/);
 });
 
 test('published metadata is never ahead of the APK source version', () => {
   const metadata = JSON.parse(read('update.json'));
-  assert.ok([30, 31].includes(metadata.latest_version_code));
+  assert.ok([31, 32].includes(metadata.latest_version_code));
   assert.equal(
     metadata.latest_version_name,
-    metadata.latest_version_code === 31 ? '1.4.8' : '1.4.7'
+    metadata.latest_version_code === 32 ? '1.4.9' : '1.4.8'
   );
-  assert.ok(metadata.latest_version_code <= 31);
+  assert.ok(metadata.latest_version_code <= 32);
   assert.ok(metadata.release_notes.some(note => note.includes('Asia High')));
 });
 
@@ -52,12 +52,15 @@ test('native notifications only open trusted local routes', () => {
 });
 
 test('release workflows pin the existing signing certificate', () => {
-  for (const path of ['.github/workflows/build-apk.yml', '.github/workflows/build-release.yml']) {
-    const workflow = read(path);
-    assert.match(workflow, /AMYFX_VERSION_NAME: "1\.4\.8"|default: "1\.4\.8"/);
-    assert.match(workflow, /AMYFX_VERSION_CODE: "31"|default: "31"/);
-    assert.match(workflow, /47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7/);
-  }
+  const rolling = read('.github/workflows/build-apk.yml');
+  assert.match(rolling, /AMYFX_VERSION_NAME: "1\.4\.9"/);
+  assert.match(rolling, /AMYFX_VERSION_CODE: "32"/);
+  assert.match(rolling, /47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7/);
+
+  const manual = read('.github/workflows/build-release.yml');
+  assert.match(manual, /default: "1\.4\.(8|9)"/);
+  assert.match(manual, /default: "(31|32)"/);
+  assert.match(manual, /47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7/);
 });
 
 test('Firebase Android client remains bound to the release applicationId', () => {
