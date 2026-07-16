@@ -11,6 +11,38 @@
 <link rel="stylesheet" href="css/mapping-integrity.css">
 <link rel="stylesheet" href="css/market-outlook.css">
 <link rel="stylesheet" href="css/mapping-zones.css">
+<script>
+(function () {
+  var NativeDateTimeFormat = Intl.DateTimeFormat;
+  function AmyDateTimeFormat(locales, options) {
+    try {
+      return new NativeDateTimeFormat(locales, options);
+    } catch (error) {
+      if (options && options.timeZone === 'Asia/Makassar') {
+        var fallback = {};
+        Object.keys(options).forEach(function (key) { fallback[key] = options[key]; });
+        fallback.timeZone = 'Asia/Singapore';
+        return new NativeDateTimeFormat(locales, fallback);
+      }
+      throw error;
+    }
+  }
+  AmyDateTimeFormat.prototype = NativeDateTimeFormat.prototype;
+  AmyDateTimeFormat.supportedLocalesOf = NativeDateTimeFormat.supportedLocalesOf.bind(NativeDateTimeFormat);
+  Intl.DateTimeFormat = AmyDateTimeFormat;
+
+  window.addEventListener('error', function (event) {
+    window.__amyMappingStartupError = event && (event.message || event.error && event.error.message) || 'JavaScript startup error';
+  });
+
+  setTimeout(function () {
+    var app = document.getElementById('app');
+    if (!app || app.children.length || app.textContent.trim()) return;
+    var message = window.__amyMappingStartupError || 'Mapping belum berhasil dimuat.';
+    app.innerHTML = '<section class="card"><div class="kicker">MAPPING RECOVERY</div><h2>Memuat ulang Mapping</h2><p class="muted">' + String(message).replace(/[&<>"']/g, function (char) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char]; }) + '</p><button class="action" style="width:100%" onclick="location.reload()">Muat Ulang</button></section>';
+  }, 3500);
+})();
+</script>
 </head>
 <body>
 <header class="topbar"><div class="brand">XAU</div><div><div class="brand-title">Amy FX Mapping</div><div class="brand-sub">Setup Entry • BSL/SSL • Alerts</div></div><div id="conn" class="status">Offline</div></header>
