@@ -6,6 +6,51 @@ export { evaluateLevelConfirmation as evaluateLiquidityReclaim } from './concept
 
 const LIQUIDITY_SWING_LENGTH = 4;
 
+function rank(item) {
+  return item.interactionIndex >= 0 ? item.interactionIndex : item.availableIndex;
+}
+
+function collapseEqualLevels(items) {
+  const equal = items.filter(item => item.subtype === 'EQUAL');
+  const other = items.filter(item => item.subtype !== 'EQUAL');
+  const clusters = [];
+
+  for (const item of equal.sort((a, b) => a.availableIndex - b.availableIndex)) {
+    const tolerance = Math.max(Number(item.tolerance || 0), Number(item.localAtr || 0) * 0.03, 0.0000001);
+    const cluster = clusters.find(existing => existing.type === item.type
+      && Math.abs(existing.level - item.level) <= Math.max(existing.tolerance, tolerance));
+    if (!cluster) {
+      clusters.push({ type: item.type, level: item.level, tolerance, items: [item] });
+      continue;
+    }
+    cluster.items.push(item);
+    cluster.tolerance = Math.max(cluster.tolerance, tolerance);
+    cluster.level = item.type === 'BSL'
+      ? Math.max(cluster.level, item.level)
+      : Math.min(cluster.level, item.level);
+  }
+
+  const selected = clusters.map(cluster => {
+    const active = cluster.items.filter(item => item.active);
+    const candidates = active.length ? active : cluster.items;
+    const latest = [...candidates].sort((a, b) => rank(b) - rank(a))[0];
+    const members = [...new Set(cluster.items.flatMap(item => item.memberIndices || []))].sort((a, b) => a - b);
+    return {
+      ...latest,
+      memberIndices: members,
+      touchCount: members.length,
+      tolerance: cluster.tolerance,
+      clusterLevel: cluster.level
+    };
+  });
+
+  const filteredOther = other.filter(item => item.subtype !== 'SWING' || !selected.some(equalItem =>
+    equalItem.type === item.type
+      && Math.abs(equalItem.level - item.level) <= Math.max(equalItem.tolerance || 0, item.localAtr * 0.03)
+  ));
+  return [...filteredOther, ...selected];
+}
+
 export function detectLiquidityConcepts(candles, { currentPrice = null, maxLevels = 24 } = {}) {
   const values = cleanConceptCandles(candles);
   if (values.length < 12) return [];
@@ -55,8 +100,7 @@ export function detectLiquidityConcepts(candles, { currentPrice = null, maxLevel
     };
   });
 
-  const rank = item => item.interactionIndex >= 0 ? item.interactionIndex : item.availableIndex;
-  return evaluated
+  return collapseEqualLevels(evaluated)
     .sort((a, b) => rank(b) - rank(a))
     .slice(0, maxLevels);
 }
