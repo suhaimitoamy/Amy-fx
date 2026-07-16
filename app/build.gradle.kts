@@ -19,8 +19,8 @@ android {
         applicationId = "com.amyelitesuite"
         minSdk = 26
         targetSdk = 35
-        versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 31)
-        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "1.4.8"
+        versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 32)
+        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "1.4.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
