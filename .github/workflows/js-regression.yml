@@ -1,0 +1,23 @@
+name: JavaScript Regression
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run Mapping regression tests
+        run: node --test --test-reporter=spec tests/*.test.mjs
