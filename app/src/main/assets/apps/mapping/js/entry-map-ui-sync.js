@@ -26,6 +26,26 @@ function cardMarkup(setup, display) {
   </section>`;
 }
 
+function patchDecision(setup, display) {
+  const decision = document.querySelector('.decision-main');
+  if (decision) {
+    if (!setup || display.terminal) decision.textContent = 'TUNGGU';
+    else decision.textContent = `FOKUS ${String(setup.dir || '').includes('SELL') ? 'SELL' : 'BUY'}`;
+  }
+  document.querySelectorAll('.decision-box').forEach(box => {
+    const label = box.querySelector('small')?.textContent?.trim();
+    const value = box.querySelector('strong');
+    if (!value) return;
+    if (label === 'Status') value.textContent = display.status;
+    if (label === 'Area Rencana') value.textContent = setup ? p2(setup.entry) : '-';
+    if (label === 'Batas Salah') value.textContent = setup ? p2(setup.sl) : '-';
+    if (label === 'Tingkat Keyakinan' && setup) value.textContent = 'RULE';
+    if (label === 'Target Terdekat' && setup) value.textContent = `${p2(setup.tp1)} / ${p2(setup.tp2)}`;
+  });
+  const reason = document.querySelector('.decision-reason');
+  if (reason && setup) reason.innerHTML = `<b>Penjelasan:</b><br>${display.note}`;
+}
+
 function patchExisting(setup, display) {
   const focus = document.querySelector('.setup-focus');
   if (focus && state.tf === 'M15') {
@@ -34,6 +54,8 @@ function patchExisting(setup, display) {
     const title = focus.querySelector('h2');
     if (title) title.textContent = setup ? 'M15 ENTRY MAP' : 'Belum ada Entry Map aktif';
   }
+
+  patchDecision(setup, display);
 
   document.querySelectorAll('.setup-card').forEach(card => {
     const title = card.querySelector('.setup-title')?.textContent || '';
