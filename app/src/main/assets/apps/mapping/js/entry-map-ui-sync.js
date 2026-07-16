@@ -1,4 +1,4 @@
-import { state, p2 } from './main.js';
+import { state, p2, nowTime, sessions } from './main.js';
 import { entryMapDisplayState } from './ui/entry-map-status.js';
 
 let lastSignature = '';
@@ -26,6 +26,22 @@ function cardMarkup(setup, display) {
   </section>`;
 }
 
+function patchClockLabels() {
+  const current = nowTime();
+  const top = document.getElementById('top-wib');
+  if (top) top.textContent = `${state.conn === 'Connected' ? '● Live Price' : `○ ${state.conn}`} • WITA ${current}`;
+  const killzoneClock = document.getElementById('kz-wib');
+  if (killzoneClock) killzoneClock.textContent = `WITA ${current}`;
+
+  const focusSessions = sessions().filter(item =>
+    item.name.includes('London Open') || item.name.includes('New York Open')
+  );
+  document.querySelectorAll('.session-focus small').forEach((element, index) => {
+    const range = focusSessions[index]?.wita || focusSessions[index]?.wib;
+    if (range) element.textContent = `${range} WITA`;
+  });
+}
+
 function patchDecision(setup, display) {
   const decision = document.querySelector('.decision-main');
   if (decision) {
@@ -33,27 +49,63 @@ function patchDecision(setup, display) {
     else decision.textContent = `FOKUS ${String(setup.dir || '').includes('SELL') ? 'SELL' : 'BUY'}`;
   }
   document.querySelectorAll('.decision-box').forEach(box => {
-    const label = box.querySelector('small')?.textContent?.trim();
+    const labelElement = box.querySelector('small');
+    const label = labelElement?.textContent?.trim();
     const value = box.querySelector('strong');
     if (!value) return;
     if (label === 'Status') value.textContent = display.status;
-    if (label === 'Area Rencana') value.textContent = setup ? p2(setup.entry) : '-';
-    if (label === 'Batas Salah') value.textContent = setup ? p2(setup.sl) : '-';
-    if (label === 'Tingkat Keyakinan' && setup) value.textContent = 'RULE';
-    if (label === 'Target Terdekat' && setup) value.textContent = `${p2(setup.tp1)} / ${p2(setup.tp2)}`;
+    if (label === 'Area Rencana') {
+      if (labelElement) labelElement.textContent = 'Entry MSS';
+      value.textContent = setup ? p2(setup.entry) : '-';
+    }
+    if (label === 'Batas Salah') {
+      if (labelElement) labelElement.textContent = 'Stop Loss';
+      value.textContent = setup ? p2(setup.sl) : '-';
+    }
+    if (label === 'Tingkat Keyakinan') {
+      if (labelElement) labelElement.textContent = 'Mode Eksekusi';
+      value.textContent = setup ? 'RULE-BASED' : '-';
+    }
+    if (label === 'Target Terdekat' && setup) {
+      if (labelElement) labelElement.textContent = 'TP1 / TP2';
+      value.textContent = `${p2(setup.tp1)} / ${p2(setup.tp2)}`;
+    }
   });
   const reason = document.querySelector('.decision-reason');
   if (reason && setup) reason.innerHTML = `<b>Penjelasan:</b><br>${display.note}`;
 }
 
+function patchFocusCard(focus, setup, display) {
+  const note = focus.querySelector('.summary-note');
+  if (note) note.textContent = display.note;
+  const title = focus.querySelector('h2');
+  if (title) title.textContent = setup ? 'M15 ENTRY MAP' : 'Belum ada Entry Map aktif';
+
+  focus.querySelectorAll('.setup-summary > div').forEach(box => {
+    const label = box.querySelector('small');
+    const value = box.querySelector('strong');
+    const text = label?.textContent?.trim();
+    if (!label || !value) return;
+    if (text === 'Entry Area') {
+      label.textContent = 'Entry MSS';
+      value.textContent = setup ? p2(setup.entry) : '-';
+    } else if (text === 'Invalidasi') {
+      label.textContent = 'Stop Loss';
+      value.textContent = setup ? p2(setup.sl) : '-';
+    } else if (text === 'Target') {
+      label.textContent = 'TP1 / TP2';
+      value.textContent = setup ? `${p2(setup.tp1)} / ${p2(setup.tp2)}` : '-';
+    } else if (text === 'Score') {
+      label.textContent = 'Mode';
+      value.textContent = setup ? 'RULE-BASED' : '-';
+    }
+  });
+}
+
 function patchExisting(setup, display) {
+  patchClockLabels();
   const focus = document.querySelector('.setup-focus');
-  if (focus && state.tf === 'M15') {
-    const note = focus.querySelector('.summary-note');
-    if (note) note.textContent = display.note;
-    const title = focus.querySelector('h2');
-    if (title) title.textContent = setup ? 'M15 ENTRY MAP' : 'Belum ada Entry Map aktif';
-  }
+  if (focus && state.tf === 'M15') patchFocusCard(focus, setup, display);
 
   patchDecision(setup, display);
 
@@ -65,9 +117,16 @@ function patchExisting(setup, display) {
     const reason = card.querySelector('.reason');
     if (reason) reason.innerHTML = `<b>Lifecycle:</b><br>${display.note}`;
     card.querySelectorAll('.num').forEach(box => {
-      if (box.querySelector('small')?.textContent?.trim() === 'Score') {
-        box.querySelector('small').textContent = 'Mode';
-        box.querySelector('strong').textContent = 'RULE-BASED';
+      const label = box.querySelector('small');
+      const value = box.querySelector('strong');
+      const text = label?.textContent?.trim();
+      if (!label || !value) return;
+      if (text === 'Score') {
+        label.textContent = 'Mode';
+        value.textContent = 'RULE-BASED';
+      } else if (text === 'Entry Area') {
+        label.textContent = 'Entry MSS';
+        value.textContent = setup ? p2(setup.entry) : '-';
       }
     });
     const precision = card.querySelector('.precision-plan');
@@ -79,6 +138,7 @@ function patchExisting(setup, display) {
 
 function sync() {
   const result = state.result;
+  patchClockLabels();
   if (!result || state.tf !== 'M15' || !result.entryMap) {
     document.querySelector('.entry-map-state-card')?.remove();
     return;
@@ -87,6 +147,7 @@ function sync() {
   const display = entryMapDisplayState(setup);
   const signature = JSON.stringify([
     state.tab,
+    state.conn,
     setup?.id,
     display.status,
     setup?.sl,
