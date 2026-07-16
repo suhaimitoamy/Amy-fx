@@ -2,6 +2,13 @@ import { state, p2, nowTime, sessions } from './main.js';
 import { entryMapDisplayState } from './ui/entry-map-status.js';
 
 let lastSignature = '';
+let syncQueued = false;
+let syncing = false;
+let observer = null;
+
+function setText(element, text) {
+  if (element && element.textContent !== text) element.textContent = text;
+}
 
 function valueBlock(label, value) {
   return `<div><small>${label}</small><strong>${value}</strong></div>`;
@@ -29,57 +36,56 @@ function cardMarkup(setup, display) {
 function patchClockLabels() {
   const current = nowTime();
   const top = document.getElementById('top-wib');
-  if (top) top.textContent = `${state.conn === 'Connected' ? '● Live Price' : `○ ${state.conn}`} • WITA ${current}`;
-  const killzoneClock = document.getElementById('kz-wib');
-  if (killzoneClock) killzoneClock.textContent = `WITA ${current}`;
+  setText(top, `${state.conn === 'Connected' ? '● Live Price' : `○ ${state.conn}`} • WITA ${current}`);
+  setText(document.getElementById('kz-wib'), `WITA ${current}`);
 
   const focusSessions = sessions().filter(item =>
     item.name.includes('London Open') || item.name.includes('New York Open')
   );
   document.querySelectorAll('.session-focus small').forEach((element, index) => {
     const range = focusSessions[index]?.wita || focusSessions[index]?.wib;
-    if (range) element.textContent = `${range} WITA`;
+    if (range) setText(element, `${range} WITA`);
   });
 }
 
 function patchDecision(setup, display) {
   const decision = document.querySelector('.decision-main');
   if (decision) {
-    if (!setup || display.terminal) decision.textContent = 'TUNGGU';
-    else decision.textContent = `FOKUS ${String(setup.dir || '').includes('SELL') ? 'SELL' : 'BUY'}`;
+    setText(decision, !setup || display.terminal
+      ? 'TUNGGU'
+      : `FOKUS ${String(setup.dir || '').includes('SELL') ? 'SELL' : 'BUY'}`);
   }
   document.querySelectorAll('.decision-box').forEach(box => {
     const labelElement = box.querySelector('small');
     const label = labelElement?.textContent?.trim();
     const value = box.querySelector('strong');
     if (!value) return;
-    if (label === 'Status') value.textContent = display.status;
+    if (label === 'Status') setText(value, display.status);
     if (label === 'Area Rencana') {
-      if (labelElement) labelElement.textContent = 'Entry MSS';
-      value.textContent = setup ? p2(setup.entry) : '-';
+      setText(labelElement, 'Entry MSS');
+      setText(value, setup ? p2(setup.entry) : '-');
     }
     if (label === 'Batas Salah') {
-      if (labelElement) labelElement.textContent = 'Stop Loss';
-      value.textContent = setup ? p2(setup.sl) : '-';
+      setText(labelElement, 'Stop Loss');
+      setText(value, setup ? p2(setup.sl) : '-');
     }
     if (label === 'Tingkat Keyakinan') {
-      if (labelElement) labelElement.textContent = 'Mode Eksekusi';
-      value.textContent = setup ? 'RULE-BASED' : '-';
+      setText(labelElement, 'Mode Eksekusi');
+      setText(value, setup ? 'RULE-BASED' : '-');
     }
     if (label === 'Target Terdekat' && setup) {
-      if (labelElement) labelElement.textContent = 'TP1 / TP2';
-      value.textContent = `${p2(setup.tp1)} / ${p2(setup.tp2)}`;
+      setText(labelElement, 'TP1 / TP2');
+      setText(value, `${p2(setup.tp1)} / ${p2(setup.tp2)}`);
     }
   });
   const reason = document.querySelector('.decision-reason');
-  if (reason && setup) reason.innerHTML = `<b>Penjelasan:</b><br>${display.note}`;
+  const reasonHtml = setup ? `<b>Penjelasan:</b><br>${display.note}` : '';
+  if (reason && setup && reason.innerHTML !== reasonHtml) reason.innerHTML = reasonHtml;
 }
 
 function patchFocusCard(focus, setup, display) {
-  const note = focus.querySelector('.summary-note');
-  if (note) note.textContent = display.note;
-  const title = focus.querySelector('h2');
-  if (title) title.textContent = setup ? 'M15 ENTRY MAP' : 'Belum ada Entry Map aktif';
+  setText(focus.querySelector('.summary-note'), display.note);
+  setText(focus.querySelector('h2'), setup ? 'M15 ENTRY MAP' : 'Belum ada Entry Map aktif');
 
   focus.querySelectorAll('.setup-summary > div').forEach(box => {
     const label = box.querySelector('small');
@@ -87,17 +93,17 @@ function patchFocusCard(focus, setup, display) {
     const text = label?.textContent?.trim();
     if (!label || !value) return;
     if (text === 'Entry Area') {
-      label.textContent = 'Entry MSS';
-      value.textContent = setup ? p2(setup.entry) : '-';
+      setText(label, 'Entry MSS');
+      setText(value, setup ? p2(setup.entry) : '-');
     } else if (text === 'Invalidasi') {
-      label.textContent = 'Stop Loss';
-      value.textContent = setup ? p2(setup.sl) : '-';
+      setText(label, 'Stop Loss');
+      setText(value, setup ? p2(setup.sl) : '-');
     } else if (text === 'Target') {
-      label.textContent = 'TP1 / TP2';
-      value.textContent = setup ? `${p2(setup.tp1)} / ${p2(setup.tp2)}` : '-';
+      setText(label, 'TP1 / TP2');
+      setText(value, setup ? `${p2(setup.tp1)} / ${p2(setup.tp2)}` : '-');
     } else if (text === 'Score') {
-      label.textContent = 'Mode';
-      value.textContent = setup ? 'RULE-BASED' : '-';
+      setText(label, 'Mode');
+      setText(value, setup ? 'RULE-BASED' : '-');
     }
   });
 }
@@ -106,72 +112,105 @@ function patchExisting(setup, display) {
   patchClockLabels();
   const focus = document.querySelector('.setup-focus');
   if (focus && state.tf === 'M15') patchFocusCard(focus, setup, display);
-
   patchDecision(setup, display);
 
   document.querySelectorAll('.setup-card').forEach(card => {
     const title = card.querySelector('.setup-title')?.textContent || '';
     if (!title.includes('M15 ENTRY MAP')) return;
-    const status = card.querySelector('.setup-head .muted');
-    if (status) status.textContent = `Timeframe: M15 • Status: ${display.status}`;
+    setText(card.querySelector('.setup-head .muted'), `Timeframe: M15 • Status: ${display.status}`);
     const reason = card.querySelector('.reason');
-    if (reason) reason.innerHTML = `<b>Lifecycle:</b><br>${display.note}`;
+    const reasonHtml = `<b>Lifecycle:</b><br>${display.note}`;
+    if (reason && reason.innerHTML !== reasonHtml) reason.innerHTML = reasonHtml;
     card.querySelectorAll('.num').forEach(box => {
       const label = box.querySelector('small');
       const value = box.querySelector('strong');
       const text = label?.textContent?.trim();
       if (!label || !value) return;
       if (text === 'Score') {
-        label.textContent = 'Mode';
-        value.textContent = 'RULE-BASED';
+        setText(label, 'Mode');
+        setText(value, 'RULE-BASED');
       } else if (text === 'Entry Area') {
-        label.textContent = 'Entry MSS';
-        value.textContent = setup ? p2(setup.entry) : '-';
+        setText(label, 'Entry MSS');
+        setText(value, setup ? p2(setup.entry) : '-');
       }
     });
     const precision = card.querySelector('.precision-plan');
-    if (precision) {
-      precision.innerHTML = `<b>M15 ENTRY MAP</b><span>TP1 0,35R · SL → Break-even</span><span>TP2 1,75R · Expiry 36 candle M15</span>`;
-    }
+    const precisionHtml = '<b>M15 ENTRY MAP</b><span>TP1 0,35R · SL → Break-even</span><span>TP2 1,75R · Expiry 36 candle M15</span>';
+    if (precision && precision.innerHTML !== precisionHtml) precision.innerHTML = precisionHtml;
   });
 }
 
 function sync() {
-  const result = state.result;
-  patchClockLabels();
-  if (!result || state.tf !== 'M15' || !result.entryMap) {
-    document.querySelector('.entry-map-state-card')?.remove();
-    return;
-  }
-  const setup = result.entryMap.setup;
-  const display = entryMapDisplayState(setup);
-  const signature = JSON.stringify([
-    state.tab,
-    state.conn,
-    setup?.id,
-    display.status,
-    setup?.sl,
-    setup?.lifecycle?.barsElapsed,
-    document.getElementById('app')?.childElementCount
-  ]);
-  if (signature === lastSignature) return;
-  lastSignature = signature;
-  patchExisting(setup, display);
+  if (syncing) return;
+  syncing = true;
+  try {
+    const result = state.result;
+    patchClockLabels();
+    if (!result || state.tf !== 'M15' || !result.entryMap) {
+      document.querySelector('.entry-map-state-card')?.remove();
+      lastSignature = '';
+      return;
+    }
+    const setup = result.entryMap.setup;
+    const display = entryMapDisplayState(setup);
+    const signature = JSON.stringify([
+      state.tab,
+      state.conn,
+      setup?.id,
+      display.status,
+      setup?.sl,
+      setup?.lifecycle?.barsElapsed,
+      document.getElementById('app')?.childElementCount
+    ]);
+    if (signature === lastSignature) return;
+    lastSignature = signature;
+    patchExisting(setup, display);
 
-  const app = document.getElementById('app');
-  if (!app || !['Dashboard', 'Analyze', 'Setups'].includes(state.tab)) return;
-  let card = app.querySelector('.entry-map-state-card');
-  if (!card) {
-    card = document.createElement('div');
-    card.className = 'entry-map-state-card-host';
-    const anchor = app.querySelector('.setup-focus') || app.firstElementChild;
-    if (anchor?.nextSibling) app.insertBefore(card, anchor.nextSibling);
-    else app.appendChild(card);
+    const app = document.getElementById('app');
+    if (!app || !['Dashboard', 'Analyze', 'Setups'].includes(state.tab)) return;
+    let card = app.querySelector('.entry-map-state-card');
+    const markup = cardMarkup(setup, display);
+    if (!card) {
+      const host = document.createElement('div');
+      host.className = 'entry-map-state-card-host';
+      const anchor = app.querySelector('.setup-focus') || app.firstElementChild;
+      if (anchor?.nextSibling) app.insertBefore(host, anchor.nextSibling);
+      else app.appendChild(host);
+      host.outerHTML = markup;
+    } else if (card.outerHTML !== markup) {
+      card.outerHTML = markup;
+    }
+  } finally {
+    syncing = false;
   }
-  card.outerHTML = cardMarkup(setup, display);
 }
 
-new MutationObserver(sync).observe(document.documentElement, { childList: true, subtree: true });
-window.setInterval(sync, 750);
-window.addEventListener('amyfx:mapping-updated', sync);
-sync();
+function queueSync() {
+  if (syncQueued) return;
+  syncQueued = true;
+  requestAnimationFrame(() => {
+    syncQueued = false;
+    sync();
+  });
+}
+
+function boot() {
+  const app = document.getElementById('app');
+  if (app) {
+    observer?.disconnect();
+    observer = new MutationObserver(queueSync);
+    observer.observe(app, { childList: true });
+  }
+  window.addEventListener('amyfx:mapping-updated', queueSync);
+  window.addEventListener('focus', queueSync);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) queueSync();
+  });
+  queueSync();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', boot, { once: true });
+} else {
+  boot();
+}
