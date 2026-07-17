@@ -1,23 +1,23 @@
 {
-  "latest_version_code": 34,
-  "latest_version_name": "1.4.11",
-  "versionCode": 34,
-  "version": "1.4.11",
+  "latest_version_code": 35,
+  "latest_version_name": "1.4.12",
+  "versionCode": 35,
+  "version": "1.4.12",
   "releaseDate": "2026-07-17",
   "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Menambahkan download update langsung di dalam Amy FX tanpa dialihkan ke browser",
-    "Menampilkan progress unduhan, ukuran file, status verifikasi, dan tombol pembatalan",
-    "Menyimpan APK sementara di cache aplikasi sehingga tidak menumpuk di folder Download",
-    "Memverifikasi package, version code, dan sertifikat signer sebelum installer Android dibuka"
+    "Menambahkan Liquidity Draw first-hit threshold 97 sebagai informasi context di Mapping",
+    "Menampilkan destination BSL/SSL, target liquidity, confidence model, dan jarak ATR pada M15 serta H1",
+    "Liquidity Draw tidak menyediakan sinyal BUY/SELL, entry, stop loss, take profit, atau eksekusi otomatis",
+    "Sistem menampilkan ABSTAIN ketika confidence 97 tidak terpenuhi atau context belum lengkap"
   ],
   "changelog": [
-    "Menambahkan download update langsung di dalam Amy FX tanpa dialihkan ke browser",
-    "Menampilkan progress unduhan, ukuran file, status verifikasi, dan tombol pembatalan",
-    "Menyimpan APK sementara di cache aplikasi sehingga tidak menumpuk di folder Download",
-    "Memverifikasi package, version code, dan sertifikat signer sebelum installer Android dibuka"
+    "Menambahkan Liquidity Draw first-hit threshold 97 sebagai informasi context di Mapping",
+    "Menampilkan destination BSL/SSL, target liquidity, confidence model, dan jarak ATR pada M15 serta H1",
+    "Liquidity Draw tidak menyediakan sinyal BUY/SELL, entry, stop loss, take profit, atau eksekusi otomatis",
+    "Sistem menampilkan ABSTAIN ketika confidence 97 tidak terpenuhi atau context belum lengkap"
   ]
 }
