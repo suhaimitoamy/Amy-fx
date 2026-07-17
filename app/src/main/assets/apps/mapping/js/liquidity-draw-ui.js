@@ -2,6 +2,7 @@ import { calculateLiquidityDrawContext, LIQUIDITY_DRAW_CONTEXT_CONFIG } from './
 
 const CARD_ID = 'liquidity-draw-context-card';
 let lastSignature = '';
+let referenceFetchStarted = false;
 
 function number(value, digits = 2) {
   const parsed = Number(value);
@@ -19,6 +20,20 @@ function statusText(context) {
   if (context.status === 'UNSUPPORTED') return 'TF TIDAK DIDUKUNG';
   if (context.status === 'INSUFFICIENT_DATA') return 'DATA BELUM CUKUP';
   return 'ABSTAIN';
+}
+
+async function ensureWeeklyReference() {
+  const state = window.state || {};
+  if (state.candles?.W1?.length || referenceFetchStarted) return;
+  if (!state.candles?.M15?.length && !state.candles?.H1?.length) return;
+  referenceFetchStarted = true;
+  try {
+    const { fetchTf } = await import('./api/market-data.js');
+    await fetchTf('W1');
+    lastSignature = '';
+  } catch (_) {
+    referenceFetchStarted = false;
+  }
 }
 
 function contextFor(tf) {
@@ -90,6 +105,7 @@ function findAnchor() {
 }
 
 function syncLiquidityDrawCard() {
+  void ensureWeeklyReference();
   const anchor = findAnchor();
   const existing = document.getElementById(CARD_ID);
   if (!anchor) {
