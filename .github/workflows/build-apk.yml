@@ -23,8 +23,8 @@ jobs:
       AMYFX_KEYSTORE_PASSWORD: android
       AMYFX_KEY_ALIAS: androiddebugkey
       AMYFX_KEY_PASSWORD: android
-      AMYFX_VERSION_NAME: "1.4.11"
-      AMYFX_VERSION_CODE: "34"
+      AMYFX_VERSION_NAME: "1.4.12"
+      AMYFX_VERSION_CODE: "35"
       AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
     steps:
@@ -141,15 +141,16 @@ jobs:
           git tag -f amyfx-latest "$GITHUB_SHA"
           git push origin refs/tags/amyfx-latest --force
 
+          release_notes="Amy FX 1.4.12 menambahkan Liquidity Draw first-hit threshold 97 sebagai informasi context di Mapping. Menampilkan destination BSL/SSL, target, confidence model, dan jarak ATR pada M15/H1 tanpa sinyal entry otomatis."
           if gh release view amyfx-latest >/dev/null 2>&1; then
             gh release edit amyfx-latest \
               --title "Amy FX Latest — v${AMYFX_VERSION_NAME}" \
-              --notes "APK resmi Amy FX untuk update langsung tanpa uninstall. Version code ${AMYFX_VERSION_CODE}." \
+              --notes "$release_notes" \
               --latest
           else
             gh release create amyfx-latest \
               --title "Amy FX Latest — v${AMYFX_VERSION_NAME}" \
-              --notes "APK resmi Amy FX untuk update langsung tanpa uninstall. Version code ${AMYFX_VERSION_CODE}." \
+              --notes "$release_notes" \
               --latest
           fi
 
@@ -173,6 +174,12 @@ jobs:
           data = json.loads(path.read_text(encoding="utf-8"))
           version_name = os.environ["AMYFX_VERSION_NAME"].strip()
           version_code = int(os.environ["AMYFX_VERSION_CODE"])
+          notes = [
+              "Menambahkan Liquidity Draw first-hit threshold 97 sebagai informasi context di Mapping",
+              "Menampilkan destination BSL/SSL, target liquidity, confidence model, dan jarak ATR pada M15 serta H1",
+              "Liquidity Draw tidak menyediakan sinyal BUY/SELL, entry, stop loss, take profit, atau eksekusi otomatis",
+              "Sistem menampilkan ABSTAIN ketika confidence 97 tidak terpenuhi atau context belum lengkap"
+          ]
 
           data.update({
               "latest_version_code": version_code,
@@ -184,6 +191,8 @@ jobs:
               "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
               "force_update": False,
               "mandatory": False,
+              "release_notes": notes,
+              "changelog": notes,
           })
           path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           PY
