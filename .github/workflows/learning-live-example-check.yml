@@ -25,6 +25,9 @@ jobs:
   validate-and-build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      AMYFX_VERSION_CODE: '36'
+      AMYFX_VERSION_NAME: '1.4.13-learning-test'
     steps:
       - uses: actions/checkout@v4
 
@@ -46,5 +49,13 @@ jobs:
           chmod +x gradlew
           ./gradlew testDebugUnitTest --stacktrace
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug --stacktrace
+      - name: Build debug update candidate
+        run: ./gradlew assembleDebug signingReport --stacktrace
+
+      - name: Upload debug update candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: amy-fx-learning-context-debug-update-candidate
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
