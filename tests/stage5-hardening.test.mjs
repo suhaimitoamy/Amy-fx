@@ -4,24 +4,24 @@ import { readFileSync } from 'node:fs';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
-test('Amy FX 1.4.14 uses versionCode 37 without changing the production applicationId', () => {
+test('Amy FX 1.4.15 uses versionCode 38 without changing the production applicationId', () => {
   const gradle = read('app/build.gradle.kts');
   const version = read('app/src/main/assets/app-version.js');
   assert.match(gradle, /val configuredApplicationId = System\.getenv\("AMYFX_APPLICATION_ID"\) \?: "com\.amyelitesuite"/);
   assert.match(gradle, /applicationId = configuredApplicationId/);
-  assert.match(gradle, /versionCode[^\n]*37/);
-  assert.match(gradle, /versionName[^\n]*"1\.4\.14"/);
-  assert.match(version, /name: '1\.4\.14', code: 37/);
+  assert.match(gradle, /versionCode[^\n]*38/);
+  assert.match(gradle, /versionName[^\n]*"1\.4\.15"/);
+  assert.match(version, /name: '1\.4\.15', code: 38/);
 });
 
 test('published metadata is never ahead of the APK source version', () => {
   const metadata = JSON.parse(read('update.json'));
-  assert.ok([36, 37].includes(metadata.latest_version_code));
+  assert.ok([37, 38].includes(metadata.latest_version_code));
   assert.equal(
     metadata.latest_version_name,
-    metadata.latest_version_code === 37 ? '1.4.14' : '1.4.13'
+    metadata.latest_version_code === 38 ? '1.4.15' : '1.4.14'
   );
-  assert.ok(metadata.latest_version_code <= 37);
+  assert.ok(metadata.latest_version_code <= 38);
   assert.ok(Array.isArray(metadata.release_notes));
   assert.ok(metadata.release_notes.length > 0);
 });
@@ -68,12 +68,12 @@ test('release workflows pin the certificate and inspect v1 plus v2 structures', 
   }
 
   const rolling = read('.github/workflows/build-apk.yml');
-  assert.match(rolling, /AMYFX_VERSION_NAME: "1\.4\.14"/);
-  assert.match(rolling, /AMYFX_VERSION_CODE: "37"/);
+  assert.match(rolling, /AMYFX_VERSION_NAME: "1\.4\.15"/);
+  assert.match(rolling, /AMYFX_VERSION_CODE: "38"/);
 
   const manual = read('.github/workflows/build-release.yml');
-  assert.match(manual, /default: "1\.4\.14"/);
-  assert.match(manual, /default: "37"/);
+  assert.match(manual, /default: "1\.4\.15"/);
+  assert.match(manual, /default: "38"/);
 });
 
 test('Firebase Android client remains bound to the release applicationId', () => {
