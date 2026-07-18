@@ -43,8 +43,6 @@ android {
 
     signingConfigs {
         create("release") {
-            // Keep v1 enabled so Android/OEM PackageManager can read the certificate
-            // from a downloaded APK before installation. v2 remains the primary modern scheme.
             enableV1Signing = true
             enableV2Signing = true
             if (hasReleaseSigning) {
@@ -71,6 +69,17 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        create("migration") {
+            initWith(getByName("release"))
+            isDebuggable = true
+            isMinifyEnabled = false
+            isShrinkResources = false
+            matchingFallbacks += listOf("release")
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+            versionNameSuffix = "-migration"
         }
     }
 
