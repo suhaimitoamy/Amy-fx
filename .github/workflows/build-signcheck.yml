@@ -1,0 +1,47 @@
+name: Build Amy FX Sign Check
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - fix/rebuild-from-1.4.12-1.4.15
+    paths:
+      - signcheck/**
+      - settings.gradle.kts
+      - .github/workflows/build-signcheck.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - signcheck/**
+      - settings.gradle.kts
+      - .github/workflows/build-signcheck.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build-signcheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Build signer checker APK
+        run: |
+          chmod +x gradlew
+          ./gradlew :signcheck:assembleDebug --no-configuration-cache --stacktrace
+
+      - name: Upload signer checker APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Amy-FX-Sign-Check
+          path: signcheck/build/outputs/apk/debug/signcheck-debug.apk
+          if-no-files-found: error
+          retention-days: 14
