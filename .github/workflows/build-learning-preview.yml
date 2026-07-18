@@ -95,6 +95,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import os
+          import re
           from pathlib import Path
 
           version_name = os.environ['AMYFX_VERSION_NAME']
@@ -103,10 +104,14 @@ jobs:
 
           version_path = Path('app/src/main/assets/app-version.js')
           version_text = version_path.read_text(encoding='utf-8')
-          version_text = version_text.replace(
-              "const VERSION = Object.freeze({ name: '1.4.12', code: 35 });",
-              f"const VERSION = Object.freeze({{ name: '{version_name}', code: {version_code} }});"
+          version_text, count = re.subn(
+              r"const VERSION = Object\.freeze\(\{ name: '[^']+', code: \d+ \}\);",
+              f"const VERSION = Object.freeze({{ name: '{version_name}', code: {version_code} }});",
+              version_text,
+              count=1,
           )
+          if count != 1:
+              raise SystemExit('Gagal menemukan deklarasi versi aplikasi untuk preview')
           version_path.write_text(version_text, encoding='utf-8')
 
           checker_path = Path('app/src/main/assets/update-checker.js')
@@ -133,12 +138,14 @@ jobs:
       - name: Build signed Learning Preview APK
         run: ./gradlew assembleRelease --no-configuration-cache --stacktrace
 
-      - name: Verify preview package, version, and signer
+      - name: Verify preview package, version, signing schemes and signer
         run: |
           set -euo pipefail
           apk="app/build/outputs/apk/release/app-release.apk"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" | grep -F "package: name='com.amyelitesuite.learningpreview' versionCode='${AMYFX_VERSION_CODE}' versionName='${AMYFX_VERSION_NAME}'"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$apk" | tee /tmp/apksigner.txt
+          grep -F "Verified using v1 scheme (JAR signing): true" /tmp/apksigner.txt
+          grep -F "Verified using v2 scheme (APK Signature Scheme v2): true" /tmp/apksigner.txt
           expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           actual="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/apksigner.txt | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           test -n "$actual"
