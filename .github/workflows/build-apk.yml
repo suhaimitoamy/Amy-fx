@@ -23,8 +23,8 @@ jobs:
       AMYFX_KEYSTORE_PASSWORD: android
       AMYFX_KEY_ALIAS: androiddebugkey
       AMYFX_KEY_PASSWORD: android
-      AMYFX_VERSION_NAME: "1.4.14"
-      AMYFX_VERSION_CODE: "37"
+      AMYFX_VERSION_NAME: "1.4.15"
+      AMYFX_VERSION_CODE: "38"
       AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
     steps:
@@ -168,7 +168,7 @@ jobs:
           git tag -f amyfx-latest "$GITHUB_SHA"
           git push origin refs/tags/amyfx-latest --force
 
-          release_notes="Amy FX 1.4.14 memperbaiki kegagalan verifikasi tanda tangan pada updater 1.4.12. APK kini memakai signing v1+v2 untuk kompatibilitas pembacaan sertifikat pada Android/OEM, sementara updater baru membandingkan signer aktif secara benar. Fitur Live Market Example Academy tetap disertakan."
+          release_notes="Amy FX 1.4.15 adalah rilis resmi dengan package com.amyelitesuite dan sertifikat permanen Amy FX. Rilis ini menyertakan Live Market Example rule-based di 645 halaman Academy serta perbaikan updater. Build debug tidak digunakan untuk distribusi publik."
           if gh release view amyfx-latest >/dev/null 2>&1; then
             gh release edit amyfx-latest \
               --title "Amy FX Latest — v${AMYFX_VERSION_NAME}" \
@@ -202,11 +202,11 @@ jobs:
           version_name = os.environ["AMYFX_VERSION_NAME"].strip()
           version_code = int(os.environ["AMYFX_VERSION_CODE"])
           notes = [
-              "Memperbaiki pesan salah tanda tangan APK tidak cocok pada sebagian perangkat Android dan OEM",
-              "APK rilis kini memakai signing scheme v1 dan v2 dengan sertifikat Amy FX yang sama agar versi 1.4.12 dapat membaca sertifikat sebelum instalasi",
-              "Updater baru membandingkan signer aktif APK, bukan riwayat sertifikat yang dapat kosong pada file unduhan",
-              "Tetap menyertakan Live Market Example rule-based di 645 halaman Amy FX Academy",
-              "Pembaruan dapat dipasang tanpa menghapus aplikasi dan tanpa menghilangkan data lokal"
+              "Rilis resmi Amy FX dengan package com.amyelitesuite dan sertifikat permanen",
+              "Live Market Example rule-based tersedia di 645 halaman Amy FX Academy",
+              "Contoh materi tetap tersedia saat layanan data live tidak merespons",
+              "Updater memverifikasi package, versionCode, dan signer APK sebelum instalasi",
+              "Build debug tidak digunakan lagi untuk distribusi publik"
           ]
 
           data.update({
