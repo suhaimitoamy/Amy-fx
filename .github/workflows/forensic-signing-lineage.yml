@@ -20,7 +20,7 @@ permissions:
 jobs:
   trace-signers:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -29,6 +29,12 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install APK signing tools
+        run: sdkmanager "build-tools;35.0.0"
 
       - name: Find historical APK artifacts and inspect certificates
         shell: bash
@@ -40,13 +46,22 @@ jobs:
 
           inspect_sha() {
             local label="$1"
-            local sha="$2"
-            echo "===== ${label} ${sha} =====" | tee -a "$report"
+            local requested_sha="$2"
+            local sha
+            sha="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${requested_sha}" --jq '.sha' 2>/dev/null || true)"
+            if [ -z "$sha" ]; then
+              echo "===== ${label} ${requested_sha} =====" | tee -a "$report"
+              echo "COMMIT_NOT_FOUND" | tee -a "$report"
+              echo | tee -a "$report"
+              return
+            fi
 
+            echo "===== ${label} ${sha} =====" | tee -a "$report"
             runs_json="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${sha}&per_page=100")"
             run_ids="$(jq -r '.workflow_runs[] | select(.conclusion == "success") | .id' <<<"$runs_json" | sort -u)"
             if [ -z "$run_ids" ]; then
               echo "NO_SUCCESSFUL_RUN" | tee -a "$report"
+              echo | tee -a "$report"
               return
             fi
 
@@ -66,10 +81,11 @@ jobs:
                   unzip -q "$zip" -d "$dir"
                   while IFS= read -r apk; do
                     safe_name="$(basename "$apk" | tr ' ' '_')"
-                    cp "$apk" "forensic/apks/${label}-${run_id}-${artifact_id}-${safe_name}"
+                    recovered="forensic/apks/${label}-${run_id}-${artifact_id}-${safe_name}"
+                    cp "$apk" "$recovered"
                     echo "APK ${apk}" | tee -a "$report"
-                    keytool -printcert -jarfile "$apk" 2>&1 | \
-                      grep -E 'Owner:|Issuer:|SHA1:|SHA256:' | tee -a "$report" || true
+                    "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$apk" 2>&1 | \
+                      grep -E 'Verified using|Signer #1 certificate DN:|Signer #1 certificate SHA-256 digest:' | tee -a "$report" || true
                     sha256sum "$apk" | tee -a "$report"
                   done < <(find "$dir" -type f -name '*.apk' | sort)
                 fi
@@ -81,9 +97,10 @@ jobs:
           inspect_sha "v1.4.10" "e01610de8374cdfe6f9f7fa8176ffc6e6ecb0608"
           inspect_sha "v1.4.11" "b20ae1905a5368598f94fcf072cd34c0372d3f28"
           inspect_sha "v1.4.12" "8f07d43063ad1ea8398230de30b053504b1d625b"
+          inspect_sha "audit-debug-3528783" "3528783"
 
           echo "===== SUMMARY UNIQUE SHA256 CERTIFICATES =====" | tee -a "$report"
-          grep 'SHA256:' "$report" | sort -u | tee -a "$report" || true
+          grep 'Signer #1 certificate SHA-256 digest:' "$report" | sort -u | tee -a "$report" || true
 
       - name: Upload forensic report and recovered APKs
         uses: actions/upload-artifact@v4
