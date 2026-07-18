@@ -19,7 +19,7 @@ Contoh:
 1. `market-learning-map.json` menentukan `category` dan `topic` untuk halaman HTML.
 2. `market-learning-bridge.js` mengirim keduanya ke endpoint.
 3. `lib/learning-topic-router.js` memilih kelompok aturan berdasarkan topic dengan prioritas konsep spesifik.
-4. Endpoint mengambil candle XAU/USD dari Twelve Data hanya untuk timeframe yang diperlukan kelompok tersebut.
+4. Endpoint mengambil candle XAU/USD hanya untuk timeframe yang diperlukan kelompok tersebut.
 5. `lib/learning-live-engine.js` menghitung konteks seperti OHLC, ATR, range, trend, FVG, dan sweep.
 6. API mengembalikan teks edukasi rule-based yang disisipkan ke artikel oleh bridge.
 
@@ -55,12 +55,14 @@ Tambahkan pattern baru di `lib/learning-topic-router.js`. Letakkan konsep yang l
 
 Setelah itu tambahkan atau sesuaikan template kelompok di `lib/learning-live-engine.js` dan regression di `tests/learning-live-engine.test.mjs`.
 
-## Environment
+## Sumber data market
 
-Deployment Vercel memerlukan:
+Urutan sumber data backend:
 
-```text
-TWELVEDATA_API_KEY
-```
+1. Jika tersedia, endpoint memakai `TWELVEDATA_API_KEY` langsung pada server Vercel.
+2. Jika secret tidak tersedia pada Preview Deployment, endpoint memakai proxy Amy FX melalui `AMYFX_MARKET_PROXY_URL`.
+3. Nilai default proxy adalah endpoint produksi `https://amy-fx.vercel.app/api/twelvedata`.
+
+Dengan pola ini, API key tidak dikirim ke WebView atau browser.
 
 API hanya menerima metode `GET` dan `OPTIONS`, hanya memakai simbol XAU/USD, memvalidasi category/topic, dan tidak memanggil model AI.
