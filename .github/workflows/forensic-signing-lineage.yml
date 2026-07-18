@@ -72,7 +72,8 @@ jobs:
               artifacts="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100")"
               jq -r '.artifacts[] | [.id,.name,.expired] | @tsv' <<<"$artifacts" | while IFS=$'\t' read -r artifact_id artifact_name expired; do
                 echo "ARTIFACT ${artifact_id} ${artifact_name} expired=${expired}" | tee -a "$report"
-                if [ "$expired" = "false" ] && [[ "${artifact_name,,}" == *apk* ]]; then
+                lower_name="${artifact_name,,}"
+                if [ "$expired" = "false" ] && { [[ "$lower_name" == *apk* ]] || [[ "$lower_name" == *debug* ]] || [[ "$lower_name" == *validation* ]]; }; then
                   zip="forensic/${label}-${run_id}-${artifact_id}.zip"
                   dir="forensic/${label}-${run_id}-${artifact_id}"
                   gh api -H "Accept: application/vnd.github+json" \
