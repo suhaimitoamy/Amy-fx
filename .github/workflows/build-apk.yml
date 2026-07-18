@@ -23,8 +23,8 @@ jobs:
       AMYFX_KEYSTORE_PASSWORD: android
       AMYFX_KEY_ALIAS: androiddebugkey
       AMYFX_KEY_PASSWORD: android
-      AMYFX_VERSION_NAME: "1.4.13"
-      AMYFX_VERSION_CODE: "36"
+      AMYFX_VERSION_NAME: "1.4.14"
+      AMYFX_VERSION_CODE: "37"
       AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
     steps:
@@ -109,12 +109,14 @@ jobs:
       - name: Build signed release APK
         run: ./gradlew assembleRelease --no-configuration-cache --stacktrace
 
-      - name: Verify APK identity, version and signer
+      - name: Verify APK identity, version, signing schemes and signer
         run: |
           set -euo pipefail
           apk="app/build/outputs/apk/release/app-release.apk"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" | grep -F "package: name='com.amyelitesuite' versionCode='${AMYFX_VERSION_CODE}' versionName='${AMYFX_VERSION_NAME}'"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$apk" | tee /tmp/apksigner.txt
+          grep -F "Verified using v1 scheme (JAR signing): true" /tmp/apksigner.txt
+          grep -F "Verified using v2 scheme (APK Signature Scheme v2): true" /tmp/apksigner.txt
           expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           actual="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/apksigner.txt | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           test -n "$actual"
@@ -141,7 +143,7 @@ jobs:
           git tag -f amyfx-latest "$GITHUB_SHA"
           git push origin refs/tags/amyfx-latest --force
 
-          release_notes="Amy FX 1.4.13 menambahkan Live Market Example rule-based di dalam 645 halaman Academy. Setiap halaman memakai topic spesifik, tetap berada di artikel, dan memiliki fallback latihan lokal ketika layanan data live belum tersedia."
+          release_notes="Amy FX 1.4.14 memperbaiki kegagalan verifikasi tanda tangan pada updater 1.4.12. APK kini memakai signing v1+v2 untuk kompatibilitas pembacaan sertifikat pada Android/OEM, sementara updater baru membandingkan signer aktif secara benar. Fitur Live Market Example Academy tetap disertakan."
           if gh release view amyfx-latest >/dev/null 2>&1; then
             gh release edit amyfx-latest \
               --title "Amy FX Latest — v${AMYFX_VERSION_NAME}" \
@@ -175,11 +177,11 @@ jobs:
           version_name = os.environ["AMYFX_VERSION_NAME"].strip()
           version_code = int(os.environ["AMYFX_VERSION_CODE"])
           notes = [
-              "Menambahkan contoh edukasi langsung di dalam 645 halaman Amy FX Academy tanpa memindahkan pengguna ke Mapping",
-              "Setiap halaman memakai topic spesifik agar contoh sesuai dengan materi yang sedang dibaca",
-              "Menambahkan backend rule-based untuk konteks XAUUSD seperti risk, liquidity, FVG, Order Block, sesi, volatilitas, dan struktur",
-              "Jika layanan data live belum tersedia, Academy menampilkan contoh latihan lokal yang relevan tanpa pesan error dan tanpa mengaku sebagai data real-time",
-              "Fitur ini bersifat edukasi, bukan AI chatbot dan bukan sinyal Buy/Sell"
+              "Memperbaiki pesan salah tanda tangan APK tidak cocok pada sebagian perangkat Android dan OEM",
+              "APK rilis kini memakai signing scheme v1 dan v2 dengan sertifikat Amy FX yang sama agar versi 1.4.12 dapat membaca sertifikat sebelum instalasi",
+              "Updater baru membandingkan signer aktif APK, bukan riwayat sertifikat yang dapat kosong pada file unduhan",
+              "Tetap menyertakan Live Market Example rule-based di 645 halaman Amy FX Academy",
+              "Pembaruan dapat dipasang tanpa menghapus aplikasi dan tanpa menghilangkan data lokal"
           ]
 
           data.update({
