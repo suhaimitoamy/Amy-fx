@@ -83,6 +83,7 @@ jobs:
           profile: pixel_6
           disable-animations: true
           script: |
+            bash <<'BASH'
             set -euo pipefail
             log_file="$PWD/emulator-fixture/migration-test.log"
             exec > >(tee -a "$log_file") 2>&1
@@ -104,6 +105,7 @@ jobs:
             test "$(adb shell "run-as $package cat /data/user/0/$package/app_webview/public-webview.txt" | tr -d '\r')" = "webview-survived"
             adb shell dumpsys package "$package" | grep -F 'versionName=1.4.15-migration'
             find . -path '*amyfx-migration-*/amyfx-data.tar' -type f -size +1k | grep .
+            BASH
 
       - name: Upload emulator migration evidence
         if: always()
