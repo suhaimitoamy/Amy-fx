@@ -28,7 +28,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - name: Fetch tested commit quietly
+        shell: bash
+        run: |
+          git init --quiet .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --depth=1 --quiet origin "${GITHUB_SHA}"
+          git checkout --quiet FETCH_HEAD
 
       - name: Run tests and print concise failure summary
         shell: bash
