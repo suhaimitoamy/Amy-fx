@@ -7,6 +7,11 @@ on:
       - fix/rebuild-from-1.4.12-1.4.15
     paths:
       - .github/workflows/forensic-signing-lineage.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/forensic-signing-lineage.yml
 
 permissions:
   actions: read
