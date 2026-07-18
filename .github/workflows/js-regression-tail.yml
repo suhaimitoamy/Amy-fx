@@ -36,6 +36,13 @@ jobs:
           git fetch --depth=1 --quiet origin "${GITHUB_SHA}"
           git checkout --quiet FETCH_HEAD
 
+      - name: Locate version regression files
+        shell: bash
+        run: |
+          grep -R -l "profile displays Amy FX version" tests || true
+          grep -R -l "published metadata is never ahead" tests || true
+          grep -R -l "release workflows pin the existing signing certificate" tests || true
+
       - name: Run tests and print concise failure summary
         shell: bash
         run: |
