@@ -1,0 +1,112 @@
+name: Test Amy FX Data Migration on Emulator
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - fix/debug-to-release-data-migration
+    paths:
+      - app/build.gradle.kts
+      - migration/**
+      - .github/workflows/test-data-migration-emulator.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - app/build.gradle.kts
+      - migration/**
+      - .github/workflows/test-data-migration-emulator.yml
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  migrate-on-emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      AMYFX_KEYSTORE_PATH: /tmp/amy-fx-signing.keystore
+      AMYFX_KEYSTORE_PASSWORD: android
+      AMYFX_KEY_ALIAS: androiddebugkey
+      AMYFX_KEY_PASSWORD: android
+      AMYFX_VERSION_NAME: "1.4.15"
+      AMYFX_VERSION_CODE: "38"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Restore permanent Amy FX signing key
+        id: signing-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: amy-fx-debug-keystore-v1
+
+      - name: Prepare APKs
+        run: |
+          set -euo pipefail
+          test "${{ steps.signing-cache.outputs.cache-hit }}" = "true"
+          cp "$HOME/.android/debug.keystore" "$AMYFX_KEYSTORE_PATH"
+          chmod +x gradlew migration/migrate-termux.sh
+          ./gradlew assembleMigration --no-configuration-cache --stacktrace
+          mkdir -p emulator-fixture
+          gh api -H "Accept: application/vnd.github+json" \
+            repos/${GITHUB_REPOSITORY}/actions/artifacts/8423832193/zip > emulator-fixture/old.zip
+          unzip -q emulator-fixture/old.zip -d emulator-fixture/old
+          old_apk="$(find emulator-fixture/old -type f -name '*.apk' | head -n1)"
+          test -n "$old_apk"
+          cp "$old_apk" emulator-fixture/AmyFX-1.4.12-debug.apk
+          cp app/build/outputs/apk/migration/app-migration.apk emulator-fixture/AmyFX-1.4.15-migration.apk
+
+      - name: Enable KVM access
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run end-to-end migration test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            set -euo pipefail
+            package="com.amyelitesuite"
+            adb install emulator-fixture/AmyFX-1.4.12-debug.apk
+            adb shell run-as "$package" id
+            adb shell "run-as $package sh -c 'mkdir -p files shared_prefs app_webview && printf note-survived > files/public-note.txt && printf prefs-survived > shared_prefs/public-test.xml && printf webview-survived > app_webview/public-webview.txt'"
+            test "$(adb shell "run-as $package cat /data/user/0/$package/files/public-note.txt" | tr -d '\r')" = "note-survived"
+
+            mkdir -p emulator-fixture/run
+            cp emulator-fixture/AmyFX-1.4.15-migration.apk emulator-fixture/run/
+            cp migration/migrate-termux.sh emulator-fixture/run/
+            cd emulator-fixture/run
+            printf 'LANJUT\n' | bash migrate-termux.sh AmyFX-1.4.15-migration.apk
+
+            test "$(adb shell "run-as $package cat /data/user/0/$package/files/public-note.txt" | tr -d '\r')" = "note-survived"
+            test "$(adb shell "run-as $package cat /data/user/0/$package/shared_prefs/public-test.xml" | tr -d '\r')" = "prefs-survived"
+            test "$(adb shell "run-as $package cat /data/user/0/$package/app_webview/public-webview.txt" | tr -d '\r')" = "webview-survived"
+            adb shell dumpsys package "$package" | grep -F 'versionName=1.4.15-migration'
+            find . -path '*amyfx-migration-*/amyfx-data.tar' -type f -size +1k | grep .
+
+      - name: Upload emulator migration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Amy-FX-migration-emulator-evidence
+          path: emulator-fixture/run/amyfx-migration-*/
+          if-no-files-found: warn
+          retention-days: 14
