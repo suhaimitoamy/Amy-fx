@@ -64,21 +64,22 @@
   }
 
   function getCurrentPath() {
-    const path = window.location.pathname;
-    const parts = path.split('/');
-    // e.g. "bagian-17-fvg-masterclass/index.html"
-    if (parts.length >= 2) {
-      return parts[parts.length - 2] + '/' + parts[parts.length - 1];
+    const path = String(root.location?.pathname || '').replace(/\/+$/, '');
+    const parts = path.split('/').filter(Boolean);
+    if (!parts.length) return '';
+    const last = parts.at(-1);
+    if (last && last.includes('.')) {
+      return parts.length >= 2 ? `${parts.at(-2)}/${last}` : last;
     }
-    return '';
+    return `${last}/index.html`;
   }
 
   async function loadRegistry() {
     try {
-      const response = await fetch(REGISTRY_URL, { cache: 'no-store' });
+      const response = await fetchFunction()(REGISTRY_URL, { cache: 'no-store' });
       if (!response.ok) return null;
       return await response.json();
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }
@@ -111,6 +112,12 @@
     }
   }
 
+  function validCandle(candle) {
+    return [candle.open, candle.high, candle.low, candle.close].every(Number.isFinite)
+      && candle.high >= Math.max(candle.open, candle.close, candle.low)
+      && candle.low <= Math.min(candle.open, candle.close, candle.high);
+  }
+
   function normalizeSeries(data, tf) {
     const raw = (Array.isArray(data?.values) ? data.values : [])
       .slice()
@@ -125,18 +132,50 @@
         tickCount: 1,
         isClosed: index < values.length - 1
       }))
-      .filter(candle =>
-        [candle.open, candle.high, candle.low, candle.close].every(Number.isFinite)
-        && candle.high >= Math.max(candle.open, candle.close, candle.low)
-        && candle.low <= Math.min(candle.open, candle.close, candle.high)
-      );
+      .filter(validCandle);
 
     if (!raw.length) throw new Error(`Candle ${tf} kosong`);
     return {
       tf,
       latest: raw.at(-1),
-      candles: raw.filter(candle => candle.isClosed)
+      candles: raw.filter(candle => candle.isClosed),
+      source: 'LIVE_MARKET_PROXY'
     };
+  }
+
+  function normalizeNativeSeries(data, tf) {
+    const raw = (Array.isArray(data) ? data : [])
+      .map(candle => ({
+        time: number(candle.time ?? candle.open_time),
+        timeframe: tf,
+        open: number(candle.open),
+        high: number(candle.high),
+        low: number(candle.low),
+        close: number(candle.close),
+        tickCount: number(candle.tickCount, 1),
+        isClosed: candle.isClosed !== false
+      }))
+      .filter(candle => Number.isFinite(candle.time) && validCandle(candle))
+      .sort((left, right) => left.time - right.time);
+
+    if (!raw.length) return null;
+    return {
+      tf,
+      latest: raw.at(-1),
+      candles: raw.filter(candle => candle.isClosed),
+      source: 'NATIVE_MAPPING_STORE'
+    };
+  }
+
+  function readNativeMarketSeries(tf, outputsize = 300) {
+    try {
+      if (!root.Android || typeof root.Android.getNativeCandles !== 'function') return null;
+      const payload = root.Android.getNativeCandles('XAU/USD', tf, String(outputsize));
+      const parsed = typeof payload === 'string' ? JSON.parse(payload) : payload;
+      return normalizeNativeSeries(parsed, tf);
+    } catch (_) {
+      return null;
+    }
   }
 
   function fetchMarketSeries(tf, outputsize = 300) {
@@ -147,6 +186,14 @@
     const cacheKey = `${tf}:${outputsize}:${bucket}`;
     if (seriesCache.has(cacheKey)) return seriesCache.get(cacheKey);
 
+    const nativeSeries = readNativeMarketSeries(tf, outputsize);
+    const minimumNativeCandles = tf === 'M1' ? 1 : Math.min(30, outputsize);
+    if (nativeSeries && nativeSeries.candles.length >= minimumNativeCandles) {
+      const resolved = Promise.resolve(nativeSeries);
+      seriesCache.set(cacheKey, resolved);
+      return resolved;
+    }
+
     const params = new URLSearchParams({
       symbol: 'XAU/USD',
       interval,
@@ -155,6 +202,7 @@
     const promise = fetchJson(`${MARKET_PROXY_URL}?${params.toString()}`)
       .then(data => normalizeSeries(data, tf))
       .catch(error => {
+        if (nativeSeries) return nativeSeries;
         seriesCache.delete(cacheKey);
         throw error;
       });
@@ -206,7 +254,7 @@
       if (typeof engine.analyze !== 'function') throw new Error('Mapping engine tidak tersedia');
       const result = engine.analyze(primary.candles, tf, {}, currentPrice, htfCandles);
       if (!result?.marketConcepts) throw new Error('Hasil Mapping tidak valid');
-      return { result, currentPrice, source: 'LIVE_MAPPING_ENGINE' };
+      return { result, currentPrice, source: primary.source || 'LIVE_MAPPING_ENGINE' };
     } catch (error) {
       const stored = readFreshStoredAnalysis(tf);
       if (stored?.marketConcepts) {
@@ -304,6 +352,12 @@
     };
   }
 
+  function buildUnavailableExample() {
+    return {
+      message: 'Data market live **belum tersedia** saat ini. Periksa koneksi atau buka Mapping sekali agar cache candle terisi, lalu kembali ke materi ini.'
+    };
+  }
+
   async function fetchLiveExampleData(lessonConfig) {
     if (lessonConfig.category === 'basics') {
       const [live, daily] = await Promise.all([
@@ -391,15 +445,15 @@
   }
 
   async function injectExample(lessonConfig) {
-    let exampleData = null;
+    if (document.querySelector('.live-example-box')) return;
 
+    let exampleData = null;
     try {
       exampleData = await fetchLiveExampleData(lessonConfig);
     } catch (_) {
-      return;
+      exampleData = buildUnavailableExample();
     }
-
-    if (!exampleData) return;
+    if (!exampleData) exampleData = buildUnavailableExample();
 
     // Find a good place to inject (e.g., after the first 2 paragraphs of the article)
     const target = document.querySelector('.article .glass-panel') || document.querySelector('.article');
@@ -433,11 +487,14 @@
 
   return {
     boot,
+    getCurrentPath,
     fetchMarketSeries,
+    readNativeMarketSeries,
     fetchMappingAnalysis,
     fetchLiveExampleData,
     buildBasicsExample,
     buildStructuralExample,
-    buildManagementExample
+    buildManagementExample,
+    buildUnavailableExample
   };
 });
