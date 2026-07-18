@@ -10,14 +10,14 @@
   "mandatory": false,
   "release_notes": [
     "Menambahkan contoh edukasi langsung di dalam 645 halaman Amy FX Academy tanpa memindahkan pengguna ke Mapping",
-    "Setiap halaman memakai topic spesifik agar contoh yang ditampilkan sesuai dengan materi yang sedang dibaca",
+    "Setiap halaman memakai topic spesifik agar contoh sesuai dengan materi yang sedang dibaca",
     "Menambahkan backend rule-based untuk konteks XAUUSD seperti risk, liquidity, FVG, Order Block, sesi, volatilitas, dan struktur",
     "Jika layanan data live belum tersedia, Academy menampilkan contoh latihan lokal yang relevan tanpa pesan error dan tanpa mengaku sebagai data real-time",
     "Fitur ini bersifat edukasi, bukan AI chatbot dan bukan sinyal Buy/Sell"
   ],
   "changelog": [
     "Menambahkan contoh edukasi langsung di dalam 645 halaman Amy FX Academy tanpa memindahkan pengguna ke Mapping",
-    "Setiap halaman memakai topic spesifik agar contoh yang ditampilkan sesuai dengan materi yang sedang dibaca",
+    "Setiap halaman memakai topic spesifik agar contoh sesuai dengan materi yang sedang dibaca",
     "Menambahkan backend rule-based untuk konteks XAUUSD seperti risk, liquidity, FVG, Order Block, sesi, volatilitas, dan struktur",
     "Jika layanan data live belum tersedia, Academy menampilkan contoh latihan lokal yang relevan tanpa pesan error dan tanpa mengaku sebagai data real-time",
     "Fitur ini bersifat edukasi, bukan AI chatbot dan bukan sinyal Buy/Sell"
