@@ -16,5 +16,19 @@
     "decision.v1": { "evaluation": "automatic" },
     "manual-review.v1": { "evaluation": "manual" }
   },
-  "lessons": {}
+  "lessons": {
+    "bagian-04-liquidity/liquidity-sweep.html": {
+      "enabled": true,
+      "id": "fixture-liquidity-sweep",
+      "title": "Liquidity Sweep — Fixture Tahap 1",
+      "destination": "mapping",
+      "tab": "Analyze",
+      "timeframe": "M15",
+      "template": "classification.v1",
+      "requiredFacts": [
+        "liquidity.primaryEvent"
+      ],
+      "exercisePrompt": "Tentukan apakah kondisi saat ini merupakan sweep BSL, sweep SSL, liquidity run, testing, atau belum ada event valid."
+    }
+  }
 }
