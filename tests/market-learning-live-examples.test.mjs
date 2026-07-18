@@ -122,6 +122,35 @@ test('bridge forwards exact category and topic to backend', async () => {
   assert.equal(result.route.group, 'order_math');
 });
 
+test('bridge falls back from production API to branch preview API', async () => {
+  const requested = [];
+  const bridge = loadBridge({
+    fetch: async url => {
+      requested.push(String(url));
+      if (requested.length === 1) {
+        return { ok: false, status: 404, async json() { return null; } };
+      }
+      return {
+        ok: true,
+        async json() {
+          return {
+            status: 'ok',
+            route: { group: 'trading_basics' },
+            market: { generatedAt: '2026-07-18T00:00:00.000Z' },
+            content: { message: 'Contoh trading live.', disclaimer: 'Bukan sinyal.' }
+          };
+        }
+      };
+    }
+  });
+
+  const result = await bridge.fetchLiveExample('basics', 'apa-itu-trading');
+  assert.equal(requested.length, 2);
+  assert.match(requested[0], /amy-fx\.vercel\.app/);
+  assert.match(requested[1], /feature-learning-context-stage1/);
+  assert.equal(result.route.group, 'trading_basics');
+});
+
 test('API text is escaped before limited bold markup is rendered', () => {
   const bridge = loadBridge();
   const rendered = bridge.renderMessage('<img src=x onerror=alert(1)> **aman**');
@@ -130,12 +159,13 @@ test('API text is escaped before limited bold markup is rendered', () => {
   assert.match(rendered, /<strong>aman<\/strong>/);
 });
 
-test('backend route validates topic and uses Twelve Data server-side', () => {
+test('backend route validates topic and uses server-side market data', () => {
   assert.match(apiSource, /req\.query\?\.topic/);
   assert.match(apiSource, /classifyLearningTopic/);
   assert.match(apiSource, /buildLearningExample/);
   assert.match(apiSource, /process\.env\.TWELVEDATA_API_KEY/);
   assert.match(apiSource, /api\.twelvedata\.com\/time_series/);
+  assert.match(apiSource, /amy-fx\.vercel\.app\/api\/twelvedata/);
   assert.match(apiSource, /Access-Control-Allow-Origin/);
   assert.doesNotMatch(apiSource, /Gemini|OpenAI|chatbot/i);
 });
