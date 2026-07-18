@@ -1,20 +1,39 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "defaults": {
-    "maxAgeMs": 1800000,
-    "resumeGraceMs": 21600000,
-    "hardMaxAgeMs": 86400000,
-    "passScore": 80
+    "showLiveExamples": true
   },
-  "templates": {
-    "classification.v1": { "evaluation": "automatic" },
-    "state-transition.v1": { "evaluation": "automatic" },
-    "location.v1": { "evaluation": "automatic" },
-    "sequence.v1": { "evaluation": "automatic" },
-    "numeric.v1": { "evaluation": "automatic" },
-    "checklist.v1": { "evaluation": "automatic" },
-    "decision.v1": { "evaluation": "automatic" },
-    "manual-review.v1": { "evaluation": "manual" }
-  },
-  "lessons": {}
+  "lessons": {
+    "bagian-01-pemula-nol/index.html": {
+      "enabled": true,
+      "category": "basics"
+    },
+    "bagian-02-membaca-chart/index.html": {
+      "enabled": true,
+      "category": "basics"
+    },
+    "bagian-08-session-dan-waktu/index.html": {
+      "enabled": true,
+      "category": "basics"
+    },
+    "bagian-17-fvg-masterclass/index.html": {
+      "enabled": true,
+      "category": "structural",
+      "topic": "fvg"
+    },
+    "bagian-18-order-block-masterclass/index.html": {
+      "enabled": true,
+      "category": "structural",
+      "topic": "ob"
+    },
+    "bagian-19-liquidity-masterclass/index.html": {
+      "enabled": true,
+      "category": "structural",
+      "topic": "liquidity_sweep"
+    },
+    "bagian-13-psikologi-trading/index.html": {
+      "enabled": true,
+      "category": "management"
+    }
+  }
 }
