@@ -41,6 +41,20 @@ jobs:
       - name: Run inline live-example regression
         run: node --test --test-reporter=spec tests/market-learning-live-examples.test.mjs
 
+      - name: Diagnose full JavaScript regression
+        continue-on-error: true
+        run: |
+          set +e
+          node --test --test-reporter=tap tests/*.test.mjs > /tmp/amy-full-suite.log 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            echo "Full suite exit code: $status"
+            grep -nE 'not ok|failureType:|error:|code:|AssertionError|ERR_' /tmp/amy-full-suite.log | tail -n 120 || true
+          else
+            echo "Full JavaScript regression passed."
+          fi
+          exit 0
+
       - name: Run Android unit tests
         run: |
           chmod +x gradlew
