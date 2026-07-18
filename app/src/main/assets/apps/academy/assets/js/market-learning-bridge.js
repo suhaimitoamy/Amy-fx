@@ -10,6 +10,7 @@
 
   const REGISTRY_URL = '../assets/data/market-learning-map.json';
   const DEFAULT_API_URL = 'https://amy-fx.vercel.app/api/learning-live-example';
+  const PREVIEW_API_URL = 'https://amy-fx-git-feature-learning-context-stage1-aplikasi-trading.vercel.app/api/learning-live-example';
   const FETCH_TIMEOUT_MS = 15000;
 
   function getCurrentPath() {
@@ -51,8 +52,13 @@
     return String(topic || 'materi').replace(/-/g, ' ');
   }
 
-  function apiUrl() {
-    return String(root.AMY_FX_LEARNING_API_URL || DEFAULT_API_URL);
+  function apiUrls() {
+    const configured = String(root.AMY_FX_LEARNING_API_URL || '').trim();
+    return [...new Set([
+      ...(configured ? [configured] : []),
+      DEFAULT_API_URL,
+      PREVIEW_API_URL
+    ])];
   }
 
   async function fetchLiveExample(category, topic) {
@@ -68,16 +74,27 @@
         category: String(category || 'basics'),
         topic: String(topic || '')
       });
-      const response = await root.fetch(`${apiUrl()}?${params.toString()}`, {
-        cache: 'no-store',
-        headers: { Accept: 'application/json' },
-        ...(controller ? { signal: controller.signal } : {})
-      });
-      const data = await response.json().catch(() => null);
-      if (!response.ok || data?.status !== 'ok' || !data?.content?.message) {
-        throw new Error(data?.message || `HTTP ${response.status}`);
+      let lastError = null;
+
+      for (const url of apiUrls()) {
+        try {
+          const response = await root.fetch(`${url}?${params.toString()}`, {
+            cache: 'no-store',
+            headers: { Accept: 'application/json' },
+            ...(controller ? { signal: controller.signal } : {})
+          });
+          const data = await response.json().catch(() => null);
+          if (!response.ok || data?.status !== 'ok' || !data?.content?.message) {
+            throw new Error(data?.message || `HTTP ${response.status}`);
+          }
+          return data;
+        } catch (error) {
+          lastError = error;
+          if (controller?.signal.aborted) throw error;
+        }
       }
-      return data;
+
+      throw lastError || new Error('Learning API tidak tersedia');
     } finally {
       if (timeout) root.clearTimeout(timeout);
     }
