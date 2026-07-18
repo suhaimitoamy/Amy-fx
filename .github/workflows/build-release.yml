@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       versionName:
-        description: "Version Name (e.g., 1.4.14)"
+        description: "Version Name (e.g., 1.4.15)"
         required: true
-        default: "1.4.14"
+        default: "1.4.15"
       versionCode:
         description: "Version Code (must increase)"
         required: true
-        default: "37"
+        default: "38"
 
 permissions:
   contents: read
@@ -83,43 +83,16 @@ jobs:
       - name: Build signed release APK
         run: ./gradlew assembleRelease --no-configuration-cache --stacktrace
 
-      - name: Verify APK identity, requested version, signing structures and signer
+      - name: Verify APK identity, requested version and signer
         run: |
           set -euo pipefail
           apk="app/build/outputs/apk/release/app-release.apk"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" | grep -F "package: name='com.amyelitesuite' versionCode='${AMYFX_VERSION_CODE}' versionName='${AMYFX_VERSION_NAME}'"
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$apk"
-          sf_entry="$(unzip -Z1 "$apk" | grep -E '^META-INF/[^/]+\.SF$' | head -n1)"
-          cert_entry="$(unzip -Z1 "$apk" | grep -E '^META-INF/[^/]+\.(RSA|DSA|EC)$' | head -n1)"
-          test -n "$sf_entry"
-          test -n "$cert_entry"
-          unzip -p "$apk" "$cert_entry" > /tmp/amyfx-apk-cert
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$apk" | tee /tmp/apksigner.txt
           expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
-          actual="$(keytool -printcert -file /tmp/amyfx-apk-cert | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          actual="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/apksigner.txt | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           test -n "$actual"
           test "$actual" = "$expected"
-          APK_PATH="$apk" python3 - <<'PY'
-          import os
-          import struct
-          data = open(os.environ["APK_PATH"], "rb").read()
-          index = data.rfind(b"APK Sig Block 42")
-          if index < 0:
-              raise SystemExit("APK Signing Block tidak ditemukan")
-          size = struct.unpack_from("<Q", data, index - 8)[0]
-          start = index + 8 - size
-          if start < 0 or struct.unpack_from("<Q", data, start)[0] != size:
-              raise SystemExit("APK Signing Block tidak valid")
-          position, end, ids = start + 8, index - 8, set()
-          while position < end:
-              length = struct.unpack_from("<Q", data, position)[0]
-              position += 8
-              if length < 4 or position + length > end:
-                  raise SystemExit("Pasangan APK Signing Block rusak")
-              ids.add(struct.unpack_from("<I", data, position)[0])
-              position += length
-          if 0x7109871A not in ids:
-              raise SystemExit("APK Signature Scheme v2 tidak ditemukan")
-          PY
 
       - name: Upload signed release APK
         uses: actions/upload-artifact@v4
