@@ -8,6 +8,42 @@
       "enabled": true,
       "category": "basics"
     },
+    "bagian-01-pemula-nol/apa-itu-trading.html": {
+      "enabled": true,
+      "category": "basics"
+    },
+    "bagian-01-pemula-nol/realita-trading-untuk-pemula.html": {
+      "enabled": true,
+      "category": "basics"
+    },
+    "bagian-01-pemula-nol/market-forex-gold-indeks-dan-crypto.html": {
+      "enabled": true,
+      "category": "basics"
+    },
+    "bagian-01-pemula-nol/buy-sell-profit-dan-loss.html": {
+      "enabled": true,
+      "category": "basics"
+    },
+    "bagian-01-pemula-nol/lot-pip-point-dan-spread.html": {
+      "enabled": true,
+      "category": "basics"
+    },
+    "bagian-01-pemula-nol/leverage-margin-equity-dan-balance.html": {
+      "enabled": true,
+      "category": "basics"
+    },
+    "bagian-01-pemula-nol/stop-loss-dan-take-profit.html": {
+      "enabled": true,
+      "category": "basics"
+    },
+    "bagian-01-pemula-nol/risk-sebelum-entry.html": {
+      "enabled": true,
+      "category": "basics"
+    },
+    "bagian-01-pemula-nol/cara-belajar-trading-yang-benar.html": {
+      "enabled": true,
+      "category": "basics"
+    },
     "bagian-02-membaca-chart/index.html": {
       "enabled": true,
       "category": "basics"
