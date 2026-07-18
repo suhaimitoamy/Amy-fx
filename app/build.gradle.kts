@@ -28,8 +28,8 @@ android {
         applicationId = configuredApplicationId
         minSdk = 26
         targetSdk = 35
-        versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 37)
-        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "1.4.14"
+        versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 38)
+        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "1.4.15"
         manifestPlaceholders["appLabel"] = configuredAppLabel
         manifestPlaceholders["amyFxScheme"] = configuredUriScheme
         buildConfigField("String", "UPDATE_MANIFEST_URL", buildConfigString(configuredUpdateManifestUrl))
@@ -43,8 +43,8 @@ android {
 
     signingConfigs {
         create("release") {
-            // Keep v1 enabled so Android/OEM PackageManager can read the certificate
-            // from a downloaded APK before installation. v2 remains the primary modern scheme.
+            // Official Amy FX releases use the permanent signing certificate.
+            // Keep both schemes enabled for broad Android and OEM compatibility.
             enableV1Signing = true
             enableV2Signing = true
             if (hasReleaseSigning) {
