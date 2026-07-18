@@ -84,6 +84,9 @@ jobs:
           disable-animations: true
           script: |
             set -euo pipefail
+            log_file="$PWD/emulator-fixture/migration-test.log"
+            exec > >(tee -a "$log_file") 2>&1
+            set -x
             package="com.amyelitesuite"
             adb install emulator-fixture/AmyFX-1.4.12-debug.apk
             adb shell run-as "$package" id
@@ -107,6 +110,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Amy-FX-migration-emulator-evidence
-          path: emulator-fixture/run/amyfx-migration-*/
+          path: emulator-fixture/
           if-no-files-found: warn
           retention-days: 14
