@@ -37,10 +37,11 @@ test('downloaded APK must match package, exact version and active installed sign
   assert.match(updater, /MessageDigest\.getInstance\("SHA-256"\)/);
 });
 
-test('release signing keeps v1 compatibility and v2 integrity', () => {
+test('release signing follows the same Android Gradle defaults as Amy FX 1.4.12', () => {
   const gradle = read('app/build.gradle.kts');
-  assert.match(gradle, /enableV1Signing = true/);
-  assert.match(gradle, /enableV2Signing = true/);
+  assert.doesNotMatch(gradle, /enableV1Signing\s*=/);
+  assert.doesNotMatch(gradle, /enableV2Signing\s*=/);
+  assert.match(gradle, /same defaults that produced the installed 1\.4\.12 package/);
 });
 
 test('installer uses FileProvider and requests per-app unknown-source permission', () => {
