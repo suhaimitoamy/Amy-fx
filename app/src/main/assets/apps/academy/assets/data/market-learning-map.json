@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "defaults": {
+    "maxAgeMs": 1800000,
+    "resumeGraceMs": 21600000,
+    "hardMaxAgeMs": 86400000,
+    "passScore": 80
+  },
+  "templates": {
+    "classification.v1": { "evaluation": "automatic" },
+    "state-transition.v1": { "evaluation": "automatic" },
+    "location.v1": { "evaluation": "automatic" },
+    "sequence.v1": { "evaluation": "automatic" },
+    "numeric.v1": { "evaluation": "automatic" },
+    "checklist.v1": { "evaluation": "automatic" },
+    "decision.v1": { "evaluation": "automatic" },
+    "manual-review.v1": { "evaluation": "manual" }
+  },
+  "lessons": {}
+}
