@@ -1,9 +1,11 @@
 import {
   buildLearningExample,
-  buildMarketContext,
+  buildMarketContext
+} from '../lib/learning-live-engine.js';
+import {
   classifyLearningTopic,
   normalizeTopic
-} from '../lib/learning-live-engine.js';
+} from '../lib/learning-topic-router.js';
 
 const FETCH_TIMEOUT_MS = 12_000;
 const INTERVAL_OUTPUT_SIZE = Object.freeze({
