@@ -5,17 +5,23 @@ on:
     branches:
       - main
     paths:
+      - api/learning-live-example.js
+      - lib/learning-live-engine.js
       - app/src/main/assets/apps/academy/assets/data/market-learning-map.json
       - app/src/main/assets/apps/academy/assets/js/market-learning-bridge.js
       - tests/market-learning-live-examples.test.mjs
+      - tests/learning-live-engine.test.mjs
       - .github/workflows/learning-live-example-check.yml
   push:
     branches:
       - feature/learning-context-stage1
     paths:
+      - api/learning-live-example.js
+      - lib/learning-live-engine.js
       - app/src/main/assets/apps/academy/assets/data/market-learning-map.json
       - app/src/main/assets/apps/academy/assets/js/market-learning-bridge.js
       - tests/market-learning-live-examples.test.mjs
+      - tests/learning-live-engine.test.mjs
       - .github/workflows/learning-live-example-check.yml
 
 permissions:
@@ -38,11 +44,17 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Validate bridge syntax
-        run: node --check app/src/main/assets/apps/academy/assets/js/market-learning-bridge.js
+      - name: Validate JavaScript syntax
+        run: |
+          node --check api/learning-live-example.js
+          node --check lib/learning-live-engine.js
+          node --check app/src/main/assets/apps/academy/assets/js/market-learning-bridge.js
 
-      - name: Run inline live-example regression
-        run: node --test --test-reporter=spec tests/market-learning-live-examples.test.mjs
+      - name: Run topic router and inline UI regression
+        run: |
+          node --test --test-reporter=spec \
+            tests/market-learning-live-examples.test.mjs \
+            tests/learning-live-engine.test.mjs
 
       - name: Run Android unit tests
         run: |
