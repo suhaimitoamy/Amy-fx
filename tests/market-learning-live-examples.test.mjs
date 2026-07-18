@@ -5,7 +5,9 @@ import vm from 'node:vm';
 
 const bridgePath = 'app/src/main/assets/apps/academy/assets/js/market-learning-bridge.js';
 const registryPath = 'app/src/main/assets/apps/academy/assets/data/market-learning-map.json';
+const apiPath = 'api/learning-live-example.js';
 const source = fs.readFileSync(bridgePath, 'utf8');
+const apiSource = fs.readFileSync(apiPath, 'utf8');
 
 function loadBridge(overrides = {}) {
   const sandbox = {
@@ -13,16 +15,15 @@ function loadBridge(overrides = {}) {
     exports: {},
     URL,
     URLSearchParams,
-    Map,
+    AbortController,
     Promise,
     Date,
-    Intl,
     Number,
     String,
-    Math,
     JSON,
     setTimeout,
     clearTimeout,
+    location: { pathname: '/assets/apps/academy/bagian-01-pemula-nol/apa-itu-trading.html' },
     ...overrides
   };
   sandbox.globalThis = sandbox;
@@ -30,150 +31,111 @@ function loadBridge(overrides = {}) {
   return sandbox.module.exports;
 }
 
-test('registry v2 keeps inline lesson categories enabled', () => {
+test('registry v2 maps all 645 HTML lessons to explicit topics', () => {
   const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
+  const entries = Object.entries(registry.lessons);
+
   assert.equal(registry.schemaVersion, 2);
   assert.equal(registry.defaults.showLiveExamples, true);
-  assert.equal(registry.lessons['bagian-17-fvg-masterclass/index.html'].category, 'structural');
-  assert.equal(registry.lessons['bagian-17-fvg-masterclass/index.html'].topic, 'fvg');
-  assert.equal(registry.lessons['bagian-13-psikologi-trading/index.html'].category, 'management');
+  assert.equal(entries.length, 645);
+  for (const [path, config] of entries) {
+    assert.match(path, /\.html$/);
+    assert.equal(config.enabled, true);
+    assert.ok(['basics', 'structural', 'management'].includes(config.category));
+    assert.equal(typeof config.topic, 'string');
+    assert.ok(config.topic.length > 0);
+  }
 });
 
-test('bridge removes simulated data and uses Mapping market pipeline', () => {
+test('different pages inside the same category retain different topics', () => {
+  const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
+  const trading = registry.lessons['bagian-01-pemula-nol/apa-itu-trading.html'];
+  const lot = registry.lessons['bagian-01-pemula-nol/lot-pip-point-dan-spread.html'];
+  const risk = registry.lessons['bagian-01-pemula-nol/risk-sebelum-entry.html'];
+
+  assert.equal(trading.category, 'basics');
+  assert.equal(lot.category, 'basics');
+  assert.equal(risk.category, 'basics');
+  assert.equal(trading.topic, 'apa-itu-trading');
+  assert.equal(lot.topic, 'lot-pip-point-dan-spread');
+  assert.equal(risk.topic, 'risk-sebelum-entry');
+  assert.notEqual(trading.topic, lot.topic);
+  assert.notEqual(lot.topic, risk.topic);
+});
+
+test('bridge calls the topic-aware backend instead of simulated data', () => {
   assert.doesNotMatch(source, /simulatedLiveData/);
-  assert.match(source, /https:\/\/amy-fx\.vercel\.app\/api\/twelvedata/);
-  assert.match(source, /\/assets\/apps\/mapping\/js\/engine\/ict-core\.js/);
-  assert.match(source, /\/assets\/apps\/mapping\/js\/engine\/concept-candles\.js/);
-  assert.match(source, /Android\.getNativeCandles/);
-  assert.match(source, /engine\.analyze\(/);
-  assert.match(source, /conceptAtrAt\(/);
+  assert.doesNotMatch(source, /Siap disambungkan ke API backend/);
+  assert.doesNotMatch(source, /setTimeout\(\(\) => \{\s*desc\.innerHTML/);
+  assert.match(source, /\/api\/learning-live-example/);
+  assert.match(source, /topic:\s*String\(topic/);
+  assert.match(source, /category:\s*String\(category/);
+  assert.match(source, /data\.content\.message/);
 });
 
-test('inline architecture contains no redirect or external coach flow', () => {
-  assert.doesNotMatch(source, /location\.assign\s*\(/);
-  assert.doesNotMatch(source, /location\.replace\s*\(/);
-  assert.doesNotMatch(source, /window\.open\s*\(/);
-  assert.doesNotMatch(source, /Android\.goHome\s*\(/);
-  assert.doesNotMatch(source, /Gemini|OpenAI|chatbot|learning-ai/i);
-});
-
-test('existing glass UI and pulse animation contract remain present', () => {
+test('inline glass UI, pulse animation, and no-redirect contract remain present', () => {
   assert.match(source, /live-example-box glass-panel/);
   assert.match(source, /Live Market Example/);
   assert.match(source, /pulse 2s infinite/);
   assert.match(source, /@keyframes pulse/);
   assert.match(source, /insertBefore\(ui, injectionPoint\.nextSibling\)/);
+  assert.doesNotMatch(source, /location\.assign\s*\(/);
+  assert.doesNotMatch(source, /location\.replace\s*\(/);
+  assert.doesNotMatch(source, /window\.open\s*\(/);
+  assert.doesNotMatch(source, /Gemini|OpenAI|chatbot|learning-ai/i);
 });
 
-test('academy folder and index URLs resolve to the same registry key', () => {
-  const direct = loadBridge({
-    location: { pathname: '/assets/apps/academy/bagian-01-pemula-nol/index.html' }
-  });
-  assert.equal(direct.getCurrentPath(), 'bagian-01-pemula-nol/index.html');
-
-  const folder = loadBridge({
-    location: { pathname: '/assets/apps/academy/bagian-01-pemula-nol/' }
-  });
-  assert.equal(folder.getCurrentPath(), 'bagian-01-pemula-nol/index.html');
-});
-
-test('native Mapping candle store is accepted before network fallback', () => {
-  const candles = [
-    { time: 100, open: 3300, high: 3310, low: 3295, close: 3305, isClosed: true },
-    { time: 200, open: 3305, high: 3315, low: 3300, close: 3312, isClosed: true }
-  ];
+test('academy chapter URL resolves to its exact registry key', () => {
   const bridge = loadBridge({
-    Android: {
-      getNativeCandles(symbol, timeframe, limit) {
-        assert.equal(symbol, 'XAU/USD');
-        assert.equal(timeframe, 'M1');
-        assert.equal(limit, '3');
-        return JSON.stringify(candles);
-      }
+    location: { pathname: '/assets/apps/academy/bagian-01-pemula-nol/apa-itu-trading.html' }
+  });
+  assert.equal(bridge.getCurrentPath(), 'bagian-01-pemula-nol/apa-itu-trading.html');
+});
+
+test('bridge forwards exact category and topic to backend', async () => {
+  let requestedUrl = '';
+  const bridge = loadBridge({
+    fetch: async url => {
+      requestedUrl = String(url);
+      return {
+        ok: true,
+        async json() {
+          return {
+            status: 'ok',
+            route: { group: 'order_math' },
+            market: { generatedAt: '2026-07-18T00:00:00.000Z' },
+            content: {
+              message: 'Lot dan pip memakai **data berbeda**.',
+              disclaimer: 'Bukan sinyal.'
+            }
+          };
+        }
+      };
     }
   });
-  const result = bridge.readNativeMarketSeries('M1', 3);
-  assert.equal(result.source, 'NATIVE_MAPPING_STORE');
-  assert.equal(result.latest.close, 3312);
-  assert.equal(result.candles.length, 2);
+
+  const result = await bridge.fetchLiveExample('basics', 'lot-pip-point-dan-spread');
+  const parsed = new URL(requestedUrl);
+  assert.equal(parsed.pathname, '/api/learning-live-example');
+  assert.equal(parsed.searchParams.get('category'), 'basics');
+  assert.equal(parsed.searchParams.get('topic'), 'lot-pip-point-dan-spread');
+  assert.equal(result.route.group, 'order_math');
 });
 
-test('data failure has a visible honest fallback instead of hiding the box', () => {
+test('API text is escaped before limited bold markup is rendered', () => {
   const bridge = loadBridge();
-  const fallback = bridge.buildUnavailableExample();
-  assert.match(fallback.message, /belum tersedia/i);
-  assert.match(fallback.message, /Mapping/i);
-  assert.doesNotMatch(source, /catch \(_\) \{\s*return;\s*\}/);
+  const rendered = bridge.renderMessage('<img src=x onerror=alert(1)> **aman**');
+  assert.doesNotMatch(rendered, /<img/);
+  assert.match(rendered, /&lt;img/);
+  assert.match(rendered, /<strong>aman<\/strong>/);
 });
 
-test('basics example is built from fetched candle values', () => {
-  const bridge = loadBridge();
-  const result = bridge.buildBasicsExample(
-    { latest: { close: 3341.25 } },
-    { latest: { open: 3320, high: 3355.5, low: 3312.75, close: 3341.25 } }
-  );
-  assert.equal(result.price, '3341.25');
-  assert.match(result.message, /\$3341\.25/);
-  assert.match(result.message, /\$3320\.00/);
-  assert.match(result.message, /\$3355\.50/);
-  assert.match(result.message, /\$3312\.75/);
-});
-
-test('structural examples use Mapping FVG and Order Block fields', () => {
-  const bridge = loadBridge();
-  const analysis = {
-    currentPrice: 3341.25,
-    result: {
-      price: 3341.25,
-      marketConcepts: {
-        nearestFairValueGaps: [{ direction: 'BULLISH', bottom: 3330, top: 3334, status: 'DETECTED' }],
-        nearestOrderBlocks: [{ direction: 'BEARISH', bottom: 3350, top: 3356, status: 'TESTING', sourceStructure: 'BOS' }],
-        latestConfirmedSweep: null,
-        liquidityHierarchy: { drawTarget: null }
-      }
-    }
-  };
-
-  const fvg = bridge.buildStructuralExample('fvg', analysis);
-  assert.match(fvg.message, /FVG BULLISH/);
-  assert.match(fvg.message, /\$3330\.00 - \$3334\.00/);
-  assert.match(fvg.message, /DETECTED/);
-
-  const ob = bridge.buildStructuralExample('ob', analysis);
-  assert.match(ob.message, /Order Block BEARISH/);
-  assert.match(ob.message, /\$3350\.00 - \$3356\.00/);
-  assert.match(ob.message, /BOS/);
-});
-
-test('liquidity lesson distinguishes confirmed sweep from an active target', () => {
-  const bridge = loadBridge();
-  const confirmed = bridge.buildStructuralExample('liquidity_sweep', {
-    currentPrice: 3341,
-    result: {
-      marketConcepts: {
-        latestConfirmedSweep: {
-          type: 'BSL',
-          level: 3350,
-          reclaimDepthAtr: 0.55,
-          status: 'CONFIRMED_REACTION'
-        },
-        liquidityHierarchy: { drawTarget: null }
-      }
-    }
-  });
-  assert.match(confirmed.message, /sweep terkonfirmasi/);
-  assert.match(confirmed.message, /BSL/);
-  assert.match(confirmed.message, /0\.55 ATR/);
-
-  const waiting = bridge.buildStructuralExample('liquidity_sweep', {
-    currentPrice: 3341,
-    result: {
-      marketConcepts: {
-        latestConfirmedSweep: null,
-        liquidityHierarchy: { drawTarget: { type: 'SSL', level: 3320 } }
-      }
-    }
-  });
-  assert.match(waiting.message, /belum menemukan sweep terkonfirmasi/i);
-  assert.match(waiting.message, /target likuiditas, bukan sinyal arah/i);
+test('backend route validates topic and uses Twelve Data server-side', () => {
+  assert.match(apiSource, /req\.query\?\.topic/);
+  assert.match(apiSource, /classifyLearningTopic/);
+  assert.match(apiSource, /buildLearningExample/);
+  assert.match(apiSource, /process\.env\.TWELVEDATA_API_KEY/);
+  assert.match(apiSource, /api\.twelvedata\.com\/time_series/);
+  assert.match(apiSource, /Access-Control-Allow-Origin/);
+  assert.doesNotMatch(apiSource, /Gemini|OpenAI|chatbot/i);
 });
