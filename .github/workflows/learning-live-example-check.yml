@@ -7,6 +7,7 @@ on:
     paths:
       - api/learning-live-example.js
       - lib/learning-live-engine.js
+      - lib/learning-topic-router.js
       - app/src/main/assets/apps/academy/assets/data/market-learning-map.json
       - app/src/main/assets/apps/academy/assets/js/market-learning-bridge.js
       - tests/market-learning-live-examples.test.mjs
@@ -18,6 +19,7 @@ on:
     paths:
       - api/learning-live-example.js
       - lib/learning-live-engine.js
+      - lib/learning-topic-router.js
       - app/src/main/assets/apps/academy/assets/data/market-learning-map.json
       - app/src/main/assets/apps/academy/assets/js/market-learning-bridge.js
       - tests/market-learning-live-examples.test.mjs
@@ -48,6 +50,7 @@ jobs:
         run: |
           node --check api/learning-live-example.js
           node --check lib/learning-live-engine.js
+          node --check lib/learning-topic-router.js
           node --check app/src/main/assets/apps/academy/assets/js/market-learning-bridge.js
 
       - name: Run topic router and inline UI regression
