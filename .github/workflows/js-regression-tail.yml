@@ -1,0 +1,31 @@
+name: JavaScript Regression Tail
+
+on:
+  push:
+    branches:
+      - feature/learning-context-stage1
+    paths:
+      - .github/workflows/js-regression-tail.yml
+      - tests/**
+      - app/src/main/assets/**
+      - api/**
+      - lib/**
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run tests and print only final result
+        shell: bash
+        run: |
+          set +e
+          node --test --test-reporter=spec tests/*.test.mjs > /tmp/js-regression.log 2>&1
+          status=$?
+          tail -n 180 /tmp/js-regression.log
+          exit "$status"
