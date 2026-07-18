@@ -24,13 +24,23 @@ test('native updater downloads only HTTPS GitHub APKs into private cache', () =>
   assert.match(updater, /hasZipHeader/);
 });
 
-test('downloaded APK must match package, exact version and installed signer', () => {
+test('downloaded APK must match package, exact version and active installed signer', () => {
   const updater = read('app/src/main/java/com/amyelitesuite/NativeAppUpdater.kt');
   assert.match(updater, /archive\.packageName != activity\.packageName/);
   assert.match(updater, /archiveVersionCode != expectedVersionCode\.toLong\(\)/);
   assert.match(updater, /archiveVersionCode <= currentVersionCode\(\)/);
   assert.match(updater, /installedSigners != archiveSigners/);
+  assert.match(updater, /signingInfo\.apkContentsSigners/);
+  assert.match(updater, /takeIf \{ it\.isNotEmpty\(\) \}/);
+  assert.match(updater, /\?: signingInfo\.signingCertificateHistory/);
+  assert.match(updater, /Sertifikat APK update tidak dapat dibaca/);
   assert.match(updater, /MessageDigest\.getInstance\("SHA-256"\)/);
+});
+
+test('release signing keeps v1 compatibility and v2 integrity', () => {
+  const gradle = read('app/build.gradle.kts');
+  assert.match(gradle, /enableV1Signing = true/);
+  assert.match(gradle, /enableV2Signing = true/);
 });
 
 test('installer uses FileProvider and requests per-app unknown-source permission', () => {

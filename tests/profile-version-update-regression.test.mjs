@@ -22,11 +22,11 @@ test('version and update scripts remain syntactically valid', () => {
   assertSyntax(checkerUrl);
 });
 
-test('profile displays Amy FX version 1.4.13 and supports manual update checks', () => {
+test('profile displays Amy FX version 1.4.14 and supports manual update checks', () => {
   const version = source(versionUrl);
   const index = source(indexUrl);
-  assert.match(version, /name: '1\.4\.13'/);
-  assert.match(version, /code: 36/);
+  assert.match(version, /name: '1\.4\.14'/);
+  assert.match(version, /code: 37/);
   assert.match(version, /Versi Aplikasi/);
   assert.match(version, /data-profile-action=\\?"version/);
   assert.match(version, /AmyFXUpdate\?\.checkNow/);

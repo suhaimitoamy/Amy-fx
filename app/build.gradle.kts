@@ -28,8 +28,8 @@ android {
         applicationId = configuredApplicationId
         minSdk = 26
         targetSdk = 35
-        versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 36)
-        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "1.4.13"
+        versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 37)
+        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "1.4.14"
         manifestPlaceholders["appLabel"] = configuredAppLabel
         manifestPlaceholders["amyFxScheme"] = configuredUriScheme
         buildConfigField("String", "UPDATE_MANIFEST_URL", buildConfigString(configuredUpdateManifestUrl))
@@ -43,6 +43,10 @@ android {
 
     signingConfigs {
         create("release") {
+            // Keep v1 enabled so Android/OEM PackageManager can read the certificate
+            // from a downloaded APK before installation. v2 remains the primary modern scheme.
+            enableV1Signing = true
+            enableV2Signing = true
             if (hasReleaseSigning) {
                 storeFile = file(System.getenv("AMYFX_KEYSTORE_PATH"))
                 storePassword = System.getenv("AMYFX_KEYSTORE_PASSWORD")

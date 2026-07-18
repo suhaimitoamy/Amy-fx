@@ -23,8 +23,8 @@ jobs:
       AMYFX_KEYSTORE_PASSWORD: android
       AMYFX_KEY_ALIAS: androiddebugkey
       AMYFX_KEY_PASSWORD: android
-      AMYFX_VERSION_NAME: "1.4.13"
-      AMYFX_VERSION_CODE: "36"
+      AMYFX_VERSION_NAME: "1.4.14"
+      AMYFX_VERSION_CODE: "37"
       AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
     steps:
@@ -109,16 +109,43 @@ jobs:
       - name: Build signed release APK
         run: ./gradlew assembleRelease --no-configuration-cache --stacktrace
 
-      - name: Verify APK identity, version and signer
+      - name: Verify APK identity, version, signing structures and signer
         run: |
           set -euo pipefail
           apk="app/build/outputs/apk/release/app-release.apk"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" | grep -F "package: name='com.amyelitesuite' versionCode='${AMYFX_VERSION_CODE}' versionName='${AMYFX_VERSION_NAME}'"
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$apk" | tee /tmp/apksigner.txt
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$apk"
+          sf_entry="$(unzip -Z1 "$apk" | grep -E '^META-INF/[^/]+\.SF$' | head -n1)"
+          cert_entry="$(unzip -Z1 "$apk" | grep -E '^META-INF/[^/]+\.(RSA|DSA|EC)$' | head -n1)"
+          test -n "$sf_entry"
+          test -n "$cert_entry"
+          unzip -p "$apk" "$cert_entry" > /tmp/amyfx-apk-cert
           expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
-          actual="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/apksigner.txt | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          actual="$(keytool -printcert -file /tmp/amyfx-apk-cert | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           test -n "$actual"
           test "$actual" = "$expected"
+          APK_PATH="$apk" python3 - <<'PY'
+          import os
+          import struct
+          data = open(os.environ["APK_PATH"], "rb").read()
+          index = data.rfind(b"APK Sig Block 42")
+          if index < 0:
+              raise SystemExit("APK Signing Block tidak ditemukan")
+          size = struct.unpack_from("<Q", data, index - 8)[0]
+          start = index + 8 - size
+          if start < 0 or struct.unpack_from("<Q", data, start)[0] != size:
+              raise SystemExit("APK Signing Block tidak valid")
+          position, end, ids = start + 8, index - 8, set()
+          while position < end:
+              length = struct.unpack_from("<Q", data, position)[0]
+              position += 8
+              if length < 4 or position + length > end:
+                  raise SystemExit("Pasangan APK Signing Block rusak")
+              ids.add(struct.unpack_from("<I", data, position)[0])
+              position += length
+          if 0x7109871A not in ids:
+              raise SystemExit("APK Signature Scheme v2 tidak ditemukan")
+          PY
 
       - name: Prepare rolling APK
         run: |
@@ -141,7 +168,7 @@ jobs:
           git tag -f amyfx-latest "$GITHUB_SHA"
           git push origin refs/tags/amyfx-latest --force
 
-          release_notes="Amy FX 1.4.13 menambahkan Live Market Example rule-based di dalam 645 halaman Academy. Setiap halaman memakai topic spesifik, tetap berada di artikel, dan memiliki fallback latihan lokal ketika layanan data live belum tersedia."
+          release_notes="Amy FX 1.4.14 memperbaiki kegagalan verifikasi tanda tangan pada updater 1.4.12. APK kini memakai signing v1+v2 untuk kompatibilitas pembacaan sertifikat pada Android/OEM, sementara updater baru membandingkan signer aktif secara benar. Fitur Live Market Example Academy tetap disertakan."
           if gh release view amyfx-latest >/dev/null 2>&1; then
             gh release edit amyfx-latest \
               --title "Amy FX Latest — v${AMYFX_VERSION_NAME}" \
@@ -175,11 +202,11 @@ jobs:
           version_name = os.environ["AMYFX_VERSION_NAME"].strip()
           version_code = int(os.environ["AMYFX_VERSION_CODE"])
           notes = [
-              "Menambahkan contoh edukasi langsung di dalam 645 halaman Amy FX Academy tanpa memindahkan pengguna ke Mapping",
-              "Setiap halaman memakai topic spesifik agar contoh sesuai dengan materi yang sedang dibaca",
-              "Menambahkan backend rule-based untuk konteks XAUUSD seperti risk, liquidity, FVG, Order Block, sesi, volatilitas, dan struktur",
-              "Jika layanan data live belum tersedia, Academy menampilkan contoh latihan lokal yang relevan tanpa pesan error dan tanpa mengaku sebagai data real-time",
-              "Fitur ini bersifat edukasi, bukan AI chatbot dan bukan sinyal Buy/Sell"
+              "Memperbaiki pesan salah tanda tangan APK tidak cocok pada sebagian perangkat Android dan OEM",
+              "APK rilis kini memakai signing scheme v1 dan v2 dengan sertifikat Amy FX yang sama agar versi 1.4.12 dapat membaca sertifikat sebelum instalasi",
+              "Updater baru membandingkan signer aktif APK, bukan riwayat sertifikat yang dapat kosong pada file unduhan",
+              "Tetap menyertakan Live Market Example rule-based di 645 halaman Amy FX Academy",
+              "Pembaruan dapat dipasang tanpa menghapus aplikasi dan tanpa menghilangkan data lokal"
           ]
 
           data.update({
