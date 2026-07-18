@@ -30,11 +30,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run tests and print only final result
+      - name: Run tests and print concise failure summary
         shell: bash
         run: |
           set +e
           node --test --test-reporter=spec tests/*.test.mjs > /tmp/js-regression.log 2>&1
           status=$?
-          tail -n 180 /tmp/js-regression.log
+          grep -E "^(✖|ℹ tests|ℹ suites|ℹ pass|ℹ fail|ℹ cancelled|ℹ skipped|ℹ todo|ℹ duration)|AssertionError|ERR_ASSERTION|not ok|error:" /tmp/js-regression.log | tail -n 80 || true
           exit "$status"
