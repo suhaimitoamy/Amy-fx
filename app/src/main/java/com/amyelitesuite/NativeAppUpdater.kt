@@ -206,10 +206,15 @@ class NativeAppUpdater(
             error("APK bukan versi yang lebih baru")
         }
 
-        val installed = installedPackageInfo()
-        val installedSigners = signerDigests(installed)
+        val installedSigners = signerDigests(installedPackageInfo())
         val archiveSigners = signerDigests(archive)
-        if (installedSigners.isEmpty() || archiveSigners.isEmpty() || installedSigners != archiveSigners) {
+        if (installedSigners.isEmpty()) {
+            error("Sertifikat Amy FX terpasang tidak dapat dibaca")
+        }
+        if (archiveSigners.isEmpty()) {
+            error("Sertifikat APK update tidak dapat dibaca")
+        }
+        if (installedSigners != archiveSigners) {
             error("Tanda tangan APK tidak cocok dengan Amy FX terpasang")
         }
     }
@@ -238,7 +243,12 @@ class NativeAppUpdater(
     private fun signerDigests(info: PackageInfo): Set<String> {
         val signatures = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             val signingInfo = info.signingInfo ?: return emptySet()
-            if (signingInfo.hasMultipleSigners()) signingInfo.apkContentsSigners else signingInfo.signingCertificateHistory
+            // Compare the certificate that signs the current APK contents. Using
+            // signingCertificateHistory for a downloaded archive produces false
+            // negatives on some Android/OEM PackageManager implementations.
+            signingInfo.apkContentsSigners
+                .takeIf { it.isNotEmpty() }
+                ?: signingInfo.signingCertificateHistory
         } else {
             info.signatures ?: emptyArray()
         }
