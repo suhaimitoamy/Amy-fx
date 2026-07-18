@@ -53,24 +53,27 @@ test('native notifications only open trusted local routes', () => {
   assert.match(native, /setSmallIcon\(R\.drawable\.ic_stat_amy_fx\)/);
 });
 
-test('release workflows pin the existing certificate and require v1 plus v2 signing', () => {
+test('release workflows pin the certificate and inspect v1 plus v2 structures', () => {
   const gradle = read('app/build.gradle.kts');
   assert.match(gradle, /enableV1Signing = true/);
   assert.match(gradle, /enableV2Signing = true/);
 
+  for (const path of ['.github/workflows/build-apk.yml', '.github/workflows/build-release.yml', '.github/workflows/stage5-apply.yml']) {
+    const workflow = read(path);
+    assert.match(workflow, /META-INF\/\[\^\/\]\+\\\.SF/);
+    assert.match(workflow, /META-INF\/\[\^\/\]\+\\\.\(RSA\|DSA\|EC\)/);
+    assert.match(workflow, /0x7109871A/);
+    assert.match(workflow, /keytool -printcert/);
+    assert.match(workflow, /47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7/);
+  }
+
   const rolling = read('.github/workflows/build-apk.yml');
   assert.match(rolling, /AMYFX_VERSION_NAME: "1\.4\.14"/);
   assert.match(rolling, /AMYFX_VERSION_CODE: "37"/);
-  assert.match(rolling, /Verified using v1 scheme \(JAR signing\): true/);
-  assert.match(rolling, /Verified using v2 scheme \(APK Signature Scheme v2\): true/);
-  assert.match(rolling, /47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7/);
 
   const manual = read('.github/workflows/build-release.yml');
   assert.match(manual, /default: "1\.4\.14"/);
   assert.match(manual, /default: "37"/);
-  assert.match(manual, /Verified using v1 scheme \(JAR signing\): true/);
-  assert.match(manual, /Verified using v2 scheme \(APK Signature Scheme v2\): true/);
-  assert.match(manual, /47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7/);
 });
 
 test('Firebase Android client remains bound to the release applicationId', () => {
