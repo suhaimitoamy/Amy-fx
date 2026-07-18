@@ -50,7 +50,7 @@ function marketFixture() {
 test('topic normalization is deterministic and bounded', () => {
   assert.equal(normalizeTopic('  FVG Presisi vs FVG Luas.html '), 'fvg-presisi-vs-fvg-luas');
   assert.equal(normalizeTopic('Risk & Reward!'), 'risk-reward');
-  assert.equal(humanizeTopic('lot-pip-point-dan-spread'), 'Lot PIP Point Dan Spread');
+  assert.equal(humanizeTopic('lot-pip-point-dan-spread'), 'LOT PIP Point DAN Spread');
 });
 
 test('specific topics route to different rule groups', () => {
