@@ -1,0 +1,89 @@
+name: Trace Amy FX APK Signing Lineage
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - fix/rebuild-from-1.4.12-1.4.15
+    paths:
+      - .github/workflows/forensic-signing-lineage.yml
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  trace-signers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Find historical APK artifacts and inspect certificates
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p forensic/apks
+          report="forensic/signing-lineage.txt"
+          : > "$report"
+
+          inspect_sha() {
+            local label="$1"
+            local sha="$2"
+            echo "===== ${label} ${sha} =====" | tee -a "$report"
+
+            runs_json="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${sha}&per_page=100")"
+            run_ids="$(jq -r '.workflow_runs[] | select(.conclusion == "success") | .id' <<<"$runs_json" | sort -u)"
+            if [ -z "$run_ids" ]; then
+              echo "NO_SUCCESSFUL_RUN" | tee -a "$report"
+              return
+            fi
+
+            while read -r run_id; do
+              [ -n "$run_id" ] || continue
+              run_name="$(jq -r --argjson id "$run_id" '.workflow_runs[] | select(.id == $id) | .name' <<<"$runs_json" | head -n1)"
+              echo "RUN ${run_id} ${run_name}" | tee -a "$report"
+              artifacts="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100")"
+              jq -r '.artifacts[] | [.id,.name,.expired] | @tsv' <<<"$artifacts" | while IFS=$'\t' read -r artifact_id artifact_name expired; do
+                echo "ARTIFACT ${artifact_id} ${artifact_name} expired=${expired}" | tee -a "$report"
+                if [ "$expired" = "false" ] && [[ "${artifact_name,,}" == *apk* ]]; then
+                  zip="forensic/${label}-${run_id}-${artifact_id}.zip"
+                  dir="forensic/${label}-${run_id}-${artifact_id}"
+                  gh api -H "Accept: application/vnd.github+json" \
+                    "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" > "$zip"
+                  mkdir -p "$dir"
+                  unzip -q "$zip" -d "$dir"
+                  while IFS= read -r apk; do
+                    safe_name="$(basename "$apk" | tr ' ' '_')"
+                    cp "$apk" "forensic/apks/${label}-${run_id}-${artifact_id}-${safe_name}"
+                    echo "APK ${apk}" | tee -a "$report"
+                    keytool -printcert -jarfile "$apk" 2>&1 | \
+                      grep -E 'Owner:|Issuer:|SHA1:|SHA256:' | tee -a "$report" || true
+                    sha256sum "$apk" | tee -a "$report"
+                  done < <(find "$dir" -type f -name '*.apk' | sort)
+                fi
+              done
+            done <<<"$run_ids"
+            echo | tee -a "$report"
+          }
+
+          inspect_sha "v1.4.10" "e01610de8374cdfe6f9f7fa8176ffc6e6ecb0608"
+          inspect_sha "v1.4.11" "b20ae1905a5368598f94fcf072cd34c0372d3f28"
+          inspect_sha "v1.4.12" "8f07d43063ad1ea8398230de30b053504b1d625b"
+
+          echo "===== SUMMARY UNIQUE SHA256 CERTIFICATES =====" | tee -a "$report"
+          grep 'SHA256:' "$report" | sort -u | tee -a "$report" || true
+
+      - name: Upload forensic report and recovered APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: amy-fx-signing-lineage-forensics
+          path: forensic/
+          if-no-files-found: error
+          retention-days: 14
