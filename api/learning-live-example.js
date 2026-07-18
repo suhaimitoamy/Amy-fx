@@ -8,6 +8,8 @@ import {
 } from '../lib/learning-topic-router.js';
 
 const FETCH_TIMEOUT_MS = 12_000;
+const MARKET_PROXY_URL = process.env.AMYFX_MARKET_PROXY_URL
+  || 'https://amy-fx.vercel.app/api/twelvedata';
 const INTERVAL_OUTPUT_SIZE = Object.freeze({
   '1min': 5,
   '15min': 120,
@@ -44,22 +46,30 @@ function normalizeCandles(data) {
     );
 }
 
+function providerUrl(interval, outputsize, apiKey) {
+  const params = new URLSearchParams({
+    symbol: 'XAU/USD',
+    interval,
+    outputsize: String(outputsize)
+  });
+
+  if (apiKey) {
+    params.set('timezone', 'UTC');
+    params.set('apikey', apiKey);
+    return `https://api.twelvedata.com/time_series?${params}`;
+  }
+  return `${MARKET_PROXY_URL}?${params}`;
+}
+
 async function fetchSeries(interval, apiKey, signal) {
   const outputsize = INTERVAL_OUTPUT_SIZE[interval];
   if (!outputsize) throw new Error(`Interval ${interval} tidak didukung`);
 
-  const params = new URLSearchParams({
-    symbol: 'XAU/USD',
-    interval,
-    outputsize: String(outputsize),
-    timezone: 'UTC',
-    apikey: apiKey
-  });
-  const response = await fetch(`https://api.twelvedata.com/time_series?${params}`, {
+  const response = await fetch(providerUrl(interval, outputsize, apiKey), {
     signal,
     headers: { Accept: 'application/json' }
   });
-  if (!response.ok) throw new Error(`TwelveData HTTP ${response.status}`);
+  if (!response.ok) throw new Error(`Market provider HTTP ${response.status}`);
 
   const data = await response.json();
   if (data?.status === 'error') throw new Error(data.message || 'Market provider gagal');
@@ -94,15 +104,8 @@ export default async function handler(req, res) {
     });
   }
 
-  const apiKey = process.env.TWELVEDATA_API_KEY;
-  if (!apiKey) {
-    return res.status(503).json({
-      status: 'error',
-      message: 'Market service belum dikonfigurasi'
-    });
-  }
-
   const route = classifyLearningTopic(topic, category);
+  const apiKey = process.env.TWELVEDATA_API_KEY || '';
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
