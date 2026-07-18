@@ -95,16 +95,27 @@ jobs:
       - name: Build signed Amy FX 1.4.14 APK
         run: ./gradlew assembleRelease --no-configuration-cache --stacktrace
 
+      - name: Upload built APK for signing inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: Amy-FX-v1.4.14-stage5-built-apk
+          path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+
       - name: Verify APK identity, version, signing schemes and signer
         run: |
           set -euo pipefail
           apk="app/build/outputs/apk/release/app-release.apk"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" | grep -F "package: name='com.amyelitesuite' versionCode='${AMYFX_VERSION_CODE}' versionName='${AMYFX_VERSION_NAME}'"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$apk" | tee /tmp/apksigner.txt
-          grep -F "Verified using v1 scheme (JAR signing): true" /tmp/apksigner.txt
-          grep -F "Verified using v2 scheme (APK Signature Scheme v2): true" /tmp/apksigner.txt
+          v1="$(sed -n 's/^Verified using v1 scheme (JAR signing): //p' /tmp/apksigner.txt | head -n1 | tr -d '\r')"
+          v2="$(sed -n 's/^Verified using v2 scheme (APK Signature Scheme v2): //p' /tmp/apksigner.txt | head -n1 | tr -d '\r')"
+          echo "APK signing schemes: v1=${v1:-missing}, v2=${v2:-missing}"
+          test "$v1" = "true"
+          test "$v2" = "true"
           expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
-          actual="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/apksigner.txt | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          actual="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/apksigner.txt | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]' | tr -d '\r')"
+          echo "APK signer SHA-256: ${actual:-missing}"
           test -n "$actual"
           test "$actual" = "$expected"
 
@@ -113,3 +124,4 @@ jobs:
         with:
           name: Amy-FX-v1.4.14-stage5-signed-apk
           path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
