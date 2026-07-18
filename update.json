@@ -1,25 +1,25 @@
 {
-  "latest_version_code": 37,
-  "latest_version_name": "1.4.14",
-  "versionCode": 37,
-  "version": "1.4.14",
+  "latest_version_code": 38,
+  "latest_version_name": "1.4.15",
+  "versionCode": 38,
+  "version": "1.4.15",
   "releaseDate": "2026-07-18",
   "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Memperbaiki pesan salah tanda tangan APK tidak cocok pada sebagian perangkat Android dan OEM",
-    "APK rilis kini memakai signing scheme v1 dan v2 dengan sertifikat Amy FX yang sama agar versi 1.4.12 dapat membaca sertifikat sebelum instalasi",
-    "Updater baru membandingkan signer aktif APK, bukan riwayat sertifikat yang dapat kosong pada file unduhan",
-    "Tetap menyertakan Live Market Example rule-based di 645 halaman Amy FX Academy",
-    "Pembaruan dapat dipasang tanpa menghapus aplikasi dan tanpa menghilangkan data lokal"
+    "Rilis resmi Amy FX dengan package com.amyelitesuite dan sertifikat permanen",
+    "Live Market Example rule-based tersedia di 645 halaman Amy FX Academy",
+    "Contoh materi tetap tersedia saat layanan data live tidak merespons",
+    "Updater memverifikasi package, versionCode, dan signer APK sebelum instalasi",
+    "Build debug tidak digunakan lagi untuk distribusi publik"
   ],
   "changelog": [
-    "Memperbaiki pesan salah tanda tangan APK tidak cocok pada sebagian perangkat Android dan OEM",
-    "APK rilis kini memakai signing scheme v1 dan v2 dengan sertifikat Amy FX yang sama agar versi 1.4.12 dapat membaca sertifikat sebelum instalasi",
-    "Updater baru membandingkan signer aktif APK, bukan riwayat sertifikat yang dapat kosong pada file unduhan",
-    "Tetap menyertakan Live Market Example rule-based di 645 halaman Amy FX Academy",
-    "Pembaruan dapat dipasang tanpa menghapus aplikasi dan tanpa menghilangkan data lokal"
+    "Rilis resmi Amy FX dengan package com.amyelitesuite dan sertifikat permanen",
+    "Live Market Example rule-based tersedia di 645 halaman Amy FX Academy",
+    "Contoh materi tetap tersedia saat layanan data live tidak merespons",
+    "Updater memverifikasi package, versionCode, dan signer APK sebelum instalasi",
+    "Build debug tidak digunakan lagi untuk distribusi publik"
   ]
 }
