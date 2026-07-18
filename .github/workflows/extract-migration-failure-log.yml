@@ -23,8 +23,8 @@ jobs:
           set -euo pipefail
           mkdir -p diagnostics
           gh api -H "Accept: application/vnd.github+json" \
-            repos/${GITHUB_REPOSITORY}/actions/jobs/88068654880/logs > diagnostics/full.log
-          tail -n 300 diagnostics/full.log > diagnostics/tail.log
+            repos/${GITHUB_REPOSITORY}/actions/jobs/88069189295/logs > diagnostics/full.log
+          tail -n 400 diagnostics/full.log > diagnostics/tail.log
           cat diagnostics/tail.log
 
       - name: Upload compact failure log
