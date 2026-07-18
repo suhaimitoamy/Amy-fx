@@ -3,10 +3,12 @@ import test from 'node:test';
 import {
   buildLearningExample,
   buildMarketContext,
-  classifyLearningTopic,
-  humanizeTopic,
-  normalizeTopic
+  humanizeTopic
 } from '../lib/learning-live-engine.js';
+import {
+  classifyLearningTopic,
+  normalizeTopic
+} from '../lib/learning-topic-router.js';
 
 function candles(count, start, step, timeframe = 'generic') {
   return Array.from({ length: count }, (_, index) => {
@@ -61,6 +63,14 @@ test('specific topics route to different rule groups', () => {
   assert.equal(classifyLearningTopic('breaker-blocks-dan-mitigation-blocks', 'structural').group, 'order_block');
   assert.equal(classifyLearningTopic('liquidity-sweep', 'structural').group, 'liquidity');
   assert.equal(classifyLearningTopic('konsep-yang-belum-dipetakan', 'structural').group, 'structural_fallback');
+});
+
+test('specific concepts win over generic words inside the same slug', () => {
+  assert.equal(classifyLearningTopic('stop-loss-dan-take-profit', 'basics').group, 'risk');
+  assert.equal(classifyLearningTopic('xauusd-session-playbook', 'structural').group, 'session');
+  assert.equal(classifyLearningTopic('xauusd-liquidity-map-memetakan-bahan-bakar-market', 'structural').group, 'liquidity');
+  assert.equal(classifyLearningTopic('target-dan-partial-take-profit-mengelola-hasil-secara-objektif', 'management').group, 'trade_management');
+  assert.equal(classifyLearningTopic('seasonal-tendency-dan-cot-report-gold', 'structural').group, 'news');
 });
 
 test('same basics category produces topic-specific messages', () => {
