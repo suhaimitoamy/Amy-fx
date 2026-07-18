@@ -1,0 +1,98 @@
+name: Learning Context Fixture APK
+
+on:
+  pull_request:
+    branches:
+      - feature/learning-context-stage1
+  push:
+    branches:
+      - test/learning-context-stage1-fixture
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout fixture branch
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Validate learning JavaScript syntax
+        run: |
+          node --check app/src/main/assets/apps/shared/learning-context.js
+          node --check app/src/main/assets/apps/shared/learning-evaluator.js
+          node --check app/src/main/assets/apps/shared/learning-progress.js
+          node --check app/src/main/assets/apps/academy/assets/js/market-learning-bridge.js
+          node --check app/src/main/assets/apps/academy/assets/js/main.js
+
+      - name: Validate fixture registry and bridge route
+        run: |
+          node --input-type=commonjs <<'NODE'
+          const fs = require('fs');
+          const vm = require('vm');
+          const assert = require('assert');
+
+          const registryPath = 'app/src/main/assets/apps/academy/assets/data/market-learning-map.json';
+          const lessonPath = 'app/src/main/assets/apps/academy/bagian-04-liquidity/liquidity-sweep.html';
+          const bridgePath = 'app/src/main/assets/apps/academy/assets/js/market-learning-bridge.js';
+          const mainPath = 'app/src/main/assets/apps/academy/assets/js/main.js';
+
+          const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
+          const key = 'bagian-04-liquidity/liquidity-sweep.html';
+          assert.equal(registry.schemaVersion, 1);
+          assert.equal(Object.keys(registry.lessons).length, 1);
+          assert.equal(registry.lessons[key].enabled, true);
+          assert.equal(registry.lessons[key].destination, 'mapping');
+          assert.equal(registry.lessons[key].timeframe, 'M15');
+          assert.ok(registry.lessons[key].requiredFacts.includes('liquidity.primaryEvent'));
+          assert.ok(fs.existsSync(lessonPath));
+
+          const source = fs.readFileSync(bridgePath, 'utf8');
+          const sandbox = { module: { exports: {} }, exports: {}, URL, Promise, Set, Object };
+          sandbox.globalThis = sandbox;
+          vm.runInNewContext(source, sandbox, { filename: bridgePath });
+          const bridge = sandbox.module.exports;
+          const runtime = {
+            safeLocalPath(path) {
+              return path.startsWith('/assets/apps/academy/') && !path.includes('..') ? path : null;
+            }
+          };
+          assert.equal(bridge.validateRegistry(registry, runtime).valid, true);
+          const active = bridge.activeLessonForPath(
+            registry,
+            '/assets/apps/academy/' + key,
+            runtime
+          );
+          assert.equal(active.lesson.id, 'fixture-liquidity-sweep');
+
+          const mainSource = fs.readFileSync(mainPath, 'utf8');
+          assert.equal((mainSource.match(/market-learning-bridge\.js/g) || []).length, 1);
+          NODE
+
+      - name: Run Android unit tests
+        run: |
+          chmod +x gradlew
+          ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Upload fixture APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: amy-fx-learning-context-stage1-fixture-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
