@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Amy FX"
 include(":app")
+include(":signcheck")
