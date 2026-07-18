@@ -1,25 +1,25 @@
 {
-  "latest_version_code": 36,
-  "latest_version_name": "1.4.13",
-  "versionCode": 36,
-  "version": "1.4.13",
+  "latest_version_code": 37,
+  "latest_version_name": "1.4.14",
+  "versionCode": 37,
+  "version": "1.4.14",
   "releaseDate": "2026-07-18",
   "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Menambahkan contoh edukasi langsung di dalam 645 halaman Amy FX Academy tanpa memindahkan pengguna ke Mapping",
-    "Setiap halaman memakai topic spesifik agar contoh sesuai dengan materi yang sedang dibaca",
-    "Menambahkan backend rule-based untuk konteks XAUUSD seperti risk, liquidity, FVG, Order Block, sesi, volatilitas, dan struktur",
-    "Jika layanan data live belum tersedia, Academy menampilkan contoh latihan lokal yang relevan tanpa pesan error dan tanpa mengaku sebagai data real-time",
-    "Fitur ini bersifat edukasi, bukan AI chatbot dan bukan sinyal Buy/Sell"
+    "Memperbaiki pesan salah tanda tangan APK tidak cocok pada sebagian perangkat Android dan OEM",
+    "APK rilis kini memakai signing scheme v1 dan v2 dengan sertifikat Amy FX yang sama agar versi 1.4.12 dapat membaca sertifikat sebelum instalasi",
+    "Updater baru membandingkan signer aktif APK, bukan riwayat sertifikat yang dapat kosong pada file unduhan",
+    "Tetap menyertakan Live Market Example rule-based di 645 halaman Amy FX Academy",
+    "Pembaruan dapat dipasang tanpa menghapus aplikasi dan tanpa menghilangkan data lokal"
   ],
   "changelog": [
-    "Menambahkan contoh edukasi langsung di dalam 645 halaman Amy FX Academy tanpa memindahkan pengguna ke Mapping",
-    "Setiap halaman memakai topic spesifik agar contoh sesuai dengan materi yang sedang dibaca",
-    "Menambahkan backend rule-based untuk konteks XAUUSD seperti risk, liquidity, FVG, Order Block, sesi, volatilitas, dan struktur",
-    "Jika layanan data live belum tersedia, Academy menampilkan contoh latihan lokal yang relevan tanpa pesan error dan tanpa mengaku sebagai data real-time",
-    "Fitur ini bersifat edukasi, bukan AI chatbot dan bukan sinyal Buy/Sell"
+    "Memperbaiki pesan salah tanda tangan APK tidak cocok pada sebagian perangkat Android dan OEM",
+    "APK rilis kini memakai signing scheme v1 dan v2 dengan sertifikat Amy FX yang sama agar versi 1.4.12 dapat membaca sertifikat sebelum instalasi",
+    "Updater baru membandingkan signer aktif APK, bukan riwayat sertifikat yang dapat kosong pada file unduhan",
+    "Tetap menyertakan Live Market Example rule-based di 645 halaman Amy FX Academy",
+    "Pembaruan dapat dipasang tanpa menghapus aplikasi dan tanpa menghilangkan data lokal"
   ]
 }
