@@ -20,6 +20,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.PowerManager
+import android.os.SystemClock
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Base64
@@ -603,6 +604,11 @@ class MainActivity : Activity() {
     }
 
     inner class WebAppInterface(private val mContext: Context) {
+        @JavascriptInterface
+        fun getElapsedRealtimeMs(): Long {
+            return SystemClock.elapsedRealtime()
+        }
+
         @JavascriptInterface
         fun goHome() {
             (mContext as Activity).runOnUiThread {

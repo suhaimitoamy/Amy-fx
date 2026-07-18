@@ -23,8 +23,8 @@ jobs:
       AMYFX_KEYSTORE_PASSWORD: android
       AMYFX_KEY_ALIAS: androiddebugkey
       AMYFX_KEY_PASSWORD: android
-      AMYFX_VERSION_NAME: "1.4.12"
-      AMYFX_VERSION_CODE: "35"
+      AMYFX_VERSION_NAME: "1.4.13"
+      AMYFX_VERSION_CODE: "36"
       AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
     steps:
@@ -141,7 +141,7 @@ jobs:
           git tag -f amyfx-latest "$GITHUB_SHA"
           git push origin refs/tags/amyfx-latest --force
 
-          release_notes="Amy FX 1.4.12 menambahkan Liquidity Draw first-hit threshold 97 sebagai informasi context di Mapping. Menampilkan destination BSL/SSL, target, confidence model, dan jarak ATR pada M15/H1 tanpa sinyal entry otomatis."
+          release_notes="Amy FX 1.4.13 menambahkan Live Market Example rule-based di dalam 645 halaman Academy. Setiap halaman memakai topic spesifik, tetap berada di artikel, dan memiliki fallback latihan lokal ketika layanan data live belum tersedia."
           if gh release view amyfx-latest >/dev/null 2>&1; then
             gh release edit amyfx-latest \
               --title "Amy FX Latest — v${AMYFX_VERSION_NAME}" \
@@ -175,10 +175,11 @@ jobs:
           version_name = os.environ["AMYFX_VERSION_NAME"].strip()
           version_code = int(os.environ["AMYFX_VERSION_CODE"])
           notes = [
-              "Menambahkan Liquidity Draw first-hit threshold 97 sebagai informasi context di Mapping",
-              "Menampilkan destination BSL/SSL, target liquidity, confidence model, dan jarak ATR pada M15 serta H1",
-              "Liquidity Draw tidak menyediakan sinyal BUY/SELL, entry, stop loss, take profit, atau eksekusi otomatis",
-              "Sistem menampilkan ABSTAIN ketika confidence 97 tidak terpenuhi atau context belum lengkap"
+              "Menambahkan contoh edukasi langsung di dalam 645 halaman Amy FX Academy tanpa memindahkan pengguna ke Mapping",
+              "Setiap halaman memakai topic spesifik agar contoh sesuai dengan materi yang sedang dibaca",
+              "Menambahkan backend rule-based untuk konteks XAUUSD seperti risk, liquidity, FVG, Order Block, sesi, volatilitas, dan struktur",
+              "Jika layanan data live belum tersedia, Academy menampilkan contoh latihan lokal yang relevan tanpa pesan error dan tanpa mengaku sebagai data real-time",
+              "Fitur ini bersifat edukasi, bukan AI chatbot dan bukan sinyal Buy/Sell"
           ]
 
           data.update({
