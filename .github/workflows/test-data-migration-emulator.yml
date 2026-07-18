@@ -57,7 +57,7 @@ jobs:
           set -euo pipefail
           test "${{ steps.signing-cache.outputs.cache-hit }}" = "true"
           cp "$HOME/.android/debug.keystore" "$AMYFX_KEYSTORE_PATH"
-          chmod +x gradlew migration/migrate-termux.sh
+          chmod +x gradlew migration/migrate-termux.sh migration/test-emulator-migration.sh
           ./gradlew assembleMigration --no-configuration-cache --stacktrace
           mkdir -p emulator-fixture
           gh api -H "Accept: application/vnd.github+json" \
@@ -82,30 +82,7 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: true
-          script: |
-            bash <<'BASH'
-            set -euo pipefail
-            log_file="$PWD/emulator-fixture/migration-test.log"
-            exec > >(tee -a "$log_file") 2>&1
-            set -x
-            package="com.amyelitesuite"
-            adb install emulator-fixture/AmyFX-1.4.12-debug.apk
-            adb shell run-as "$package" id
-            adb shell "run-as $package sh -c 'mkdir -p files shared_prefs app_webview && printf note-survived > files/public-note.txt && printf prefs-survived > shared_prefs/public-test.xml && printf webview-survived > app_webview/public-webview.txt'"
-            test "$(adb shell "run-as $package cat /data/user/0/$package/files/public-note.txt" | tr -d '\r')" = "note-survived"
-
-            mkdir -p emulator-fixture/run
-            cp emulator-fixture/AmyFX-1.4.15-migration.apk emulator-fixture/run/
-            cp migration/migrate-termux.sh emulator-fixture/run/
-            cd emulator-fixture/run
-            printf 'LANJUT\n' | bash migrate-termux.sh AmyFX-1.4.15-migration.apk
-
-            test "$(adb shell "run-as $package cat /data/user/0/$package/files/public-note.txt" | tr -d '\r')" = "note-survived"
-            test "$(adb shell "run-as $package cat /data/user/0/$package/shared_prefs/public-test.xml" | tr -d '\r')" = "prefs-survived"
-            test "$(adb shell "run-as $package cat /data/user/0/$package/app_webview/public-webview.txt" | tr -d '\r')" = "webview-survived"
-            adb shell dumpsys package "$package" | grep -F 'versionName=1.4.15-migration'
-            find . -path '*amyfx-migration-*/amyfx-data.tar' -type f -size +1k | grep .
-            BASH
+          script: bash migration/test-emulator-migration.sh
 
       - name: Upload emulator migration evidence
         if: always()
