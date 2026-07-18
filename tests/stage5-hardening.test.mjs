@@ -4,24 +4,24 @@ import { readFileSync } from 'node:fs';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
-test('Amy FX 1.4.13 uses versionCode 36 without changing the production applicationId', () => {
+test('Amy FX 1.4.14 uses versionCode 37 without changing the production applicationId', () => {
   const gradle = read('app/build.gradle.kts');
   const version = read('app/src/main/assets/app-version.js');
   assert.match(gradle, /val configuredApplicationId = System\.getenv\("AMYFX_APPLICATION_ID"\) \?: "com\.amyelitesuite"/);
   assert.match(gradle, /applicationId = configuredApplicationId/);
-  assert.match(gradle, /versionCode[^\n]*36/);
-  assert.match(gradle, /versionName[^\n]*"1\.4\.13"/);
-  assert.match(version, /name: '1\.4\.13', code: 36/);
+  assert.match(gradle, /versionCode[^\n]*37/);
+  assert.match(gradle, /versionName[^\n]*"1\.4\.14"/);
+  assert.match(version, /name: '1\.4\.14', code: 37/);
 });
 
 test('published metadata is never ahead of the APK source version', () => {
   const metadata = JSON.parse(read('update.json'));
-  assert.ok([35, 36].includes(metadata.latest_version_code));
+  assert.ok([36, 37].includes(metadata.latest_version_code));
   assert.equal(
     metadata.latest_version_name,
-    metadata.latest_version_code === 36 ? '1.4.13' : '1.4.12'
+    metadata.latest_version_code === 37 ? '1.4.14' : '1.4.13'
   );
-  assert.ok(metadata.latest_version_code <= 36);
+  assert.ok(metadata.latest_version_code <= 37);
   assert.ok(Array.isArray(metadata.release_notes));
   assert.ok(metadata.release_notes.length > 0);
 });
@@ -53,15 +53,23 @@ test('native notifications only open trusted local routes', () => {
   assert.match(native, /setSmallIcon\(R\.drawable\.ic_stat_amy_fx\)/);
 });
 
-test('release workflows pin the existing signing certificate', () => {
+test('release workflows pin the existing certificate and require v1 plus v2 signing', () => {
+  const gradle = read('app/build.gradle.kts');
+  assert.match(gradle, /enableV1Signing = true/);
+  assert.match(gradle, /enableV2Signing = true/);
+
   const rolling = read('.github/workflows/build-apk.yml');
-  assert.match(rolling, /AMYFX_VERSION_NAME: "1\.4\.13"/);
-  assert.match(rolling, /AMYFX_VERSION_CODE: "36"/);
+  assert.match(rolling, /AMYFX_VERSION_NAME: "1\.4\.14"/);
+  assert.match(rolling, /AMYFX_VERSION_CODE: "37"/);
+  assert.match(rolling, /Verified using v1 scheme \(JAR signing\): true/);
+  assert.match(rolling, /Verified using v2 scheme \(APK Signature Scheme v2\): true/);
   assert.match(rolling, /47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7/);
 
   const manual = read('.github/workflows/build-release.yml');
-  assert.match(manual, /default: "1\.4\.13"/);
-  assert.match(manual, /default: "36"/);
+  assert.match(manual, /default: "1\.4\.14"/);
+  assert.match(manual, /default: "37"/);
+  assert.match(manual, /Verified using v1 scheme \(JAR signing\): true/);
+  assert.match(manual, /Verified using v2 scheme \(APK Signature Scheme v2\): true/);
   assert.match(manual, /47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7/);
 });
 
