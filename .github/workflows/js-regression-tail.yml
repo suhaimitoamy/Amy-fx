@@ -1,6 +1,15 @@
 name: JavaScript Regression Tail
 
 on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/js-regression-tail.yml
+      - tests/**
+      - app/src/main/assets/**
+      - api/**
+      - lib/**
   push:
     branches:
       - feature/learning-context-stage1
