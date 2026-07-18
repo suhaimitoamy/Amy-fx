@@ -1,0 +1,121 @@
+name: Build Amy FX Data Migration Kit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - fix/debug-to-release-data-migration
+    paths:
+      - app/build.gradle.kts
+      - app/src/main/assets/**
+      - app/src/main/java/**
+      - migration/**
+      - .github/workflows/build-data-migration-kit.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - app/build.gradle.kts
+      - app/src/main/assets/**
+      - app/src/main/java/**
+      - migration/**
+      - .github/workflows/build-data-migration-kit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build-migration-kit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      AMYFX_KEYSTORE_PATH: /tmp/amy-fx-signing.keystore
+      AMYFX_KEYSTORE_PASSWORD: android
+      AMYFX_KEY_ALIAS: androiddebugkey
+      AMYFX_KEY_PASSWORD: android
+      AMYFX_VERSION_NAME: "1.4.15"
+      AMYFX_VERSION_CODE: "38"
+      AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Restore permanent Amy FX signing key
+        id: signing-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: amy-fx-debug-keystore-v1
+
+      - name: Verify permanent release certificate
+        run: |
+          set -euo pipefail
+          test "${{ steps.signing-cache.outputs.cache-hit }}" = "true"
+          cp "$HOME/.android/debug.keystore" "$AMYFX_KEYSTORE_PATH"
+          actual="$(keytool -list -v -keystore "$AMYFX_KEYSTORE_PATH" -storepass "$AMYFX_KEYSTORE_PASSWORD" -alias "$AMYFX_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1)"
+          test "$actual" = "$AMYFX_SIGNING_CERT_SHA256"
+
+      - name: Stamp migration web version
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('app/src/main/assets/app-version.js')
+          text = path.read_text(encoding='utf-8')
+          old = "const VERSION = Object.freeze({ name: '1.4.14', code: 37 });"
+          new = "const VERSION = Object.freeze({ name: '1.4.15-migration', code: 38 });"
+          if old not in text:
+              raise SystemExit('Expected 1.4.14 source version was not found')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+
+      - name: Validate migration scripts and app tests
+        run: |
+          chmod +x gradlew migration/migrate-termux.sh
+          bash -n migration/migrate-termux.sh
+          node --check app/src/main/assets/app-version.js
+          ./gradlew testMigrationUnitTest --no-configuration-cache --stacktrace
+
+      - name: Build official-signed debuggable migration APK
+        run: ./gradlew assembleMigration --no-configuration-cache --stacktrace
+
+      - name: Verify migration APK identity, debuggable flag, version, and signer
+        run: |
+          set -euo pipefail
+          apk="app/build/outputs/apk/migration/app-migration.apk"
+          badging="$("$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk")"
+          grep -F "package: name='com.amyelitesuite' versionCode='38' versionName='1.4.15-migration'" <<<"$badging"
+          grep -F "application-debuggable" <<<"$badging"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$apk" | tee /tmp/apksigner.txt
+          expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          actual="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/apksigner.txt | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          test -n "$actual"
+          test "$actual" = "$expected"
+
+      - name: Assemble migration kit
+        run: |
+          set -euo pipefail
+          mkdir -p dist/Amy-FX-Data-Migration
+          cp app/build/outputs/apk/migration/app-migration.apk dist/Amy-FX-Data-Migration/AmyFX-1.4.15-migration.apk
+          cp migration/migrate-termux.sh dist/Amy-FX-Data-Migration/
+          cp migration/migrate-windows.bat dist/Amy-FX-Data-Migration/
+          cp migration/README.md dist/Amy-FX-Data-Migration/
+          sha256sum dist/Amy-FX-Data-Migration/* > dist/Amy-FX-Data-Migration/SHA256SUMS.txt
+
+      - name: Upload migration kit
+        uses: actions/upload-artifact@v4
+        with:
+          name: Amy-FX-1.4.12-debug-to-official-migration-kit
+          path: dist/Amy-FX-Data-Migration/
+          if-no-files-found: error
+          retention-days: 30
