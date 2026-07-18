@@ -103,10 +103,18 @@ jobs:
           echo "===== SUMMARY UNIQUE SHA256 CERTIFICATES =====" | tee -a "$report"
           grep 'Signer #1 certificate SHA-256 digest:' "$report" | sort -u | tee -a "$report" || true
 
-      - name: Upload forensic report and recovered APKs
+      - name: Upload compact signing report
         uses: actions/upload-artifact@v4
         with:
-          name: amy-fx-signing-lineage-forensics
-          path: forensic/
+          name: amy-fx-signing-lineage-report
+          path: forensic/signing-lineage.txt
           if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload recovered audit APK only
+        uses: actions/upload-artifact@v4
+        with:
+          name: amy-fx-recovered-audit-debug-apk
+          path: forensic/apks/audit-debug-3528783-*.apk
+          if-no-files-found: warn
           retention-days: 14
