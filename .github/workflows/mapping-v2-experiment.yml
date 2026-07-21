@@ -51,12 +51,15 @@ jobs:
           node --check tools/backtest-market-regime-v2.mjs
           node --check tools/backtest-shift-lag-v2.mjs
 
-      - name: Verify validated context wiring and safety contract
+      - name: Verify validated context wiring and separated views
         run: |
           grep -Fq 'Amy FX Preview · Regime Router' app/src/main/assets/apps/mapping/index.html
           grep -Fq 'Market Regime • Strategy Router • Market Shift' app/src/main/assets/apps/mapping/index.html
           grep -Fq 'VALIDATED MARKET CONTEXT' app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          grep -Fq 'Kondisi dan arah market' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'DASHBOARD · MARKET CONTEXT RINGKAS' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'ANALYZE · VALIDATED CONTEXT + TECHNICAL SUPPORT' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'function renderDashboardCard' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'function renderAnalyzeCard' app/src/main/assets/apps/mapping/js/market-intent-ui.js
           grep -Fq 'REGIME CONTEXT' app/src/main/assets/apps/mapping/js/market-intent-ui.js
           grep -Fq 'MARKET HEALTH' app/src/main/assets/apps/mapping/js/market-intent-ui.js
           grep -Fq 'STRATEGY ROUTER' app/src/main/assets/apps/mapping/js/market-intent-ui.js
@@ -72,8 +75,8 @@ jobs:
           ! grep -Fq 'NAIK KE BSL' app/src/main/assets/apps/mapping/js/market-intent-ui.js
           ! grep -Fq 'TURUN KE SSL' app/src/main/assets/apps/mapping/js/market-intent-ui.js
 
-      - name: Run validated context parity tests
-        run: node --test tests/validated-market-context-parity.test.mjs
+      - name: Run validated context and view separation tests
+        run: node --test tests/validated-market-context-parity.test.mjs tests/dashboard-analyze-separation.test.mjs
 
       - name: Run existing regime and router tests for diagnostics
         continue-on-error: true
