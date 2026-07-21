@@ -63,12 +63,14 @@ test('failed opposite transition blocks action', () => {
   assert.ok(result.shift.risk >= 55);
 });
 
-test('entry map is only actionable when strategy and context align', () => {
+test('entry map remains advisory while experiment gate is disabled', () => {
   const result = detectMarketRegimeV2({
     candles: trending(),
     htfBiases: { H1: 'BULLISH', H4: 'BULLISH', D1: 'BULLISH' },
     entryMap: { activeSetup: { live: true, dir: 'BUY' } }
   });
-  assert.equal(result.action, 'BUY');
+  assert.equal(result.action, 'WAIT');
+  assert.equal(result.advisoryAction, 'BUY');
+  assert.equal(result.executionGateEnabled, false);
   assert.ok(result.setupQuality >= 55);
 });
