@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - experiment/mapping-regime-engine-20260721
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
