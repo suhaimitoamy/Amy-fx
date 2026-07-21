@@ -84,14 +84,15 @@ function mountDashboard(range) {
 
 function mountAnalyze(range) {
   const app = document.getElementById('app');
-  const decisionCard = app?.querySelector('.decision-main')?.closest('.card');
-  if (!decisionCard) return;
+  if (!app) return;
+  const anchor = app.querySelector('.regime-router-card') || app.querySelector('.tf-card') || app.firstElementChild;
+  if (!anchor) return;
   let strip = app.querySelector('[data-asia-range-analyze]');
   if (!strip) {
     strip = document.createElement('section');
     strip.className = 'card asia-liquidity-strip';
     strip.dataset.asiaRangeAnalyze = '';
-    decisionCard.insertAdjacentElement('afterend', strip);
+    anchor.insertAdjacentElement('afterend', strip);
   }
   setMarkupIfChanged(strip, analyzeMarkup(range));
 }

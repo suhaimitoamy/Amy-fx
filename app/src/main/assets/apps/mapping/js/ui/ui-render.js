@@ -237,7 +237,6 @@ export function plainMappingExplanation(){
 export function analyzeView(){
   const active=analyzeActiveSetups(state.result?.setups||[]);
   return`<section class="card"><div class="tf-grid">${Object.keys(TF).map(x=>`<button class="${state.tf===x?'active':''}" onclick="window.runAnalysis('${x}')">${x}</button>`).join('')}</div></section>
-  ${amyDecisionCard()}
   <details class="card disclosure" open><summary>Valid Break</summary>${validBreakInfo()}</details>
   <details class="card disclosure"><summary>Mapping M1–H4</summary>${m1h4MappingTable()}</details>
   <details class="card disclosure"><summary>Penjelasan Mapping</summary>${plainMappingExplanation()}</details>
