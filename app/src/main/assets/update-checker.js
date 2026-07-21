@@ -277,14 +277,13 @@
     const now = Date.now();
 
     if (checkingPromise) return checkingPromise;
-    if (!force && now - lastCheckAt < CHECK_INTERVAL_MS) return { status: 'throttled' };
+    if (!force && now - lastCheckAt < 10000) return { status: 'throttled' };
     lastCheckAt = now;
 
     checkingPromise = (async () => {
       try {
-        const cacheKey = force ? now : Math.floor(now / CHECK_INTERVAL_MS);
-        const res = await fetch(`${UPDATE_URL}?v=${cacheKey}`, {
-          cache: force ? 'no-store' : 'default'
+        const res = await fetch(`${UPDATE_URL}?_=${now}`, {
+          cache: 'no-store'
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
