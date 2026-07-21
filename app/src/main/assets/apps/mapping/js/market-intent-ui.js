@@ -2,7 +2,7 @@ import { deriveLiquidityContext } from './engine/market-intent-engine.js';
 import { detectMarketRegimeV2 } from './engine/market-regime-engine.js';
 import { routeRegimeStrategy } from './engine/strategy-router-engine.js';
 import { evaluateValidatedMarketContext } from './engine/validated-market-context.js';
-import { MAPPING_CLAIM_ACCURACY, LOCKED_PINE_REFERENCE_CLAIMS, accuracyText } from './engine/mapping-claim-accuracy.js';
+import { MAPPING_CLAIM_ACCURACY, LOCKED_PINE_REFERENCE_CLAIMS } from './engine/mapping-claim-accuracy.js';
 
 const CARD_ID = 'amy-regime-router-v3';
 const STATE_KEY = 'amy_regime_router_state_v3';
@@ -15,23 +15,57 @@ const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character =>
 const numberText = (value, digits = 0) => Number.isFinite(Number(value)) ? Number(value).toFixed(digits) : '-';
 const labelText = value => String(value || '-').replaceAll('_', ' ');
 
-function claimCard(key, extra = '') {
-  const claim = MAPPING_CLAIM_ACCURACY[key];
-  const authority = claim?.authority || 'UNKNOWN';
-  const kind = authority === 'VALIDATED_APP' || authority === 'VALIDATED_PINE' ? 'stable'
-    : authority === 'ADVISORY_ONLY' || authority === 'CONTEXT_ONLY' ? 'warning' : 'danger';
-  return `<div class="claim-accuracy-card ${kind}"><small>${escapeHtml(claim?.label || key)}</small><strong>${escapeHtml(accuracyText(claim))}</strong><span>${escapeHtml(claim?.claim || '')}${extra ? ` · ${escapeHtml(extra)}` : ''}</span><em>${escapeHtml(authority.replaceAll('_', ' '))} · ${escapeHtml(claim?.period || '-')}</em></div>`;
+const FEATURE_COPY = Object.freeze({
+  marketStateM15: { title: 'Kondisi Struktur', description: 'Kesesuaian pembacaan struktur dengan pengujian historis.' },
+  directionForecastM15: { title: 'Proyeksi Arah', description: 'Ketepatan arah penutupan pada horizon analisis.' },
+  nearestLiquidity: { title: 'Target Likuiditas', description: 'Ketepatan level terdekat sebagai target pertama.' },
+  failedBreak: { title: 'Failed Break', description: 'Ketepatan reaksi harga setelah break gagal dipertahankan.' },
+  validBreak: { title: 'Valid Break', description: 'Ketepatan kelanjutan harga setelah break terkonfirmasi.' },
+  sweepOnly: { title: 'Liquidity Sweep', description: 'Ketepatan reaksi harga setelah sapuan dan reclaim.' },
+  marketRegime: { title: 'Karakter Market', description: 'Konsistensi klasifikasi kondisi market saat ini.' },
+  marketShift: { title: 'Risiko Perubahan', description: 'Ketepatan peringatan sebelum perubahan struktur besar.' },
+  strategyRouter: { title: 'Konteks Strategi', description: 'Kesesuaian strategi dengan perilaku market berikutnya.' },
+  entryMap: { title: 'Skenario Harga', description: 'Ketepatan reaksi harga setelah rangkaian Sweep dan MSS.' }
+});
+
+const REFERENCE_COPY = Object.freeze({
+  'Validated Target': ['Target Utama', 'Target historis tercapai'],
+  'Asia High / Low': ['High / Low Asia', 'Target tercapai dalam ≤4 jam'],
+  'PDH / PDL': ['PDH / PDL', 'Target tercapai dalam ≤8 jam'],
+  'Midnight Open': ['Midnight Open', 'Harga kembali menguji level dalam ≤4 jam'],
+  'Order Block': ['Order Block', 'Area kembali diuji dalam ≤4 jam'],
+  FVG: ['Fair Value Gap', 'Area kembali diuji dalam ≤4 jam'],
+  'M5 Key Liquidity': ['Likuiditas Utama M5', 'Target tercapai dalam ≤4 jam'],
+  'Protected Low': ['Protected Low', 'Level bertahan selama 1 jam'],
+  'Protected High': ['Protected High', 'Level bertahan selama 1 jam']
+});
+
+function reliabilityLevel(value) {
+  const score = Number(value || 0);
+  if (score >= 85) return { label: 'Sangat kuat', kind: 'stable' };
+  if (score >= 75) return { label: 'Kuat', kind: 'stable' };
+  if (score >= 60) return { label: 'Cukup', kind: 'warning' };
+  return { label: 'Terbatas', kind: 'danger' };
 }
 
-function lockedPineClaimCard(claim) {
-  return `<div class="claim-accuracy-card stable pine-reference"><small>${escapeHtml(claim.label)}</small><strong>${numberText(claim.value, 2)}% ${escapeHtml(claim.claim)}</strong><span>Threshold Pine terkunci; tidak dituning ulang pada integrasi Amy FX.</span><em>VALIDATED PINE REFERENCE · ${escapeHtml(claim.period)}</em></div>`;
+function reliabilityCard(key, detail = '') {
+  const metric = MAPPING_CLAIM_ACCURACY[key];
+  const copy = FEATURE_COPY[key] || { title: metric?.label || key, description: metric?.claim || '' };
+  const level = reliabilityLevel(metric?.value);
+  return `<div class="reliability-card ${level.kind}">
+    <div class="reliability-head"><small>${escapeHtml(copy.title)}</small><span>${escapeHtml(level.label)}</span></div>
+    <strong>${numberText(metric?.value, 2)}%</strong>
+    <p>${escapeHtml(copy.description)}</p>
+    <em>${escapeHtml(detail || metric?.period || '')}</em>
+  </div>`;
 }
 
-function experimentalEntryMapMarkup(result) {
-  const setup = result?.experimentalBestSetup || result?.unroutedBestSetup;
-  const claim = MAPPING_CLAIM_ACCURACY.entryMap;
-  if (!setup) return `<div class="router-execution wait"><small>ENTRY MAP EKSPERIMENTAL</small><strong>BELUM ADA KANDIDAT</strong><p>${escapeHtml(claim.claim)} Akurasi klaim ${numberText(claim.value, 2)}%.</p></div>`;
-  return `<div class="router-execution wait experimental-entry-map"><small>ENTRY MAP EKSPERIMENTAL · BUKAN SETUP UTAMA</small><strong>${escapeHtml(setup.dir || setup.direction || 'WAIT')} · ${escapeHtml(setup.type || 'SWEEP → MSS')}</strong><div class="router-level-row"><span><b>Entry referensi</b>${numberText(setup.entry ?? setup.entryLow, 2)}</span><span><b>Invalidasi</b>${numberText(setup.sl, 2)}</span><span><b>TP1 referensi</b>${numberText(setup.tp1, 2)}</span><span><b>TP2 referensi</b>${numberText(setup.tp2, 2)}</span></div><p>${escapeHtml(claim.claim)} Akurasi klaim 2022–2025: ${numberText(claim.value, 2)}%. Kandidat ini hanya untuk audit di Analyze.</p></div>`;
+function historicalReferenceRow(claim) {
+  const [title, description] = REFERENCE_COPY[claim.label] || [claim.label, claim.claim];
+  return `<div class="performance-row">
+    <span><b>${escapeHtml(title)}</b><small>${escapeHtml(description)}</small></span>
+    <strong>${numberText(claim.value, 2)}%</strong>
+  </div>`;
 }
 
 function readRouterState() {
@@ -90,18 +124,15 @@ function healthMetric(label, value, kind = '') {
 
 function engineCard(engine, activeName) {
   const isActive = engine?.engine === activeName;
-  return `<div class="strategy-engine ${isActive ? 'active' : 'disabled'}"><small>${isActive ? 'AKTIF' : 'NONAKTIF'}</small><strong>${escapeHtml(labelText(engine?.engine))}</strong><span>${escapeHtml(labelText(engine?.status || 'DISABLED'))}${engine?.quality ? ` · kualitas ${numberText(engine.quality)}/100` : ''}</span></div>`;
+  return `<div class="strategy-engine ${isActive ? 'active' : 'disabled'}"><small>${isActive ? 'KONTEKS UTAMA' : 'ALTERNATIF'}</small><strong>${escapeHtml(labelText(engine?.engine))}</strong><span>${escapeHtml(labelText(engine?.status || 'BELUM AKTIF'))}${engine?.quality ? ` · skor konteks ${numberText(engine.quality)}/100` : ''}</span></div>`;
 }
 
-function setupMarkup(router) {
-  const setup = router?.watchSetup || router?.setup;
+function scenarioMarkup(result, router) {
+  const setup = result?.experimentalBestSetup || result?.unroutedBestSetup || router?.watchSetup || null;
   if (!setup) {
-    const conflictText = router?.validatedConflict
-      ? 'Kandidat dibatalkan karena berlawanan dengan Direction Forecast tervalidasi.'
-      : 'Router belum menemukan kandidat strategy context yang lengkap.';
-    return `<div class="router-execution wait"><small>KANDIDAT STRATEGI</small><strong>${escapeHtml(router?.decision || 'MENUNGGU ANALISIS')}</strong><p>${escapeHtml(conflictText)}</p></div>`;
+    return `<div class="router-execution wait"><small>SKENARIO PEMANTAUAN</small><strong>Belum terbentuk</strong><p>Belum ada rangkaian harga yang cukup lengkap untuk membuat skenario level.</p></div>`;
   }
-  return `<div class="router-execution ${String(setup.dir || '').toLowerCase()}"><small>KANDIDAT STRATEGI · EKSPERIMENTAL</small><strong>${escapeHtml(router.decision)}</strong><div class="router-level-row"><span><b>Entry referensi</b>${numberText(setup.entry ?? setup.entryLow, 2)}</span><span><b>SL referensi</b>${numberText(setup.sl, 2)}</span><span><b>TP1 referensi</b>${numberText(setup.tp1, 2)}</span><span><b>TP2 referensi</b>${numberText(setup.tp2, 2)}</span></div><p>Raw quality ${numberText(setup.score)}/100. Kandidat ini bukan setup live dan tidak memiliki otoritas keputusan.</p></div>`;
+  return `<div class="router-execution ${String(setup.dir || '').toLowerCase()}"><small>SKENARIO PEMANTAUAN</small><strong>${escapeHtml(setup.dir || setup.direction || 'TUNGGU')} · ${escapeHtml(setup.type || 'SWEEP → MSS')}</strong><div class="router-level-row"><span><b>Area harga</b>${numberText(setup.entry ?? setup.entryLow, 2)}</span><span><b>Batas skenario</b>${numberText(setup.sl, 2)}</span><span><b>Target awal</b>${numberText(setup.tp1, 2)}</span><span><b>Target lanjutan</b>${numberText(setup.tp2, 2)}</span></div><p>Gunakan sebagai skenario pemantauan dan tunggu konfirmasi harga sebelum mengambil keputusan.</p></div>`;
 }
 
 function targetMarkup(title, target, emptyText) {
@@ -121,46 +152,36 @@ function contextKinds(validated, regime) {
   };
 }
 
-function validatedContextMarkup(validated) {
+function marketOverviewMarkup(validated, liquidity) {
   const { marketState, forecast, stateKind, forecastKind } = contextKinds(validated);
-  const forecastDetail = forecast.active
-    ? `${numberText(forecast.confidence)}% display confidence · horizon ${escapeHtml(forecast.horizonText || '-')}`
-    : 'Tidak ada pola forecast tervalidasi yang aktif';
-  return `<div class="market-health-title"><span>VALIDATED MARKET CONTEXT</span><small>Rule Pine yang sudah dibacktest menjadi sumber utama</small></div>
+  const target = liquidity?.nearestLiquidity || null;
+  return `<div class="market-health-title"><span>RINGKASAN MARKET</span><small>Struktur, arah, dan target terdekat</small></div>
     <div class="router-status-strip validated-context-strip">
-      <div class="${stateKind}"><small>Market State</small><strong>${escapeHtml(marketState.state || 'RANGE / TRANSITION')}</strong><span>${numberText(MAPPING_CLAIM_ACCURACY.marketStateM15.value, 2)}% structural agreement · bukan forecast</span></div>
-      <div class="${forecastKind}"><small>Direction Forecast</small><strong>${escapeHtml(forecast.direction || 'NO CLEAR DIRECTION')}</strong><span>${forecastDetail} · accuracy ${numberText(MAPPING_CLAIM_ACCURACY.directionForecastM15.value, 2)}%</span></div>
-      <div><small>Regime Authority</small><strong>CONTEXT ONLY</strong><span>Tidak boleh mengganti Market State/Forecast</span></div>
+      <div class="${stateKind}"><small>Kondisi Struktur</small><strong>${escapeHtml(marketState.state || 'RANGE / TRANSITION')}</strong><span>${numberText(MAPPING_CLAIM_ACCURACY.marketStateM15.value, 2)}% konsistensi historis</span></div>
+      <div class="${forecastKind}"><small>Proyeksi Arah</small><strong>${escapeHtml(forecast.direction || 'BELUM JELAS')}</strong><span>${forecast.active ? `${numberText(MAPPING_CLAIM_ACCURACY.directionForecastM15.value, 2)}% akurasi · ${escapeHtml(forecast.horizonText || '-')}` : 'Belum ada proyeksi aktif'}</span></div>
+      <div><small>Target Likuiditas</small><strong>${escapeHtml(target?.label || target?.type || 'BELUM JELAS')}</strong><span>${target ? `${numberText(target.level, 2)} · ${numberText(MAPPING_CLAIM_ACCURACY.nearestLiquidity.value, 2)}% akurasi target pertama` : 'Menunggu target aktif'}</span></div>
     </div>`;
 }
 
 function waitingMarkup(tab) {
   const dashboard = tab === 'Dashboard';
   return `<section class="card regime-router-card waiting ${dashboard ? 'dashboard-context-card' : 'analyze-context-card'}" id="${CARD_ID}">
-    <div class="regime-preview-ribbon">${dashboard ? 'DASHBOARD · RINGKASAN KLAIM TERVALIDASI' : 'ANALYZE · VALIDATED MARKET CONTEXT'}</div>
-    <div class="regime-header"><div><div class="kicker">PINE PARITY ENGINE</div><h2>${dashboard ? 'Memuat ringkasan kondisi market' : 'Memuat Market State dan Direction Forecast'}</h2></div><span class="regime-badge">MEMINDAI</span></div>
-    <p class="muted">${dashboard ? 'Dashboard hanya menampilkan kondisi, arah, dan target utama. Semua detail akurasi tersedia di Analyze.' : 'Analyze menampilkan rule tervalidasi, definisi klaim, regime, shift, router, Valid Break, Entry Map, dan liquidity context.'}</p>
-    <button class="router-primary-button" type="button" data-router-action="scan">Muat Analisis M15</button>
+    <div class="regime-preview-ribbon">AMY FX · MARKET INTELLIGENCE</div>
+    <div class="regime-header"><div><div class="kicker">KONTEKS MARKET</div><h2>Menyiapkan analisis market</h2></div><span class="regime-badge">MEMUAT</span></div>
+    <p class="muted">Memuat data struktur, arah, dan likuiditas XAU/USD.</p>
+    <button class="router-primary-button" type="button" data-router-action="scan">Muat Ulang Analisis M15</button>
   </section>`;
 }
 
 function renderDashboardCard(validated, regime, router, liquidity) {
-  const { marketState, forecast, stateKind, forecastKind } = contextKinds(validated, regime);
-  const mainTarget = liquidity?.nearestLiquidity || null;
   return `<section class="card regime-router-card dashboard-context-card" id="${CARD_ID}">
-    <div class="regime-preview-ribbon">DASHBOARD · RINGKASAN KLAIM TERVALIDASI</div>
-    <div class="regime-header"><div><div class="kicker">KESIMPULAN CEPAT</div><h2>Kondisi, arah, dan target terdekat</h2></div><span class="regime-badge">RINGKAS</span></div>
-
-    <div class="router-status-strip validated-context-strip">
-      <div class="${stateKind}"><small>Market State</small><strong>${escapeHtml(marketState.state || 'RANGE / TRANSITION')}</strong><span>${numberText(MAPPING_CLAIM_ACCURACY.marketStateM15.value, 2)}% structural agreement</span></div>
-      <div class="${forecastKind}"><small>Direction Forecast</small><strong>${escapeHtml(forecast.direction || 'NO CLEAR DIRECTION')}</strong><span>${forecast.active ? `${numberText(MAPPING_CLAIM_ACCURACY.directionForecastM15.value, 2)}% accuracy · ${escapeHtml(forecast.horizonText || '-')}` : 'Belum ada forecast aktif'}</span></div>
-      <div><small>Nearest Liquidity</small><strong>${escapeHtml(mainTarget?.label || mainTarget?.type || 'BELUM JELAS')}</strong><span>${mainTarget ? `${numberText(mainTarget.level, 2)} · ${numberText(MAPPING_CLAIM_ACCURACY.nearestLiquidity.value, 2)}% first-hit accuracy` : 'Tunggu target aktif'}</span></div>
-    </div>
-
-    <div class="dashboard-validation-note">Regime, Market Shift, Strategy Router, Valid Break, dan Entry Map tidak dipakai sebagai keputusan Dashboard karena akurasi klaimnya belum memenuhi standar fitur tervalidasi.</div>
+    <div class="regime-preview-ribbon">AMY FX · MARKET INTELLIGENCE</div>
+    <div class="regime-header"><div><div class="kicker">RINGKASAN LIVE</div><h2>Kondisi market saat ini</h2></div><span class="regime-badge">M15</span></div>
+    ${marketOverviewMarkup(validated, liquidity)}
+    <p class="professional-note">Reliabilitas ditampilkan berdasarkan pengujian historis dan tidak menjamin hasil market berikutnya.</p>
     <div class="router-actions dashboard-context-actions">
-      <button type="button" data-router-open-analyze>Buka Detail & Akurasi</button>
-      <button type="button" data-router-action="scan">Perbarui M15</button>
+      <button type="button" data-router-open-analyze>Lihat Analisis Lengkap</button>
+      <button type="button" data-router-action="scan">Perbarui Data</button>
     </div>
   </section>`;
 }
@@ -170,70 +191,62 @@ function renderAnalyzeCard(result, validated, regime, router, liquidity) {
   const health = regime.health || {};
   const shiftClass = regime.shift?.risk >= 55 ? 'danger' : regime.shift?.risk >= 30 ? 'warning' : 'stable';
   const engines = Object.values(router.engines || {});
-  const reasons = (router.reasons || []).slice(0, 6);
   return `<section class="card regime-router-card analyze-context-card" id="${CARD_ID}">
-    <div class="regime-preview-ribbon">ANALYZE · KLAIM, AKURASI, DAN DETAIL TEKNIS</div>
-    <div class="regime-header"><div><div class="kicker">DETAIL TEKNIS</div><h2>Mengapa market dibaca seperti ini?</h2></div><span class="regime-badge">NO AUTO TRADE</span></div>
+    <div class="regime-preview-ribbon">AMY FX · ANALISIS PASAR</div>
+    <div class="regime-header"><div><div class="kicker">XAU/USD · M15</div><h2>Analisis market</h2></div><span class="regime-badge">LIVE</span></div>
 
-    ${validatedContextMarkup(validated)}
+    ${marketOverviewMarkup(validated, liquidity)}
 
-    <div class="market-health-title"><span>AKURASI KLAIM FITUR</span><small>Setiap fitur dinilai terhadap klaimnya sendiri, bukan win rate</small></div>
-    <div class="claim-accuracy-grid">
-      ${claimCard('nearestLiquidity', `coverage ${numberText(MAPPING_CLAIM_ACCURACY.nearestLiquidity.coverage, 2)}%`)}
-      ${claimCard('failedBreak')}
-      ${claimCard('validBreak')}
-      ${claimCard('sweepOnly')}
-      ${claimCard('marketRegime')}
-      ${claimCard('marketShift', `recall ${numberText(MAPPING_CLAIM_ACCURACY.marketShift.secondaryValue, 2)}%`)}
-      ${claimCard('strategyRouter')}
-      ${claimCard('entryMap')}
+    <div class="market-health-title"><span>RELIABILITAS HISTORIS</span><small>Ringkasan performa fitur utama</small></div>
+    <div class="reliability-grid">
+      ${reliabilityCard('marketStateM15')}
+      ${reliabilityCard('directionForecastM15')}
+      ${reliabilityCard('nearestLiquidity', `Cakupan ${numberText(MAPPING_CLAIM_ACCURACY.nearestLiquidity.coverage, 2)}%`)}
+      ${reliabilityCard('failedBreak')}
     </div>
 
-    <div class="market-health-title"><span>REFERENSI KLAIM PINE TERKUNCI</span><small>Rule asli dipertahankan; angka ini bukan hasil Router atau Entry Map Amy FX</small></div>
-    <div class="claim-accuracy-grid pine-reference-grid">${LOCKED_PINE_REFERENCE_CLAIMS.map(lockedPineClaimCard).join('')}</div>
+    <details class="professional-disclosure">
+      <summary><span>Performa Historis Model</span><small>${LOCKED_PINE_REFERENCE_CLAIMS.length} referensi · 2020–2025</small></summary>
+      <div class="performance-list">${LOCKED_PINE_REFERENCE_CLAIMS.map(historicalReferenceRow).join('')}</div>
+      <p class="professional-note">Hasil historis digunakan sebagai referensi reliabilitas dan bukan jaminan performa di masa depan.</p>
+    </details>
 
-    <div class="market-health-title"><span>REGIME EKSPERIMENTAL</span><small>Current-condition agreement 19,74% terhadap audit independen</small></div>
-    <div class="regime-hero ${String(router.activeRegime).toLowerCase()}">
-      <div><small>MARKET PERSONALITY TAMBAHAN</small><strong>${escapeHtml(labelText(router.activeRegime))}</strong><p>Regime mentah: ${escapeHtml(labelText(router.rawRegime))} · raw clarity ${numberText(regime.confidence)}/100</p></div>
-      <div class="regime-strategy"><small>STRATEGY CONTEXT</small><strong>${escapeHtml(labelText(router.activeStrategy))}</strong><span>${router.blocked ? 'Regime transition: no trade' : 'Kandidat eksperimen; tidak memiliki otoritas keputusan'}</span></div>
-    </div>
+    <details class="professional-disclosure">
+      <summary><span>Konteks Market Lanjutan</span><small>Karakter, stabilitas, dan risiko perubahan</small></summary>
+      <div class="regime-hero ${String(router.activeRegime).toLowerCase()}">
+        <div><small>KARAKTER MARKET</small><strong>${escapeHtml(labelText(router.activeRegime))}</strong><p>Kondisi terdeteksi: ${escapeHtml(labelText(router.rawRegime))} · skor kejelasan ${numberText(regime.confidence)}/100</p></div>
+        <div class="regime-strategy"><small>KONTEKS STRATEGI</small><strong>${escapeHtml(labelText(router.activeStrategy))}</strong><span>${router.blocked ? 'Tunggu hingga kondisi market lebih stabil.' : 'Gunakan sebagai konteks tambahan untuk membaca market.'}</span></div>
+      </div>
+      <div class="regime-probability-list">${Object.entries(probabilities).map(([name, value]) => bar(name, value, name === router.activeRegime)).join('')}</div>
+      <div class="market-health-grid">
+        ${healthMetric('Kekuatan Tren', health.trendStrength)}
+        ${healthMetric('Stabilitas Tren', health.trendStability)}
+        ${healthMetric('Risiko Transisi', health.transitionRisk, shiftClass)}
+        ${healthMetric('Tekanan Manipulasi', health.manipulationRisk, health.manipulationRisk >= 60 ? 'warning' : '')}
+        ${healthMetric('Kondisi Range', health.rangeProbability)}
+        ${healthMetric('Potensi Ekspansi', health.expansionProbability)}
+      </div>
+      <div class="router-status-strip">
+        <div class="${shiftClass}"><small>Risiko Perubahan</small><strong>${escapeHtml(labelText(regime.shift?.status || 'STABIL'))}</strong><span>Skor ${numberText(regime.shift?.risk)}/100</span></div>
+        <div><small>Stabilitas Kondisi</small><strong>${router.state?.stable ? 'STABIL' : 'DALAM KONFIRMASI'}</strong><span>${router.state?.candidateBars || 0} candle observasi</span></div>
+        <div><small>Mode Analisis</small><strong>INFORMASI</strong><span>Konfirmasi harga tetap diperlukan</span></div>
+      </div>
+      <div class="strategy-engine-grid">${engines.map(engine => engineCard(engine, router.activeStrategy)).join('')}</div>
+    </details>
 
-    <div class="regime-probability-list">${Object.entries(probabilities).map(([name, value]) => bar(name, value, name === router.activeRegime)).join('')}</div>
-    <p class="score-disclaimer">Distribusi regime adalah skor karakter mentah. Nilai ini bukan peluang arah, bukan win rate, dan tidak boleh mengganti Direction Forecast.</p>
+    <details class="professional-disclosure">
+      <summary><span>Target & Skenario Harga</span><small>Level yang sedang dipantau</small></summary>
+      <div class="liquidity-context-grid">
+        ${targetMarkup('TARGET TERDEKAT', liquidity?.nearestLiquidity, 'Belum ada target')}
+        ${targetMarkup('TARGET TIMEFRAME BESAR', liquidity?.htfAlignedLiquidity, 'Arah timeframe besar belum selaras')}
+        ${targetMarkup('TARGET UTAMA', liquidity?.destinationTarget, 'Belum ada target utama')}
+      </div>
+      ${scenarioMarkup(result, router)}
+      <div class="liquidity-warning"><b>${escapeHtml(liquidity?.destination || 'KONTEKS LIKUIDITAS')}</b><span>${escapeHtml(liquidity?.warning || 'Target likuiditas tidak menentukan waktu entry.')}</span></div>
+    </details>
 
-    <div class="market-health-title"><span>ENGINE DIAGNOSTICS</span><small>Raw score untuk audit; belum terkalibrasi sebagai probabilitas</small></div>
-    <div class="market-health-grid">
-      ${healthMetric('Raw Trend Score', health.trendStrength)}
-      ${healthMetric('Raw Stability Score', health.trendStability)}
-      ${healthMetric('Raw Transition Score', health.transitionRisk, shiftClass)}
-      ${healthMetric('Raw Manipulation Score', health.manipulationRisk, health.manipulationRisk >= 60 ? 'warning' : '')}
-      ${healthMetric('Raw Range Score', health.rangeProbability)}
-      ${healthMetric('Raw Expansion Score', health.expansionProbability)}
-    </div>
-    <div class="diagnostic-warning">Backtest 2022–2025 tidak menunjukkan predictive lift yang stabil pada skor diagnostics ini. Gunakan hanya untuk melihat isi mesin, bukan mengambil entry.</div>
-
-    <div class="router-status-strip">
-      <div class="${shiftClass}"><small>Market Shift Advisory</small><strong>${escapeHtml(labelText(regime.shift?.status))}</strong><span>${numberText(regime.shift?.risk)}/100 · precision 14,01% · recall 62,21%</span></div>
-      <div><small>Regime State</small><strong>${router.state?.stable ? 'STABIL' : 'MENUNGGU PERSISTENCE'}</strong><span>${router.state?.candidateBars || 0} candle kandidat</span></div>
-      <div><small>Automatic Trade</small><strong>OFF</strong><span>Fitur eksperimen tidak boleh membuat setup utama</span></div>
-    </div>
-
-    <div class="market-health-title"><span>STRATEGY ROUTER</span><small>Eksperimental; strategy-suitability accuracy 48,53%</small></div>
-    <div class="strategy-engine-grid">${engines.map(engine => engineCard(engine, router.activeStrategy)).join('')}</div>
-    ${setupMarkup(router)}
-    ${experimentalEntryMapMarkup(result)}
-
-    <div class="market-health-title"><span>LIQUIDITY CONTEXT</span><small>Nearest first-hit adalah konteks terkuat; tetap bukan sinyal entry</small></div>
-    <div class="liquidity-context-grid">
-      ${targetMarkup('NEAREST LIQUIDITY', liquidity?.nearestLiquidity, 'Tidak ada target terdekat')}
-      ${targetMarkup('HTF-ALIGNED LIQUIDITY', liquidity?.htfAlignedLiquidity, 'HTF masih mixed')}
-      ${targetMarkup('AUDITED DESTINATION', liquidity?.destinationTarget, 'Liquidity Draw belum lolos')}
-    </div>
-    <div class="liquidity-warning"><b>${escapeHtml(liquidity?.destination || 'LIQUIDITY CONTEXT')}</b><span>${escapeHtml(liquidity?.warning || 'BSL/SSL bukan BUY/SELL.')}</span></div>
-
-    <div class="router-reasons"><b>Mengapa konteks tambahan memilih ini?</b><ul>${reasons.map(reason => `<li>${escapeHtml(reason)}</li>`).join('')}</ul></div>
-    <div class="router-actions"><button type="button" data-router-action="scan">Analisis Ulang M15</button></div>
-    <p class="router-disclaimer">Akurasi di atas memakai definisi klaim masing-masing. Regime, shift, router, dan Entry Map tetap eksperimen dan tidak memiliki otoritas keputusan.</p>
+    <div class="router-actions"><button type="button" data-router-action="scan">Perbarui Analisis M15</button></div>
+    <p class="router-disclaimer">Gunakan analisis sebagai alat bantu. Keputusan dan pengelolaan risiko tetap berada pada pengguna.</p>
   </section>`;
 }
 
@@ -256,7 +269,7 @@ function bindCard() {
     const scan = event.target.closest('[data-router-action="scan"]');
     if (scan) {
       scan.disabled = true;
-      scan.textContent = 'Memindai M15...';
+      scan.textContent = 'Memperbarui...';
       if (typeof window.runAnalysis === 'function') window.runAnalysis('M15');
       return;
     }
