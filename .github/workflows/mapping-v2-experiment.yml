@@ -1,4 +1,4 @@
-name: Regime Router V3 Experiment
+name: Validated Context + Regime Router Experiment
 
 on:
   push:
@@ -14,7 +14,7 @@ permissions:
   statuses: write
 
 concurrency:
-  group: regime-router-v3-${{ github.ref }}
+  group: validated-context-regime-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -33,6 +33,7 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check app/src/main/assets/apps/mapping/js/engine/market-math.js
+          node --check app/src/main/assets/apps/mapping/js/engine/validated-market-context.js
           node --check app/src/main/assets/apps/mapping/js/engine/market-regime-engine.js
           node --check app/src/main/assets/apps/mapping/js/engine/regime-state-machine.js
           node --check app/src/main/assets/apps/mapping/js/engine/strategy-router-engine.js
@@ -50,24 +51,29 @@ jobs:
           node --check tools/backtest-market-regime-v2.mjs
           node --check tools/backtest-shift-lag-v2.mjs
 
-      - name: Verify regime router wiring and safety contract
+      - name: Verify validated context wiring and safety contract
         run: |
           grep -Fq 'Amy FX Preview · Regime Router' app/src/main/assets/apps/mapping/index.html
           grep -Fq 'Market Regime • Strategy Router • Market Shift' app/src/main/assets/apps/mapping/index.html
-          grep -Fq 'Market sedang apa?' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'VALIDATED MARKET CONTEXT' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'Kondisi dan arah market' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'REGIME CONTEXT' app/src/main/assets/apps/mapping/js/market-intent-ui.js
           grep -Fq 'MARKET HEALTH' app/src/main/assets/apps/mapping/js/market-intent-ui.js
           grep -Fq 'STRATEGY ROUTER' app/src/main/assets/apps/mapping/js/market-intent-ui.js
           grep -Fq 'NEAREST LIQUIDITY' app/src/main/assets/apps/mapping/js/market-intent-ui.js
           grep -Fq 'HTF-ALIGNED LIQUIDITY' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'AMY_VALIDATED_PINE_PARITY' app/src/main/assets/apps/mapping/js/engine/validated-market-context.js
+          grep -Fq 'regimeMayOverrideDirectionForecast: false' app/src/main/assets/apps/mapping/js/engine/validated-market-context.js
+          grep -Fq 'evaluateValidatedMarketContext' app/src/main/assets/apps/mapping/js/api/market-data.js
+          grep -Fq 'mayOverrideValidatedDirectionForecast: false' app/src/main/assets/apps/mapping/js/api/market-data.js
           grep -Fq 'strategyGateEnabled: true' app/src/main/assets/apps/mapping/js/engine/market-regime-engine.js
           grep -Fq 'automaticTradeExecution: false' app/src/main/assets/apps/mapping/js/engine/market-regime-engine.js
           grep -Fq 'REGIME_ROUTED_M15' app/src/main/assets/apps/mapping/js/integrity/mapping-integrity-core.js
-          grep -Fq 'routeRegimeStrategy' app/src/main/assets/apps/mapping/js/api/market-data.js
           ! grep -Fq 'NAIK KE BSL' app/src/main/assets/apps/mapping/js/market-intent-ui.js
           ! grep -Fq 'TURUN KE SSL' app/src/main/assets/apps/mapping/js/market-intent-ui.js
 
-      - name: Run regime, router, liquidity and integrity tests
-        run: node --test tests/market-regime-engine-v2.test.mjs tests/market-intent-engine-v3.test.mjs tests/regime-strategy-router-v3.test.mjs
+      - name: Run validated context, regime, router, liquidity and integrity tests
+        run: node --test tests/validated-market-context-parity.test.mjs tests/market-regime-engine-v2.test.mjs tests/market-intent-engine-v3.test.mjs tests/regime-strategy-router-v3.test.mjs
 
       - name: Run complete JavaScript regression
         run: |
@@ -129,7 +135,7 @@ jobs:
           actual="$(keytool -list -v -keystore "$AMYFX_KEYSTORE_PATH" -storepass "$AMYFX_KEYSTORE_PASSWORD" -alias "$AMYFX_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1)"
           test "$actual" = "$AMYFX_SIGNING_CERT_SHA256"
 
-      - name: Build signed Amy FX Preview Regime Router APK
+      - name: Build signed Amy FX Preview Validated Context APK
         run: |
           chmod +x gradlew
           ./gradlew :app:assembleRelease --stacktrace --no-daemon --no-configuration-cache
@@ -151,13 +157,13 @@ jobs:
           expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           actual="$(keytool -printcert -file /tmp/amyfx-preview-cert | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           test "$actual" = "$expected"
-          cp "$APK" AmyFX-Preview-RegimeRouterV3.apk
+          cp "$APK" AmyFX-Preview-ValidatedContext.apk
 
       - name: Upload signed Amy FX Preview APK
         uses: actions/upload-artifact@v4
         with:
-          name: AmyFX-Preview-RegimeRouterV3-v1.4.15-preview.3
-          path: AmyFX-Preview-RegimeRouterV3.apk
+          name: AmyFX-Preview-ValidatedContext-v1.4.15-preview.3
+          path: AmyFX-Preview-ValidatedContext.apk
           if-no-files-found: error
           retention-days: 14
 
@@ -175,13 +181,13 @@ jobs:
           BUILD_RESULT: ${{ needs.android-preview-build.result }}
         run: |
           state=success
-          description='Regime Router V3 passed; signed Amy FX Preview APK is ready'
+          description='Validated context parity passed; signed Amy FX Preview APK is ready'
           if [ "$VALIDATION_RESULT" != 'success' ] || [ "$BUILD_RESULT" != 'success' ]; then
             state=failure
-            description="Regime Router V3 failed: validation=$VALIDATION_RESULT preview=$BUILD_RESULT"
+            description="Validated context failed: validation=$VALIDATION_RESULT preview=$BUILD_RESULT"
           fi
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state="$state" \
-            -f context='Regime Router V3 Experiment' \
+            -f context='Validated Context + Regime Experiment' \
             -f description="$description" \
             -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
