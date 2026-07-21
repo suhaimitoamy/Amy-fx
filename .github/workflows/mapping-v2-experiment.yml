@@ -1,4 +1,4 @@
-name: Mapping Claim Accuracy + Preview Update
+name: Amy FX Preview Professional UI
 
 on:
   push:
@@ -16,7 +16,7 @@ permissions:
   statuses: write
 
 concurrency:
-  group: mapping-claim-preview-${{ github.ref }}
+  group: amyfx-preview-professional-ui-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -29,9 +29,11 @@ env:
   AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
   AMYFX_APP_LABEL: Amy FX Preview
   AMYFX_URI_SCHEME: amyfxpreview
+  AMYFX_VERSION_NAME: 1.4.15-preview.6
+  AMYFX_VERSION_CODE: '90043'
 
 jobs:
-  claim-accuracy-validation:
+  validation:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -52,28 +54,20 @@ jobs:
           node --check app/src/main/assets/apps/mapping/js/engine/market-regime-engine.js
           node --check app/src/main/assets/apps/mapping/js/engine/regime-state-machine.js
           node --check app/src/main/assets/apps/mapping/js/engine/strategy-router-engine.js
-          node --check app/src/main/assets/apps/mapping/js/engine/strategies/strategy-common.js
-          node --check app/src/main/assets/apps/mapping/js/engine/strategies/trend-pullback-engine.js
-          node --check app/src/main/assets/apps/mapping/js/engine/strategies/range-mean-reversion-engine.js
-          node --check app/src/main/assets/apps/mapping/js/engine/strategies/manipulation-sweep-engine.js
-          node --check app/src/main/assets/apps/mapping/js/engine/strategies/expansion-breakout-engine.js
           node --check app/src/main/assets/apps/mapping/js/engine/market-intent-engine.js
-          node --check app/src/main/assets/apps/mapping/js/engine/concept-analyze.js
           node --check app/src/main/assets/apps/mapping/js/api/market-data.js
-          node --check app/src/main/assets/apps/mapping/js/integrity/mapping-integrity-core.js
           node --check app/src/main/assets/apps/mapping/js/market-intent-ui.js
           node --check tools/configure-preview-web-version.mjs
 
-      - name: Verify authority and locked-rule safety contract
+      - name: Verify product copy and safety contract
         run: |
           set -euo pipefail
-          grep -Fq 'DASHBOARD · RINGKASAN KLAIM TERVALIDASI' app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          grep -Fq 'AKURASI KLAIM FITUR' app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          grep -Fq 'REFERENSI KLAIM PINE TERKUNCI' app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          grep -Fq 'ENTRY MAP EKSPERIMENTAL' app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          grep -Fq 'MAPPING_CLAIM_ACCURACY' app/src/main/assets/apps/mapping/js/engine/mapping-claim-accuracy.js
-          grep -Fq 'ENTRY_MAP_REACTION_ACCURACY_48_24_2022_2025' app/src/main/assets/apps/mapping/js/api/market-data.js
-          grep -Fq 'STRATEGY_SUITABILITY_ACCURACY_48_53_2022_2025' app/src/main/assets/apps/mapping/js/engine/strategy-router-engine.js
+          grep -Fq 'AMY FX · MARKET INTELLIGENCE' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'RELIABILITAS HISTORIS' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'Performa Historis Model' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'Konteks Market Lanjutan' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'Target & Skenario Harga' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'Struktur • Arah • Likuiditas' app/src/main/assets/apps/mapping/index.html
           grep -Fq 'result.setups = []' app/src/main/assets/apps/mapping/js/api/market-data.js
           grep -Fq 'result.bestSetup = null' app/src/main/assets/apps/mapping/js/api/market-data.js
           grep -Fq "result.signal = 'WAIT'" app/src/main/assets/apps/mapping/js/api/market-data.js
@@ -82,10 +76,8 @@ jobs:
           grep -Fq 'mayReplaceEntryMap: false' app/src/main/assets/apps/mapping/js/api/market-data.js
           grep -Fq 'marketShiftHardGate: false' app/src/main/assets/apps/mapping/js/engine/strategy-router-engine.js
           grep -Fq 'routerCanReplaceEntrySetup: false' app/src/main/assets/apps/mapping/js/engine/strategy-router-engine.js
-          test -f docs/MAPPING_CLAIM_ACCURACY_2022_2025.md
-          test -f backtest/mapping-claim-accuracy-2022-2025-summary.json
 
-      - name: Run claim, parity, view and updater tests
+      - name: Run focused and full JavaScript regression
         run: |
           set -euo pipefail
           node --test \
@@ -93,13 +85,12 @@ jobs:
             tests/dashboard-analyze-separation.test.mjs \
             tests/mapping-context-safety.test.mjs \
             tests/mapping-claim-accuracy.test.mjs \
+            tests/production-copy-polish.test.mjs \
             tests/preview-updater-config.test.mjs
-
-      - name: Run full JavaScript regression
-        run: node --test --test-reporter=spec tests/*.test.mjs
+          node --test --test-reporter=spec tests/*.test.mjs
 
   android-quality:
-    needs: claim-accuracy-validation
+    needs: validation
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -125,29 +116,13 @@ jobs:
           chmod +x gradlew
           ./gradlew :app:testReleaseUnitTest :app:lintRelease --stacktrace --no-daemon --no-configuration-cache
 
-  signed-preview-builds:
+  signed-preview-build:
     needs:
-      - claim-accuracy-validation
+      - validation
       - android-quality
     runs-on: ubuntu-latest
     timeout-minutes: 50
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - variant: bridge
-            version_name: 1.4.15-preview.4
-            version_code: '90041'
-            apk_name: AmyFX-Preview-Bridge.apk
-            artifact_name: AmyFX-Preview-Bridge-v1.4.15-preview.4
-          - variant: final
-            version_name: 1.4.15-preview.5
-            version_code: '90042'
-            apk_name: AmyFX-Preview-latest.apk
-            artifact_name: AmyFX-Preview-ClaimAccuracy-v1.4.15-preview.5
     env:
-      AMYFX_VERSION_NAME: ${{ matrix.version_name }}
-      AMYFX_VERSION_CODE: ${{ matrix.version_code }}
       AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/mapping-regime-engine-20260721/preview-update.json
     steps:
       - name: Checkout experiment branch
@@ -220,19 +195,19 @@ jobs:
           expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           actual="$(keytool -printcert -file /tmp/amyfx-preview-cert | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           test "$actual" = "$expected"
-          cp "$APK" "${{ matrix.apk_name }}"
+          cp "$APK" AmyFX-Preview-latest.apk
 
       - name: Upload signed Preview APK
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.apk_name }}
+          name: AmyFX-Preview-ProfessionalUI-v1.4.15-preview.6
+          path: AmyFX-Preview-latest.apk
           if-no-files-found: error
           retention-days: 14
 
   publish-preview-update:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/experiment/mapping-regime-engine-20260721'
-    needs: signed-preview-builds
+    needs: signed-preview-build
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -241,95 +216,74 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download signed APKs
+      - name: Download signed Preview APK
         uses: actions/download-artifact@v4
         with:
-          pattern: AmyFX-Preview-*
+          name: AmyFX-Preview-ProfessionalUI-v1.4.15-preview.6
           path: release-assets
-          merge-multiple: true
 
-      - name: Verify downloaded APK files
+      - name: Verify downloaded APK
         run: |
           set -euo pipefail
-          test -s release-assets/AmyFX-Preview-Bridge.apk
           test -s release-assets/AmyFX-Preview-latest.apk
-          sha256sum release-assets/*.apk
+          sha256sum release-assets/AmyFX-Preview-latest.apk
 
-      - name: Publish one-time bridge and final Preview releases
+      - name: Publish professional UI Preview release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          BRIDGE_TAG='amyfx-preview-v1.4.15-preview.4'
-          FINAL_TAG='amyfx-preview-v1.4.15-preview.5'
+          TAG='amyfx-preview-v1.4.15-preview.6'
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes
+          fi
+          gh api --method DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" >/dev/null 2>&1 || true
 
-          for tag in "$BRIDGE_TAG" "$FINAL_TAG"; do
-            if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-              gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes
-            fi
-            gh api --method DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$tag" >/dev/null 2>&1 || true
-          done
+          cat > /tmp/release-notes.md <<'NOTES'
+          Amy FX Preview — Professional UI refinement.
 
-          cat > /tmp/bridge-notes.md <<'NOTES'
-          One-time updater bridge for Amy FX Preview.
-
-          - Same package and permanent Preview signer as the installed Preview.
-          - Points the in-app updater to the experiment Preview manifest.
-          - After installation, Amy FX Preview automatically detects 1.4.15-preview.5 and displays an update popup plus Android notification.
-          - No uninstall is required, so local Preview data remains intact.
+          - Analyze now uses a clear product hierarchy: market summary, historical reliability, advanced context, and monitored price scenarios.
+          - Historical model performance is compact and collapsed by default.
+          - Internal development wording has been removed from user-facing screens.
+          - Header, navigation, labels, and explanatory copy are now consistent in Indonesian.
+          - Market logic, validated rules, safety authority, package, and permanent Preview signer remain unchanged.
           NOTES
 
-          cat > /tmp/final-notes.md <<'NOTES'
-          Amy FX Preview claim-accuracy correction.
-
-          - Dashboard contains only Market State, Direction Forecast, and Nearest Liquidity.
-          - Analyze displays each feature against its own accuracy claim, not trade win rate.
-          - Regime, Market Shift, Strategy Router, and Entry Map are explicitly experimental and cannot control the primary decision.
-          - Locked Pine rules and thresholds remain unchanged.
-          NOTES
-
-          gh release create "$BRIDGE_TAG" \
-            "release-assets/AmyFX-Preview-Bridge.apk#AmyFX-Preview-Bridge.apk" \
-            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
-            --title 'Amy FX Preview 1.4.15-preview.4 — Updater Bridge' --notes-file /tmp/bridge-notes.md
-
-          gh release create "$FINAL_TAG" \
+          gh release create "$TAG" \
             "release-assets/AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
-            --title 'Amy FX Preview 1.4.15-preview.5 — Mapping Claim Accuracy' --notes-file /tmp/final-notes.md
+            --title 'Amy FX Preview 1.4.15-preview.6 — Professional UI' --notes-file /tmp/release-notes.md
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
 
-          gh release view "$BRIDGE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-Bridge.apk'
-          gh release view "$FINAL_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
-
-      - name: Activate final Preview in-app update manifest
+      - name: Activate Preview 1.4.15-preview.6 manifest
         run: |
           set -euo pipefail
           cat > preview-update.json <<'JSON'
           {
-            "channel": "mapping-claim-accuracy-preview",
-            "latest_version_code": 90042,
-            "latest_version_name": "1.4.15-preview.5",
-            "versionCode": 90042,
-            "version": "1.4.15-preview.5",
+            "channel": "amyfx-preview-professional-ui",
+            "latest_version_code": 90043,
+            "latest_version_name": "1.4.15-preview.6",
+            "versionCode": 90043,
+            "version": "1.4.15-preview.6",
             "releaseDate": "2026-07-22",
-            "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.5/AmyFX-Preview-latest.apk",
-            "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.5/AmyFX-Preview-latest.apk",
+            "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.6/AmyFX-Preview-latest.apk",
+            "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.6/AmyFX-Preview-latest.apk",
             "force_update": false,
             "mandatory": false,
             "enabled": true,
             "release_notes": [
-              "Dashboard hanya menampilkan Market State, Direction Forecast, dan Nearest Liquidity",
-              "Analyze menampilkan akurasi klaim setiap fitur, bukan win rate transaksi",
-              "Regime, Market Shift, Strategy Router, dan Entry Map menjadi detail eksperimen tanpa otoritas keputusan",
-              "Valid Break, Sweep Only, dan Failed Break dipisahkan sesuai akurasi klaim masing-masing",
-              "Updater Preview diperbaiki agar update berikutnya muncul lewat popup dan notifikasi Android"
+              "Tampilan Analyze dirapikan menjadi ringkasan market, reliabilitas historis, konteks lanjutan, dan skenario harga",
+              "Performa historis kini ringkas dan tertutup secara default",
+              "Istilah pengembangan internal dihapus dari tampilan pengguna",
+              "Header, navigasi, label, dan penjelasan dibuat lebih konsisten dan profesional",
+              "Logika market dan sistem keamanan tetap dipertahankan"
             ],
             "changelog": [
-              "Dashboard hanya menampilkan Market State, Direction Forecast, dan Nearest Liquidity",
-              "Analyze menampilkan akurasi klaim setiap fitur, bukan win rate transaksi",
-              "Regime, Market Shift, Strategy Router, dan Entry Map menjadi detail eksperimen tanpa otoritas keputusan",
-              "Valid Break, Sweep Only, dan Failed Break dipisahkan sesuai akurasi klaim masing-masing",
-              "Updater Preview diperbaiki agar update berikutnya muncul lewat popup dan notifikasi Android"
+              "Tampilan Analyze dirapikan menjadi ringkasan market, reliabilitas historis, konteks lanjutan, dan skenario harga",
+              "Performa historis kini ringkas dan tertutup secara default",
+              "Istilah pengembangan internal dihapus dari tampilan pengguna",
+              "Header, navigasi, label, dan penjelasan dibuat lebih konsisten dan profesional",
+              "Logika market dan sistem keamanan tetap dipertahankan"
             ]
           }
           JSON
@@ -338,36 +292,36 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add preview-update.json
           if ! git diff --cached --quiet; then
-            git commit -m 'release: activate Amy FX Preview 1.4.15-preview.5 update [skip ci]'
+            git commit -m 'release: activate Amy FX Preview 1.4.15-preview.6 update [skip ci]'
             git push origin HEAD:experiment/mapping-regime-engine-20260721
           fi
 
   report-status:
     if: always() && github.event_name != 'pull_request'
     needs:
-      - claim-accuracy-validation
+      - validation
       - android-quality
-      - signed-preview-builds
+      - signed-preview-build
       - publish-preview-update
     runs-on: ubuntu-latest
     steps:
       - name: Publish combined Preview status
         env:
           GH_TOKEN: ${{ github.token }}
-          CLAIM_RESULT: ${{ needs.claim-accuracy-validation.result }}
+          VALIDATION_RESULT: ${{ needs.validation.result }}
           ANDROID_RESULT: ${{ needs.android-quality.result }}
-          BUILD_RESULT: ${{ needs.signed-preview-builds.result }}
+          BUILD_RESULT: ${{ needs.signed-preview-build.result }}
           PUBLISH_RESULT: ${{ needs.publish-preview-update.result }}
         run: |
           set -euo pipefail
           state=success
-          description='Claim accuracy validated; bridge and final Preview update published'
-          if [ "$CLAIM_RESULT" != 'success' ] || [ "$ANDROID_RESULT" != 'success' ] || [ "$BUILD_RESULT" != 'success' ] || [ "$PUBLISH_RESULT" != 'success' ]; then
+          description='Professional UI validated, signed and published'
+          if [ "$VALIDATION_RESULT" != 'success' ] || [ "$ANDROID_RESULT" != 'success' ] || [ "$BUILD_RESULT" != 'success' ] || [ "$PUBLISH_RESULT" != 'success' ]; then
             state=failure
-            description="Preview update failed: claims=$CLAIM_RESULT android=$ANDROID_RESULT builds=$BUILD_RESULT publish=$PUBLISH_RESULT"
+            description="Preview failed: validation=$VALIDATION_RESULT android=$ANDROID_RESULT build=$BUILD_RESULT publish=$PUBLISH_RESULT"
           fi
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state="$state" \
-            -f context='Mapping Claim Accuracy + Preview Update' \
+            -f context='Amy FX Preview Professional UI' \
             -f description="$description" \
             -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
