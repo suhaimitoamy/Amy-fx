@@ -1,1 +1,390 @@
-const e=1e-9;export const MARKET_REGIMES=Object.freeze(["TRENDING","RANGING","MANIPULATION","EXPANSION","TRANSITION"]);export const STRATEGY_BY_REGIME=Object.freeze({TRENDING:"TREND_PULLBACK",RANGING:"RANGE_MEAN_REVERSION",MANIPULATION:"SWEEP_MSS_REVERSAL",EXPANSION:"BREAKOUT_CONTINUATION",TRANSITION:"NO_TRADE"});function n(e,n=NaN){const t=Number(e);return Number.isFinite(t)?t:n}function t(e,n=0,t=1){return Math.max(n,Math.min(t,e))}function a(e){const n=String(e||"").toUpperCase();return n.includes("BULL")||"BUY"===n?1:n.includes("BEAR")||"SELL"===n?-1:0}function i(e,n){if(!e.length)return[];const t=2/(Math.max(2,n)+1),a=[];let i=e[0];for(const n of e)i=a.length?t*n+(1-t)*i:n,a.push(i);return a}function s(e,n=14){const t=new Array(e.length).fill(null);if(e.length<n)return t;const a=e.map((n,t)=>function(e,n){const t=e[n],a=e[n-1];return t?a?Math.max(t.high-t.low,Math.abs(t.high-a.close),Math.abs(t.low-a.close)):Math.max(0,t.high-t.low):0}(e,t));let i=a.slice(0,n).reduce((e,n)=>e+n,0)/n;t[n-1]=i;for(let s=n;s<e.length;s+=1)i=(i*(n-1)+a[s])/n,t[s]=i;return t}function o(e){const n=e.filter(Number.isFinite);return n.length?n.reduce((e,n)=>e+n,0)/n.length:0}function r(n,t=20){const a=n.slice(-Math.max(4,t));if(a.length<3)return{efficiency:0,net:0,path:0,alternation:0};let i=0,s=0,o=0;for(let e=1;e<a.length;e+=1){const n=a[e].close-a[e-1].close;i+=Math.abs(n);const t=Math.sign(n);t&&o&&t!==o&&(s+=1),t&&(o=t)}const r=a.at(-1).close-a[0].close;return{efficiency:i>e?Math.abs(r)/i:0,net:r,path:i,alternation:s/Math.max(1,a.length-2)}}function l(i,s,o){const r=function(n,a){if(n.length<40)return{trend:0,sweepRecent:!1,failedRecent:!1,oppositeTransition:!1,displacement:0,eventAge:1/0};let i=null,s=null,o=0,r=null,l=null,c=null,u=0;for(let h=8;h<n.length;h+=1){const m=h-4,f=n[m];let p=!0,d=!0;for(let e=1;e<=4;e+=1)(f.high<=n[m-e].high||f.high<=n[m+e].high)&&(p=!1),(f.low>=n[m-e].low||f.low>=n[m+e].low)&&(d=!1);p&&(i={level:f.high,index:m}),d&&(s={level:f.low,index:m});const g=n[h],A=n[h-1];i&&g.high>i.level&&g.close<i.level&&(r={index:h,direction:-1}),s&&g.low<s.level&&g.close>s.level&&(r={index:h,direction:1});const M=i&&A.close<=i.level&&g.close>i.level,E=s&&A.close>=s.level&&g.close<s.level;if(M||E){const n=M?1:-1;o&&n!==o&&(c={index:h,direction:n}),o=n;const i=Math.max(g.high-g.low,e),s=Math.abs(g.close-g.open);u=t(s/Math.max(a,e)*(s/i),0,2)/2}const N=o>0?i?.level:s?.level;N&&o>0&&g.close<N&&h-(c?.index??h)<=6&&(l={index:h}),N&&o<0&&g.close>N&&h-(c?.index??h)<=6&&(l={index:h})}const h=n.length-1,m=Math.max(r?.index??-1,l?.index??-1,c?.index??-1);return{trend:o,sweepRecent:!!r&&h-r.index<=12,failedRecent:!!l&&h-l.index<=8,oppositeTransition:!!c&&h-c.index<=10,displacement:u,eventAge:m>=0?h-m:1/0}}(s,o),l=i?.structure;if(!l)return r;const c=s.length-1,u=l.lastEvent||l.last,h=l.lastFailedBreak,m=l.lastSweep,f=l.transitionBreak,p=e=>n(e?.index??e?.availableIndex??e?.originIndex,-1/0),d=Math.max(p(u),p(h),p(m),p(f)),g=a(l.confirmedTrend||l.trend)||r.trend,A=a(f?.dir||f?.direction);return{trend:g,sweepRecent:p(m)>-1/0?c-p(m)<=12:r.sweepRecent,failedRecent:p(h)>-1/0?c-p(h)<=8:r.failedRecent,oppositeTransition:A&&g&&A!==g?c-p(f)<=10:r.oppositeTransition,displacement:u?.hasDisplacement?1:t(n(u?.bodyRatio,0)*n(u?.penetrationAtr,0),0,1),eventAge:d>-1/0?c-d:r.eventAge}}export function detectMarketRegimeV2({candles:c=[],tf:u="M15",htfBiases:h={},marketConcepts:m=null,entryMap:f=null,newsRisk:p="NORMAL",freshness:d={},currentPrice:g=null}={}){const A=function(e){return(Array.isArray(e)?e:[]).map((e,t)=>({index:t,time:n(e?.time,t),open:n(e?.open),high:n(e?.high),low:n(e?.low),close:n(e?.close)})).filter(e=>[e.open,e.high,e.low,e.close].every(Number.isFinite)&&e.high>=Math.max(e.open,e.close,e.low)&&e.low<=Math.min(e.open,e.close,e.high))}(c),M={version:"2.0.0-experiment",source:"AMY_MARKET_REGIME_V2",experimental:!0,contextOnly:!0,executionGateEnabled:!1,tf:u,status:"INSUFFICIENT_DATA",regime:"TRANSITION",probabilities:Object.fromEntries(MARKET_REGIMES.map(e=>[e,"TRANSITION"===e?100:0])),confidence:0,shift:{risk:100,status:"TRANSITION_RISK",confirmed:!1,reasons:["Data candle belum cukup."]},strategy:STRATEGY_BY_REGIME.TRANSITION,action:"WAIT",setupQuality:0,reasons:["Minimal 100 candle closed diperlukan."],features:{}};if(A.length<100)return M;const E=A.map(e=>e.close),N=i(E,21),b=(i(E,34),i(E,90)),R=s(A,14),T=n(R.at(-1),0);if(!(T>0))return{...M,reasons:["ATR14 belum tersedia."]};const I=r(A,20),k=r(A,10),y=r(A.slice(0,-10),10),x=r(A.slice(0,-6),20),S=function(n,t=12){const a=n.slice(-Math.max(3,t)),i=[],s=[],r=[];for(const n of a){const t=Math.max(n.high-n.low,e),a=Math.abs(n.close-n.open),o=Math.max(0,t-a);i.push(a/t),s.push(o/t);const l=(n.close-n.low)/t,c=(n.high-n.close)/t;r.push(Math.max(l,c))}return{bodyEfficiency:o(i),wickDominance:o(s),closeEfficiency:o(r)}}(A,12),w=l(m,A,T),O=function(e={}){const n={M15:.12,M30:.16,H1:.25,H4:.3,D1:.17,W1:.2};let t=0,i=0;const s=[];for(const[o,r]of Object.entries(e||{})){const e=a(r);if(!e)continue;const l=n[o]||.12;t+=e*l,i+=l,s.push(e)}const o=Math.sign(t),r=s.filter(e=>e===o).length;return{score:i?t/i:0,consensus:s.length?r/s.length:0,disagreement:s.length?1-r/s.length:0,coverage:Math.min(1,s.length/3)}}(h),_=Math.abs(N.at(-1)-b.at(-1))/T,v=Math.abs(N.at(-7)-b.at(-7))/T,D=t((v-_)/Math.max(v,.15),0,1),B=(N.at(-1)-N.at(-6))/T,G=t(.9*x.efficiency+.55*t(v/1.5,0,1)+Math.abs(O.score)*O.consensus*.35-.45*x.alternation,0,1),L=(N.at(-1)-N.at(-4))/T,U=(N.at(-5)-N.at(-8))/T,C=function(e){const n=e.filter(Number.isFinite).sort((e,n)=>e-n);if(!n.length)return 0;const t=Math.floor(n.length/2);return n.length%2?n[t]:(n[t-1]+n[t])/2}(R.slice(-90,-10).filter(Number.isFinite))||T,j=T/Math.max(C,e),P=A.slice(-20),K=(Math.max(...P.map(e=>e.high))-Math.min(...P.map(e=>e.low)))/T,Y=t((k.efficiency-y.efficiency+.5)/1.5,0,1),W=t(y.efficiency-k.efficiency,0,1),F=w.trend||Math.sign(N.at(-1)-b.at(-1)),H=F&&O.score&&Math.sign(O.score)!==F?1:0,$=r(A,5),V=r(A.slice(0,-5),5),X=t(F*(U-L)/.8,0,1),z=t(-F*$.net/Math.max(1.2*T,e),0,1),Q=t(V.efficiency-$.efficiency,0,1),J=Math.max(...A.slice(-21,-1).map(e=>e.high)),q=Math.min(...A.slice(-21,-1).map(e=>e.low)),Z=A.at(-1),ee=F>0?Z.high>=J&&Z.close<J?1:0:F<0&&Z.low<=q&&Z.close>q?1:0,ne=Math.max(...P.map(e=>e.high)),te=Math.min(...P.map(e=>e.low)),ae=t((Z.close-te)/Math.max(ne-te,e),0,1),ie=F>0?1-ae:F<0?ae:.5,se=n(R.at(-6),T),oe=T/Math.max(se,e),re=t((j-1)/.7,0,1),le=t((1.05-j)/.45,0,1),ce=t(_/1.6,0,1),ue=t(Math.abs(B)/1.2,0,1),he=t((S.closeEfficiency-.5)/.45,0,1),me=w.sweepRecent?1:0,fe=w.failedRecent?1:0,pe=w.oppositeTransition?1:0,de=function(e){const n=Object.values(e||{});return n.length?t((n.filter(e=>String(e?.state||e||"").toUpperCase().includes("STALE")).length+.45*n.filter(e=>String(e?.state||e||"").toUpperCase().includes("CACHE")).length)/n.length,0,1):0}(d),ge=function(e){const n=String(e||"").toUpperCase();return"HIGH"===n?1:"ELEVATED"===n?.6:"UNKNOWN"===n?.25:0}(p);let Ae=0;const Me=[],Ee=(e,n,a)=>{e&&(Ae+=n*("number"==typeof e?t(e,0,1):1),Me.push(a))};Ee(pe,26,"Internal shift bergerak berlawanan dengan tren terkonfirmasi."),Ee(fe,22,"Break terakhir gagal dipertahankan."),Ee(me&&!w.displacement,13,"Sweep terbaru belum diikuti displacement yang kuat."),Ee(ee,20,"Harga gagal mempertahankan kelanjutan pada ekstrem terbaru."),Ee(z,18,"Dorongan mikro bergerak berlawanan dengan tren aktif."),Ee(X,14,"Kemiringan EMA melambat dibanding jendela sebelumnya."),Ee(Q,10,"Efisiensi gerak mikro menurun tajam."),Ee(ie*z,8,"Harga terdorong menjauh dari sisi tren pada range lokal."),Ee(D,12,"Jarak EMA menyempit; momentum tren sedang kehilangan kestabilan."),Ee(O.disagreement,10,"Arah lintas timeframe mulai berbeda."),Ee(H,10,"Struktur lokal berlawanan dengan konteks timeframe tinggi."),Ee(W,8,"Efisiensi gerak menurun dibanding jendela sebelumnya."),Ee(I.alternation,7,"Pergantian arah candle meningkat."),Ee(de,15,"Kualitas data tidak sepenuhnya fresh."),Ee(ge*re,10,"Risiko berita dan lonjakan volatilitas muncul bersamaan.");pe||fe||(Ae*=.35+.65*G,G<.28&&(Ae=Math.min(Ae,29))),Ae=Math.round(t(Ae,0,100));const Ne=Boolean(pe&&(fe||H||D>=.55));!Ne&&Ae>74&&(Ae=74);const be=(Re=Ae,Ne&&Re>=75?"SHIFT_CONFIRMED":Re>=55?"TRANSITION_RISK":Re>=30?"EARLY_WARNING":"STABLE");var Re;const Te=function(e){const n=Object.entries(e),t=Math.max(...n.map(([,e])=>e)),a=n.map(([e,n])=>[e,Math.exp(n-t)]),i=a.reduce((e,[,n])=>e+n,0)||1,s=Object.fromEntries(a.map(([e,n])=>[e,n/i*100])),o=Object.fromEntries(n.map(([e])=>[e,Math.round(s[e])])),r=100-Object.values(o).reduce((e,n)=>e+n,0),l=n.sort((e,n)=>s[n[0]]-s[e[0]])[0]?.[0];return l&&(o[l]+=r),o}({TRENDING:.25+1.7*I.efficiency+1*ce+.75*ue+Math.abs(O.score)*O.consensus*.8+.45*t((K-2.2)/2.8,0,1)+.45*S.bodyEfficiency-.9*I.alternation-Ae/100*1.2,RANGING:.25+1.3*(1-I.efficiency)+1.05*I.alternation+.85*(1-ce)+.45*le+.65*S.wickDominance+.7*t((2.5-K)/2.5,0,1)-.5*re,MANIPULATION:.1+1.45*me+.8*S.wickDominance+.55*I.alternation+.4*(1-S.bodyEfficiency)+.45*t(w.eventAge<=5?1:w.eventAge<=12?.5:0,0,1)+.3*fe,EXPANSION:.1+1.35*re+.75*S.bodyEfficiency+.55*he+.8*w.displacement+.55*ue+.4*Y+.6*t((K-3)/3,0,1)-.45*I.alternation,TRANSITION:.1+1.35*fe+1.45*pe+.9*D+.75*O.disagreement+.5*H+.7*W+.45*I.alternation+Ae/100*.85}),Ie=Object.entries(Te).sort((e,n)=>n[1]-e[1]);let ke=Ie[0][0],ye=Ie[0][1];Ae>=60&&Te.TRANSITION>=Math.max(20,ye-12)&&(ke="TRANSITION",ye=Te.TRANSITION);const xe=STRATEGY_BY_REGIME[ke]||"NO_TRADE",Se=f?.activeSetup||(f?.setup?.live?f.setup:null),we=a(Se?.dir||Se?.direction),Oe=a(O.score)||F,_e=Boolean(we&&Oe&&we===Oe),ve="TREND_PULLBACK"===xe||"SWEEP_MSS_REVERSAL"===xe,De=Se?Math.round(t(42+.28*ye+(_e?14:-16)+10*w.displacement-.38*Ae-18*de,0,92)):0;let Be="WAIT";const Ge=[];Ne?Ge.push("Pergantian struktur telah terkonfirmasi; rekomendasi konteks adalah WAIT."):ye<40?Ge.push("Regime belum cukup jelas untuk memilih strategi dengan aman."):Se?ve?_e?De<55?Ge.push(`Kualitas setup ${De}/100 masih di bawah batas aman 55.`):(Be=we>0?"BUY":"SELL",Ge.push(`Setup M15 selaras dengan ${ke.toLowerCase()} dan strategi ${xe.replaceAll("_"," ")}.`)):Ge.push("Arah setup belum selaras dengan konteks timeframe tinggi."):Ge.push(`Entry Map saat ini tidak cocok dengan regime ${ke}; tunggu model strategi khusus.`):Ge.push(`Strategi ${xe.replaceAll("_"," ")} aktif, tetapi belum ada setup M15 yang lolos.`),Ae>=25&&!Ne&&Ge.unshift(`Peringatan awal perubahan karakter ${Ae}%; belum dipakai sebagai pemblokir entry otomatis.`),"WAIT"!==Be||Ge.length||Ge.push("Belum ada alasan yang cukup aman untuk entry.");const Le=n(g,A.at(-1).close);return{version:"2.0.0-experiment",source:"AMY_MARKET_REGIME_V2",experimental:!0,contextOnly:!0,executionGateEnabled:!1,tf:u,status:"READY",calculatedAt:n(A.at(-1).time,Date.now()),price:Le,regime:ke,probabilities:Te,confidence:ye,shift:{risk:Ae,status:be,confirmed:Ne,warningRecommended:Ae>=25,blockRecommended:Ne,reasons:Me.slice(0,5)},strategy:xe,action:"WAIT",advisoryAction:Be,setupQuality:De,setupAligned:_e,reasons:Ge,features:{atr:T,atrRatio:j,rangeAtr:K,directionalEfficiency:I.efficiency,priorDirectionalEfficiency:x.efficiency,priorAlternation:x.alternation,priorTrendStrength:G,alternation:I.alternation,bodyEfficiency:S.bodyEfficiency,wickDominance:S.wickDominance,emaSpreadAtr:_,emaCompression:D,emaSlopeAtr:B,emaSlopeNow:L,emaSlopePrevious:U,slopeDecay:X,oppositeImpulse:z,microEfficiency:$.efficiency,priorMicroEfficiency:V.efficiency,microEfficiencyDrop:Q,failedContinuation:Boolean(ee),rangeLocation:ae,oppositeLocation:ie,volatilityChange:oe,htfScore:O.score,htfConsensus:O.consensus,htfDisagreement:O.disagreement,recentSweep:Boolean(me),failedBreak:Boolean(fe),oppositeTransition:Boolean(pe),displacement:w.displacement,dataRisk:de,newsRisk:ge}}}export function regimeSummary(e){if(!e||"READY"!==e.status)return{headline:"DATA BELUM CUKUP",action:"WAIT",strategy:"NO TRADE",reason:e?.reasons?.[0]||"Mapping belum siap."};const n=e.regime.replaceAll("_"," "),t=e.strategy.replaceAll("_"," ");return{headline:`${n} · ${e.shift.status.replaceAll("_"," ")}`,action:e.action,strategy:t,reason:e.reasons?.[0]||"Belum ada alasan tambahan."}}
+import {
+  EPSILON,
+  adxSeries,
+  atrSeries,
+  candleCharacter,
+  clamp,
+  cleanCandles,
+  directionValue,
+  emaSeries,
+  median,
+  movementStats,
+  numeric,
+  softmaxPercent
+} from './market-math.js';
+
+export const MARKET_REGIMES = Object.freeze([
+  'TRENDING',
+  'RANGING',
+  'MANIPULATION',
+  'EXPANSION',
+  'TRANSITION'
+]);
+
+export const STRATEGY_BY_REGIME = Object.freeze({
+  TRENDING: 'TREND_PULLBACK',
+  RANGING: 'RANGE_MEAN_REVERSION',
+  MANIPULATION: 'SWEEP_MSS_REVERSAL',
+  EXPANSION: 'BREAKOUT_CONTINUATION',
+  TRANSITION: 'NO_TRADE'
+});
+
+function eventIndex(event) {
+  return numeric(event?.index ?? event?.availableIndex ?? event?.originIndex, -Infinity);
+}
+
+function conceptFeatures(marketConcepts, candles, atr) {
+  const structure = marketConcepts?.structure || marketConcepts?.structureSnapshot || null;
+  const last = structure?.lastEvent || structure?.last || null;
+  const sweep = marketConcepts?.latestConfirmedSweep || structure?.lastSweep || null;
+  const failed = structure?.lastFailedBreak || null;
+  const transition = structure?.transitionBreak || null;
+  const currentIndex = candles.length - 1;
+  const age = event => currentIndex - eventIndex(event);
+  const trend = directionValue(structure?.confirmedTrend || structure?.trend);
+  const transitionDirection = directionValue(transition?.dir || transition?.direction);
+  const lastDirection = directionValue(last?.dir || last?.direction);
+  const displacement = last?.hasDisplacement
+    ? 1
+    : clamp(numeric(last?.bodyRatio, 0) * Math.max(0.4, numeric(last?.penetrationAtr, 0)), 0, 1);
+
+  const recentWindow = candles.slice(-21, -1);
+  const recentHigh = recentWindow.length ? Math.max(...recentWindow.map(candle => candle.high)) : NaN;
+  const recentLow = recentWindow.length ? Math.min(...recentWindow.map(candle => candle.low)) : NaN;
+  const current = candles.at(-1);
+  const failedContinuation = trend > 0
+    ? current.high >= recentHigh && current.close < recentHigh
+    : trend < 0
+      ? current.low <= recentLow && current.close > recentLow
+      : false;
+
+  return {
+    trend,
+    lastDirection,
+    displacement,
+    recentSweep: Boolean(sweep && age(sweep) <= 12),
+    sweepAge: sweep ? age(sweep) : Infinity,
+    failedBreak: Boolean(failed && age(failed) <= 8),
+    oppositeTransition: Boolean(transition && age(transition) <= 10 && trend && transitionDirection && transitionDirection !== trend),
+    transitionDirection,
+    failedContinuation,
+    eventAge: Math.min(age(last), age(sweep), age(failed), age(transition)),
+    atr
+  };
+}
+
+function htfFeatures(htfBiases = {}) {
+  const weights = { M15: 0.10, M30: 0.15, H1: 0.25, H4: 0.30, D1: 0.15, W1: 0.20 };
+  let weighted = 0;
+  let coverageWeight = 0;
+  const directions = [];
+  for (const [timeframe, value] of Object.entries(htfBiases || {})) {
+    const direction = directionValue(value);
+    if (!direction) continue;
+    const weight = weights[timeframe] || 0.10;
+    weighted += direction * weight;
+    coverageWeight += weight;
+    directions.push(direction);
+  }
+  const score = coverageWeight ? weighted / coverageWeight : 0;
+  const leader = Math.sign(score);
+  const aligned = directions.filter(direction => direction === leader).length;
+  return {
+    score,
+    direction: leader,
+    consensus: directions.length ? aligned / directions.length : 0,
+    disagreement: directions.length ? 1 - aligned / directions.length : 0,
+    coverage: clamp(directions.length / 3, 0, 1)
+  };
+}
+
+function dataRiskValue(freshness = {}) {
+  const values = Object.values(freshness || {});
+  if (!values.length) return 0;
+  const stale = values.filter(value => String(value?.state || value?.status || value || '').toUpperCase().includes('STALE')).length;
+  const cache = values.filter(value => String(value?.state || value?.status || value || '').toUpperCase().includes('CACHE')).length;
+  const gaps = values.reduce((sum, value) => sum + Math.min(1, numeric(value?.gaps, 0) / 4), 0);
+  return clamp((stale + cache * 0.45 + gaps * 0.35) / values.length, 0, 1);
+}
+
+function newsRiskValue(newsRisk) {
+  const value = String(newsRisk || '').toUpperCase();
+  if (value === 'HIGH') return 1;
+  if (value === 'ELEVATED') return 0.6;
+  if (value === 'UNKNOWN') return 0.25;
+  return 0;
+}
+
+function healthStatus(health) {
+  if (health.transitionRisk >= 72) return 'SHIFT_CONFIRMED';
+  if (health.transitionRisk >= 55) return 'TRANSITION_RISK';
+  if (health.transitionRisk >= 30) return 'EARLY_WARNING';
+  return 'STABLE';
+}
+
+export function detectMarketRegimeV3({
+  candles = [],
+  tf = 'M15',
+  htfBiases = {},
+  marketConcepts = null,
+  entryMap = null,
+  newsRisk = 'NORMAL',
+  freshness = {},
+  currentPrice = null
+} = {}) {
+  const values = cleanCandles(candles);
+  const insufficient = {
+    version: '3.0.0-preview',
+    source: 'AMY_MARKET_REGIME_V3',
+    tf,
+    status: 'INSUFFICIENT_DATA',
+    regime: 'TRANSITION',
+    probabilities: Object.fromEntries(MARKET_REGIMES.map(name => [name, name === 'TRANSITION' ? 100 : 0])),
+    confidence: 0,
+    strategy: STRATEGY_BY_REGIME.TRANSITION,
+    strategyGateEnabled: true,
+    automaticTradeExecution: false,
+    shift: { risk: 100, status: 'TRANSITION_RISK', confirmed: false, reasons: ['Minimal 120 candle tertutup diperlukan.'] },
+    health: { trendStrength: 0, trendStability: 0, transitionRisk: 100, manipulationRisk: 0, rangeProbability: 0, expansionProbability: 0 },
+    features: {},
+    reasons: ['Data candle belum cukup untuk Market Regime Engine.'],
+    entryMap
+  };
+  if (values.length < 120) return insufficient;
+
+  const closes = values.map(candle => candle.close);
+  const ema9 = emaSeries(closes, 9);
+  const ema21 = emaSeries(closes, 21);
+  const ema34 = emaSeries(closes, 34);
+  const ema90 = emaSeries(closes, 90);
+  const ema200 = emaSeries(closes, 200);
+  const atrValues = atrSeries(values, 14);
+  const adxValues = adxSeries(values, 14);
+  const atr = numeric(atrValues.at(-1), 0);
+  if (!(atr > 0)) return { ...insufficient, reasons: ['ATR14 belum tersedia.'] };
+
+  const current = values.at(-1);
+  const previousAtrBaseline = median(atrValues.slice(-100, -10).filter(Number.isFinite)) || atr;
+  const atrRatio = atr / Math.max(previousAtrBaseline, EPSILON);
+  const movement20 = movementStats(values, 20);
+  const movement10 = movementStats(values, 10);
+  const priorMicro = movementStats(values.slice(0, -5), 5);
+  const micro = movementStats(values, 5);
+  const character = candleCharacter(values, 12);
+  const concepts = conceptFeatures(marketConcepts, values, atr);
+  const htf = htfFeatures(htfBiases);
+  const dataRisk = dataRiskValue(freshness);
+  const news = newsRiskValue(newsRisk);
+
+  const emaSpread = Math.abs(ema21.at(-1) - ema90.at(-1)) / atr;
+  const priorEmaSpread = Math.abs(ema21.at(-7) - ema90.at(-7)) / atr;
+  const emaCompression = clamp((priorEmaSpread - emaSpread) / Math.max(priorEmaSpread, 0.15), 0, 1);
+  const emaSlope = (ema21.at(-1) - ema21.at(-6)) / atr;
+  const previousSlope = (ema21.at(-6) - ema21.at(-11)) / atr;
+  const direction = concepts.trend || Math.sign(ema21.at(-1) - ema90.at(-1));
+  const slopeDecay = direction ? clamp(direction * (previousSlope - emaSlope) / 0.9, 0, 1) : 0;
+  const oppositeImpulse = direction ? clamp(-direction * micro.net / Math.max(atr * 1.2, EPSILON), 0, 1) : 0;
+  const efficiencyDrop = clamp(priorMicro.efficiency - micro.efficiency, 0, 1);
+  const htfConflict = direction && htf.direction && direction !== htf.direction ? 1 : 0;
+  const adx = numeric(adxValues.at(-1), 0);
+  const adxTrend = clamp((adx - 15) / 25, 0, 1);
+  const rangeWindow = values.slice(-20);
+  const rangeAtr = (Math.max(...rangeWindow.map(candle => candle.high)) - Math.min(...rangeWindow.map(candle => candle.low))) / atr;
+  const recentRange = Math.max(current.high - current.low, EPSILON);
+  const bodyFraction = Math.abs(current.close - current.open) / recentRange;
+  const closeLocation = (current.close - current.low) / recentRange;
+  const previousHigh = Math.max(...values.slice(-21, -1).map(candle => candle.high));
+  const previousLow = Math.min(...values.slice(-21, -1).map(candle => candle.low));
+  const breakout = current.close > previousHigh || current.close < previousLow;
+  const breakoutDirection = current.close > previousHigh ? 1 : current.close < previousLow ? -1 : 0;
+  const expansionCandle = bodyFraction >= 0.58 && (breakout || recentRange / atr >= 1.25);
+
+  let transitionRisk = 0;
+  const shiftReasons = [];
+  const addRisk = (condition, weight, reason) => {
+    const amount = typeof condition === 'number' ? clamp(condition, 0, 1) : condition ? 1 : 0;
+    if (!amount) return;
+    transitionRisk += weight * amount;
+    shiftReasons.push(reason);
+  };
+  addRisk(concepts.oppositeTransition, 26, 'Internal shift bergerak berlawanan dengan tren terkonfirmasi.');
+  addRisk(concepts.failedBreak, 22, 'Break terakhir gagal dipertahankan.');
+  addRisk(concepts.failedContinuation, 18, 'Kelanjutan pada ekstrem terbaru gagal dipertahankan.');
+  addRisk(concepts.recentSweep && concepts.displacement < 0.45, 12, 'Sweep terbaru belum diikuti displacement yang kuat.');
+  addRisk(oppositeImpulse, 16, 'Dorongan mikro bergerak berlawanan dengan tren aktif.');
+  addRisk(slopeDecay, 13, 'Kemiringan EMA melambat dibanding jendela sebelumnya.');
+  addRisk(efficiencyDrop, 10, 'Efisiensi gerak mikro menurun.');
+  addRisk(emaCompression, 11, 'Jarak EMA menyempit.');
+  addRisk(htf.disagreement, 10, 'Arah lintas timeframe mulai berbeda.');
+  addRisk(htfConflict, 10, 'Struktur lokal berlawanan dengan konteks timeframe tinggi.');
+  addRisk(movement20.alternation, 7, 'Pergantian arah candle meningkat.');
+  addRisk(dataRisk, 15, 'Kualitas data tidak sepenuhnya fresh.');
+  addRisk(news * clamp((atrRatio - 1) / 0.7, 0, 1), 10, 'Risiko berita muncul bersama lonjakan volatilitas.');
+
+  const baseTrendQuality = clamp(
+    0.30 * adxTrend
+      + 0.24 * movement20.efficiency
+      + 0.18 * clamp(emaSpread / 1.5, 0, 1)
+      + 0.16 * clamp(Math.abs(emaSlope) / 1.1, 0, 1)
+      + 0.12 * htf.consensus,
+    0,
+    1
+  );
+  if (!concepts.oppositeTransition && !concepts.failedBreak) transitionRisk *= 0.40 + 0.60 * baseTrendQuality;
+  if (baseTrendQuality < 0.25) transitionRisk = Math.min(transitionRisk, 45);
+  transitionRisk = Math.round(clamp(transitionRisk, 0, 100));
+
+  const trendStrength = Math.round(clamp(baseTrendQuality * 100 - transitionRisk * 0.20, 0, 100));
+  const trendStability = Math.round(clamp(
+    trendStrength * 0.72 + htf.consensus * 22 - emaCompression * 22 - movement20.alternation * 18 - transitionRisk * 0.22,
+    0,
+    100
+  ));
+  const manipulationRisk = Math.round(clamp(
+    (concepts.recentSweep ? 38 : 0)
+      + character.wickDominance * 28
+      + movement20.alternation * 18
+      + (concepts.failedBreak ? 18 : 0)
+      + (concepts.failedContinuation ? 12 : 0)
+      - concepts.displacement * 12,
+    0,
+    100
+  ));
+  const expansionStrength = Math.round(clamp(
+    clamp((atrRatio - 0.95) / 0.75, 0, 1) * 32
+      + character.bodyEfficiency * 22
+      + movement10.efficiency * 20
+      + concepts.displacement * 16
+      + (expansionCandle ? 18 : 0)
+      - movement20.alternation * 10,
+    0,
+    100
+  ));
+  const rangeStrength = Math.round(clamp(
+    (1 - baseTrendQuality) * 38
+      + movement20.alternation * 22
+      + character.wickDominance * 18
+      + clamp((2.7 - rangeAtr) / 2.7, 0, 1) * 18
+      + clamp((1.08 - atrRatio) / 0.45, 0, 1) * 12
+      - expansionStrength * 0.18,
+    0,
+    100
+  ));
+
+  const scores = {
+    TRENDING: 0.20 + trendStrength / 42 + trendStability / 85 - transitionRisk / 85,
+    RANGING: 0.15 + rangeStrength / 43 - expansionStrength / 120,
+    MANIPULATION: 0.10 + manipulationRisk / 40 + (concepts.recentSweep ? 0.45 : 0) + (concepts.failedBreak ? 0.35 : 0),
+    EXPANSION: 0.10 + expansionStrength / 40 + (breakout ? 0.35 : 0) + clamp((atrRatio - 1) / 0.8, 0, 1) * 0.35,
+    TRANSITION: 0.10 + transitionRisk / 38 + emaCompression * 0.35 + htf.disagreement * 0.30
+  };
+  const probabilities = softmaxPercent(scores);
+  let regime = Object.entries(probabilities).sort((a, b) => b[1] - a[1])[0][0];
+  if (transitionRisk >= 60 && probabilities.TRANSITION >= Math.max(20, probabilities[regime] - 10)) regime = 'TRANSITION';
+  if (concepts.recentSweep && manipulationRisk >= 62 && probabilities.MANIPULATION >= probabilities[regime] - 7) regime = 'MANIPULATION';
+  if (expansionCandle && expansionStrength >= 65 && probabilities.EXPANSION >= probabilities[regime] - 7) regime = 'EXPANSION';
+
+  const sorted = Object.values(probabilities).sort((a, b) => b - a);
+  const confidence = Math.round(clamp((sorted[0] - sorted[1]) * 1.8 + sorted[0] * 0.65, 0, 92));
+  const health = {
+    trendStrength,
+    trendStability,
+    transitionRisk,
+    manipulationRisk,
+    rangeProbability: probabilities.RANGING,
+    expansionProbability: probabilities.EXPANSION
+  };
+  const shiftStatus = healthStatus(health);
+  const confirmedShift = Boolean(concepts.oppositeTransition && (concepts.failedBreak || htfConflict || emaCompression >= 0.55) && transitionRisk >= 60);
+  if (confirmedShift) regime = 'TRANSITION';
+
+  const reasons = [];
+  reasons.push(`Regime ${regime} memimpin dengan ${probabilities[regime]} dari 100 poin distribusi.`);
+  if (regime === 'TRENDING') reasons.push(`Trend strength ${trendStrength}/100 dan stability ${trendStability}/100.`);
+  if (regime === 'RANGING') reasons.push(`EMA/arah kurang efisien dan rotasi candle mendominasi; range score ${rangeStrength}/100.`);
+  if (regime === 'EXPANSION') reasons.push(`ATR ratio ${atrRatio.toFixed(2)} dan expansion strength ${expansionStrength}/100.`);
+  if (regime === 'MANIPULATION') reasons.push(`Sweep/failed continuation dan wick menghasilkan manipulation risk ${manipulationRisk}/100.`);
+  if (transitionRisk >= 30) reasons.push(`Transition risk ${transitionRisk}/100: ${shiftReasons[0] || 'karakter market mulai berubah.'}`);
+
+  return {
+    version: '3.0.0-preview',
+    source: 'AMY_MARKET_REGIME_V3',
+    tf,
+    status: 'READY',
+    calculatedAt: numeric(values.at(-1)?.time, Date.now()),
+    price: numeric(currentPrice, current.close),
+    regime,
+    probabilities,
+    confidence,
+    confidenceMeaning: 'REGIME_CLARITY_SCORE_NOT_WIN_PROBABILITY',
+    strategy: STRATEGY_BY_REGIME[regime],
+    strategyGateEnabled: true,
+    automaticTradeExecution: false,
+    shift: {
+      risk: transitionRisk,
+      status: confirmedShift ? 'SHIFT_CONFIRMED' : shiftStatus,
+      confirmed: confirmedShift,
+      warningRecommended: transitionRisk >= 30,
+      blockRecommended: confirmedShift || regime === 'TRANSITION' || transitionRisk >= 72,
+      reasons: shiftReasons.slice(0, 5)
+    },
+    health,
+    reasons: reasons.slice(0, 5),
+    features: {
+      atr,
+      atrRatio,
+      adx,
+      rangeAtr,
+      bodyFraction,
+      closeLocation,
+      breakout,
+      breakoutDirection,
+      expansionCandle,
+      directionalEfficiency: movement20.efficiency,
+      microEfficiency: micro.efficiency,
+      efficiencyDrop,
+      alternation: movement20.alternation,
+      bodyEfficiency: character.bodyEfficiency,
+      wickDominance: character.wickDominance,
+      ema9: ema9.at(-1),
+      ema21: ema21.at(-1),
+      ema34: ema34.at(-1),
+      ema90: ema90.at(-1),
+      ema200: ema200.at(-1),
+      emaSpreadAtr: emaSpread,
+      emaCompression,
+      emaSlopeAtr: emaSlope,
+      slopeDecay,
+      oppositeImpulse,
+      htfScore: htf.score,
+      htfDirection: htf.direction,
+      htfConsensus: htf.consensus,
+      htfDisagreement: htf.disagreement,
+      localDirection: direction,
+      recentSweep: concepts.recentSweep,
+      failedBreak: concepts.failedBreak,
+      failedContinuation: concepts.failedContinuation,
+      oppositeTransition: concepts.oppositeTransition,
+      displacement: concepts.displacement,
+      dataRisk,
+      newsRisk: news,
+      rangeStrength,
+      expansionStrength
+    },
+    entryMap
+  };
+}
+
+export const detectMarketRegimeV2 = detectMarketRegimeV3;
+
+export function regimeSummary(result) {
+  if (!result || result.status !== 'READY') {
+    return { headline: 'DATA BELUM CUKUP', action: 'WAIT', strategy: 'NO TRADE', reason: result?.reasons?.[0] || 'Mapping belum siap.' };
+  }
+  return {
+    headline: `${result.regime.replaceAll('_', ' ')} · ${result.shift.status.replaceAll('_', ' ')}`,
+    action: result.shift.blockRecommended ? 'WAIT' : 'ROUTE',
+    strategy: result.strategy.replaceAll('_', ' '),
+    reason: result.reasons?.[0] || 'Belum ada alasan tambahan.'
+  };
+}
