@@ -13,7 +13,8 @@ test('Mapping provides an ICU-safe fallback for Asia/Makassar', () => {
 
 test('Mapping never leaves an empty screen when startup rendering throws', () => {
   assert.match(html, /window\.__amyMappingStartupError/);
-  assert.match(html, /MAPPING RECOVERY/);
+  assert.match(html, /PEMULIHAN DATA/);
+  assert.match(html, /Memuat ulang analisis/);
   assert.match(html, /location\.reload\(\)/);
 });
 
