@@ -2,6 +2,7 @@ import { state, TF, log, save } from '../main.js';
 import { analyze, tfGroup } from '../engine/ict-core.js';
 import { detectMarketRegimeV2 } from '../engine/market-regime-engine.js';
 import { routeRegimeStrategy } from '../engine/strategy-router-engine.js';
+import { evaluateValidatedMarketContext } from '../engine/validated-market-context.js';
 import { render, renderSoft, renderAnalyzeLive } from '../ui/ui-render.js';
 import { sendTargetsToNative } from '../bridge/android-bridge.js';
 
@@ -37,6 +38,12 @@ function analysisRefreshDelay(tf) {
   return 3_600_000;
 }
 
+function validatedDirection(result) {
+  const forecast = result?.validatedMarketContext?.directionForecast;
+  if (!forecast?.active) return null;
+  return forecast.directionValue > 0 ? 'BUY' : forecast.directionValue < 0 ? 'SELL' : null;
+}
+
 function publishMappingSnapshot(result = state.result) {
   const intel = window.AmyFXIntel;
   if (!intel?.write) return;
@@ -62,15 +69,22 @@ function publishMappingSnapshot(result = state.result) {
   if (!levels.some(item => item.type === 'BSL') && bsl > 0) levels.push({ type: 'BSL', price: bsl, distance: price > 0 ? bsl - price : 0, status: 'ACTIVE', source: 'MAPPING', timeframe: result?.tf || state.tf });
   if (!levels.some(item => item.type === 'SSL') && ssl > 0) levels.push({ type: 'SSL', price: ssl, distance: price > 0 ? ssl - price : 0, status: 'ACTIVE', source: 'MAPPING', timeframe: result?.tf || state.tf });
 
+  const validated = result?.validatedMarketContext;
   intel.write('mapping', {
     price,
     bsl,
     ssl,
     levels,
     timeframe: result?.tf || previous.timeframe || state.tf,
-    bias: result?.final || previous.bias || 'WAIT',
+    bias: validated?.directionForecast?.active
+      ? validated.directionForecast.direction
+      : validated?.marketState?.direction || result?.final || previous.bias || 'WAIT',
     direction: result?.bestSetup?.dir || 'WAIT',
-    status: result?.bestSetup?.status || result?.strategyRouter?.decision || 'WAIT',
+    status: validated?.directionForecast?.active
+      ? `${validated.directionForecast.direction} · VALIDATED FORECAST`
+      : result?.bestSetup?.status || result?.strategyRouter?.decision || 'NO CLEAR DIRECTION',
+    marketState: validated?.marketState?.state || 'RANGE / TRANSITION',
+    directionForecast: validated?.directionForecast?.direction || 'NO CLEAR DIRECTION',
     regime: result?.strategyRouter?.activeRegime || result?.marketRegime?.regime || 'TRANSITION',
     strategy: result?.strategyRouter?.activeStrategy || 'NO_TRADE',
     shiftRisk: Number(result?.marketRegime?.shift?.risk || 0),
@@ -103,7 +117,29 @@ export async function fetchTf(tf) {
   return candles;
 }
 
+function attachValidatedMarketContext(result) {
+  if (!result || !['M5', 'M15', 'H1'].includes(result.tf)) return result;
+  const candles = state.candles[result.tf] || [];
+  const validated = evaluateValidatedMarketContext({
+    candles,
+    tf: result.tf,
+    htfCandles: { H4: state.candles.H4 || [] }
+  });
+  result.validatedMarketContext = validated;
+  result.validatedMarketState = validated.marketState;
+  result.validatedDirectionForecast = validated.directionForecast;
+  return result;
+}
+
+function setupDirection(setup) {
+  const value = String(setup?.dir || setup?.direction || '').toUpperCase();
+  if (value.includes('BUY') || value.includes('BULL')) return 1;
+  if (value.includes('SELL') || value.includes('BEAR')) return -1;
+  return 0;
+}
+
 function applyRegimeRouter(result, htfBiases) {
+  result = attachValidatedMarketContext(result);
   if (!result || result.tf !== 'M15') return result;
   const candles = state.candles.M15 || [];
   const intel = window.AmyFXIntel?.read?.() || {};
@@ -117,7 +153,7 @@ function applyRegimeRouter(result, htfBiases) {
     newsRisk: window.AmyFXIntel?.newsRisk?.(intel) || 'UNKNOWN',
     freshness: window.AmyMappingIntegrity?.qualityByInterval || {}
   });
-  const router = routeRegimeStrategy({
+  let router = routeRegimeStrategy({
     candles,
     result,
     regime,
@@ -126,14 +162,35 @@ function applyRegimeRouter(result, htfBiases) {
   });
   regimeRouterState = router.state;
 
+  const forecast = result.validatedMarketContext?.directionForecast;
+  const forecastDirection = forecast?.active ? Number(forecast.directionValue || 0) : 0;
+  const conflict = Boolean(router.setup && forecastDirection && setupDirection(router.setup) !== forecastDirection);
+  if (conflict) {
+    router = {
+      ...router,
+      setup: null,
+      validatedConflict: true,
+      decision: 'WAIT — SETUP BERTENTANGAN DENGAN DIRECTION FORECAST TERVALIDASI',
+      reasons: [
+        `Direction Forecast tervalidasi ${forecast.direction}; setup ${router.setup?.dir || 'berlawanan'} tidak diteruskan.`,
+        ...(router.reasons || [])
+      ].slice(0, 6)
+    };
+  }
+
   result.marketRegime = regime;
-  result.strategyRouter = router;
+  result.strategyRouter = {
+    ...router,
+    role: 'CONTEXT_AND_STRATEGY_SUPPORT',
+    mayOverrideValidatedMarketState: false,
+    mayOverrideValidatedDirectionForecast: false
+  };
   result.unroutedSetups = Array.isArray(result.setups) ? [...result.setups] : [];
   result.unroutedBestSetup = result.bestSetup || null;
   result.setups = router.setup ? [router.setup] : [];
   result.bestSetup = router.setup || null;
   result.signal = router.setup?.dir || 'WAIT';
-  result.final = router.blocked ? 'WAIT' : result.final;
+  if (forecast?.active) result.final = forecast.direction;
   result.routerDecision = router.decision;
   return result;
 }
@@ -174,7 +231,10 @@ export async function runAnalysis(tf = state.tf) {
     state.analyses = [{ id: Date.now(), ...result }, ...state.analyses].slice(0, 80);
     save();
     publishMappingSnapshot(result);
-    log(`${tf} selesai: ${result.strategyRouter?.decision || `${result.signal} score ${result.score}/100`}`);
+    const validatedText = result.validatedDirectionForecast?.active
+      ? `${result.validatedDirectionForecast.direction} · validated ${result.validatedDirectionForecast.confidence}%`
+      : result.validatedMarketState?.state;
+    log(`${tf} selesai: ${validatedText || result.strategyRouter?.decision || `${result.signal} score ${result.score}/100`}`);
     sendTargetsToNative();
   } catch (error) {
     log(`Error ${tf}: ${error.message}`);
