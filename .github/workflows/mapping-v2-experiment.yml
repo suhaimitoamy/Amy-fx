@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 concurrency:
   group: mapping-v2-experiment-${{ github.ref }}
@@ -69,3 +70,28 @@ jobs:
 
       - name: Build Android debug APK
         run: ./gradlew :app:assembleDebug --stacktrace --no-daemon
+
+  report-status:
+    if: always()
+    needs:
+      - mapping-v2-validation
+      - android-debug-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish combined experiment status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VALIDATION_RESULT: ${{ needs.mapping-v2-validation.result }}
+          BUILD_RESULT: ${{ needs.android-debug-build.result }}
+        run: |
+          state=success
+          description='Mapping V2 tests and Android debug build passed'
+          if [ "$VALIDATION_RESULT" != 'success' ] || [ "$BUILD_RESULT" != 'success' ]; then
+            state=failure
+            description="Mapping V2 failed: validation=$VALIDATION_RESULT build=$BUILD_RESULT"
+          fi
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state="$state" \
+            -f context='Mapping V2 Experiment' \
+            -f description="$description" \
+            -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
