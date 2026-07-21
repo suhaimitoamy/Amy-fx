@@ -1,0 +1,47 @@
+name: Claim Regression Diagnostic
+
+on:
+  push:
+    branches:
+      - experiment/mapping-regime-engine-20260721
+    paths-ignore:
+      - preview-update.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: claim-regression-diagnostic-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  full-js-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run full JavaScript regression and save log
+        id: regression
+        continue-on-error: true
+        run: |
+          set +e
+          node --test --test-reporter=spec tests/*.test.mjs > full-js-tests.log 2>&1
+          status=$?
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          tail -n 120 full-js-tests.log
+          exit "$status"
+      - name: Upload complete regression log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claim-regression-log
+          path: full-js-tests.log
+          if-no-files-found: error
+          retention-days: 3
+      - name: Fail when regression failed
+        if: steps.regression.outputs.exit_code != '0'
+        run: exit 1
