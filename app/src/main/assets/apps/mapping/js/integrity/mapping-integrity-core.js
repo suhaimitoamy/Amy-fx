@@ -23,8 +23,15 @@ const TF_FRESH_MS = {
 const ACTIONABLE_TYPES = new Set([
   'ORDER BLOCK',
   'FAIR VALUE GAP',
-  'SWEEP_MSS_FVG'
+  'SWEEP_MSS_FVG',
+  'M15 ENTRY MAP',
+  'TREND PULLBACK',
+  'RANGE REVERSAL',
+  'EXPANSION BREAKOUT',
+  'SWEEP MSS REVERSAL'
 ]);
+
+const ACTIONABLE_EXECUTION_MODES = new Set(['', 'M15_PRECISION', 'M15_ENTRY_MAP', 'REGIME_ROUTED_M15']);
 
 function number(value) {
   const parsed = Number(value);
@@ -32,6 +39,10 @@ function number(value) {
 }
 
 function parseTime(value) {
+  if (Number.isFinite(Number(value))) {
+    const numeric = Number(value);
+    return numeric > 10_000_000_000 ? numeric : numeric * 1000;
+  }
   const normalized = String(value || '').trim().replace(' ', 'T');
   const stamp = Date.parse(/(?:Z|[+-]\d\d:?\d\d)$/.test(normalized) ? normalized : `${normalized}Z`);
   return Number.isFinite(stamp) ? stamp : 0;
@@ -50,19 +61,12 @@ function isValidOhlc(row) {
 }
 
 function normalizeRow(row) {
-  return {
-    ...row,
-    open: String(number(row.open)),
-    high: String(number(row.high)),
-    low: String(number(row.low)),
-    close: String(number(row.close))
-  };
+  return { ...row, open: String(number(row.open)), high: String(number(row.high)), low: String(number(row.low)), close: String(number(row.close)) };
 }
 
 function frozenRunIndexes(rows) {
   const marked = new Set();
   let start = 0;
-
   const finish = end => {
     const length = end - start;
     if (length < 8) return;
@@ -80,23 +84,14 @@ function frozenRunIndexes(rows) {
       for (let index = start; index < end; index += 1) marked.add(index);
     }
   };
-
   for (let index = 1; index <= rows.length; index += 1) {
-    if (index === rows.length) {
-      finish(index);
-      break;
-    }
+    if (index === rows.length) { finish(index); break; }
     const previous = rows[index - 1];
     const current = rows[index];
     const anchor = number(rows[start]?.open) || 1;
     const tolerance = Math.max(0.03, Math.abs(anchor) * 0.00001);
-    const continues = Math.abs(number(current.open) - number(previous.open)) <= tolerance;
-    if (!continues) {
-      finish(index);
-      start = index;
-    }
+    if (Math.abs(number(current.open) - number(previous.open)) > tolerance) { finish(index); start = index; }
   }
-
   return marked;
 }
 
@@ -107,34 +102,23 @@ export function sanitizeCandleValues(values, interval = '15min') {
   const valid = [];
   let malformed = 0;
   let duplicates = 0;
-
   for (const row of chronological) {
-    if (!isValidOhlc(row) || !parseTime(row.datetime)) {
-      malformed += 1;
-      continue;
-    }
+    if (!isValidOhlc(row) || !parseTime(row.datetime)) { malformed += 1; continue; }
     const key = String(row.datetime);
-    if (seen.has(key)) {
-      duplicates += 1;
-      continue;
-    }
+    if (seen.has(key)) { duplicates += 1; continue; }
     seen.add(key);
     valid.push(normalizeRow(row));
   }
-
   const frozen = frozenRunIndexes(valid);
   let clean = valid.filter((_, index) => !frozen.has(index));
   if (clean.length < 30 && valid.length >= 30) clean = valid;
-
   const intervalMs = TF_INTERVAL_MS[interval] || 0;
   let gaps = 0;
   if (intervalMs > 0) {
     for (let index = 1; index < clean.length; index += 1) {
-      const difference = parseTime(clean[index].datetime) - parseTime(clean[index - 1].datetime);
-      if (difference > intervalMs * 2.2) gaps += 1;
+      if (parseTime(clean[index].datetime) - parseTime(clean[index - 1].datetime) > intervalMs * 2.2) gaps += 1;
     }
   }
-
   const output = [...clean].sort((a, b) => String(b.datetime).localeCompare(String(a.datetime)));
   return {
     values: output,
@@ -154,91 +138,44 @@ export function sanitizeCandleValues(values, interval = '15min') {
 }
 
 export function classifyBreak(breakInfo, confirmedTrend = 'NEUTRAL') {
-  if (!breakInfo) {
-    return {
-      state: 'WAIT',
-      title: 'BELUM ADA BREAK VALID',
-      attempt: 'NONE',
-      confirmedTrend,
-      isConfirmed: false,
-      explanation: 'Belum ada candle close yang mengonfirmasi BOS atau CHOCH.'
-    };
-  }
-
+  if (!breakInfo) return { state: 'WAIT', title: 'BELUM ADA BREAK VALID', attempt: 'NONE', confirmedTrend, isConfirmed: false, explanation: 'Belum ada candle close yang mengonfirmasi BOS atau CHOCH.' };
   const failed = breakInfo.breakType === 'BREAK_FAILED' || breakInfo.failed;
   const sweep = breakInfo.breakType === 'SWEEP_ONLY' || breakInfo.sweepOnly;
   const valid = breakInfo.breakType === 'VALID_BREAK' && breakInfo.valid;
   const attempt = breakInfo.dir === 'BEARISH' ? 'BEARISH' : breakInfo.dir === 'BULLISH' ? 'BULLISH' : 'NONE';
   const liquidity = attempt === 'BEARISH' ? 'SSL' : attempt === 'BULLISH' ? 'BSL' : 'LIQUIDITY';
-
-  if (failed) {
-    return {
-      state: 'FAILED',
-      title: 'BREAK GAGAL DIPERTAHANKAN',
-      attempt,
-      confirmedTrend,
-      isConfirmed: false,
-      explanation: 'Break sebelumnya gagal dipertahankan karena harga kembali close melewati level konfirmasi.'
-    };
-  }
-
-  if (sweep) {
-    return {
-      state: 'SWEEP',
-      title: `${liquidity} SWEEP — BELUM ADA BOS`,
-      attempt,
-      confirmedTrend,
-      isConfirmed: false,
-      explanation: `Harga menyapu ${liquidity} dengan wick, tetapi candle close kembali ke dalam struktur. Dorongan candle tidak mengesahkan BOS tanpa body close yang valid.`
-    };
-  }
-
-  if (valid) {
-    return {
-      state: 'CONFIRMED',
-      title: `VALID ${breakInfo.kind || 'STRUCTURE BREAK'} ${attempt}`,
-      attempt,
-      confirmedTrend: attempt,
-      isConfirmed: true,
-      explanation: `Candle sudah close melewati level struktur${breakInfo.hasDisplacement ? ' dan didukung displacement' : ''}.`
-    };
-  }
-
-  return {
-    state: 'WAIT',
-    title: 'BELUM ADA BREAK VALID',
-    attempt,
-    confirmedTrend,
-    isConfirmed: false,
-    explanation: 'Belum ada BOS atau CHOCH yang memenuhi syarat body close.'
-  };
+  if (failed) return { state: 'FAILED', title: 'BREAK GAGAL DIPERTAHANKAN', attempt, confirmedTrend, isConfirmed: false, explanation: 'Break sebelumnya gagal dipertahankan karena harga kembali close melewati level konfirmasi.' };
+  if (sweep) return { state: 'SWEEP', title: `${liquidity} SWEEP — BELUM ADA BOS`, attempt, confirmedTrend, isConfirmed: false, explanation: `Harga menyapu ${liquidity} dengan wick, tetapi candle close kembali ke dalam struktur.` };
+  if (valid) return { state: 'CONFIRMED', title: `VALID ${breakInfo.kind || 'STRUCTURE BREAK'} ${attempt}`, attempt, confirmedTrend: attempt, isConfirmed: true, explanation: `Candle sudah close melewati level struktur${breakInfo.hasDisplacement ? ' dan didukung displacement' : ''}.` };
+  return { state: 'WAIT', title: 'BELUM ADA BREAK VALID', attempt, confirmedTrend, isConfirmed: false, explanation: 'Belum ada BOS atau CHOCH yang memenuhi syarat body close.' };
 }
 
 function setupRr(setup) {
   const direct = number(setup?.conflictCheck?.rr);
   if (Number.isFinite(direct) && direct > 0) return direct;
   const isBuy = String(setup?.dir || '').includes('BUY');
-  const plannedEntry = isBuy
-    ? Math.max(number(setup?.entryLow), number(setup?.entryHigh))
-    : Math.min(number(setup?.entryLow), number(setup?.entryHigh));
+  const entryLow = number(setup?.entryLow ?? setup?.entry);
+  const entryHigh = number(setup?.entryHigh ?? setup?.entry);
+  const plannedEntry = isBuy ? Math.max(entryLow, entryHigh) : Math.min(entryLow, entryHigh);
   const risk = isBuy ? plannedEntry - number(setup?.sl) : number(setup?.sl) - plannedEntry;
-  const target = isBuy
-    ? Math.max(number(setup?.tp1), number(setup?.tp2))
-    : Math.min(number(setup?.tp1), number(setup?.tp2));
+  const tpValues = [number(setup?.tp1), number(setup?.tp2)].filter(Number.isFinite);
+  const target = isBuy ? Math.max(...tpValues) : Math.min(...tpValues);
   const reward = isBuy ? target - plannedEntry : plannedEntry - target;
   return risk > 0 && reward > 0 ? reward / risk : 0;
 }
 
 export function isActionableSetup(setup, now = Date.now(), livePrice = 0) {
-  if (!setup || setup.tf !== 'M15' || !ACTIONABLE_TYPES.has(setup.type)) return false;
-  const status = String(setup.status || '');
-  if (!/(READY|WATCH|PANTAU|VALID)/.test(status) || /(WAIT|INVALID|BROKEN)/.test(status)) return false;
-  if (setup.executionMode && setup.executionMode !== 'M15_PRECISION') return false;
-  const conflict = String(setup.conflictCheck?.conflictLevel || 'NONE');
+  if (!setup || setup.tf !== 'M15' || !ACTIONABLE_TYPES.has(String(setup.type || '').toUpperCase())) return false;
+  const status = String(setup.lifecycle?.status || setup.status || '').toUpperCase();
+  if (!/(READY|WATCH|PANTAU|VALID|ACTIVE)/.test(status) || /(WAIT|INVALID|BROKEN|EXPIRED|SL HIT|TP2 HIT|TP1 \/ BE)/.test(status)) return false;
+  const executionMode = String(setup.executionMode || '').toUpperCase();
+  if (!ACTIONABLE_EXECUTION_MODES.has(executionMode)) return false;
+  const conflict = String(setup.conflictCheck?.conflictLevel || 'NONE').toUpperCase();
   if (conflict === 'FATAL' || conflict === 'HIGH') return false;
-  if (setupRr(setup) < 2) return false;
-  if (setup.timestamp && now - Number(setup.timestamp) > 24 * 60 * 60 * 1000) return false;
-
+  const minimumRr = executionMode === 'M15_PRECISION' ? 2 : 1.5;
+  if (setupRr(setup) + 1e-9 < minimumRr) return false;
+  const timestamp = parseTime(setup.timestamp || setup.startTime || setup.lifecycle?.startTime);
+  if (timestamp && now - timestamp > 24 * 60 * 60 * 1000) return false;
   const price = number(livePrice);
   const sl = number(setup.sl);
   if (Number.isFinite(price) && price > 0 && Number.isFinite(sl)) {
@@ -255,10 +192,8 @@ export function filterActionableSetups(setups, now = Date.now(), livePrice = 0) 
 export function deriveBiasView(result) {
   const local = result?.st?.trend || 'NEUTRAL';
   const htf = result?.htfNarrative?.htfBias || 'NEUTRAL';
-  const composite = result?.final || 'NEUTRAL';
-  const alignment = local === 'NEUTRAL' || htf === 'NEUTRAL'
-    ? 'MIXED'
-    : local === htf ? 'ALIGNED' : 'CONFLICT';
+  const composite = result?.strategyRouter?.blocked ? 'WAIT' : result?.final || 'NEUTRAL';
+  const alignment = local === 'NEUTRAL' || htf === 'NEUTRAL' ? 'MIXED' : local === htf ? 'ALIGNED' : 'CONFLICT';
   return { local, htf, composite, alignment };
 }
 
@@ -269,51 +204,38 @@ export function applyLiveLiquidity(result, live = {}) {
   const liveHigh = Math.max(price, number(live.high) || price);
   const liveLow = Math.min(price, number(live.low) || price);
   const hierarchy = result.liquidityHierarchy || {};
-  const original = Array.isArray(hierarchy.activeTargets)
-    ? hierarchy.activeTargets
-    : Array.isArray(result.activeLiquidityTargets) ? result.activeLiquidityTargets : [];
+  const original = Array.isArray(hierarchy.activeTargets) ? hierarchy.activeTargets : Array.isArray(result.activeLiquidityTargets) ? result.activeLiquidityTargets : [];
   const tolerance = Math.max(number(hierarchy.tolerance?.sweep) || 0.01, 0.01);
   const touched = [];
   const active = [];
-
   for (const target of original) {
     const level = number(target.level);
     if (!Number.isFinite(level) || level <= 0) continue;
-    const crossed = target.type === 'BSL'
-      ? liveHigh >= level + tolerance
-      : target.type === 'SSL' ? liveLow <= level - tolerance : false;
+    const crossed = target.type === 'BSL' ? liveHigh >= level + tolerance : target.type === 'SSL' ? liveLow <= level - tolerance : false;
     const wrongSide = target.type === 'BSL' ? level <= price : target.type === 'SSL' ? level >= price : true;
-    if (crossed || wrongSide) {
-      touched.push({ ...target, status: 'LIVE_TOUCHED', touchedAt: Date.now() });
-      continue;
-    }
-    active.push({ ...target, distanceFromPrice: Math.abs(level - price) });
+    if (crossed || wrongSide) touched.push({ ...target, status: 'LIVE_TOUCHED', touchedAt: Date.now() });
+    else active.push({ ...target, distanceFromPrice: Math.abs(level - price) });
   }
-
   active.sort((a, b) => a.distanceFromPrice - b.distanceFromPrice);
-  const bslTarget = active.find(target => target.type === 'BSL');
-  const sslTarget = active.find(target => target.type === 'SSL');
+  const bslTarget = active.find(target => target.type === 'BSL') || null;
+  const sslTarget = active.find(target => target.type === 'SSL') || null;
+  const nearestLiquidity = active[0] || null;
   const htf = result.htfNarrative?.htfBias || 'NEUTRAL';
-  const drawTarget = htf === 'BULLISH'
-    ? bslTarget || active[0] || null
-    : htf === 'BEARISH'
-      ? sslTarget || active[0] || null
-      : active[0] || null;
-
+  const htfAlignedLiquidity = htf === 'BULLISH' ? bslTarget : htf === 'BEARISH' ? sslTarget : null;
   hierarchy.activeTargets = active;
-  hierarchy.liveTouched = [
-    ...(Array.isArray(hierarchy.liveTouched) ? hierarchy.liveTouched : []),
-    ...touched
-  ].slice(-30);
-  hierarchy.drawTarget = drawTarget;
-  hierarchy.summary = drawTarget
-    ? `${htf === 'NEUTRAL' ? 'Target aktif terdekat' : `Target sesuai HTF ${htf.toLowerCase()}`} adalah ${drawTarget.type} di ${Number(drawTarget.level).toFixed(2)}.`
+  hierarchy.liveTouched = [...(Array.isArray(hierarchy.liveTouched) ? hierarchy.liveTouched : []), ...touched].slice(-30);
+  hierarchy.nearestLiquidity = nearestLiquidity;
+  hierarchy.htfAlignedLiquidity = htfAlignedLiquidity;
+  hierarchy.drawTarget = nearestLiquidity;
+  hierarchy.summary = nearestLiquidity
+    ? `Nearest Liquidity adalah ${nearestLiquidity.type} di ${Number(nearestLiquidity.level).toFixed(2)}. HTF-Aligned Liquidity ditampilkan terpisah dan bukan sinyal arah.`
     : 'Tidak ada level BSL/SSL aktif yang masih berada pada sisi harga yang benar.';
-
   result.price = price;
   result.bsl = bslTarget?.level || 0;
   result.ssl = sslTarget?.level || 0;
-  result.drawTarget = drawTarget;
+  result.drawTarget = nearestLiquidity;
+  result.nearestLiquidity = nearestLiquidity;
+  result.htfAlignedLiquidity = htfAlignedLiquidity;
   result.activeLiquidityTargets = active;
   result.liquidityHierarchy = hierarchy;
   return result;
@@ -335,15 +257,11 @@ export function zoneLiveStatus(zone, livePrice) {
 }
 
 export function executionGuidance(htfBias, zone, hasActionableSetup = false) {
-  if (hasActionableSetup) return 'Ada setup M15 yang lolos seluruh filter. Tunggu harga masuk area; jangan mengejar.';
-  if (htfBias === 'BEARISH' && zone === 'DISCOUNT') {
-    return 'HTF masih bearish, tetapi harga sudah di discount. Jangan mengejar SELL; tunggu retracement ke premium atau konfirmasi struktur baru.';
-  }
-  if (htfBias === 'BULLISH' && zone === 'PREMIUM') {
-    return 'HTF masih bullish, tetapi harga sudah di premium. Jangan mengejar BUY; tunggu retracement ke discount atau konfirmasi struktur baru.';
-  }
-  if (zone === 'EQUILIBRIUM') return 'Harga berada dekat equilibrium. Tunggu harga memilih sisi range dan membentuk konfirmasi M15.';
-  return 'Bias market hanya konteks, bukan perintah entry. Tunggu setup M15 yang memiliki area, invalidasi, dan target minimal 2R.';
+  if (hasActionableSetup) return 'Ada setup M15 dari strategy engine aktif. Tunggu harga masuk area; jangan mengejar.';
+  if (htfBias === 'BEARISH' && zone === 'DISCOUNT') return 'HTF masih bearish, tetapi harga sudah di discount. Jangan mengejar SELL.';
+  if (htfBias === 'BULLISH' && zone === 'PREMIUM') return 'HTF masih bullish, tetapi harga sudah di premium. Jangan mengejar BUY.';
+  if (zone === 'EQUILIBRIUM') return 'Harga berada dekat equilibrium. Tunggu strategy engine aktif memberi konfirmasi M15.';
+  return 'Bias dan liquidity hanya konteks. Entry harus berasal dari strategy engine yang dipilih Market Regime.';
 }
 
 export function candleFreshness(meta, tf, now = Date.now()) {
@@ -354,9 +272,7 @@ export function candleFreshness(meta, tf, now = Date.now()) {
   return {
     state: fresh ? (meta.status === 'CLEANED' ? 'FRESH_CLEANED' : 'FRESH') : 'STALE',
     ageMs,
-    label: fresh
-      ? meta.status === 'CLEANED' ? 'FRESH • DATA DIBERSIHKAN' : 'FRESH'
-      : 'STALE'
+    label: fresh ? meta.status === 'CLEANED' ? 'FRESH • DATA DIBERSIHKAN' : 'FRESH' : 'STALE'
   };
 }
 
