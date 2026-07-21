@@ -29,8 +29,8 @@ env:
   AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
   AMYFX_APP_LABEL: Amy FX Preview
   AMYFX_URI_SCHEME: amyfxpreview
-  AMYFX_VERSION_NAME: 1.4.15-preview.7
-  AMYFX_VERSION_CODE: '90044'
+  AMYFX_VERSION_NAME: 1.4.15-preview.8
+  AMYFX_VERSION_CODE: '90045'
 
 jobs:
   validation:
@@ -200,7 +200,7 @@ jobs:
       - name: Upload signed Preview APK
         uses: actions/upload-artifact@v4
         with:
-          name: AmyFX-Preview-ProfessionalUI-v1.4.15-preview.7
+          name: AmyFX-Preview-ProfessionalUI-v1.4.15-preview.8
           path: AmyFX-Preview-latest.apk
           if-no-files-found: error
           retention-days: 14
@@ -219,7 +219,7 @@ jobs:
       - name: Download signed Preview APK
         uses: actions/download-artifact@v4
         with:
-          name: AmyFX-Preview-ProfessionalUI-v1.4.15-preview.7
+          name: AmyFX-Preview-ProfessionalUI-v1.4.15-preview.8
           path: release-assets
 
       - name: Verify downloaded APK
@@ -233,54 +233,53 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG='amyfx-preview-v1.4.15-preview.7'
+          TAG='amyfx-preview-v1.4.15-preview.8'
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes
           fi
           gh api --method DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" >/dev/null 2>&1 || true
 
           cat > /tmp/release-notes.md <<'NOTES'
-          Amy FX Preview — Professional UI audit & copy refinement.
+          Amy FX Preview — Professional UI & Optimizations release.
 
           - Comprehensive visual and copy audit of the Mapping page.
           - Technical/developer jargon replaced with clean, professional user-facing Indonesian language.
-          - Dashboard remains clean & concise while Analyze presents structured, rich information hierarchy.
+          - Removal of redundant AMY FX DECISION card & reordered Analyze disclosures (Outlook, Valid Break, Mapping M1-H4, Penjelasan, Setup).
+          - Sticky Mini Header on scroll, Live Price pulse animation, Skeleton loader shimmer, and automatic storage/memory pruning.
           - Analysis engines, validated thresholds, safety rules, package, and Preview signature remain 100% intact.
           NOTES
 
           gh release create "$TAG" \
             "release-assets/AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
-            --title 'Amy FX Preview 1.4.15-preview.7 — Professional UI Audit' --notes-file /tmp/release-notes.md
+            --title 'Amy FX Preview 1.4.15-preview.8 — Professional UI & Optimizations' --notes-file /tmp/release-notes.md
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
 
-      - name: Activate Preview 1.4.15-preview.7 manifest
+      - name: Activate Preview 1.4.15-preview.8 manifest
         run: |
           set -euo pipefail
           cat > preview-update.json <<'JSON'
           {
             "channel": "amyfx-preview-professional-ui",
-            "latest_version_code": 90044,
-            "latest_version_name": "1.4.15-preview.7",
-            "versionCode": 90044,
-            "version": "1.4.15-preview.7",
+            "latest_version_code": 90045,
+            "latest_version_name": "1.4.15-preview.8",
+            "versionCode": 90045,
+            "version": "1.4.15-preview.8",
             "releaseDate": "2026-07-22",
-            "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.7/AmyFX-Preview-latest.apk",
-            "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.7/AmyFX-Preview-latest.apk",
+            "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.8/AmyFX-Preview-latest.apk",
+            "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.8/AmyFX-Preview-latest.apk",
             "force_update": false,
             "mandatory": false,
             "enabled": true,
             "release_notes": [
-              "Audit visual dan penyempurnaan copy halaman Mapping menyeluruh",
-              "Istilah teknis dan pengembang diganti dengan bahasa pengguna yang profesional",
-              "Dashboard tetap ringkas dan Analyze menyajikan detail hierarki yang rapi",
-              "Logika analisis, threshold, dan keamanan sistem tetap tervalidasi dan dipertahankan"
+              "Penyempurnaan tampilan UI & copy halaman Mapping menyeluruh",
+              "Penghapusan kartu AMY FX DECISION dan penyusunan ulang urutan Analisis (Outlook, Valid Break, Mapping M1-H4, Penjelasan, Setup)",
+              "Penambahan Sticky Mini Header saat scroll, Indikator Live Price berdenyut, dan optimasi pembersihan memori"
             ],
             "changelog": [
-              "Audit visual dan penyempurnaan copy halaman Mapping menyeluruh",
-              "Istilah teknis dan pengembang diganti dengan bahasa pengguna yang profesional",
-              "Dashboard tetap ringkas dan Analyze menyajikan detail hierarki yang rapi",
-              "Logika analisis, threshold, dan keamanan sistem tetap tervalidasi dan dipertahankan"
+              "Penyempurnaan tampilan UI & copy halaman Mapping menyeluruh",
+              "Penghapusan kartu AMY FX DECISION dan penyusunan ulang urutan Analisis (Outlook, Valid Break, Mapping M1-H4, Penjelasan, Setup)",
+              "Penambahan Sticky Mini Header saat scroll, Indikator Live Price berdenyut, dan optimasi pembersihan memori"
             ]
           }
           JSON
@@ -289,7 +288,7 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add preview-update.json
           if ! git diff --cached --quiet; then
-            git commit -m 'release: activate Amy FX Preview 1.4.15-preview.7 update [skip ci]'
+            git commit -m 'release: activate Amy FX Preview 1.4.15-preview.8 update [skip ci]'
             git push origin HEAD:experiment/mapping-regime-engine-20260721
           fi
 
