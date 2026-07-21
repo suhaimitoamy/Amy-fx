@@ -152,11 +152,13 @@ test('liquidity context never converts destination into buy or sell', () => {
   assert.doesNotMatch(context.statement, /\bBUY\b|\bSELL\b/);
 });
 
-test('preview copy leads with regime and strategy router, not directional prediction', () => {
+test('Preview separates Dashboard authority from Analyze experiments', () => {
   const ui = readFileSync(new URL('../app/src/main/assets/apps/mapping/js/market-intent-ui.js', import.meta.url), 'utf8');
-  assert.match(ui, /Market sedang apa\?/);
-  assert.match(ui, /MARKET HEALTH/);
+  assert.match(ui, /DASHBOARD · RINGKASAN KLAIM TERVALIDASI/);
+  assert.match(ui, /AKURASI KLAIM FITUR/);
+  assert.match(ui, /REGIME EKSPERIMENTAL/);
   assert.match(ui, /STRATEGY ROUTER/);
-  assert.match(ui, /Destination bukan sinyal entry|BSL\/SSL bukan BUY\/SELL/);
+  assert.match(ui, /Nearest Liquidity/);
+  assert.match(ui, /BSL\/SSL bukan BUY\/SELL|tetap bukan sinyal entry/);
   assert.doesNotMatch(ui, /NAIK KE BSL|TURUN KE SSL/);
 });
