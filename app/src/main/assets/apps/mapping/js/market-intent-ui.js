@@ -307,9 +307,28 @@ export function syncMarketIntentV3() {
   applyViewMode();
   const current = document.getElementById(CARD_ID);
   if (current && signature === lastSignature) return;
-  const markup = renderCard(state.tab, result, validated, regime, router, liquidity);
-  if (current) current.outerHTML = markup;
-  else app.insertAdjacentHTML('afterbegin', markup);
+
+  const openStates = current
+    ? Array.from(current.querySelectorAll('.professional-disclosure')).map(element => element.open)
+    : [];
+
+  const rawMarkup = renderCard(state.tab, result, validated, regime, router, liquidity);
+  let markup = rawMarkup;
+  if (openStates.length > 0) {
+    const temp = document.createElement('div');
+    temp.innerHTML = rawMarkup;
+    const disclosures = temp.querySelectorAll('.professional-disclosure');
+    openStates.forEach((isOpen, index) => {
+      if (disclosures[index] && isOpen) disclosures[index].open = true;
+    });
+    markup = temp.innerHTML;
+  }
+
+  if (current) {
+    if (current.outerHTML !== markup) current.outerHTML = markup;
+  } else {
+    app.insertAdjacentHTML('afterbegin', markup);
+  }
   lastSignature = signature;
   bindCard();
 }

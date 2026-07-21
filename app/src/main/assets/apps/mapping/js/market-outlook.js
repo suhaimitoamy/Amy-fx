@@ -313,8 +313,17 @@ function refresh(force = false) {
   if (force || signature !== lastPaintSignature) {
     lastPaintSignature = signature;
     const summary = details.querySelector(':scope > summary');
+    const wasOpen = details.open;
+    const historyDetails = details.querySelector('.outlook-history');
+    const historyWasOpen = historyDetails ? historyDetails.open : false;
+
     [...details.children].filter(child => child !== summary).forEach(child => child.remove());
     summary.insertAdjacentHTML('afterend', panelMarkup(projection, stats, context));
+
+    details.open = wasOpen;
+    const newHistory = details.querySelector('.outlook-history');
+    if (newHistory && historyWasOpen) newHistory.open = true;
+
     state.result.marketOutlook = projection;
     publishOutlook(projection, stats);
   }

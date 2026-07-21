@@ -130,7 +130,7 @@ function syncLiquidityDrawCard() {
   if (existing && signature === lastSignature) return;
   const html = cardHtml(contexts);
   if (existing) {
-    existing.outerHTML = html;
+    if (existing.outerHTML !== html) existing.outerHTML = html;
   } else {
     anchor.insertAdjacentHTML('afterend', html);
   }
