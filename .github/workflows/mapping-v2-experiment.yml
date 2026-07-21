@@ -40,6 +40,7 @@ jobs:
           grep -Fq 'executionGateEnabled:!1' app/src/main/assets/apps/mapping/js/engine/market-regime-engine.js
           grep -Fq 'EXPERIMENTAL · CONTEXT ONLY' app/src/main/assets/apps/mapping/js/mapping-v2.js
           grep -Fq 'executionGateEnabled&&n?.shift?.blockRecommended' app/src/main/assets/apps/mapping/js/mapping-v2.js
+          grep -Fq '"M15"!==String(n.tf||"").toUpperCase()' app/src/main/assets/apps/mapping/js/mapping-v2.js
           ! grep -Fq 'if(n?.shift?.blockRecommended)' app/src/main/assets/apps/mapping/js/mapping-v2.js
 
       - name: Run regime safety tests
