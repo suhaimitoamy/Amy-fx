@@ -78,7 +78,7 @@ test('local range fallback still provides objectives', () => {
 });
 
 test('preview UI exposes the requested market intent sections', () => {
-  const ui = readFileSync(new URL('../app/src/main/assets/apps/mapping/js/mapping-v2.js', import.meta.url), 'utf8');
+  const ui = readFileSync(new URL('../app/src/main/assets/apps/mapping/js/market-intent-ui.js', import.meta.url), 'utf8');
   assert.match(ui, /Market mau ke mana\?/);
   assert.match(ui, /PRIMARY LIQUIDITY OBJECTIVE/);
   assert.match(ui, /EXPECTED PRICE PATH/);
