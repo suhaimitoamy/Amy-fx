@@ -69,6 +69,18 @@ jobs:
       - name: Run regime, router, liquidity and integrity tests
         run: node --test tests/market-regime-engine-v2.test.mjs tests/market-intent-engine-v3.test.mjs tests/regime-strategy-router-v3.test.mjs
 
+      - name: Run complete JavaScript regression
+        run: |
+          set +e
+          node --test --test-reporter=spec tests/*.test.mjs > /tmp/full-js-tests.log 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            echo '--- FAILED TEST EXCERPTS ---'
+            grep -n -A18 -B6 -E '✖|not ok|AssertionError|ERR_ASSERTION|tests failed' /tmp/full-js-tests.log | tail -n 220 || tail -n 220 /tmp/full-js-tests.log
+            exit "$status"
+          fi
+          tail -n 30 /tmp/full-js-tests.log
+
   android-preview-build:
     needs: regime-router-validation
     runs-on: ubuntu-latest
