@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { detectMarketRegimeV2 } from '../app/src/main/assets/apps/mapping/js/engine/market-regime-engine.js';
 
-function trending(count = 180, direction = 1) {
+function trending(count = 240, direction = 1) {
   const output = [];
   let price = 2000;
   for (let index = 0; index < count; index += 1) {
@@ -15,7 +15,7 @@ function trending(count = 180, direction = 1) {
   return output;
 }
 
-function ranging(count = 180) {
+function ranging(count = 240) {
   const output = [];
   let price = 2000;
   for (let index = 0; index < count; index += 1) {
@@ -29,48 +29,28 @@ function ranging(count = 180) {
 }
 
 test('stable directional series is classified as trending', () => {
-  const result = detectMarketRegimeV2({
-    candles: trending(),
-    htfBiases: { H1: 'BULLISH', H4: 'BULLISH', D1: 'BULLISH' }
-  });
+  const result = detectMarketRegimeV2({ candles: trending(), htfBiases: { H1: 'BULLISH', H4: 'BULLISH', D1: 'BULLISH' } });
   assert.equal(result.status, 'READY');
   assert.equal(result.regime, 'TRENDING');
-  assert.ok(result.shift.risk < 55);
+  assert.equal(result.strategy, 'TREND_PULLBACK');
+  assert.equal(result.strategyGateEnabled, true);
+  assert.equal(result.automaticTradeExecution, false);
 });
 
-test('alternating low-efficiency series is not forced into trending', () => {
+test('alternating low-efficiency series routes to range', () => {
   const result = detectMarketRegimeV2({ candles: ranging(), htfBiases: { H1: 'NEUTRAL' } });
-  assert.notEqual(result.regime, 'TRENDING');
-  assert.ok(result.probabilities.RANGING >= 20);
+  assert.equal(result.regime, 'RANGING');
+  assert.equal(result.strategy, 'RANGE_MEAN_REVERSION');
 });
 
-test('failed opposite transition blocks action', () => {
+test('failed opposite transition becomes no-trade context', () => {
   const candles = trending();
   const result = detectMarketRegimeV2({
     candles,
     htfBiases: { H1: 'BULLISH', H4: 'BEARISH', D1: 'BEARISH' },
-    marketConcepts: {
-      structure: {
-        confirmedTrend: 'BULLISH',
-        transitionBreak: { index: candles.length - 2, dir: 'BEARISH' },
-        lastFailedBreak: { index: candles.length - 1 },
-        lastEvent: { index: candles.length - 1, bodyRatio: 0.2 }
-      }
-    },
-    entryMap: { activeSetup: { live: true, dir: 'BUY' } }
+    marketConcepts: { structure: { confirmedTrend: 'BULLISH', transitionBreak: { index: candles.length - 2, dir: 'BEARISH' }, lastFailedBreak: { index: candles.length - 1 }, lastEvent: { index: candles.length - 1, bodyRatio: 0.2 } } }
   });
-  assert.equal(result.action, 'WAIT');
-  assert.ok(result.shift.risk >= 55);
-});
-
-test('entry map remains advisory while experiment gate is disabled', () => {
-  const result = detectMarketRegimeV2({
-    candles: trending(),
-    htfBiases: { H1: 'BULLISH', H4: 'BULLISH', D1: 'BULLISH' },
-    entryMap: { activeSetup: { live: true, dir: 'BUY' } }
-  });
-  assert.equal(result.action, 'WAIT');
-  assert.equal(result.advisoryAction, 'BUY');
-  assert.equal(result.executionGateEnabled, false);
-  assert.ok(result.setupQuality >= 55);
+  assert.equal(result.regime, 'TRANSITION');
+  assert.equal(result.strategy, 'NO_TRADE');
+  assert.equal(result.shift.blockRecommended, true);
 });
