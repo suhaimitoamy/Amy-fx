@@ -1,0 +1,42 @@
+{
+  "branch": "experiment/mapping-regime-engine-20260721",
+  "period": "2020-2025",
+  "symbol": "XAU/USD",
+  "data2026Used": false,
+  "candles": {
+    "M15": 138750,
+    "H1": 34703,
+    "H4": 9555,
+    "D1": 1866
+  },
+  "marketShift": {
+    "rawStructureFlips": 4001,
+    "validatedMajorFlips": 1676,
+    "warningThreshold": 25,
+    "warningCount": 12603,
+    "usefulWarnings": 1943,
+    "precision": 0.15416964214869475,
+    "detectedMajorFlips": 1369,
+    "recall": 0.8168257756563246,
+    "averageLeadBarsM15": 7.365230094959824,
+    "medianLeadBarsM15": 8
+  },
+  "regime": {
+    "horizonBarsM15": 16,
+    "stepBarsM15": 4,
+    "samples": 34649,
+    "exactFiveClassAccuracy": 0.21417645530895552,
+    "rawDirectionalAccuracy": 0.49905343917101197,
+    "gatedDirectionalAccuracy": 0.5026937422295897,
+    "accuracyDelta": 0.003640303058577765,
+    "gatedCoverage": 0.16028430037530306
+  },
+  "activation": {
+    "decisionFirstUi": "EXPERIMENT_BRANCH_ONLY",
+    "marketRegime": "CONTEXT_ONLY",
+    "marketShift": "CONTEXT_ONLY",
+    "strategyRouter": "DESCRIPTIVE_ONLY",
+    "automaticEntryGate": false,
+    "mainModified": false
+  }
+}
