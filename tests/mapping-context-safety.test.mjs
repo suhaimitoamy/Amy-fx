@@ -21,15 +21,15 @@ test('Strategy Router cannot create or replace a primary setup', () => {
   assert.doesNotMatch(marketData, /result\.bestSetup = router\.setup/);
 });
 
-test('Entry Map remains available only as an experimental Analyze claim', () => {
+test('Entry Map remains non-primary while the UI presents it as a monitoring scenario', () => {
   assert.match(marketData, /ENTRY_MAP_REACTION_ACCURACY_48_24_2022_2025/);
   assert.match(marketData, /result\.experimentalSetups = experimentalSetups/);
   assert.match(marketData, /result\.experimentalBestSetup = experimentalBestSetup/);
   assert.match(marketData, /result\.setups = \[\]/);
   assert.match(marketData, /result\.bestSetup = null/);
   assert.match(marketData, /result\.signal = 'WAIT'/);
-  assert.match(ui, /ENTRY MAP EKSPERIMENTAL/);
-  assert.match(ui, /BUKAN SETUP UTAMA/);
+  assert.match(ui, /SKENARIO PEMANTAUAN/);
+  assert.match(ui, /Konfirmasi harga tetap diperlukan/);
 });
 
 test('Validated Direction Forecast conflict protection remains active', () => {
