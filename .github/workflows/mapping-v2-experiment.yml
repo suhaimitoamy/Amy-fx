@@ -1,4 +1,4 @@
-name: Mapping V2 Experiment
+name: Regime Router V3 Experiment
 
 on:
   push:
@@ -14,13 +14,13 @@ permissions:
   statuses: write
 
 concurrency:
-  group: mapping-v2-experiment-${{ github.ref }}
+  group: regime-router-v3-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  mapping-v2-validation:
+  regime-router-validation:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout experiment branch
         uses: actions/checkout@v4
@@ -32,30 +32,45 @@ jobs:
 
       - name: Check JavaScript syntax
         run: |
+          node --check app/src/main/assets/apps/mapping/js/engine/market-math.js
           node --check app/src/main/assets/apps/mapping/js/engine/market-regime-engine.js
+          node --check app/src/main/assets/apps/mapping/js/engine/regime-state-machine.js
+          node --check app/src/main/assets/apps/mapping/js/engine/strategy-router-engine.js
+          node --check app/src/main/assets/apps/mapping/js/engine/strategies/strategy-common.js
+          node --check app/src/main/assets/apps/mapping/js/engine/strategies/trend-pullback-engine.js
+          node --check app/src/main/assets/apps/mapping/js/engine/strategies/range-mean-reversion-engine.js
+          node --check app/src/main/assets/apps/mapping/js/engine/strategies/manipulation-sweep-engine.js
+          node --check app/src/main/assets/apps/mapping/js/engine/strategies/expansion-breakout-engine.js
           node --check app/src/main/assets/apps/mapping/js/engine/market-intent-engine.js
+          node --check app/src/main/assets/apps/mapping/js/engine/concept-analyze.js
+          node --check app/src/main/assets/apps/mapping/js/api/market-data.js
+          node --check app/src/main/assets/apps/mapping/js/integrity/mapping-integrity-core.js
           node --check app/src/main/assets/apps/mapping/js/market-intent-ui.js
           node --check app/src/main/assets/apps/mapping/js/mapping-v2.js
           node --check tools/backtest-market-regime-v2.mjs
           node --check tools/backtest-shift-lag-v2.mjs
 
-      - name: Verify visible Market Intent wiring and safety contract
+      - name: Verify regime router wiring and safety contract
         run: |
-          grep -Fq 'Amy FX Preview · Market Intent' app/src/main/assets/apps/mapping/index.html
-          grep -Fq 'Market Intent • Liquidity Path • M15 Decision' app/src/main/assets/apps/mapping/index.html
-          grep -Fq 'market-intent-ui.js' app/src/main/assets/apps/mapping/js/mapping-v2.js
-          grep -Fq 'Market mau ke mana?' app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          grep -Fq 'PRIMARY LIQUIDITY OBJECTIVE' app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          grep -Fq 'EXPECTED PRICE PATH' app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          grep -Fq 'KEPUTUSAN EKSEKUSI' app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          grep -Fq 'executionGateEnabled:!1' app/src/main/assets/apps/mapping/js/engine/market-regime-engine.js
-          grep -Fq "headline: direction > 0 ? 'NAIK KE BSL'" app/src/main/assets/apps/mapping/js/engine/market-intent-engine.js
+          grep -Fq 'Amy FX Preview · Regime Router' app/src/main/assets/apps/mapping/index.html
+          grep -Fq 'Market Regime • Strategy Router • Market Shift' app/src/main/assets/apps/mapping/index.html
+          grep -Fq 'Market sedang apa?' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'MARKET HEALTH' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'STRATEGY ROUTER' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'NEAREST LIQUIDITY' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'HTF-ALIGNED LIQUIDITY' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'strategyGateEnabled: true' app/src/main/assets/apps/mapping/js/engine/market-regime-engine.js
+          grep -Fq 'automaticTradeExecution: false' app/src/main/assets/apps/mapping/js/engine/market-regime-engine.js
+          grep -Fq 'REGIME_ROUTED_M15' app/src/main/assets/apps/mapping/js/integrity/mapping-integrity-core.js
+          grep -Fq 'routeRegimeStrategy' app/src/main/assets/apps/mapping/js/api/market-data.js
+          ! grep -Fq 'NAIK KE BSL' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          ! grep -Fq 'TURUN KE SSL' app/src/main/assets/apps/mapping/js/market-intent-ui.js
 
-      - name: Run Mapping V2 and Market Intent V3 tests
-        run: node --test tests/market-regime-engine-v2.test.mjs tests/market-intent-engine-v3.test.mjs
+      - name: Run regime, router, liquidity and integrity tests
+        run: node --test tests/market-regime-engine-v2.test.mjs tests/market-intent-engine-v3.test.mjs tests/regime-strategy-router-v3.test.mjs
 
   android-preview-build:
-    needs: mapping-v2-validation
+    needs: regime-router-validation
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -67,8 +82,8 @@ jobs:
       AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
       AMYFX_APP_LABEL: Amy FX Preview
       AMYFX_URI_SCHEME: amyfxpreview
-      AMYFX_VERSION_CODE: '90039'
-      AMYFX_VERSION_NAME: 1.4.15-preview.2
+      AMYFX_VERSION_CODE: '90040'
+      AMYFX_VERSION_NAME: 1.4.15-preview.3
       AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/mapping-regime-engine-20260721/preview-update.json
     steps:
       - name: Checkout experiment branch
@@ -102,7 +117,7 @@ jobs:
           actual="$(keytool -list -v -keystore "$AMYFX_KEYSTORE_PATH" -storepass "$AMYFX_KEYSTORE_PASSWORD" -alias "$AMYFX_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1)"
           test "$actual" = "$AMYFX_SIGNING_CERT_SHA256"
 
-      - name: Build signed Amy FX Preview Market Intent APK
+      - name: Build signed Amy FX Preview Regime Router APK
         run: |
           chmod +x gradlew
           ./gradlew :app:assembleRelease --stacktrace --no-daemon --no-configuration-cache
@@ -115,7 +130,7 @@ jobs:
           AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
           APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
           "$AAPT" dump badging "$APK" | tee /tmp/preview-badging.txt
-          grep -Fq "package: name='com.amyelitesuite.learningpreview' versionCode='90039' versionName='1.4.15-preview.2'" /tmp/preview-badging.txt
+          grep -Fq "package: name='com.amyelitesuite.learningpreview' versionCode='90040' versionName='1.4.15-preview.3'" /tmp/preview-badging.txt
           grep -Fq "application-label:'Amy FX Preview'" /tmp/preview-badging.txt
           "$APKSIGNER" verify --verbose "$APK"
           cert_entry="$(unzip -Z1 "$APK" | grep -E '^META-INF/[^/]+\.(RSA|DSA|EC)$' | head -n1)"
@@ -124,37 +139,37 @@ jobs:
           expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           actual="$(keytool -printcert -file /tmp/amyfx-preview-cert | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           test "$actual" = "$expected"
-          cp "$APK" AmyFX-Preview-MarketIntentV3.apk
+          cp "$APK" AmyFX-Preview-RegimeRouterV3.apk
 
       - name: Upload signed Amy FX Preview APK
         uses: actions/upload-artifact@v4
         with:
-          name: AmyFX-Preview-MarketIntentV3-v1.4.15-preview.2
-          path: AmyFX-Preview-MarketIntentV3.apk
+          name: AmyFX-Preview-RegimeRouterV3-v1.4.15-preview.3
+          path: AmyFX-Preview-RegimeRouterV3.apk
           if-no-files-found: error
           retention-days: 14
 
   report-status:
     if: always()
     needs:
-      - mapping-v2-validation
+      - regime-router-validation
       - android-preview-build
     runs-on: ubuntu-latest
     steps:
       - name: Publish combined experiment status
         env:
           GH_TOKEN: ${{ github.token }}
-          VALIDATION_RESULT: ${{ needs.mapping-v2-validation.result }}
+          VALIDATION_RESULT: ${{ needs.regime-router-validation.result }}
           BUILD_RESULT: ${{ needs.android-preview-build.result }}
         run: |
           state=success
-          description='Market Intent V3 passed; signed Amy FX Preview APK is ready'
+          description='Regime Router V3 passed; signed Amy FX Preview APK is ready'
           if [ "$VALIDATION_RESULT" != 'success' ] || [ "$BUILD_RESULT" != 'success' ]; then
             state=failure
-            description="Market Intent V3 failed: validation=$VALIDATION_RESULT preview=$BUILD_RESULT"
+            description="Regime Router V3 failed: validation=$VALIDATION_RESULT preview=$BUILD_RESULT"
           fi
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state="$state" \
-            -f context='Mapping V2 Experiment' \
+            -f context='Regime Router V3 Experiment' \
             -f description="$description" \
             -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
