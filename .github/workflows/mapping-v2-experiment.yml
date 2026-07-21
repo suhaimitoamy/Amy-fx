@@ -33,35 +33,43 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check app/src/main/assets/apps/mapping/js/engine/market-regime-engine.js
+          node --check app/src/main/assets/apps/mapping/js/engine/market-intent-engine.js
+          node --check app/src/main/assets/apps/mapping/js/market-intent-ui.js
           node --check app/src/main/assets/apps/mapping/js/mapping-v2.js
           node --check tools/backtest-market-regime-v2.mjs
           node --check tools/backtest-shift-lag-v2.mjs
 
-      - name: Verify Mapping V2 wiring and safety contract
+      - name: Verify visible Market Intent wiring and safety contract
         run: |
-          grep -Fq 'css/mapping-v2.css' app/src/main/assets/apps/mapping/index.html
-          grep -Fq 'js/mapping-v2.js' app/src/main/assets/apps/mapping/index.html
+          grep -Fq 'Amy FX Preview · Market Intent' app/src/main/assets/apps/mapping/index.html
+          grep -Fq 'Market Intent • Liquidity Path • M15 Decision' app/src/main/assets/apps/mapping/index.html
+          grep -Fq 'market-intent-ui.js' app/src/main/assets/apps/mapping/js/mapping-v2.js
+          grep -Fq 'Market mau ke mana?' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'PRIMARY LIQUIDITY OBJECTIVE' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'EXPECTED PRICE PATH' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'KEPUTUSAN EKSEKUSI' app/src/main/assets/apps/mapping/js/market-intent-ui.js
           grep -Fq 'executionGateEnabled:!1' app/src/main/assets/apps/mapping/js/engine/market-regime-engine.js
-          grep -Fq 'action:"WAIT",advisoryAction:' app/src/main/assets/apps/mapping/js/engine/market-regime-engine.js
-          grep -Fq 'EXPERIMENTAL · CONTEXT ONLY' app/src/main/assets/apps/mapping/js/mapping-v2.js
-          grep -Fq 'executionGateEnabled&&n?.shift?.blockRecommended' app/src/main/assets/apps/mapping/js/mapping-v2.js
-          grep -Fq '"M15"!==String(n.tf||"").toUpperCase()' app/src/main/assets/apps/mapping/js/mapping-v2.js
-          ! grep -Fq 'if(n?.shift?.blockRecommended)' app/src/main/assets/apps/mapping/js/mapping-v2.js
+          grep -Fq "headline: direction > 0 ? 'NAIK KE BSL'" app/src/main/assets/apps/mapping/js/engine/market-intent-engine.js
 
-      - name: Run regime safety tests
-        run: node --test tests/market-regime-engine-v2.test.mjs
+      - name: Run Mapping V2 and Market Intent V3 tests
+        run: node --test tests/market-regime-engine-v2.test.mjs tests/market-intent-engine-v3.test.mjs
 
   android-preview-build:
     needs: mapping-v2-validation
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
+      AMYFX_KEYSTORE_PATH: /tmp/amy-fx-signing.keystore
+      AMYFX_KEYSTORE_PASSWORD: android
+      AMYFX_KEY_ALIAS: androiddebugkey
+      AMYFX_KEY_PASSWORD: android
+      AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
       AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
       AMYFX_APP_LABEL: Amy FX Preview
       AMYFX_URI_SCHEME: amyfxpreview
-      AMYFX_VERSION_CODE: '90038'
-      AMYFX_VERSION_NAME: 1.4.15-preview
-      AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json
+      AMYFX_VERSION_CODE: '90039'
+      AMYFX_VERSION_NAME: 1.4.15-preview.2
+      AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/mapping-regime-engine-20260721/preview-update.json
     steps:
       - name: Checkout experiment branch
         uses: actions/checkout@v4
@@ -71,33 +79,58 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
-      - name: Setup Gradle cache
-        uses: gradle/actions/setup-gradle@v4
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Make Gradle wrapper executable
-        run: chmod +x gradlew
+      - name: Install Android SDK 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Build Amy FX Preview APK
-        run: ./gradlew :app:assembleDebug --stacktrace --no-daemon
+      - name: Restore permanent Amy FX preview signing key
+        id: signing-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: amy-fx-debug-keystore-v1
 
-      - name: Verify preview identity
-        shell: bash
+      - name: Verify permanent preview signing key
         run: |
-          APK='app/build/outputs/apk/debug/app-debug.apk'
-          test -f "$APK"
-          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
-          test -x "$AAPT"
-          "$AAPT" dump badging "$APK" | tee /tmp/preview-badging.txt
-          grep -Fq "package: name='com.amyelitesuite.learningpreview'" /tmp/preview-badging.txt
-          grep -Fq "application-label:'Amy FX Preview'" /tmp/preview-badging.txt
-          cp "$APK" AmyFX-Preview-MappingV2.apk
+          set -euo pipefail
+          test "${{ steps.signing-cache.outputs.cache-hit }}" = "true"
+          cp "$HOME/.android/debug.keystore" "$AMYFX_KEYSTORE_PATH"
+          actual="$(keytool -list -v -keystore "$AMYFX_KEYSTORE_PATH" -storepass "$AMYFX_KEYSTORE_PASSWORD" -alias "$AMYFX_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1)"
+          test "$actual" = "$AMYFX_SIGNING_CERT_SHA256"
 
-      - name: Upload Amy FX Preview APK
+      - name: Build signed Amy FX Preview Market Intent APK
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleRelease --stacktrace --no-daemon --no-configuration-cache
+
+      - name: Verify preview package, label, version and signer
+        run: |
+          set -euo pipefail
+          APK='app/build/outputs/apk/release/app-release.apk'
+          test -f "$APK"
+          AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
+          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          "$AAPT" dump badging "$APK" | tee /tmp/preview-badging.txt
+          grep -Fq "package: name='com.amyelitesuite.learningpreview' versionCode='90039' versionName='1.4.15-preview.2'" /tmp/preview-badging.txt
+          grep -Fq "application-label:'Amy FX Preview'" /tmp/preview-badging.txt
+          "$APKSIGNER" verify --verbose "$APK"
+          cert_entry="$(unzip -Z1 "$APK" | grep -E '^META-INF/[^/]+\.(RSA|DSA|EC)$' | head -n1)"
+          test -n "$cert_entry"
+          unzip -p "$APK" "$cert_entry" > /tmp/amyfx-preview-cert
+          expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          actual="$(keytool -printcert -file /tmp/amyfx-preview-cert | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          test "$actual" = "$expected"
+          cp "$APK" AmyFX-Preview-MarketIntentV3.apk
+
+      - name: Upload signed Amy FX Preview APK
         uses: actions/upload-artifact@v4
         with:
-          name: AmyFX-Preview-MappingV2
-          path: AmyFX-Preview-MappingV2.apk
+          name: AmyFX-Preview-MarketIntentV3-v1.4.15-preview.2
+          path: AmyFX-Preview-MarketIntentV3.apk
           if-no-files-found: error
           retention-days: 14
 
@@ -115,10 +148,10 @@ jobs:
           BUILD_RESULT: ${{ needs.android-preview-build.result }}
         run: |
           state=success
-          description='Mapping V2 passed; Amy FX Preview APK is ready'
+          description='Market Intent V3 passed; signed Amy FX Preview APK is ready'
           if [ "$VALIDATION_RESULT" != 'success' ] || [ "$BUILD_RESULT" != 'success' ]; then
             state=failure
-            description="Mapping V2 failed: validation=$VALIDATION_RESULT preview=$BUILD_RESULT"
+            description="Market Intent V3 failed: validation=$VALIDATION_RESULT preview=$BUILD_RESULT"
           fi
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state="$state" \
