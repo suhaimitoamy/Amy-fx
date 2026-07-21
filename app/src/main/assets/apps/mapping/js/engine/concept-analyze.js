@@ -28,7 +28,7 @@ function entryMapRow(entryMap) {
 
 export function analyze(candles, tf, htfBiases = {}, currentPrice = null, htfCandles = {}) {
   const result = analyzeLegacy(candles, tf, htfBiases, currentPrice, htfCandles);
-  if (!Array.isArray(candles) || candles.length < 30) return result;
+  if (!Array.isArray(candles) || candles.length < 30) return { ...result, htfBiases };
   const marketConcepts = detectMarketConcepts(candles, {
     tf,
     currentPrice: result.price || currentPrice,
@@ -44,6 +44,7 @@ export function analyze(candles, tf, htfBiases = {}, currentPrice = null, htfCan
 
   return {
     ...result,
+    htfBiases: { ...htfBiases },
     setups,
     bestSetup,
     signal,
