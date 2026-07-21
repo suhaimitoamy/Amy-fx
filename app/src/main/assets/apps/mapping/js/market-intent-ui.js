@@ -124,7 +124,7 @@ function healthMetric(label, value, kind = '') {
 
 function engineCard(engine, activeName) {
   const isActive = engine?.engine === activeName;
-  return `<div class="strategy-engine ${isActive ? 'active' : 'disabled'}"><small>${isActive ? 'KONTEKS UTAMA' : 'ALTERNATIF'}</small><strong>${escapeHtml(labelText(engine?.engine))}</strong><span>${escapeHtml(labelText(engine?.status || 'BELUM AKTIF'))}${engine?.quality ? ` · skor konteks ${numberText(engine.quality)}/100` : ''}</span></div>`;
+  return `<div class="strategy-engine ${isActive ? 'active' : 'disabled'}"><small>${isActive ? 'KONTEKS AKTIF' : 'ALTERNATIF'}</small><strong>${escapeHtml(labelText(engine?.engine))}</strong><span>${escapeHtml(labelText(engine?.status || 'BELUM AKTIF'))}${engine?.quality ? ` · skor konteks ${numberText(engine.quality)}/100` : ''}</span></div>`;
 }
 
 function scenarioMarkup(result, router) {

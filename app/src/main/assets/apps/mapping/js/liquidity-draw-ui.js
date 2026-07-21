@@ -10,16 +10,16 @@ function number(value, digits = 2) {
 }
 
 function destinationText(value) {
-  if (value === 'BSL') return 'BSL · Likuiditas atas';
-  if (value === 'SSL') return 'SSL · Likuiditas bawah';
-  return 'Belum ada destination valid';
+  if (value === 'BSL') return 'BSL · Likuiditas Atas';
+  if (value === 'SSL') return 'SSL · Likuiditas Bawah';
+  return 'Belum ada target terkonfirmasi';
 }
 
 function statusText(context) {
-  if (context.status === 'VALID') return 'VALID CONTEXT';
-  if (context.status === 'UNSUPPORTED') return 'TF TIDAK DIDUKUNG';
-  if (context.status === 'INSUFFICIENT_DATA') return 'DATA BELUM CUKUP';
-  return 'ABSTAIN';
+  if (context.status === 'VALID') return 'TERKONFIRMASI';
+  if (context.status === 'UNSUPPORTED') return 'TIMEFRAME TIDAK AKTIF';
+  if (context.status === 'INSUFFICIENT_DATA') return 'MEMUAT DATA';
+  return 'NETRAL';
 }
 
 async function ensureWeeklyReference() {
@@ -68,32 +68,33 @@ function contextRow(context) {
 function overallSummary(contexts) {
   const valid = contexts.filter(item => item.status === 'VALID');
   if (!valid.length) {
-    return 'Belum ada M15/H1 yang memenuhi confidence minimum 97. Sistem tidak memaksa arah.';
+    return 'Belum ada M15/H1 yang memenuhi confidence minimum 97%. Sistem tidak memaksa arah.';
   }
   if (valid.length === 2 && valid[0].destination === valid[1].destination) {
-    return `M15 dan H1 sama-sama menunjuk ${destinationText(valid[0].destination)}. Ini hanya informasi first-hit.`;
+    return `M15 dan H1 sama-sama menunjuk ${destinationText(valid[0].destination)}. Ini merupakan target likuiditas terdekat.`;
   }
   if (valid.length === 2) {
     return 'M15 dan H1 berbeda destination. Context dianggap konflik dan tidak boleh diterjemahkan menjadi sinyal entry.';
   }
-  return `${valid[0].tf} menunjuk ${destinationText(valid[0].destination)}; timeframe lain masih abstain.`;
+  return `${valid[0].tf} menunjuk ${destinationText(valid[0].destination)}; timeframe lain masih netral.`;
 }
 
 function cardHtml(contexts) {
   return `<section class="card liquidity-draw-card" id="${CARD_ID}" aria-label="Liquidity Draw context">
     <div class="liquidity-draw-title-row">
       <div>
-        <div class="kicker">LIQUIDITY DRAW · FIRST-HIT</div>
+        <div class="kicker">TARGET LIKUIDITAS TERDEKAT</div>
         <h2>Destination Context</h2>
       </div>
-      <span class="liquidity-context-badge">CONTEXT ONLY</span>
+      <span class="liquidity-context-badge">KONTEKS ACUAN</span>
     </div>
     <p class="liquidity-draw-summary">${overallSummary(contexts)}</p>
     <div class="liquidity-draw-rows">${contexts.map(contextRow).join('')}</div>
     <div class="liquidity-draw-footnote">
-      Threshold tetap <b>${LIQUIDITY_DRAW_CONTEXT_CONFIG.threshold}</b> · horizon riset 72 jam · bukan BUY/SELL, bukan entry, bukan SL/TP.
+      Threshold tetap <b>${LIQUIDITY_DRAW_CONTEXT_CONFIG.threshold}%</b> · horizon riset 72 jam · bukan BUY/SELL, bukan entry, bukan SL/TP.
     </div>
   </section>`;
+}
 }
 
 function findAnchor() {

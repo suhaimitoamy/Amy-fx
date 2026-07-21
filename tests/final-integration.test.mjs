@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
+import { fileURLToPath } from 'node:url';
+
 const root = new URL('../', import.meta.url);
 const path = relative => new URL(relative, root);
 const source = relative => readFileSync(path(relative), 'utf8');
@@ -23,7 +25,7 @@ const criticalModules = [
 
 test('all critical Mapping modules pass JavaScript syntax validation', () => {
   for (const module of criticalModules) {
-    execFileSync(process.execPath, ['--check', path(module).pathname], { stdio: 'pipe' });
+    execFileSync(process.execPath, ['--check', fileURLToPath(path(module))], { stdio: 'pipe' });
   }
 });
 
