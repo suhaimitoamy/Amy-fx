@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 concurrency:
   group: claim-regression-diagnostic-${{ github.ref }}
@@ -42,6 +43,23 @@ jobs:
           path: full-js-tests.log
           if-no-files-found: error
           retention-days: 3
+      - name: Publish diagnostic status and run URL
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXIT_CODE: ${{ steps.regression.outputs.exit_code }}
+        run: |
+          state=success
+          description='Full JavaScript regression passed'
+          if [ "$EXIT_CODE" != '0' ]; then
+            state=failure
+            description='Full JavaScript regression failed; complete log artifact is available'
+          fi
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state="$state" \
+            -f context='Claim Regression Diagnostic' \
+            -f description="$description" \
+            -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
       - name: Fail when regression failed
         if: steps.regression.outputs.exit_code != '0'
         run: exit 1
