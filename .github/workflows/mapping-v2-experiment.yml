@@ -48,10 +48,17 @@ jobs:
       - name: Run regime safety tests
         run: node --test tests/market-regime-engine-v2.test.mjs
 
-  android-debug-build:
+  android-preview-build:
     needs: mapping-v2-validation
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
+      AMYFX_APP_LABEL: Amy FX Preview
+      AMYFX_URI_SCHEME: amyfxpreview
+      AMYFX_VERSION_CODE: '90038'
+      AMYFX_VERSION_NAME: 1.4.15-preview
+      AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json
     steps:
       - name: Checkout experiment branch
         uses: actions/checkout@v4
@@ -68,27 +75,47 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
 
-      - name: Build Android debug APK
+      - name: Build Amy FX Preview APK
         run: ./gradlew :app:assembleDebug --stacktrace --no-daemon
+
+      - name: Verify preview identity
+        shell: bash
+        run: |
+          APK='app/build/outputs/apk/debug/app-debug.apk'
+          test -f "$APK"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          test -x "$AAPT"
+          "$AAPT" dump badging "$APK" | tee /tmp/preview-badging.txt
+          grep -Fq "package: name='com.amyelitesuite.learningpreview'" /tmp/preview-badging.txt
+          grep -Fq "application-label:'Amy FX Preview'" /tmp/preview-badging.txt
+          cp "$APK" AmyFX-Preview-MappingV2.apk
+
+      - name: Upload Amy FX Preview APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AmyFX-Preview-MappingV2
+          path: AmyFX-Preview-MappingV2.apk
+          if-no-files-found: error
+          retention-days: 14
 
   report-status:
     if: always()
     needs:
       - mapping-v2-validation
-      - android-debug-build
+      - android-preview-build
     runs-on: ubuntu-latest
     steps:
       - name: Publish combined experiment status
         env:
           GH_TOKEN: ${{ github.token }}
           VALIDATION_RESULT: ${{ needs.mapping-v2-validation.result }}
-          BUILD_RESULT: ${{ needs.android-debug-build.result }}
+          BUILD_RESULT: ${{ needs.android-preview-build.result }}
         run: |
           state=success
-          description='Mapping V2 tests and Android debug build passed'
+          description='Mapping V2 passed; Amy FX Preview APK is ready'
           if [ "$VALIDATION_RESULT" != 'success' ] || [ "$BUILD_RESULT" != 'success' ]; then
             state=failure
-            description="Mapping V2 failed: validation=$VALIDATION_RESULT build=$BUILD_RESULT"
+            description="Mapping V2 failed: validation=$VALIDATION_RESULT preview=$BUILD_RESULT"
           fi
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state="$state" \
