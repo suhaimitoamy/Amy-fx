@@ -4,7 +4,6 @@ import { routeRegimeStrategy } from './engine/strategy-router-engine.js';
 import { evaluateValidatedMarketContext } from './engine/validated-market-context.js';
 
 const CARD_ID = 'amy-regime-router-v3';
-const VIEW_MODE_KEY = 'amy_mapping_v4_view_mode';
 const STATE_KEY = 'amy_regime_router_state_v3';
 let lastSignature = '';
 let refreshTimer = 0;
@@ -14,7 +13,6 @@ const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character =>
 })[character]);
 const numberText = (value, digits = 0) => Number.isFinite(Number(value)) ? Number(value).toFixed(digits) : '-';
 const labelText = value => String(value || '-').replaceAll('_', ' ');
-const mode = () => localStorage.getItem(VIEW_MODE_KEY) === 'DETAIL' ? 'DETAIL' : 'FOCUS';
 
 function readRouterState() {
   try { return JSON.parse(localStorage.getItem(STATE_KEY) || 'null'); } catch (_) { return null; }
@@ -91,36 +89,82 @@ function targetMarkup(title, target, emptyText) {
   return `<div class="liquidity-context-target"><small>${escapeHtml(title)}</small><strong>${escapeHtml(target.label || target.type)}</strong><span>${numberText(target.level, 2)} · ${escapeHtml(target.type)}</span></div>`;
 }
 
-function validatedContextMarkup(validated) {
-  const state = validated?.marketState || {};
+function contextKinds(validated, regime) {
+  const marketState = validated?.marketState || {};
   const forecast = validated?.directionForecast || {};
-  const stateKind = state.directionValue > 0 ? 'stable' : state.directionValue < 0 ? 'danger' : 'warning';
-  const forecastKind = forecast.directionValue > 0 ? 'stable' : forecast.directionValue < 0 ? 'danger' : 'warning';
+  return {
+    marketState,
+    forecast,
+    stateKind: marketState.directionValue > 0 ? 'stable' : marketState.directionValue < 0 ? 'danger' : 'warning',
+    forecastKind: forecast.directionValue > 0 ? 'stable' : forecast.directionValue < 0 ? 'danger' : 'warning',
+    shiftKind: regime?.shift?.risk >= 55 ? 'danger' : regime?.shift?.risk >= 30 ? 'warning' : 'stable'
+  };
+}
+
+function validatedContextMarkup(validated) {
+  const { marketState, forecast, stateKind, forecastKind } = contextKinds(validated);
   const forecastDetail = forecast.active
     ? `${numberText(forecast.confidence)}% display confidence · horizon ${escapeHtml(forecast.horizonText || '-')}`
     : 'Tidak ada pola forecast tervalidasi yang aktif';
   return `<div class="market-health-title"><span>VALIDATED MARKET CONTEXT</span><small>Rule Pine yang sudah dibacktest menjadi sumber utama</small></div>
     <div class="router-status-strip validated-context-strip">
-      <div class="${stateKind}"><small>Market State</small><strong>${escapeHtml(state.state || 'RANGE / TRANSITION')}</strong><span>Kondisi saat ini · fast 4/4 + slow 6/6</span></div>
+      <div class="${stateKind}"><small>Market State</small><strong>${escapeHtml(marketState.state || 'RANGE / TRANSITION')}</strong><span>Kondisi saat ini · fast 4/4 + slow 6/6</span></div>
       <div class="${forecastKind}"><small>Direction Forecast</small><strong>${escapeHtml(forecast.direction || 'NO CLEAR DIRECTION')}</strong><span>${forecastDetail}</span></div>
       <div><small>Regime Authority</small><strong>CONTEXT ONLY</strong><span>Tidak boleh mengganti Market State/Forecast</span></div>
     </div>`;
 }
 
-function waitingMarkup() {
-  return `<section class="card regime-router-card waiting" id="${CARD_ID}"><div class="regime-preview-ribbon">AMY FX PREVIEW · VALIDATED MARKET CONTEXT</div><div class="regime-header"><div><div class="kicker">PINE PARITY ENGINE</div><h2>Memuat Market State dan Direction Forecast</h2></div><span class="regime-badge">MEMINDAI</span></div><p class="muted">Menggunakan rule indikator tervalidasi terlebih dahulu. Regime, shift, dan strategy router hanya menjadi konteks tambahan.</p><button class="router-primary-button" type="button" data-router-action="scan">Muat Analisis M15</button></section>`;
+function waitingMarkup(tab) {
+  const dashboard = tab === 'Dashboard';
+  return `<section class="card regime-router-card waiting ${dashboard ? 'dashboard-context-card' : 'analyze-context-card'}" id="${CARD_ID}">
+    <div class="regime-preview-ribbon">${dashboard ? 'DASHBOARD · MARKET CONTEXT RINGKAS' : 'ANALYZE · VALIDATED MARKET CONTEXT'}</div>
+    <div class="regime-header"><div><div class="kicker">PINE PARITY ENGINE</div><h2>${dashboard ? 'Memuat ringkasan kondisi market' : 'Memuat Market State dan Direction Forecast'}</h2></div><span class="regime-badge">MEMINDAI</span></div>
+    <p class="muted">${dashboard ? 'Dashboard hanya menampilkan kesimpulan. Detail struktur, regime, dan router tersedia di Analyze.' : 'Analyze menampilkan seluruh rule tervalidasi, regime, shift, router, dan liquidity context.'}</p>
+    <button class="router-primary-button" type="button" data-router-action="scan">Muat Analisis M15</button>
+  </section>`;
 }
 
-function renderCard(result, validated, regime, router, liquidity) {
-  if (!validated || validated.status !== 'READY' || !regime || regime.status !== 'READY' || !router) return waitingMarkup();
+function renderDashboardCard(validated, regime, router, liquidity) {
+  const { marketState, forecast, stateKind, forecastKind, shiftKind } = contextKinds(validated, regime);
+  const mainTarget = liquidity?.destinationTarget || liquidity?.htfAlignedLiquidity || liquidity?.nearestLiquidity;
+  const strategyStatus = router?.blocked || router?.validatedConflict
+    ? 'WAIT / DIBLOKIR'
+    : router?.setup
+      ? 'SETUP TERSEDIA'
+      : 'MENUNGGU SETUP';
+  return `<section class="card regime-router-card dashboard-context-card" id="${CARD_ID}">
+    <div class="regime-preview-ribbon">DASHBOARD · MARKET CONTEXT RINGKAS</div>
+    <div class="regime-header"><div><div class="kicker">KESIMPULAN CEPAT</div><h2>Kondisi market saat ini</h2></div><span class="regime-badge">RINGKAS</span></div>
+
+    <div class="router-status-strip validated-context-strip">
+      <div class="${stateKind}"><small>Market State</small><strong>${escapeHtml(marketState.state || 'RANGE / TRANSITION')}</strong><span>Kondisi struktur saat ini</span></div>
+      <div class="${forecastKind}"><small>Direction Forecast</small><strong>${escapeHtml(forecast.direction || 'NO CLEAR DIRECTION')}</strong><span>${forecast.active ? `${numberText(forecast.confidence)}% · ${escapeHtml(forecast.horizonText || '-')}` : 'Belum ada forecast aktif'}</span></div>
+      <div><small>Liquidity Tujuan</small><strong>${escapeHtml(mainTarget?.label || mainTarget?.type || 'BELUM JELAS')}</strong><span>${mainTarget ? `${numberText(mainTarget.level, 2)} · konteks, bukan entry` : 'Tunggu target tervalidasi'}</span></div>
+    </div>
+
+    <div class="router-status-strip dashboard-context-secondary">
+      <div><small>Regime</small><strong>${escapeHtml(labelText(router?.activeRegime || regime?.regime || 'TRANSITION'))}</strong><span>Konteks karakter market</span></div>
+      <div class="${shiftKind}"><small>Market Shift</small><strong>${escapeHtml(labelText(regime?.shift?.status || 'STABLE'))}</strong><span>Risiko ${numberText(regime?.shift?.risk)}/100</span></div>
+      <div><small>Status Strategi</small><strong>${escapeHtml(strategyStatus)}</strong><span>${escapeHtml(labelText(router?.activeStrategy || 'NO TRADE'))}</span></div>
+    </div>
+
+    <div class="router-actions dashboard-context-actions">
+      <button type="button" data-router-open-analyze>Buka Analisis Teknis</button>
+      <button type="button" data-router-action="scan">Perbarui M15</button>
+    </div>
+    <p class="router-disclaimer">Dashboard hanya menunjukkan keputusan penting. Probability regime, Market Health, strategy engine, alasan, dan detail liquidity hanya tampil di Analyze.</p>
+  </section>`;
+}
+
+function renderAnalyzeCard(validated, regime, router, liquidity) {
   const probabilities = regime.probabilities || {};
   const health = regime.health || {};
   const shiftClass = regime.shift?.risk >= 55 ? 'danger' : regime.shift?.risk >= 30 ? 'warning' : 'stable';
   const engines = Object.values(router.engines || {});
   const reasons = (router.reasons || []).slice(0, 6);
-  return `<section class="card regime-router-card" id="${CARD_ID}">
-    <div class="regime-preview-ribbon">AMY FX PREVIEW · VALIDATED CONTEXT + REGIME SUPPORT</div>
-    <div class="regime-header"><div><div class="kicker">VALIDATED RULES FIRST</div><h2>Kondisi dan arah market</h2></div><span class="regime-badge">NO AUTO TRADE</span></div>
+  return `<section class="card regime-router-card analyze-context-card" id="${CARD_ID}">
+    <div class="regime-preview-ribbon">ANALYZE · VALIDATED CONTEXT + TECHNICAL SUPPORT</div>
+    <div class="regime-header"><div><div class="kicker">DETAIL TEKNIS</div><h2>Mengapa market dibaca seperti ini?</h2></div><span class="regime-badge">NO AUTO TRADE</span></div>
 
     ${validatedContextMarkup(validated)}
 
@@ -162,15 +206,20 @@ function renderCard(result, validated, regime, router, liquidity) {
     <div class="liquidity-warning"><b>${escapeHtml(liquidity?.destination || 'LIQUIDITY CONTEXT')}</b><span>${escapeHtml(liquidity?.warning || 'BSL/SSL bukan BUY/SELL.')}</span></div>
 
     <div class="router-reasons"><b>Mengapa konteks tambahan memilih ini?</b><ul>${reasons.map(reason => `<li>${escapeHtml(reason)}</li>`).join('')}</ul></div>
-    <div class="router-actions"><button type="button" data-router-action="scan">Analisis Ulang M15</button><button type="button" data-router-mode="FOCUS" class="${mode() === 'FOCUS' ? 'active' : ''}">Fokus</button><button type="button" data-router-mode="DETAIL" class="${mode() === 'DETAIL' ? 'active' : ''}">Detail Teknis</button></div>
+    <div class="router-actions"><button type="button" data-router-action="scan">Analisis Ulang M15</button></div>
     <p class="router-disclaimer">Market State dan Direction Forecast berasal dari rule Pine tervalidasi. Regime dan quality score hanya konteks tambahan, bukan win rate.</p>
   </section>`;
 }
 
+function renderCard(tab, validated, regime, router, liquidity) {
+  if (!validated || validated.status !== 'READY' || !regime || regime.status !== 'READY' || !router) return waitingMarkup(tab);
+  return tab === 'Dashboard'
+    ? renderDashboardCard(validated, regime, router, liquidity)
+    : renderAnalyzeCard(validated, regime, router, liquidity);
+}
+
 function applyViewMode() {
-  const supported = ['Dashboard', 'Analyze'].includes(window.state?.tab);
-  document.body.classList.toggle('regime-router-focus-mode', supported && mode() === 'FOCUS');
-  document.body.classList.toggle('regime-router-detail-mode', supported && mode() !== 'FOCUS');
+  document.body.classList.remove('regime-router-focus-mode', 'regime-router-detail-mode');
 }
 
 function bindCard() {
@@ -185,12 +234,10 @@ function bindCard() {
       if (typeof window.runAnalysis === 'function') window.runAnalysis('M15');
       return;
     }
-    const modeButton = event.target.closest('[data-router-mode]');
-    if (!modeButton) return;
-    localStorage.setItem(VIEW_MODE_KEY, modeButton.dataset.routerMode);
-    lastSignature = '';
-    syncMarketIntentV3();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const openAnalyze = event.target.closest('[data-router-open-analyze]');
+    if (openAnalyze && typeof window.setTab === 'function') {
+      window.setTab('Analyze');
+    }
   });
 }
 
@@ -218,13 +265,12 @@ export function syncMarketIntentV3() {
     strategy: router?.activeStrategy,
     decision: router?.decision,
     setup: router?.setup?.id || '',
-    liquidity: liquidity?.destinationTarget?.level,
-    mode: mode()
+    liquidity: liquidity?.destinationTarget?.level
   });
   applyViewMode();
   const current = document.getElementById(CARD_ID);
   if (current && signature === lastSignature) return;
-  const markup = renderCard(result, validated, regime, router, liquidity);
+  const markup = renderCard(state.tab, validated, regime, router, liquidity);
   if (current) current.outerHTML = markup;
   else app.insertAdjacentHTML('afterbegin', markup);
   lastSignature = signature;
@@ -240,7 +286,7 @@ function start() {
   schedule();
   document.addEventListener('click', () => schedule(100), { passive: true });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) schedule(); });
-  window.addEventListener('storage', event => { if ([VIEW_MODE_KEY, STATE_KEY].includes(event.key)) schedule(); });
+  window.addEventListener('storage', event => { if (event.key === STATE_KEY) schedule(); });
   setInterval(() => { if (!document.hidden) schedule(); }, 1500);
 }
 
