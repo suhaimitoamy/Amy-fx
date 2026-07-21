@@ -152,13 +152,13 @@ test('liquidity context never converts destination into buy or sell', () => {
   assert.doesNotMatch(context.statement, /\bBUY\b|\bSELL\b/);
 });
 
-test('Preview separates Dashboard authority from Analyze experiments', () => {
+test('Preview separates market summary from compact advanced analysis', () => {
   const ui = readFileSync(new URL('../app/src/main/assets/apps/mapping/js/market-intent-ui.js', import.meta.url), 'utf8');
-  assert.match(ui, /DASHBOARD · RINGKASAN KLAIM TERVALIDASI/);
-  assert.match(ui, /AKURASI KLAIM FITUR/);
-  assert.match(ui, /REGIME EKSPERIMENTAL/);
-  assert.match(ui, /STRATEGY ROUTER/);
-  assert.match(ui, /Nearest Liquidity/);
-  assert.match(ui, /BSL\/SSL bukan BUY\/SELL|tetap bukan sinyal entry/);
+  assert.match(ui, /RINGKASAN MARKET/);
+  assert.match(ui, /RELIABILITAS HISTORIS/);
+  assert.match(ui, /Konteks Market Lanjutan/);
+  assert.match(ui, /KONTEKS STRATEGI/);
+  assert.match(ui, /Target & Skenario Harga/);
+  assert.match(ui, /Target likuiditas tidak menentukan waktu entry/);
   assert.doesNotMatch(ui, /NAIK KE BSL|TURUN KE SSL/);
 });
