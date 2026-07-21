@@ -1,0 +1,59 @@
+{
+  "schema": "AMY_MAPPING_CLAIM_ACCURACY_V1",
+  "symbol": "XAU/USD",
+  "period": "2022-01 through 2025-12",
+  "evaluationPrinciple": "Each feature is scored against its own explicit claim. Trading win rate and expectancy are not feature-accuracy metrics.",
+  "dataQuality": {
+    "raw": { "M15": 91578, "H1": 22905, "H4": 6368, "D1": 1244 },
+    "clean": { "M15": 91562, "H1": 22905, "H4": 6368, "D1": 1244 },
+    "duplicates": { "M15": 16 }
+  },
+  "metrics": {
+    "marketRegime": {
+      "samples": 22836,
+      "accuracy": 0.19736381152566124,
+      "byPredictedClass": {
+        "TRENDING": { "samples": 7053, "precision": 0.18545299872394724 },
+        "RANGING": { "samples": 1583, "precision": 0.6045483259633607 },
+        "MANIPULATION": { "samples": 6318, "precision": 0.09939854384298828 },
+        "EXPANSION": { "samples": 1475, "precision": 0.26915254237288133 },
+        "TRANSITION": { "samples": 6407, "precision": 0.18994849383486812 }
+      }
+    },
+    "marketShiftRisk30": {
+      "threshold": 30,
+      "events": 5419,
+      "useful": 759,
+      "precision": 0.14006274220335854,
+      "validatedFlips": 1138,
+      "detectedFlips": 708,
+      "recall": 0.6221441124780316,
+      "averageLeadBars": 6.744350282485875,
+      "medianLeadBars": 7
+    },
+    "strategyRouter": { "claims": 1426, "correct": 692, "accuracy": 0.485273492286115 },
+    "validBreakLabels": {
+      "VALID_BREAK": { "events": 6620, "correct": 4469, "accuracy": 0.6750755287009064, "medianBars": 1 },
+      "SWEEP_ONLY": { "events": 2545, "correct": 1739, "accuracy": 0.6833005893909627, "medianBars": 1 },
+      "BREAK_FAILED": { "events": 4222, "correct": 3436, "accuracy": 0.8138323069635244, "medianBars": 1 }
+    },
+    "entryMap": { "setups": 85, "correctReactions": 41, "accuracy": 0.4823529411764706 },
+    "liquidityContext": {
+      "samples": 22859,
+      "firstHitCoverage": 0.829695087274159,
+      "nearestFirstHitAccuracy": 0.7955288410840451,
+      "nearestReachRate": 0.6966183997550199,
+      "htfAlignedSamples": 22365,
+      "htfAlignedReachRate": 0.6185110663983904,
+      "forecastAlignedSamples": 1248,
+      "forecastAlignedReachRate": 0.6426282051282052,
+      "averageFirstHitBars": 11.803068649161657
+    }
+  },
+  "authority": {
+    "dashboardPrimary": ["Validated Market State", "Validated Direction Forecast", "Nearest Liquidity"],
+    "analyzeOnly": ["Market Regime", "Market Shift", "Strategy Router", "Valid Break labels", "Entry Map", "Engine Diagnostics"],
+    "lockedPineRulesChanged": false,
+    "automaticTrading": false
+  }
+}
