@@ -1,0 +1,7 @@
+{
+  "channel": "market-intent-preview",
+  "versionCode": 90039,
+  "versionName": "1.4.15-preview.2",
+  "enabled": false,
+  "message": "Preview update channel is intentionally manual while Market Intent V3 is under evaluation."
+}
