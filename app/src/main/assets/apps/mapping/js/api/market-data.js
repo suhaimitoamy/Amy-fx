@@ -139,15 +139,17 @@ function setupDirection(setup) {
   return 0;
 }
 
-function watchOnlySetup(setup) {
+function annotateExperimentalSetup(setup) {
   if (!setup) return null;
   const terminal = /INVALID|BROKEN|SL HIT|TP HIT|EXPIRED/.test(String(setup.status || '').toUpperCase());
   if (terminal) return { ...setup };
   return {
     ...setup,
-    status: 'WATCH SETUP',
-    validationStatus: 'ENTRY_MODEL_NOT_STABLE_2022_2025',
-    reason: `${setup.reason || 'Setup Entry Map terdeteksi.'} Status diturunkan menjadi WATCH karena performa entry gabungan belum stabil pada setiap tahun 2022-2025.`
+    status: 'EXPERIMENTAL CLAIM',
+    validationStatus: 'ENTRY_MAP_REACTION_ACCURACY_48_24_2022_2025',
+    claimAccuracy: 48.24,
+    claimDefinition: 'Reaksi minimal 0,5 ATR searah mapping dalam 16 candle M15 dengan favorable excursion tidak lebih kecil dari adverse excursion.',
+    reason: `${setup.reason || 'Setup Entry Map terdeteksi.'} Entry Map tetap tersedia untuk audit di Analyze, tetapi tidak boleh ditampilkan sebagai setup utama karena akurasi klaim reaksinya 48,24% pada 2022-2025.`
   };
 }
 
@@ -196,8 +198,8 @@ function applyRegimeRouter(result, htfBiases) {
   }
 
   const setupConflict = Boolean(originalBestSetup && forecastDirection && setupDirection(originalBestSetup) !== forecastDirection);
-  const safeSetups = setupConflict ? [] : originalSetups.map(watchOnlySetup).filter(Boolean);
-  const safeBestSetup = setupConflict ? null : watchOnlySetup(originalBestSetup);
+  const experimentalSetups = setupConflict ? [] : originalSetups.map(annotateExperimentalSetup).filter(Boolean);
+  const experimentalBestSetup = setupConflict ? null : annotateExperimentalSetup(originalBestSetup);
 
   result.marketRegime = regime;
   result.strategyRouter = {
@@ -212,9 +214,12 @@ function applyRegimeRouter(result, htfBiases) {
   result.unroutedBestSetup = originalBestSetup;
   result.routerCandidateSetup = router.watchSetup || null;
   result.validatedSetupConflict = setupConflict;
-  result.setups = safeSetups;
-  result.bestSetup = safeBestSetup;
-  result.signal = safeBestSetup?.dir || 'WAIT';
+  result.experimentalSetups = experimentalSetups;
+  result.experimentalBestSetup = experimentalBestSetup;
+  // Only validated entry claims may occupy the primary setup contract.
+  result.setups = [];
+  result.bestSetup = null;
+  result.signal = 'WAIT';
   if (forecast?.active) result.final = forecast.direction;
   result.routerDecision = router.decision;
   return result;
