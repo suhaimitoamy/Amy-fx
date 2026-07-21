@@ -20,31 +20,32 @@ test('Dashboard and Analyze use separate render functions', () => {
   assert.match(source, /renderAnalyzeCard\(validated, regime, router, liquidity\)/);
 });
 
-test('Dashboard contains only compact decision context', () => {
+test('Dashboard contains compact decision context only', () => {
   const dashboard = section('function renderDashboardCard(', 'function renderAnalyzeCard(');
   assert.match(dashboard, /DASHBOARD · MARKET CONTEXT RINGKAS/);
   assert.match(dashboard, /Market State/);
   assert.match(dashboard, /Direction Forecast/);
-  assert.match(dashboard, /Liquidity Tujuan/);
-  assert.match(dashboard, /Market Shift/);
-  assert.match(dashboard, /Status Strategi/);
-  assert.doesNotMatch(dashboard, /MARKET HEALTH/);
+  assert.match(dashboard, /Nearest Liquidity/);
+  assert.match(dashboard, /Market Shift Advisory/);
+  assert.match(dashboard, /Strategy Context/);
+  assert.doesNotMatch(dashboard, /ENGINE DIAGNOSTICS/);
   assert.doesNotMatch(dashboard, /regime-probability-list/);
   assert.doesNotMatch(dashboard, /strategy-engine-grid/);
   assert.doesNotMatch(dashboard, /router-reasons/);
 });
 
-test('Analyze keeps complete technical context', () => {
+test('Analyze keeps complete technical context and labels raw scores honestly', () => {
   const helper = section('function validatedContextMarkup(', 'function waitingMarkup(');
   const analyze = section('function renderAnalyzeCard(', 'function renderCard(');
   assert.match(helper, /VALIDATED MARKET CONTEXT/);
   assert.match(analyze, /ANALYZE · VALIDATED CONTEXT \+ TECHNICAL SUPPORT/);
   assert.match(analyze, /validatedContextMarkup\(validated\)/);
   assert.match(analyze, /REGIME CONTEXT/);
-  assert.match(analyze, /MARKET HEALTH/);
+  assert.match(analyze, /ENGINE DIAGNOSTICS/);
   assert.match(analyze, /STRATEGY ROUTER/);
   assert.match(analyze, /LIQUIDITY CONTEXT/);
   assert.match(analyze, /router-reasons/);
+  assert.match(analyze, /belum terkalibrasi sebagai probabilitas/);
 });
 
 test('Legacy focus mode no longer hides the rest of Dashboard', () => {
