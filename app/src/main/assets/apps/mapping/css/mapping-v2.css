@@ -1,0 +1,35 @@
+.mapping-v2-decision-card{border:1px solid rgba(218,178,58,.42);background:linear-gradient(180deg,rgba(24,22,14,.98),rgba(12,12,12,.98));box-shadow:0 18px 50px rgba(0,0,0,.28)}
+.mapping-v2-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+.mapping-v2-head h2{margin:5px 0 0;font-size:22px;line-height:1.25}
+.mapping-v2-context-badge{flex:0 0 auto;border:1px solid rgba(218,178,58,.36);border-radius:999px;padding:7px 9px;color:#d9b83f;background:rgba(218,178,58,.08);font-size:9px;font-weight:800;letter-spacing:.08em;text-align:center}
+.mapping-v2-primary{padding:18px;border-radius:18px;border:1px solid #303030;background:#090909;margin-bottom:12px}
+.mapping-v2-primary small{display:block;color:#929292;font-size:10px;font-weight:800;letter-spacing:.12em}
+.mapping-v2-primary strong{display:block;margin:6px 0 4px;font-size:38px;line-height:1;font-weight:900}
+.mapping-v2-primary p{margin:8px 0 0;color:#d7d7d7;font-size:13px;line-height:1.55}
+.mapping-v2-primary.buy{border-left:4px solid #40d88a}.mapping-v2-primary.buy strong{color:#56e39b}
+.mapping-v2-primary.sell{border-left:4px solid #ff6c73}.mapping-v2-primary.sell strong{color:#ff747b}
+.mapping-v2-primary.wait{border-left:4px solid #d9b83f}.mapping-v2-primary.wait strong{color:#e2c44f}
+.mapping-v2-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-bottom:10px}
+.mapping-v2-overview>div,.mapping-v2-evidence>div{min-width:0;padding:12px;border-radius:14px;background:#111;border:1px solid #242424}
+.mapping-v2-overview small,.mapping-v2-evidence small{display:block;color:#8d8d8d;font-size:10px;margin-bottom:5px}
+.mapping-v2-overview strong,.mapping-v2-evidence strong{display:block;color:#f1f1f1;font-size:13px;line-height:1.3;overflow-wrap:anywhere}
+.mapping-v2-overview span{display:block;color:#a7a7a7;font-size:10px;margin-top:5px}
+.mapping-v2-overview .stable{border-color:rgba(64,216,138,.3)}
+.mapping-v2-overview .watch{border-color:rgba(217,184,63,.38)}
+.mapping-v2-overview .warning,.mapping-v2-overview .danger{border-color:rgba(255,108,115,.45)}
+.mapping-v2-overview .warning strong,.mapping-v2-overview .danger strong{color:#ff747b}
+.mapping-v2-evidence{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.mapping-v2-why{padding:13px 14px;border-radius:14px;background:#0b0b0b;border:1px solid #252525}
+.mapping-v2-why b{color:#d9b83f}.mapping-v2-why ul{margin:8px 0 0;padding-left:18px}.mapping-v2-why li{color:#d6d6d6;font-size:12px;line-height:1.5;margin:4px 0}
+.mapping-v2-probabilities{margin-top:10px;border:1px solid #292929;border-radius:14px;background:#0d0d0d;padding:0 12px}
+.mapping-v2-probabilities summary{padding:12px 0;color:#d9b83f;font-size:12px;font-weight:800;cursor:pointer}
+.mapping-v2-probabilities>div{padding:0 0 12px}
+.mapping-v2-probability{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;align-items:center;margin:8px 0;font-size:11px;color:#bdbdbd}
+.mapping-v2-probability i{grid-column:1/3;display:block;height:4px;border-radius:999px;background:linear-gradient(90deg,#d9b83f var(--mapping-v2-value),#252525 var(--mapping-v2-value))}
+.mapping-v2-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.mapping-v2-actions button{border:1px solid #323232;border-radius:12px;background:#121212;color:#aaa;padding:11px;font-size:12px;font-weight:800}
+.mapping-v2-actions button.active{border-color:#d9b83f;color:#e0c24c;background:rgba(217,184,63,.09)}
+.mapping-v2-hidden-note{margin:10px 0 0;color:#858585;font-size:11px;line-height:1.45;text-align:center}
+body.mapping-v2-focus-mode #app>.mapping-v2-decision-card~*{display:none!important}
+body.mapping-v2-focus-mode #app{padding-bottom:105px}
+@media(max-width:560px){.mapping-v2-head{align-items:stretch}.mapping-v2-context-badge{max-width:128px}.mapping-v2-overview{grid-template-columns:1fr 1fr}.mapping-v2-overview>div:last-child{grid-column:1/3}.mapping-v2-evidence{grid-template-columns:1fr 1fr}.mapping-v2-primary strong{font-size:34px}}
