@@ -41,15 +41,14 @@ test('liquidity context does not generate direction or trade decision', () => {
   assert.doesNotMatch(context.statement, /\bBUY\b|\bSELL\b/);
 });
 
-test('Preview UI separates validated Dashboard claims from Analyze experiments', () => {
+test('Preview UI presents a professional hierarchy with compact advanced detail', () => {
   const ui = readFileSync(new URL('../app/src/main/assets/apps/mapping/js/market-intent-ui.js', import.meta.url), 'utf8');
-  assert.match(ui, /DASHBOARD · RINGKASAN KLAIM TERVALIDASI/);
-  assert.match(ui, /AKURASI KLAIM FITUR/);
-  assert.match(ui, /REGIME EKSPERIMENTAL/);
-  assert.match(ui, /ENGINE DIAGNOSTICS/);
-  assert.match(ui, /STRATEGY ROUTER/);
-  assert.match(ui, /NEAREST LIQUIDITY/);
-  assert.match(ui, /HTF-ALIGNED LIQUIDITY/);
-  assert.match(ui, /tetap bukan sinyal entry|BSL\/SSL bukan BUY\/SELL/);
+  assert.match(ui, /AMY FX · MARKET INTELLIGENCE/);
+  assert.match(ui, /RINGKASAN MARKET/);
+  assert.match(ui, /RELIABILITAS HISTORIS/);
+  assert.match(ui, /Performa Historis Model/);
+  assert.match(ui, /Konteks Market Lanjutan/);
+  assert.match(ui, /TARGET TERDEKAT/);
+  assert.match(ui, /TARGET TIMEFRAME BESAR/);
   assert.doesNotMatch(ui, /NAIK KE BSL|TURUN KE SSL|Market mau ke mana\?/);
 });
