@@ -35,9 +35,11 @@ test('Dashboard contains only compact decision context', () => {
 });
 
 test('Analyze keeps complete technical context', () => {
+  const helper = section('function validatedContextMarkup(', 'function waitingMarkup(');
   const analyze = section('function renderAnalyzeCard(', 'function renderCard(');
+  assert.match(helper, /VALIDATED MARKET CONTEXT/);
   assert.match(analyze, /ANALYZE · VALIDATED CONTEXT \+ TECHNICAL SUPPORT/);
-  assert.match(analyze, /VALIDATED MARKET CONTEXT/);
+  assert.match(analyze, /validatedContextMarkup\(validated\)/);
   assert.match(analyze, /REGIME CONTEXT/);
   assert.match(analyze, /MARKET HEALTH/);
   assert.match(analyze, /STRATEGY ROUTER/);
