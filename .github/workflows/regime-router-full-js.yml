@@ -1,0 +1,33 @@
+name: Regime Router Full JavaScript
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  full-js:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Fetch pull request commit
+        run: |
+          git init --quiet .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --depth=1 --quiet origin "${GITHUB_SHA}"
+          git checkout --quiet FETCH_HEAD
+
+      - name: Run full regression with compact failure output
+        run: |
+          set +e
+          node --test --test-reporter=spec tests/*.test.mjs > /tmp/tests.log 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            grep -n -A22 -B5 -E '✖|not ok|AssertionError|ERR_ASSERTION|tests failed' /tmp/tests.log | tail -n 260 || tail -n 260 /tmp/tests.log
+            exit "$status"
+          fi
+          tail -n 35 /tmp/tests.log
