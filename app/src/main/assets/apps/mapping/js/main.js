@@ -203,8 +203,21 @@ function syncAutomaticScannerUi() {
   if (warning && warning.innerHTML !== warningHtml) warning.innerHTML = warningHtml;
 }
 
+export function pruneStorage() {
+  try {
+    state.logs = state.logs.slice(0, 100);
+    state.analyses = state.analyses.slice(0, 30);
+    state.setups = state.setups.slice(0, 30);
+    save();
+
+    const keysToClean = ['amy_mapping_tmp', 'amy_test_cache', 'amy_debug_log'];
+    keysToClean.forEach(key => localStorage.removeItem(key));
+  } catch (_) {}
+}
+
 function initApp() {
   try { localStorage.removeItem('twelve_api_key'); } catch (_) {}
+  pruneStorage();
 
   document.querySelectorAll('.nav button')
     .forEach(button => button.addEventListener('click', () => setTab(button.dataset.tab)));

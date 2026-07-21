@@ -264,6 +264,31 @@ function syncMarketSnapshot(){
   const d=decisionData();
   window.AmyFXIntel.write('mapping',{price:analyzeLivePrice(),bias:d.bias,direction:d.direction,status:d.status,confidence:d.confidence,tf:state.tf});
 }
+export function syncStickyBar() {
+  const bar = document.getElementById('sticky-bar');
+  if (!bar) return;
+  const isDashboardOrAnalyze = ['Dashboard', 'Analyze'].includes(state.tab);
+  const shouldShow = isDashboardOrAnalyze && window.scrollY > 110;
+  bar.classList.toggle('visible', shouldShow);
+  bar.setAttribute('aria-hidden', String(!shouldShow));
+  if (shouldShow) {
+    const priceEl = bar.querySelector('.sticky-price');
+    const biasEl = bar.querySelector('.sticky-bias');
+    if (priceEl) priceEl.textContent = `$${p2(state.price)}`;
+    if (biasEl) {
+      const dec = decisionData();
+      const b = (dec.bias || 'WAIT').toUpperCase();
+      biasEl.textContent = b;
+      biasEl.className = `sticky-bias ${mapBiasClass(b)}`;
+    }
+  }
+}
+if (typeof window !== 'undefined') window.addEventListener('scroll', syncStickyBar, { passive: true });
+
+export function skeletonCardMarkup() {
+  return `<section class="card skeleton-card"><div class="skeleton-line h-24 w-50"></div><div class="skeleton-line w-100"></div><div class="skeleton-line w-75"></div></section>`;
+}
+
 export function renderSoft(){
   let c=document.getElementById('conn');
   if(c){c.textContent=state.conn;c.className=state.conn==='Connected'?'status on':'status';}
@@ -273,6 +298,7 @@ export function renderSoft(){
   if(tw)tw.textContent=(state.conn==='Connected'?'● Live Price':'○ '+state.conn)+' • WIB '+nowTime();
   let kw=document.getElementById('kz-wib');
   if(kw)kw.textContent='WIB '+nowTime();
+  syncStickyBar();
 }
 export function applyAmyFxRoute(){
   let route='';
