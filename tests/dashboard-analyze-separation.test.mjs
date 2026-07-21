@@ -20,32 +20,28 @@ test('Dashboard and Analyze use separate render functions', () => {
   assert.match(source, /renderAnalyzeCard\(result, validated, regime, router, liquidity\)/);
 });
 
-test('Dashboard contains only the three primary claim outputs', () => {
+test('Dashboard contains only the three primary market outputs', () => {
   const dashboard = section('function renderDashboardCard(', 'function renderAnalyzeCard(');
-  assert.match(dashboard, /DASHBOARD · RINGKASAN KLAIM TERVALIDASI/);
-  assert.match(dashboard, /Market State/);
-  assert.match(dashboard, /Direction Forecast/);
-  assert.match(dashboard, /Nearest Liquidity/);
-  assert.doesNotMatch(dashboard, /Market Shift Advisory/);
-  assert.doesNotMatch(dashboard, /Strategy Context/);
-  assert.doesNotMatch(dashboard, /ENGINE DIAGNOSTICS/);
-  assert.doesNotMatch(dashboard, /regime-probability-list/);
+  assert.match(dashboard, /AMY FX · MARKET INTELLIGENCE/);
+  assert.match(dashboard, /Kondisi market saat ini/);
+  assert.match(dashboard, /marketOverviewMarkup\(validated, liquidity\)/);
+  assert.doesNotMatch(dashboard, /Konteks Market Lanjutan/);
+  assert.doesNotMatch(dashboard, /Performa Historis Model/);
   assert.doesNotMatch(dashboard, /strategy-engine-grid/);
-  assert.doesNotMatch(dashboard, /router-reasons/);
+  assert.doesNotMatch(dashboard, /regime-probability-list/);
 });
 
-test('Analyze keeps complete detail and feature claim accuracy', () => {
-  const helper = section('function validatedContextMarkup(', 'function waitingMarkup(');
+test('Analyze presents performance and advanced context in compact disclosures', () => {
+  const helper = section('function marketOverviewMarkup(', 'function waitingMarkup(');
   const analyze = section('function renderAnalyzeCard(', 'function renderCard(');
-  assert.match(helper, /VALIDATED MARKET CONTEXT/);
-  assert.match(analyze, /AKURASI KLAIM FITUR/);
-  assert.match(analyze, /REFERENSI KLAIM PINE TERKUNCI/);
-  assert.match(analyze, /REGIME EKSPERIMENTAL/);
-  assert.match(analyze, /ENGINE DIAGNOSTICS/);
-  assert.match(analyze, /STRATEGY ROUTER/);
-  assert.match(analyze, /LIQUIDITY CONTEXT/);
-  assert.match(analyze, /experimentalEntryMapMarkup\(result\)/);
-  assert.match(analyze, /router-reasons/);
+  assert.match(helper, /RINGKASAN MARKET/);
+  assert.match(analyze, /RELIABILITAS HISTORIS/);
+  assert.match(analyze, /Performa Historis Model/);
+  assert.match(analyze, /Konteks Market Lanjutan/);
+  assert.match(analyze, /Target & Skenario Harga/);
+  assert.match(analyze, /professional-disclosure/);
+  assert.match(analyze, /scenarioMarkup\(result, router\)/);
+  assert.doesNotMatch(analyze, /<details class="professional-disclosure" open>/);
 });
 
 test('Legacy focus mode no longer hides the rest of Dashboard', () => {
