@@ -31,7 +31,12 @@ const ACTIONABLE_TYPES = new Set([
   'SWEEP MSS REVERSAL'
 ]);
 
-const ACTIONABLE_EXECUTION_MODES = new Set(['', 'M15_PRECISION', 'M15_ENTRY_MAP', 'REGIME_ROUTED_M15']);
+const ACTIONABLE_EXECUTION_MODES = new Set([
+  '',
+  'M15_PRECISION',
+  'M15_ENTRY_MAP',
+  'REGIME_ROUTED_M15'
+]);
 
 function number(value) {
   const parsed = Number(value);
@@ -61,7 +66,13 @@ function isValidOhlc(row) {
 }
 
 function normalizeRow(row) {
-  return { ...row, open: String(number(row.open)), high: String(number(row.high)), low: String(number(row.low)), close: String(number(row.close)) };
+  return {
+    ...row,
+    open: String(number(row.open)),
+    high: String(number(row.high)),
+    low: String(number(row.low)),
+    close: String(number(row.close))
+  };
 }
 
 function frozenRunIndexes(rows) {
@@ -85,12 +96,18 @@ function frozenRunIndexes(rows) {
     }
   };
   for (let index = 1; index <= rows.length; index += 1) {
-    if (index === rows.length) { finish(index); break; }
+    if (index === rows.length) {
+      finish(index);
+      break;
+    }
     const previous = rows[index - 1];
     const current = rows[index];
     const anchor = number(rows[start]?.open) || 1;
     const tolerance = Math.max(0.03, Math.abs(anchor) * 0.00001);
-    if (Math.abs(number(current.open) - number(previous.open)) > tolerance) { finish(index); start = index; }
+    if (Math.abs(number(current.open) - number(previous.open)) > tolerance) {
+      finish(index);
+      start = index;
+    }
   }
   return marked;
 }
@@ -103,9 +120,15 @@ export function sanitizeCandleValues(values, interval = '15min') {
   let malformed = 0;
   let duplicates = 0;
   for (const row of chronological) {
-    if (!isValidOhlc(row) || !parseTime(row.datetime)) { malformed += 1; continue; }
+    if (!isValidOhlc(row) || !parseTime(row.datetime)) {
+      malformed += 1;
+      continue;
+    }
     const key = String(row.datetime);
-    if (seen.has(key)) { duplicates += 1; continue; }
+    if (seen.has(key)) {
+      duplicates += 1;
+      continue;
+    }
     seen.add(key);
     valid.push(normalizeRow(row));
   }
@@ -138,14 +161,16 @@ export function sanitizeCandleValues(values, interval = '15min') {
 }
 
 export function classifyBreak(breakInfo, confirmedTrend = 'NEUTRAL') {
-  if (!breakInfo) return { state: 'WAIT', title: 'BELUM ADA BREAK VALID', attempt: 'NONE', confirmedTrend, isConfirmed: false, explanation: 'Belum ada candle close yang mengonfirmasi BOS atau CHOCH.' };
+  if (!breakInfo) {
+    return { state: 'WAIT', title: 'BELUM ADA BREAK VALID', attempt: 'NONE', confirmedTrend, isConfirmed: false, explanation: 'Belum ada candle close yang mengonfirmasi BOS atau CHOCH.' };
+  }
   const failed = breakInfo.breakType === 'BREAK_FAILED' || breakInfo.failed;
   const sweep = breakInfo.breakType === 'SWEEP_ONLY' || breakInfo.sweepOnly;
   const valid = breakInfo.breakType === 'VALID_BREAK' && breakInfo.valid;
   const attempt = breakInfo.dir === 'BEARISH' ? 'BEARISH' : breakInfo.dir === 'BULLISH' ? 'BULLISH' : 'NONE';
   const liquidity = attempt === 'BEARISH' ? 'SSL' : attempt === 'BULLISH' ? 'BSL' : 'LIQUIDITY';
   if (failed) return { state: 'FAILED', title: 'BREAK GAGAL DIPERTAHANKAN', attempt, confirmedTrend, isConfirmed: false, explanation: 'Break sebelumnya gagal dipertahankan karena harga kembali close melewati level konfirmasi.' };
-  if (sweep) return { state: 'SWEEP', title: `${liquidity} SWEEP — BELUM ADA BOS`, attempt, confirmedTrend, isConfirmed: false, explanation: `Harga menyapu ${liquidity} dengan wick, tetapi candle close kembali ke dalam struktur.` };
+  if (sweep) return { state: 'SWEEP', title: `${liquidity} SWEEP — BELUM ADA BOS`, attempt, confirmedTrend, isConfirmed: false, explanation: `Harga menyapu ${liquidity} dengan wick, tetapi candle close kembali ke dalam struktur sehingga sweep tidak mengesahkan BOS.` };
   if (valid) return { state: 'CONFIRMED', title: `VALID ${breakInfo.kind || 'STRUCTURE BREAK'} ${attempt}`, attempt, confirmedTrend: attempt, isConfirmed: true, explanation: `Candle sudah close melewati level struktur${breakInfo.hasDisplacement ? ' dan didukung displacement' : ''}.` };
   return { state: 'WAIT', title: 'BELUM ADA BREAK VALID', attempt, confirmedTrend, isConfirmed: false, explanation: 'Belum ada BOS atau CHOCH yang memenuhi syarat body close.' };
 }
