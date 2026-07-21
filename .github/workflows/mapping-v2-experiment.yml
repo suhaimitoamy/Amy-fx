@@ -1,26 +1,39 @@
-name: Validated Context + Regime Router Experiment
+name: Mapping Claim Accuracy + Preview Update
 
 on:
   push:
     branches:
       - experiment/mapping-regime-engine-20260721
+    paths-ignore:
+      - preview-update.json
   pull_request:
     branches:
       - main
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   statuses: write
 
 concurrency:
-  group: validated-context-regime-${{ github.ref }}
+  group: mapping-claim-preview-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  PREVIEW_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/mapping-regime-engine-20260721/preview-update.json
+  AMYFX_KEYSTORE_PATH: /tmp/amy-fx-signing.keystore
+  AMYFX_KEYSTORE_PASSWORD: android
+  AMYFX_KEY_ALIAS: androiddebugkey
+  AMYFX_KEY_PASSWORD: android
+  AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
+  AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
+  AMYFX_APP_LABEL: Amy FX Preview
+  AMYFX_URI_SCHEME: amyfxpreview
+
 jobs:
-  regime-router-validation:
+  claim-accuracy-validation:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout experiment branch
         uses: actions/checkout@v4
@@ -32,8 +45,10 @@ jobs:
 
       - name: Check JavaScript syntax
         run: |
+          set -euo pipefail
           node --check app/src/main/assets/apps/mapping/js/engine/market-math.js
           node --check app/src/main/assets/apps/mapping/js/engine/validated-market-context.js
+          node --check app/src/main/assets/apps/mapping/js/engine/mapping-claim-accuracy.js
           node --check app/src/main/assets/apps/mapping/js/engine/market-regime-engine.js
           node --check app/src/main/assets/apps/mapping/js/engine/regime-state-machine.js
           node --check app/src/main/assets/apps/mapping/js/engine/strategy-router-engine.js
@@ -47,71 +62,46 @@ jobs:
           node --check app/src/main/assets/apps/mapping/js/api/market-data.js
           node --check app/src/main/assets/apps/mapping/js/integrity/mapping-integrity-core.js
           node --check app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          node --check app/src/main/assets/apps/mapping/js/mapping-v2.js
-          node --check tools/backtest-market-regime-v2.mjs
-          node --check tools/backtest-shift-lag-v2.mjs
+          node --check tools/configure-preview-web-version.mjs
 
-      - name: Verify validated context wiring, separated views and safety contract
+      - name: Verify authority and locked-rule safety contract
         run: |
-          grep -Fq 'Amy FX Preview · Regime Router' app/src/main/assets/apps/mapping/index.html
-          grep -Fq 'Market Regime • Strategy Router • Market Shift' app/src/main/assets/apps/mapping/index.html
-          grep -Fq 'VALIDATED MARKET CONTEXT' app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          grep -Fq 'DASHBOARD · MARKET CONTEXT RINGKAS' app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          grep -Fq 'ANALYZE · VALIDATED CONTEXT + TECHNICAL SUPPORT' app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          grep -Fq 'REGIME CONTEXT' app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          grep -Fq 'ENGINE DIAGNOSTICS' app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          grep -Fq 'STRATEGY ROUTER' app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          grep -Fq 'NEAREST LIQUIDITY' app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          grep -Fq 'HTF-ALIGNED LIQUIDITY' app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          grep -Fq 'AMY_VALIDATED_PINE_PARITY' app/src/main/assets/apps/mapping/js/engine/validated-market-context.js
+          set -euo pipefail
+          grep -Fq 'DASHBOARD · RINGKASAN KLAIM TERVALIDASI' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'AKURASI KLAIM FITUR' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'REFERENSI KLAIM PINE TERKUNCI' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'ENTRY MAP EKSPERIMENTAL' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          grep -Fq 'MAPPING_CLAIM_ACCURACY' app/src/main/assets/apps/mapping/js/engine/mapping-claim-accuracy.js
+          grep -Fq 'ENTRY_MAP_REACTION_ACCURACY_48_24_2022_2025' app/src/main/assets/apps/mapping/js/api/market-data.js
+          grep -Fq 'STRATEGY_SUITABILITY_ACCURACY_48_53_2022_2025' app/src/main/assets/apps/mapping/js/engine/strategy-router-engine.js
+          grep -Fq 'result.setups = []' app/src/main/assets/apps/mapping/js/api/market-data.js
+          grep -Fq 'result.bestSetup = null' app/src/main/assets/apps/mapping/js/api/market-data.js
+          grep -Fq "result.signal = 'WAIT'" app/src/main/assets/apps/mapping/js/api/market-data.js
           grep -Fq 'regimeMayOverrideDirectionForecast: false' app/src/main/assets/apps/mapping/js/engine/validated-market-context.js
-          grep -Fq 'evaluateValidatedMarketContext' app/src/main/assets/apps/mapping/js/api/market-data.js
           grep -Fq 'mayOverrideValidatedDirectionForecast: false' app/src/main/assets/apps/mapping/js/api/market-data.js
           grep -Fq 'mayReplaceEntryMap: false' app/src/main/assets/apps/mapping/js/api/market-data.js
           grep -Fq 'marketShiftHardGate: false' app/src/main/assets/apps/mapping/js/engine/strategy-router-engine.js
           grep -Fq 'routerCanReplaceEntrySetup: false' app/src/main/assets/apps/mapping/js/engine/strategy-router-engine.js
-          grep -Fq 'strategyGateEnabled: true' app/src/main/assets/apps/mapping/js/engine/market-regime-engine.js
-          grep -Fq 'automaticTradeExecution: false' app/src/main/assets/apps/mapping/js/engine/market-regime-engine.js
-          grep -Fq 'REGIME_ROUTED_M15' app/src/main/assets/apps/mapping/js/integrity/mapping-integrity-core.js
-          ! grep -Fq 'NAIK KE BSL' app/src/main/assets/apps/mapping/js/market-intent-ui.js
-          ! grep -Fq 'TURUN KE SSL' app/src/main/assets/apps/mapping/js/market-intent-ui.js
+          test -f docs/MAPPING_CLAIM_ACCURACY_2022_2025.md
+          test -f backtest/mapping-claim-accuracy-2022-2025-summary.json
 
-      - name: Run validated context and mapping safety tests
-        run: node --test tests/validated-market-context-parity.test.mjs tests/dashboard-analyze-separation.test.mjs tests/mapping-context-safety.test.mjs
-
-      - name: Run existing regime and router tests for diagnostics
-        continue-on-error: true
-        run: node --test tests/market-regime-engine-v2.test.mjs tests/market-intent-engine-v3.test.mjs tests/regime-strategy-router-v3.test.mjs
-
-      - name: Run complete JavaScript regression for diagnostics
-        continue-on-error: true
+      - name: Run claim, parity, view and updater tests
         run: |
-          set +e
-          node --test --test-reporter=spec tests/*.test.mjs > /tmp/full-js-tests.log 2>&1
-          status=$?
-          if [ "$status" -ne 0 ]; then
-            echo '--- FAILED TEST EXCERPTS ---'
-            grep -n -A18 -B6 -E '✖|not ok|AssertionError|ERR_ASSERTION|tests failed' /tmp/full-js-tests.log | tail -n 220 || tail -n 220 /tmp/full-js-tests.log
-            exit "$status"
-          fi
-          tail -n 30 /tmp/full-js-tests.log
+          set -euo pipefail
+          node --test \
+            tests/validated-market-context-parity.test.mjs \
+            tests/dashboard-analyze-separation.test.mjs \
+            tests/mapping-context-safety.test.mjs \
+            tests/mapping-claim-accuracy.test.mjs \
+            tests/preview-updater-config.test.mjs
 
-  android-preview-build:
-    needs: regime-router-validation
+      - name: Run full JavaScript regression
+        run: node --test --test-reporter=spec tests/*.test.mjs
+
+  android-quality:
+    needs: claim-accuracy-validation
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-    env:
-      AMYFX_KEYSTORE_PATH: /tmp/amy-fx-signing.keystore
-      AMYFX_KEYSTORE_PASSWORD: android
-      AMYFX_KEY_ALIAS: androiddebugkey
-      AMYFX_KEY_PASSWORD: android
-      AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
-      AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
-      AMYFX_APP_LABEL: Amy FX Preview
-      AMYFX_URI_SCHEME: amyfxpreview
-      AMYFX_VERSION_CODE: '90040'
-      AMYFX_VERSION_NAME: 1.4.15-preview.3
-      AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/mapping-regime-engine-20260721/preview-update.json
+    timeout-minutes: 35
     steps:
       - name: Checkout experiment branch
         uses: actions/checkout@v4
@@ -129,14 +119,77 @@ jobs:
       - name: Install Android SDK 35
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Restore permanent Amy FX preview signing key
+      - name: Run Android unit tests and release lint
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew :app:testReleaseUnitTest :app:lintRelease --stacktrace --no-daemon --no-configuration-cache
+
+  signed-preview-builds:
+    needs:
+      - claim-accuracy-validation
+      - android-quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: bridge
+            version_name: 1.4.15-preview.4
+            version_code: '90041'
+            apk_name: AmyFX-Preview-Bridge.apk
+            artifact_name: AmyFX-Preview-Bridge-v1.4.15-preview.4
+          - variant: final
+            version_name: 1.4.15-preview.5
+            version_code: '90042'
+            apk_name: AmyFX-Preview-latest.apk
+            artifact_name: AmyFX-Preview-ClaimAccuracy-v1.4.15-preview.5
+    env:
+      AMYFX_VERSION_NAME: ${{ matrix.version_name }}
+      AMYFX_VERSION_CODE: ${{ matrix.version_code }}
+      AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/mapping-regime-engine-20260721/preview-update.json
+    steps:
+      - name: Checkout experiment branch
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Configure Preview version and updater channel
+        run: |
+          set -euo pipefail
+          node tools/configure-preview-web-version.mjs "$AMYFX_VERSION_NAME" "$AMYFX_VERSION_CODE" "$AMYFX_UPDATE_MANIFEST_URL"
+          node --check app/src/main/assets/app-version.js
+          node --check app/src/main/assets/update-checker.js
+          grep -Fq "name: '$AMYFX_VERSION_NAME', code: $AMYFX_VERSION_CODE" app/src/main/assets/app-version.js
+          grep -Fq "window.AmyFXUpdateManifestUrl = '$AMYFX_UPDATE_MANIFEST_URL';" app/src/main/assets/app-version.js
+          grep -Fq 'Update Amy FX Preview Tersedia' app/src/main/assets/update-checker.js
+          grep -Fq 'announceNativeUpdate(latestCode, latestName);' app/src/main/assets/update-checker.js
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Restore permanent Preview signing key
         id: signing-cache
         uses: actions/cache/restore@v4
         with:
           path: ~/.android/debug.keystore
           key: amy-fx-debug-keystore-v1
 
-      - name: Verify permanent preview signing key
+      - name: Verify permanent Preview signing key
         run: |
           set -euo pipefail
           test "${{ steps.signing-cache.outputs.cache-hit }}" = "true"
@@ -144,12 +197,13 @@ jobs:
           actual="$(keytool -list -v -keystore "$AMYFX_KEYSTORE_PATH" -storepass "$AMYFX_KEYSTORE_PASSWORD" -alias "$AMYFX_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1)"
           test "$actual" = "$AMYFX_SIGNING_CERT_SHA256"
 
-      - name: Build signed Amy FX Preview Validated Context APK
+      - name: Build signed Amy FX Preview
         run: |
+          set -euo pipefail
           chmod +x gradlew
           ./gradlew :app:assembleRelease --stacktrace --no-daemon --no-configuration-cache
 
-      - name: Verify preview package, label, version and signer
+      - name: Verify package, label, version and signer
         run: |
           set -euo pipefail
           APK='app/build/outputs/apk/release/app-release.apk'
@@ -157,7 +211,7 @@ jobs:
           AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
           APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
           "$AAPT" dump badging "$APK" | tee /tmp/preview-badging.txt
-          grep -Fq "package: name='com.amyelitesuite.learningpreview' versionCode='90040' versionName='1.4.15-preview.3'" /tmp/preview-badging.txt
+          grep -Fq "package: name='com.amyelitesuite.learningpreview' versionCode='$AMYFX_VERSION_CODE' versionName='$AMYFX_VERSION_NAME'" /tmp/preview-badging.txt
           grep -Fq "application-label:'Amy FX Preview'" /tmp/preview-badging.txt
           "$APKSIGNER" verify --verbose "$APK"
           cert_entry="$(unzip -Z1 "$APK" | grep -E '^META-INF/[^/]+\.(RSA|DSA|EC)$' | head -n1)"
@@ -166,37 +220,154 @@ jobs:
           expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           actual="$(keytool -printcert -file /tmp/amyfx-preview-cert | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           test "$actual" = "$expected"
-          cp "$APK" AmyFX-Preview-ValidatedContext.apk
+          cp "$APK" "${{ matrix.apk_name }}"
 
-      - name: Upload signed Amy FX Preview APK
+      - name: Upload signed Preview APK
         uses: actions/upload-artifact@v4
         with:
-          name: AmyFX-Preview-ValidatedContext-v1.4.15-preview.3
-          path: AmyFX-Preview-ValidatedContext.apk
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.apk_name }}
           if-no-files-found: error
           retention-days: 14
 
-  report-status:
-    if: always()
-    needs:
-      - regime-router-validation
-      - android-preview-build
+  publish-preview-update:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/experiment/mapping-regime-engine-20260721'
+    needs: signed-preview-builds
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - name: Publish combined experiment status
+      - name: Checkout experiment branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download signed APKs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: AmyFX-Preview-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Verify downloaded APK files
+        run: |
+          set -euo pipefail
+          test -s release-assets/AmyFX-Preview-Bridge.apk
+          test -s release-assets/AmyFX-Preview-latest.apk
+          sha256sum release-assets/*.apk
+
+      - name: Publish one-time bridge and final Preview releases
         env:
           GH_TOKEN: ${{ github.token }}
-          VALIDATION_RESULT: ${{ needs.regime-router-validation.result }}
-          BUILD_RESULT: ${{ needs.android-preview-build.result }}
         run: |
+          set -euo pipefail
+          BRIDGE_TAG='amyfx-preview-v1.4.15-preview.4'
+          FINAL_TAG='amyfx-preview-v1.4.15-preview.5'
+
+          for tag in "$BRIDGE_TAG" "$FINAL_TAG"; do
+            if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes
+            fi
+            gh api --method DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$tag" >/dev/null 2>&1 || true
+          done
+
+          cat > /tmp/bridge-notes.md <<'NOTES'
+          One-time updater bridge for Amy FX Preview.
+
+          - Same package and permanent Preview signer as the installed Preview.
+          - Points the in-app updater to the experiment Preview manifest.
+          - After installation, Amy FX Preview automatically detects 1.4.15-preview.5 and displays an update popup plus Android notification.
+          - No uninstall is required, so local Preview data remains intact.
+          NOTES
+
+          cat > /tmp/final-notes.md <<'NOTES'
+          Amy FX Preview claim-accuracy correction.
+
+          - Dashboard contains only Market State, Direction Forecast, and Nearest Liquidity.
+          - Analyze displays each feature against its own accuracy claim, not trade win rate.
+          - Regime, Market Shift, Strategy Router, and Entry Map are explicitly experimental and cannot control the primary decision.
+          - Locked Pine rules and thresholds remain unchanged.
+          NOTES
+
+          gh release create "$BRIDGE_TAG" \
+            "release-assets/AmyFX-Preview-Bridge.apk#AmyFX-Preview-Bridge.apk" \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+            --title 'Amy FX Preview 1.4.15-preview.4 — Updater Bridge' --notes-file /tmp/bridge-notes.md
+
+          gh release create "$FINAL_TAG" \
+            "release-assets/AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+            --title 'Amy FX Preview 1.4.15-preview.5 — Mapping Claim Accuracy' --notes-file /tmp/final-notes.md
+
+          gh release view "$BRIDGE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-Bridge.apk'
+          gh release view "$FINAL_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
+
+      - name: Activate final Preview in-app update manifest
+        run: |
+          set -euo pipefail
+          cat > preview-update.json <<'JSON'
+          {
+            "channel": "mapping-claim-accuracy-preview",
+            "latest_version_code": 90042,
+            "latest_version_name": "1.4.15-preview.5",
+            "versionCode": 90042,
+            "version": "1.4.15-preview.5",
+            "releaseDate": "2026-07-22",
+            "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.5/AmyFX-Preview-latest.apk",
+            "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.5/AmyFX-Preview-latest.apk",
+            "force_update": false,
+            "mandatory": false,
+            "enabled": true,
+            "release_notes": [
+              "Dashboard hanya menampilkan Market State, Direction Forecast, dan Nearest Liquidity",
+              "Analyze menampilkan akurasi klaim setiap fitur, bukan win rate transaksi",
+              "Regime, Market Shift, Strategy Router, dan Entry Map menjadi detail eksperimen tanpa otoritas keputusan",
+              "Valid Break, Sweep Only, dan Failed Break dipisahkan sesuai akurasi klaim masing-masing",
+              "Updater Preview diperbaiki agar update berikutnya muncul lewat popup dan notifikasi Android"
+            ],
+            "changelog": [
+              "Dashboard hanya menampilkan Market State, Direction Forecast, dan Nearest Liquidity",
+              "Analyze menampilkan akurasi klaim setiap fitur, bukan win rate transaksi",
+              "Regime, Market Shift, Strategy Router, dan Entry Map menjadi detail eksperimen tanpa otoritas keputusan",
+              "Valid Break, Sweep Only, dan Failed Break dipisahkan sesuai akurasi klaim masing-masing",
+              "Updater Preview diperbaiki agar update berikutnya muncul lewat popup dan notifikasi Android"
+            ]
+          }
+          JSON
+          python -m json.tool preview-update.json >/dev/null
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add preview-update.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'release: activate Amy FX Preview 1.4.15-preview.5 update [skip ci]'
+            git push origin HEAD:experiment/mapping-regime-engine-20260721
+          fi
+
+  report-status:
+    if: always() && github.event_name != 'pull_request'
+    needs:
+      - claim-accuracy-validation
+      - android-quality
+      - signed-preview-builds
+      - publish-preview-update
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish combined Preview status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLAIM_RESULT: ${{ needs.claim-accuracy-validation.result }}
+          ANDROID_RESULT: ${{ needs.android-quality.result }}
+          BUILD_RESULT: ${{ needs.signed-preview-builds.result }}
+          PUBLISH_RESULT: ${{ needs.publish-preview-update.result }}
+        run: |
+          set -euo pipefail
           state=success
-          description='Validated context parity passed; signed Amy FX Preview APK is ready'
-          if [ "$VALIDATION_RESULT" != 'success' ] || [ "$BUILD_RESULT" != 'success' ]; then
+          description='Claim accuracy validated; bridge and final Preview update published'
+          if [ "$CLAIM_RESULT" != 'success' ] || [ "$ANDROID_RESULT" != 'success' ] || [ "$BUILD_RESULT" != 'success' ] || [ "$PUBLISH_RESULT" != 'success' ]; then
             state=failure
-            description="Validated context failed: validation=$VALIDATION_RESULT preview=$BUILD_RESULT"
+            description="Preview update failed: claims=$CLAIM_RESULT android=$ANDROID_RESULT builds=$BUILD_RESULT publish=$PUBLISH_RESULT"
           fi
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state="$state" \
-            -f context='Validated Context + Regime Experiment' \
+            -f context='Mapping Claim Accuracy + Preview Update' \
             -f description="$description" \
             -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
