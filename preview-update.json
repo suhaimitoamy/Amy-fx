@@ -1,7 +1,7 @@
 {
-  "channel": "market-intent-preview",
-  "versionCode": 90039,
-  "versionName": "1.4.15-preview.2",
+  "channel": "regime-router-preview",
+  "versionCode": 90040,
+  "versionName": "1.4.15-preview.3",
   "enabled": false,
-  "message": "Preview update channel is intentionally manual while Market Intent V3 is under evaluation."
+  "message": "Manual Preview build for Market Regime Engine V3 and active Strategy Router evaluation."
 }
