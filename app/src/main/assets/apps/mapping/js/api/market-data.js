@@ -70,6 +70,7 @@ function publishMappingSnapshot(result = state.result) {
   if (!levels.some(item => item.type === 'SSL') && ssl > 0) levels.push({ type: 'SSL', price: ssl, distance: price > 0 ? ssl - price : 0, status: 'ACTIVE', source: 'MAPPING', timeframe: result?.tf || state.tf });
 
   const validated = result?.validatedMarketContext;
+  validatedDirection(result);
   intel.write('mapping', {
     price,
     bsl,
@@ -138,6 +139,18 @@ function setupDirection(setup) {
   return 0;
 }
 
+function watchOnlySetup(setup) {
+  if (!setup) return null;
+  const terminal = /INVALID|BROKEN|SL HIT|TP HIT|EXPIRED/.test(String(setup.status || '').toUpperCase());
+  if (terminal) return { ...setup };
+  return {
+    ...setup,
+    status: 'WATCH SETUP',
+    validationStatus: 'ENTRY_MODEL_NOT_STABLE_2022_2025',
+    reason: `${setup.reason || 'Setup Entry Map terdeteksi.'} Status diturunkan menjadi WATCH karena performa entry gabungan belum stabil pada setiap tahun 2022-2025.`
+  };
+}
+
 function applyRegimeRouter(result, htfBiases) {
   result = attachValidatedMarketContext(result);
   if (!result || result.tf !== 'M15') return result;
@@ -162,34 +175,46 @@ function applyRegimeRouter(result, htfBiases) {
   });
   regimeRouterState = router.state;
 
+  const originalSetups = Array.isArray(result.setups) ? [...result.setups] : [];
+  const originalBestSetup = result.bestSetup || null;
   const forecast = result.validatedMarketContext?.directionForecast;
   const forecastDirection = forecast?.active ? Number(forecast.directionValue || 0) : 0;
-  const conflict = Boolean(router.setup && forecastDirection && setupDirection(router.setup) !== forecastDirection);
-  if (conflict) {
+  const routerCandidate = router.watchSetup || router.setup || null;
+  const routerConflict = Boolean(routerCandidate && forecastDirection && setupDirection(routerCandidate) !== forecastDirection);
+  if (routerConflict) {
     router = {
       ...router,
       setup: null,
+      watchSetup: null,
       validatedConflict: true,
-      decision: 'WAIT — SETUP BERTENTANGAN DENGAN DIRECTION FORECAST TERVALIDASI',
+      decision: 'WAIT — KANDIDAT ROUTER BERTENTANGAN DENGAN DIRECTION FORECAST',
       reasons: [
-        `Direction Forecast tervalidasi ${forecast.direction}; setup ${router.setup?.dir || 'berlawanan'} tidak diteruskan.`,
+        `Direction Forecast tervalidasi ${forecast.direction}; kandidat ${routerCandidate?.dir || 'berlawanan'} tidak diteruskan.`,
         ...(router.reasons || [])
       ].slice(0, 6)
     };
   }
+
+  const setupConflict = Boolean(originalBestSetup && forecastDirection && setupDirection(originalBestSetup) !== forecastDirection);
+  const safeSetups = setupConflict ? [] : originalSetups.map(watchOnlySetup).filter(Boolean);
+  const safeBestSetup = setupConflict ? null : watchOnlySetup(originalBestSetup);
 
   result.marketRegime = regime;
   result.strategyRouter = {
     ...router,
     role: 'CONTEXT_AND_STRATEGY_SUPPORT',
     mayOverrideValidatedMarketState: false,
-    mayOverrideValidatedDirectionForecast: false
+    mayOverrideValidatedDirectionForecast: false,
+    mayReplaceEntryMap: false,
+    marketShiftHardGate: false
   };
-  result.unroutedSetups = Array.isArray(result.setups) ? [...result.setups] : [];
-  result.unroutedBestSetup = result.bestSetup || null;
-  result.setups = router.setup ? [router.setup] : [];
-  result.bestSetup = router.setup || null;
-  result.signal = router.setup?.dir || 'WAIT';
+  result.unroutedSetups = originalSetups;
+  result.unroutedBestSetup = originalBestSetup;
+  result.routerCandidateSetup = router.watchSetup || null;
+  result.validatedSetupConflict = setupConflict;
+  result.setups = safeSetups;
+  result.bestSetup = safeBestSetup;
+  result.signal = safeBestSetup?.dir || 'WAIT';
   if (forecast?.active) result.final = forecast.direction;
   result.routerDecision = router.decision;
   return result;
