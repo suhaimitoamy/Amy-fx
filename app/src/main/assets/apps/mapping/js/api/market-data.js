@@ -73,7 +73,18 @@ function validatedDirection(result) {
 }
 
 export function buildDirectionDecision(result) {
-  if (!result || result.dataStale) {
+  if (!result) {
+    return {
+      bias: 'WAIT',
+      signal: 'WAIT',
+      source: 'NO_CLEAR_DIRECTION',
+      status: 'WAIT — DATA ANALISIS BELUM TERSEDIA',
+      invalidated: false,
+      invalidationReason: ''
+    };
+  }
+
+  if (result.dataStale) {
     return {
       bias: 'DATA USANG',
       signal: 'WAIT',
@@ -88,6 +99,19 @@ export function buildDirectionDecision(result) {
   const forecast = validated?.directionForecast;
   const marketState = validated?.marketState;
 
+  if (forecast && (forecast.invalidated || forecast.expired) && !forecast.active) {
+    const reason = forecast.invalidationReason
+      || (forecast.invalidated ? 'Direction Forecast dihentikan oleh structural break berlawanan.' : 'Direction Forecast telah melewati batas horizon.');
+    return {
+      bias: 'WAIT',
+      signal: 'WAIT',
+      source: 'VALIDATED_DIRECTION_FORECAST',
+      status: `WAIT — ${reason}`,
+      invalidated: true,
+      invalidationReason: reason
+    };
+  }
+
   if (forecast?.active) {
     const forecastDir = forecast.direction;
     const bias = forecastDir === 'BULLISH' ? 'BUY' : forecastDir === 'BEARISH' ? 'SELL' : 'WAIT';
@@ -97,13 +121,14 @@ export function buildDirectionDecision(result) {
     const conflict = Boolean(rawSetup && setupVal !== 0 && setupVal !== forecastVal);
 
     if (conflict) {
+      const reason = `Setup Entry Map (${rawSetup?.dir || 'Entry Map'}) bertentangan dengan Validated Direction Forecast (${forecastDir}).`;
       return {
         bias,
         signal: 'WAIT',
         source: 'VALIDATED_DIRECTION_FORECAST',
-        status: `WAIT — Setup Entry Map (${rawSetup?.dir || 'Entry Map'}) bertentangan dengan Validated Direction Forecast (${forecastDir})`,
+        status: `WAIT — ${reason}`,
         invalidated: true,
-        invalidationReason: `Setup Entry Map bertentangan dengan Validated Direction Forecast (${forecastDir}).`
+        invalidationReason: reason
       };
     }
 
@@ -124,7 +149,7 @@ export function buildDirectionDecision(result) {
       source: 'VALIDATED_MARKET_STATE',
       status: `WAIT — Market State: ${marketState.state} (Konteks saja, sinyal WAIT)`,
       invalidated: false,
-      invalidationReason: 'Belum ada Direction Forecast tervalidasi yang aktif.'
+      invalidationReason: ''
     };
   }
 
@@ -134,7 +159,7 @@ export function buildDirectionDecision(result) {
     source: 'NO_CLEAR_DIRECTION',
     status: 'WAIT — NO CLEAR DIRECTION',
     invalidated: false,
-    invalidationReason: 'Tidak ada arah yang terverifikasi.'
+    invalidationReason: ''
   };
 }
 
@@ -369,6 +394,7 @@ export async function runAnalysis(tf = state.tf) {
           activeStrategy: 'NO_TRADE'
         }
       };
+      result.directionDecision = buildDirectionDecision(result);
       state.result = result;
       save();
       publishMappingSnapshot(result);

@@ -1,5 +1,5 @@
 import { state, TF, p2, nowTime, sessions, curSession } from '../main.js';
-import { runAnalysis } from '../api/market-data.js';
+import { runAnalysis, buildDirectionDecision } from '../api/market-data.js';
 import { analyze } from '../engine/ict-core.js';
 import { saveConnect, toggleBg, testNotif, downloadLogs } from '../bridge/android-bridge.js';
 import { renderSetupLifecycle } from './setup-lifecycle.js';
@@ -95,60 +95,42 @@ export function renderAnalyzeLive(){
 }
 
 export function decisionData(){
-  let r=state.result;
-  if(!r)return{bias:'WAIT',direction:'TUNGGU',confidence:0,confLabel:'Confidence',status:'TUNGGU',entry:'-',invalid:'-',nearTarget:'-',mainTarget:'-',reason:'Belum ada data mapping.'};
-
-  if (r.directionDecision) {
-    const dd = r.directionDecision;
-    let s = r.bestSetup;
-    let nearTarget = '-';
-    let mainTarget = '-';
-    if (s && !r.dataStale) {
-      nearTarget = s.singleTarget ? `${p2(s.tp1)}` : `${p2(s.tp1)} / ${p2(s.tp2)}`;
-      mainTarget = r.liquidityHierarchy?.drawTarget ? `${r.liquidityHierarchy.drawTarget.type} ${p2(r.liquidityHierarchy.drawTarget.level)}` : (String(s.dir).includes('BUY')?`BSL ${p2(r.bsl)}`:`SSL ${p2(r.ssl)}`);
-    }
+  let r = state.result;
+  if (!r) {
     return {
-      bias: dd.bias,
-      direction: dd.signal === 'WAIT' ? 'TUNGGU' : dd.signal,
-      confidence: dd.source === 'VALIDATED_DIRECTION_FORECAST' ? (r.validatedDirectionForecast?.confidence || 60) : 0,
-      confLabel: 'Bias Confidence',
-      status: dd.status,
-      entry: s ? `${p2(s.entryLow)} - ${p2(s.entryHigh)}` : '-',
-      invalid: s ? p2(s.sl) : '-',
-      nearTarget,
-      mainTarget,
-      reason: dd.invalidationReason || dd.status
+      bias: 'WAIT',
+      direction: 'TUNGGU',
+      confidence: 0,
+      confLabel: 'Confidence',
+      status: 'WAIT — DATA ANALISIS BELUM TERSEDIA',
+      entry: '-',
+      invalid: '-',
+      nearTarget: '-',
+      mainTarget: '-',
+      reason: 'Belum ada data mapping.'
     };
   }
 
-  let bias=r.final||'WAIT';
-  let s=r.bestSetup;
-  let live=s?analyzeSetupLiveState(s):null;
-  if(s&&live?.fatal)return{bias,direction:'TUNGGU',confidence:0,confLabel:'Confidence',status:live.status,entry:`${p2(s.entryLow)} - ${p2(s.entryHigh)}`,invalid:p2(s.sl),nearTarget:'-',mainTarget:'-',reason:live.note+' Tunggu setup baru.'};
-  let rawDir=s?.dir||r.signal||'WAIT';
-  let focus=fmtDir(rawDir,s?s.status:'',s?s.conflictCheck?.conflictLevel:'');
-  let score=s?.score||r.score||0;
-  let aligned=(bias==='BULLISH'&&String(rawDir).includes('BUY'))||(bias==='BEARISH'&&String(rawDir).includes('SELL'));
-  let conflict=['HIGH','MEDIUM','FATAL'].includes(String(s?.conflictCheck?.conflictLevel||''));
-  let confidence=Math.max(0,Math.min(95,Math.round(score+(aligned?8:0)-(conflict?12:0))));
-  let stat = s?(live?.status||fmtStatus(s.status)):'TUNGGU';
-  
-  let confLabel = 'Bias Confidence';
-  if(!s || stat.includes('WAIT') || stat.includes('INVALID') || focus.includes('ABAIKAN')){
-      confidence = 0;
-      confLabel = 'Confidence';
-  } else if(stat.includes('VALID') || stat.includes('READY')){
-      confLabel = 'Setup Confidence';
+  const dd = r.directionDecision || buildDirectionDecision(r);
+  let s = r.bestSetup;
+  let nearTarget = '-';
+  let mainTarget = '-';
+  if (s && !r.dataStale && dd.signal !== 'WAIT') {
+    nearTarget = s.singleTarget ? `${p2(s.tp1)}` : `${p2(s.tp1)} / ${p2(s.tp2)}`;
+    mainTarget = r.liquidityHierarchy?.drawTarget ? `${r.liquidityHierarchy.drawTarget.type} ${p2(r.liquidityHierarchy.drawTarget.level)}` : (String(s.dir).includes('BUY')?`BSL ${p2(r.bsl)}`:`SSL ${p2(r.ssl)}`);
   }
-  
-  let nearTarget='-';
-  let mainTarget='-';
-  if(s){
-     nearTarget = s.singleTarget ? `${p2(s.tp1)}` : `${p2(s.tp1)} / ${p2(s.tp2)}`;
-     mainTarget = r.liquidityHierarchy?.drawTarget ? `${r.liquidityHierarchy.drawTarget.type} ${p2(r.liquidityHierarchy.drawTarget.level)}` : (String(rawDir).includes('BUY')?`BSL ${p2(r.bsl)}`:`SSL ${p2(r.ssl)}`);
-  }
-  let reason=s?`Bias aktif ${bias}. Setup utama membaca ${s.type}. ${live?live.note:''} Area entry ${p2(s.entryLow)} - ${p2(s.entryHigh)}, invalidasi ${p2(s.sl)}.`:`Bias aktif ${bias}. Belum ada setup aktif yang aman, jadi fokus utama adalah menunggu konfirmasi baru.`;
-  return{bias,direction:s?focus:'TUNGGU',confidence,confLabel,status:stat,entry:s?`${p2(s.entryLow)} - ${p2(s.entryHigh)}`:'-',invalid:s?p2(s.sl):'-',nearTarget,mainTarget,reason}
+  return {
+    bias: dd.bias,
+    direction: dd.signal === 'WAIT' ? 'TUNGGU' : dd.signal,
+    confidence: (dd.source === 'VALIDATED_DIRECTION_FORECAST' && !dd.invalidated) ? (r.validatedDirectionForecast?.confidence || 60) : 0,
+    confLabel: 'Bias Confidence',
+    status: dd.status,
+    entry: (s && dd.signal !== 'WAIT') ? `${p2(s.entryLow)} - ${p2(s.entryHigh)}` : '-',
+    invalid: (s && dd.signal !== 'WAIT') ? p2(s.sl) : '-',
+    nearTarget,
+    mainTarget,
+    reason: dd.invalidationReason || dd.status
+  };
 }
 export function amyDecisionCard(){
   let d=decisionData();

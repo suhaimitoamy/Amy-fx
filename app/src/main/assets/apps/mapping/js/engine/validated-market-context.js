@@ -236,7 +236,7 @@ export function advanceValidatedForecast(previous, {
     expired: false
   };
   const expired = state.directionValue !== 0 && state.expiryIndex != null && index > state.expiryIndex;
-  const invalidated = state.directionValue === 1 && rawBreakBear || state.directionValue === -1 && rawBreakBull;
+  const invalidated = (previous?.directionValue === 1 && rawBreakBear) || (previous?.directionValue === -1 && rawBreakBull);
   if (expired || invalidated) {
     state.directionValue = 0;
     state.startIndex = null;
@@ -244,8 +244,11 @@ export function advanceValidatedForecast(previous, {
     state.expiryIndex = null;
     state.expiryTime = NaN;
     state.triggerRule = '';
-    state.expired = expired;
-    state.invalidated = invalidated;
+    state.expired = Boolean(expired);
+    state.invalidated = Boolean(invalidated || expired);
+    state.invalidationReason = invalidated
+      ? 'Direction Forecast dihentikan oleh structural break berlawanan.'
+      : 'Direction Forecast telah melewati batas horizon.';
   }
   const candidateDirection = finite(candidate?.directionValue, 0);
   const canRefresh = state.startIndex == null
@@ -259,6 +262,9 @@ export function advanceValidatedForecast(previous, {
     state.expiryTime = NaN;
     state.triggerRule = candidate.rule;
     state.newForecast = true;
+    state.invalidated = false;
+    state.expired = false;
+    state.invalidationReason = '';
   }
   state.active = state.directionValue !== 0 && state.expiryIndex != null && index <= state.expiryIndex;
   return state;
@@ -486,6 +492,9 @@ export function evaluateValidatedMarketContext(input = {}) {
       expiryIndex: forecast.expiryIndex,
       expiryTime: forecast.expiryTime,
       triggerRule: forecast.triggerRule || '',
+      invalidated: Boolean(forecast.invalidated),
+      expired: Boolean(forecast.expired),
+      invalidationReason: forecast.invalidationReason || '',
       confidenceMeaning: 'DISPLAY_CONFIDENCE_FROM_VALIDATED_BACKTEST_NOT_LIVE_WIN_PROBABILITY'
     },
     latestEvent: {
