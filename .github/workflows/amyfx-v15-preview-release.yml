@@ -1,0 +1,174 @@
+name: Publish Amy FX v1.5 Preview Update
+
+on:
+  push:
+    branches:
+      - feature/amyfx-v1.5-full-enhancements
+    paths:
+      - .github/workflows/amyfx-v15-preview-release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: amyfx-v15-preview-release
+  cancel-in-progress: true
+
+env:
+  AMYFX_VERSION_NAME: 1.5.0-preview.1
+  AMYFX_VERSION_CODE: '90051'
+  AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
+  AMYFX_APP_LABEL: Amy FX Preview
+  AMYFX_URI_SCHEME: amyfxpreview
+  AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/heatmap-news-20260722/preview-update.json
+  AMYFX_KEYSTORE_PATH: /tmp/amy-fx-signing.keystore
+  AMYFX_KEYSTORE_PASSWORD: android
+  AMYFX_KEY_ALIAS: androiddebugkey
+  AMYFX_KEY_PASSWORD: android
+  AMYFX_SIGNING_CERT_SHA256: '47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7'
+
+jobs:
+  publish-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout v1.5 feature branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Configure Preview identity and update channel
+        run: |
+          set -euo pipefail
+          node tools/configure-preview-web-version.mjs "$AMYFX_VERSION_NAME" "$AMYFX_VERSION_CODE" "$AMYFX_UPDATE_MANIFEST_URL"
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 35
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+
+      - name: Restore permanent Preview signing key
+        id: signing-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: amy-fx-debug-keystore-v1
+
+      - name: Verify permanent Preview signing key
+        run: |
+          set -euo pipefail
+          test "${{ steps.signing-cache.outputs.cache-hit }}" = 'true'
+          cp "$HOME/.android/debug.keystore" "$AMYFX_KEYSTORE_PATH"
+          actual="$(keytool -list -v -keystore "$AMYFX_KEYSTORE_PATH" -storepass "$AMYFX_KEYSTORE_PASSWORD" -alias "$AMYFX_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1)"
+          test "$actual" = "$AMYFX_SIGNING_CERT_SHA256"
+
+      - name: Build signed Amy FX Preview
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew :app:assembleRelease --stacktrace --no-daemon --no-configuration-cache
+
+      - name: Verify Preview package version and signer
+        run: |
+          set -euo pipefail
+          APK='app/build/outputs/apk/release/app-release.apk'
+          AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
+          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          test -s "$APK"
+          "$AAPT" dump badging "$APK" | tee /tmp/preview-badging.txt
+          grep -Fq "package: name='$AMYFX_APPLICATION_ID' versionCode='$AMYFX_VERSION_CODE' versionName='$AMYFX_VERSION_NAME'" /tmp/preview-badging.txt
+          grep -Fq "application-label:'$AMYFX_APP_LABEL'" /tmp/preview-badging.txt
+          "$APKSIGNER" verify --verbose "$APK"
+          cert_entry="$(unzip -Z1 "$APK" | grep -E '^META-INF/[^/]+\.(RSA|DSA|EC)$' | head -n1)"
+          test -n "$cert_entry"
+          unzip -p "$APK" "$cert_entry" > /tmp/amyfx-preview-cert
+          expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          actual="$(keytool -printcert -file /tmp/amyfx-preview-cert | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          test "$actual" = "$expected"
+          cp "$APK" AmyFX-Preview-latest.apk
+
+      - name: Publish Preview APK release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG='amyfx-preview-v1.5.0-preview.1'
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes
+          fi
+          gh api --method DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" >/dev/null 2>&1 || true
+          cat > /tmp/release-notes.md <<'NOTES'
+          Amy FX Preview 1.5 — Validated Mapping Contract.
+
+          - Data freshness dan stale protection terpadu.
+          - Order Block memakai satu detector tervalidasi.
+          - Direction Decision dan invalidation memakai satu kontrak.
+          - Mapping Explanation konsisten dengan keputusan tervalidasi.
+          - Entry Map, SL, TP, liquidity target, dan lifecycle memakai setupExecution.
+          - Scanner dan notifikasi hanya mengikuti setup M15 yang aktif, searah forecast, dan belum terminal.
+          - Setup lama, data usang, dan forecast invalid tidak lagi memunculkan rencana aktif.
+          NOTES
+          gh release create "$TAG" \
+            "AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --title 'Amy FX Preview 1.5.0-preview.1 — Validated Mapping' \
+            --notes-file /tmp/release-notes.md
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
+
+      - name: Activate update for installed Amy FX Preview
+        run: |
+          set -euo pipefail
+          git reset --hard HEAD
+          git fetch origin experiment/heatmap-news-20260722
+          git checkout -B preview-update-channel origin/experiment/heatmap-news-20260722
+          cat > preview-update.json <<'JSON'
+          {
+            "channel": "amyfx-preview-professional-ui",
+            "latest_version_code": 90051,
+            "latest_version_name": "1.5.0-preview.1",
+            "versionCode": 90051,
+            "version": "1.5.0-preview.1",
+            "releaseDate": "2026-07-23",
+            "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.5.0-preview.1/AmyFX-Preview-latest.apk",
+            "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.5.0-preview.1/AmyFX-Preview-latest.apk",
+            "force_update": false,
+            "mandatory": false,
+            "enabled": true,
+            "release_notes": [
+              "Mapping memakai kontrak Direction Decision tervalidasi",
+              "Entry, SL, TP, target, dan lifecycle disatukan dalam setupExecution",
+              "Setup terminal atau forecast invalid tidak dapat hidup kembali",
+              "Scanner dan notifikasi hanya mengikuti setup M15 aktif yang tervalidasi",
+              "Data usang menghentikan rencana entry dan background scanner"
+            ],
+            "changelog": [
+              "Validated Direction Forecast dan invalidation contract",
+              "Validated Mapping Explanation contract",
+              "Persistent setup lifecycle v4",
+              "Unified scanner, snapshot, and notification contract"
+            ]
+          }
+          JSON
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add preview-update.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'release: activate Amy FX Preview 1.5.0-preview.1 update [skip ci]'
+            git push origin HEAD:experiment/heatmap-news-20260722
+          fi
