@@ -224,3 +224,31 @@ test('backend route validates topic and uses server-side market data', () => {
   assert.match(apiSource, /Access-Control-Allow-Origin/);
   assert.doesNotMatch(apiSource, /Gemini|OpenAI|chatbot/i);
 });
+
+test('injectChapterNavigation creates prev, catalog, and next chapter links', () => {
+  const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
+  const appended = [];
+  const fakeArticle = { appendChild: el => appended.push(el) };
+  const document = {
+    querySelector: sel => sel.includes('.article') ? fakeArticle : null,
+    createElement: tag => {
+      const el = {
+        tagName: tag,
+        children: [],
+        setAttribute: (k, v) => { el[k] = v; },
+        appendChild: child => el.children.push(child)
+      };
+      return el;
+    }
+  };
+  const bridge = loadBridge({ document, location: { pathname: '/bagian-01-pemula-nol/lot-pip-point-dan-spread.html' } });
+  bridge.injectChapterNavigation(registry);
+
+  assert.equal(appended.length, 1);
+  const nav = appended[0];
+  assert.equal(nav.className, 'chapter-nav-box glass-panel');
+  assert.equal(nav.children.length, 3);
+  assert.match(nav.children[0].href, /realita-trading-untuk-pemula/);
+  assert.match(nav.children[1].href, /daftar-materi.html/);
+  assert.match(nav.children[2].href, /apa-itu-trading/);
+});

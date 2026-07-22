@@ -60,7 +60,7 @@ test('specific topics route to different rule groups', () => {
   assert.equal(classifyLearningTopic('lot-pip-point-dan-spread', 'basics').group, 'order_math');
   assert.equal(classifyLearningTopic('risk-sebelum-entry', 'basics').group, 'risk');
   assert.equal(classifyLearningTopic('fair-value-gap-fvg', 'structural').group, 'imbalance');
-  assert.equal(classifyLearningTopic('breaker-blocks-dan-mitigation-blocks', 'structural').group, 'order_block');
+  assert.equal(classifyLearningTopic('breaker-blocks-dan-mitigation-blocks', 'structural').group, 'breaker_block');
   assert.equal(classifyLearningTopic('liquidity-sweep', 'structural').group, 'liquidity');
   assert.equal(classifyLearningTopic('konsep-yang-belum-dipetakan', 'structural').group, 'structural_fallback');
 });
