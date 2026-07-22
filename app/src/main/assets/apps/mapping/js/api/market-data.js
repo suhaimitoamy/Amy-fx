@@ -4,7 +4,7 @@ import { detectMarketRegimeV2 } from '../engine/market-regime-engine.js';
 import { routeRegimeStrategy } from '../engine/strategy-router-engine.js';
 import { evaluateValidatedMarketContext } from '../engine/validated-market-context.js';
 import { render, renderSoft, renderAnalyzeLive } from '../ui/ui-render.js';
-import { sendTargetsToNative } from '../bridge/android-bridge.js';
+import { sendTargetsToNative, notifyImportant } from '../bridge/android-bridge.js';
 
 export let liveTimer = null;
 export let scanTimer = null;
@@ -52,7 +52,7 @@ export function isCandleStale(tf) {
   if (norm === 'M30') return ageMinutes >= 10;
   if (norm === 'H1') return ageMinutes >= 15;
   if (norm === 'H4') return ageMinutes >= 60;
-  if (norm === 'D1') return ageMinutes >= 240; // 4 jam = 240 menit
+  if (norm === 'D1') return ageMinutes >= 240;
   return ageMinutes >= 240;
 }
 
@@ -204,32 +204,18 @@ export function validateSetupGeometry(setup, dirSignal) {
     return { valid: false, reason: `entryLow (${lo}) lebih tinggi dari entryHigh (${hi}).` };
   }
 
-  if (!singleTarget) {
-    if (!Number.isFinite(tp2)) {
-      return { valid: false, reason: 'Target 2 wajib tersedia untuk setup multi-target.' };
-    }
+  if (!singleTarget && !Number.isFinite(tp2)) {
+    return { valid: false, reason: 'Target 2 wajib tersedia untuk setup multi-target.' };
   }
 
   if (isBuy) {
-    if (sl >= lo) {
-      return { valid: false, reason: `SL BUY (${sl}) harus di bawah entryLow (${lo}).` };
-    }
-    if (tp1 <= hi) {
-      return { valid: false, reason: `Target 1 BUY (${tp1}) harus di atas entryHigh (${hi}).` };
-    }
-    if (!singleTarget && tp2 < tp1) {
-      return { valid: false, reason: `Target 2 BUY (${tp2}) harus lebih tinggi dari Target 1 (${tp1}).` };
-    }
+    if (sl >= lo) return { valid: false, reason: `SL BUY (${sl}) harus di bawah entryLow (${lo}).` };
+    if (tp1 <= hi) return { valid: false, reason: `Target 1 BUY (${tp1}) harus di atas entryHigh (${hi}).` };
+    if (!singleTarget && tp2 < tp1) return { valid: false, reason: `Target 2 BUY (${tp2}) harus lebih tinggi dari Target 1 (${tp1}).` };
   } else if (isSell) {
-    if (sl <= hi) {
-      return { valid: false, reason: `SL SELL (${sl}) harus di atas entryHigh (${hi}).` };
-    }
-    if (tp1 >= lo) {
-      return { valid: false, reason: `Target 1 SELL (${tp1}) harus di bawah entryLow (${lo}).` };
-    }
-    if (!singleTarget && tp2 > tp1) {
-      return { valid: false, reason: `Target 2 SELL (${tp2}) harus lebih rendah dari Target 1 (${tp1}).` };
-    }
+    if (sl <= hi) return { valid: false, reason: `SL SELL (${sl}) harus di atas entryHigh (${hi}).` };
+    if (tp1 >= lo) return { valid: false, reason: `Target 1 SELL (${tp1}) harus di bawah entryLow (${lo}).` };
+    if (!singleTarget && tp2 > tp1) return { valid: false, reason: `Target 2 SELL (${tp2}) harus lebih rendah dari Target 1 (${tp1}).` };
   } else {
     return { valid: false, reason: 'Arah setup tidak BUY maupun SELL.' };
   }
@@ -240,9 +226,7 @@ export function validateSetupGeometry(setup, dirSignal) {
 export function persistSetupLifecycle({ setupId, lifecycleStage, status, terminal = false, invalidationReason = '', entryTouched = false, target1Secured = false, entryAt = null, target1At = null, terminalAt = null }) {
   if (!setupId) return;
   let lcStorage = {};
-  try {
-    lcStorage = JSON.parse(localStorage.getItem('amy_mapping_lifecycle_v4') || '{}');
-  } catch (_) {}
+  try { lcStorage = JSON.parse(localStorage.getItem('amy_mapping_lifecycle_v4') || '{}'); } catch (_) {}
 
   const existing = lcStorage[setupId] || {};
   lcStorage[setupId] = {
@@ -259,28 +243,16 @@ export function persistSetupLifecycle({ setupId, lifecycleStage, status, termina
   };
 
   const keys = Object.keys(lcStorage);
-  if (keys.length > 50) {
-    keys.slice(0, keys.length - 30).forEach(k => delete lcStorage[k]);
-  }
-  try {
-    localStorage.setItem('amy_mapping_lifecycle_v4', JSON.stringify(lcStorage));
-  } catch (_) {}
+  if (keys.length > 50) keys.slice(0, keys.length - 30).forEach(k => delete lcStorage[k]);
+  try { localStorage.setItem('amy_mapping_lifecycle_v4', JSON.stringify(lcStorage)); } catch (_) {}
 }
 
 export function persistTerminalSetup(args) {
-  return persistSetupLifecycle({
-    ...args,
-    terminal: true,
-    terminalAt: args.terminalAt || Date.now()
-  });
+  return persistSetupLifecycle({ ...args, terminal: true, terminalAt: args.terminalAt || Date.now() });
 }
 
 function getActivePointers() {
-  try {
-    return JSON.parse(localStorage.getItem('amy_mapping_active_pointer_v4') || '{}');
-  } catch (_) {
-    return {};
-  }
+  try { return JSON.parse(localStorage.getItem('amy_mapping_active_pointer_v4') || '{}'); } catch (_) { return {}; }
 }
 
 function saveActivePointers(pointers) {
@@ -289,9 +261,7 @@ function saveActivePointers(pointers) {
     const sorted = keys.map(k => ({ k, t: pointers[k]?.updatedAt || 0 })).sort((a, b) => a.t - b.t);
     sorted.slice(0, keys.length - 30).forEach(item => delete pointers[item.k]);
   }
-  try {
-    localStorage.setItem('amy_mapping_active_pointer_v4', JSON.stringify(pointers));
-  } catch (_) {}
+  try { localStorage.setItem('amy_mapping_active_pointer_v4', JSON.stringify(pointers)); } catch (_) {}
 }
 
 function deleteActivePointer(tf) {
@@ -337,84 +307,43 @@ export function buildSetupExecution(result, { persist = true } = {}) {
 
   if (result.dataStale || dd.source === 'DATA_STALE') {
     if (persist) {
-      const pointers = getActivePointers();
-      const prev = pointers[tf];
+      const prev = getActivePointers()[tf];
       if (prev?.setupId) {
-        persistTerminalSetup({
-          setupId: prev.setupId,
-          lifecycleStage: 'DATA_STALE',
-          status: 'DATA USANG',
-          invalidationReason: 'Data market usang.'
-        });
+        persistTerminalSetup({ setupId: prev.setupId, lifecycleStage: 'DATA_STALE', status: 'DATA USANG', invalidationReason: 'Data market usang.' });
         deleteActivePointer(tf);
       }
     }
-    return {
-      ...defaultExecution,
-      status: 'DATA USANG',
-      lifecycleStage: 'DATA_STALE',
-      invalidated: true,
-      invalidationReason: 'Data market usang.'
-    };
+    return { ...defaultExecution, status: 'DATA USANG', lifecycleStage: 'DATA_STALE', invalidated: true, invalidationReason: 'Data market usang.' };
   }
 
   if (!forecastActive || dd.invalidated || dd.source !== 'VALIDATED_DIRECTION_FORECAST' || (dd.signal !== 'BUY' && dd.signal !== 'SELL')) {
     const reason = dd.invalidationReason || 'Direction Forecast tidak aktif atau ter-invalidasi.';
     if (persist) {
-      const pointers = getActivePointers();
-      const prev = pointers[tf];
+      const prev = getActivePointers()[tf];
       if (prev?.setupId) {
-        persistTerminalSetup({
-          setupId: prev.setupId,
-          lifecycleStage: 'FORECAST_INVALIDATED',
-          status: 'FORECAST INVALIDATED',
-          invalidationReason: reason
-        });
+        persistTerminalSetup({ setupId: prev.setupId, lifecycleStage: 'FORECAST_INVALIDATED', status: 'FORECAST INVALIDATED', invalidationReason: reason });
         deleteActivePointer(tf);
       }
     }
-    return {
-      ...defaultExecution,
-      status: 'FORECAST INVALIDATED',
-      lifecycleStage: 'FORECAST_INVALIDATED',
-      invalidated: true,
-      invalidationReason: reason
-    };
+    return { ...defaultExecution, status: 'FORECAST INVALIDATED', lifecycleStage: 'FORECAST_INVALIDATED', invalidated: true, invalidationReason: reason };
   }
 
   if (!bestSetup) {
     if (persist) {
-      const pointers = getActivePointers();
-      const prev = pointers[tf];
+      const prev = getActivePointers()[tf];
       if (prev?.setupId) {
         const fcStartTime = forecast?.startTime || 0;
         const sameForecast = prev.forecastStartTime === fcStartTime && prev.direction === dd.signal;
-        if (sameForecast) {
-          persistTerminalSetup({
-            setupId: prev.setupId,
-            lifecycleStage: 'SETUP_REPLACED',
-            status: 'SETUP NO LONGER ACTIVE',
-            invalidationReason: 'Setup lama tidak lagi menjadi Entry Map aktif setelah analisis terbaru.'
-          });
-        } else {
-          persistTerminalSetup({
-            setupId: prev.setupId,
-            lifecycleStage: 'FORECAST_INVALIDATED',
-            status: 'FORECAST INVALIDATED',
-            invalidationReason: 'Direction Forecast atau arah market telah berubah.'
-          });
-        }
+        persistTerminalSetup({
+          setupId: prev.setupId,
+          lifecycleStage: sameForecast ? 'SETUP_REPLACED' : 'FORECAST_INVALIDATED',
+          status: sameForecast ? 'SETUP NO LONGER ACTIVE' : 'FORECAST INVALIDATED',
+          invalidationReason: sameForecast ? 'Setup lama tidak lagi menjadi Entry Map aktif setelah analisis terbaru.' : 'Direction Forecast atau arah market telah berubah.'
+        });
         deleteActivePointer(tf);
       }
     }
-    return {
-      ...defaultExecution,
-      direction: dd.signal,
-      status: 'WAITING FOR SETUP',
-      lifecycleStage: 'WAITING_ENTRY',
-      alignedWithForecast: true,
-      invalidationReason: 'Belum ada setup Entry Map yang lolos seluruh filter.'
-    };
+    return { ...defaultExecution, direction: dd.signal, status: 'WAITING FOR SETUP', lifecycleStage: 'WAITING_ENTRY', alignedWithForecast: true, invalidationReason: 'Belum ada setup Entry Map yang lolos seluruh filter.' };
   }
 
   const setupDir = String(bestSetup.dir || bestSetup.direction || '').toUpperCase();
@@ -424,88 +353,45 @@ export function buildSetupExecution(result, { persist = true } = {}) {
 
   if (!aligned) {
     if (persist) {
-      const pointers = getActivePointers();
-      const prev = pointers[tf];
+      const prev = getActivePointers()[tf];
       if (prev?.setupId) {
-        persistTerminalSetup({
-          setupId: prev.setupId,
-          lifecycleStage: 'FORECAST_INVALIDATED',
-          status: 'SETUP CONFLICT',
-          invalidationReason: `Setup Entry Map (${setupDir}) bertentangan dengan Direction Forecast (${dd.signal}).`
-        });
+        persistTerminalSetup({ setupId: prev.setupId, lifecycleStage: 'FORECAST_INVALIDATED', status: 'SETUP CONFLICT', invalidationReason: `Setup Entry Map (${setupDir}) bertentangan dengan Direction Forecast (${dd.signal}).` });
         deleteActivePointer(tf);
       }
     }
-    return {
-      ...defaultExecution,
-      direction: dd.signal,
-      status: 'SETUP CONFLICT',
-      lifecycleStage: 'FORECAST_INVALIDATED',
-      alignedWithForecast: false,
-      invalidated: true,
-      invalidationReason: `Setup Entry Map (${setupDir}) bertentangan dengan Direction Forecast (${dd.signal}).`
-    };
+    return { ...defaultExecution, direction: dd.signal, status: 'SETUP CONFLICT', lifecycleStage: 'FORECAST_INVALIDATED', alignedWithForecast: false, invalidated: true, invalidationReason: `Setup Entry Map (${setupDir}) bertentangan dengan Direction Forecast (${dd.signal}).` };
   }
 
   const geom = validateSetupGeometry(bestSetup, dd.signal);
   if (!geom.valid) {
     if (persist) {
-      const pointers = getActivePointers();
-      const prev = pointers[tf];
+      const prev = getActivePointers()[tf];
       if (prev?.setupId) {
-        persistTerminalSetup({
-          setupId: prev.setupId,
-          lifecycleStage: 'INVALID_GEOMETRY',
-          status: 'INVALID SETUP GEOMETRY',
-          invalidationReason: geom.reason
-        });
+        persistTerminalSetup({ setupId: prev.setupId, lifecycleStage: 'INVALID_GEOMETRY', status: 'INVALID SETUP GEOMETRY', invalidationReason: geom.reason });
         deleteActivePointer(tf);
       }
     }
-    return {
-      ...defaultExecution,
-      direction: dd.signal,
-      status: 'INVALID SETUP GEOMETRY',
-      lifecycleStage: 'INVALID_GEOMETRY',
-      alignedWithForecast: true,
-      geometryValid: false,
-      invalidated: true,
-      invalidationReason: geom.reason
-    };
+    return { ...defaultExecution, direction: dd.signal, status: 'INVALID SETUP GEOMETRY', lifecycleStage: 'INVALID_GEOMETRY', alignedWithForecast: true, geometryValid: false, invalidated: true, invalidationReason: geom.reason };
   }
 
   const setupId = buildSetupId(bestSetup, forecast, tf);
 
   if (persist) {
     const fcStartTime = forecast?.startTime || 0;
-    const pointers = getActivePointers();
-    const prevPointer = pointers[tf];
-
+    const prevPointer = getActivePointers()[tf];
     if (prevPointer && prevPointer.setupId !== setupId) {
       const sameForecast = prevPointer.forecastStartTime === fcStartTime && prevPointer.direction === dd.signal;
-      if (sameForecast) {
-        persistTerminalSetup({
-          setupId: prevPointer.setupId,
-          lifecycleStage: 'SETUP_REPLACED',
-          status: 'SETUP REPLACED',
-          invalidationReason: 'Setup lama telah digantikan oleh setup Entry Map yang lebih baru.'
-        });
-      } else {
-        persistTerminalSetup({
-          setupId: prevPointer.setupId,
-          lifecycleStage: 'FORECAST_INVALIDATED',
-          status: 'FORECAST INVALIDATED',
-          invalidationReason: 'Direction Forecast atau arah market telah berubah.'
-        });
-      }
+      persistTerminalSetup({
+        setupId: prevPointer.setupId,
+        lifecycleStage: sameForecast ? 'SETUP_REPLACED' : 'FORECAST_INVALIDATED',
+        status: sameForecast ? 'SETUP REPLACED' : 'FORECAST INVALIDATED',
+        invalidationReason: sameForecast ? 'Setup lama telah digantikan oleh setup Entry Map yang lebih baru.' : 'Direction Forecast atau arah market telah berubah.'
+      });
     }
   }
 
   let lcStorage = {};
-  try {
-    lcStorage = JSON.parse(localStorage.getItem('amy_mapping_lifecycle_v4') || '{}');
-  } catch (_) {}
-
+  try { lcStorage = JSON.parse(localStorage.getItem('amy_mapping_lifecycle_v4') || '{}'); } catch (_) {}
   const savedState = lcStorage[setupId] || {};
 
   const lo = Math.min(Number(bestSetup.entryLow), Number(bestSetup.entryHigh));
@@ -543,25 +429,15 @@ export function buildSetupExecution(result, { persist = true } = {}) {
 
   let entryTouched = Boolean(savedState.entryTouched);
   let target1Secured = Boolean(savedState.target1Secured);
-
   let liquidityTarget = null;
   const drawTarget = result.liquidityHierarchy?.drawTarget;
   if (drawTarget && Number.isFinite(drawTarget.level)) {
     const levelPrice = Number(drawTarget.level);
     const targetType = String(drawTarget.type || '').toUpperCase();
-    
     if (isBuy) {
-      const isAbove = levelPrice > Math.max(price, hi);
-      const isTypeValid = !targetType || targetType === 'BSL';
-      if (isAbove && isTypeValid) {
-        liquidityTarget = { type: targetType || 'BSL', level: levelPrice };
-      }
-    } else {
-      const isBelow = levelPrice < Math.min(price, lo);
-      const isTypeValid = !targetType || targetType === 'SSL';
-      if (isBelow && isTypeValid) {
-        liquidityTarget = { type: targetType || 'SSL', level: levelPrice };
-      }
+      if (levelPrice > Math.max(price, hi) && (!targetType || targetType === 'BSL')) liquidityTarget = { type: targetType || 'BSL', level: levelPrice };
+    } else if (levelPrice < Math.min(price, lo) && (!targetType || targetType === 'SSL')) {
+      liquidityTarget = { type: targetType || 'SSL', level: levelPrice };
     }
   }
 
@@ -577,7 +453,6 @@ export function buildSetupExecution(result, { persist = true } = {}) {
     invalidReason = 'Setup sudah kedaluwarsa (lebih dari 24 jam).';
   } else if (price > 0) {
     const reachedTarget1BeforeEntry = !entryTouched && (isBuy ? price >= tp1 : price <= tp1);
-    
     if (reachedTarget1BeforeEntry) {
       stage = 'MISSED_ENTRY';
       statusText = 'MISSED ENTRY';
@@ -589,7 +464,6 @@ export function buildSetupExecution(result, { persist = true } = {}) {
         savedState.entryTouched = true;
         savedState.entryAt = Date.now();
       }
-
       if (entryTouched) {
         const slHit = isBuy ? price <= sl : price >= sl;
         if (slHit) {
@@ -603,85 +477,44 @@ export function buildSetupExecution(result, { persist = true } = {}) {
             target1Secured = true;
             savedState.target1Secured = true;
             savedState.target1At = Date.now();
-
             if (singleTarget) {
               stage = 'TARGET_HIT';
               statusText = 'TP1 HIT';
               isTerminal = true;
+            } else if (Number.isFinite(tp2) && (isBuy ? price >= tp2 : price <= tp2)) {
+              stage = 'TARGET_HIT';
+              statusText = 'TP2 HIT';
+              isTerminal = true;
             } else {
-              const tp2Hit = Number.isFinite(tp2) && (isBuy ? price >= tp2 : price <= tp2);
-              if (tp2Hit) {
-                stage = 'TARGET_HIT';
-                statusText = 'TP2 HIT';
-                isTerminal = true;
-              } else {
-                stage = 'RUNNER_ACTIVE';
-                statusText = 'TP1 SECURED · RUNNER KE TP2';
-                isTerminal = false;
-              }
+              stage = 'RUNNER_ACTIVE';
+              statusText = 'TP1 SECURED · RUNNER KE TP2';
             }
           } else if (target1Secured) {
             stage = 'RUNNER_ACTIVE';
             statusText = 'TP1 SECURED · RUNNER AKTIF';
-            isTerminal = false;
           } else {
             stage = 'ENTRY_ACTIVE';
             statusText = 'ENTRY AKTIF';
-            isTerminal = false;
           }
         }
-      } else {
-        stage = 'WAITING_ENTRY';
-        statusText = 'MENUNGGU ENTRY';
-        isTerminal = false;
       }
     }
   }
 
   if (persist) {
     if (isTerminal) {
-      persistTerminalSetup({
-        setupId,
-        lifecycleStage: stage,
-        status: statusText,
-        invalidationReason: invalidReason,
-        entryTouched,
-        target1Secured,
-        entryAt: savedState.entryAt,
-        target1At: savedState.target1At
-      });
+      persistTerminalSetup({ setupId, lifecycleStage: stage, status: statusText, invalidationReason: invalidReason, entryTouched, target1Secured, entryAt: savedState.entryAt, target1At: savedState.target1At });
       deleteActivePointer(tf);
     } else {
-      persistSetupLifecycle({
-        setupId,
-        lifecycleStage: stage,
-        status: statusText,
-        terminal: false,
-        invalidationReason: '',
-        entryTouched,
-        target1Secured,
-        entryAt: savedState.entryAt,
-        target1At: savedState.target1At,
-        terminalAt: null
-      });
-
-      const fcStartTime = forecast?.startTime || 0;
+      persistSetupLifecycle({ setupId, lifecycleStage: stage, status: statusText, terminal: false, invalidationReason: '', entryTouched, target1Secured, entryAt: savedState.entryAt, target1At: savedState.target1At, terminalAt: null });
       const pointers = getActivePointers();
-      pointers[tf] = {
-        setupId,
-        timeframe: tf,
-        direction: dd.signal,
-        forecastStartTime: fcStartTime,
-        updatedAt: Date.now()
-      };
+      pointers[tf] = { setupId, timeframe: tf, direction: dd.signal, forecastStartTime: forecast?.startTime || 0, updatedAt: Date.now() };
       saveActivePointers(pointers);
     }
   }
 
-  const active = !isTerminal;
-
   return {
-    active,
+    active: !isTerminal,
     setupId,
     direction: dd.signal,
     status: statusText,
@@ -697,7 +530,7 @@ export function buildSetupExecution(result, { persist = true } = {}) {
     terminal: isTerminal,
     alignedWithForecast: true,
     geometryValid: true,
-    invalidated: !active,
+    invalidated: isTerminal,
     invalidationReason: invalidReason,
     liquidityTarget
   };
@@ -717,78 +550,44 @@ export function buildMappingExplanation(result) {
   }
 
   const dd = result.directionDecision || buildDirectionDecision(result);
-  const se = result.setupExecution || buildSetupExecution(result);
+  result.directionDecision = dd;
+  const se = buildSetupExecution(result);
+  result.setupExecution = se;
   const validated = result.validatedMarketContext;
   const forecast = validated?.directionForecast;
   const marketState = validated?.marketState;
   const concepts = result.marketConcepts;
 
   if (dd.source === 'DATA_STALE' || result.dataStale) {
-    return {
-      headline: 'Data market sudah kedaluwarsa',
-      action: 'Jangan mengambil keputusan entry.',
-      reason: 'Cache candle telah melewati batas waktu dan API belum berhasil memperbarui data.',
-      confirmationNeeded: 'Tunggu data candle terbaru tersedia.',
-      invalidation: '-',
-      marketContext: 'DATA USANG — CACHE KEDALUWARSA',
-      dataStatus: 'DATA USANG'
-    };
+    return { headline: 'Data market sudah kedaluwarsa', action: 'Jangan mengambil keputusan entry.', reason: 'Cache candle telah melewati batas waktu dan API belum berhasil memperbarui data.', confirmationNeeded: 'Tunggu data candle terbaru tersedia.', invalidation: '-', marketContext: 'DATA USANG — CACHE KEDALUWARSA', dataStatus: 'DATA USANG' };
   }
 
   if (dd.invalidated && !forecast?.active && (forecast?.invalidated || forecast?.expired || dd.source === 'VALIDATED_DIRECTION_FORECAST')) {
-    return {
-      headline: 'Arah sebelumnya sudah tidak berlaku',
-      action: 'Tunggu Direction Forecast baru.',
-      reason: dd.invalidationReason || 'Direction Forecast sebelumnya sudah kedaluwarsa atau dihentikan.',
-      confirmationNeeded: 'Structural break dan Direction Forecast baru yang tervalidasi.',
-      invalidation: '-',
-      marketContext: 'FORECAST INVALID / EXPIRED',
-      dataStatus: 'AKTIF'
-    };
+    return { headline: 'Arah sebelumnya sudah tidak berlaku', action: 'Tunggu Direction Forecast baru.', reason: dd.invalidationReason || 'Direction Forecast sebelumnya sudah kedaluwarsa atau dihentikan.', confirmationNeeded: 'Structural break dan Direction Forecast baru yang tervalidasi.', invalidation: '-', marketContext: 'FORECAST INVALID / EXPIRED', dataStatus: 'AKTIF' };
   }
 
   if (forecast?.active) {
     const forecastDir = forecast.direction;
-
     if (se.active && se.alignedWithForecast) {
       const obInfo = concepts?.nearestOrderBlocks?.length ? ` Order Block terdekat di ${p2(concepts.nearestOrderBlocks[0].bottom)}–${p2(concepts.nearestOrderBlocks[0].top)}.` : '';
       const fvgInfo = concepts?.nearestFairValueGaps?.length ? ` FVG terdekat di ${p2(concepts.nearestFairValueGaps[0].bottom)}–${p2(concepts.nearestFairValueGaps[0].top)}.` : '';
-      const zoneMention = (obInfo || fvgInfo) ? `${obInfo}${fvgInfo}` : '';
       const targetMention = se.liquidityTarget ? ` Target likuiditas utama: ${se.liquidityTarget.type} ${p2(se.liquidityTarget.level)}.` : '';
-      
       return {
         headline: 'Setup searah dengan arah market tervalidasi',
         action: `FOKUS ${se.direction}`,
-        reason: `Direction Forecast tervalidasi ${forecastDir} (${forecast.confidence || 60}%). Struktur market ${marketState?.structureTrend || 'TERBENTUK'}.${zoneMention}${targetMention} Status setup: ${se.status}.`,
+        reason: `Direction Forecast tervalidasi ${forecastDir} (${forecast.confidence || 0}%). Struktur market ${marketState?.structureTrend || 'TERBENTUK'}.${obInfo}${fvgInfo}${targetMention} Status setup: ${se.status}.`,
         confirmationNeeded: se.entryTouched ? 'Setup sedang berjalan dalam area entry.' : `Harga sedang menunggu di area entry ${p2(se.entryLow)}–${p2(se.entryHigh)}.`,
         invalidation: se.stopLoss ? `SL pada ${p2(se.stopLoss)}` : 'Batas invalidasi setup',
         marketContext: `VALIDATED FORECAST ${forecastDir}`,
         dataStatus: 'AKTIF'
       };
     }
-
     const reasonDetail = se.invalidationReason ? ` (${se.invalidationReason})` : '';
-    return {
-      headline: 'Arah market tervalidasi, tetapi belum ada area entry',
-      action: 'Jangan mengejar harga. Tunggu setup Entry Map searah.',
-      reason: `Direction Forecast tervalidasi ${forecastDir} (${forecast.confidence || 60}%). Struktur market ${marketState?.structureTrend || 'TERBENTUK'}.${reasonDetail} Belum ada area entry aktif yang aman.`,
-      confirmationNeeded: 'Setup Entry Map searah forecast dan masih aktif.',
-      invalidation: 'Structural break berlawanan',
-      marketContext: `VALIDATED FORECAST ${forecastDir}`,
-      dataStatus: 'AKTIF'
-    };
+    return { headline: 'Arah market tervalidasi, tetapi belum ada area entry', action: 'Jangan mengejar harga. Tunggu setup Entry Map searah.', reason: `Direction Forecast tervalidasi ${forecastDir} (${forecast.confidence || 0}%). Struktur market ${marketState?.structureTrend || 'TERBENTUK'}.${reasonDetail} Belum ada area entry aktif yang aman.`, confirmationNeeded: 'Setup Entry Map searah forecast dan masih aktif.', invalidation: 'Structural break berlawanan', marketContext: `VALIDATED FORECAST ${forecastDir}`, dataStatus: 'AKTIF' };
   }
 
   const stateText = marketState?.state || 'RANGE / TRANSITION';
-  return {
-    headline: 'Belum ada arah market yang tervalidasi',
-    action: 'Tunggu konfirmasi arah baru.',
-    reason: `Kondisi market saat ini adalah ${stateText}. Kondisi ini merupakan konteks perilaku harga, bukan sinyal BUY atau SELL.`,
-    confirmationNeeded: 'Membutuhkan structural break terkonfirmasi dan Direction Forecast aktif.',
-    invalidation: '-',
-    marketContext: stateText,
-    dataStatus: 'AKTIF'
-  };
+  return { headline: 'Belum ada arah market yang tervalidasi', action: 'Tunggu konfirmasi arah baru.', reason: `Kondisi market saat ini adalah ${stateText}. Kondisi ini merupakan konteks perilaku harga, bukan sinyal BUY atau SELL.`, confirmationNeeded: 'Membutuhkan structural break terkonfirmasi dan Direction Forecast aktif.', invalidation: '-', marketContext: stateText, dataStatus: 'AKTIF' };
 }
 
 function publishMappingSnapshot(result = state.result) {
@@ -802,26 +601,22 @@ function publishMappingSnapshot(result = state.result) {
   const activeTargets = Array.isArray(result?.activeLiquidityTargets) ? result.activeLiquidityTargets : [];
   const levels = activeTargets.map(item => {
     const levelPrice = Number(item.level);
-    return {
-      type: item.type,
-      price: levelPrice,
-      distance: Number.isFinite(levelPrice) && price > 0 ? levelPrice - price : 0,
-      status: item.status || 'ACTIVE',
-      strength: item.strength || 'MEDIUM',
-      source: item.source || 'MAPPING',
-      timeframe: result?.tf || state.tf
-    };
+    return { type: item.type, price: levelPrice, distance: Number.isFinite(levelPrice) && price > 0 ? levelPrice - price : 0, status: item.status || 'ACTIVE', strength: item.strength || 'MEDIUM', source: item.source || 'MAPPING', timeframe: result?.tf || state.tf };
   }).filter(item => (item.type === 'BSL' || item.type === 'SSL') && Number.isFinite(item.price) && item.price > 0);
 
   if (!levels.some(item => item.type === 'BSL') && bsl > 0) levels.push({ type: 'BSL', price: bsl, distance: price > 0 ? bsl - price : 0, status: 'ACTIVE', source: 'MAPPING', timeframe: result?.tf || state.tf });
   if (!levels.some(item => item.type === 'SSL') && ssl > 0) levels.push({ type: 'SSL', price: ssl, distance: price > 0 ? ssl - price : 0, status: 'ACTIVE', source: 'MAPPING', timeframe: result?.tf || state.tf });
 
   const decision = result?.directionDecision || buildDirectionDecision(result);
-  const execution = result?.setupExecution || buildSetupExecution(result);
-  const explanation = result?.mappingExplanation || buildMappingExplanation(result);
+  if (result) result.directionDecision = decision;
+  const execution = buildSetupExecution(result);
+  if (result) result.setupExecution = execution;
+  const explanation = buildMappingExplanation(result);
+  if (result) result.mappingExplanation = explanation;
   const validated = result?.validatedMarketContext;
 
   intel.write('mapping', {
+    ...previous,
     price,
     bsl,
     ssl,
@@ -829,7 +624,7 @@ function publishMappingSnapshot(result = state.result) {
     timeframe: result?.tf || previous.timeframe || state.tf,
     bias: decision.bias,
     direction: decision.signal,
-    status: decision.status,
+    status: execution.active ? execution.status : decision.status,
     directionDecision: decision,
     setupExecution: execution,
     mappingExplanation: explanation,
@@ -870,11 +665,7 @@ export async function fetchTf(tf) {
 function attachValidatedMarketContext(result) {
   if (!result || !['M5', 'M15', 'H1'].includes(result.tf)) return result;
   const candles = state.candles[result.tf] || [];
-  const validated = evaluateValidatedMarketContext({
-    candles,
-    tf: result.tf,
-    htfCandles: { H4: state.candles.H4 || [] }
-  });
+  const validated = evaluateValidatedMarketContext({ candles, tf: result.tf, htfCandles: { H4: state.candles.H4 || [] } });
   result.validatedMarketContext = validated;
   result.validatedMarketState = validated.marketState;
   result.validatedDirectionForecast = validated.directionForecast;
@@ -909,7 +700,6 @@ function applyRegimeRouter(result, htfBiases) {
   const forecast = result.validatedMarketContext?.directionForecast;
   const forecastActive = Boolean(forecast?.active);
   const forecastDirection = forecastActive ? Number(forecast.directionValue || 0) : 0;
-
   const originalSetups = Array.isArray(result.setups) ? [...result.setups] : [];
   const originalBestSetup = result.bestSetup || null;
   const setupVal = setupDirection(originalBestSetup);
@@ -919,35 +709,13 @@ function applyRegimeRouter(result, htfBiases) {
   if (result.tf === 'M15') {
     const candles = state.candles.M15 || [];
     const intel = window.AmyFXIntel?.read?.() || {};
-    const regime = detectMarketRegimeV2({
-      candles,
-      tf: 'M15',
-      htfBiases: result.htfBiases || htfBiases || {},
-      marketConcepts: result.marketConcepts || null,
-      entryMap: result.entryMap || null,
-      currentPrice: state.price || result.price,
-      newsRisk: window.AmyFXIntel?.newsRisk?.(intel) || 'UNKNOWN',
-      freshness: window.AmyMappingIntegrity?.qualityByInterval || {}
-    });
-    router = routeRegimeStrategy({
-      candles,
-      result,
-      regime,
-      currentPrice: state.price || result.price,
-      previousState: regimeRouterState
-    });
+    const regime = detectMarketRegimeV2({ candles, tf: 'M15', htfBiases: result.htfBiases || htfBiases || {}, marketConcepts: result.marketConcepts || null, entryMap: result.entryMap || null, currentPrice: state.price || result.price, newsRisk: window.AmyFXIntel?.newsRisk?.(intel) || 'UNKNOWN', freshness: window.AmyMappingIntegrity?.qualityByInterval || {} });
+    router = routeRegimeStrategy({ candles, result, regime, currentPrice: state.price || result.price, previousState: regimeRouterState });
     regimeRouterState = router.state;
     result.marketRegime = regime;
   }
 
-  result.strategyRouter = {
-    ...router,
-    role: 'CONTEXT_AND_STRATEGY_SUPPORT',
-    mayOverrideValidatedMarketState: false,
-    mayOverrideValidatedDirectionForecast: false,
-    mayReplaceEntryMap: false,
-    marketShiftHardGate: false
-  };
+  result.strategyRouter = { ...router, role: 'CONTEXT_AND_STRATEGY_SUPPORT', mayOverrideValidatedMarketState: false, mayOverrideValidatedDirectionForecast: false, mayReplaceEntryMap: false, marketShiftHardGate: false };
 
   const experimentalSetups = setupConflict || !forecastActive ? [] : originalSetups.map(annotateExperimentalSetup).filter(Boolean);
   const experimentalBestSetup = setupConflict || !forecastActive ? null : annotateExperimentalSetup(originalBestSetup);
@@ -957,7 +725,6 @@ function applyRegimeRouter(result, htfBiases) {
   result.validatedSetupConflict = setupConflict;
   result.experimentalSetups = experimentalSetups;
   result.experimentalBestSetup = experimentalBestSetup;
-
   if (!forecastActive || setupConflict) {
     result.setups = [];
     result.bestSetup = null;
@@ -975,7 +742,6 @@ function applyRegimeRouter(result, htfBiases) {
   result.statusText = decision.status;
   result.final = decision.bias;
   result.routerDecision = router.decision;
-
   return result;
 }
 
@@ -994,13 +760,9 @@ export async function runAnalysis(tf = state.tf) {
     await Promise.all(scanGroup.map(async currentTf => {
       const isStale = isCandleStale(currentTf);
       if (!state.candles[currentTf]?.length || isStale) {
-        try {
-          await fetchTf(currentTf);
-        } catch (_) {
+        try { await fetchTf(currentTf); } catch (_) {
           log(`Candle ${currentTf} belum diperbarui, memakai cache.`);
-          if (isStale || !state.candles[currentTf]?.length) {
-            staleFetchFailed = true;
-          }
+          if (isStale || !state.candles[currentTf]?.length) staleFetchFailed = true;
         }
       }
       return state.candles[currentTf] || [];
@@ -1022,11 +784,7 @@ export async function runAnalysis(tf = state.tf) {
         experimentalBestSetup: null,
         routerDecision: 'DATA USANG — CACHE KEDALUWARSA & API GAGAL',
         marketState: { state: 'DATA USANG', detail: 'Cache kedaluwarsa & API gagal diperbarui.' },
-        strategyRouter: {
-          decision: 'DATA USANG — CACHE KEDALUWARSA & API GAGAL',
-          activeRegime: 'TRANSITION',
-          activeStrategy: 'NO_TRADE'
-        }
+        strategyRouter: { decision: 'DATA USANG — CACHE KEDALUWARSA & API GAGAL', activeRegime: 'TRANSITION', activeStrategy: 'NO_TRADE' }
       };
       result.directionDecision = buildDirectionDecision(result);
       result.setupExecution = buildSetupExecution(result);
@@ -1034,6 +792,8 @@ export async function runAnalysis(tf = state.tf) {
       state.result = result;
       save();
       publishMappingSnapshot(result);
+      sendTargetsToNative();
+      notifyImportant(result);
       render();
       return;
     }
@@ -1062,6 +822,7 @@ export async function runAnalysis(tf = state.tf) {
       : result.validatedMarketState?.state;
     log(`${tf} selesai: ${validatedText || result.strategyRouter?.decision || `${result.signal} score ${result.score}/100`}`);
     sendTargetsToNative();
+    notifyImportant(result);
   } catch (error) {
     log(`Error ${tf}: ${error.message}`);
   }
@@ -1095,6 +856,8 @@ async function pollLivePrice() {
       state.result.mappingExplanation = buildMappingExplanation(state.result);
     }
     publishMappingSnapshot();
+    sendTargetsToNative();
+    notifyImportant(state.result);
     renderAnalyzeLive();
     renderSoft();
     scheduleAnalysisRefresh();
