@@ -1,16 +1,17 @@
 {
   "channel": "amyfx-preview-professional-ui",
-  "latest_version_code": 90047,
-  "latest_version_name": "1.4.15-preview.10",
-  "versionCode": 90047,
-  "version": "1.4.15-preview.10",
+  "latest_version_code": 90050,
+  "latest_version_name": "1.4.15-preview.11",
+  "versionCode": 90050,
+  "version": "1.4.15-preview.11",
   "releaseDate": "2026-07-22",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.10/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.10/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.11/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.11/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
+    "Pembaruan Amy FX Preview v1.4.15-preview.11",
     "Fitur Pencarian Instan dan visual Progress Bar % Membaca di Amy FX Academy",
     "Visual Scenario Bar memetakan Entry, SL, TP1, TP2 pada card M15 Entry Map",
     "Kurva pertumbuhan saldo Equity SVG kumulatif pada modul Jurnal Trading",
@@ -18,6 +19,7 @@
     "Pembersihan 46 file HTML Academy dari sisa sintaks Obsidian"
   ],
   "changelog": [
+    "Pembaruan Amy FX Preview v1.4.15-preview.11",
     "Fitur Pencarian Instan dan visual Progress Bar % Membaca di Amy FX Academy",
     "Visual Scenario Bar memetakan Entry, SL, TP1, TP2 pada card M15 Entry Map",
     "Kurva pertumbuhan saldo Equity SVG kumulatif pada modul Jurnal Trading",
