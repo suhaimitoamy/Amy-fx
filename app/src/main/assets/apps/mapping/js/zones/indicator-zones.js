@@ -262,7 +262,7 @@ function updateObLifecycle(list, candle, index, useBody) {
  */
 export function detectIndicatorOrderBlocks(candles, {
   swingLength = 10,
-  useBody = true,
+  useBody = false,
   visiblePerDirection = DEFAULT_OB_VISIBLE_PER_DIRECTION,
   lookback = 1000
 } = {}) {

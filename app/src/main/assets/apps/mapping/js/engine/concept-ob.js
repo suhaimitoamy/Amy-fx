@@ -13,10 +13,12 @@ export function detectOrderBlockConcepts(candles, structureSnapshot, {
   currentPrice = null,
   maxZones = 12,
   maxPerDirection = 2,
-  useBody = true
+  useBody = false
 } = {}) {
   const values = cleanConceptCandles(candles);
-  const events = (structureSnapshot?.structureEvents || []).filter(event => event.valid);
+  const events = (structureSnapshot?.structureEvents || []).filter(event =>
+    event.valid && (event.hasDisplacement !== false && (event.hasDisplacement || (event.bodyRatio || 0) >= CONCEPT_THRESHOLDS.displacementBodyAtr))
+  );
   const byIndex = new Map();
 
   for (const event of events) {
@@ -67,7 +69,7 @@ export function detectOrderBlockConcepts(candles, structureSnapshot, {
       active: true,
       converted: false,
       filterPassed: true,
-      filterReason: 'Candle berlawanan terakhir sebelum close-break struktur.'
+      filterReason: 'Candle berlawanan terakhir sebelum displacement pemecah struktur.'
     };
     if (!byIndex.has(breakIndex)) byIndex.set(breakIndex, []);
     byIndex.get(breakIndex).push(zone);
@@ -112,6 +114,11 @@ export function detectOrderBlockConcepts(candles, structureSnapshot, {
 
   return active
     .map(zone => ({ ...zone, status: liveStatus(zone, currentPrice) }))
-    .sort((a, b) => b.availableIndex - a.availableIndex)
+    .sort((a, b) => {
+      const scoreA = (a.createdImbalance ? 2 : 0) + (a.htfAligned ? 1 : 0);
+      const scoreB = (b.createdImbalance ? 2 : 0) + (b.htfAligned ? 1 : 0);
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      return b.availableIndex - a.availableIndex;
+    })
     .slice(0, maxZones);
 }
