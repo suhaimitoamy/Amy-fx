@@ -8,18 +8,126 @@ export function killzonePanel(){let list=sessions(),cur=curSession(),focus=list.
 
 export function fmtDir(x,status='',cf=''){x=String(x||'');let d=x.includes('BUY')?'BUY':x.includes('SELL')?'SELL':'';if(!d)return 'TUNGGU';if(status.includes('SL HIT')||status.includes('TP HIT')||status.includes('EXPIRED'))return `ABAIKAN ${d}`;if(status==='INVALID'||status==='BROKEN'||status==='WAIT'||cf==='FATAL')return `WAIT ${d}`;if(cf==='HIGH'||cf==='MEDIUM')return `BIAS ${d}`;if(status==='WATCH SETUP'||status==='PANTAU SETUP')return `WATCH ${d}`;return `FOKUS ${d}`;}
 export function fmtStatus(x){x=String(x||'');return x.replace(/READY SETUP/g,'SETUP VALID').replace(/WATCH SETUP/g,'PANTAU SETUP').replace(/^WAIT$/g,'TUNGGU');}
-export function dirClass(x){x=String(x||'');return x.includes('BUY')?'buy':x.includes('SELL')?'sell':'wait';}
+export function dirClass(x){x=String(x||'');return x.includes('BUY')?'buy':x.includes('SELL')?'sell':'wait'}
 
-export function setupCard(s,i=0){let q=s.qualityLabel?`<b>${(s.status.includes('INVALID')||s.status.includes('WAIT'))?'Component Quality':'Quality'}: ${s.qualityLabel}</b>${(s.status.includes('INVALID')||s.status.includes('WAIT'))?', Setup Status: INVALID/WAIT':''} — `:'',ce=s.ce?`<br><small>CE Level: ${p2(s.ce)}</small>`:'',comp='';if(s.components){let c=s.components;comp=`<div class="num-grid" style="margin-top:10px;border-top:1px solid #333;padding-top:10px"><div class="num"><small>Model</small><strong>${c.model}</strong></div><div class="num"><small>Sweep</small><strong>${c.sweep}</strong></div><div class="num"><small>MSS</small><strong>${c.mss}</strong></div><div class="num"><small>Entry</small><strong>${c.entry}</strong></div><div class="num"><small>HTF</small><strong>${c.htf}</strong></div></div>`}let chk='';if(s.scoreChecklist){let list=s.scoreChecklist.map(x=>`<div style="font-size:12px;margin:2px 0"><span style="color:${x.passed?'#4ade80':'#f87171'}">${x.passed?'✓':'×'}</span> ${x.name} <span class="muted">+${x.score}</span></div>`).join('');chk=`<div style="margin-top:10px;border-top:1px solid #333;padding-top:10px"><b>Checklist Score: ${s.score}/100 — Grade ${s.grade||''}</b><br>${list}</div>`}let sess='';if(s.sessionContext){let sc=s.sessionContext;sess=`<div class="ai-map-note" style="margin-top:10px;font-size:12px;background:#1a1a1a;padding:8px;border-radius:4px"><b>Session: ${sc.session.replace('_',' ')}</b> — ${sc.killzone!=='NONE'?'Killzone Aktif. ':''}${sc.note}</div>`}let cfHtml='';if(s.conflictCheck){let cf=s.conflictCheck,badge=cf.conflictLevel==='NONE'?'#4ade80':cf.conflictLevel==='FATAL'||cf.conflictLevel==='HIGH'?'#f87171':'#fbbf24',cNotes=cf.conflicts.length?cf.conflicts.map(x=>x.note).join('<br>'):'Komponen utama selaras.';cfHtml=`<div style="margin-top:10px;border-top:1px solid #333;padding-top:10px;font-size:12px"><b>Conflict: <span style="color:${badge}">${cf.conflictLevel}</span> — ${cf.recommendation}</b><br><span class="muted">${cNotes}</span></div>`}let tpHtml = s.singleTarget ? `<div class="num" style="grid-column: span 2"><small>Single Target</small><strong>${p2(s.tp1)}</strong></div>` : `<div class="num"><small>TP1</small><strong>${p2(s.tp1)}</strong></div><div class="num"><small>TP2</small><strong>${p2(s.tp2)}</strong></div>`;return`<div class="setup-card ${s.status.includes('READY')?'ready':s.status.includes('WATCH')?'watch':'wait'}"><div class="setup-head"><div><div class="setup-title">SETUP ${i+1} — ${s.type}</div><div class="muted">Timeframe: ${s.tf} • Status: ${fmtStatus(s.status)}</div></div><span class="badge ${String(s.dir).includes('BUY')?'buy':'sell'}">${fmtDir(s.dir,s.status,s.conflictCheck?.conflictLevel)}</span></div><div class="num-grid"><div class="num"><small>Score</small><strong>${s.score}/100</strong></div><div class="num"><small>Harga Sekarang</small><strong>${p2(s.price)}</strong></div><div class="num"><small>Entry Area</small><strong>${p2(s.entryLow)} - ${p2(s.entryHigh)}</strong></div><div class="num"><small>SL</small><strong>${p2(s.sl)}</strong></div>${tpHtml}</div>${comp}${cfHtml}${chk}${sess}<div class="reason" style="margin-top:10px"><b>Alasan:</b><br>${q}${s.reason}${ce}</div></div>`}
+export function setupCard(s, se, i = 0, mode = 'ACTIVE') {
+  if (mode === 'HISTORY' || !se || !se.active) {
+    return historyCard(s, i);
+  }
 
-export function dashboard(){let r=state.result,dec=decisionData(),se=r?.setupExecution||(r?buildSetupExecution(r):null),tfList=['M15','H1','H4','D1'];let setupTitle=(se&&se.active)?(r?.bestSetup?.type||'Setup Entry Map'):'Belum ada setup';let setupBody='';if(se&&se.active){setupBody=`<div class="setup-summary"><div><small>Entry Area</small><strong>${p2(se.entryLow)} – ${p2(se.entryHigh)}</strong></div><div><small>Invalidasi</small><strong>${p2(se.stopLoss)}</strong></div><div><small>Target</small><strong>${p2(se.target1)}</strong></div><div><small>Status</small><strong>${se.status}</strong></div></div><p class="summary-note">${se.invalidationReason||'Setup searah Direction Forecast yang tervalidasi.'}</p>`}else{setupBody=`<p class="muted">${se?.invalidationReason||'Klik Analisis Setup untuk membuat mapping angka.'}</p>`}return`<section class="hero card mapping-hero"><div><div class="kicker">AMY FX MAPPING</div><h1>XAU/USD</h1><div class="muted" id="top-wib">${state.conn==='Connected'?'● Live Price':'○ '+state.conn} • WIB ${nowTime()}</div></div><div style="text-align:right"><div class="muted">Gold Price</div><div class="price">$${p2(state.price)}</div><div class="${dec.bias==='BULLISH'?'green':dec.bias==='BEARISH'?'red':'muted'}">${dec.bias} ${dec.confidence?`• ${dec.confidence}%`:''}</div></div></section><section class="card tf-card"><div class="section-row"><div><div class="kicker">TIMEFRAME</div><h2>Pilih mapping</h2></div><span class="muted">${state.tf}</span></div><div class="tf-grid compact-tf">${tfList.map(x=>`<button class="${state.tf===x?'active':''}" onclick="window.runAnalysis('${x}')">${x}</button>`).join('')}</div></section><section class="card setup-focus"><div class="section-row"><div><div class="kicker">SETUP UTAMA</div><h2>${setupTitle}</h2></div>${(se&&se.active)?`<span class="badge ${se.direction.includes('BUY')?'buy':'sell'}">${se.direction}</span>`:''}</div>${setupBody}<button class="action" onclick="setTab('Analyze')" style="width:100%;margin-top:12px">⚡ Buka Analisis Lengkap</button></section>${killzonePanel()}`}
+  let q = s?.qualityLabel ? `<b>Quality: ${s.qualityLabel}</b> — ` : '';
+  let ce = s?.ce ? `<br><small>CE Level: ${p2(s.ce)}</small>` : '';
+  let comp = '';
+  if (s?.components) {
+    let c = s.components;
+    comp = `<div class="num-grid" style="margin-top:10px;border-top:1px solid #333;padding-top:10px">
+      <div class="num"><small>Model</small><strong>${c.model}</strong></div>
+      <div class="num"><small>Sweep</small><strong>${c.sweep}</strong></div>
+      <div class="num"><small>MSS</small><strong>${c.mss}</strong></div>
+      <div class="num"><small>Entry</small><strong>${c.entry}</strong></div>
+      <div class="num"><small>HTF</small><strong>${c.htf}</strong></div>
+    </div>`;
+  }
+  let chk = '';
+  if (s?.scoreChecklist) {
+    let list = s.scoreChecklist.map(x => `<div style="font-size:12px;margin:2px 0"><span style="color:${x.passed ? '#4ade80' : '#f87171'}">${x.passed ? '✓' : '×'}</span> ${x.name} <span class="muted">+${x.score}</span></div>`).join('');
+    chk = `<div style="margin-top:10px;border-top:1px solid #333;padding-top:10px"><b>Checklist Score: ${s.score || 0}/100 — Grade ${s.grade || ''}</b><br>${list}</div>`;
+  }
+  let sess = '';
+  if (s?.sessionContext) {
+    let sc = s.sessionContext;
+    sess = `<div class="ai-map-note" style="margin-top:10px;font-size:12px;background:#1a1a1a;padding:8px;border-radius:4px"><b>Session: ${sc.session.replace('_', ' ')}</b> — ${sc.killzone !== 'NONE' ? 'Killzone Aktif. ' : ''}${sc.note}</div>`;
+  }
+  let cfHtml = '';
+  if (s?.conflictCheck) {
+    let cf = s.conflictCheck, badge = cf.conflictLevel === 'NONE' ? '#4ade80' : cf.conflictLevel === 'FATAL' || cf.conflictLevel === 'HIGH' ? '#f87171' : '#fbbf24', cNotes = cf.conflicts.length ? cf.conflicts.map(x => x.note).join('<br>') : 'Komponen utama selaras.';
+    cfHtml = `<div style="margin-top:10px;border-top:1px solid #333;padding-top:10px;font-size:12px"><b>Conflict: <span style="color:${badge}">${cf.conflictLevel}</span> — ${cf.recommendation}</b><br><span class="muted">${cNotes}</span></div>`;
+  }
 
-function lifecycleSetupCard(s,i=0){
-  const live=analyzeSetupLiveState(s);
-  const plan=s.tradeManagement?`<div class="precision-plan"><b>M15 PRECISION PLAN</b><span>TP1 ${s.tradeManagement.tp1R}R · Close ${s.tradeManagement.tp1ClosePercent}%</span><span>SL runner → Break-even · Runner ${s.tradeManagement.runnerPercent}% ke TP2 ≥ ${s.tradeManagement.tp2MinimumR}R</span></div>`:'';
-  return setupCard(s,i)
-    .replace('<div class="num-grid">',renderSetupLifecycle(s,live)+plan+'<div class="num-grid">')
-    .replace(`<strong>${p2(s.price)}</strong>`,`<strong data-live-price>${p2(analyzeLivePrice()||s.price)}</strong>`);
+  const tpHtml = se.singleTarget
+    ? `<div class="num" style="grid-column: span 2"><small>Target Utama</small><strong>${p2(se.target1)}</strong></div>`
+    : `<div class="num"><small>TP1</small><strong>${p2(se.target1)}</strong></div><div class="num"><small>TP2</small><strong>${se.target2 ? p2(se.target2) : '-'}</strong></div>`;
+
+  return `<div class="setup-card ready">
+    <div class="setup-head">
+      <div>
+        <div class="setup-title">SETUP AKTIF — ${s?.type || 'Entry Map'}</div>
+        <div class="muted">Timeframe: ${se.tf || state.tf} • Status: ${se.status}</div>
+      </div>
+      <span class="badge ${se.direction === 'BUY' ? 'buy' : 'sell'}">FOKUS ${se.direction}</span>
+    </div>
+    <div class="num-grid">
+      <div class="num"><small>Harga Live</small><strong>$${p2(state.price)}</strong></div>
+      <div class="num"><small>Entry Area</small><strong>${p2(se.entryLow)} - ${p2(se.entryHigh)}</strong></div>
+      <div class="num"><small>SL</small><strong>${p2(se.stopLoss)}</strong></div>
+      ${tpHtml}
+    </div>
+    ${comp}${cfHtml}${chk}${sess}
+    <div class="reason" style="margin-top:10px">
+      <b>Alasan:</b><br>${q}${s?.reason || ''}${ce}
+    </div>
+  </div>`;
+}
+
+export function historyCard(s, i = 0) {
+  if (!s) return '';
+  const lo = s.entryLow != null ? p2(s.entryLow) : '-';
+  const hi = s.entryHigh != null ? p2(s.entryHigh) : '-';
+  const sl = s.sl != null ? p2(s.sl) : '-';
+  const tp1 = s.tp1 != null ? p2(s.tp1) : '-';
+  const tp2 = s.tp2 != null ? p2(s.tp2) : '-';
+
+  return `<div class="setup-card wait">
+    <div class="setup-head">
+      <div>
+        <div class="setup-title">RIWAYAT SETUP ${i + 1} — ${s.type || 'Entry Map'}</div>
+        <div class="muted">Timeframe: ${s.tf || state.tf} • Status: TERMINAL / HISTORY</div>
+      </div>
+      <span class="badge wait">HISTORY / TERMINAL</span>
+    </div>
+    <div class="num-grid">
+      <div class="num"><small>Data Historis Entry</small><strong>${lo} - ${hi}</strong></div>
+      <div class="num"><small>Data Historis SL</small><strong>${sl}</strong></div>
+      <div class="num"><small>Data Historis TP1</small><strong>${tp1}</strong></div>
+      <div class="num"><small>Data Historis TP2</small><strong>${tp2}</strong></div>
+    </div>
+    <div class="reason" style="margin-top:10px">
+      <b>Catatan Riwayat:</b><br>${s.reason || 'Setup ini telah selesai atau digantikan.'}
+    </div>
+  </div>`;
+}
+
+export function dashboard() {
+  let r = state.result;
+  const se = r ? buildSetupExecution(r) : null;
+  if (r) {
+    r.setupExecution = se;
+    r.mappingExplanation = buildMappingExplanation(r);
+  }
+  let dec = decisionData();
+  let tfList = ['M15', 'H1', 'H4', 'D1'];
+  let setupTitle = (se && se.active) ? (r?.bestSetup?.type || 'Setup Entry Map') : 'Belum ada setup';
+  let setupBody = '';
+  if (se && se.active) {
+    setupBody = `<div class="setup-summary"><div><small>Entry Area</small><strong>${p2(se.entryLow)} – ${p2(se.entryHigh)}</strong></div><div><small>Invalidasi</small><strong>${p2(se.stopLoss)}</strong></div><div><small>Target</small><strong>${p2(se.target1)}</strong></div><div><small>Status</small><strong>${se.status}</strong></div></div><p class="summary-note">${se.invalidationReason || 'Setup searah Direction Forecast yang tervalidasi.'}</p>`;
+  } else {
+    setupBody = `<p class="muted">${se?.invalidationReason || 'Klik Analisis Setup untuk membuat mapping angka.'}</p>`;
+  }
+  return `<section class="hero card mapping-hero"><div><div class="kicker">AMY FX MAPPING</div><h1>XAU/USD</h1><div class="muted" id="top-wib">${state.conn === 'Connected' ? '● Live Price' : '○ ' + state.conn} • WIB ${nowTime()}</div></div><div style="text-align:right"><div class="muted">Gold Price</div><div class="price">$${p2(state.price)}</div><div class="${dec.bias === 'BULLISH' ? 'green' : dec.bias === 'BEARISH' ? 'red' : 'muted'}">${dec.bias} ${dec.confidence ? `• ${dec.confidence}%` : ''}</div></div></section><section class="card tf-card"><div class="section-row"><div><div class="kicker">TIMEFRAME</div><h2>Pilih mapping</h2></div><span class="muted">${state.tf}</span></div><div class="tf-grid compact-tf">${tfList.map(x => `<button class="${state.tf === x ? 'active' : ''}" onclick="window.runAnalysis('${x}')">${x}</button>`).join('')}</div></section><section class="card setup-focus"><div class="section-row"><div><div class="kicker">SETUP UTAMA</div><h2>${setupTitle}</h2></div>${(se && se.active) ? `<span class="badge ${se.direction.includes('BUY') ? 'buy' : 'sell'}">${se.direction}</span>` : ''}</div>${setupBody}<button class="action" onclick="setTab('Analyze')" style="width:100%;margin-top:12px">⚡ Buka Analisis Lengkap</button></section>${killzonePanel()}`;
+}
+
+export function lifecycleSetupCard(s, i = 0) {
+  const se = state.result ? buildSetupExecution(state.result) : null;
+  if (state.result) {
+    state.result.setupExecution = se;
+    state.result.mappingExplanation = buildMappingExplanation(state.result);
+  }
+  if (!se || !se.active) {
+    return historyCard(s, i);
+  }
+  const plan = s?.tradeManagement ? `<div class="precision-plan"><b>M15 PRECISION PLAN</b><span>TP1 ${s.tradeManagement.tp1R}R · Close ${s.tradeManagement.tp1ClosePercent}%</span><span>SL runner → Break-even · Runner ${s.tradeManagement.runnerPercent}% ke TP2 ≥ ${s.tradeManagement.tp2MinimumR}R</span></div>` : '';
+  return setupCard(s, se, i, 'ACTIVE')
+    .replace('<div class="num-grid">', renderSetupLifecycle(se) + plan + '<div class="num-grid">');
 }
 
 export function mapMini(tf){
@@ -50,46 +158,31 @@ export function activeBias(){
 export function analyzeLivePrice(){
   return Number(state.price||localStorage.getItem('last_price')||state.result?.price||0)
 }
-export function analyzeSetupLiveState(s){
-  if(!s)return{status:'TUNGGU',fatal:false,note:'Belum ada setup aktif.'}
-  const se = state.result?.setupExecution || (state.result ? buildSetupExecution(state.result) : null);
-  if (se && !se.active) return { status: se.status || 'TUNGGU', fatal: true, note: se.invalidationReason || 'Setup tidak aktif.' };
-  if(s.timestamp&&Date.now()-s.timestamp>86400000)return{status:'EXPIRED',fatal:true,note:'Setup sudah kedaluwarsa (lebih dari 24 jam).'}
-  const price=analyzeLivePrice()
-  if(!price)return{status:fmtStatus(s.status),fatal:false,note:'Harga live belum tersedia.'}
-  const dir=String(s.dir||''),isBuy=dir.includes('BUY'),isSell=dir.includes('SELL')
-  const lo=Math.min(Number(s.entryLow),Number(s.entryHigh)),hi=Math.max(Number(s.entryLow),Number(s.entryHigh))
-  const sl=Number(s.sl),tp1=Number(s.tp1),tp2=Number(s.tp2)
-  let lcKey=`${s.type}:${s.dir}:${s.tf}:${s.entryLow}:${s.entryHigh}:${s.sl}:${s.tp1}:${s.tp2}:${s.timestamp||0}`;
-  let lc=JSON.parse(localStorage.getItem('amy_mapping_lifecycle')||'{}');
-  let life=lc[lcKey],touched=life===true||life?.touched===true,tp1Secured=life?.tp1Secured===true;
-  const plannedEntry=Number(s.conflictCheck?.plannedEntry||(isBuy?hi:lo));
-  const saveLife=next=>{lc[lcKey]=next;let keys=Object.keys(lc);if(keys.length>50)keys.slice(0,keys.length-30).forEach(k=>delete lc[k]);localStorage.setItem('amy_mapping_lifecycle',JSON.stringify(lc));life=next;touched=next.touched===true;tp1Secured=next.tp1Secured===true;};
-  if(touched&&isBuy&&Number.isFinite(tp2)&&price>=tp2)return{status:'TP2 HIT',fatal:true,note:`Runner BUY mencapai TP2 ${p2(tp2)} setelah TP1 diamankan.`}
-  if(touched&&isSell&&Number.isFinite(tp2)&&price<=tp2)return{status:'TP2 HIT',fatal:true,note:`Runner SELL mencapai TP2 ${p2(tp2)} setelah TP1 diamankan.`}
-  if(tp1Secured){
-    if(isBuy&&price<=plannedEntry)return{status:'TP1 + BE',fatal:true,note:`TP1 telah diamankan dan sisa posisi BUY selesai di break-even ${p2(plannedEntry)}.`}
-    if(isSell&&price>=plannedEntry)return{status:'TP1 + BE',fatal:true,note:`TP1 telah diamankan dan sisa posisi SELL selesai di break-even ${p2(plannedEntry)}.`}
-    return{status:'RUNNER KE TP2',fatal:false,note:`TP1 sudah diamankan. SL runner berada di break-even ${p2(plannedEntry)} menuju TP2 ${p2(tp2)}.`}
+export function analyzeSetupLiveState() {
+  const result = state.result;
+  const se = result ? buildSetupExecution(result) : null;
+
+  if (!se) {
+    return {
+      status: 'TUNGGU',
+      fatal: false,
+      note: 'Belum ada setup aktif.',
+      setupExecution: null
+    };
   }
-  if(isBuy&&Number.isFinite(sl)&&price<=sl)return{status:'SL HIT / INVALID',fatal:true,note:`Setup BUY invalid karena harga live ${p2(price)} sudah di bawah SL ${p2(sl)}.`}
-  if(isSell&&Number.isFinite(sl)&&price>=sl)return{status:'SL HIT / INVALID',fatal:true,note:`Setup SELL invalid karena harga live ${p2(price)} sudah di atas SL ${p2(sl)}.`}
-  if(Number.isFinite(lo)&&Number.isFinite(hi)&&price>=lo&&price<=hi){
-    if(!touched){
-      saveLife({touched:true,tp1Secured:false,entryAt:Date.now()});
-    }
-    return{status:'DALAM AREA',fatal:false,note:`Harga live ${p2(price)} sedang berada di area entry.`}
-  }
-  if(isBuy&&Number.isFinite(tp1)&&price>=tp1){
-    if(touched){saveLife({...(typeof life==='object'?life:{}),touched:true,tp1Secured:true,tp1At:Date.now()});return{status:'TP1 SECURED',fatal:false,note:`TP1 BUY ${p2(tp1)} tercapai. Amankan 90% dan pindahkan SL runner ke break-even ${p2(plannedEntry)}.`}}
-  }
-  if(isSell&&Number.isFinite(tp1)&&price<=tp1){
-    if(touched){saveLife({...(typeof life==='object'?life:{}),touched:true,tp1Secured:true,tp1At:Date.now()});return{status:'TP1 SECURED',fatal:false,note:`TP1 SELL ${p2(tp1)} tercapai. Amankan 90% dan pindahkan SL runner ke break-even ${p2(plannedEntry)}.`}}
-  }
-  return{status:'MENUNGGU ENTRY',fatal:false,note:`Harga live ${p2(price)} belum berada di area entry ${p2(lo)} - ${p2(hi)}.`}
+
+  result.setupExecution = se;
+
+  return {
+    status: se.status,
+    fatal: se.terminal || !se.active,
+    note: se.invalidationReason || se.status,
+    setupExecution: se
+  };
 }
 export function analyzeActiveSetups(list){
-  return (list||[]).filter(s=>!analyzeSetupLiveState(s).fatal)
+  const se = state.result ? buildSetupExecution(state.result) : null;
+  return (se && se.active && state.result?.bestSetup) ? [state.result.bestSetup] : [];
 }
 export function renderAnalyzeLive(){
   renderSoft()
@@ -120,32 +213,53 @@ export function decisionData(){
   }
 
   const dd = r.directionDecision || buildDirectionDecision(r);
-  const se = r.setupExecution || buildSetupExecution(r);
-  const exp = r.mappingExplanation || buildMappingExplanation(r);
+  const se = buildSetupExecution(r);
+  r.setupExecution = se;
 
-  let nearTarget = '-';
-  let mainTarget = '-';
-  if (se.active && !r.dataStale && dd.signal !== 'WAIT') {
-    nearTarget = se.singleTarget ? `${p2(se.target1)}` : `${p2(se.target1)} / ${p2(se.target2)}`;
-    mainTarget = se.liquidityTarget ? `${se.liquidityTarget.type} ${p2(se.liquidityTarget.level)}` : (se.target2 ? `TP2 ${p2(se.target2)}` : `TP1 ${p2(se.target1)}`);
+  const expl = buildMappingExplanation(r);
+  r.mappingExplanation = expl;
+
+  if (!se.active) {
+    return {
+      bias: dd.bias,
+      direction: 'TUNGGU',
+      confidence: 0,
+      confLabel: 'Confidence',
+      status: se.status || dd.status,
+      entry: '-',
+      invalid: '-',
+      nearTarget: '-',
+      mainTarget: '-',
+      headline: expl.headline,
+      action: expl.action,
+      reason: expl.reason,
+      confirmationNeeded: expl.confirmationNeeded,
+      invalidationText: se.invalidationReason || expl.invalidation || '-',
+      marketContext: expl.marketContext || 'NETRAL',
+      dataStatus: expl.dataStatus || 'AKTIF'
+    };
   }
+
+  const nearTarget = se.singleTarget ? `${p2(se.target1)}` : `${p2(se.target1)} / ${p2(se.target2)}`;
+  const mainTarget = se.liquidityTarget ? `${se.liquidityTarget.type} ${p2(se.liquidityTarget.level)}` : (se.target2 ? `TP2 ${p2(se.target2)}` : `TP1 ${p2(se.target1)}`);
+
   return {
     bias: dd.bias,
-    direction: (se.active && dd.signal !== 'WAIT') ? dd.signal : 'TUNGGU',
-    confidence: (se.active && dd.source === 'VALIDATED_DIRECTION_FORECAST' && !dd.invalidated) ? (r.validatedDirectionForecast?.confidence || 60) : 0,
-    confLabel: 'Bias Confidence',
-    status: se.active ? se.status : (se.invalidationReason || dd.status),
-    entry: (se.active && se.entryLow != null && se.entryHigh != null) ? `${p2(se.entryLow)} - ${p2(se.entryHigh)}` : '-',
-    invalid: (se.active && se.stopLoss != null) ? p2(se.stopLoss) : '-',
+    direction: `FOKUS ${se.direction}`,
+    confidence: dd.confidence,
+    confLabel: 'Confidence',
+    status: se.status,
+    entry: `${p2(se.entryLow)} - ${p2(se.entryHigh)}`,
+    invalid: p2(se.stopLoss),
     nearTarget,
     mainTarget,
-    reason: exp.reason || dd.invalidationReason || dd.status,
-    headline: exp.headline,
-    action: exp.action,
-    confirmationNeeded: exp.confirmationNeeded,
-    invalidationText: exp.invalidation,
-    marketContext: exp.marketContext || 'BELUM TERSEDIA',
-    dataStatus: exp.dataStatus
+    headline: expl.headline,
+    action: expl.action,
+    reason: expl.reason,
+    confirmationNeeded: expl.confirmationNeeded,
+    invalidationText: se.invalidationReason || '-',
+    marketContext: expl.marketContext || 'NETRAL',
+    dataStatus: expl.dataStatus || 'AKTIF'
   };
 }
 export function amyDecisionCard(){

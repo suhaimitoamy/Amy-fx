@@ -6,27 +6,57 @@ const LABELS = [
   ['target', 'TARGET']
 ];
 
-export function lifecycleState(setup, liveState) {
-  const se = setup?.setupExecution || liveState?.setupExecution || null;
-  const stage = String(se?.lifecycleStage || '');
-  const fatal = Boolean(se ? !se.active : liveState?.fatal) || /invalid|sl hit|expired|broken|missed|stopped|replaced|stale/i.test(stage);
+export function lifecycleState(setupExecution) {
+  const se = setupExecution?.setupExecution || setupExecution;
+  const stage = String(se?.lifecycleStage || 'WAITING_ENTRY');
+  
+  let states = ['locked', 'locked', 'locked', 'locked', 'locked'];
 
-  const sweep = Boolean(se?.alignedWithForecast) || (se && stage !== 'FORECAST_INVALIDATED');
-  const mss = sweep && (Boolean(se?.geometryValid) || (se && stage !== 'INVALID_GEOMETRY'));
-  const poi = mss && (se ? se.entryLow != null : true);
-  const entered = poi && (Boolean(se?.entryTouched) || ['ENTRY_ACTIVE', 'TP1_SECURED', 'RUNNER_ACTIVE', 'TARGET_HIT'].includes(stage));
-  const target = entered && (Boolean(se?.target1Secured) || ['TARGET_HIT', 'TP1_SECURED', 'RUNNER_ACTIVE'].includes(stage));
+  switch (stage) {
+    case 'WAITING_ENTRY':
+      states = ['confirmed', 'confirmed', 'active', 'locked', 'locked'];
+      break;
+    case 'ENTRY_ACTIVE':
+      states = ['confirmed', 'confirmed', 'confirmed', 'active', 'locked'];
+      break;
+    case 'TP1_SECURED':
+    case 'RUNNER_ACTIVE':
+      states = ['confirmed', 'confirmed', 'confirmed', 'confirmed', 'active'];
+      break;
+    case 'TARGET_HIT':
+      states = ['confirmed', 'confirmed', 'confirmed', 'confirmed', 'confirmed'];
+      break;
+    case 'STOPPED':
+      states = ['confirmed', 'confirmed', 'confirmed', 'invalid', 'invalid'];
+      break;
+    case 'MISSED_ENTRY':
+      states = ['confirmed', 'confirmed', 'confirmed', 'invalid', 'invalid'];
+      break;
+    case 'EXPIRED':
+    case 'DATA_STALE':
+    case 'SETUP_REPLACED':
+      states = ['confirmed', 'confirmed', 'confirmed', 'invalid', 'invalid'];
+      break;
+    case 'FORECAST_INVALIDATED':
+      states = ['invalid', 'locked', 'locked', 'locked', 'locked'];
+      break;
+    case 'INVALID_GEOMETRY':
+      states = ['confirmed', 'invalid', 'locked', 'locked', 'locked'];
+      break;
+    default:
+      states = ['locked', 'locked', 'locked', 'locked', 'locked'];
+      break;
+  }
 
-  const values = [sweep, mss, poi, entered, target];
-  const firstWaiting = values.findIndex(value => !value);
   return LABELS.map((item, index) => ({
-    key: item[0], label: item[1],
-    state: fatal && index >= Math.max(firstWaiting, 0) ? 'invalid' : values[index] ? 'confirmed' : index === firstWaiting ? 'active' : 'locked'
+    key: item[0],
+    label: item[1],
+    state: states[index]
   }));
 }
 
-export function renderSetupLifecycle(setup, liveState) {
-  const stages = lifecycleState(setup, liveState);
+export function renderSetupLifecycle(setupExecution) {
+  const stages = lifecycleState(setupExecution);
   return `<div class="setup-lifecycle" data-setup-lifecycle>${stages.map(stage => `
     <div class="lifecycle-step ${stage.state}">
       <span>${stage.state === 'confirmed' ? '✓' : stage.state === 'invalid' ? '×' : stage.state === 'active' ? '●' : '○'}</span>
