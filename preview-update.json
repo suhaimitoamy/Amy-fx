@@ -11,19 +11,17 @@
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Pembaruan Amy FX Preview v1.4.15-preview.11",
-    "Fitur Pencarian Instan dan visual Progress Bar % Membaca di Amy FX Academy",
-    "Visual Scenario Bar memetakan Entry, SL, TP1, TP2 pada card M15 Entry Map",
-    "Kurva pertumbuhan saldo Equity SVG kumulatif pada modul Jurnal Trading",
-    "Tombol pasang Alert Level likuiditas lokal pada Heatmap Depth Radar",
-    "Pembersihan 46 file HTML Academy dari sisa sintaks Obsidian"
+    "Pencarian instan dan progress membaca di Academy",
+    "Visual Scenario Bar untuk Entry, SL, TP1, dan TP2",
+    "Kurva pertumbuhan equity pada Jurnal Trading",
+    "Alert Level lokal pada Heatmap Depth Radar",
+    "Pembersihan sintaks Obsidian pada materi Academy"
   ],
   "changelog": [
-    "Pembaruan Amy FX Preview v1.4.15-preview.11",
-    "Fitur Pencarian Instan dan visual Progress Bar % Membaca di Amy FX Academy",
-    "Visual Scenario Bar memetakan Entry, SL, TP1, TP2 pada card M15 Entry Map",
-    "Kurva pertumbuhan saldo Equity SVG kumulatif pada modul Jurnal Trading",
-    "Tombol pasang Alert Level likuiditas lokal pada Heatmap Depth Radar",
-    "Pembersihan 46 file HTML Academy dari sisa sintaks Obsidian"
+    "Pencarian instan dan progress membaca di Academy",
+    "Visual Scenario Bar untuk Entry, SL, TP1, dan TP2",
+    "Kurva pertumbuhan equity pada Jurnal Trading",
+    "Alert Level lokal pada Heatmap Depth Radar",
+    "Pembersihan sintaks Obsidian pada materi Academy"
   ]
 }
