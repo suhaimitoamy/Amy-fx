@@ -1,5 +1,5 @@
 import { state, TF, p2, nowTime, sessions, curSession } from '../main.js';
-import { runAnalysis, buildDirectionDecision } from '../api/market-data.js';
+import { runAnalysis, buildDirectionDecision, buildMappingExplanation } from '../api/market-data.js';
 import { analyze } from '../engine/ict-core.js';
 import { saveConnect, toggleBg, testNotif, downloadLogs } from '../bridge/android-bridge.js';
 import { renderSetupLifecycle } from './setup-lifecycle.js';
@@ -107,11 +107,17 @@ export function decisionData(){
       invalid: '-',
       nearTarget: '-',
       mainTarget: '-',
-      reason: 'Belum ada data mapping.'
+      headline: 'Data market belum tersedia',
+      action: 'Jangan mengambil keputusan entry.',
+      reason: 'Belum ada data mapping.',
+      confirmationNeeded: 'Tunggu data candle terbaru tersedia.',
+      invalidationText: '-',
+      dataStatus: 'DATA USANG'
     };
   }
 
   const dd = r.directionDecision || buildDirectionDecision(r);
+  const exp = r.mappingExplanation || buildMappingExplanation(r);
   let s = r.bestSetup;
   let nearTarget = '-';
   let mainTarget = '-';
@@ -129,11 +135,16 @@ export function decisionData(){
     invalid: (s && dd.signal !== 'WAIT') ? p2(s.sl) : '-',
     nearTarget,
     mainTarget,
-    reason: dd.invalidationReason || dd.status
+    reason: exp.reason || dd.invalidationReason || dd.status,
+    headline: exp.headline,
+    action: exp.action,
+    confirmationNeeded: exp.confirmationNeeded,
+    invalidationText: exp.invalidation,
+    dataStatus: exp.dataStatus
   };
 }
 export function amyDecisionCard(){
-  let d=decisionData();
+  let d = decisionData();
   let targetHtml = '';
   if (d.nearTarget === '-' && d.mainTarget === '-') {
       targetHtml = `<div class="decision-box"><small>Target Harga</small><strong>-</strong></div>`;
@@ -145,11 +156,18 @@ export function amyDecisionCard(){
   return`<section class="card"><div class="kicker">AMY FX DECISION</div><div class="decision-main ${dirClass(d.direction)}">${d.direction}</div><div class="decision-grid">
     <div class="decision-box"><small>Arah Utama</small><strong>${d.bias}</strong></div>
     <div class="decision-box"><small>Tingkat Keyakinan</small><strong>${d.confidence}%</strong></div>
-    <div class="decision-box"><small>Status</small><strong>${d.status}</strong></div>
+    <div class="decision-box"><small>Status Data</small><strong>${d.dataStatus || 'AKTIF'}</strong></div>
     <div class="decision-box"><small>Area Rencana</small><strong>${d.entry}</strong></div>
     <div class="decision-box"><small>Batas Salah</small><strong>${d.invalid}</strong></div>
     ${targetHtml}
-  </div><div class="decision-reason"><b>Penjelasan:</b><br>${d.reason}</div></section>`
+  </div>
+  <div class="decision-explanation" style="margin-top:12px;border-top:1px solid #333;padding-top:10px">
+    <b style="font-size:14px;color:#fff">${d.headline || 'Mapping Explanation'}</b><br>
+    <span class="muted" style="font-size:12px">Tindakan: <b>${d.action}</b></span>
+    <p style="margin:6px 0;font-size:13px">${d.reason}</p>
+    <small class="muted" style="display:block;font-size:11px">Konfirmasi Dibutuhkan: ${d.confirmationNeeded}</small>
+    ${d.invalidationText && d.invalidationText !== '-' ? `<small class="muted" style="display:block;font-size:11px">Invalidasi: ${d.invalidationText}</small>` : ''}
+  </div></section>`
 }
 
 export function validBreakInfo(){

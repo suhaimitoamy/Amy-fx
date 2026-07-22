@@ -163,6 +163,83 @@ export function buildDirectionDecision(result) {
   };
 }
 
+export function buildMappingExplanation(result) {
+  const dd = result?.directionDecision || buildDirectionDecision(result);
+  const validated = result?.validatedMarketContext;
+  const forecast = validated?.directionForecast;
+  const marketState = validated?.marketState;
+  const bestSetup = result?.bestSetup || null;
+  const concepts = result?.marketConcepts;
+  const liq = result?.liquidityHierarchy;
+
+  if (dd.source === 'DATA_STALE' || result?.dataStale) {
+    return {
+      headline: 'Data market sudah kedaluwarsa',
+      action: 'Jangan mengambil keputusan entry.',
+      reason: 'Cache candle telah melewati batas waktu dan API belum berhasil memperbarui data.',
+      confirmationNeeded: 'Tunggu data candle terbaru tersedia.',
+      invalidation: '-',
+      marketContext: 'DATA USANG — CACHE KEDALUWARSA',
+      dataStatus: 'DATA USANG'
+    };
+  }
+
+  if (dd.invalidated && !forecast?.active && (forecast?.invalidated || forecast?.expired || dd.source === 'VALIDATED_DIRECTION_FORECAST')) {
+    return {
+      headline: 'Arah sebelumnya sudah tidak berlaku',
+      action: 'Tunggu Direction Forecast baru.',
+      reason: dd.invalidationReason || 'Direction Forecast sebelumnya sudah kedaluwarsa atau dihentikan.',
+      confirmationNeeded: 'Structural break dan Direction Forecast baru yang tervalidasi.',
+      invalidation: '-',
+      marketContext: 'FORECAST INVALID / EXPIRED',
+      dataStatus: 'AKTIF'
+    };
+  }
+
+  if (forecast?.active) {
+    const forecastDir = forecast.direction;
+
+    if (bestSetup && dd.signal !== 'WAIT') {
+      const obInfo = concepts?.nearestOrderBlocks?.length ? ` Order Block terdekat di ${p2(concepts.nearestOrderBlocks[0].bottom)}–${p2(concepts.nearestOrderBlocks[0].top)}.` : '';
+      const fvgInfo = concepts?.nearestFairValueGaps?.length ? ` FVG terdekat di ${p2(concepts.nearestFairValueGaps[0].bottom)}–${p2(concepts.nearestFairValueGaps[0].top)}.` : '';
+      const zoneMention = (obInfo || fvgInfo) ? `${obInfo}${fvgInfo}` : '';
+      const targetMention = liq?.drawTarget ? ` Target harga utama: ${liq.drawTarget.type} ${p2(liq.drawTarget.level)}.` : '';
+      
+      return {
+        headline: 'Setup searah dengan arah market tervalidasi',
+        action: `FOKUS ${dd.signal}`,
+        reason: `Direction Forecast tervalidasi ${forecastDir} (${forecast.confidence || 60}%). Struktur market ${marketState?.structureTrend || 'TERBENTUK'}.${zoneMention}${targetMention} Setup ${bestSetup.type || 'Entry Map'} aktif.`,
+        confirmationNeeded: `Harga sedang ${bestSetup.entryLow ? `menunggu di area entry ${p2(bestSetup.entryLow)}–${p2(bestSetup.entryHigh)}` : 'menunggu area retest'}.`,
+        invalidation: bestSetup.sl ? `SL pada ${p2(bestSetup.sl)}` : 'Batas invalidasi setup',
+        marketContext: `VALIDATED FORECAST ${forecastDir}`,
+        dataStatus: 'AKTIF'
+      };
+    }
+
+    const conflictNote = result?.validatedSetupConflict ? ' Setup Entry Map berlawanan disembunyikan.' : '';
+    return {
+      headline: 'Arah market tervalidasi, tetapi belum ada area entry',
+      action: 'Jangan mengejar harga. Tunggu setup Entry Map searah.',
+      reason: `Direction Forecast tervalidasi ${forecastDir} (${forecast.confidence || 60}%). Struktur market ${marketState?.structureTrend || 'TERBENTUK'}.${conflictNote} Belum ada area entry yang aman.`,
+      confirmationNeeded: 'Setup Entry Map searah forecast dan masih aktif.',
+      invalidation: 'Structural break berlawanan',
+      marketContext: `VALIDATED FORECAST ${forecastDir}`,
+      dataStatus: 'AKTIF'
+    };
+  }
+
+  const stateText = marketState?.state || 'RANGE / TRANSITION';
+  return {
+    headline: 'Belum ada arah market yang tervalidasi',
+    action: 'Tunggu konfirmasi arah baru.',
+    reason: `Kondisi market saat ini adalah ${stateText}. Kondisi ini merupakan konteks perilaku harga, bukan sinyal BUY atau SELL.`,
+    confirmationNeeded: 'Membutuhkan structural break terkonfirmasi dan Direction Forecast aktif.',
+    invalidation: '-',
+    marketContext: stateText,
+    dataStatus: 'AKTIF'
+  };
+}
+
 function publishMappingSnapshot(result = state.result) {
   const intel = window.AmyFXIntel;
   if (!intel?.write) return;
@@ -189,6 +266,7 @@ function publishMappingSnapshot(result = state.result) {
   if (!levels.some(item => item.type === 'SSL') && ssl > 0) levels.push({ type: 'SSL', price: ssl, distance: price > 0 ? ssl - price : 0, status: 'ACTIVE', source: 'MAPPING', timeframe: result?.tf || state.tf });
 
   const decision = result?.directionDecision || buildDirectionDecision(result);
+  const explanation = result?.mappingExplanation || buildMappingExplanation(result);
   const validated = result?.validatedMarketContext;
 
   intel.write('mapping', {
@@ -201,6 +279,7 @@ function publishMappingSnapshot(result = state.result) {
     direction: decision.signal,
     status: decision.status,
     directionDecision: decision,
+    mappingExplanation: explanation,
     marketState: result?.dataStale ? 'DATA USANG' : (validated?.marketState?.state || 'RANGE / TRANSITION'),
     directionForecast: decision.source === 'VALIDATED_DIRECTION_FORECAST' ? (validated?.directionForecast?.direction || 'NO CLEAR DIRECTION') : 'NO CLEAR DIRECTION',
     regime: result?.dataStale ? 'TRANSITION' : (result?.strategyRouter?.activeRegime || result?.marketRegime?.regime || 'TRANSITION'),
@@ -336,6 +415,7 @@ function applyRegimeRouter(result, htfBiases) {
 
   const decision = buildDirectionDecision(result);
   result.directionDecision = decision;
+  result.mappingExplanation = buildMappingExplanation(result);
   result.bias = decision.bias;
   result.signal = decision.signal;
   result.statusText = decision.status;
@@ -395,6 +475,7 @@ export async function runAnalysis(tf = state.tf) {
         }
       };
       result.directionDecision = buildDirectionDecision(result);
+      result.mappingExplanation = buildMappingExplanation(result);
       state.result = result;
       save();
       publishMappingSnapshot(result);
