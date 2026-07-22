@@ -46,6 +46,7 @@ export const state = {
 };
 
 const DISPLAY_TIME_ZONE = 'Asia/Makassar';
+const PREVIEW_UPDATE_ID = 'amyfx-preview-update';
 
 export const p2 = value =>
   Number.isFinite(+value) ? Number(value).toFixed(2) : '-';
@@ -132,26 +133,24 @@ export function save() {
   localStorage.setItem('bg_scanner', 'true');
 }
 
-export function setupText(setup) {
-  if (!setup) return '';
-  const action = setup.status === 'WAIT'
-    ? 'Tunggu konfirmasi.'
-    : setup.status === 'INVALID'
-      ? 'Setup tidak valid.'
-      : setup.lifecycle?.live === false
-        ? `Setup selesai: ${setup.lifecycle.status}.`
-        : 'Ikuti level Entry Map; jangan mengejar harga.';
-  const quality = setup.scoreMode === 'RULE_BASED' || setup.grade === 'RULE-BASED'
-    ? 'Mode: RULE-BASED'
-    : `Kualitas: ${setup.score}/100`;
-  return `${fmtDir(setup.dir)} • ${setup.tf}
-${quality}
-Area rencana: ${p2(setup.entryLow)} - ${p2(setup.entryHigh)}
-Batas salah: ${p2(setup.sl)}
-Target aman: ${p2(setup.tp1)}
-Target lanjutan: ${p2(setup.tp2)}
-${action}
-${setup.reason}`;
+export function setupText(execution, result = state.result) {
+  if (!execution) return 'Belum ada setup tervalidasi.';
+
+  const explanation = result?.mappingExplanation;
+  if (!execution.active) {
+    return `Status: ${execution.status || 'TUNGGU'}\n${execution.invalidationReason || explanation?.reason || 'Belum ada setup aktif.'}`;
+  }
+
+  const targetText = execution.singleTarget
+    ? `Target: ${p2(execution.target1)}`
+    : `TP1: ${p2(execution.target1)}\nTP2: ${p2(execution.target2)}`;
+
+  return `${fmtDir(execution.direction)} • ${result?.tf || state.tf}
+Status: ${execution.status}
+Area rencana: ${p2(execution.entryLow)} - ${p2(execution.entryHigh)}
+Batas salah: ${p2(execution.stopLoss)}
+${targetText}
+${explanation?.action || 'Ikuti lifecycle setup; jangan mengejar harga.'}`;
 }
 
 function setTab(tab) {
@@ -181,9 +180,34 @@ function livePriceWatchdog() {
   if (!isLivePriceRunning() || state.conn === 'Offline' || stale) connect();
 }
 
+function mountPreviewUpdateBadge() {
+  if (document.getElementById(PREVIEW_UPDATE_ID)) return;
+  const badge = document.createElement('div');
+  badge.id = PREVIEW_UPDATE_ID;
+  badge.textContent = 'UPDATE · AMY FX v1.5 PREVIEW';
+  badge.setAttribute('aria-label', 'Amy FX preview sudah memakai update terbaru');
+  Object.assign(badge.style, {
+    position: 'fixed',
+    top: '10px',
+    right: '10px',
+    zIndex: '99999',
+    padding: '7px 10px',
+    borderRadius: '999px',
+    border: '1px solid rgba(255, 196, 0, .55)',
+    background: 'rgba(20, 16, 4, .94)',
+    color: '#ffd45a',
+    fontSize: '10px',
+    fontWeight: '800',
+    letterSpacing: '.08em',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, .35)',
+    pointerEvents: 'none'
+  });
+  document.body.appendChild(badge);
+}
+
 function syncAutomaticScannerUi() {
   const button = document.querySelector('[data-scanner-status]');
-  const buttonText = '📡 Background Scanner Otomatis Aktif';
+  const buttonText = '📡 Scanner mengikuti setup tervalidasi';
   if (button) {
     if (button.textContent !== buttonText) button.textContent = buttonText;
     if (!button.classList.contains('action')) button.className = 'action';
@@ -193,12 +217,12 @@ function syncAutomaticScannerUi() {
   if (!settings) return;
 
   const helpText =
-    'Harga live dan Background Scanner memakai server Amy FX secara otomatis. API key lokal tidak wajib.';
+    'Harga live, snapshot Mapping, scanner, dan notifikasi memakai kontrak setupExecution yang sama.';
   const help = settings.querySelector('p.muted');
   if (help && help.textContent !== helpText) help.textContent = helpText;
 
   const warningHtml =
-    '<b>Monitor Otomatis</b><br>News dan area M15 tetap dipantau setelah aplikasi ditutup.';
+    '<b>Monitor Tervalidasi</b><br>Scanner hanya aktif ketika setupExecution M15 masih aktif, searah forecast, dan belum terminal.';
   const warning = settings.querySelector('.warn');
   if (warning && warning.innerHTML !== warningHtml) warning.innerHTML = warningHtml;
 }
@@ -227,9 +251,7 @@ function initApp() {
   applyAmyFxRoute();
   render();
   syncAutomaticScannerUi();
-
-  // MutationObserver sebelumnya menulis ulang Settings lalu memicu dirinya sendiri.
-  // Tanpa observer, navigasi tetap ringan dan semua tombol dapat menerima sentuhan.
+  mountPreviewUpdateBadge();
 
   setTimeout(autoConnectLivePrice, 600);
   setInterval(livePriceWatchdog, 30000);
