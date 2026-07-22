@@ -232,28 +232,34 @@ export function advanceValidatedForecast(previous, {
     expiryTime: finite(previous?.expiryTime),
     triggerRule: previous?.triggerRule || '',
     newForecast: false,
-    invalidated: false,
-    expired: false
+    invalidated: Boolean(previous?.invalidated),
+    expired: Boolean(previous?.expired),
+    invalidationReason: previous?.invalidationReason || ''
   };
-  const expired = state.directionValue !== 0 && state.expiryIndex != null && index > state.expiryIndex;
-  const invalidated = (previous?.directionValue === 1 && rawBreakBear) || (previous?.directionValue === -1 && rawBreakBull);
-  if (expired || invalidated) {
+
+  const activeBefore = state.directionValue !== 0 && state.expiryIndex != null && index <= state.expiryIndex;
+  const expiredNow = activeBefore && state.expiryIndex != null && index > state.expiryIndex;
+  const invalidatedNow = activeBefore && ((state.directionValue === 1 && rawBreakBear) || (state.directionValue === -1 && rawBreakBull));
+
+  if (expiredNow || invalidatedNow) {
     state.directionValue = 0;
     state.startIndex = null;
     state.startTime = NaN;
     state.expiryIndex = null;
     state.expiryTime = NaN;
     state.triggerRule = '';
-    state.expired = Boolean(expired);
-    state.invalidated = Boolean(invalidated || expired);
-    state.invalidationReason = invalidated
+    state.expired = Boolean(expiredNow);
+    state.invalidated = true;
+    state.invalidationReason = invalidatedNow
       ? 'Direction Forecast dihentikan oleh structural break berlawanan.'
       : 'Direction Forecast telah melewati batas horizon.';
   }
+
   const candidateDirection = finite(candidate?.directionValue, 0);
   const canRefresh = state.startIndex == null
     || candidateDirection !== state.directionValue
     || index - state.startIndex >= profile.cooldownBars;
+
   if (candidateDirection !== 0 && canRefresh) {
     state.directionValue = candidateDirection;
     state.startIndex = index;
@@ -266,6 +272,7 @@ export function advanceValidatedForecast(previous, {
     state.expired = false;
     state.invalidationReason = '';
   }
+
   state.active = state.directionValue !== 0 && state.expiryIndex != null && index <= state.expiryIndex;
   return state;
 }
@@ -314,6 +321,7 @@ export function evaluateValidatedSeries({
   for (let index = 0; index < values.length; index += 1) {
     const candle = values[index];
     const previous = values[index - 1];
+
     const fastPivotHigh = pivotAt(values, index, 'HIGH', settings.swingLength);
     const fastPivotLow = pivotAt(values, index, 'LOW', settings.swingLength);
     const slowPivotHigh = pivotAt(values, index, 'HIGH', settings.slowSwingLength);
@@ -461,7 +469,14 @@ export function evaluateValidatedMarketContext(input = {}) {
       status: series.status,
       tf: series.tf,
       marketState: { state: 'DATA BELUM CUKUP', direction: 'NEUTRAL', directionValue: 0, confirmed: false },
-      directionForecast: { active: false, direction: 'NO CLEAR DIRECTION', directionValue: 0 }
+      directionForecast: {
+        active: false,
+        direction: 'NO CLEAR DIRECTION',
+        directionValue: 0,
+        invalidated: false,
+        expired: false,
+        invalidationReason: ''
+      }
     };
   }
   const latest = series.snapshots.at(-1);
