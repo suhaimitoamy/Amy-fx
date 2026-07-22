@@ -1,25 +1,23 @@
 {
-  "latest_version_code": 38,
-  "latest_version_name": "1.4.15",
-  "versionCode": 38,
-  "version": "1.4.15",
+  "channel": "amyfx-preview-professional-ui",
+  "latest_version_code": 90045,
+  "latest_version_name": "1.4.15-preview.8",
+  "versionCode": 90045,
+  "version": "1.4.15-preview.8",
   "releaseDate": "2026-07-22",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.8/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.8/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
+  "enabled": true,
   "release_notes": [
-    "Rilis resmi Amy FX dengan package com.amyelitesuite dan sertifikat permanen",
-    "Live Market Example rule-based tersedia di 645 halaman Amy FX Academy",
-    "Contoh materi tetap tersedia saat layanan data live tidak merespons",
-    "Updater memverifikasi package, versionCode, dan signer APK sebelum instalasi",
-    "Build debug tidak digunakan lagi untuk distribusi publik"
+    "Penyempurnaan tampilan UI & copy halaman Mapping menyeluruh",
+    "Penghapusan kartu AMY FX DECISION dan penyusunan ulang urutan Analisis (Outlook, Valid Break, Mapping M1-H4, Penjelasan, Setup)",
+    "Penambahan Sticky Mini Header saat scroll, Indikator Live Price berdenyut, dan optimasi pembersihan memori"
   ],
   "changelog": [
-    "Rilis resmi Amy FX dengan package com.amyelitesuite dan sertifikat permanen",
-    "Live Market Example rule-based tersedia di 645 halaman Amy FX Academy",
-    "Contoh materi tetap tersedia saat layanan data live tidak merespons",
-    "Updater memverifikasi package, versionCode, dan signer APK sebelum instalasi",
-    "Build debug tidak digunakan lagi untuk distribusi publik"
+    "Penyempurnaan tampilan UI & copy halaman Mapping menyeluruh",
+    "Penghapusan kartu AMY FX DECISION dan penyusunan ulang urutan Analisis (Outlook, Valid Break, Mapping M1-H4, Penjelasan, Setup)",
+    "Penambahan Sticky Mini Header saat scroll, Indikator Live Price berdenyut, dan optimasi pembersihan memori"
   ]
 }
