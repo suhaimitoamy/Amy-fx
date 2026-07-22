@@ -1,5 +1,5 @@
 import { state, TF, p2, nowTime, sessions, curSession } from '../main.js';
-import { runAnalysis, buildDirectionDecision, buildMappingExplanation } from '../api/market-data.js';
+import { runAnalysis, buildDirectionDecision, buildMappingExplanation, buildSetupExecution } from '../api/market-data.js';
 import { analyze } from '../engine/ict-core.js';
 import { saveConnect, toggleBg, testNotif, downloadLogs } from '../bridge/android-bridge.js';
 import { renderSetupLifecycle } from './setup-lifecycle.js';
@@ -12,7 +12,7 @@ export function dirClass(x){x=String(x||'');return x.includes('BUY')?'buy':x.inc
 
 export function setupCard(s,i=0){let q=s.qualityLabel?`<b>${(s.status.includes('INVALID')||s.status.includes('WAIT'))?'Component Quality':'Quality'}: ${s.qualityLabel}</b>${(s.status.includes('INVALID')||s.status.includes('WAIT'))?', Setup Status: INVALID/WAIT':''} — `:'',ce=s.ce?`<br><small>CE Level: ${p2(s.ce)}</small>`:'',comp='';if(s.components){let c=s.components;comp=`<div class="num-grid" style="margin-top:10px;border-top:1px solid #333;padding-top:10px"><div class="num"><small>Model</small><strong>${c.model}</strong></div><div class="num"><small>Sweep</small><strong>${c.sweep}</strong></div><div class="num"><small>MSS</small><strong>${c.mss}</strong></div><div class="num"><small>Entry</small><strong>${c.entry}</strong></div><div class="num"><small>HTF</small><strong>${c.htf}</strong></div></div>`}let chk='';if(s.scoreChecklist){let list=s.scoreChecklist.map(x=>`<div style="font-size:12px;margin:2px 0"><span style="color:${x.passed?'#4ade80':'#f87171'}">${x.passed?'✓':'×'}</span> ${x.name} <span class="muted">+${x.score}</span></div>`).join('');chk=`<div style="margin-top:10px;border-top:1px solid #333;padding-top:10px"><b>Checklist Score: ${s.score}/100 — Grade ${s.grade||''}</b><br>${list}</div>`}let sess='';if(s.sessionContext){let sc=s.sessionContext;sess=`<div class="ai-map-note" style="margin-top:10px;font-size:12px;background:#1a1a1a;padding:8px;border-radius:4px"><b>Session: ${sc.session.replace('_',' ')}</b> — ${sc.killzone!=='NONE'?'Killzone Aktif. ':''}${sc.note}</div>`}let cfHtml='';if(s.conflictCheck){let cf=s.conflictCheck,badge=cf.conflictLevel==='NONE'?'#4ade80':cf.conflictLevel==='FATAL'||cf.conflictLevel==='HIGH'?'#f87171':'#fbbf24',cNotes=cf.conflicts.length?cf.conflicts.map(x=>x.note).join('<br>'):'Komponen utama selaras.';cfHtml=`<div style="margin-top:10px;border-top:1px solid #333;padding-top:10px;font-size:12px"><b>Conflict: <span style="color:${badge}">${cf.conflictLevel}</span> — ${cf.recommendation}</b><br><span class="muted">${cNotes}</span></div>`}let tpHtml = s.singleTarget ? `<div class="num" style="grid-column: span 2"><small>Single Target</small><strong>${p2(s.tp1)}</strong></div>` : `<div class="num"><small>TP1</small><strong>${p2(s.tp1)}</strong></div><div class="num"><small>TP2</small><strong>${p2(s.tp2)}</strong></div>`;return`<div class="setup-card ${s.status.includes('READY')?'ready':s.status.includes('WATCH')?'watch':'wait'}"><div class="setup-head"><div><div class="setup-title">SETUP ${i+1} — ${s.type}</div><div class="muted">Timeframe: ${s.tf} • Status: ${fmtStatus(s.status)}</div></div><span class="badge ${String(s.dir).includes('BUY')?'buy':'sell'}">${fmtDir(s.dir,s.status,s.conflictCheck?.conflictLevel)}</span></div><div class="num-grid"><div class="num"><small>Score</small><strong>${s.score}/100</strong></div><div class="num"><small>Harga Sekarang</small><strong>${p2(s.price)}</strong></div><div class="num"><small>Entry Area</small><strong>${p2(s.entryLow)} - ${p2(s.entryHigh)}</strong></div><div class="num"><small>SL</small><strong>${p2(s.sl)}</strong></div>${tpHtml}</div>${comp}${cfHtml}${chk}${sess}<div class="reason" style="margin-top:10px"><b>Alasan:</b><br>${q}${s.reason}${ce}</div></div>`}
 
-export function dashboard(){let r=state.result,s=r?.bestSetup,dec=decisionData(),tfList=['M15','H1','H4','D1'];return`<section class="hero card mapping-hero"><div><div class="kicker">AMY FX MAPPING</div><h1>XAU/USD</h1><div class="muted" id="top-wib">${state.conn==='Connected'?'● Live Price':'○ '+state.conn} • WIB ${nowTime()}</div></div><div style="text-align:right"><div class="muted">Gold Price</div><div class="price">$${p2(state.price)}</div><div class="${dec.bias==='BULLISH'?'green':dec.bias==='BEARISH'?'red':'muted'}">${dec.bias} ${dec.confidence?`• ${dec.confidence}%`:''}</div></div></section><section class="card tf-card"><div class="section-row"><div><div class="kicker">TIMEFRAME</div><h2>Pilih mapping</h2></div><span class="muted">${state.tf}</span></div><div class="tf-grid compact-tf">${tfList.map(x=>`<button class="${state.tf===x?'active':''}" onclick="window.runAnalysis('${x}')">${x}</button>`).join('')}</div></section><section class="card setup-focus"><div class="section-row"><div><div class="kicker">SETUP UTAMA</div><h2>${s?s.type:'Belum ada setup'}</h2></div>${s?`<span class="badge ${String(s.dir).includes('BUY')?'buy':'sell'}">${fmtDir(s.dir,s.status,s.conflictCheck?.conflictLevel)}</span>`:''}</div>${s?`<div class="setup-summary"><div><small>Entry Area</small><strong>${p2(s.entryLow)} – ${p2(s.entryHigh)}</strong></div><div><small>Invalidasi</small><strong>${p2(s.sl)}</strong></div><div><small>Target</small><strong>${p2(s.tp1)}</strong></div><div><small>Score</small><strong>${s.score}/100</strong></div></div><p class="summary-note">${analyzeSetupLiveState(s).note}</p>`:'<p class="muted">Klik Analisis Setup untuk membuat mapping angka.</p>'}<button class="action" onclick="setTab('Analyze')" style="width:100%;margin-top:12px">⚡ Buka Analisis Lengkap</button></section>${killzonePanel()}`}
+export function dashboard(){let r=state.result,dec=decisionData(),se=r?.setupExecution||(r?buildSetupExecution(r):null),tfList=['M15','H1','H4','D1'];let setupTitle=(se&&se.active)?(r?.bestSetup?.type||'Setup Entry Map'):'Belum ada setup';let setupBody='';if(se&&se.active){setupBody=`<div class="setup-summary"><div><small>Entry Area</small><strong>${p2(se.entryLow)} – ${p2(se.entryHigh)}</strong></div><div><small>Invalidasi</small><strong>${p2(se.stopLoss)}</strong></div><div><small>Target</small><strong>${p2(se.target1)}</strong></div><div><small>Status</small><strong>${se.status}</strong></div></div><p class="summary-note">${se.invalidationReason||'Setup searah Direction Forecast yang tervalidasi.'}</p>`}else{setupBody=`<p class="muted">${se?.invalidationReason||'Klik Analisis Setup untuk membuat mapping angka.'}</p>`}return`<section class="hero card mapping-hero"><div><div class="kicker">AMY FX MAPPING</div><h1>XAU/USD</h1><div class="muted" id="top-wib">${state.conn==='Connected'?'● Live Price':'○ '+state.conn} • WIB ${nowTime()}</div></div><div style="text-align:right"><div class="muted">Gold Price</div><div class="price">$${p2(state.price)}</div><div class="${dec.bias==='BULLISH'?'green':dec.bias==='BEARISH'?'red':'muted'}">${dec.bias} ${dec.confidence?`• ${dec.confidence}%`:''}</div></div></section><section class="card tf-card"><div class="section-row"><div><div class="kicker">TIMEFRAME</div><h2>Pilih mapping</h2></div><span class="muted">${state.tf}</span></div><div class="tf-grid compact-tf">${tfList.map(x=>`<button class="${state.tf===x?'active':''}" onclick="window.runAnalysis('${x}')">${x}</button>`).join('')}</div></section><section class="card setup-focus"><div class="section-row"><div><div class="kicker">SETUP UTAMA</div><h2>${setupTitle}</h2></div>${(se&&se.active)?`<span class="badge ${se.direction.includes('BUY')?'buy':'sell'}">${se.direction}</span>`:''}</div>${setupBody}<button class="action" onclick="setTab('Analyze')" style="width:100%;margin-top:12px">⚡ Buka Analisis Lengkap</button></section>${killzonePanel()}`}
 
 function lifecycleSetupCard(s,i=0){
   const live=analyzeSetupLiveState(s);
@@ -52,6 +52,8 @@ export function analyzeLivePrice(){
 }
 export function analyzeSetupLiveState(s){
   if(!s)return{status:'TUNGGU',fatal:false,note:'Belum ada setup aktif.'}
+  const se = state.result?.setupExecution || (state.result ? buildSetupExecution(state.result) : null);
+  if (se && !se.active) return { status: se.status || 'TUNGGU', fatal: true, note: se.invalidationReason || 'Setup tidak aktif.' };
   if(s.timestamp&&Date.now()-s.timestamp>86400000)return{status:'EXPIRED',fatal:true,note:'Setup sudah kedaluwarsa (lebih dari 24 jam).'}
   const price=analyzeLivePrice()
   if(!price)return{status:fmtStatus(s.status),fatal:false,note:'Harga live belum tersedia.'}
@@ -118,22 +120,23 @@ export function decisionData(){
   }
 
   const dd = r.directionDecision || buildDirectionDecision(r);
+  const se = r.setupExecution || buildSetupExecution(r);
   const exp = r.mappingExplanation || buildMappingExplanation(r);
-  let s = r.bestSetup;
+
   let nearTarget = '-';
   let mainTarget = '-';
-  if (s && !r.dataStale && dd.signal !== 'WAIT') {
-    nearTarget = s.singleTarget ? `${p2(s.tp1)}` : `${p2(s.tp1)} / ${p2(s.tp2)}`;
-    mainTarget = r.liquidityHierarchy?.drawTarget ? `${r.liquidityHierarchy.drawTarget.type} ${p2(r.liquidityHierarchy.drawTarget.level)}` : (String(s.dir).includes('BUY')?`BSL ${p2(r.bsl)}`:`SSL ${p2(r.ssl)}`);
+  if (se.active && !r.dataStale && dd.signal !== 'WAIT') {
+    nearTarget = se.singleTarget ? `${p2(se.target1)}` : `${p2(se.target1)} / ${p2(se.target2)}`;
+    mainTarget = se.liquidityTarget ? `${se.liquidityTarget.type} ${p2(se.liquidityTarget.level)}` : (se.target2 ? `TP2 ${p2(se.target2)}` : `TP1 ${p2(se.target1)}`);
   }
   return {
     bias: dd.bias,
-    direction: dd.signal === 'WAIT' ? 'TUNGGU' : dd.signal,
-    confidence: (dd.source === 'VALIDATED_DIRECTION_FORECAST' && !dd.invalidated) ? (r.validatedDirectionForecast?.confidence || 60) : 0,
+    direction: (se.active && dd.signal !== 'WAIT') ? dd.signal : 'TUNGGU',
+    confidence: (se.active && dd.source === 'VALIDATED_DIRECTION_FORECAST' && !dd.invalidated) ? (r.validatedDirectionForecast?.confidence || 60) : 0,
     confLabel: 'Bias Confidence',
-    status: dd.status,
-    entry: (s && dd.signal !== 'WAIT') ? `${p2(s.entryLow)} - ${p2(s.entryHigh)}` : '-',
-    invalid: (s && dd.signal !== 'WAIT') ? p2(s.sl) : '-',
+    status: se.active ? se.status : (se.invalidationReason || dd.status),
+    entry: (se.active && se.entryLow != null && se.entryHigh != null) ? `${p2(se.entryLow)} - ${p2(se.entryHigh)}` : '-',
+    invalid: (se.active && se.stopLoss != null) ? p2(se.stopLoss) : '-',
     nearTarget,
     mainTarget,
     reason: exp.reason || dd.invalidationReason || dd.status,

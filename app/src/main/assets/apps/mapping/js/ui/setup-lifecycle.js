@@ -12,13 +12,18 @@ function has(value) {
 
 export function lifecycleState(setup, liveState) {
   const c = setup?.components || {};
-  const status = String(liveState?.status || setup?.status || 'WAIT');
-  const fatal = Boolean(liveState?.fatal) || /invalid|sl hit|expired|broken/i.test(status);
-  const sweep = has(c.sweep);
-  const mss = sweep && has(c.mss);
-  const poi = mss && (has(c.entry) || /fvg|order block|ob/i.test(String(setup?.type || '')));
-  const entered = poi && /entry touched|active|ready|valid|tp/i.test(status);
-  const target = entered && /tp|target hit|completed/i.test(status);
+  const se = setup?.setupExecution || liveState?.setupExecution || null;
+
+  const status = String(se?.status || liveState?.status || setup?.status || 'WAIT');
+  const stage = String(se?.lifecycleStage || liveState?.stage || '');
+  const fatal = Boolean(se ? !se.active : liveState?.fatal) || /invalid|sl hit|expired|broken|missed|stopped/i.test(status);
+
+  const sweep = has(c.sweep) || Boolean(se?.alignedWithForecast);
+  const mss = sweep && (has(c.mss) || Boolean(se?.geometryValid));
+  const poi = mss && (has(c.entry) || Boolean(se?.geometryValid) || /fvg|order block|ob/i.test(String(setup?.type || '')));
+  const entered = poi && (Boolean(se?.entryTouched) || /entry touched|entry_active|tp1_secured|runner_active|target_hit/i.test(stage) || /dalam area|tp|entry aktif/i.test(status));
+  const target = entered && (Boolean(se?.target1Secured) || /target_hit|tp1_secured|runner_active/i.test(stage) || /tp|target hit|completed/i.test(status));
+
   const values = [sweep, mss, poi, entered, target];
   const firstWaiting = values.findIndex(value => !value);
   return LABELS.map((item, index) => ({
