@@ -72,6 +72,72 @@ function validatedDirection(result) {
   return forecast.directionValue > 0 ? 'BUY' : forecast.directionValue < 0 ? 'SELL' : null;
 }
 
+export function buildDirectionDecision(result) {
+  if (!result || result.dataStale) {
+    return {
+      bias: 'DATA USANG',
+      signal: 'WAIT',
+      source: 'DATA_STALE',
+      status: 'DATA USANG — CACHE KEDALUWARSA & API GAGAL',
+      invalidated: true,
+      invalidationReason: 'Cache kedaluwarsa & API gagal diperbarui.'
+    };
+  }
+
+  const validated = result.validatedMarketContext;
+  const forecast = validated?.directionForecast;
+  const marketState = validated?.marketState;
+
+  if (forecast?.active) {
+    const forecastDir = forecast.direction;
+    const bias = forecastDir === 'BULLISH' ? 'BUY' : forecastDir === 'BEARISH' ? 'SELL' : 'WAIT';
+    const rawSetup = result.experimentalBestSetup || result.bestSetup || result.entryMap?.setup;
+    const setupVal = setupDirection(rawSetup);
+    const forecastVal = forecast.directionValue > 0 ? 1 : forecast.directionValue < 0 ? -1 : 0;
+    const conflict = Boolean(rawSetup && setupVal !== 0 && setupVal !== forecastVal);
+
+    if (conflict) {
+      return {
+        bias,
+        signal: 'WAIT',
+        source: 'VALIDATED_DIRECTION_FORECAST',
+        status: `WAIT — Setup Entry Map (${rawSetup?.dir || 'Entry Map'}) bertentangan dengan Validated Direction Forecast (${forecastDir})`,
+        invalidated: true,
+        invalidationReason: `Setup Entry Map bertentangan dengan Validated Direction Forecast (${forecastDir}).`
+      };
+    }
+
+    return {
+      bias,
+      signal: bias,
+      source: 'VALIDATED_DIRECTION_FORECAST',
+      status: `${forecastDir} · VALIDATED FORECAST (${forecast.confidence || 60}%)`,
+      invalidated: false,
+      invalidationReason: ''
+    };
+  }
+
+  if (marketState?.state && marketState.state !== 'DATA BELUM CUKUP') {
+    return {
+      bias: 'WAIT',
+      signal: 'WAIT',
+      source: 'VALIDATED_MARKET_STATE',
+      status: `WAIT — Market State: ${marketState.state} (Konteks saja, sinyal WAIT)`,
+      invalidated: false,
+      invalidationReason: 'Belum ada Direction Forecast tervalidasi yang aktif.'
+    };
+  }
+
+  return {
+    bias: 'WAIT',
+    signal: 'WAIT',
+    source: 'NO_CLEAR_DIRECTION',
+    status: 'WAIT — NO CLEAR DIRECTION',
+    invalidated: false,
+    invalidationReason: 'Tidak ada arah yang terverifikasi.'
+  };
+}
+
 function publishMappingSnapshot(result = state.result) {
   const intel = window.AmyFXIntel;
   if (!intel?.write) return;
@@ -97,23 +163,21 @@ function publishMappingSnapshot(result = state.result) {
   if (!levels.some(item => item.type === 'BSL') && bsl > 0) levels.push({ type: 'BSL', price: bsl, distance: price > 0 ? bsl - price : 0, status: 'ACTIVE', source: 'MAPPING', timeframe: result?.tf || state.tf });
   if (!levels.some(item => item.type === 'SSL') && ssl > 0) levels.push({ type: 'SSL', price: ssl, distance: price > 0 ? ssl - price : 0, status: 'ACTIVE', source: 'MAPPING', timeframe: result?.tf || state.tf });
 
+  const decision = result?.directionDecision || buildDirectionDecision(result);
   const validated = result?.validatedMarketContext;
-  validatedDirection(result);
+
   intel.write('mapping', {
     price,
     bsl,
     ssl,
     levels,
     timeframe: result?.tf || previous.timeframe || state.tf,
-    bias: result?.dataStale ? 'DATA USANG' : (validated?.directionForecast?.active
-      ? validated.directionForecast.direction
-      : validated?.marketState?.direction || result?.final || previous.bias || 'WAIT'),
-    direction: result?.dataStale ? 'WAIT' : (result?.bestSetup?.dir || 'WAIT'),
-    status: result?.dataStale ? 'DATA USANG — CACHE KEDALUWARSA & API GAGAL' : (validated?.directionForecast?.active
-      ? `${validated.directionForecast.direction} · VALIDATED FORECAST`
-      : result?.bestSetup?.status || result?.strategyRouter?.decision || 'NO CLEAR DIRECTION'),
+    bias: decision.bias,
+    direction: decision.signal,
+    status: decision.status,
+    directionDecision: decision,
     marketState: result?.dataStale ? 'DATA USANG' : (validated?.marketState?.state || 'RANGE / TRANSITION'),
-    directionForecast: result?.dataStale ? 'DATA USANG' : (validated?.directionForecast?.direction || 'NO CLEAR DIRECTION'),
+    directionForecast: decision.source === 'VALIDATED_DIRECTION_FORECAST' ? (validated?.directionForecast?.direction || 'NO CLEAR DIRECTION') : 'NO CLEAR DIRECTION',
     regime: result?.dataStale ? 'TRANSITION' : (result?.strategyRouter?.activeRegime || result?.marketRegime?.regime || 'TRANSITION'),
     strategy: result?.dataStale ? 'NO_TRADE' : (result?.strategyRouter?.activeStrategy || 'NO_TRADE'),
     shiftRisk: Number(result?.marketRegime?.shift?.risk || 0),
@@ -183,53 +247,42 @@ function annotateExperimentalSetup(setup) {
 
 function applyRegimeRouter(result, htfBiases) {
   result = attachValidatedMarketContext(result);
-  if (!result || result.tf !== 'M15') return result;
-  const candles = state.candles.M15 || [];
-  const intel = window.AmyFXIntel?.read?.() || {};
-  const regime = detectMarketRegimeV2({
-    candles,
-    tf: 'M15',
-    htfBiases: result.htfBiases || htfBiases || {},
-    marketConcepts: result.marketConcepts || null,
-    entryMap: result.entryMap || null,
-    currentPrice: state.price || result.price,
-    newsRisk: window.AmyFXIntel?.newsRisk?.(intel) || 'UNKNOWN',
-    freshness: window.AmyMappingIntegrity?.qualityByInterval || {}
-  });
-  let router = routeRegimeStrategy({
-    candles,
-    result,
-    regime,
-    currentPrice: state.price || result.price,
-    previousState: regimeRouterState
-  });
-  regimeRouterState = router.state;
+  if (!result) return result;
+
+  const forecast = result.validatedMarketContext?.directionForecast;
+  const forecastActive = Boolean(forecast?.active);
+  const forecastDirection = forecastActive ? Number(forecast.directionValue || 0) : 0;
 
   const originalSetups = Array.isArray(result.setups) ? [...result.setups] : [];
   const originalBestSetup = result.bestSetup || null;
-  const forecast = result.validatedMarketContext?.directionForecast;
-  const forecastDirection = forecast?.active ? Number(forecast.directionValue || 0) : 0;
-  const routerCandidate = router.watchSetup || router.setup || null;
-  const routerConflict = Boolean(routerCandidate && forecastDirection && setupDirection(routerCandidate) !== forecastDirection);
-  if (routerConflict) {
-    router = {
-      ...router,
-      setup: null,
-      watchSetup: null,
-      validatedConflict: true,
-      decision: 'WAIT — KANDIDAT ROUTER BERTENTANGAN DENGAN DIRECTION FORECAST',
-      reasons: [
-        `Direction Forecast tervalidasi ${forecast.direction}; kandidat ${routerCandidate?.dir || 'berlawanan'} tidak diteruskan.`,
-        ...(router.reasons || [])
-      ].slice(0, 6)
-    };
+  const setupVal = setupDirection(originalBestSetup);
+  const setupConflict = Boolean(originalBestSetup && forecastDirection && setupVal !== forecastDirection);
+
+  let router = result.strategyRouter || {};
+  if (result.tf === 'M15') {
+    const candles = state.candles.M15 || [];
+    const intel = window.AmyFXIntel?.read?.() || {};
+    const regime = detectMarketRegimeV2({
+      candles,
+      tf: 'M15',
+      htfBiases: result.htfBiases || htfBiases || {},
+      marketConcepts: result.marketConcepts || null,
+      entryMap: result.entryMap || null,
+      currentPrice: state.price || result.price,
+      newsRisk: window.AmyFXIntel?.newsRisk?.(intel) || 'UNKNOWN',
+      freshness: window.AmyMappingIntegrity?.qualityByInterval || {}
+    });
+    router = routeRegimeStrategy({
+      candles,
+      result,
+      regime,
+      currentPrice: state.price || result.price,
+      previousState: regimeRouterState
+    });
+    regimeRouterState = router.state;
+    result.marketRegime = regime;
   }
 
-  const setupConflict = Boolean(originalBestSetup && forecastDirection && setupDirection(originalBestSetup) !== forecastDirection);
-  const experimentalSetups = setupConflict ? [] : originalSetups.map(annotateExperimentalSetup).filter(Boolean);
-  const experimentalBestSetup = setupConflict ? null : annotateExperimentalSetup(originalBestSetup);
-
-  result.marketRegime = regime;
   result.strategyRouter = {
     ...router,
     role: 'CONTEXT_AND_STRATEGY_SUPPORT',
@@ -238,18 +291,32 @@ function applyRegimeRouter(result, htfBiases) {
     mayReplaceEntryMap: false,
     marketShiftHardGate: false
   };
+
+  const experimentalSetups = setupConflict || !forecastActive ? [] : originalSetups.map(annotateExperimentalSetup).filter(Boolean);
+  const experimentalBestSetup = setupConflict || !forecastActive ? null : annotateExperimentalSetup(originalBestSetup);
+
   result.unroutedSetups = originalSetups;
   result.unroutedBestSetup = originalBestSetup;
-  result.routerCandidateSetup = router.watchSetup || null;
   result.validatedSetupConflict = setupConflict;
   result.experimentalSetups = experimentalSetups;
   result.experimentalBestSetup = experimentalBestSetup;
-  // Only validated entry claims may occupy the primary setup contract.
-  result.setups = [];
-  result.bestSetup = null;
-  result.signal = 'WAIT';
-  if (forecast?.active) result.final = forecast.direction;
+
+  if (!forecastActive || setupConflict) {
+    result.setups = [];
+    result.bestSetup = null;
+  } else {
+    result.bestSetup = experimentalBestSetup;
+    result.setups = experimentalSetups;
+  }
+
+  const decision = buildDirectionDecision(result);
+  result.directionDecision = decision;
+  result.bias = decision.bias;
+  result.signal = decision.signal;
+  result.statusText = decision.status;
+  result.final = decision.bias;
   result.routerDecision = router.decision;
+
   return result;
 }
 

@@ -97,6 +97,30 @@ export function renderAnalyzeLive(){
 export function decisionData(){
   let r=state.result;
   if(!r)return{bias:'WAIT',direction:'TUNGGU',confidence:0,confLabel:'Confidence',status:'TUNGGU',entry:'-',invalid:'-',nearTarget:'-',mainTarget:'-',reason:'Belum ada data mapping.'};
+
+  if (r.directionDecision) {
+    const dd = r.directionDecision;
+    let s = r.bestSetup;
+    let nearTarget = '-';
+    let mainTarget = '-';
+    if (s && !r.dataStale) {
+      nearTarget = s.singleTarget ? `${p2(s.tp1)}` : `${p2(s.tp1)} / ${p2(s.tp2)}`;
+      mainTarget = r.liquidityHierarchy?.drawTarget ? `${r.liquidityHierarchy.drawTarget.type} ${p2(r.liquidityHierarchy.drawTarget.level)}` : (String(s.dir).includes('BUY')?`BSL ${p2(r.bsl)}`:`SSL ${p2(r.ssl)}`);
+    }
+    return {
+      bias: dd.bias,
+      direction: dd.signal === 'WAIT' ? 'TUNGGU' : dd.signal,
+      confidence: dd.source === 'VALIDATED_DIRECTION_FORECAST' ? (r.validatedDirectionForecast?.confidence || 60) : 0,
+      confLabel: 'Bias Confidence',
+      status: dd.status,
+      entry: s ? `${p2(s.entryLow)} - ${p2(s.entryHigh)}` : '-',
+      invalid: s ? p2(s.sl) : '-',
+      nearTarget,
+      mainTarget,
+      reason: dd.invalidationReason || dd.status
+    };
+  }
+
   let bias=r.final||'WAIT';
   let s=r.bestSetup;
   let live=s?analyzeSetupLiveState(s):null;
