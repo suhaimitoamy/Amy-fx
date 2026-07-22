@@ -1,25 +1,27 @@
 {
   "channel": "amyfx-preview-professional-ui",
-  "latest_version_code": 90046,
-  "latest_version_name": "1.4.15-preview.9",
-  "versionCode": 90046,
-  "version": "1.4.15-preview.9",
+  "latest_version_code": 90047,
+  "latest_version_name": "1.4.15-preview.10",
+  "versionCode": 90047,
+  "version": "1.4.15-preview.10",
   "releaseDate": "2026-07-22",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.9/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.9/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.10/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.10/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Implementasi Heatmap Depth Radar dengan Visual Horizontal Depth Bar & Spot Glow Effect",
-    "Toolbar filter kepadatan cepat: Semua Zona, Hot Spots (>50%), dan Dynamic Sweep/Reaction",
-    "Legenda skala gradien warna kepadatan volume (Kepadatan Tinggi, Sedang, Tipis)",
-    "Accordion interaktif detail penjelasan zona ketika baris diklik"
+    "Fitur Pencarian Instan dan visual Progress Bar % Membaca di Amy FX Academy",
+    "Visual Scenario Bar memetakan Entry, SL, TP1, TP2 pada card M15 Entry Map",
+    "Kurva pertumbuhan saldo Equity SVG kumulatif pada modul Jurnal Trading",
+    "Tombol pasang Alert Level likuiditas lokal pada Heatmap Depth Radar",
+    "Pembersihan 46 file HTML Academy dari sisa sintaks Obsidian"
   ],
   "changelog": [
-    "Implementasi Heatmap Depth Radar dengan Visual Horizontal Depth Bar & Spot Glow Effect",
-    "Toolbar filter kepadatan cepat: Semua Zona, Hot Spots (>50%), dan Dynamic Sweep/Reaction",
-    "Legenda skala gradien warna kepadatan volume (Kepadatan Tinggi, Sedang, Tipis)",
-    "Accordion interaktif detail penjelasan zona ketika baris diklik"
+    "Fitur Pencarian Instan dan visual Progress Bar % Membaca di Amy FX Academy",
+    "Visual Scenario Bar memetakan Entry, SL, TP1, TP2 pada card M15 Entry Map",
+    "Kurva pertumbuhan saldo Equity SVG kumulatif pada modul Jurnal Trading",
+    "Tombol pasang Alert Level likuiditas lokal pada Heatmap Depth Radar",
+    "Pembersihan 46 file HTML Academy dari sisa sintaks Obsidian"
   ]
 }
