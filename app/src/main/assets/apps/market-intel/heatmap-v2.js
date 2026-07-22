@@ -147,6 +147,18 @@
     return 'mixed';
   }
 
+  let activeFilter = 'all';
+
+  function zoneExplanation(zone) {
+    if (zone.isCurrent) return 'Harga emas live saat ini.';
+    const score = number(zone.score, 0);
+    const densityLabel = score >= 7 ? 'Sangat Tebal' : score >= 4 ? 'Sedang' : 'Tipis';
+    if (zone.role === 'SUPPORT') return `Area Pembeli (${densityLabel}) · Potensi memantul naik saat diuji.`;
+    if (zone.role === 'RESISTANCE') return `Area Penjual (${densityLabel}) · Potensi memantul turun saat diuji.`;
+    if (zone.status === 'POLARITY_FLIP') return 'Zona Pembalikan Peran (Support berubah menjadi Resistance atau sebaliknya).';
+    return 'Zona konsentrasi likuiditas pasar.';
+  }
+
   function intensityPercent(zone) {
     if (zone.isCurrent) return 100;
     return Math.max(7, Math.min(100, Math.round(number(zone.intensity, 0.08) * 100)));
@@ -157,7 +169,10 @@
     const levelType = zone.liquidityType ? `${zone.liquidityType} · ` : '';
     const distance = zone.isCurrent ? '' : `${number(zone.distance, 0) >= 0 ? '+' : ''}${p2(zone.distance)}`;
     const statusClass = String(zone.status || '').toLowerCase().replaceAll('_', '-');
-    return `<div class="dynamic-heat-row ${roleClass(zone)} status-${statusClass}">
+    const intensity = intensityPercent(zone);
+    const isHot = intensity >= 75 ? 'hot-spot' : intensity >= 40 ? 'medium-spot' : 'low-spot';
+
+    return `<div class="dynamic-heat-row ${roleClass(zone)} status-${statusClass} ${isHot}">
       <div class="dynamic-heat-price">
         <strong>${p2(zone.price)}</strong>
         ${zone.isCurrent ? '<span>◀</span>' : `<small>${safeText(distance)}</small>`}
@@ -167,11 +182,12 @@
           <b>${safeText(levelType + (zone.label || zone.role || 'ZONA'))}</b>
           ${changeMarkup(zone)}
         </div>
-        <div class="dynamic-heat-track"><i style="--heat:${intensityPercent(zone)}%"></i></div>
+        <div class="dynamic-heat-track"><i style="--heat:${intensity}%"></i></div>
         <div class="dynamic-heat-detail">
-          <span>${safeText(statusLabel(zone.status))}</span>
-          ${zone.isCurrent ? '<span>Harga berjalan</span>' : `<span>Skor ${score.toFixed(1)} · ${Number(zone.recentTouches || 0)} sentuhan baru</span>`}
+          <span>${safeText(statusLabel(zone.status))} · ${intensity}% KEPADATAN</span>
+          ${zone.isCurrent ? '<span>Harga berjalan</span>' : `<span>Skor ${score.toFixed(1)} · ${Number(zone.recentTouches || 0)}x sentuhan</span>`}
         </div>
+        ${zone.isCurrent ? '' : `<div class="dynamic-heat-expanded" style="display:none"><p>${safeText(zoneExplanation(zone))}</p></div>`}
       </div>
     </div>`;
   }
@@ -199,7 +215,25 @@
       <div><small>DRAW TERDEKAT</small><strong>${draw ? `${safeText(draw.type)} ${p2(draw.price)}` : 'Belum ada'}</strong></div>
       <div><small>ZONA AKTIF</small><strong>${Number(summary.activeZones || 0)}</strong></div>
       <div><small>PERGERAKAN</small><strong>${safeText(movementText(payload.currentPrice, previous.currentPrice))}</strong></div>
+    </div>
+    <div class="heat-filter-toolbar">
+      <button class="heat-filter-btn ${activeFilter === 'all' ? 'active' : ''}" data-filter="all">🔥 Semua Zona</button>
+      <button class="heat-filter-btn ${activeFilter === 'hot' ? 'active' : ''}" data-filter="hot">🔴 Hot Spots (&gt;50%)</button>
+      <button class="heat-filter-btn ${activeFilter === 'dynamic' ? 'active' : ''}" data-filter="dynamic">⚡ Reaksi / Sweep</button>
+    </div>
+    <div class="heat-scale-bar">
+      <span class="scale-item hot">🔥 Kepadatan Tinggi (&gt;75%)</span>
+      <span class="scale-item med">🟡 Sedang (40-75%)</span>
+      <span class="scale-item low">⚪ Tipis (&lt;40%)</span>
     </div>`;
+
+    target.querySelectorAll('.heat-filter-btn').forEach(btn => {
+      btn.onclick = () => {
+        activeFilter = btn.dataset.filter;
+        target.querySelectorAll('.heat-filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+        if (lastPayload) renderDynamicHeatmap(lastPayload, previous);
+      };
+    });
   }
 
   function renderDynamicHeatmap(payload, previous = {}) {
@@ -216,13 +250,28 @@
       role: 'CURRENT', status: 'LIVE_PRICE', label: 'HARGA BERJALAN', intensity: 1,
       score: 0, totalActivity: 0, recentTouches: 0, change: 'LIVE'
     };
-    const zones = [...zonesWithoutCurrent, current].sort((a, b) => number(b.price) - number(a.price));
+
+    let filtered = zonesWithoutCurrent;
+    if (activeFilter === 'hot') {
+      filtered = zonesWithoutCurrent.filter(z => intensityPercent(z) >= 40);
+    } else if (activeFilter === 'dynamic') {
+      filtered = zonesWithoutCurrent.filter(z => ['MENGUAT', 'MELEMAH', 'BARU', 'BERUBAH', 'DITEMBUS'].includes(z.change) || ['POLARITY_FLIP', 'SWEPT_RECLAIMED'].includes(z.status));
+    }
+
+    const zones = [...filtered, current].sort((a, b) => number(b.price) - number(a.price));
 
     ensureSummary({ ...payload, currentPrice: livePrice }, previous);
     canvas.classList.add('dynamic-heatmap-canvas');
     canvas.innerHTML = zones.map(rowMarkup).join('');
     const price = document.getElementById('heatmap-price');
     if (price) price.textContent = `💰 XAU/USD ${p2(livePrice)}`;
+
+    canvas.querySelectorAll('.dynamic-heat-row').forEach(row => {
+      row.onclick = () => {
+        const detail = row.querySelector('.dynamic-heat-expanded');
+        if (detail) detail.style.display = detail.style.display === 'none' ? 'block' : 'none';
+      };
+    });
   }
 
   function normalizeProviderCandles(data) {

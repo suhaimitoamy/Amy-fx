@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - experiment/mapping-regime-engine-20260721
+      - experiment/heatmap-news-20260722
     paths-ignore:
       - preview-update.json
   pull_request:
@@ -20,7 +21,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PREVIEW_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/mapping-regime-engine-20260721/preview-update.json
+  PREVIEW_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/heatmap-news-20260722/preview-update.json
   AMYFX_KEYSTORE_PATH: /tmp/amy-fx-signing.keystore
   AMYFX_KEYSTORE_PASSWORD: android
   AMYFX_KEY_ALIAS: androiddebugkey
@@ -29,8 +30,8 @@ env:
   AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
   AMYFX_APP_LABEL: Amy FX Preview
   AMYFX_URI_SCHEME: amyfxpreview
-  AMYFX_VERSION_NAME: 1.4.15-preview.8
-  AMYFX_VERSION_CODE: '90045'
+  AMYFX_VERSION_NAME: 1.4.15-preview.9
+  AMYFX_VERSION_CODE: '90046'
 
 jobs:
   validation:
@@ -123,7 +124,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 50
     env:
-      AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/mapping-regime-engine-20260721/preview-update.json
+      AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/heatmap-news-20260722/preview-update.json
     steps:
       - name: Checkout experiment branch
         uses: actions/checkout@v4
@@ -200,13 +201,13 @@ jobs:
       - name: Upload signed Preview APK
         uses: actions/upload-artifact@v4
         with:
-          name: AmyFX-Preview-ProfessionalUI-v1.4.15-preview.8
+          name: AmyFX-Preview-ProfessionalUI-v1.4.15-preview.9
           path: AmyFX-Preview-latest.apk
           if-no-files-found: error
           retention-days: 14
 
   publish-preview-update:
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/experiment/mapping-regime-engine-20260721'
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/experiment/mapping-regime-engine-20260721' || github.ref == 'refs/heads/experiment/heatmap-news-20260722')
     needs: signed-preview-build
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -219,7 +220,7 @@ jobs:
       - name: Download signed Preview APK
         uses: actions/download-artifact@v4
         with:
-          name: AmyFX-Preview-ProfessionalUI-v1.4.15-preview.8
+          name: AmyFX-Preview-ProfessionalUI-v1.4.15-preview.9
           path: release-assets
 
       - name: Verify downloaded APK
@@ -233,53 +234,54 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG='amyfx-preview-v1.4.15-preview.8'
+          TAG='amyfx-preview-v1.4.15-preview.9'
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes
           fi
           gh api --method DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" >/dev/null 2>&1 || true
 
           cat > /tmp/release-notes.md <<'NOTES'
-          Amy FX Preview — Professional UI & Optimizations release.
+          Amy FX Preview — Heatmap Depth Radar & Controls release.
 
-          - Comprehensive visual and copy audit of the Mapping page.
-          - Technical/developer jargon replaced with clean, professional user-facing Indonesian language.
-          - Removal of redundant AMY FX DECISION card & reordered Analyze disclosures (Outlook, Valid Break, Mapping M1-H4, Penjelasan, Setup).
-          - Sticky Mini Header on scroll, Live Price pulse animation, Skeleton loader shimmer, and automatic storage/memory pruning.
-          - Analysis engines, validated thresholds, safety rules, package, and Preview signature remain 100% intact.
+          - Heatmap Depth Radar with Horizontal Depth Bar & Spot Glow Effect.
+          - Quick density filter toolbar: All Zones, Hot Spots (>50%), and Dynamic Sweep/Reaction.
+          - Visual color density scale legend (High, Medium, Low density).
+          - Interactive zone detail accordion on row click.
           NOTES
 
           gh release create "$TAG" \
             "release-assets/AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
-            --title 'Amy FX Preview 1.4.15-preview.8 — Professional UI & Optimizations' --notes-file /tmp/release-notes.md
+            --title 'Amy FX Preview 1.4.15-preview.9 — Heatmap Depth Radar & Controls' --notes-file /tmp/release-notes.md
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
 
-      - name: Activate Preview 1.4.15-preview.8 manifest
+      - name: Activate Preview 1.4.15-preview.9 manifest
         run: |
           set -euo pipefail
           cat > preview-update.json <<'JSON'
           {
             "channel": "amyfx-preview-professional-ui",
-            "latest_version_code": 90045,
-            "latest_version_name": "1.4.15-preview.8",
-            "versionCode": 90045,
-            "version": "1.4.15-preview.8",
+            "latest_version_code": 90046,
+            "latest_version_name": "1.4.15-preview.9",
+            "versionCode": 90046,
+            "version": "1.4.15-preview.9",
             "releaseDate": "2026-07-22",
-            "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.8/AmyFX-Preview-latest.apk",
-            "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.8/AmyFX-Preview-latest.apk",
+            "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.9/AmyFX-Preview-latest.apk",
+            "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.9/AmyFX-Preview-latest.apk",
             "force_update": false,
             "mandatory": false,
             "enabled": true,
             "release_notes": [
-              "Penyempurnaan tampilan UI & copy halaman Mapping menyeluruh",
-              "Penghapusan kartu AMY FX DECISION dan penyusunan ulang urutan Analisis (Outlook, Valid Break, Mapping M1-H4, Penjelasan, Setup)",
-              "Penambahan Sticky Mini Header saat scroll, Indikator Live Price berdenyut, dan optimasi pembersihan memori"
+              "Implementasi Heatmap Depth Radar dengan Visual Horizontal Depth Bar & Spot Glow Effect",
+              "Toolbar filter kepadatan cepat: Semua Zona, Hot Spots (>50%), dan Dynamic Sweep/Reaction",
+              "Legenda skala gradien warna kepadatan volume (Kepadatan Tinggi, Sedang, Tipis)",
+              "Accordion interaktif detail penjelasan zona ketika baris diklik"
             ],
             "changelog": [
-              "Penyempurnaan tampilan UI & copy halaman Mapping menyeluruh",
-              "Penghapusan kartu AMY FX DECISION dan penyusunan ulang urutan Analisis (Outlook, Valid Break, Mapping M1-H4, Penjelasan, Setup)",
-              "Penambahan Sticky Mini Header saat scroll, Indikator Live Price berdenyut, dan optimasi pembersihan memori"
+              "Implementasi Heatmap Depth Radar dengan Visual Horizontal Depth Bar & Spot Glow Effect",
+              "Toolbar filter kepadatan cepat: Semua Zona, Hot Spots (>50%), dan Dynamic Sweep/Reaction",
+              "Legenda skala gradien warna kepadatan volume (Kepadatan Tinggi, Sedang, Tipis)",
+              "Accordion interaktif detail penjelasan zona ketika baris diklik"
             ]
           }
           JSON
@@ -288,8 +290,8 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add preview-update.json
           if ! git diff --cached --quiet; then
-            git commit -m 'release: activate Amy FX Preview 1.4.15-preview.8 update [skip ci]'
-            git push origin HEAD:experiment/mapping-regime-engine-20260721
+            git commit -m 'release: activate Amy FX Preview 1.4.15-preview.9 update [skip ci]'
+            git push origin HEAD:${{ github.ref_name }}
           fi
 
   report-status:
