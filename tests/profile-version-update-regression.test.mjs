@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 const versionUrl = new URL('../app/src/main/assets/app-version.js', import.meta.url);
 const checkerUrl = new URL('../app/src/main/assets/update-checker.js', import.meta.url);
 const indexUrl = new URL('../app/src/main/assets/index.html', import.meta.url);
+const mappingUiUrl = new URL('../app/src/main/assets/apps/mapping/js/ui/ui-render.js', import.meta.url);
 
 function source(url) {
   return readFileSync(url, 'utf8');
@@ -22,15 +23,18 @@ test('version and update scripts remain syntactically valid', () => {
   assertSyntax(checkerUrl);
 });
 
-test('profile displays Amy FX version 1.4.15 and supports manual update checks', () => {
+test('profile displays Amy FX version 1.4.16 and supports manual update checks', () => {
   const version = source(versionUrl);
   const index = source(indexUrl);
-  assert.match(version, /name: '1\.4\.15'/);
-  assert.match(version, /code: 38/);
+  assert.match(version, /name: '1\.4\.16'/);
+  assert.match(version, /code: 39/);
   assert.match(version, /Versi Aplikasi/);
   assert.match(version, /data-profile-action=\\?"version/);
   assert.match(version, /AmyFXUpdate\?\.checkNow/);
   assert.match(index, /<script src="app-version\.js"><\/script>\s*<script src="app\.js"><\/script>\s*<script src="update-checker\.js"><\/script>/);
+  const mappingUi = source(mappingUiUrl);
+  assert.match(mappingUi, /window\.AmyFXUpdate\?\.checkNow\(\)/);
+  assert.doesNotMatch(mappingUi, /window\.AmyFXUpdater/);
 });
 
 test('native updater owns download progress while browser remains a legacy fallback', () => {
