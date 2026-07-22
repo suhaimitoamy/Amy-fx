@@ -109,10 +109,11 @@ export function decisionData(){
       mainTarget: '-',
       headline: 'Data market belum tersedia',
       action: 'Jangan mengambil keputusan entry.',
-      reason: 'Belum ada data mapping.',
-      confirmationNeeded: 'Tunggu data candle terbaru tersedia.',
+      reason: 'Analisis Mapping belum tersedia.',
+      confirmationNeeded: 'Tunggu data candle dan hasil analisis terbaru.',
       invalidationText: '-',
-      dataStatus: 'DATA USANG'
+      marketContext: 'BELUM TERSEDIA',
+      dataStatus: 'BELUM TERSEDIA'
     };
   }
 
@@ -140,6 +141,7 @@ export function decisionData(){
     action: exp.action,
     confirmationNeeded: exp.confirmationNeeded,
     invalidationText: exp.invalidation,
+    marketContext: exp.marketContext || 'BELUM TERSEDIA',
     dataStatus: exp.dataStatus
   };
 }

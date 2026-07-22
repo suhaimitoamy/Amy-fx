@@ -1,4 +1,4 @@
-import { state, TF, log, save } from '../main.js';
+import { state, TF, log, save, p2 } from '../main.js';
 import { analyze, tfGroup } from '../engine/ict-core.js';
 import { detectMarketRegimeV2 } from '../engine/market-regime-engine.js';
 import { routeRegimeStrategy } from '../engine/strategy-router-engine.js';
@@ -164,7 +164,19 @@ export function buildDirectionDecision(result) {
 }
 
 export function buildMappingExplanation(result) {
-  const dd = result?.directionDecision || buildDirectionDecision(result);
+  if (!result) {
+    return {
+      headline: 'Data market belum tersedia',
+      action: 'Jangan mengambil keputusan entry.',
+      reason: 'Analisis Mapping belum tersedia.',
+      confirmationNeeded: 'Tunggu data candle dan hasil analisis terbaru.',
+      invalidation: '-',
+      marketContext: 'BELUM TERSEDIA',
+      dataStatus: 'BELUM TERSEDIA'
+    };
+  }
+
+  const dd = result.directionDecision || buildDirectionDecision(result);
   const validated = result?.validatedMarketContext;
   const forecast = validated?.directionForecast;
   const marketState = validated?.marketState;
