@@ -12,20 +12,44 @@ export let lastWsTickAt = Number(localStorage.getItem('last_ws_tick_at') || 0);
 
 const PROXY_URL = 'https://amy-fx.vercel.app/api/twelvedata';
 const LIVE_POLL_MS = 20_000;
-let candleFetchedAt = {};
-let pollInFlight = false;
-let lastErrorLogAt = 0;
-let regimeRouterState = null;
+export let candleFetchedAt = {};
+
+function normalizeTfKey(tf) {
+  const norm = String(tf || '').toUpperCase();
+  if (norm === '1MIN') return 'M1';
+  if (norm === '5MIN') return 'M5';
+  if (norm === '15MIN') return 'M15';
+  if (norm === '30MIN') return 'M30';
+  if (norm === '1H') return 'H1';
+  if (norm === '4H') return 'H4';
+  if (norm === '1DAY') return 'D1';
+  return norm;
+}
+
+export function setCandleFetchedAt(tf, timestamp = Date.now()) {
+  const key = normalizeTfKey(tf);
+  candleFetchedAt[tf] = timestamp;
+  candleFetchedAt[key] = timestamp;
+}
+
+export function getCandleFetchedAt(tf) {
+  const key = normalizeTfKey(tf);
+  return candleFetchedAt[key] || candleFetchedAt[tf] || 0;
+}
 
 export function isCandleStale(tf) {
-  const age = (Date.now() - (candleFetchedAt[tf] || 0)) / 1000 / 60;
-  if (tf === 'M1') return age >= 1;
-  if (tf === 'M5') return age >= 3;
-  if (tf === 'M15') return age >= 5;
-  if (tf === 'M30') return age >= 10;
-  if (tf === 'H1') return age >= 15;
-  if (tf === 'H4') return age >= 30;
-  return age >= 120;
+  const norm = normalizeTfKey(tf);
+  const fetched = getCandleFetchedAt(tf);
+  const ageMinutes = (Date.now() - fetched) / (1000 * 60);
+
+  if (norm === 'M1') return ageMinutes >= 2;
+  if (norm === 'M5') return ageMinutes >= 5;
+  if (norm === 'M15') return ageMinutes >= 5;
+  if (norm === 'M30') return ageMinutes >= 10;
+  if (norm === 'H1') return ageMinutes >= 15;
+  if (norm === 'H4') return ageMinutes >= 60;
+  if (norm === 'D1') return ageMinutes >= 240; // 4 jam = 240 menit
+  return ageMinutes >= 240;
 }
 
 function analysisRefreshDelay(tf) {
@@ -77,17 +101,17 @@ function publishMappingSnapshot(result = state.result) {
     ssl,
     levels,
     timeframe: result?.tf || previous.timeframe || state.tf,
-    bias: validated?.directionForecast?.active
+    bias: result?.dataStale ? 'DATA USANG' : (validated?.directionForecast?.active
       ? validated.directionForecast.direction
-      : validated?.marketState?.direction || result?.final || previous.bias || 'WAIT',
-    direction: result?.bestSetup?.dir || 'WAIT',
-    status: validated?.directionForecast?.active
+      : validated?.marketState?.direction || result?.final || previous.bias || 'WAIT'),
+    direction: result?.dataStale ? 'WAIT' : (result?.bestSetup?.dir || 'WAIT'),
+    status: result?.dataStale ? 'DATA USANG — CACHE KEDALUWARSA & API GAGAL' : (validated?.directionForecast?.active
       ? `${validated.directionForecast.direction} · VALIDATED FORECAST`
-      : result?.bestSetup?.status || result?.strategyRouter?.decision || 'NO CLEAR DIRECTION',
-    marketState: validated?.marketState?.state || 'RANGE / TRANSITION',
-    directionForecast: validated?.directionForecast?.direction || 'NO CLEAR DIRECTION',
-    regime: result?.strategyRouter?.activeRegime || result?.marketRegime?.regime || 'TRANSITION',
-    strategy: result?.strategyRouter?.activeStrategy || 'NO_TRADE',
+      : result?.bestSetup?.status || result?.strategyRouter?.decision || 'NO CLEAR DIRECTION'),
+    marketState: result?.dataStale ? 'DATA USANG' : (validated?.marketState?.state || 'RANGE / TRANSITION'),
+    directionForecast: result?.dataStale ? 'DATA USANG' : (validated?.directionForecast?.direction || 'NO CLEAR DIRECTION'),
+    regime: result?.dataStale ? 'TRANSITION' : (result?.strategyRouter?.activeRegime || result?.marketRegime?.regime || 'TRANSITION'),
+    strategy: result?.dataStale ? 'NO_TRADE' : (result?.strategyRouter?.activeStrategy || 'NO_TRADE'),
     shiftRisk: Number(result?.marketRegime?.shift?.risk || 0),
     analyzedAt: result ? Date.now() : Number(previous.analyzedAt || 0)
   });
@@ -114,7 +138,7 @@ export async function fetchTf(tf) {
 
   if (!candles.length) throw new Error(`Candle ${tf} kosong`);
   state.candles[tf] = candles;
-  candleFetchedAt[tf] = Date.now();
+  setCandleFetchedAt(tf, Date.now());
   return candles;
 }
 
@@ -235,12 +259,51 @@ export async function runAnalysis(tf = state.tf) {
     log(`Memindai ${tf}...`);
     const group = tfGroup(tf);
     const scanGroup = [...new Set([...group, 'M1', 'M5', 'M15', 'M30', 'H1', 'H4'])];
+    let staleFetchFailed = false;
+
     await Promise.all(scanGroup.map(async currentTf => {
-      if (!state.candles[currentTf]?.length || isCandleStale(currentTf)) {
-        try { await fetchTf(currentTf); } catch (_) { log(`Candle ${currentTf} belum diperbarui, memakai cache.`); }
+      const isStale = isCandleStale(currentTf);
+      if (!state.candles[currentTf]?.length || isStale) {
+        try {
+          await fetchTf(currentTf);
+        } catch (_) {
+          log(`Candle ${currentTf} belum diperbarui, memakai cache.`);
+          if (isStale || !state.candles[currentTf]?.length) {
+            staleFetchFailed = true;
+          }
+        }
       }
       return state.candles[currentTf] || [];
     }));
+
+    if (staleFetchFailed) {
+      log(`DATA USANG: Cache ${tf} kedaluwarsa & API gagal diperbarui.`);
+      const result = {
+        tf,
+        price: state.price || 0,
+        dataStale: true,
+        statusText: 'DATA USANG',
+        final: 'DATA USANG',
+        signal: 'WAIT',
+        bestSetup: null,
+        entryMap: null,
+        setups: [],
+        experimentalSetups: [],
+        experimentalBestSetup: null,
+        routerDecision: 'DATA USANG — CACHE KEDALUWARSA & API GAGAL',
+        marketState: { state: 'DATA USANG', detail: 'Cache kedaluwarsa & API gagal diperbarui.' },
+        strategyRouter: {
+          decision: 'DATA USANG — CACHE KEDALUWARSA & API GAGAL',
+          activeRegime: 'TRANSITION',
+          activeStrategy: 'NO_TRADE'
+        }
+      };
+      state.result = result;
+      save();
+      publishMappingSnapshot(result);
+      render();
+      return;
+    }
 
     const htfBiases = {};
     for (const currentTf of group.filter(item => item !== tf)) {

@@ -1,5 +1,5 @@
 (function(){
-  if(window.__amyfxSyncFixLoaded)return;
+  if(typeof window === 'undefined' || window.__amyfxSyncFixLoaded)return;
   window.__amyfxSyncFixLoaded=true;
 
   const TF_KEY='amyfx.selected.tf';

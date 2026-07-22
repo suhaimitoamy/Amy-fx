@@ -1,9 +1,10 @@
 export function entryMapDisplayState(setup) {
-  if (!setup) {
+  if (!setup || setup.dataStale || setup.status === 'DATA USANG' || setup.statusText === 'DATA USANG') {
     return {
-      status: 'WAIT',
-      terminal: false,
-      note: 'Belum ada setup M15 yang lolos seluruh filter Entry Map.'
+      status: 'DATA USANG',
+      terminal: true,
+      dataStale: true,
+      note: 'DATA USANG: Cache kedaluwarsa & API gagal diperbarui. Entry Map dan sinyal dinonaktifkan.'
     };
   }
 
