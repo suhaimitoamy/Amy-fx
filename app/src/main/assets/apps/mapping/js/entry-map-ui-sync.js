@@ -14,6 +14,50 @@ function valueBlock(label, value) {
   return `<div><small>${label}</small><strong>${value}</strong></div>`;
 }
 
+function renderScenarioBar(setup) {
+  if (!setup || !setup.entry || !setup.sl || !setup.tp2) return '';
+  const dir = String(setup.dir || '').includes('SELL') ? 'SELL' : 'BUY';
+  const entry = Number(setup.entry);
+  const sl = Number(setup.sl);
+  const tp1 = Number(setup.tp1 || setup.entry);
+  const tp2 = Number(setup.tp2);
+
+  const isBuy = dir === 'BUY';
+  const minVal = isBuy ? sl : tp2;
+  const maxVal = isBuy ? tp2 : sl;
+  const range = (maxVal - minVal) || 1;
+
+  const getPct = (val) => Math.max(5, Math.min(95, ((val - minVal) / range) * 100));
+
+  const slPos = getPct(sl);
+  const entryPos = getPct(entry);
+  const tp1Pos = getPct(tp1);
+  const tp2Pos = getPct(tp2);
+
+  return `
+    <div class="visual-scenario-bar" style="margin:12px 0;padding:12px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;color:var(--gold,#d4a832);margin-bottom:8px;">
+        <span>PROYEKSI VISUAL RENCANA SETUP (${dir})</span>
+        <span>RR: 1:${Number(setup.rr || 1.75).toFixed(2)}</span>
+      </div>
+      <div style="position:relative;height:12px;background:rgba(255,255,255,0.1);border-radius:6px;margin:16px 0 24px 0;">
+        <!-- SL Dot -->
+        <div style="position:absolute;left:${slPos}%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;background:#ff4c4c;box-shadow:0 0 8px #ff4c4c;"></div>
+        <div style="position:absolute;left:${slPos}%;top:18px;transform:translateX(-50%);font-size:10px;color:#ff4c4c;white-space:nowrap;font-weight:700;">SL ${p2(sl)}</div>
+        <!-- Entry Dot -->
+        <div style="position:absolute;left:${entryPos}%;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:#d4a832;box-shadow:0 0 10px #d4a832;"></div>
+        <div style="position:absolute;left:${entryPos}%;bottom:18px;transform:translateX(-50%);font-size:10px;color:#d4a832;white-space:nowrap;font-weight:700;">Entry ${p2(entry)}</div>
+        <!-- TP1 Dot -->
+        <div style="position:absolute;left:${tp1Pos}%;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;background:#00d97e;opacity:0.8;"></div>
+        <div style="position:absolute;left:${tp1Pos}%;top:18px;transform:translateX(-50%);font-size:10px;color:#00d97e;white-space:nowrap;">TP1 ${p2(tp1)}</div>
+        <!-- TP2 Dot -->
+        <div style="position:absolute;left:${tp2Pos}%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;background:#00d97e;box-shadow:0 0 8px #00d97e;"></div>
+        <div style="position:absolute;left:${tp2Pos}%;bottom:18px;transform:translateX(-50%);font-size:10px;color:#00d97e;white-space:nowrap;font-weight:700;">TP2 ${p2(tp2)}</div>
+      </div>
+    </div>
+  `;
+}
+
 function cardMarkup(setup, display) {
   if (!setup) {
     return `<section class="card entry-map-state-card"><div class="kicker">M15 ENTRY MAP</div><h2>Belum ada setup aktif</h2><p class="muted">${display.note}</p></section>`;
@@ -28,6 +72,7 @@ function cardMarkup(setup, display) {
       ${valueBlock('TP1 · 0,35R', p2(setup.tp1))}
       ${valueBlock('TP2 · 1,75R', p2(setup.tp2))}
     </div>
+    ${renderScenarioBar(setup)}
     <p class="summary-note">${display.note}</p>
     <div class="ai-map-note"><b>Lifecycle candle:</b> ${setup.lifecycle?.barsElapsed || 0}/${setup.expiryBars || 36} candle M15 · Sweep ${setup.sweepType || '-'} · MSS ${setup.direction || '-'}</div>
   </section>`;

@@ -187,7 +187,10 @@
           <span>${safeText(statusLabel(zone.status))} · ${intensity}% KEPADATAN</span>
           ${zone.isCurrent ? '<span>Harga berjalan</span>' : `<span>Skor ${score.toFixed(1)} · ${Number(zone.recentTouches || 0)}x sentuhan</span>`}
         </div>
-        ${zone.isCurrent ? '' : `<div class="dynamic-heat-expanded" style="display:none"><p>${safeText(zoneExplanation(zone))}</p></div>`}
+        ${zone.isCurrent ? '' : `<div class="dynamic-heat-expanded" style="display:none;margin-top:8px;">
+          <p style="margin:0 0 8px 0;font-size:12px;color:var(--muted);">${safeText(zoneExplanation(zone))}</p>
+          <button class="btn sm heat-alert-btn" data-price="${p2(zone.price)}" data-role="${safeText(zone.role)}" style="font-size:11px;padding:4px 10px;border-radius:6px;background:var(--gold,#d4a832);color:#000;font-weight:700;border:none;cursor:pointer;">🔔 Pasang Alert Level $${p2(zone.price)}</button>
+        </div>`}
       </div>
     </div>`;
   }
@@ -267,9 +270,28 @@
     if (price) price.textContent = `💰 XAU/USD ${p2(livePrice)}`;
 
     canvas.querySelectorAll('.dynamic-heat-row').forEach(row => {
-      row.onclick = () => {
+      row.onclick = (e) => {
+        if (e.target.closest('.heat-alert-btn')) return;
         const detail = row.querySelector('.dynamic-heat-expanded');
         if (detail) detail.style.display = detail.style.display === 'none' ? 'block' : 'none';
+      };
+    });
+
+    canvas.querySelectorAll('.heat-alert-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const alertPrice = btn.dataset.price;
+        const alertRole = btn.dataset.role;
+        try {
+          const alerts = JSON.parse(localStorage.getItem('amy_heatmap_alerts') || '[]');
+          alerts.push({ price: alertPrice, role: alertRole, created: Date.now() });
+          localStorage.setItem('amy_heatmap_alerts', JSON.stringify(alerts.slice(-20)));
+        } catch(_) {}
+        if (typeof window.showToast === 'function') {
+          window.showToast(`🔔 Alert terpasang untuk $${alertPrice}`);
+        } else {
+          alert(`🔔 Alert terpasang untuk $${alertPrice}`);
+        }
       };
     });
   }
