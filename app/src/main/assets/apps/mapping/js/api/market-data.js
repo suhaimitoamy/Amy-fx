@@ -10,6 +10,10 @@ export let liveTimer = null;
 export let scanTimer = null;
 export let lastWsTickAt = Number(localStorage.getItem('last_ws_tick_at') || 0);
 
+let pollInFlight = false;
+let lastErrorLogAt = 0;
+let regimeRouterState = null;
+
 const PROXY_URL = 'https://amy-fx.vercel.app/api/twelvedata';
 const LIVE_POLL_MS = 20_000;
 export let candleFetchedAt = {};
