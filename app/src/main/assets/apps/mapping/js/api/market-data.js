@@ -237,11 +237,11 @@ export function validateSetupGeometry(setup, dirSignal) {
   return { valid: true, reason: '' };
 }
 
-export function persistTerminalSetup({ setupId, lifecycleStage, status, invalidationReason, entryTouched = false, target1Secured = false, entryAt = null, target1At = null }) {
+export function persistSetupLifecycle({ setupId, lifecycleStage, status, terminal = false, invalidationReason = '', entryTouched = false, target1Secured = false, entryAt = null, target1At = null, terminalAt = null }) {
   if (!setupId) return;
   let lcStorage = {};
   try {
-    lcStorage = JSON.parse(localStorage.getItem('amy_mapping_lifecycle_v3') || '{}');
+    lcStorage = JSON.parse(localStorage.getItem('amy_mapping_lifecycle_v4') || '{}');
   } catch (_) {}
 
   const existing = lcStorage[setupId] || {};
@@ -251,11 +251,11 @@ export function persistTerminalSetup({ setupId, lifecycleStage, status, invalida
     target1Secured: Boolean(target1Secured || existing.target1Secured),
     lifecycleStage,
     status,
-    terminal: true,
+    terminal: Boolean(terminal),
     invalidationReason,
     entryAt: entryAt || existing.entryAt || null,
     target1At: target1At || existing.target1At || existing.tp1At || null,
-    terminalAt: existing.terminalAt || Date.now()
+    terminalAt: terminal ? (terminalAt || existing.terminalAt || Date.now()) : null
   };
 
   const keys = Object.keys(lcStorage);
@@ -263,13 +263,21 @@ export function persistTerminalSetup({ setupId, lifecycleStage, status, invalida
     keys.slice(0, keys.length - 30).forEach(k => delete lcStorage[k]);
   }
   try {
-    localStorage.setItem('amy_mapping_lifecycle_v3', JSON.stringify(lcStorage));
+    localStorage.setItem('amy_mapping_lifecycle_v4', JSON.stringify(lcStorage));
   } catch (_) {}
+}
+
+export function persistTerminalSetup(args) {
+  return persistSetupLifecycle({
+    ...args,
+    terminal: true,
+    terminalAt: args.terminalAt || Date.now()
+  });
 }
 
 function getActivePointers() {
   try {
-    return JSON.parse(localStorage.getItem('amy_mapping_active_pointer_v3') || '{}');
+    return JSON.parse(localStorage.getItem('amy_mapping_active_pointer_v4') || '{}');
   } catch (_) {
     return {};
   }
@@ -282,11 +290,19 @@ function saveActivePointers(pointers) {
     sorted.slice(0, keys.length - 30).forEach(item => delete pointers[item.k]);
   }
   try {
-    localStorage.setItem('amy_mapping_active_pointer_v3', JSON.stringify(pointers));
+    localStorage.setItem('amy_mapping_active_pointer_v4', JSON.stringify(pointers));
   } catch (_) {}
 }
 
-export function buildSetupExecution(result) {
+function deleteActivePointer(tf) {
+  const pointers = getActivePointers();
+  if (pointers[tf]) {
+    delete pointers[tf];
+    saveActivePointers(pointers);
+  }
+}
+
+export function buildSetupExecution(result, { persist = true } = {}) {
   const defaultExecution = {
     active: false,
     setupId: '',
@@ -320,15 +336,18 @@ export function buildSetupExecution(result) {
   const price = Number(state.price || result.price || localStorage.getItem('last_price') || 0);
 
   if (result.dataStale || dd.source === 'DATA_STALE') {
-    const pointers = getActivePointers();
-    const prev = pointers[tf];
-    if (prev?.setupId) {
-      persistTerminalSetup({
-        setupId: prev.setupId,
-        lifecycleStage: 'DATA_STALE',
-        status: 'DATA USANG',
-        invalidationReason: 'Data market usang.'
-      });
+    if (persist) {
+      const pointers = getActivePointers();
+      const prev = pointers[tf];
+      if (prev?.setupId) {
+        persistTerminalSetup({
+          setupId: prev.setupId,
+          lifecycleStage: 'DATA_STALE',
+          status: 'DATA USANG',
+          invalidationReason: 'Data market usang.'
+        });
+        deleteActivePointer(tf);
+      }
     }
     return {
       ...defaultExecution,
@@ -341,15 +360,18 @@ export function buildSetupExecution(result) {
 
   if (!forecastActive || dd.invalidated || dd.source !== 'VALIDATED_DIRECTION_FORECAST' || (dd.signal !== 'BUY' && dd.signal !== 'SELL')) {
     const reason = dd.invalidationReason || 'Direction Forecast tidak aktif atau ter-invalidasi.';
-    const pointers = getActivePointers();
-    const prev = pointers[tf];
-    if (prev?.setupId) {
-      persistTerminalSetup({
-        setupId: prev.setupId,
-        lifecycleStage: 'FORECAST_INVALIDATED',
-        status: 'FORECAST INVALIDATED',
-        invalidationReason: reason
-      });
+    if (persist) {
+      const pointers = getActivePointers();
+      const prev = pointers[tf];
+      if (prev?.setupId) {
+        persistTerminalSetup({
+          setupId: prev.setupId,
+          lifecycleStage: 'FORECAST_INVALIDATED',
+          status: 'FORECAST INVALIDATED',
+          invalidationReason: reason
+        });
+        deleteActivePointer(tf);
+      }
     }
     return {
       ...defaultExecution,
@@ -361,15 +383,29 @@ export function buildSetupExecution(result) {
   }
 
   if (!bestSetup) {
-    const pointers = getActivePointers();
-    const prev = pointers[tf];
-    if (prev?.setupId) {
-      persistTerminalSetup({
-        setupId: prev.setupId,
-        lifecycleStage: 'FORECAST_INVALIDATED',
-        status: 'WAITING FOR SETUP',
-        invalidationReason: 'Belum ada setup Entry Map yang lolos seluruh filter.'
-      });
+    if (persist) {
+      const pointers = getActivePointers();
+      const prev = pointers[tf];
+      if (prev?.setupId) {
+        const fcStartTime = forecast?.startTime || 0;
+        const sameForecast = prev.forecastStartTime === fcStartTime && prev.direction === dd.signal;
+        if (sameForecast) {
+          persistTerminalSetup({
+            setupId: prev.setupId,
+            lifecycleStage: 'SETUP_REPLACED',
+            status: 'SETUP NO LONGER ACTIVE',
+            invalidationReason: 'Setup lama tidak lagi menjadi Entry Map aktif setelah analisis terbaru.'
+          });
+        } else {
+          persistTerminalSetup({
+            setupId: prev.setupId,
+            lifecycleStage: 'FORECAST_INVALIDATED',
+            status: 'FORECAST INVALIDATED',
+            invalidationReason: 'Direction Forecast atau arah market telah berubah.'
+          });
+        }
+        deleteActivePointer(tf);
+      }
     }
     return {
       ...defaultExecution,
@@ -387,15 +423,18 @@ export function buildSetupExecution(result) {
   const aligned = (dd.signal === 'BUY' && setupIsBuy) || (dd.signal === 'SELL' && setupIsSell);
 
   if (!aligned) {
-    const pointers = getActivePointers();
-    const prev = pointers[tf];
-    if (prev?.setupId) {
-      persistTerminalSetup({
-        setupId: prev.setupId,
-        lifecycleStage: 'FORECAST_INVALIDATED',
-        status: 'SETUP CONFLICT',
-        invalidationReason: `Setup Entry Map (${setupDir}) bertentangan dengan Direction Forecast (${dd.signal}).`
-      });
+    if (persist) {
+      const pointers = getActivePointers();
+      const prev = pointers[tf];
+      if (prev?.setupId) {
+        persistTerminalSetup({
+          setupId: prev.setupId,
+          lifecycleStage: 'FORECAST_INVALIDATED',
+          status: 'SETUP CONFLICT',
+          invalidationReason: `Setup Entry Map (${setupDir}) bertentangan dengan Direction Forecast (${dd.signal}).`
+        });
+        deleteActivePointer(tf);
+      }
     }
     return {
       ...defaultExecution,
@@ -410,15 +449,18 @@ export function buildSetupExecution(result) {
 
   const geom = validateSetupGeometry(bestSetup, dd.signal);
   if (!geom.valid) {
-    const pointers = getActivePointers();
-    const prev = pointers[tf];
-    if (prev?.setupId) {
-      persistTerminalSetup({
-        setupId: prev.setupId,
-        lifecycleStage: 'INVALID_GEOMETRY',
-        status: 'INVALID SETUP GEOMETRY',
-        invalidationReason: geom.reason
-      });
+    if (persist) {
+      const pointers = getActivePointers();
+      const prev = pointers[tf];
+      if (prev?.setupId) {
+        persistTerminalSetup({
+          setupId: prev.setupId,
+          lifecycleStage: 'INVALID_GEOMETRY',
+          status: 'INVALID SETUP GEOMETRY',
+          invalidationReason: geom.reason
+        });
+        deleteActivePointer(tf);
+      }
     }
     return {
       ...defaultExecution,
@@ -434,41 +476,34 @@ export function buildSetupExecution(result) {
 
   const setupId = buildSetupId(bestSetup, forecast, tf);
 
-  const fcStartTime = forecast?.startTime || 0;
-  const pointers = getActivePointers();
-  const prevPointer = pointers[tf];
+  if (persist) {
+    const fcStartTime = forecast?.startTime || 0;
+    const pointers = getActivePointers();
+    const prevPointer = pointers[tf];
 
-  if (prevPointer && prevPointer.setupId !== setupId) {
-    const sameForecast = prevPointer.forecastStartTime === fcStartTime && prevPointer.direction === dd.signal;
-    if (sameForecast) {
-      persistTerminalSetup({
-        setupId: prevPointer.setupId,
-        lifecycleStage: 'SETUP_REPLACED',
-        status: 'SETUP REPLACED',
-        invalidationReason: 'Setup lama telah digantikan oleh setup Entry Map yang lebih baru.'
-      });
-    } else {
-      persistTerminalSetup({
-        setupId: prevPointer.setupId,
-        lifecycleStage: 'FORECAST_INVALIDATED',
-        status: 'FORECAST INVALIDATED',
-        invalidationReason: 'Direction Forecast atau arah market telah berubah.'
-      });
+    if (prevPointer && prevPointer.setupId !== setupId) {
+      const sameForecast = prevPointer.forecastStartTime === fcStartTime && prevPointer.direction === dd.signal;
+      if (sameForecast) {
+        persistTerminalSetup({
+          setupId: prevPointer.setupId,
+          lifecycleStage: 'SETUP_REPLACED',
+          status: 'SETUP REPLACED',
+          invalidationReason: 'Setup lama telah digantikan oleh setup Entry Map yang lebih baru.'
+        });
+      } else {
+        persistTerminalSetup({
+          setupId: prevPointer.setupId,
+          lifecycleStage: 'FORECAST_INVALIDATED',
+          status: 'FORECAST INVALIDATED',
+          invalidationReason: 'Direction Forecast atau arah market telah berubah.'
+        });
+      }
     }
   }
 
-  pointers[tf] = {
-    setupId,
-    timeframe: tf,
-    direction: dd.signal,
-    forecastStartTime: fcStartTime,
-    updatedAt: Date.now()
-  };
-  saveActivePointers(pointers);
-
   let lcStorage = {};
   try {
-    lcStorage = JSON.parse(localStorage.getItem('amy_mapping_lifecycle_v3') || '{}');
+    lcStorage = JSON.parse(localStorage.getItem('amy_mapping_lifecycle_v4') || '{}');
   } catch (_) {}
 
   const savedState = lcStorage[setupId] || {};
@@ -603,16 +638,45 @@ export function buildSetupExecution(result) {
     }
   }
 
-  persistTerminalSetup({
-    setupId,
-    lifecycleStage: stage,
-    status: statusText,
-    invalidationReason: invalidReason,
-    entryTouched,
-    target1Secured,
-    entryAt: savedState.entryAt,
-    target1At: savedState.target1At
-  });
+  if (persist) {
+    if (isTerminal) {
+      persistTerminalSetup({
+        setupId,
+        lifecycleStage: stage,
+        status: statusText,
+        invalidationReason: invalidReason,
+        entryTouched,
+        target1Secured,
+        entryAt: savedState.entryAt,
+        target1At: savedState.target1At
+      });
+      deleteActivePointer(tf);
+    } else {
+      persistSetupLifecycle({
+        setupId,
+        lifecycleStage: stage,
+        status: statusText,
+        terminal: false,
+        invalidationReason: '',
+        entryTouched,
+        target1Secured,
+        entryAt: savedState.entryAt,
+        target1At: savedState.target1At,
+        terminalAt: null
+      });
+
+      const fcStartTime = forecast?.startTime || 0;
+      const pointers = getActivePointers();
+      pointers[tf] = {
+        setupId,
+        timeframe: tf,
+        direction: dd.signal,
+        forecastStartTime: fcStartTime,
+        updatedAt: Date.now()
+      };
+      saveActivePointers(pointers);
+    }
+  }
 
   const active = !isTerminal;
 

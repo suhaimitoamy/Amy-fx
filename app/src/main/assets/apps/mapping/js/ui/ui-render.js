@@ -318,30 +318,37 @@ export function validBreakInfo(){
 }
 
 export function m1h4MappingTable(){
-  const rows=m1h4List().map(({tf,a})=>{
-    if(!a)return`<tr><td>${tf}</td><td colspan="6" class="muted">Belum dimuat</td></tr>`;
-    let ob=mapConcept(a,'OB'),fvg=mapConcept(a,'FVG');
-    let se=a.setupExecution || buildSetupExecution(a);
-    let status=(se && se.active) ? `${se.direction} · ${se.status}` : 'TUNGGU';
-    return`<tr><td>${tf}</td><td><span class="map-bias ${mapBiasClass(a.final)}">${a.final}</span></td><td>${p2(a.bsl)}</td><td>${p2(a.ssl)}</td><td>${ob?ob[2]:'-'}</td><td>${fvg?fvg[2]:'-'}</td><td>${status}</td></tr>`;
+  const rows = m1h4List().map(({ tf, a }) => {
+    if (!a) return `<tr><td>${tf}</td><td colspan="6" class="muted">Belum dimuat</td></tr>`;
+    let ob = mapConcept(a, 'OB'), fvg = mapConcept(a, 'FVG');
+    let dd = a.directionDecision || buildDirectionDecision(a);
+    let se = buildSetupExecution(a, { persist: false });
+    let biasText = dd.source === 'VALIDATED_DIRECTION_FORECAST' ? dd.bias : 'WAIT';
+    let statusText = (se && se.active) ? `${se.direction} · ${se.status}` : 'TUNGGU';
+    return `<tr><td>${tf}</td><td><span class="map-bias ${mapBiasClass(biasText)}">${biasText}</span></td><td>${p2(a.bsl)}</td><td>${p2(a.ssl)}</td><td>${ob ? ob[2] : '-'}</td><td>${fvg ? fvg[2] : '-'}</td><td>${statusText}</td></tr>`;
   }).join('');
-  return`<section class="card"><div class="kicker">M1–H4 MAPPING TABLE</div><h2>BSL • SSL • OB • FVG</h2><div class="map-table-wrap"><table class="map-table"><thead><tr><th>TF</th><th>Bias</th><th>BSL</th><th>SSL</th><th>OB</th><th>FVG</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div></section>`
+  return `<section class="card"><div class="kicker">M1–H4 MAPPING TABLE</div><h2>BSL • SSL • OB • FVG</h2><div class="map-table-wrap"><table class="map-table"><thead><tr><th>TF</th><th>Bias</th><th>BSL</th><th>SSL</th><th>OB</th><th>FVG</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
 }
 
 export function aiMappingExplanation(){
-  let r=state.result,s=r?.bestSetup;
-  let se=r?.setupExecution || (r ? buildSetupExecution(r) : null);
-  if(!r)return`<section class="card"><div class="kicker">MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note muted">Klik timeframe untuk membuat penjelasan mapping.</div></section>`;
-  let htfNote=r.htfNarrative?.reason?`<p><b>HTF Narrative</b>: ${r.htfNarrative.reason}</p>`:`<p><b>HTF Narrative</b>: Data HTF belum cukup. Mapping memakai struktur timeframe aktif.</p>`;
-  let sessNote=r.sessionContext ? `<p><b>Session Context</b>: ${r.sessionContext.session.replace('_',' ')} — ${r.sessionContext.killzone!=='NONE'?'Killzone Aktif. ':''}${r.sessionContext.note}</p>` : '';
-  let drNote=r.dealingRange ? `<p><b>Dealing Range</b>: ${r.dealingRange.rangeSource} (${r.dealingRange.confidence}) di High ${p2(r.dealingRange.high)} - Low ${p2(r.dealingRange.low)}.</p>` : '';
-  let liqNote=se?.liquidityTarget ? `<p><b>Target Likuiditas</b>: ${se.liquidityTarget.type} ${p2(se.liquidityTarget.level)}</p>` : '';
+  let r = state.result, s = r?.bestSetup;
+  let dd = r ? (r.directionDecision || buildDirectionDecision(r)) : null;
+  let se = r ? buildSetupExecution(r) : null;
+  if (r) {
+    r.setupExecution = se;
+    r.mappingExplanation = buildMappingExplanation(r);
+  }
+  if (!r || !dd) return `<section class="card"><div class="kicker">MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note muted">Klik timeframe untuk membuat penjelasan mapping.</div></section>`;
+  let htfNote = r.htfNarrative?.reason ? `<p><b>HTF Narrative</b>: ${r.htfNarrative.reason}</p>` : `<p><b>HTF Narrative</b>: Data HTF belum cukup. Mapping memakai struktur timeframe aktif.</p>`;
+  let sessNote = r.sessionContext ? `<p><b>Session Context</b>: ${r.sessionContext.session.replace('_',' ')} — ${r.sessionContext.killzone !== 'NONE' ? 'Killzone Aktif. ' : ''}${r.sessionContext.note}</p>` : '';
+  let drNote = r.dealingRange ? `<p><b>Dealing Range</b>: ${r.dealingRange.rangeSource} (${r.dealingRange.confidence}) di High ${p2(r.dealingRange.high)} - Low ${p2(r.dealingRange.low)}.</p>` : '';
+  let liqNote = se?.liquidityTarget ? `<p><b>Target Likuiditas</b>: ${se.liquidityTarget.type} ${p2(se.liquidityTarget.level)}</p>` : '';
 
-  if(!se || !se.active){
-    return`<section class="card"><div class="kicker">MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note">${htfNote}${sessNote}${drNote}${liqNote}<p>Mapping ${r.tf} menunjukkan bias utama <b>${r.directionDecision?.bias || r.final || 'WAIT'}</b>.</p><p><b>Status Setup: NON-AKTIF</b> (${se?.invalidationReason || 'Belum ada setup Entry Map valid.'})</p><p>Kesimpulan: belum ada setup angka aktif yang aman. Tunggu konfirmasi baru.</p></div></section>`;
+  if (!se || !se.active) {
+    return `<section class="card"><div class="kicker">MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note">${htfNote}${sessNote}${drNote}${liqNote}<p>Mapping ${r.tf} menunjukkan bias utama <b>${dd.bias}</b>.</p><p><b>Status Setup: NON-AKTIF</b> (${se?.invalidationReason || 'Belum ada setup Entry Map valid.'})</p><p>Kesimpulan: belum ada setup angka aktif yang aman. Tunggu konfirmasi baru.</p></div></section>`;
   }
 
-  return`<section class="card"><div class="kicker">MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note">${htfNote}${sessNote}${drNote}${liqNote}<p>Mapping ${se.direction} sedang aktif untuk <b>${s?.type || 'Entry Map'}</b>. Harga sekarang $<b>${p2(analyzeLivePrice()||r.price)}</b>.</p><p>Area entry utama di <b>${p2(se.entryLow)} - ${p2(se.entryHigh)}</b>. Status: <b>${se.status}</b>.</p><p>Invalidasi pada <b>${p2(se.stopLoss)}</b>. Target awal pada <b>${p2(se.target1)}</b>${se.target2 ? `, target lanjutan pada <b>${p2(se.target2)}</b>` : ''}.</p><p>Kesimpulan: <b>PANTAU SETUP ${se.direction}</b>. Tetap hormati invalidasi pada ${p2(se.stopLoss)}.</p></div></section>`;
+  return `<section class="card"><div class="kicker">MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note">${htfNote}${sessNote}${drNote}${liqNote}<p>Mapping ${se.direction} sedang aktif untuk <b>${s?.type || 'Entry Map'}</b>. Harga sekarang $<b>${p2(analyzeLivePrice() || r.price)}</b>.</p><p>Area entry utama di <b>${p2(se.entryLow)} - ${p2(se.entryHigh)}</b>. Status: <b>${se.status}</b>.</p><p>Invalidasi pada <b>${p2(se.stopLoss)}</b>. Target awal pada <b>${p2(se.target1)}</b>${se.target2 ? `, target lanjutan pada <b>${p2(se.target2)}</b>` : ''}.</p><p>Kesimpulan: <b>PANTAU SETUP ${se.direction}</b>. Tetap hormati invalidasi pada ${p2(se.stopLoss)}.</p></div></section>`;
 }
 
 function readableBias(value){return value==='BULLISH'?'naik (bullish)':value==='BEARISH'?'turun (bearish)':'netral';}
@@ -354,22 +361,26 @@ function readableConflict(s){
 }
 
 export function plainMappingExplanation(){
-  const r=state.result,s=r?.bestSetup;
-  const se=r?.setupExecution || (r ? buildSetupExecution(r) : null);
-  if(!r)return`<section class="card"><div class="kicker">PENJELASAN MAPPING</div><h2>Belum Ada Analisis</h2><div class="ai-map-note muted">Pilih timeframe untuk mulai membaca kondisi market.</div></section>`;
-  const price=p2(analyzeLivePrice()||r.price);
-  const htf=r.htfNarrative;
-  const targetText=se?.liquidityTarget
+  const r = state.result, s = r?.bestSetup;
+  const dd = r ? (r.directionDecision || buildDirectionDecision(r)) : null;
+  const se = r ? buildSetupExecution(r) : null;
+  if (r) {
+    r.setupExecution = se;
+    r.mappingExplanation = buildMappingExplanation(r);
+  }
+  if (!r || !dd) return `<section class="card"><div class="kicker">PENJELASAN MAPPING</div><h2>Belum Ada Analisis</h2><div class="ai-map-note muted">Pilih timeframe untuk mulai membaca kondisi market.</div></section>`;
+  const price = p2(analyzeLivePrice() || r.price);
+  const targetText = se?.liquidityTarget
     ? `${se.liquidityTarget.type} pada ${p2(se.liquidityTarget.level)} menjadi target likuiditas utama.`
     : 'Belum ada target likuiditas searah yang cukup jelas.';
   
-  let plan='Belum ada setup aktif yang memenuhi seluruh syarat. Jangan mengejar harga.';
-  if(se && se.active){
-    plan=`Amy membaca setup aktif <b>${readableSetup(s?.type || 'Entry Map')}</b> pada ${r.tf}. Area entry ${p2(se.entryLow)}–${p2(se.entryHigh)}, SL ${p2(se.stopLoss)}, TP1 ${p2(se.target1)}${se.target2 ? `, TP2 ${p2(se.target2)}` : ''}. Status: ${se.status}.`;
+  let plan = 'Belum ada setup aktif yang memenuhi seluruh syarat. Jangan mengejar harga.';
+  if (se && se.active) {
+    plan = `Amy membaca setup aktif <b>${readableSetup(s?.type || 'Entry Map')}</b> pada ${r.tf}. Area entry ${p2(se.entryLow)}–${p2(se.entryHigh)}, SL ${p2(se.stopLoss)}, TP1 ${p2(se.target1)}${se.target2 ? `, TP2 ${p2(se.target2)}` : ''}. Status: ${se.status}.`;
   }
 
-  return`<section class="card"><div class="kicker">PENJELASAN MAPPING</div><h2>Apa yang Sedang Terjadi?</h2><div class="ai-map-note">
-    <p><b>1. Arah utama</b><br>Struktur market <b>${readableBias(htf?.htfBias||r.final)}</b>. Harga ${price} berada di <b>${readableZone(r.premiumDiscountZone||r.zone)}</b>.</p>
+  return `<section class="card"><div class="kicker">PENJELASAN MAPPING</div><h2>Apa yang Sedang Terjadi?</h2><div class="ai-map-note">
+    <p><b>1. Arah utama</b><br>Struktur market <b>${readableBias(dd.bias)}</b>. Harga ${price} berada di <b>${readableZone(r.premiumDiscountZone || r.zone)}</b>.</p>
     <p><b>2. Target market</b><br>${targetText}</p>
     <p><b>3. Rencana tindakan</b><br>${plan}</p>
     <p><b>Kesimpulan</b><br>${se && se.active ? `<b>FOKUS ${se.direction}</b> — status: ${se.status}.` : `<b>TUNGGU</b> — ${se?.invalidationReason || 'belum ada setup aktif.'}`}</p>
