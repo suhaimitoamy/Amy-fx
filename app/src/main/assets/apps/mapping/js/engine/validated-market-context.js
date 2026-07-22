@@ -237,22 +237,35 @@ export function advanceValidatedForecast(previous, {
     invalidationReason: previous?.invalidationReason || ''
   };
 
-  const activeBefore = state.directionValue !== 0 && state.expiryIndex != null && index <= state.expiryIndex;
-  const expiredNow = activeBefore && state.expiryIndex != null && index > state.expiryIndex;
-  const invalidatedNow = activeBefore && ((state.directionValue === 1 && rawBreakBear) || (state.directionValue === -1 && rawBreakBull));
+  const hasForecast = state.directionValue !== 0 && state.expiryIndex != null;
 
-  if (expiredNow || invalidatedNow) {
+  const expiredNow = hasForecast && index > state.expiryIndex;
+
+  const invalidatedNow = hasForecast && index <= state.expiryIndex && (
+    (state.directionValue === 1 && rawBreakBear) ||
+    (state.directionValue === -1 && rawBreakBull)
+  );
+
+  if (expiredNow) {
     state.directionValue = 0;
     state.startIndex = null;
     state.startTime = NaN;
     state.expiryIndex = null;
     state.expiryTime = NaN;
     state.triggerRule = '';
-    state.expired = Boolean(expiredNow);
     state.invalidated = true;
-    state.invalidationReason = invalidatedNow
-      ? 'Direction Forecast dihentikan oleh structural break berlawanan.'
-      : 'Direction Forecast telah melewati batas horizon.';
+    state.expired = true;
+    state.invalidationReason = 'Direction Forecast telah melewati batas horizon.';
+  } else if (invalidatedNow) {
+    state.directionValue = 0;
+    state.startIndex = null;
+    state.startTime = NaN;
+    state.expiryIndex = null;
+    state.expiryTime = NaN;
+    state.triggerRule = '';
+    state.invalidated = true;
+    state.expired = false;
+    state.invalidationReason = 'Direction Forecast dihentikan oleh structural break berlawanan.';
   }
 
   const candidateDirection = finite(candidate?.directionValue, 0);
