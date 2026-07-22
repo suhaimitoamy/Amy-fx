@@ -30,8 +30,8 @@ env:
   AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
   AMYFX_APP_LABEL: Amy FX Preview
   AMYFX_URI_SCHEME: amyfxpreview
-  AMYFX_VERSION_NAME: 1.4.15-preview.8
-  AMYFX_VERSION_CODE: '90045'
+  AMYFX_VERSION_NAME: 1.4.15-preview.9
+  AMYFX_VERSION_CODE: '90046'
 
 jobs:
   validation:
@@ -124,7 +124,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 50
     env:
-      AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/mapping-regime-engine-20260721/preview-update.json
+      AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/heatmap-news-20260722/preview-update.json
     steps:
       - name: Checkout experiment branch
         uses: actions/checkout@v4
