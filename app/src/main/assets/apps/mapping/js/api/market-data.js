@@ -163,18 +163,24 @@ export function buildDirectionDecision(result) {
   };
 }
 
+function numStr(val) {
+  const n = Number(val);
+  return Number.isFinite(n) ? String(n) : '';
+}
+
 export function buildSetupId(setup, forecast, tf) {
   if (!setup) return '';
   const dir = String(setup.dir || setup.direction || '').toUpperCase();
   const type = String(setup.type || 'ENTRY_MAP').toUpperCase();
-  const lo = setup.entryLow != null ? p2(setup.entryLow) : '';
-  const hi = setup.entryHigh != null ? p2(setup.entryHigh) : '';
-  const sl = setup.sl != null ? p2(setup.sl) : '';
-  const tp1 = setup.tp1 != null ? p2(setup.tp1) : '';
-  const tp2 = setup.tp2 != null ? p2(setup.tp2) : '';
+  const lo = numStr(setup.entryLow);
+  const hi = numStr(setup.entryHigh);
+  const sl = numStr(setup.sl);
+  const tp1 = numStr(setup.tp1);
+  const tp2 = numStr(setup.tp2);
   const ts = setup.timestamp || 0;
-  const fcStart = forecast?.startIndex != null ? forecast.startIndex : 0;
-  return `${tf}:${dir}:${type}:${lo}:${hi}:${sl}:${tp1}:${tp2}:${ts}:${fcStart}`;
+  const fcStartTime = forecast?.startTime != null ? forecast.startTime : 0;
+  const fcStartIndex = forecast?.startIndex != null ? forecast.startIndex : 0;
+  return `${tf}:${dir}:${type}:${lo}:${hi}:${sl}:${tp1}:${tp2}:${ts}:${fcStartTime}:${fcStartIndex}`;
 }
 
 export function validateSetupGeometry(setup, dirSignal) {
@@ -198,6 +204,12 @@ export function validateSetupGeometry(setup, dirSignal) {
     return { valid: false, reason: `entryLow (${lo}) lebih tinggi dari entryHigh (${hi}).` };
   }
 
+  if (!singleTarget) {
+    if (!Number.isFinite(tp2)) {
+      return { valid: false, reason: 'Target 2 wajib tersedia untuk setup multi-target.' };
+    }
+  }
+
   if (isBuy) {
     if (sl >= lo) {
       return { valid: false, reason: `SL BUY (${sl}) harus di bawah entryLow (${lo}).` };
@@ -205,7 +217,7 @@ export function validateSetupGeometry(setup, dirSignal) {
     if (tp1 <= hi) {
       return { valid: false, reason: `Target 1 BUY (${tp1}) harus di atas entryHigh (${hi}).` };
     }
-    if (!singleTarget && Number.isFinite(tp2) && tp2 < tp1) {
+    if (!singleTarget && tp2 < tp1) {
       return { valid: false, reason: `Target 2 BUY (${tp2}) harus lebih tinggi dari Target 1 (${tp1}).` };
     }
   } else if (isSell) {
@@ -213,9 +225,9 @@ export function validateSetupGeometry(setup, dirSignal) {
       return { valid: false, reason: `SL SELL (${sl}) harus di atas entryHigh (${hi}).` };
     }
     if (tp1 >= lo) {
-      return { valid: false, reason: `Target 1 SELL (${tp1}) harus di bawah entryHigh (${hi}).` };
+      return { valid: false, reason: `Target 1 SELL (${tp1}) harus di bawah entryLow (${lo}).` };
     }
-    if (!singleTarget && Number.isFinite(tp2) && tp2 > tp1) {
+    if (!singleTarget && tp2 > tp1) {
       return { valid: false, reason: `Target 2 SELL (${tp2}) harus lebih rendah dari Target 1 (${tp1}).` };
     }
   } else {
@@ -325,12 +337,35 @@ export function buildSetupExecution(result) {
 
   let lcStorage = {};
   try {
-    lcStorage = JSON.parse(localStorage.getItem('amy_mapping_lifecycle_v2') || '{}');
+    lcStorage = JSON.parse(localStorage.getItem('amy_mapping_lifecycle_v3') || '{}');
   } catch (_) {}
-  const savedState = lcStorage[setupId] || {};
 
-  let entryTouched = Boolean(savedState.entryTouched);
-  let target1Secured = Boolean(savedState.target1Secured);
+  let activeContexts = {};
+  try {
+    activeContexts = JSON.parse(localStorage.getItem('amy_mapping_active_context_v3') || '{}');
+  } catch (_) {}
+
+  const contextKey = `${tf}:${dd.signal}:${forecast?.startTime || 0}`;
+
+  const prevActiveSetupId = activeContexts[contextKey];
+  if (prevActiveSetupId && prevActiveSetupId !== setupId) {
+    if (lcStorage[prevActiveSetupId] && !lcStorage[prevActiveSetupId].terminal) {
+      lcStorage[prevActiveSetupId] = {
+        ...lcStorage[prevActiveSetupId],
+        lifecycleStage: 'SETUP_REPLACED',
+        status: 'SETUP REPLACED',
+        terminal: true,
+        invalidationReason: 'Setup lama telah digantikan oleh setup Entry Map yang lebih baru.',
+        terminalAt: Date.now()
+      };
+    }
+  }
+  activeContexts[contextKey] = setupId;
+  try {
+    localStorage.setItem('amy_mapping_active_context_v3', JSON.stringify(activeContexts));
+  } catch (_) {}
+
+  const savedState = lcStorage[setupId] || {};
 
   const lo = Math.min(Number(bestSetup.entryLow), Number(bestSetup.entryHigh));
   const hi = Math.max(Number(bestSetup.entryLow), Number(bestSetup.entryHigh));
@@ -340,16 +375,52 @@ export function buildSetupExecution(result) {
   const singleTarget = Boolean(bestSetup.singleTarget);
   const isBuy = dd.signal === 'BUY';
 
+  if (savedState.terminal) {
+    return {
+      ...defaultExecution,
+      active: false,
+      setupId,
+      direction: dd.signal,
+      status: savedState.status || 'TERMINAL',
+      lifecycleStage: savedState.lifecycleStage || 'FORECAST_INVALIDATED',
+      entryLow: lo,
+      entryHigh: hi,
+      stopLoss: sl,
+      target1: tp1,
+      target2: Number.isFinite(tp2) ? tp2 : null,
+      singleTarget,
+      entryTouched: Boolean(savedState.entryTouched),
+      target1Secured: Boolean(savedState.target1Secured),
+      terminal: true,
+      alignedWithForecast: true,
+      geometryValid: true,
+      invalidated: true,
+      invalidationReason: savedState.invalidationReason || 'Setup sudah terminal.',
+      liquidityTarget: null
+    };
+  }
+
+  let entryTouched = Boolean(savedState.entryTouched);
+  let target1Secured = Boolean(savedState.target1Secured);
+
   let liquidityTarget = null;
   const drawTarget = result.liquidityHierarchy?.drawTarget;
   if (drawTarget && Number.isFinite(drawTarget.level)) {
     const levelPrice = Number(drawTarget.level);
-    const validLiquidityDir = isBuy ? (levelPrice > price) : (levelPrice < price);
-    if (validLiquidityDir) {
-      liquidityTarget = {
-        type: drawTarget.type,
-        level: levelPrice
-      };
+    const targetType = String(drawTarget.type || '').toUpperCase();
+    
+    if (isBuy) {
+      const isAbove = levelPrice > Math.max(price, hi);
+      const isTypeValid = !targetType || targetType === 'BSL';
+      if (isAbove && isTypeValid) {
+        liquidityTarget = { type: targetType || 'BSL', level: levelPrice };
+      }
+    } else {
+      const isBelow = levelPrice < Math.min(price, lo);
+      const isTypeValid = !targetType || targetType === 'SSL';
+      if (isBelow && isTypeValid) {
+        liquidityTarget = { type: targetType || 'SSL', level: levelPrice };
+      }
     }
   }
 
@@ -426,16 +497,26 @@ export function buildSetupExecution(result) {
     }
   }
 
-  if (entryTouched || target1Secured) {
-    lcStorage[setupId] = savedState;
-    const keys = Object.keys(lcStorage);
-    if (keys.length > 50) {
-      keys.slice(0, keys.length - 30).forEach(k => delete lcStorage[k]);
-    }
-    try {
-      localStorage.setItem('amy_mapping_lifecycle_v2', JSON.stringify(lcStorage));
-    } catch (_) {}
+  savedState.setupId = setupId;
+  savedState.entryTouched = entryTouched;
+  savedState.target1Secured = target1Secured;
+  savedState.lifecycleStage = stage;
+  savedState.status = statusText;
+  savedState.terminal = isTerminal;
+  savedState.invalidationReason = invalidReason;
+  if (isTerminal && !savedState.terminalAt) {
+    savedState.terminalAt = Date.now();
   }
+
+  lcStorage[setupId] = savedState;
+
+  const keys = Object.keys(lcStorage);
+  if (keys.length > 50) {
+    keys.slice(0, keys.length - 30).forEach(k => delete lcStorage[k]);
+  }
+  try {
+    localStorage.setItem('amy_mapping_lifecycle_v3', JSON.stringify(lcStorage));
+  } catch (_) {}
 
   const active = !isTerminal;
 
@@ -849,6 +930,10 @@ async function pollLivePrice() {
     localStorage.setItem('last_price', String(price));
     state.price = price;
     state.conn = 'Connected';
+    if (state.result) {
+      state.result.setupExecution = buildSetupExecution(state.result);
+      state.result.mappingExplanation = buildMappingExplanation(state.result);
+    }
     publishMappingSnapshot();
     renderAnalyzeLive();
     renderSoft();

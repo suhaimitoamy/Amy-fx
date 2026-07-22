@@ -6,23 +6,16 @@ const LABELS = [
   ['target', 'TARGET']
 ];
 
-function has(value) {
-  return value === true || Number(value) > 0 || /yes|valid|active|confirmed|fresh|strong/i.test(String(value || ''));
-}
-
 export function lifecycleState(setup, liveState) {
-  const c = setup?.components || {};
   const se = setup?.setupExecution || liveState?.setupExecution || null;
+  const stage = String(se?.lifecycleStage || '');
+  const fatal = Boolean(se ? !se.active : liveState?.fatal) || /invalid|sl hit|expired|broken|missed|stopped|replaced|stale/i.test(stage);
 
-  const status = String(se?.status || liveState?.status || setup?.status || 'WAIT');
-  const stage = String(se?.lifecycleStage || liveState?.stage || '');
-  const fatal = Boolean(se ? !se.active : liveState?.fatal) || /invalid|sl hit|expired|broken|missed|stopped/i.test(status);
-
-  const sweep = has(c.sweep) || Boolean(se?.alignedWithForecast);
-  const mss = sweep && (has(c.mss) || Boolean(se?.geometryValid));
-  const poi = mss && (has(c.entry) || Boolean(se?.geometryValid) || /fvg|order block|ob/i.test(String(setup?.type || '')));
-  const entered = poi && (Boolean(se?.entryTouched) || /entry touched|entry_active|tp1_secured|runner_active|target_hit/i.test(stage) || /dalam area|tp|entry aktif/i.test(status));
-  const target = entered && (Boolean(se?.target1Secured) || /target_hit|tp1_secured|runner_active/i.test(stage) || /tp|target hit|completed/i.test(status));
+  const sweep = Boolean(se?.alignedWithForecast) || (se && stage !== 'FORECAST_INVALIDATED');
+  const mss = sweep && (Boolean(se?.geometryValid) || (se && stage !== 'INVALID_GEOMETRY'));
+  const poi = mss && (se ? se.entryLow != null : true);
+  const entered = poi && (Boolean(se?.entryTouched) || ['ENTRY_ACTIVE', 'TP1_SECURED', 'RUNNER_ACTIVE', 'TARGET_HIT'].includes(stage));
+  const target = entered && (Boolean(se?.target1Secured) || ['TARGET_HIT', 'TP1_SECURED', 'RUNNER_ACTIVE'].includes(stage));
 
   const values = [sweep, mss, poi, entered, target];
   const firstWaiting = values.findIndex(value => !value);

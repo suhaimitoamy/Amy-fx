@@ -207,13 +207,28 @@ export function m1h4MappingTable(){
   const rows=m1h4List().map(({tf,a})=>{
     if(!a)return`<tr><td>${tf}</td><td colspan="6" class="muted">Belum dimuat</td></tr>`;
     let ob=mapConcept(a,'OB'),fvg=mapConcept(a,'FVG');
-    let status=a.bestSetup?`${fmtDir(a.bestSetup.dir,a.bestSetup.status,a.bestSetup.conflictCheck?.conflictLevel)} ${a.bestSetup.score}/100`:fmtDir(a.signal);
+    let se=a.setupExecution || buildSetupExecution(a);
+    let status=(se && se.active) ? `${se.direction} · ${se.status}` : 'TUNGGU';
     return`<tr><td>${tf}</td><td><span class="map-bias ${mapBiasClass(a.final)}">${a.final}</span></td><td>${p2(a.bsl)}</td><td>${p2(a.ssl)}</td><td>${ob?ob[2]:'-'}</td><td>${fvg?fvg[2]:'-'}</td><td>${status}</td></tr>`;
   }).join('');
   return`<section class="card"><div class="kicker">M1–H4 MAPPING TABLE</div><h2>BSL • SSL • OB • FVG</h2><div class="map-table-wrap"><table class="map-table"><thead><tr><th>TF</th><th>Bias</th><th>BSL</th><th>SSL</th><th>OB</th><th>FVG</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div></section>`
 }
 
-export function aiMappingExplanation(){let r=state.result,s=r?.bestSetup;if(!r)return`<section class="card"><div class="kicker">MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note muted">Klik timeframe untuk membuat penjelasan mapping.</div></section>`;let live=s?analyzeSetupLiveState(s):null,htfNote=r.htfNarrative?.reason?`<p><b>HTF Narrative</b>: ${r.htfNarrative.reason}</p>`:`<p><b>HTF Narrative</b>: Data HTF belum cukup. Mapping memakai struktur timeframe aktif.</p>`;let sessNote='';if(r.sessionContext){sessNote=`<p><b>Session Context</b>: ${r.sessionContext.session.replace('_',' ')} — ${r.sessionContext.killzone!=='NONE'?'Killzone Aktif. ':''}${r.sessionContext.note}</p>`}let drNote='';if(r.dealingRange){let dr=r.dealingRange, htfZn=r.premiumDiscountZone||dr.currentZone;drNote=`<p><b>Dealing Range</b>: ${dr.rangeSource} (${dr.confidence}) di High ${p2(dr.high)} - Low ${p2(dr.low)}. Equilibrium di ${p2(dr.equilibrium)}. HTF Zone: <b>${htfZn}</b>. Current Dealing Range Zone: <b>${dr.currentZone}</b>. ${dr.reason}</p>`}let liqNote='';if(r.liquidityHierarchy){let lh=r.liquidityHierarchy,dtStr=lh.drawTarget?`<p><b>Draw Target</b>: ${lh.drawTarget.type} ${p2(lh.drawTarget.level)} — external liquidity aktif di ${lh.drawTarget.type==='BSL'?'atas':'bawah'} harga.</p>`:'',sweptStr='';if(lh.swept.length>0){if(s&&!s.components?.sweep){sweptStr=`<p><b>Swept Liquidity</b>: Liquidity historis sudah tersapu, tetapi setup ini belum memiliki liquidity sweep valid sebagai trigger entry.</p>`}else{sweptStr=`<p><b>Swept Liquidity</b>: ${lh.swept.slice(0,3).map(x=>`${x.type} ${p2(x.level)}`).join(', ')} sudah tersapu.</p>`}}liqNote=dtStr+sweptStr}let chkNote='';if(s&&s.scoreChecklist){if(s.grade==='A+'||s.grade==='A'){chkNote=`<p><b>Grade ${s.grade}</b>: Setup ini mendapat Grade tinggi karena HTF searah, liquidity sudah disapu, MSS valid, dan FVG fresh/kuat.</p>`}else{chkNote=`<p><b>Grade ${s.grade||'WAIT'}</b>: Setup belum layak karena ${s.scoreChecklist.filter(x=>!x.passed).map(x=>x.name).join(', ')||'kurangnya konfirmasi'}.</p>`}}let cfNote='';if(s&&s.conflictCheck){let cf=s.conflictCheck;if(cf.hasFatalConflict){cfNote=`<p><b>Fatal Conflict</b>: ${cf.conflicts.map(x=>x.note).join(', ')}. Setup ini ditolak / tidak valid.</p>`}else if(cf.conflictLevel!=='NONE'){cfNote=`<p><b>Conflicts (${cf.conflictLevel})</b>: ${cf.conflicts.map(x=>x.note).join(', ')}. Setup status = ${cf.recommendation}.</p>`}else{cfNote=`<p><b>Conflict</b>: NONE — Komponen utama selaras.</p>`}}if(s&&live?.fatal)return`<section class="card"><div class="kicker">MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note">${htfNote}${sessNote}${drNote}${liqNote}${cfNote}<p>Setup ${s.tf} sebelumnya membaca <b>${s.type}</b> dengan arah <b>${fmtDir(s.dir,s.status,s.conflictCheck?.conflictLevel)}</b>.</p><p><b>${live.status}</b>: ${live.note}</p><p>Kesimpulan: setup aktif tidak layak dipakai. Tunggu mapping ulang atau setup baru.</p></div></section>`;if(!s)return`<section class="card"><div class="kicker">MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note">${htfNote}${sessNote}${drNote}${liqNote}<p>Mapping ${r.tf} menunjukkan bias utama <b>${r.final}</b> dengan posisi harga berada di area <b>${r.zone}</b>.</p><p>Kesimpulan: belum ada setup angka yang cukup kuat. Tunggu OB, FVG, sweep liquidity, atau displacement yang lebih jelas.</p></div></section>`;let finalConcl='SETUP VALID';if(s.conflictCheck?.hasFatalConflict||s.status==='INVALID')finalConcl='INVALID / ABAIKAN SETUP';else if(s.status==='WAIT')finalConcl='MENUNGGU KONFIRMASI';else if(s.status.includes('WATCH'))finalConcl='PANTAU SETUP';return`<section class="card"><div class="kicker">MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note">${htfNote}${sessNote}${drNote}${liqNote}${chkNote}${cfNote}<p>Mapping ${s.tf} sedang membaca <b>${s.type}</b> dengan arah <b>${fmtDir(s.dir,s.status,s.conflictCheck?.conflictLevel)}</b>. Harga sekarang berada di sekitar <b>${p2(analyzeLivePrice()||s.price)}</b>.</p><p>Area entry utama berada di <b>${p2(s.entryLow)} - ${p2(s.entryHigh)}</b>. ${live?live.note:''}</p><p>Invalidasi berada di <b>${p2(s.sl)}</b>. Target awal berada di <b>${p2(s.tp1)}</b>${(Math.abs(s.tp1-s.tp2)>0.05)?`, lalu target lanjutan di <b>${p2(s.tp2)}</b>`:''}.</p><p>Kesimpulan: <b>${finalConcl}</b>. Jangan paksa entry sebelum harga memberi konfirmasi di area mapping.</p></div></section>`;}
+export function aiMappingExplanation(){
+  let r=state.result,s=r?.bestSetup;
+  let se=r?.setupExecution || (r ? buildSetupExecution(r) : null);
+  if(!r)return`<section class="card"><div class="kicker">MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note muted">Klik timeframe untuk membuat penjelasan mapping.</div></section>`;
+  let htfNote=r.htfNarrative?.reason?`<p><b>HTF Narrative</b>: ${r.htfNarrative.reason}</p>`:`<p><b>HTF Narrative</b>: Data HTF belum cukup. Mapping memakai struktur timeframe aktif.</p>`;
+  let sessNote=r.sessionContext ? `<p><b>Session Context</b>: ${r.sessionContext.session.replace('_',' ')} — ${r.sessionContext.killzone!=='NONE'?'Killzone Aktif. ':''}${r.sessionContext.note}</p>` : '';
+  let drNote=r.dealingRange ? `<p><b>Dealing Range</b>: ${r.dealingRange.rangeSource} (${r.dealingRange.confidence}) di High ${p2(r.dealingRange.high)} - Low ${p2(r.dealingRange.low)}.</p>` : '';
+  let liqNote=se?.liquidityTarget ? `<p><b>Target Likuiditas</b>: ${se.liquidityTarget.type} ${p2(se.liquidityTarget.level)}</p>` : '';
+
+  if(!se || !se.active){
+    return`<section class="card"><div class="kicker">MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note">${htfNote}${sessNote}${drNote}${liqNote}<p>Mapping ${r.tf} menunjukkan bias utama <b>${r.directionDecision?.bias || r.final || 'WAIT'}</b>.</p><p><b>Status Setup: NON-AKTIF</b> (${se?.invalidationReason || 'Belum ada setup Entry Map valid.'})</p><p>Kesimpulan: belum ada setup angka aktif yang aman. Tunggu konfirmasi baru.</p></div></section>`;
+  }
+
+  return`<section class="card"><div class="kicker">MAPPING NOTES</div><h2>Amy FX Mapping Explanation</h2><div class="ai-map-note">${htfNote}${sessNote}${drNote}${liqNote}<p>Mapping ${se.direction} sedang aktif untuk <b>${s?.type || 'Entry Map'}</b>. Harga sekarang $<b>${p2(analyzeLivePrice()||r.price)}</b>.</p><p>Area entry utama di <b>${p2(se.entryLow)} - ${p2(se.entryHigh)}</b>. Status: <b>${se.status}</b>.</p><p>Invalidasi pada <b>${p2(se.stopLoss)}</b>. Target awal pada <b>${p2(se.target1)}</b>${se.target2 ? `, target lanjutan pada <b>${p2(se.target2)}</b>` : ''}.</p><p>Kesimpulan: <b>PANTAU SETUP ${se.direction}</b>. Tetap hormati invalidasi pada ${p2(se.stopLoss)}.</p></div></section>`;
+}
 
 function readableBias(value){return value==='BULLISH'?'naik (bullish)':value==='BEARISH'?'turun (bearish)':'netral';}
 function readableZone(value){return value==='PREMIUM'?'bagian atas range (premium)':value==='DISCOUNT'?'bagian bawah range (discount)':'tengah range (equilibrium)';}
@@ -226,53 +241,45 @@ function readableConflict(s){
 
 export function plainMappingExplanation(){
   const r=state.result,s=r?.bestSetup;
+  const se=r?.setupExecution || (r ? buildSetupExecution(r) : null);
   if(!r)return`<section class="card"><div class="kicker">PENJELASAN MAPPING</div><h2>Belum Ada Analisis</h2><div class="ai-map-note muted">Pilih timeframe untuk mulai membaca kondisi market.</div></section>`;
-  const live=s?analyzeSetupLiveState(s):null;
-  const price=p2(analyzeLivePrice()||s?.price||r.price);
+  const price=p2(analyzeLivePrice()||r.price);
   const htf=r.htfNarrative;
-  const draw=r.liquidityHierarchy?.drawTarget;
-  const structure=r.st?.last;
-  const structureText=structure?.breakType==='VALID_BREAK'&&structure?.atRisk
-    ? `Break ${p2(structure.price)} sedang AT RISK karena harga live kembali ke sisi sebelumnya. Tunggu candle close sebelum menganggap perubahan struktur bertahan.`
-    : structure?.breakType==='VALID_BREAK'&&(structure?.confirmationStage==='TRANSITION'||structure?.trendConfirmed===false)
-      ? `Candle menutup melewati struktur internal ${p2(structure.price)} dengan dorongan yang cukup, tetapi tren utama masih ${readableBias(r.st?.confirmedTrend)}. Reversal belum terkonfirmasi${Number.isFinite(Number(r.st?.transitionConfirmationLevel))?`; level berikutnya ${p2(r.st.transitionConfirmationLevel)}`:''}.`
-      : structure?.breakType==='VALID_BREAK'
-        ? `Candle sudah menutup melewati struktur mayor ${p2(structure.price)} dengan dorongan yang cukup. Tren terkonfirmasi: ${readableBias(r.st?.confirmedTrend||structure.dir)}.`
-        : structure?.breakType==='SWEEP_ONLY'
-          ? `Harga baru menyapu level ${p2(structure.price)} dengan wick. Belum ada penutupan candle yang mengonfirmasi perubahan arah.`
-          : 'Belum ada break struktur yang cukup kuat untuk dijadikan pemicu entry.';
-  const targetText=draw
-    ? `${draw.type==='BSL'?'Likuiditas di atas harga':'Likuiditas di bawah harga'} pada ${p2(draw.level)} menjadi target market yang paling masuk akal saat ini.`
-    : 'Belum ada target likuiditas yang cukup jelas. Kondisi ini lebih aman untuk ditunggu.';
-  const session=r.sessionContext?.session==='OFF_SESSION'
-    ? 'Market sedang di luar sesi aktif; risiko gerakan palsu lebih tinggi.'
-    : `Sesi ${String(r.sessionContext?.session||'aktif').replaceAll('_',' ').toLowerCase()} sedang berjalan${r.sessionContext?.killzone!=='NONE'?', termasuk waktu aktif '+r.sessionContext.killzone.replaceAll('_',' ').toLowerCase():''}.`;
-  let plan='Belum ada setup yang memenuhi seluruh syarat. Jangan entry hanya karena harga berada di premium atau discount.';
-  if(s){
-    const action=live?.fatal?'Abaikan setup lama dan tunggu mapping baru.':s.status==='WAIT'?'Tunggu konfirmasi tambahan sebelum entry.':'Pantau harga saat masuk ke area entry; jangan mengejar harga di luar zona.';
-    plan=`Amy membaca <b>${readableSetup(s.type)}</b> pada ${s.tf}. Area rencana ${p2(s.entryLow)}–${p2(s.entryHigh)}, batas salah ${p2(s.sl)}, TP1 ${p2(s.tp1)}, dan TP2 ${p2(s.tp2)}. ${action}`;
-    if(s.tradeManagement)plan+=` Jika TP1 tercapai, amankan ${s.tradeManagement.tp1ClosePercent}% posisi dan pindahkan stop ${s.tradeManagement.runnerPercent}% sisanya ke harga masuk.`;
+  const targetText=se?.liquidityTarget
+    ? `${se.liquidityTarget.type} pada ${p2(se.liquidityTarget.level)} menjadi target likuiditas utama.`
+    : 'Belum ada target likuiditas searah yang cukup jelas.';
+  
+  let plan='Belum ada setup aktif yang memenuhi seluruh syarat. Jangan mengejar harga.';
+  if(se && se.active){
+    plan=`Amy membaca setup aktif <b>${readableSetup(s?.type || 'Entry Map')}</b> pada ${r.tf}. Area entry ${p2(se.entryLow)}–${p2(se.entryHigh)}, SL ${p2(se.stopLoss)}, TP1 ${p2(se.target1)}${se.target2 ? `, TP2 ${p2(se.target2)}` : ''}. Status: ${se.status}.`;
   }
+
   return`<section class="card"><div class="kicker">PENJELASAN MAPPING</div><h2>Apa yang Sedang Terjadi?</h2><div class="ai-map-note">
-    <p><b>1. Arah utama</b><br>Struktur timeframe besar sedang <b>${readableBias(htf?.htfBias||r.final)}</b>. Harga ${price} berada di <b>${readableZone(r.premiumDiscountZone||r.zone)}</b>. ${htf?.reason||'Data timeframe besar masih terbatas.'}</p>
-    <p><b>2. Konfirmasi harga</b><br>${structureText}</p>
-    <p><b>3. Target market</b><br>${targetText}</p>
-    <p><b>4. Rencana tindakan</b><br>${plan}</p>
-    <p><b>5. Risiko yang perlu diperhatikan</b><br>${s?readableConflict(s):'Setup belum terbentuk.'} ${session}</p>
-    <p><b>Kesimpulan</b><br>${s&&!live?.fatal&&s.status!=='WAIT'?'<b>PANTAU SETUP</b> — tunggu harga masuk area dan tetap hormati invalidasi.':'<b>TUNGGU</b> — belum ada alasan yang cukup aman untuk entry.'}</p>
+    <p><b>1. Arah utama</b><br>Struktur market <b>${readableBias(htf?.htfBias||r.final)}</b>. Harga ${price} berada di <b>${readableZone(r.premiumDiscountZone||r.zone)}</b>.</p>
+    <p><b>2. Target market</b><br>${targetText}</p>
+    <p><b>3. Rencana tindakan</b><br>${plan}</p>
+    <p><b>Kesimpulan</b><br>${se && se.active ? `<b>FOKUS ${se.direction}</b> — status: ${se.status}.` : `<b>TUNGGU</b> — ${se?.invalidationReason || 'belum ada setup aktif.'}`}</p>
   </div></section>`;
 }
 
 export function analyzeView(){
-  const active=analyzeActiveSetups(state.result?.setups||[]);
+  const r=state.result;
+  const se=r?.setupExecution || (r ? buildSetupExecution(r) : null);
+  const activeSetupCard = (se && se.active && r?.bestSetup)
+    ? lifecycleSetupCard(r.bestSetup, 0)
+    : `<p class="muted">${se?.invalidationReason || 'Belum ada setup aktif yang aman. Tunggu mapping baru.'}</p>`;
+
   return`<section class="card"><div class="tf-grid">${Object.keys(TF).map(x=>`<button class="${state.tf===x?'active':''}" onclick="window.runAnalysis('${x}')">${x}</button>`).join('')}</div></section>
   <details class="card disclosure" open><summary>Valid Break</summary>${validBreakInfo()}</details>
   <details class="card disclosure"><summary>Mapping M1–H4</summary>${m1h4MappingTable()}</details>
   <details class="card disclosure"><summary>Penjelasan Mapping</summary>${plainMappingExplanation()}</details>
-  <details class="card disclosure"><summary>Setup Aktif (${active.length})</summary><section class="card"><h2>Setup Aktif</h2>${active.map(s => lifecycleSetupCard(s, 0)).join('')||'<p class="muted">Belum ada setup aktif yang aman. Tunggu mapping baru.</p>'}</section></details>`
+  <details class="card disclosure"><summary>Setup Aktif (${se && se.active ? 1 : 0})</summary><section class="card"><h2>Setup Aktif</h2>${activeSetupCard}</section></details>`;
 }
 
-export function setupsView(){let list=state.setups.slice(0,20);return`<section class="card"><h1>Riwayat Setup</h1>${list.map(s => lifecycleSetupCard(s, 0)).join('')||'<p class="muted">Belum ada setup tersimpan.</p>'}</section>`}
+export function setupsView(){
+  let list=state.setups.slice(0,20);
+  return`<section class="card"><h1>Riwayat Setup (HISTORY / TERMINAL)</h1>${list.map((s, i) => setupCard({ ...s, status: 'HISTORY / TERMINAL' }, i)).join('')||'<p class="muted">Belum ada setup tersimpan.</p>'}</section>`;
+}
 export function historyView(){return`<section class="card"><h1>Event Logs</h1><button class="action" onclick="window.downloadLogs()">⇩ Download TXT</button>${state.logs.map(x=>`<div class="log">${x}</div>`).join('')||'<p class="muted">Belum ada event.</p>'}</section>`}
 export function settingsView(){return`<section class="card settings"><h1>Settings & API</h1><label>Twelve Data API Key <span class="muted">(opsional untuk candle)</span></label><input id="apiKey" value="${state.key}" placeholder="Kosongkan jika key sudah di Vercel"><button class="action" onclick="window.saveConnect()" style="width:100%">🔑 Simpan & Hubungkan Live</button><p class="muted">Analisis candle memakai API Vercel. Key lokal hanya diperlukan untuk live price WebSocket dan Background Scanner native.</p><div class="warn"><b>Background Scanner</b><br>Jika ON, scanner akan memantau Entry Area setup terbaik dari Mapping saat aplikasi ditutup.</div><button data-scanner-status class="${state.bg?'action':'chip'}" onclick="window.toggleBg()" style="width:100%;margin-top:14px">${state.bg?'📡 Background Scanner ON':'📴 Background Scanner OFF'}</button><button class="action" onclick="window.testNotif()" style="width:100%;margin-top:12px">🔔 Tes Notifikasi Setup</button><button class="action" onclick="window.AmyFXUpdate?.checkNow()" style="width:100%;margin-top:12px">🔄 Cek Pembaruan Versi</button></section>`}
 
