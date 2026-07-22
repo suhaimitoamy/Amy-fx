@@ -1,6 +1,3 @@
-import { detectStructureConcepts } from '../engine/concept-structure.js';
-import { detectOrderBlockConcepts } from '../engine/concept-ob.js';
-
 const DEFAULT_FVG_VISIBLE_PER_DIRECTION = 2;
 const DEFAULT_OB_VISIBLE_PER_DIRECTION = 1;
 
@@ -91,55 +88,87 @@ function evaluateFvgStatus(zone, candles) {
   return { status, active: true, lastTouchIndex };
 }
 
+/**
+ * Meniru aturan FVG Pine milik pengguna:
+ * - candle tengah harus lebih besar dari rata-rata body length 5;
+ * - wick atas dan bawah masing-masing < 36% body;
+ * - bullish FVG: low candle ketiga > high candle pertama;
+ * - bearish FVG: high candle ketiga < low candle pertama;
+ * - zona tetap aktif sampai wick menembus sisi terjauh zona.
+ */
 export function detectIndicatorFvgs(candles, {
   bodyLength = 5,
   wickBodyRatio = 0.36,
   visiblePerDirection = DEFAULT_FVG_VISIBLE_PER_DIRECTION,
-  lookback = 1000
+  lookback = 500
 } = {}) {
-  const all = cleanCandles(candles);
-  const offset = Math.max(0, all.length - lookback);
-  const values = all.slice(offset).map((candle, index) => ({ ...candle, index }));
+  const values = cleanCandles(candles);
+  const start = Math.max(2, values.length - Math.max(lookback, 3));
   const raw = [];
+  let previousBullIndex = -99;
+  let previousBearIndex = -99;
 
-  for (let index = 2; index < values.length; index += 1) {
+  for (let index = start; index < values.length; index += 1) {
     const first = values[index - 2];
-    const second = values[index - 1];
+    const middle = values[index - 1];
     const third = values[index];
-    const avgBody = averageBody(values, index - 1, bodyLength);
-    const body = Math.abs(second.close - second.open);
+    if (!first || !middle || !third) continue;
 
-    if (body <= avgBody || avgBody <= 0) continue;
+    const body = Math.abs(middle.close - middle.open);
+    const meanBody = averageBody(values, index - 1, bodyLength);
+    const upperWick = middle.high - Math.max(middle.open, middle.close);
+    const lowerWick = Math.min(middle.open, middle.close) - middle.low;
+    const displacementBody = body > meanBody
+      && upperWick < body * wickBodyRatio
+      && lowerWick < body * wickBodyRatio;
+    if (!displacementBody || body <= 0) continue;
 
-    const upperWick = second.high - Math.max(second.open, second.close);
-    const lowerWick = Math.min(second.open, second.close) - second.low;
-    if (upperWick > body * wickBodyRatio || lowerWick > body * wickBodyRatio) continue;
-
-    const bullish = third.low > first.high;
-    const bearish = third.high < first.low;
+    const bullish = middle.close > middle.open && third.low > first.high;
+    const bearish = middle.close < middle.open && third.high < first.low;
     if (!bullish && !bearish) continue;
 
     const type = bullish ? 'BULLISH' : 'BEARISH';
     const bottom = bullish ? first.high : third.high;
     const top = bullish ? third.low : first.low;
+    if (!(top > bottom)) continue;
+
     const zone = {
       kind: 'FVG',
       type,
       bottom,
       top,
       mid: (bottom + top) / 2,
-      originIndex: index - 2 + offset,
-      endIndex: index + offset,
+      originIndex: index - 2,
+      displacementIndex: index - 1,
+      endIndex: index,
       createdAt: third.time,
       active: true,
-      status: 'FRESH'
+      status: 'FRESH',
+      source: 'PINE_AMYGMGO',
+      reason: 'Pola tiga candle dengan displacement body di atas rata-rata dan wick terkendali.'
     };
-    raw.push(zone);
+
+    const consecutive = bullish
+      ? previousBullIndex === index - 1
+      : previousBearIndex === index - 1;
+    const last = raw.at(-1);
+    if (consecutive && last?.type === type) {
+      last.bottom = zone.bottom;
+      last.top = zone.top;
+      last.mid = zone.mid;
+      last.endIndex = zone.endIndex;
+      last.createdAt = zone.createdAt;
+    } else {
+      raw.push(zone);
+    }
+
+    if (bullish) previousBullIndex = index;
+    if (bearish) previousBearIndex = index;
   }
 
   const evaluated = raw.map(zone => ({
     ...zone,
-    ...evaluateFvgStatus(zone, all)
+    ...evaluateFvgStatus(zone, values)
   }));
 
   const latest = type => evaluated
@@ -151,27 +180,24 @@ export function detectIndicatorFvgs(candles, {
     .sort((a, b) => b.endIndex - a.endIndex);
 }
 
+function createOb() { return null; }
+
 /**
  * Adapter tampilan validated Order Block:
- * Meneruskan hasil dari detectOrderBlockConcepts (concept-ob.js) sebagai satu-satunya mesin OB.
+ * Hanya menerima validatedOrderBlocks yang sudah dihasilkan oleh marketConcepts.orderBlocks.
+ * Jika validatedOrderBlocks tidak tersedia, kembalikan array kosong. Jangan menghitung ulang OB.
  */
-export function detectIndicatorOrderBlocks(candles, {
+export function detectIndicatorOrderBlocks(_candles, {
   validatedOrderBlocks = null,
-  currentPrice = null,
   visiblePerDirection = DEFAULT_OB_VISIBLE_PER_DIRECTION
 } = {}) {
-  const clean = cleanCandles(candles);
-  const zones = Array.isArray(validatedOrderBlocks)
-    ? validatedOrderBlocks
-    : detectOrderBlockConcepts(
-        clean,
-        detectStructureConcepts(clean),
-        { currentPrice, maxZones: 12 }
-      );
+  if (!Array.isArray(validatedOrderBlocks) || !validatedOrderBlocks.length) {
+    return [];
+  }
 
-  const latest = type => zones
+  const latest = type => validatedOrderBlocks
     .filter(zone => (zone.direction === type || zone.type === type) && zone.active !== false && zone.status !== 'INVALID')
-    .sort((a, b) => Number(b.availableIndex || 0) - Number(a.availableIndex || 0))
+    .sort((a, b) => Number(b.availableIndex || b.structureBreakIndex || 0) - Number(a.availableIndex || a.structureBreakIndex || 0))
     .slice(0, visiblePerDirection);
 
   return [...latest('BULLISH'), ...latest('BEARISH')];
@@ -209,7 +235,11 @@ export function nearestZones(zones, price, limit = 2) {
 }
 
 export function detectIndicatorZones(candles, price, options = {}) {
-  const orderBlocks = detectIndicatorOrderBlocks(candles, options.orderBlocks);
+  const validatedOrderBlocks = options.validatedOrderBlocks || options.marketConcepts?.orderBlocks || options.orderBlocks?.validatedOrderBlocks || null;
+  const orderBlocks = detectIndicatorOrderBlocks(candles, {
+    ...options.orderBlocks,
+    validatedOrderBlocks
+  });
   const fairValueGaps = detectIndicatorFvgs(candles, options.fairValueGaps);
   return {
     orderBlocks,
@@ -218,8 +248,7 @@ export function detectIndicatorZones(candles, price, options = {}) {
     nearestFairValueGaps: nearestZones(fairValueGaps, price, 2),
     metadata: {
       source: 'ICT Concepts [amygmgo]',
-      obUseBody: options.orderBlocks?.useBody ?? true,
-      obSwingLength: options.orderBlocks?.swingLength ?? 10,
+      obUseBody: false,
       fvgBodyLength: options.fairValueGaps?.bodyLength ?? 5,
       fvgWickBodyRatio: options.fairValueGaps?.wickBodyRatio ?? 0.36
     }
