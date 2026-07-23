@@ -240,7 +240,7 @@ class ScannerService : Service() {
             .setContentTitle("Amy FX — Pemantau area M15")
             .setContentText(targetText())
             .setStyle(Notification.BigTextStyle().bigText(
-                "Scanner ringan aktif hanya untuk ${targetText()} News diterima terpisah melalui push notification."
+                "Scanner hemat data aktif untuk ${targetText()} dan memeriksa harga setiap 5 menit saat aplikasi berada di latar belakang. News diterima terpisah melalui push notification."
             ))
             .setSmallIcon(R.drawable.ic_stat_amy_fx)
             .setContentIntent(pendingIntent)
@@ -356,9 +356,9 @@ class ScannerService : Service() {
 
         private const val MARKET_URL =
             "https://amy-fx.vercel.app/api/twelvedata?symbol=XAU/USD&interval=1min&outputsize=1"
-        private const val MARKET_POLL_MS = 30_000L
-        private const val RETRY_STEP_MS = 15_000L
-        private const val MAX_RETRY_MS = 120_000L
+        private const val MARKET_POLL_MS = 5L * 60L * 1000L
+        private const val RETRY_STEP_MS = 60_000L
+        private const val MAX_RETRY_MS = 5L * 60L * 1000L
         private const val TARGET_MAX_AGE_MS = 24L * 60L * 60L * 1000L
         private const val RESET_DISTANCE = 0.50
         private const val PRICE_EPSILON = 0.01

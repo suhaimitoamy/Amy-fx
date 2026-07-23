@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="css/liquidity-draw.css">
 <link rel="stylesheet" href="css/entry-watch.css">
 <link rel="stylesheet" href="css/mapping-v2.css">
+<link rel="stylesheet" href="css/analysis-compact.css">
 <script>
 (function () {
   var NativeDateTimeFormat = Intl.DateTimeFormat;
@@ -52,10 +53,14 @@
 <section id="mapping-command-strip" class="amy-command-strip mapping-command-strip" aria-label="Ringkasan market"></section>
 <main class="content" id="app"></main>
 <nav class="nav"><button data-tab="Dashboard" class="active">▥<span>Dashboard</span></button><button data-tab="Analyze">〽<span>Analisis</span></button><button data-tab="Setups">◎<span>Skenario</span></button><button data-tab="History">◷<span>Riwayat</span></button><button data-tab="Settings">⚙<span>Pengaturan</span></button></nav>
+<script src="js/api-request-coordinator.js"></script>
 <script src="../shared/market-intelligence.js"></script>
 <script src="js/notification-route-sync.js"></script>
 <script src="js/production-branding.js"></script>
+<script src="js/scanner-visibility-gate.js"></script>
+<script src="js/view-stability.js"></script>
 <script type="module" src="js/main.js"></script>
+<script type="module" src="js/candle-refresh-coordinator.js"></script>
 <script type="module" src="js/entry-map-ui-sync.js"></script>
 <script type="module" src="js/entry-watch-runtime-v2.js"></script>
 <script type="module" src="js/session/asia-range-ui.js"></script>
