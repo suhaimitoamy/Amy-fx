@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       versionName:
-        description: "Version Name (e.g., 1.4.17)"
+        description: "Version Name (e.g., 1.5.0)"
         required: true
-        default: "1.4.17"
+        default: "1.5.0"
       versionCode:
         description: "Version Code (must increase)"
         required: true
-        default: "40"
+        default: "41"
 
 permissions:
   contents: read
@@ -69,10 +69,10 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Run JavaScript regression tests
-        run: node --test tests/*.test.mjs
+        run: timeout 10m npm test
 
       - name: Run Android unit tests
         run: ./gradlew testReleaseUnitTest --no-configuration-cache
@@ -120,10 +120,3 @@ jobs:
           if 0x7109871A not in ids:
               raise SystemExit("APK Signature Scheme v2 tidak ditemukan")
           PY
-
-      - name: Upload signed release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Amy-FX-v${{ github.event.inputs.versionName }}-signed-apk
-          path: app/build/outputs/apk/release/app-release.apk
-          if-no-files-found: error
