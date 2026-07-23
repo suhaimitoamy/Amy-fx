@@ -5,9 +5,17 @@ on:
     branches:
       - feature/amyfx-v1.5-full-enhancements
     paths:
-      - app/src/main/assets/apps/mapping/**
-      - tests/entry-watch-engine.test.mjs
-      - docs/MULTI_TF_ENTRY_WATCH.md
+      - app/**
+      - lib/**
+      - tests/**
+      - tools/**
+      - docs/**
+      - package.json
+      - package-lock.json
+      - build.gradle.kts
+      - settings.gradle.kts
+      - gradle.properties
+      - gradle/**
       - .github/workflows/amyfx-v15-preview-release.yml
   workflow_dispatch:
 
@@ -20,8 +28,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  AMYFX_VERSION_NAME: 1.5.0-preview.4
-  AMYFX_VERSION_CODE: '90054'
   AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
   AMYFX_APP_LABEL: Amy FX Preview
   AMYFX_URI_SCHEME: amyfxpreview
@@ -37,6 +43,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
+      - name: Checkout v1.5 feature branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare immutable Preview version
+        run: |
+          set -euo pipefail
+          version_code=$((910000 + GITHUB_RUN_NUMBER))
+          version_name="1.5.0-preview.${GITHUB_RUN_NUMBER}"
+          release_tag="amyfx-preview-${version_name}"
+          {
+            echo "AMYFX_VERSION_CODE=$version_code"
+            echo "AMYFX_VERSION_NAME=$version_name"
+            echo "AMYFX_RELEASE_TAG=$release_tag"
+          } >> "$GITHUB_ENV"
+
       - name: Mark authoritative Preview release pending
         env:
           GH_TOKEN: ${{ github.token }}
@@ -44,26 +67,24 @@ jobs:
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state='pending' \
             -f context='Amy FX v1.5 Authoritative Preview' \
-            -f description='Building signed Preview 1.5.0-preview.4' \
+            -f description="Building signed Preview $AMYFX_VERSION_NAME" \
             -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
-
-      - name: Checkout v1.5 feature branch
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Validate Entry Watch and updater
+      - name: Validate complete Preview source and tests
         run: |
           set -euo pipefail
           node --check app/src/main/assets/apps/mapping/js/engine/entry-watch-engine.js
-          node --check app/src/main/assets/apps/mapping/js/entry-watch-runtime.js
+          node --check app/src/main/assets/apps/mapping/js/engine/entry-watch-hardening.js
+          node --check app/src/main/assets/apps/mapping/js/engine/validated-market-context.js
+          node --check app/src/main/assets/apps/mapping/js/engine/validated-market-context-balanced.js
+          node --check app/src/main/assets/apps/mapping/js/entry-watch-runtime-v2.js
           node --check app/src/main/assets/apps/mapping/js/engine/concept-analyze.js
-          node --test tests/entry-watch-engine.test.mjs
+          npm test
           node tools/configure-preview-web-version.mjs "$AMYFX_VERSION_NAME" "$AMYFX_VERSION_CODE" "$AMYFX_UPDATE_MANIFEST_URL"
           node --check app/src/main/assets/app-version.js
           node --check app/src/main/assets/update-checker.js
@@ -71,7 +92,6 @@ jobs:
           grep -Fq "window.AmyFXUpdateManifestUrl = '$AMYFX_UPDATE_MANIFEST_URL';" app/src/main/assets/app-version.js
           grep -Fq 'Update Amy FX Preview Tersedia' app/src/main/assets/update-checker.js
           grep -Fq 'announceNativeUpdate(latestCode, latestName);' app/src/main/assets/update-checker.js
-          node --test tests/preview-updater-config.test.mjs
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -126,89 +146,90 @@ jobs:
           test "$actual" = "$expected"
           cp "$APK" AmyFX-Preview-latest.apk
 
-      - name: Publish Preview APK release
+      - name: Publish immutable Preview APK release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG='amyfx-preview-v1.5.0-preview.4'
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes
+          if gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $AMYFX_RELEASE_TAG already exists; refusing to replace an installed version."
+            exit 1
           fi
-          gh api --method DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" >/dev/null 2>&1 || true
-          cat > /tmp/release-notes.md <<'NOTES'
-          Amy FX Preview 1.5.0-preview.4 — Honest Entry Watch Update.
+          cat > /tmp/release-notes.md <<NOTES
+          Amy FX Preview $AMYFX_VERSION_NAME — Entry Watch Hardening.
 
-          - Dapat dipasang sebagai update dari Amy FX Preview yang sudah ada.
-          - Package ID dan sertifikat signing tetap sama.
-          - Level wajib melewati fase PANTAU sebelum entry.
-          - Hidden break direkonsiliasi dan level mati tidak dapat hidup kembali.
-          - Satu level hanya menghasilkan satu entry lalu ENTRY_SPENT.
+          - Version code selalu meningkat dan release tidak lagi diganti diam-diam.
+          - Waktu entry memakai close candle trigger, bukan open candle.
+          - Entry zone, SL, TP1, dan TP2 dikunci saat trigger sah.
+          - Forecast WAIT langsung menonaktifkan BUY/SELL lama.
+          - Level yang keluar detector ditutup sebelum entry diterima.
+          - Trigger candle aktif diperbarui tanpa mengikuti jeda timeframe layar.
+          - H1 BUY dan SELL memakai aturan yang simetris.
           NOTES
-          gh release create "$TAG" \
+          gh release create "$AMYFX_RELEASE_TAG" \
             "AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --prerelease \
-            --title 'Amy FX Preview 1.5.0-preview.4 — Honest Entry Watch Update' \
+            --title "Amy FX Preview $AMYFX_VERSION_NAME — Entry Watch Hardening" \
             --notes-file /tmp/release-notes.md
-          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
+          gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
 
-      - name: Activate update for all installed Preview channels
+      - name: Activate update manifest on feature branch
         run: |
           set -euo pipefail
           git reset --hard HEAD
-          cat > preview-update.json <<'JSON'
-          {
-            "channel": "amyfx-preview-professional-ui",
-            "latest_version_code": 90054,
-            "latest_version_name": "1.5.0-preview.4",
-            "versionCode": 90054,
-            "version": "1.5.0-preview.4",
-            "releaseDate": "2026-07-23",
-            "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.5.0-preview.4/AmyFX-Preview-latest.apk",
-            "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.5.0-preview.4/AmyFX-Preview-latest.apk",
-            "force_update": false,
-            "mandatory": false,
-            "enabled": true,
-            "release_notes": [
-              "Update Preview tersedia langsung dari aplikasi yang sudah terpasang",
-              "Level wajib melewati fase PANTAU sebelum entry",
-              "Hidden break direkonsiliasi ketika Direction Forecast pause",
-              "Level yang keluar detector menjadi LEVEL_RETIRED",
-              "Satu level hanya menghasilkan satu entry lalu ENTRY_SPENT",
-              "Level asli dan hasil konversi memiliki expiry eksplisit"
-            ],
-            "changelog": [
-              "Unified in-app update channel",
-              "Entry Watch Engine 1.1 causal replay",
-              "FORECAST_PAUSED reconciliation",
-              "LEVEL_RETIRED and LEVEL_EXPIRED lifecycle",
-              "ENTRY_SPENT single-entry lock",
-              "Eleven automated lifecycle contract tests",
-              "2022–2025 post-fix honesty verification"
-            ]
+          export RELEASE_DATE="$(date -u +%F)"
+          export APK_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${AMYFX_RELEASE_TAG}/AmyFX-Preview-latest.apk"
+          python - <<'PY'
+          import json
+          import os
+
+          version_code = int(os.environ['AMYFX_VERSION_CODE'])
+          version_name = os.environ['AMYFX_VERSION_NAME']
+          payload = {
+              'channel': 'amyfx-preview-professional-ui',
+              'latest_version_code': version_code,
+              'latest_version_name': version_name,
+              'versionCode': version_code,
+              'version': version_name,
+              'releaseDate': os.environ['RELEASE_DATE'],
+              'apk_url': os.environ['APK_URL'],
+              'downloadUrl': os.environ['APK_URL'],
+              'force_update': False,
+              'mandatory': False,
+              'enabled': True,
+              'release_notes': [
+                  'Version Preview selalu naik sehingga update baru dapat terdeteksi',
+                  'Entry disahkan pada close candle trigger',
+                  'Entry, SL, dan target dikunci saat trigger sah',
+                  'Forecast WAIT menonaktifkan sinyal lama',
+                  'Level retired tidak dapat menghasilkan entry',
+                  'Refresh trigger candle tidak bergantung pada timeframe layar',
+                  'Forecast H1 BUY dan SELL dibuat simetris'
+              ],
+              'changelog': [
+                  'Immutable Preview release/version code',
+                  'Causal close-time entry timestamp',
+                  'Frozen execution geometry',
+                  'Strict forecast pause gate',
+                  'Detector retirement gate before entry',
+                  'Active trigger/source candle refresh',
+                  'Balanced H1 directional forecast',
+                  'Full npm test gate'
+              ]
           }
-          JSON
+          with open('preview-update.json', 'w', encoding='utf-8') as handle:
+              json.dump(payload, handle, ensure_ascii=False, indent=2)
+              handle.write('\n')
+          PY
           python -m json.tool preview-update.json >/dev/null
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add preview-update.json
           if ! git diff --cached --quiet; then
-            git commit -m 'release: activate Amy FX Preview 1.5.0-preview.4 update [skip ci]'
-            git push origin HEAD:${{ github.ref_name }}
-          fi
-
-          git fetch origin experiment/heatmap-news-20260722
-          git worktree add /tmp/amyfx-preview-compat origin/experiment/heatmap-news-20260722
-          cp preview-update.json /tmp/amyfx-preview-compat/preview-update.json
-          cd /tmp/amyfx-preview-compat
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add preview-update.json
-          if ! git diff --cached --quiet; then
-            git commit -m 'release: route installed Preview apps to 1.5.0-preview.4 [skip ci]'
-            git push origin HEAD:experiment/heatmap-news-20260722
+            git commit -m "release: activate $AMYFX_VERSION_NAME update [skip ci]"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
 
   report-status:
@@ -221,8 +242,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           BUILD_RESULT: ${{ needs.publish-preview.result }}
         run: |
+          version_name="1.5.0-preview.${GITHUB_RUN_NUMBER}"
           state=success
-          description='Preview 1.5.0-preview.4 published and update manifest activated'
+          description="$version_name published and update manifest activated"
           if [ "$BUILD_RESULT" != 'success' ]; then
             state=failure
             description="Authoritative Preview release failed: $BUILD_RESULT"
