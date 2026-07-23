@@ -21,9 +21,13 @@ test('Amy FX 1.5.0 keeps the production Android identity and updater channel', (
   assert.match(workflow, /AMYFX_APPLICATION_ID: com\.amyelitesuite/);
   assert.match(workflow, /AMYFX_APP_LABEL: Amy FX/);
   assert.match(workflow, /AMYFX_URI_SCHEME: amyfx/);
+  assert.match(workflow, /AMYFX_UPDATE_MANIFEST_URL: https:\/\/raw\.githubusercontent\.com\/suhaimitoamy\/Amy-fx\/main\/update\.json/);
   assert.match(workflow, /AMYFX_VERSION_NAME: "1\.5\.0"/);
   assert.match(workflow, /AMYFX_VERSION_CODE: "41"/);
   assert.match(workflow, /releases\/download\/amyfx-latest\/AmyFX-latest\.apk/);
+  assert.doesNotMatch(workflow, /com\.amyelitesuite\.learningpreview/);
+  assert.doesNotMatch(workflow, /AMYFX_APP_LABEL: Amy FX Preview/);
+  assert.doesNotMatch(workflow, /preview-update\.json/);
 });
 
 test('Mapping presents Amy FX without visible Preview branding', () => {
