@@ -5,6 +5,9 @@ on:
     branches:
       - feature/amyfx-v1.5-full-enhancements
     paths:
+      - app/src/main/assets/apps/mapping/**
+      - tests/entry-watch-engine.test.mjs
+      - docs/MULTI_TF_ENTRY_WATCH.md
       - .github/workflows/amyfx-v15-preview-release.yml
   workflow_dispatch:
 
@@ -16,8 +19,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  AMYFX_VERSION_NAME: 1.5.0-preview.1
-  AMYFX_VERSION_CODE: '90051'
+  AMYFX_VERSION_NAME: 1.5.0-preview.2
+  AMYFX_VERSION_CODE: '90052'
   AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
   AMYFX_APP_LABEL: Amy FX Preview
   AMYFX_URI_SCHEME: amyfxpreview
@@ -42,6 +45,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+
+      - name: Validate Multi-Timeframe Entry Watch
+        run: |
+          set -euo pipefail
+          node --check app/src/main/assets/apps/mapping/js/engine/entry-watch-engine.js
+          node --check app/src/main/assets/apps/mapping/js/entry-watch-runtime.js
+          node --check app/src/main/assets/apps/mapping/js/engine/concept-analyze.js
+          node --test tests/entry-watch-engine.test.mjs
 
       - name: Configure Preview identity and update channel
         run: |
@@ -106,28 +117,27 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG='amyfx-preview-v1.5.0-preview.1'
+          TAG='amyfx-preview-v1.5.0-preview.2'
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes
           fi
           gh api --method DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" >/dev/null 2>&1 || true
           cat > /tmp/release-notes.md <<'NOTES'
-          Amy FX Preview 1.5 — Validated Mapping Contract.
+          Amy FX Preview 1.5 — Multi-Timeframe Entry Watch.
 
-          - Data freshness dan stale protection terpadu.
-          - Order Block memakai satu detector tervalidasi.
-          - Direction Decision dan invalidation memakai satu kontrak.
-          - Mapping Explanation konsisten dengan keputusan tervalidasi.
-          - Entry Map, SL, TP, liquidity target, dan lifecycle memakai setupExecution.
-          - Scanner dan notifikasi hanya mengikuti setup M15 yang aktif, searah forecast, dan belum terminal.
-          - Setup lama, data usang, dan forecast invalid tidak lagi memunculkan rencana aktif.
+          - Direction Forecast tetap menjadi satu-satunya penentu BUY/SELL.
+          - Level entry dipantau dari M5, M15, H1, dan H4.
+          - Wick sweep dan close reclaim pada timeframe trigger memicu entry.
+          - Close timeframe asal yang menembus level membatalkan entry.
+          - FVG berubah menjadi iFVG, Order Block menjadi Breaker Block, dan liquidity menjadi Valid Break.
+          - Entry Map lama dipertahankan hanya sebagai data audit dan tidak menjadi setup utama.
           NOTES
           gh release create "$TAG" \
             "AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --prerelease \
-            --title 'Amy FX Preview 1.5.0-preview.1 — Validated Mapping' \
+            --title 'Amy FX Preview 1.5.0-preview.2 — Multi-Timeframe Entry Watch' \
             --notes-file /tmp/release-notes.md
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
 
@@ -140,28 +150,29 @@ jobs:
           cat > preview-update.json <<'JSON'
           {
             "channel": "amyfx-preview-professional-ui",
-            "latest_version_code": 90051,
-            "latest_version_name": "1.5.0-preview.1",
-            "versionCode": 90051,
-            "version": "1.5.0-preview.1",
+            "latest_version_code": 90052,
+            "latest_version_name": "1.5.0-preview.2",
+            "versionCode": 90052,
+            "version": "1.5.0-preview.2",
             "releaseDate": "2026-07-23",
-            "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.5.0-preview.1/AmyFX-Preview-latest.apk",
-            "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.5.0-preview.1/AmyFX-Preview-latest.apk",
+            "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.5.0-preview.2/AmyFX-Preview-latest.apk",
+            "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.5.0-preview.2/AmyFX-Preview-latest.apk",
             "force_update": false,
             "mandatory": false,
             "enabled": true,
             "release_notes": [
-              "Mapping memakai kontrak Direction Decision tervalidasi",
-              "Entry, SL, TP, target, dan lifecycle disatukan dalam setupExecution",
-              "Setup terminal atau forecast invalid tidak dapat hidup kembali",
-              "Scanner dan notifikasi hanya mengikuti setup M15 aktif yang tervalidasi",
-              "Data usang menghentikan rencana entry dan background scanner"
+              "Entry Watch memantau level M5, M15, H1, dan H4",
+              "Sweep dan close reclaim memicu entry searah Direction Forecast",
+              "Close timeframe asal yang menembus level membatalkan entry",
+              "FVG berubah menjadi iFVG dan Order Block menjadi Breaker Block",
+              "Liquidity yang ditembus berubah menjadi Valid Break"
             ],
             "changelog": [
-              "Validated Direction Forecast dan invalidation contract",
-              "Validated Mapping Explanation contract",
-              "Persistent setup lifecycle v4",
-              "Unified scanner, snapshot, and notification contract"
+              "Multi-Timeframe Level Watch Engine",
+              "Sweep Entry Lifecycle",
+              "Valid Break Conversion Lifecycle",
+              "Legacy Entry Map retired from primary setup",
+              "Seven automated entry-watch contract tests"
             ]
           }
           JSON
@@ -169,6 +180,6 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add preview-update.json
           if ! git diff --cached --quiet; then
-            git commit -m 'release: activate Amy FX Preview 1.5.0-preview.1 update [skip ci]'
+            git commit -m 'release: activate Amy FX Preview 1.5.0-preview.2 update [skip ci]'
             git push origin HEAD:experiment/heatmap-news-20260722
           fi
