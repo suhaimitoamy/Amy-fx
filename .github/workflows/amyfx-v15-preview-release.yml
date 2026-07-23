@@ -24,7 +24,7 @@ env:
   AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
   AMYFX_APP_LABEL: Amy FX Preview
   AMYFX_URI_SCHEME: amyfxpreview
-  AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/heatmap-news-20260722/preview-update.json
+  AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/feature/amyfx-v1.5-full-enhancements/preview-update.json
   AMYFX_KEYSTORE_PATH: /tmp/amy-fx-signing.keystore
   AMYFX_KEYSTORE_PASSWORD: android
   AMYFX_KEY_ALIAS: androiddebugkey
@@ -58,6 +58,13 @@ jobs:
         run: |
           set -euo pipefail
           node tools/configure-preview-web-version.mjs "$AMYFX_VERSION_NAME" "$AMYFX_VERSION_CODE" "$AMYFX_UPDATE_MANIFEST_URL"
+          node --check app/src/main/assets/app-version.js
+          node --check app/src/main/assets/update-checker.js
+          grep -Fq "name: '$AMYFX_VERSION_NAME', code: $AMYFX_VERSION_CODE" app/src/main/assets/app-version.js
+          grep -Fq "window.AmyFXUpdateManifestUrl = '$AMYFX_UPDATE_MANIFEST_URL';" app/src/main/assets/app-version.js
+          grep -Fq 'Update Amy FX Preview Tersedia' app/src/main/assets/update-checker.js
+          grep -Fq 'announceNativeUpdate(latestCode, latestName);' app/src/main/assets/update-checker.js
+          node --test tests/preview-updater-config.test.mjs
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -125,14 +132,13 @@ jobs:
           cat > /tmp/release-notes.md <<'NOTES'
           Amy FX Preview 1.5 — Honest Entry Watch Update.
 
-          - Update langsung dari Amy FX Preview yang sudah terpasang; tidak memakai package baru.
+          - Dapat dipasang sebagai update dari Amy FX Preview yang sudah ada.
+          - Package ID dan sertifikat signing tetap sama.
           - Direction Forecast tetap menjadi satu-satunya penentu BUY/SELL.
           - Level baru wajib melewati fase PANTAU sebelum dapat memicu entry.
-          - Semua source-close yang terlewat direplay ketika forecast atau aplikasi aktif kembali.
-          - Hidden break menutup level; level yang keluar detector tidak dapat hidup kembali.
+          - Hidden break direkonsiliasi dan level mati tidak dapat hidup kembali.
           - Satu level hanya menghasilkan satu entry, lalu berubah menjadi ENTRY_SPENT.
-          - FVG/iFVG, Order Block/Breaker Block, dan Valid Break memiliki expiry eksplisit.
-          - Audit 2022–2025 menghasilkan 0 resurrection, 0 orphan entry, 0 entry tanpa pantau, dan 0 repeat entry.
+          - Level asli dan hasil konversi memiliki expiry eksplisit.
           NOTES
           gh release create "$TAG" \
             "AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
@@ -143,12 +149,10 @@ jobs:
             --notes-file /tmp/release-notes.md
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
 
-      - name: Activate update for installed Amy FX Preview
+      - name: Activate update for all installed Amy FX Preview channels
         run: |
           set -euo pipefail
           git reset --hard HEAD
-          git fetch origin experiment/heatmap-news-20260722
-          git checkout -B preview-update-channel origin/experiment/heatmap-news-20260722
           cat > preview-update.json <<'JSON'
           {
             "channel": "amyfx-preview-professional-ui",
@@ -163,15 +167,15 @@ jobs:
             "mandatory": false,
             "enabled": true,
             "release_notes": [
-              "Versi Preview lama dapat memperbarui langsung melalui notifikasi aplikasi",
+              "Update Preview tersedia langsung dari aplikasi yang sudah terpasang",
               "Level wajib melewati fase PANTAU sebelum entry",
-              "Hidden break direkonsiliasi walaupun Direction Forecast sedang pause",
+              "Hidden break direkonsiliasi ketika Direction Forecast pause",
               "Level yang keluar detector menjadi LEVEL_RETIRED",
               "Satu level hanya menghasilkan satu entry lalu ENTRY_SPENT",
               "Level asli dan hasil konversi memiliki expiry eksplisit"
             ],
             "changelog": [
-              "In-app update from Preview 1.5.0-preview.3",
+              "Unified in-app update channel",
               "Entry Watch Engine 1.1 causal replay",
               "FORECAST_PAUSED reconciliation",
               "LEVEL_RETIRED and LEVEL_EXPIRED lifecycle",
@@ -181,10 +185,23 @@ jobs:
             ]
           }
           JSON
+          python -m json.tool preview-update.json >/dev/null
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add preview-update.json
           if ! git diff --cached --quiet; then
             git commit -m 'release: activate Amy FX Preview 1.5.0-preview.4 update [skip ci]'
+            git push origin HEAD:${{ github.ref_name }}
+          fi
+
+          git fetch origin experiment/heatmap-news-20260722
+          git worktree add /tmp/amyfx-preview-compat origin/experiment/heatmap-news-20260722
+          cp preview-update.json /tmp/amyfx-preview-compat/preview-update.json
+          cd /tmp/amyfx-preview-compat
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add preview-update.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'release: route installed Preview apps to 1.5.0-preview.4 [skip ci]'
             git push origin HEAD:experiment/heatmap-news-20260722
           fi
