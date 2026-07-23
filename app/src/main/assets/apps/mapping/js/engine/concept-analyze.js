@@ -11,18 +11,17 @@ const REPLACED_ROWS = new Set([
 
 function mergeRows(current, replacement) {
   const rows = Array.isArray(current) ? current : [];
-  const last = rows.find(row => row?.[0] === 'Best Setup');
   const kept = rows.filter(row => row?.[0] !== 'Best Setup' && !REPLACED_ROWS.has(row?.[0]));
-  return [...kept, ...replacement, ...(last ? [last] : [])];
+  return [...kept, ...replacement];
 }
 
 function entryMapRow(entryMap) {
   const setup = entryMap?.setup;
-  if (!setup) return ['Entry Map', 'WAIT', 'Belum ada setup M15 yang lolos Sweep → MSS → filter HTF/EMA/sesi.'];
+  if (!setup) return ['Entry Map', 'REPLACED', 'Entry Map lama dinonaktifkan. Entry utama memakai Multi-Timeframe Level Watch.'];
   return [
     'Entry Map',
-    setup.lifecycle?.status || setup.status,
-    `${setup.dir} entry ${setup.entry.toFixed(2)} · SL ${setup.sl.toFixed(2)} · TP1 ${setup.tp1.toFixed(2)} · TP2 ${setup.tp2.toFixed(2)}`
+    'AUDIT ONLY',
+    `${setup.dir} ${setup.type || 'legacy setup'} tetap disimpan untuk audit, tetapi tidak boleh menjadi setup utama.`
   ];
 }
 
@@ -36,18 +35,14 @@ export function analyze(candles, tf, htfBiases = {}, currentPrice = null, htfCan
     htfBias: result.htfNarrative?.htfBias || 'NEUTRAL'
   });
   const entryMap = detectM15EntryMap(candles, { tf, htfCandles });
-  const useEntryMap = tf === 'M15';
-  const setups = useEntryMap ? (entryMap.setup ? [entryMap.setup] : []) : result.setups;
-  const bestSetup = useEntryMap ? entryMap.activeSetup : result.bestSetup;
-  const signal = bestSetup?.dir || 'WAIT';
   const replacementRows = [...marketConcepts.concepts, entryMapRow(entryMap)];
 
   return {
     ...result,
     htfBiases: { ...htfBiases },
-    setups,
-    bestSetup,
-    signal,
+    setups: [],
+    bestSetup: null,
+    signal: 'WAIT',
     setupStructure: result.st,
     st: marketConcepts.structure,
     bsl: marketConcepts.bsl,
@@ -56,7 +51,13 @@ export function analyze(candles, tf, htfBiases = {}, currentPrice = null, htfCan
     drawTarget: marketConcepts.liquidityHierarchy.drawTarget,
     activeLiquidityTargets: marketConcepts.liquidityHierarchy.activeTargets,
     marketConcepts,
-    entryMap,
+    entryMap: {
+      ...entryMap,
+      setup: null,
+      activeSetup: null,
+      status: 'REPLACED_BY_MULTI_TF_LEVEL_WATCH'
+    },
+    legacyEntryMap: entryMap,
     mappingZones: marketConcepts.mappingZones,
     concepts: mergeRows(result.concepts, replacementRows)
   };
