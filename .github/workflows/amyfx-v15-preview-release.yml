@@ -67,8 +67,25 @@ jobs:
       - name: Test group G-M
         run: node --test --test-force-exit tests/[g-m]*.test.mjs
 
-      - name: Test group N-Z
-        run: node --test --test-force-exit tests/[n-z]*.test.mjs
+      - name: Test notification deep-link
+        run: node --test --test-force-exit tests/notification-route-sync.test.mjs
+
+      - name: Test production release identity
+        run: node --test --test-force-exit tests/production-release-identity.test.mjs
+
+      - name: Test remaining N-Z
+        run: |
+          set -euo pipefail
+          files=()
+          for file in tests/[n-z]*.test.mjs; do
+            case "$file" in
+              tests/notification-route-sync.test.mjs|tests/production-release-identity.test.mjs) ;;
+              *) files+=("$file") ;;
+            esac
+          done
+          if [ "${#files[@]}" -gt 0 ]; then
+            node --test --test-force-exit "${files[@]}"
+          fi
 
       - name: Publish candidate success status
         if: success()
