@@ -32,6 +32,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - name: Mark candidate validation pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='pending' \
+            -f context='Amy FX v1.5 Production Candidate' \
+            -f description='Running production candidate tests' \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+
       - name: Checkout v1.5 feature branch
         uses: actions/checkout@v4
 
@@ -66,21 +76,23 @@ jobs:
         continue-on-error: true
         run: node --test --test-force-exit tests/[n-z]*.test.mjs
 
-      - name: Enforce complete repository suite
-        if: steps.tests_af.outcome == 'failure' || steps.tests_gm.outcome == 'failure' || steps.tests_nz.outcome == 'failure'
-        run: |
-          echo "A-F=${{ steps.tests_af.outcome }}"
-          echo "G-M=${{ steps.tests_gm.outcome }}"
-          echo "N-Z=${{ steps.tests_nz.outcome }}"
-          exit 1
-
-      - name: Publish candidate success status
-        if: success()
+      - name: Publish candidate validation result
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
+          AF: ${{ steps.tests_af.outcome }}
+          GM: ${{ steps.tests_gm.outcome }}
+          NZ: ${{ steps.tests_nz.outcome }}
         run: |
+          state=success
+          description="All production candidate tests passed"
+          if [ "$AF" != 'success' ] || [ "$GM" != 'success' ] || [ "$NZ" != 'success' ]; then
+            state=failure
+            description="Test groups: A-F=$AF, G-M=$GM, N-Z=$NZ"
+          fi
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
-            -f state='success' \
+            -f state="$state" \
             -f context='Amy FX v1.5 Production Candidate' \
-            -f description='All production candidate tests passed' \
+            -f description="$description" \
             -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+          test "$state" = success
