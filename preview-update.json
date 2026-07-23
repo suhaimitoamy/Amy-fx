@@ -1,27 +1,30 @@
 {
   "channel": "amyfx-preview-professional-ui",
-  "latest_version_code": 90050,
-  "latest_version_name": "1.4.15-preview.11",
-  "versionCode": 90050,
-  "version": "1.4.15-preview.11",
-  "releaseDate": "2026-07-22",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.11/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.4.15-preview.11/AmyFX-Preview-latest.apk",
+  "latest_version_code": 90054,
+  "latest_version_name": "1.5.0-preview.4",
+  "versionCode": 90054,
+  "version": "1.5.0-preview.4",
+  "releaseDate": "2026-07-23",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.5.0-preview.4/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.5.0-preview.4/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Pencarian instan dan progress membaca di Academy",
-    "Visual Scenario Bar untuk Entry, SL, TP1, dan TP2",
-    "Kurva pertumbuhan equity pada Jurnal Trading",
-    "Alert Level lokal pada Heatmap Depth Radar",
-    "Pembersihan sintaks Obsidian pada materi Academy"
+    "Update Preview tersedia langsung dari aplikasi yang sudah terpasang",
+    "Level wajib melewati fase PANTAU sebelum entry",
+    "Hidden break direkonsiliasi ketika Direction Forecast pause",
+    "Level yang keluar detector menjadi LEVEL_RETIRED",
+    "Satu level hanya menghasilkan satu entry lalu ENTRY_SPENT",
+    "Level asli dan hasil konversi memiliki expiry eksplisit"
   ],
   "changelog": [
-    "Pencarian instan dan progress membaca di Academy",
-    "Visual Scenario Bar untuk Entry, SL, TP1, dan TP2",
-    "Kurva pertumbuhan equity pada Jurnal Trading",
-    "Alert Level lokal pada Heatmap Depth Radar",
-    "Pembersihan sintaks Obsidian pada materi Academy"
+    "Unified in-app update channel",
+    "Entry Watch Engine 1.1 causal replay",
+    "FORECAST_PAUSED reconciliation",
+    "LEVEL_RETIRED and LEVEL_EXPIRED lifecycle",
+    "ENTRY_SPENT single-entry lock",
+    "Eleven automated lifecycle contract tests",
+    "2022–2025 post-fix honesty verification"
   ]
 }
