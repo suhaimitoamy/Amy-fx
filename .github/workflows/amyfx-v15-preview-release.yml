@@ -83,6 +83,7 @@ jobs:
           node --check app/src/main/assets/apps/mapping/js/engine/validated-market-context.js
           node --check app/src/main/assets/apps/mapping/js/engine/validated-market-context-balanced.js
           node --check app/src/main/assets/apps/mapping/js/entry-watch-runtime-v2.js
+          node --check app/src/main/assets/apps/mapping/js/notification-route-sync.js
           node --check app/src/main/assets/apps/mapping/js/engine/concept-analyze.js
 
       - name: Test Entry Watch hardening contracts
@@ -90,6 +91,9 @@ jobs:
 
       - name: Test Entry Watch lifecycle contracts
         run: node --test --test-force-exit tests/entry-watch-engine.test.mjs
+
+      - name: Test notification deep-link contracts
+        run: node --test --test-force-exit tests/notification-route-sync.test.mjs
 
       - name: Test complete repository suite
         run: timeout 10m npm test
@@ -168,29 +172,26 @@ jobs:
             exit 1
           fi
           cat > /tmp/release-notes.md <<NOTES
-          Amy FX Preview $AMYFX_VERSION_NAME — Entry Watch Hardening.
+          Amy FX Preview $AMYFX_VERSION_NAME — Notification Deep-Link Hardening.
 
-          - Version code selalu meningkat dan release tidak lagi diganti diam-diam.
-          - Waktu entry memakai close candle trigger, bukan open candle.
-          - Entry zone, SL, TP1, dan TP2 dikunci saat trigger sah.
-          - Forecast WAIT langsung menonaktifkan BUY/SELL lama.
-          - Level yang keluar detector ditutup sebelum entry diterima.
-          - Trigger candle aktif diperbarui tanpa mengikuti jeda timeframe layar.
-          - H1 BUY dan SELL memakai aturan yang simetris.
+          - Klik notifikasi entry membuka tab Analisis setelah WebView benar-benar siap.
+          - Route notifikasi tidak hilang saat aplikasi dibuka dari background atau kondisi cold start.
+          - Kartu Multi-Timeframe Entry Watch otomatis digulir dan disorot.
+          - Version code selalu meningkat dan release tidak pernah diganti diam-diam.
+          - Waktu entry memakai close candle trigger dan geometri setup tetap terkunci.
           NOTES
           gh release create "$AMYFX_RELEASE_TAG" \
             "AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --prerelease \
-            --title "Amy FX Preview $AMYFX_VERSION_NAME — Entry Watch Hardening" \
+            --title "Amy FX Preview $AMYFX_VERSION_NAME — Notification Deep-Link Hardening" \
             --notes-file /tmp/release-notes.md
           gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
 
       - name: Activate update manifest on feature branch
         run: |
           set -euo pipefail
-          git reset --hard HEAD
           export RELEASE_DATE="$(date -u +%F)"
           export APK_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${AMYFX_RELEASE_TAG}/AmyFX-Preview-latest.apk"
           python - <<'PY'
@@ -212,37 +213,72 @@ jobs:
               'mandatory': False,
               'enabled': True,
               'release_notes': [
+                  'Klik notifikasi entry membuka tab Analisis setelah WebView siap',
+                  'Route notifikasi dipertahankan selama startup dan resume aplikasi',
+                  'Kartu Entry Watch otomatis digulir dan disorot',
                   'Version Preview selalu naik sehingga update baru dapat terdeteksi',
                   'Entry disahkan pada close candle trigger',
-                  'Entry, SL, dan target dikunci saat trigger sah',
-                  'Forecast WAIT menonaktifkan sinyal lama',
-                  'Level retired tidak dapat menghasilkan entry',
-                  'Refresh trigger candle tidak bergantung pada timeframe layar',
-                  'Forecast H1 BUY dan SELL dibuat simetris'
+                  'Entry, SL, dan target dikunci saat trigger sah'
               ],
               'changelog': [
+                  'Reliable notification deep-link consumption',
+                  'WebView startup route retry',
+                  'One-time URL consumption guard',
+                  'Entry Watch card focus and highlight',
                   'Immutable Preview release/version code',
                   'Causal close-time entry timestamp',
                   'Frozen execution geometry',
-                  'Strict forecast pause gate',
-                  'Detector retirement gate before entry',
-                  'Active trigger/source candle refresh',
-                  'Balanced H1 directional forecast',
                   'Full npm test gate'
               ]
           }
-          with open('preview-update.json', 'w', encoding='utf-8') as handle:
+          with open('/tmp/preview-update.json', 'w', encoding='utf-8') as handle:
               json.dump(payload, handle, ensure_ascii=False, indent=2)
               handle.write('\n')
           PY
-          python -m json.tool preview-update.json >/dev/null
+          python -m json.tool /tmp/preview-update.json >/dev/null
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add preview-update.json
-          if ! git diff --cached --quiet; then
+
+          for attempt in 1 2 3 4; do
+            git fetch origin "$GITHUB_REF_NAME"
+            git checkout -B preview-manifest-update "origin/$GITHUB_REF_NAME"
+
+            remote_code="$(python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('preview-update.json')
+          if not path.exists():
+              print(0)
+          else:
+              try:
+                  data = json.loads(path.read_text(encoding='utf-8'))
+                  print(int(data.get('latest_version_code') or data.get('versionCode') or 0))
+              except Exception:
+                  print(0)
+          PY
+          )"
+            if [ "$remote_code" -ge "$AMYFX_VERSION_CODE" ]; then
+              echo "Manifest remote versionCode $remote_code sudah sama atau lebih baru; tidak melakukan downgrade."
+              exit 0
+            fi
+
+            cp /tmp/preview-update.json preview-update.json
+            python -m json.tool preview-update.json >/dev/null
+            git add preview-update.json
+            if git diff --cached --quiet; then
+              echo "Manifest sudah sesuai $AMYFX_VERSION_NAME."
+              exit 0
+            fi
             git commit -m "release: activate $AMYFX_VERSION_NAME update [skip ci]"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
-          fi
+            if git push origin "HEAD:$GITHUB_REF_NAME"; then
+              exit 0
+            fi
+            echo "Push manifest gagal pada percobaan $attempt; menyelaraskan ulang branch."
+            sleep 2
+          done
+
+          echo 'Gagal mengaktifkan manifest Preview setelah empat percobaan.'
+          exit 1
 
   report-status:
     if: always()
