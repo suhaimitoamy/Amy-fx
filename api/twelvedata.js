@@ -4,6 +4,7 @@ const ALLOWED_INTERVALS = new Set([
 const MAX_OUTPUT_SIZE = 500;
 const FETCH_TIMEOUT_MS = 12_000;
 const MEMORY_CACHE_LIMIT = 40;
+const SHARED_M1_OUTPUT_SIZE = 300;
 
 const CACHE_TTL_SECONDS = Object.freeze({
   '1min': 55,
@@ -86,6 +87,15 @@ function setCacheHeaders(res, ttl, state = 'MISS') {
   res.setHeader('X-AmyFX-Market-Cache', state);
 }
 
+function canonicalM1Url(symbol) {
+  const params = new URLSearchParams({
+    symbol,
+    interval: '1min',
+    outputsize: String(SHARED_M1_OUTPUT_SIZE)
+  });
+  return `/api/twelvedata?${params.toString()}`;
+}
+
 async function fetchFromProvider({ symbol, interval, outputsize, apiKey }) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -147,7 +157,13 @@ export default async function handler(req, res) {
     return res.status(503).json({ status: 'error', message: 'Market service belum dikonfigurasi' });
   }
 
-  const safeOutputSize = parseOutputSize(outputsize);
+  const requestedOutputSize = parseOutputSize(outputsize);
+  if (interval === '1min' && requestedOutputSize < SHARED_M1_OUTPUT_SIZE) {
+    res.setHeader('Cache-Control', 'public, s-maxage=86400');
+    return res.redirect(307, canonicalM1Url(symbol));
+  }
+
+  const safeOutputSize = requestedOutputSize;
   const ttl = ttlSeconds(interval);
   const key = cacheKey(symbol, interval, safeOutputSize);
   const fresh = readCache(key);
