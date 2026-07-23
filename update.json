@@ -1,25 +1,29 @@
 {
-  "latest_version_code": 40,
-  "latest_version_name": "1.4.17",
-  "versionCode": 40,
-  "version": "1.4.17",
-  "releaseDate": "2026-07-22",
+  "latest_version_code": 41,
+  "latest_version_name": "1.5.0",
+  "versionCode": 41,
+  "version": "1.5.0",
+  "releaseDate": "2026-07-23",
   "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Heatmap Depth Radar dipromosikan ke Amy FX produksi",
-    "Filter Semua Zona, Hot Spots, serta Reaksi dan Sweep tersedia pada Heatmap",
-    "Skala kepadatan, efek spot glow, dan detail zona interaktif ditambahkan",
-    "Package com.amyelitesuite dan sertifikat permanen tetap dipertahankan",
-    "Pembaruan dapat dipasang tanpa menghapus aplikasi dan tanpa menghilangkan data lokal"
+    "Multi-Timeframe Entry Watch menjadi pemilik setup entry tervalidasi",
+    "Entry, SL, TP1, dan TP2 dikunci saat candle trigger ditutup",
+    "Forecast WAIT dan level retired menonaktifkan sinyal lama",
+    "Order Block dan forecast H1 diperbaiki agar lebih seimbang",
+    "Klik notifikasi entry langsung membuka tab Analisis dan menyorot Entry Watch",
+    "Package com.amyelitesuite, sertifikat permanen, dan data lokal tetap dipertahankan",
+    "Pembaruan dapat dipasang tanpa menghapus aplikasi"
   ],
   "changelog": [
-    "Heatmap Depth Radar dipromosikan ke Amy FX produksi",
-    "Filter Semua Zona, Hot Spots, serta Reaksi dan Sweep tersedia pada Heatmap",
-    "Skala kepadatan, efek spot glow, dan detail zona interaktif ditambahkan",
-    "Package com.amyelitesuite dan sertifikat permanen tetap dipertahankan",
-    "Pembaruan dapat dipasang tanpa menghapus aplikasi dan tanpa menghilangkan data lokal"
+    "Multi-Timeframe Entry Watch menjadi pemilik setup entry tervalidasi",
+    "Entry, SL, TP1, dan TP2 dikunci saat candle trigger ditutup",
+    "Forecast WAIT dan level retired menonaktifkan sinyal lama",
+    "Order Block dan forecast H1 diperbaiki agar lebih seimbang",
+    "Klik notifikasi entry langsung membuka tab Analisis dan menyorot Entry Watch",
+    "Package com.amyelitesuite, sertifikat permanen, dan data lokal tetap dipertahankan",
+    "Pembaruan dapat dipasang tanpa menghapus aplikasi"
   ]
 }
