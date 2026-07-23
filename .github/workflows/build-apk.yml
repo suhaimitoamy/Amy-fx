@@ -9,10 +9,11 @@ on:
 
 permissions:
   contents: write
+  statuses: write
 
 concurrency:
   group: amyfx-main-release
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -32,10 +33,43 @@ jobs:
       AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
     steps:
+      - name: Mark production release pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='pending' \
+            -f context='Amy FX Production Release' \
+            -f description='Testing and building signed Amy FX 1.5.0' \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate Amy FX production identity
+        run: |
+          set -euo pipefail
+          node --check app/src/main/assets/apps/mapping/js/production-branding.js
+          node --check app/src/main/assets/apps/mapping/js/notification-route-sync.js
+          node --check app/src/main/assets/apps/mapping/js/entry-watch-runtime-v2.js
+          grep -Fq '<title>Amy FX · Market Intelligence</title>' app/src/main/assets/apps/mapping/index.html
+          ! grep -Fq 'Amy FX Preview' app/src/main/assets/apps/mapping/index.html
+          ! grep -Fq 'UPDATE · AMY FX v1.5 PREVIEW' app/src/main/assets/apps/mapping/js/main.js
+          grep -Fq "name: '1.5.0', code: 41" app/src/main/assets/app-version.js
+          grep -Fq '?: 41)' app/build.gradle.kts
+          grep -Fq '?: "1.5.0"' app/build.gradle.kts
+          grep -Fq 'com.amyelitesuite' app/build.gradle.kts
+          grep -Fq 'main/update.json' app/build.gradle.kts
+
+      - name: Run complete JavaScript regression suite
+        run: timeout 10m npm test
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -71,50 +105,6 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Validate Amy FX production identity
-        run: |
-          set -euo pipefail
-          node --check app/src/main/assets/apps/mapping/js/production-branding.js
-          grep -Fq '<title>Amy FX · Market Intelligence</title>' app/src/main/assets/apps/mapping/index.html
-          ! grep -Fq 'Amy FX Preview' app/src/main/assets/apps/mapping/index.html
-          ! grep -Fq 'UPDATE · AMY FX v1.5 PREVIEW' app/src/main/assets/apps/mapping/js/main.js
-          grep -Fq "name: '1.5.0', code: 41" app/src/main/assets/app-version.js
-          grep -Fq '?: 41)' app/build.gradle.kts
-          grep -Fq '?: "1.5.0"' app/build.gradle.kts
-
-      - name: Run JavaScript regression tests
-        run: |
-          set +e
-          mkdir -p dist
-          : > dist/js-test-report.txt
-          failed=0
-          for test_file in tests/*.test.mjs; do
-            echo "===== ${test_file} =====" | tee -a dist/js-test-report.txt
-            if timeout 3m node --test --test-force-exit "$test_file" >> dist/js-test-report.txt 2>&1; then
-              echo "PASS ${test_file}" | tee -a dist/js-test-report.txt
-            else
-              echo "FAIL ${test_file}" | tee -a dist/js-test-report.txt
-              echo "::error file=${test_file}::JavaScript regression test failed"
-              failed=1
-            fi
-            echo | tee -a dist/js-test-report.txt
-          done
-          cat dist/js-test-report.txt
-          exit "$failed"
-
-      - name: Upload JavaScript test diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Amy-FX-JavaScript-test-report
-          path: dist/js-test-report.txt
-          if-no-files-found: error
-
       - name: Run Android unit tests
         run: ./gradlew testReleaseUnitTest --no-configuration-cache
 
@@ -128,9 +118,13 @@ jobs:
         run: |
           set -euo pipefail
           apk="app/build/outputs/apk/release/app-release.apk"
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" | grep -F "package: name='${AMYFX_APPLICATION_ID}' versionCode='${AMYFX_VERSION_CODE}' versionName='${AMYFX_VERSION_NAME}'"
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" | grep -F "application-label:'${AMYFX_APP_LABEL}'"
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$apk"
+          aapt="$ANDROID_HOME/build-tools/35.0.0/aapt"
+          apksigner="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          test -s "$apk"
+          "$aapt" dump badging "$apk" | tee /tmp/amyfx-badging.txt
+          grep -Fq "package: name='${AMYFX_APPLICATION_ID}' versionCode='${AMYFX_VERSION_CODE}' versionName='${AMYFX_VERSION_NAME}'" /tmp/amyfx-badging.txt
+          grep -Fq "application-label:'${AMYFX_APP_LABEL}'" /tmp/amyfx-badging.txt
+          "$apksigner" verify --verbose "$apk"
           sf_entry="$(unzip -Z1 "$apk" | grep -E '^META-INF/[^/]+\.SF$' | head -n1)"
           cert_entry="$(unzip -Z1 "$apk" | grep -E '^META-INF/[^/]+\.(RSA|DSA|EC)$' | head -n1)"
           test -n "$sf_entry"
@@ -162,19 +156,17 @@ jobs:
           if 0x7109871A not in ids:
               raise SystemExit("APK Signature Scheme v2 tidak ditemukan")
           PY
-
-      - name: Prepare rolling APK
-        run: |
           mkdir -p dist
-          cp app/build/outputs/apk/release/app-release.apk dist/AmyFX-latest.apk
+          cp "$apk" dist/AmyFX-latest.apk
 
-      - name: Upload workflow artifact
+      - name: Upload signed APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: Amy-FX-v${{ env.AMYFX_VERSION_NAME }}-signed-apk
           path: dist/AmyFX-latest.apk
+          if-no-files-found: error
 
-      - name: Publish rolling in-app update
+      - name: Publish rolling production APK
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -196,67 +188,85 @@ jobs:
               --notes "$release_notes" \
               --latest
           fi
-
           gh release upload amyfx-latest dist/AmyFX-latest.apk --clobber
+          gh release view amyfx-latest --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-latest.apk'
 
-      - name: Activate update only after APK is published
+      - name: Activate update after APK publication
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main
-          git checkout -B release-metadata origin/main
-
-          python3 - <<'PY'
+          export RELEASE_DATE="$(date -u +%F)"
+          cat > /tmp/amyfx-update.py <<'PY'
           import json
           import os
-          from datetime import date
           from pathlib import Path
 
-          path = Path("update.json")
-          data = json.loads(path.read_text(encoding="utf-8"))
-          version_name = os.environ["AMYFX_VERSION_NAME"].strip()
-          version_code = int(os.environ["AMYFX_VERSION_CODE"])
+          path = Path('update.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
           notes = [
-              "Multi-Timeframe Entry Watch menjadi pemilik setup entry tervalidasi",
-              "Entry, SL, TP1, dan TP2 dikunci saat candle trigger ditutup",
-              "Forecast WAIT dan level retired menonaktifkan sinyal lama",
-              "Order Block dan forecast H1 diperbaiki agar lebih seimbang",
-              "Klik notifikasi entry langsung membuka tab Analisis dan menyorot Entry Watch",
-              "Package com.amyelitesuite, sertifikat permanen, dan data lokal tetap dipertahankan",
-              "Pembaruan dapat dipasang tanpa menghapus aplikasi"
+              'Multi-Timeframe Entry Watch menjadi pemilik setup entry tervalidasi',
+              'Entry, SL, TP1, dan TP2 dikunci saat candle trigger ditutup',
+              'Forecast WAIT dan level retired menonaktifkan sinyal lama',
+              'Order Block dan forecast H1 diperbaiki agar lebih seimbang',
+              'Klik notifikasi entry langsung membuka tab Analisis dan menyorot Entry Watch',
+              'Package com.amyelitesuite, sertifikat permanen, dan data lokal tetap dipertahankan',
+              'Pembaruan dapat dipasang tanpa menghapus aplikasi'
           ]
-
           data.update({
-              "latest_version_code": version_code,
-              "latest_version_name": version_name,
-              "versionCode": version_code,
-              "version": version_name,
-              "releaseDate": date.today().isoformat(),
-              "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
-              "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
-              "force_update": False,
-              "mandatory": False,
-              "release_notes": notes,
-              "changelog": notes,
+              'latest_version_code': 41,
+              'latest_version_name': '1.5.0',
+              'versionCode': 41,
+              'version': '1.5.0',
+              'releaseDate': os.environ['RELEASE_DATE'],
+              'apk_url': 'https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',
+              'downloadUrl': 'https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',
+              'force_update': False,
+              'mandatory': False,
+              'release_notes': notes,
+              'changelog': notes,
           })
-          path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
 
-          git add update.json
-          if git diff --cached --quiet; then
-            echo "update.json sudah sesuai versi ${AMYFX_VERSION_NAME}."
-            exit 0
-          fi
-
-          git commit -m "release: activate Amy FX ${AMYFX_VERSION_NAME} in-app update"
-          for attempt in 1 2 3; do
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3 4; do
+            git fetch origin main
+            git checkout -B release-metadata origin/main
+            RELEASE_DATE="$RELEASE_DATE" python3 /tmp/amyfx-update.py
+            python3 -m json.tool update.json >/dev/null
+            git add update.json
+            if git diff --cached --quiet; then
+              echo "update.json sudah sesuai Amy FX 1.5.0."
+              exit 0
+            fi
+            git commit -m "release: activate Amy FX 1.5.0 in-app update [skip ci]"
             if git push origin HEAD:main; then
               exit 0
             fi
-            echo "Push metadata gagal pada percobaan ${attempt}; menyelaraskan ulang main."
-            git fetch origin main
-            git rebase origin/main
+            echo "Push metadata gagal pada percobaan $attempt; menyelaraskan ulang main."
+            sleep 2
           done
-          echo "Gagal mengaktifkan metadata update setelah tiga percobaan."
+          echo "Gagal mengaktifkan metadata update setelah empat percobaan."
           exit 1
+
+  report-status:
+    if: always()
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish production release status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          state=success
+          description='Amy FX 1.5.0 published and update activated'
+          if [ "$BUILD_RESULT" != 'success' ]; then
+            state=failure
+            description="Amy FX 1.5.0 production release failed: $BUILD_RESULT"
+          fi
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state="$state" \
+            -f context='Amy FX Production Release' \
+            -f description="$description" \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
