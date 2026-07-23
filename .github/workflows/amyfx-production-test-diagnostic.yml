@@ -1,0 +1,64 @@
+name: Diagnose Amy FX Production Regression
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - tests/**
+      - tools/run-tests-sequential.mjs
+      - package.json
+      - .github/workflows/amyfx-production-test-diagnostic.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: amyfx-production-test-diagnostic
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Find failing regression file
+        id: tests
+        run: |
+          set +e
+          failed=''
+          : > /tmp/amyfx-failure.log
+          for file in tests/*.test.mjs; do
+            echo "Testing $file"
+            node --test --test-force-exit "$file" > /tmp/current-test.log 2>&1
+            status=$?
+            if [ "$status" -ne 0 ]; then
+              failed="$file"
+              cp /tmp/current-test.log /tmp/amyfx-failure.log
+              break
+            fi
+          done
+          echo "failed=$failed" >> "$GITHUB_OUTPUT"
+      - name: Report diagnostic result
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FAILED: ${{ steps.tests.outputs.failed }}
+        run: |
+          if [ -z "$FAILED" ]; then
+            gh pr comment 47 --repo "$GITHUB_REPOSITORY" --body 'Production diagnostic: seluruh file regression JavaScript lulus satu per satu.'
+            exit 0
+          fi
+          {
+            echo "### Production regression gagal: \`$FAILED\`"
+            echo
+            echo '```text'
+            tail -n 120 /tmp/amyfx-failure.log
+            echo '```'
+          } > /tmp/diagnostic-comment.md
+          gh pr comment 47 --repo "$GITHUB_REPOSITORY" --body-file /tmp/diagnostic-comment.md
+          exit 1
