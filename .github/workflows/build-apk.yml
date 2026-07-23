@@ -19,12 +19,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
+      AMYFX_APPLICATION_ID: com.amyelitesuite
+      AMYFX_APP_LABEL: Amy FX
+      AMYFX_URI_SCHEME: amyfx
+      AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json
       AMYFX_KEYSTORE_PATH: /tmp/amy-fx-signing.keystore
       AMYFX_KEYSTORE_PASSWORD: android
       AMYFX_KEY_ALIAS: androiddebugkey
       AMYFX_KEY_PASSWORD: android
-      AMYFX_VERSION_NAME: "1.4.17"
-      AMYFX_VERSION_CODE: "40"
+      AMYFX_VERSION_NAME: "1.5.0"
+      AMYFX_VERSION_CODE: "41"
       AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
     steps:
@@ -70,7 +74,18 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
+
+      - name: Validate Amy FX production identity
+        run: |
+          set -euo pipefail
+          node --check app/src/main/assets/apps/mapping/js/production-branding.js
+          grep -Fq '<title>Amy FX · Market Intelligence</title>' app/src/main/assets/apps/mapping/index.html
+          ! grep -Fq 'Amy FX Preview' app/src/main/assets/apps/mapping/index.html
+          ! grep -Fq 'UPDATE · AMY FX v1.5 PREVIEW' app/src/main/assets/apps/mapping/js/main.js
+          grep -Fq "name: '1.5.0', code: 41" app/src/main/assets/app-version.js
+          grep -Fq '?: 41)' app/build.gradle.kts
+          grep -Fq '?: "1.5.0"' app/build.gradle.kts
 
       - name: Run JavaScript regression tests
         run: |
@@ -80,7 +95,7 @@ jobs:
           failed=0
           for test_file in tests/*.test.mjs; do
             echo "===== ${test_file} =====" | tee -a dist/js-test-report.txt
-            if node --test "$test_file" >> dist/js-test-report.txt 2>&1; then
+            if timeout 3m node --test --test-force-exit "$test_file" >> dist/js-test-report.txt 2>&1; then
               echo "PASS ${test_file}" | tee -a dist/js-test-report.txt
             else
               echo "FAIL ${test_file}" | tee -a dist/js-test-report.txt
@@ -113,7 +128,8 @@ jobs:
         run: |
           set -euo pipefail
           apk="app/build/outputs/apk/release/app-release.apk"
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" | grep -F "package: name='com.amyelitesuite' versionCode='${AMYFX_VERSION_CODE}' versionName='${AMYFX_VERSION_NAME}'"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" | grep -F "package: name='${AMYFX_APPLICATION_ID}' versionCode='${AMYFX_VERSION_CODE}' versionName='${AMYFX_VERSION_NAME}'"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" | grep -F "application-label:'${AMYFX_APP_LABEL}'"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$apk"
           sf_entry="$(unzip -Z1 "$apk" | grep -E '^META-INF/[^/]+\.SF$' | head -n1)"
           cert_entry="$(unzip -Z1 "$apk" | grep -E '^META-INF/[^/]+\.(RSA|DSA|EC)$' | head -n1)"
@@ -168,7 +184,7 @@ jobs:
           git tag -f amyfx-latest "$GITHUB_SHA"
           git push origin refs/tags/amyfx-latest --force
 
-          release_notes="Amy FX 1.4.17 membawa Heatmap Depth Radar dari PR #45 ke aplikasi produksi, termasuk filter kepadatan, skala heat, efek spot glow, dan detail zona interaktif. Package com.amyelitesuite dan sertifikat permanen tetap dipertahankan."
+          release_notes="Amy FX 1.5.0 menghadirkan Multi-Timeframe Entry Watch tervalidasi, entry yang dikunci pada close candle trigger, perlindungan level retired dan forecast WAIT, perbaikan Order Block, pembelajaran market yang diperbarui, serta deep-link notifikasi entry yang langsung membuka Analisis. Package com.amyelitesuite, data lokal, jalur update produksi, dan sertifikat permanen tetap dipertahankan."
           if gh release view amyfx-latest >/dev/null 2>&1; then
             gh release edit amyfx-latest \
               --title "Amy FX Latest — v${AMYFX_VERSION_NAME}" \
@@ -202,11 +218,13 @@ jobs:
           version_name = os.environ["AMYFX_VERSION_NAME"].strip()
           version_code = int(os.environ["AMYFX_VERSION_CODE"])
           notes = [
-              "Heatmap Depth Radar dipromosikan ke Amy FX produksi",
-              "Filter Semua Zona, Hot Spots, serta Reaksi dan Sweep tersedia pada Heatmap",
-              "Skala kepadatan, efek spot glow, dan detail zona interaktif ditambahkan",
-              "Package com.amyelitesuite dan sertifikat permanen tetap dipertahankan",
-              "Pembaruan dapat dipasang tanpa menghapus aplikasi dan tanpa menghilangkan data lokal"
+              "Multi-Timeframe Entry Watch menjadi pemilik setup entry tervalidasi",
+              "Entry, SL, TP1, dan TP2 dikunci saat candle trigger ditutup",
+              "Forecast WAIT dan level retired menonaktifkan sinyal lama",
+              "Order Block dan forecast H1 diperbaiki agar lebih seimbang",
+              "Klik notifikasi entry langsung membuka tab Analisis dan menyorot Entry Watch",
+              "Package com.amyelitesuite, sertifikat permanen, dan data lokal tetap dipertahankan",
+              "Pembaruan dapat dipasang tanpa menghapus aplikasi"
           ]
 
           data.update({
