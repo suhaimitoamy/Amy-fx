@@ -8,6 +8,14 @@ function liveStatus(zone, currentPrice) {
   return zone.status;
 }
 
+function hasValidDisplacementMetadata(event) {
+  if (event?.hasDisplacement === false) return false;
+  if (event?.hasDisplacement === true) return true;
+  const bodyRatio = Number(event?.bodyRatio);
+  if (!Number.isFinite(bodyRatio)) return true;
+  return bodyRatio >= CONCEPT_THRESHOLDS.displacementBodyAtr;
+}
+
 export function detectOrderBlockConcepts(candles, structureSnapshot, {
   htfCandles = {},
   currentPrice = null,
@@ -17,7 +25,7 @@ export function detectOrderBlockConcepts(candles, structureSnapshot, {
 } = {}) {
   const values = cleanConceptCandles(candles);
   const events = (structureSnapshot?.structureEvents || []).filter(event =>
-    event.valid && (event.hasDisplacement !== false && (event.hasDisplacement || (event.bodyRatio || 0) >= CONCEPT_THRESHOLDS.displacementBodyAtr))
+    event.valid && hasValidDisplacementMetadata(event)
   );
   const byIndex = new Map();
 
