@@ -9,6 +9,8 @@ const coordinatorPath = 'app/src/main/assets/apps/mapping/js/api-request-coordin
 const candleCoordinatorPath = 'app/src/main/assets/apps/mapping/js/candle-refresh-coordinator.js';
 const scannerGatePath = 'app/src/main/assets/apps/mapping/js/scanner-visibility-gate.js';
 const stabilityPath = 'app/src/main/assets/apps/mapping/js/view-stability.js';
+const backendPath = 'api/twelvedata.js';
+const scannerServicePath = 'app/src/main/java/com/amyelitesuite/ScannerService.kt';
 
 const index = fs.readFileSync(indexPath, 'utf8');
 const runtime = fs.readFileSync(runtimePath, 'utf8');
@@ -16,9 +18,11 @@ const coordinator = fs.readFileSync(coordinatorPath, 'utf8');
 const candleCoordinator = fs.readFileSync(candleCoordinatorPath, 'utf8');
 const scannerGate = fs.readFileSync(scannerGatePath, 'utf8');
 const stability = fs.readFileSync(stabilityPath, 'utf8');
+const backend = fs.readFileSync(backendPath, 'utf8');
+const scannerService = fs.readFileSync(scannerServicePath, 'utf8');
 
-test('new Mapping runtime files remain syntactically valid', () => {
-  for (const path of [runtimePath, coordinatorPath, candleCoordinatorPath, scannerGatePath, stabilityPath]) {
+test('new Mapping and backend runtime files remain syntactically valid', () => {
+  for (const path of [runtimePath, coordinatorPath, candleCoordinatorPath, scannerGatePath, stabilityPath, backendPath]) {
     execFileSync(process.execPath, ['--check', path], { stdio: 'pipe' });
   }
 });
@@ -52,12 +56,14 @@ test('shared candle coordinator refreshes only closed watch timeframes', () => {
   assert.match(candleCoordinator, /amyfx:candles-updated/);
 });
 
-test('native scanner is gated to background visibility', () => {
+test('native scanner is background-only and rate limited', () => {
   assert.ok(index.includes('js/scanner-visibility-gate.js'));
   assert.match(scannerGate, /document\.hidden/);
   assert.match(scannerGate, /stopBackgroundScanner/);
   assert.match(scannerGate, /startBackgroundScanner/);
   assert.match(scannerGate, /amyfx:entry-watch-updated/);
+  assert.match(scannerService, /MARKET_POLL_MS = 5L \* 60L \* 1000L/);
+  assert.match(scannerService, /memeriksa harga setiap 5 menit/);
 });
 
 test('analysis view has scroll stability protection', () => {
@@ -66,11 +72,22 @@ test('analysis view has scroll stability protection', () => {
   assert.match(stability, /window\.scrollTo/);
 });
 
-test('Twelve Data requests are deduplicated and cached', () => {
+test('client Twelve Data requests are canonicalized, deduplicated and cached', () => {
   assert.match(coordinator, /const inFlight = new Map/);
   assert.match(coordinator, /const responseCache = new Map/);
   assert.match(coordinator, /const intervalSnapshots = new Map/);
   assert.match(coordinator, /LIVE_TTL_MS = 90_000/);
+  assert.match(coordinator, /url\.searchParams\.delete\('_'\)/);
+  assert.match(coordinator, /fetchUrl: url\.toString\(\)/);
   assert.match(coordinator, /snapshotResponse/);
   assert.match(coordinator, /window\.fetch = coordinatedFetch/);
+});
+
+test('backend shares provider responses and serves stale cache during provider failure', () => {
+  assert.match(backend, /globalThis\.__amyFxTwelveDataCache/);
+  assert.match(backend, /globalThis\.__amyFxTwelveDataInFlight/);
+  assert.match(backend, /CACHE_TTL_SECONDS/);
+  assert.match(backend, /Vercel-CDN-Cache-Control/);
+  assert.match(backend, /STALE_FALLBACK/);
+  assert.match(backend, /s-maxage=\$\{ttl\}/);
 });
