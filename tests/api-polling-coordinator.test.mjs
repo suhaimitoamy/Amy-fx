@@ -1,13 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { execFileSync } from 'node:child_process';
 
-const index = fs.readFileSync('app/src/main/assets/apps/mapping/index.html', 'utf8');
-const runtime = fs.readFileSync('app/src/main/assets/apps/mapping/js/entry-watch-runtime-v2.js', 'utf8');
-const coordinator = fs.readFileSync('app/src/main/assets/apps/mapping/js/api-request-coordinator.js', 'utf8');
-const candleCoordinator = fs.readFileSync('app/src/main/assets/apps/mapping/js/candle-refresh-coordinator.js', 'utf8');
-const scannerGate = fs.readFileSync('app/src/main/assets/apps/mapping/js/scanner-visibility-gate.js', 'utf8');
-const stability = fs.readFileSync('app/src/main/assets/apps/mapping/js/view-stability.js', 'utf8');
+const indexPath = 'app/src/main/assets/apps/mapping/index.html';
+const runtimePath = 'app/src/main/assets/apps/mapping/js/entry-watch-runtime-v2.js';
+const coordinatorPath = 'app/src/main/assets/apps/mapping/js/api-request-coordinator.js';
+const candleCoordinatorPath = 'app/src/main/assets/apps/mapping/js/candle-refresh-coordinator.js';
+const scannerGatePath = 'app/src/main/assets/apps/mapping/js/scanner-visibility-gate.js';
+const stabilityPath = 'app/src/main/assets/apps/mapping/js/view-stability.js';
+
+const index = fs.readFileSync(indexPath, 'utf8');
+const runtime = fs.readFileSync(runtimePath, 'utf8');
+const coordinator = fs.readFileSync(coordinatorPath, 'utf8');
+const candleCoordinator = fs.readFileSync(candleCoordinatorPath, 'utf8');
+const scannerGate = fs.readFileSync(scannerGatePath, 'utf8');
+const stability = fs.readFileSync(stabilityPath, 'utf8');
+
+test('new Mapping runtime files remain syntactically valid', () => {
+  for (const path of [runtimePath, coordinatorPath, candleCoordinatorPath, scannerGatePath, stabilityPath]) {
+    execFileSync(process.execPath, ['--check', path], { stdio: 'pipe' });
+  }
+});
 
 test('request and candle coordinators load before Entry Watch', () => {
   const requestPosition = index.indexOf('js/api-request-coordinator.js');
