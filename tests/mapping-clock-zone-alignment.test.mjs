@@ -60,25 +60,27 @@ test('Pine-aligned FVG remains visible while price has not retested it', () => {
   assert.equal(zones.zoneLiveStatus(bullish, 108), 'BELUM RETEST · DI BAWAH HARGA');
 });
 
-test('Pine-aligned bearish OB uses candle body and remains available above price', () => {
-  const candles = [
-    candle(95, 96, 90, 95, 0),
-    candle(96, 97, 95, 96.5, 1),
-    candle(97, 98, 96, 97.5, 2),
-    candle(98, 99, 97, 98.5, 3),
-    candle(104, 106, 103, 105, 4),
-    candle(102, 103, 100, 101, 5),
-    candle(98, 99, 94, 95, 6),
-    candle(92, 93, 88, 89, 7),
-    candle(89, 91, 87, 90, 8)
-  ];
-  const result = zones.detectIndicatorOrderBlocks(candles, {
-    swingLength: 3,
-    useBody: true,
+test('Order Block display adapter uses validated body zone and keeps it available above price', () => {
+  const validatedOrderBlocks = [{
+    id: 'OB:BEARISH:4:104.00000:105.00000',
+    kind: 'ORDER_BLOCK',
+    direction: 'BEARISH',
+    type: 'BEARISH',
+    bottom: 104,
+    top: 105,
+    mid: 104.5,
+    originIndex: 4,
+    availableIndex: 7,
+    structureBreakIndex: 7,
+    status: 'DETECTED',
+    active: true
+  }];
+  const result = zones.detectIndicatorOrderBlocks([], {
+    validatedOrderBlocks,
     visiblePerDirection: 1
   });
   const bearish = result.find(item => item.type === 'BEARISH');
-  assert.ok(bearish, 'bearish OB should be detected');
+  assert.ok(bearish, 'validated bearish OB should be displayed');
   assert.equal(bearish.bottom, 104);
   assert.equal(bearish.top, 105);
   assert.equal(bearish.active, true);
