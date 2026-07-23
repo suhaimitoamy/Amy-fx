@@ -1,32 +1,31 @@
 {
   "channel": "amyfx-preview-professional-ui",
-  "latest_version_code": 910018,
-  "latest_version_name": "1.5.0-preview.18",
-  "versionCode": 910018,
-  "version": "1.5.0-preview.18",
+  "latest_version_code": 910023,
+  "latest_version_name": "1.5.0-preview.23",
+  "versionCode": 910023,
+  "version": "1.5.0-preview.23",
   "releaseDate": "2026-07-23",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-1.5.0-preview.18/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-1.5.0-preview.18/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-1.5.0-preview.23/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-1.5.0-preview.23/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
+    "Klik notifikasi entry membuka tab Analisis setelah WebView siap",
+    "Route notifikasi dipertahankan selama startup dan resume aplikasi",
+    "Kartu Entry Watch otomatis digulir dan disorot",
     "Version Preview selalu naik sehingga update baru dapat terdeteksi",
     "Entry disahkan pada close candle trigger",
-    "Entry, SL, dan target dikunci saat trigger sah",
-    "Forecast WAIT menonaktifkan sinyal lama",
-    "Level retired tidak dapat menghasilkan entry",
-    "Refresh trigger candle tidak bergantung pada timeframe layar",
-    "Forecast H1 BUY dan SELL dibuat simetris"
+    "Entry, SL, dan target dikunci saat trigger sah"
   ],
   "changelog": [
+    "Reliable notification deep-link consumption",
+    "WebView startup route retry",
+    "One-time URL consumption guard",
+    "Entry Watch card focus and highlight",
     "Immutable Preview release/version code",
     "Causal close-time entry timestamp",
     "Frozen execution geometry",
-    "Strict forecast pause gate",
-    "Detector retirement gate before entry",
-    "Active trigger/source candle refresh",
-    "Balanced H1 directional forecast",
     "Full npm test gate"
   ]
 }
