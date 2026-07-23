@@ -75,7 +75,7 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Validate complete Preview source and tests
+      - name: Validate hardened Mapping source syntax
         run: |
           set -euo pipefail
           node --check app/src/main/assets/apps/mapping/js/engine/entry-watch-engine.js
@@ -84,7 +84,19 @@ jobs:
           node --check app/src/main/assets/apps/mapping/js/engine/validated-market-context-balanced.js
           node --check app/src/main/assets/apps/mapping/js/entry-watch-runtime-v2.js
           node --check app/src/main/assets/apps/mapping/js/engine/concept-analyze.js
-          npm test
+
+      - name: Test Entry Watch hardening contracts
+        run: node --test --test-force-exit tests/entry-watch-hardening.test.mjs
+
+      - name: Test Entry Watch lifecycle contracts
+        run: node --test --test-force-exit tests/entry-watch-engine.test.mjs
+
+      - name: Test complete repository suite
+        run: timeout 10m npm test
+
+      - name: Configure and validate Preview updater
+        run: |
+          set -euo pipefail
           node tools/configure-preview-web-version.mjs "$AMYFX_VERSION_NAME" "$AMYFX_VERSION_CODE" "$AMYFX_UPDATE_MANIFEST_URL"
           node --check app/src/main/assets/app-version.js
           node --check app/src/main/assets/update-checker.js
