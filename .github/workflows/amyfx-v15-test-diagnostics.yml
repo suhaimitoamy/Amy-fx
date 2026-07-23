@@ -1,0 +1,65 @@
+name: Amy FX v1.5 Test Diagnostics
+
+on:
+  push:
+    branches:
+      - feature/amyfx-v1.5-full-enhancements
+    paths:
+      - .github/workflows/amyfx-v15-test-diagnostics.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  diagnose-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run full Node test suite and capture complete log
+        id: tests
+        shell: bash
+        run: |
+          set +e
+          npm test > amyfx-node-tests.log 2>&1
+          status=$?
+          cat amyfx-node-tests.log
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload complete Node test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: amyfx-node-test-log
+          path: amyfx-node-tests.log
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Publish diagnostic status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TEST_EXIT_CODE: ${{ steps.tests.outputs.exit_code }}
+        run: |
+          state=success
+          description='Full Node test suite passed'
+          if [ "${TEST_EXIT_CODE:-1}" != '0' ]; then
+            state=failure
+            description='Full Node test suite failed; diagnostic artifact uploaded'
+          fi
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state="$state" \
+            -f context='Amy FX v1.5 Test Diagnostics' \
+            -f description="$description" \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+
+      - name: Enforce full test result
+        if: steps.tests.outputs.exit_code != '0'
+        run: exit 1
