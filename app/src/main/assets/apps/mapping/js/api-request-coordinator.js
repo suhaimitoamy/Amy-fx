@@ -11,6 +11,7 @@
   const API_HOST = 'amy-fx.vercel.app';
   const API_PATH = '/api/twelvedata';
   const LIVE_TTL_MS = 90_000;
+  const SHARED_M1_OUTPUT_SIZE = 300;
 
   function isMarketRequest(input, init) {
     const method = String(init?.method || (input instanceof Request ? input.method : 'GET')).toUpperCase();
@@ -24,27 +25,32 @@
   }
 
   function requestInfo(input) {
-    const url = new URL(input instanceof Request ? input.url : String(input), location.href);
-    url.searchParams.delete('_');
-    url.searchParams.delete('fresh');
-    const interval = String(url.searchParams.get('interval') || '1min').toLowerCase();
-    const outputsize = Number(url.searchParams.get('outputsize') || 0);
-    const symbol = String(url.searchParams.get('symbol') || 'XAU/USD').toUpperCase();
-    const sortedParams = [...url.searchParams.entries()].sort(([a], [b]) => a.localeCompare(b));
-    url.search = '';
-    sortedParams.forEach(([name, value]) => url.searchParams.append(name, value));
+    const sourceUrl = new URL(input instanceof Request ? input.url : String(input), location.href);
+    const interval = String(sourceUrl.searchParams.get('interval') || '1min').toLowerCase();
+    const requestedOutputsize = Number(sourceUrl.searchParams.get('outputsize') || 0);
+    const outputsize = interval === '1min'
+      ? Math.max(requestedOutputsize || 1, SHARED_M1_OUTPUT_SIZE)
+      : Math.max(requestedOutputsize || 300, 1);
+    const symbol = String(sourceUrl.searchParams.get('symbol') || 'XAU/USD').toUpperCase();
+
+    const url = new URL(`${sourceUrl.origin}${sourceUrl.pathname}`);
+    url.searchParams.set('symbol', symbol);
+    url.searchParams.set('interval', interval);
+    url.searchParams.set('outputsize', String(outputsize));
+
     return {
       key: url.toString(),
       fetchUrl: url.toString(),
       interval,
       outputsize,
+      requestedOutputsize,
       symbol,
       snapshotKey: `${symbol}|${interval}`
     };
   }
 
-  function ttlFor({ interval, outputsize }) {
-    if (outputsize <= 2) return LIVE_TTL_MS;
+  function ttlFor({ interval, requestedOutputsize }) {
+    if (requestedOutputsize <= 2) return LIVE_TTL_MS;
     const ttl = {
       '1min': 55_000,
       '5min': 240_000,
@@ -77,7 +83,7 @@
   }
 
   function validSnapshot(info, now) {
-    if (info.outputsize > 2) return null;
+    if (info.requestedOutputsize > 2) return null;
     const snapshot = intervalSnapshots.get(info.snapshotKey);
     if (!snapshot || snapshot.expiresAt <= now) return null;
     const values = Array.isArray(snapshot.data?.values) ? snapshot.data.values : [];
@@ -86,7 +92,7 @@
 
   function snapshotResponse(info, snapshot) {
     const values = snapshot.data.values;
-    const requested = Math.max(1, info.outputsize || 1);
+    const requested = Math.max(1, info.requestedOutputsize || 1);
     return new Response(JSON.stringify({
       ...snapshot.data,
       values: values.slice(0, requested),
