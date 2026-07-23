@@ -1,0 +1,146 @@
+{
+  "schema": "amyfx-honesty-backtest-summary-v1",
+  "branch": "feature/amyfx-v1.5-full-enhancements",
+  "tested_source_head": "d0f01742d08c86f8f836b8dd4fae47412aa5c45a",
+  "period": {
+    "start": "2022-01-01T00:00:00Z",
+    "end_exclusive": "2026-01-01T00:00:00Z",
+    "warmup_start": "2021-12-01T00:00:00Z",
+    "used_2026_data": false
+  },
+  "instrument": "XAUUSD",
+  "timestamp_assumption": "UTC candle-open time",
+  "source_blobs": {
+    "validated-market-context.js": "2d090b790c9244b119a0e0a61933d58dfdad49ad",
+    "liquidity-draw-context.js": "f0d0bad4bd624e2bd5890d80ded99365369c194c",
+    "market-data.js": "525f71bd40ae2cf7d81c9bebc2e9dcf4ee9ea01e"
+  },
+  "data_counts": {
+    "M1": 1372863,
+    "M5": 274665,
+    "M15": 91562,
+    "H1": 22905,
+    "H4": 6368,
+    "D1": 1244,
+    "W1_aggregated": 209
+  },
+  "verdict": {
+    "overall": "JUJUR BERSYARAT",
+    "repaint_and_direct_lookahead": "LULUS",
+    "market_state": "JUJUR SEBAGAI KONTEKS; GAGAL SEBAGAI PREDIKSI ARAH",
+    "direction_forecast": "TERKALIBRASI UNTUK ENDPOINT HORIZON HISTORIS; BUKAN SINYAL ENTRY",
+    "liquidity_draw": "JUJUR DAN KUAT SEBAGAI DESTINATION/FIRST-HIT CONTEXT",
+    "entry_map": "TIDAK LAYAK DITAMPILKAN SEBAGAI SETUP TERVALIDASI",
+    "confidence_ui_semantics": "GAGAL; SCORE DITAMPILKAN SEBAGAI PERSEN"
+  },
+  "liquidity_draw": {
+    "definition": {
+      "timeframes": ["M15", "H1"],
+      "threshold_score": 97,
+      "horizon_hours": 72,
+      "cooldown_hours_per_timeframe": 72,
+      "outcome_source": "M1 first hit after context close",
+      "semantics": "context_only_not_entry"
+    },
+    "combined": {
+      "n": 468,
+      "correct": 412,
+      "wrong": 40,
+      "ambiguous": 0,
+      "unresolved": 16,
+      "conservative_accuracy_pct": 88.03,
+      "resolved_accuracy_pct": 91.15
+    },
+    "by_timeframe": {
+      "M15": {
+        "n": 295,
+        "correct": 263,
+        "wrong": 27,
+        "unresolved": 5,
+        "conservative_accuracy_pct": 89.15,
+        "resolved_accuracy_pct": 90.69
+      },
+      "H1": {
+        "n": 173,
+        "correct": 149,
+        "wrong": 13,
+        "unresolved": 11,
+        "conservative_accuracy_pct": 86.13,
+        "resolved_accuracy_pct": 91.98
+      }
+    },
+    "by_year_combined": {
+      "2022": {"n": 110, "correct": 97, "wrong": 11, "unresolved": 2, "conservative_accuracy_pct": 88.18},
+      "2023": {"n": 117, "correct": 101, "wrong": 11, "unresolved": 5, "conservative_accuracy_pct": 86.32},
+      "2024": {"n": 120, "correct": 109, "wrong": 7, "unresolved": 4, "conservative_accuracy_pct": 90.83},
+      "2025": {"n": 121, "correct": 105, "wrong": 11, "unresolved": 5, "conservative_accuracy_pct": 86.78}
+    }
+  },
+  "direction_forecast": {
+    "combined": {
+      "n": 495,
+      "fixed_horizon_endpoint_accuracy_pct": 63.43,
+      "invalidated_before_horizon_pct": 89.90,
+      "lifecycle_first_hit_plus_minus_1atr_accuracy_pct": 50.51
+    },
+    "by_timeframe": {
+      "M5": {
+        "display_confidence": 65,
+        "n": 117,
+        "fixed_horizon_endpoint_accuracy_pct": 64.96,
+        "invalidated_before_horizon_pct": 100.00,
+        "lifecycle_first_hit_plus_minus_1atr_accuracy_pct": 46.15
+      },
+      "M15": {
+        "display_confidence": 60,
+        "n": 172,
+        "fixed_horizon_endpoint_accuracy_pct": 59.88,
+        "invalidated_before_horizon_pct": 100.00,
+        "lifecycle_first_hit_plus_minus_1atr_accuracy_pct": 45.35
+      },
+      "H1": {
+        "display_confidence": 65,
+        "n": 206,
+        "fixed_horizon_endpoint_accuracy_pct": 65.53,
+        "invalidated_before_horizon_pct": 75.73,
+        "lifecycle_first_hit_plus_minus_1atr_accuracy_pct": 57.28
+      }
+    },
+    "by_year_combined": {
+      "2022": {"n": 115, "fixed_horizon_endpoint_accuracy_pct": 59.13, "lifecycle_first_hit_plus_minus_1atr_accuracy_pct": 45.22},
+      "2023": {"n": 109, "fixed_horizon_endpoint_accuracy_pct": 66.97, "lifecycle_first_hit_plus_minus_1atr_accuracy_pct": 62.39},
+      "2024": {"n": 139, "fixed_horizon_endpoint_accuracy_pct": 62.59, "lifecycle_first_hit_plus_minus_1atr_accuracy_pct": 43.17},
+      "2025": {"n": 132, "fixed_horizon_endpoint_accuracy_pct": 65.15, "lifecycle_first_hit_plus_minus_1atr_accuracy_pct": 53.03}
+    }
+  },
+  "market_state": {
+    "combined": {"n": 5406, "endpoint_accuracy_pct": 50.43},
+    "by_timeframe": {
+      "M5": {"n": 3595, "endpoint_accuracy_pct": 50.71},
+      "M15": {"n": 1316, "endpoint_accuracy_pct": 49.54},
+      "H1": {"n": 495, "endpoint_accuracy_pct": 50.71}
+    },
+    "by_year_combined": {
+      "2022": {"n": 1391, "endpoint_accuracy_pct": 49.96},
+      "2023": {"n": 1199, "endpoint_accuracy_pct": 50.13},
+      "2024": {"n": 1418, "endpoint_accuracy_pct": 50.63},
+      "2025": {"n": 1398, "endpoint_accuracy_pct": 50.93}
+    }
+  },
+  "entry_map": {
+    "independent_full_detector_replay_in_this_run": false,
+    "existing_runtime_claim_accuracy_pct": 48.24,
+    "existing_runtime_claim_definition": "Reaction at least 0.5 ATR in mapping direction within 16 M15 candles, with favorable excursion not smaller than adverse excursion.",
+    "runtime_issue": "An EXPERIMENTAL CLAIM setup can still be assigned as bestSetup, passed into setupExecution, and described with FOKUS BUY/SELL when aligned with Direction Forecast."
+  },
+  "honesty_checks": {
+    "closed_candle_input": true,
+    "future_2026_excluded": true,
+    "pivot_confirmation_delayed": true,
+    "h4_closed_only_in_replay": true,
+    "targets_frozen_at_issue": true,
+    "liquidity_non_overlap_72h_per_timeframe": true,
+    "main_branch_modified": false,
+    "preview_update_channel_modified": false
+  }
+}
