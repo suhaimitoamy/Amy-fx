@@ -30,12 +30,12 @@
     const interval = String(url.searchParams.get('interval') || '1min').toLowerCase();
     const outputsize = Number(url.searchParams.get('outputsize') || 0);
     const symbol = String(url.searchParams.get('symbol') || 'XAU/USD').toUpperCase();
-    const key = `${url.origin}${url.pathname}?${[...url.searchParams.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([keyName, value]) => `${encodeURIComponent(keyName)}=${encodeURIComponent(value)}`)
-      .join('&')}`;
+    const sortedParams = [...url.searchParams.entries()].sort(([a], [b]) => a.localeCompare(b));
+    url.search = '';
+    sortedParams.forEach(([name, value]) => url.searchParams.append(name, value));
     return {
-      key,
+      key: url.toString(),
+      fetchUrl: url.toString(),
       interval,
       outputsize,
       symbol,
@@ -76,12 +76,16 @@
     });
   }
 
-  function snapshotResponse(info, now) {
+  function validSnapshot(info, now) {
     if (info.outputsize > 2) return null;
     const snapshot = intervalSnapshots.get(info.snapshotKey);
     if (!snapshot || snapshot.expiresAt <= now) return null;
     const values = Array.isArray(snapshot.data?.values) ? snapshot.data.values : [];
-    if (!values.length) return null;
+    return values.length ? snapshot : null;
+  }
+
+  function snapshotResponse(info, snapshot) {
+    const values = snapshot.data.values;
     const requested = Math.max(1, info.outputsize || 1);
     return new Response(JSON.stringify({
       ...snapshot.data,
@@ -97,6 +101,8 @@
     try {
       const data = JSON.parse(body);
       if (data?.status !== 'ok' || !Array.isArray(data.values) || !data.values.length) return;
+      const previous = intervalSnapshots.get(info.snapshotKey);
+      if (previous && previous.storedAt > now) return;
       intervalSnapshots.set(info.snapshotKey, {
         data,
         storedAt: now,
@@ -127,12 +133,14 @@
     cleanCache(now);
 
     const exactCached = responseCache.get(info.key);
+    const sharedSnapshot = validSnapshot(info, now);
+    if (sharedSnapshot && (!exactCached || sharedSnapshot.storedAt > exactCached.storedAt)) {
+      return snapshotResponse(info, sharedSnapshot);
+    }
     if (exactCached && exactCached.expiresAt > now) {
       return cloneStored(exactCached);
     }
-
-    const sharedSnapshot = snapshotResponse(info, now);
-    if (sharedSnapshot) return sharedSnapshot;
+    if (sharedSnapshot) return snapshotResponse(info, sharedSnapshot);
 
     const active = inFlight.get(info.key);
     if (active) {
@@ -141,7 +149,10 @@
     }
 
     const request = (async () => {
-      const response = await nativeFetch(input, init);
+      const canonicalInput = input instanceof Request
+        ? new Request(info.fetchUrl, input)
+        : info.fetchUrl;
+      const response = await nativeFetch(canonicalInput, init);
       const body = await response.clone().text();
       const storedAt = Date.now();
       const stored = {
