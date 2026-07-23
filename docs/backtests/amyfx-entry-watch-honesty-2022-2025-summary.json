@@ -1,0 +1,212 @@
+{
+  "metadata": {
+    "branch": "feature/amyfx-v1.5-full-enhancements",
+    "head": "bcf6015fd3ab8679e469604ac65c59312edb072a",
+    "period": "2022-01-01 through 2025-12-31",
+    "warmup": "2021-12",
+    "data_2026_used": false,
+    "purpose": "honesty and causal lifecycle audit; not win-rate, profit, SL, or TP optimization",
+    "primary_runtime_mode": "M15 direction forecast",
+    "cross_checks": [
+      "M5",
+      "H1"
+    ],
+    "method": "closed-candle walk-forward replay mirroring Entry Watch level lock, source-close break priority, trigger-timeframe sweep, forecast gaps, and conversion state",
+    "coverage_note": "FVG, Order Block, and swing-liquidity levels reconstructed from branch rules. Equal-liquidity and previous-day/week levels were excluded; defect counts are conservative lower bounds."
+  },
+  "verdict": "BELUM JUJUR UNTUK EKSEKUSI ENTRY LIVE",
+  "module_verdicts": {
+    "direction_forecast_authority": {
+      "verdict": "JUJUR",
+      "reason": "Every entry direction remained equal to the active Direction Forecast."
+    },
+    "sweep_vs_break_order": {
+      "verdict": "JUJUR",
+      "reason": "Source-timeframe close break is evaluated before lower-timeframe sweep."
+    },
+    "watch_before_entry": {
+      "verdict": "GAGAL",
+      "reason": "M15 produced 2 entry events on the first evaluation of a newly selected level."
+    },
+    "forecast_gap_reconciliation": {
+      "verdict": "GAGAL",
+      "reason": "M15 observed 30 breaks while forecast was inactive; 25 levels later reappeared because only the latest candle was checked."
+    },
+    "detector_membership": {
+      "verdict": "GAGAL",
+      "reason": "M15 produced 13 entries from locked levels that were no longer in the active detector set."
+    },
+    "single_entry_lifecycle": {
+      "verdict": "TIDAK STABIL",
+      "reason": "M15 had 18 levels with repeated distinct sweep-entry events, adding 40 extra entries."
+    },
+    "conversion_semantics": {
+      "verdict": "JUJUR BERSYARAT",
+      "reason": "FVG/OB/liquidity labels convert only after source close break, but converted levels have no expiry or full gap reconciliation."
+    },
+    "closed_candle_lookahead": {
+      "verdict": "JUJUR BERSYARAT",
+      "reason": "No pre-availability trigger entry appeared in this replay, but the engine has no explicit guard requiring trigger candle start after level availability."
+    }
+  },
+  "primary_M15": {
+    "intervals": 172,
+    "metrics": {
+      "watch_selected": 115,
+      "entry_trigger": 70,
+      "entry_kind_FVG": 53,
+      "entry_tf_M15": 20,
+      "forecast_reactivations": 171,
+      "replaced_direction_change": 73,
+      "hidden_break_during_forecast_gap": 30,
+      "valid_break": 47,
+      "break_kind_ORDER_BLOCK": 3,
+      "break_tf_H1": 12,
+      "entry_tf_H1": 10,
+      "break_kind_FVG": 39,
+      "break_tf_M15": 6,
+      "resurrected_after_hidden_break": 25,
+      "break_tf_H4": 10,
+      "converted_reused": 6,
+      "break_kind_LIQUIDITY": 4,
+      "break_tf_M5": 19,
+      "entry_tf_M5": 20,
+      "entry_on_orphaned_level": 13,
+      "entry_tf_H4": 20,
+      "entry_kind_LIQUIDITY": 10,
+      "entry_kind_ORDER_BLOCK": 7,
+      "break_kind_BREAKER_BLOCK": 1,
+      "entry_without_prior_watch": 2,
+      "trigger_not_after_watch_started": 2,
+      "levels_with_repeat_entries": 18,
+      "extra_repeat_entries": 40
+    },
+    "entry_age_hours": {
+      "n": 70,
+      "median": 7.492,
+      "p90": 61.275,
+      "max": 161.917
+    },
+    "gap_hours": {
+      "n": 30,
+      "median": 184.75,
+      "max": 543.5
+    }
+  },
+  "cross_modes": {
+    "M5": {
+      "intervals": 117,
+      "metrics": {
+        "watch_selected": 71,
+        "forecast_reactivations": 115,
+        "hidden_break_during_forecast_gap": 19,
+        "resurrected_after_hidden_break": 9,
+        "replaced_direction_change": 47,
+        "entry_trigger": 9,
+        "entry_kind_FVG": 9,
+        "entry_tf_M15": 6,
+        "valid_break": 29,
+        "break_kind_FVG": 23,
+        "break_tf_H4": 12,
+        "break_tf_H1": 4,
+        "break_tf_M15": 4,
+        "break_tf_M5": 9,
+        "converted_reused": 6,
+        "break_kind_IFVG": 2,
+        "break_kind_LIQUIDITY": 3,
+        "entry_tf_H1": 3,
+        "break_kind_ORDER_BLOCK": 1,
+        "levels_with_repeat_entries": 2,
+        "extra_repeat_entries": 3
+      },
+      "entry_age_hours": {
+        "n": 9,
+        "median": 1.917,
+        "p90": 9.467,
+        "max": 23.667
+      },
+      "gap_hours": {
+        "n": 19,
+        "median": 413.083,
+        "max": 1312.083
+      }
+    },
+    "H1": {
+      "intervals": 206,
+      "metrics": {
+        "watch_selected": 13,
+        "forecast_reactivations": 161,
+        "hidden_break_during_forecast_gap": 9,
+        "valid_break": 12,
+        "break_kind_FVG": 10,
+        "break_tf_M15": 3,
+        "resurrected_after_hidden_break": 5,
+        "entry_trigger": 11,
+        "entry_kind_FVG": 6,
+        "entry_tf_H4": 3,
+        "entry_on_orphaned_level": 2,
+        "break_tf_H4": 3,
+        "entry_tf_H1": 7,
+        "break_tf_H1": 5,
+        "break_tf_M5": 1,
+        "entry_tf_M15": 1,
+        "entry_kind_ORDER_BLOCK": 5,
+        "break_kind_ORDER_BLOCK": 1,
+        "break_kind_LIQUIDITY": 1,
+        "levels_with_repeat_entries": 2,
+        "extra_repeat_entries": 5
+      },
+      "entry_age_hours": {
+        "n": 11,
+        "median": 13.333,
+        "p90": 583.75,
+        "max": 1037.583
+      },
+      "gap_hours": {
+        "n": 9,
+        "median": 401.0,
+        "max": 938.0
+      }
+    }
+  },
+  "aggregate_three_modes": {
+    "watch_selected": 199,
+    "forecast_reactivations": 447,
+    "hidden_break_during_forecast_gap": 58,
+    "resurrected_after_hidden_break": 39,
+    "replaced_direction_change": 120,
+    "entry_trigger": 90,
+    "entry_kind_FVG": 68,
+    "entry_tf_M15": 27,
+    "valid_break": 88,
+    "break_kind_FVG": 72,
+    "break_tf_H4": 25,
+    "break_tf_H1": 21,
+    "break_tf_M15": 13,
+    "break_tf_M5": 29,
+    "converted_reused": 12,
+    "break_kind_IFVG": 2,
+    "break_kind_LIQUIDITY": 8,
+    "entry_tf_H1": 20,
+    "break_kind_ORDER_BLOCK": 5,
+    "levels_with_repeat_entries": 22,
+    "extra_repeat_entries": 48,
+    "entry_tf_M5": 20,
+    "entry_on_orphaned_level": 15,
+    "entry_tf_H4": 23,
+    "entry_kind_LIQUIDITY": 10,
+    "entry_kind_ORDER_BLOCK": 12,
+    "break_kind_BREAKER_BLOCK": 1,
+    "entry_without_prior_watch": 2,
+    "trigger_not_after_watch_started": 2
+  },
+  "required_fixes_before_live_entry": [
+    "Clear or reconcile previous Entry Watch state whenever Direction Forecast becomes inactive.",
+    "Scan every closed source candle since last evaluation before reactivating a locked or converted level.",
+    "Require at least one completed watch cycle before ENTRY_TRIGGERED; a level selected on the current trigger candle must remain PANTAU.",
+    "Reject locked levels that are no longer active in the current concept detector.",
+    "Persist one entry event per level lifecycle, or require a reset/re-arm rule before another entry.",
+    "Add expiry and invalidation rules for iFVG, Breaker Block, and Valid Break conversions.",
+    "Enforce trigger candle open time >= honest level availability close time."
+  ]
+}
