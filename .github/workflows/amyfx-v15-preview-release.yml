@@ -19,8 +19,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  AMYFX_VERSION_NAME: 1.5.0-preview.2
-  AMYFX_VERSION_CODE: '90052'
+  AMYFX_VERSION_NAME: 1.5.0-preview.3
+  AMYFX_VERSION_CODE: '90053'
   AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
   AMYFX_APP_LABEL: Amy FX Preview
   AMYFX_URI_SCHEME: amyfxpreview
@@ -117,27 +117,28 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG='amyfx-preview-v1.5.0-preview.2'
+          TAG='amyfx-preview-v1.5.0-preview.3'
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes
           fi
           gh api --method DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" >/dev/null 2>&1 || true
           cat > /tmp/release-notes.md <<'NOTES'
-          Amy FX Preview 1.5 — Multi-Timeframe Entry Watch.
+          Amy FX Preview 1.5 — Honest Entry Watch Lifecycle.
 
           - Direction Forecast tetap menjadi satu-satunya penentu BUY/SELL.
-          - Level entry dipantau dari M5, M15, H1, dan H4.
-          - Wick sweep dan close reclaim pada timeframe trigger memicu entry.
-          - Close timeframe asal yang menembus level membatalkan entry.
-          - FVG berubah menjadi iFVG, Order Block menjadi Breaker Block, dan liquidity menjadi Valid Break.
-          - Entry Map lama dipertahankan hanya sebagai data audit dan tidak menjadi setup utama.
+          - Level baru wajib melewati fase PANTAU sebelum dapat memicu entry.
+          - Semua source-close yang terlewat direplay ketika forecast atau aplikasi aktif kembali.
+          - Hidden break menutup level; level yang keluar detector tidak dapat hidup kembali.
+          - Satu level hanya menghasilkan satu entry, lalu berubah menjadi ENTRY_SPENT.
+          - FVG/iFVG, Order Block/Breaker Block, dan Valid Break memiliki expiry eksplisit.
+          - Audit 2022–2025 menghasilkan 0 resurrection, 0 orphan entry, 0 entry tanpa pantau, dan 0 repeat entry.
           NOTES
           gh release create "$TAG" \
             "AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --prerelease \
-            --title 'Amy FX Preview 1.5.0-preview.2 — Multi-Timeframe Entry Watch' \
+            --title 'Amy FX Preview 1.5.0-preview.3 — Honest Entry Watch Lifecycle' \
             --notes-file /tmp/release-notes.md
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
 
@@ -150,29 +151,30 @@ jobs:
           cat > preview-update.json <<'JSON'
           {
             "channel": "amyfx-preview-professional-ui",
-            "latest_version_code": 90052,
-            "latest_version_name": "1.5.0-preview.2",
-            "versionCode": 90052,
-            "version": "1.5.0-preview.2",
+            "latest_version_code": 90053,
+            "latest_version_name": "1.5.0-preview.3",
+            "versionCode": 90053,
+            "version": "1.5.0-preview.3",
             "releaseDate": "2026-07-23",
-            "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.5.0-preview.2/AmyFX-Preview-latest.apk",
-            "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.5.0-preview.2/AmyFX-Preview-latest.apk",
+            "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.5.0-preview.3/AmyFX-Preview-latest.apk",
+            "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-v1.5.0-preview.3/AmyFX-Preview-latest.apk",
             "force_update": false,
             "mandatory": false,
             "enabled": true,
             "release_notes": [
-              "Entry Watch memantau level M5, M15, H1, dan H4",
-              "Sweep dan close reclaim memicu entry searah Direction Forecast",
-              "Close timeframe asal yang menembus level membatalkan entry",
-              "FVG berubah menjadi iFVG dan Order Block menjadi Breaker Block",
-              "Liquidity yang ditembus berubah menjadi Valid Break"
+              "Level wajib melewati fase PANTAU sebelum entry",
+              "Hidden break direkonsiliasi walaupun Direction Forecast sedang pause",
+              "Level yang keluar detector menjadi LEVEL_RETIRED",
+              "Satu level hanya menghasilkan satu entry lalu ENTRY_SPENT",
+              "Level asli dan hasil konversi memiliki expiry eksplisit"
             ],
             "changelog": [
-              "Multi-Timeframe Level Watch Engine",
-              "Sweep Entry Lifecycle",
-              "Valid Break Conversion Lifecycle",
-              "Legacy Entry Map retired from primary setup",
-              "Seven automated entry-watch contract tests"
+              "Entry Watch Engine 1.1 causal replay",
+              "FORECAST_PAUSED reconciliation",
+              "LEVEL_RETIRED and LEVEL_EXPIRED lifecycle",
+              "ENTRY_SPENT single-entry lock",
+              "Eleven automated lifecycle contract tests",
+              "2022–2025 post-fix honesty verification"
             ]
           }
           JSON
@@ -180,6 +182,6 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add preview-update.json
           if ! git diff --cached --quiet; then
-            git commit -m 'release: activate Amy FX Preview 1.5.0-preview.2 update [skip ci]'
+            git commit -m 'release: activate Amy FX Preview 1.5.0-preview.3 update [skip ci]'
             git push origin HEAD:experiment/heatmap-news-20260722
           fi

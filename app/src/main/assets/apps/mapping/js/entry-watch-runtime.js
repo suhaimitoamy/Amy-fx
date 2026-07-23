@@ -6,8 +6,9 @@ import {
   ENTRY_WATCH_CONFIG
 } from './engine/entry-watch-engine.js';
 
-const STORAGE_KEY = 'amy_entry_watch_state_v1';
-const NOTIFY_KEY = 'amy_entry_watch_notified_v1';
+const STORAGE_KEY = 'amy_entry_watch_state_v2';
+const LEGACY_STORAGE_KEY = 'amy_entry_watch_state_v1';
+const NOTIFY_KEY = 'amy_entry_watch_notified_v2';
 const CARD_ID = 'amy-entry-watch-card';
 const WATCH_TFS = ['M5', 'M15', 'H1', 'H4'];
 const FORECAST_TFS = ['M15', 'H1', 'M5'];
@@ -15,6 +16,10 @@ let previous = readJson(STORAGE_KEY, null);
 let lastSignature = '';
 let lastScannerKey = '';
 let syncRunning = false;
+
+if (!previous) {
+  try { localStorage.removeItem(LEGACY_STORAGE_KEY); } catch (_) {}
+}
 
 function readJson(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key) || '') ?? fallback; } catch (_) { return fallback; }
@@ -122,8 +127,8 @@ function setupFromEntryWatch(watch, currentPrice) {
     sourceKind: watch.sourceKind,
     triggerTf: watch.triggerTf,
     status: 'ENTRY TRIGGERED',
-    reason: `${watch.sourceTf} ${watch.sourceLabel} disapu pada ${watch.triggerTf} dan candle close kembali. Direction Forecast tetap ${watch.direction}.`,
-    validationStatus: 'SWEEP_CLOSE_RECLAIM',
+    reason: `${watch.sourceTf} ${watch.sourceLabel} disapu pada ${watch.triggerTf} setelah fase pantau dan candle close kembali. Direction Forecast tetap ${watch.direction}.`,
+    validationStatus: 'ARMED_SWEEP_CLOSE_RECLAIM',
     riskModel: 'ENGINEERING_DEFAULT_NOT_BACKTESTED'
   };
 }
@@ -153,11 +158,27 @@ function attachToResult(state, watch, forecast) {
   }
 }
 
+function dataStaleWatch(state) {
+  return {
+    ...(previous || {}),
+    version: '1.1.0',
+    model: 'AMY_MULTI_TF_LEVEL_WATCH',
+    direction: previous?.direction || 'WAIT',
+    status: 'DATA USANG — ENTRY WATCH DINONAKTIFKAN',
+    lifecycleStage: 'DATA_STALE',
+    active: false,
+    terminal: true,
+    entryAllowed: false,
+    reason: 'Cache kedaluwarsa dan API gagal diperbarui. Tidak ada entry atau scanner aktif.',
+    updatedAt: Date.now()
+  };
+}
+
 function notificationData(watch) {
   if (watch.lifecycleStage === 'ENTRY_TRIGGERED') {
     return {
       title: `AMY FX — ENTRY ${watch.direction}`,
-      body: `${watch.triggerTf} sweep ${price(watch.level)} lalu close kembali. Level berasal dari ${watch.sourceTf} ${watch.sourceLabel}.`
+      body: `${watch.triggerTf} sweep ${price(watch.level)} lalu close kembali setelah level di-arm. Level berasal dari ${watch.sourceTf} ${watch.sourceLabel}.`
     };
   }
   if (watch.lifecycleStage === 'VALID_BREAK') {
@@ -166,16 +187,35 @@ function notificationData(watch) {
       body: `${watch.sourceTf} close menembus ${price(watch.level)}. ${watch.transitionText || 'Level berubah menjadi Valid Break'}.`
     };
   }
+  if (watch.lifecycleStage === 'FORECAST_PAUSED') {
+    return {
+      title: 'AMY FX — ENTRY WATCH DI-PAUSE',
+      body: `Forecast tidak aktif. ${watch.sourceTf} ${watch.sourceLabel} tetap direkonsiliasi, tetapi entry dinonaktifkan.`
+    };
+  }
+  if (watch.lifecycleStage === 'ENTRY_SPENT') {
+    return {
+      title: 'AMY FX — LEVEL SUDAH DIPAKAI',
+      body: `${watch.sourceTf} ${watch.sourceLabel} sudah menghasilkan satu entry dan menunggu level baru.`
+    };
+  }
+  if (['LEVEL_EXPIRED', 'LEVEL_RETIRED', 'FORECAST_CHANGED'].includes(watch.lifecycleStage)) {
+    return {
+      title: 'AMY FX — LEVEL DITUTUP',
+      body: watch.reason || 'Level lama tidak lagi sah untuk entry.'
+    };
+  }
   return {
     title: `AMY FX — PANTAU ${watch.direction}`,
-    body: `${watch.sourceTf} ${watch.sourceLabel} di ${price(watch.level)}. Sweep ${watch.triggerTf} = entry; close ${watch.sourceTf} menembus level = batal.`
+    body: `${watch.sourceTf} ${watch.sourceLabel} di ${price(watch.level)}. Sweep ${watch.triggerTf} setelah armed = entry; close ${watch.sourceTf} menembus level = batal.`
   };
 }
 
 function sendNotification(watch) {
-  if (!['WATCHING_LEVEL', 'ENTRY_TRIGGERED', 'VALID_BREAK'].includes(watch?.lifecycleStage)) return;
+  const allowed = new Set(['WATCHING_LEVEL', 'ENTRY_TRIGGERED', 'VALID_BREAK', 'FORECAST_PAUSED', 'ENTRY_SPENT', 'LEVEL_EXPIRED', 'LEVEL_RETIRED', 'FORECAST_CHANGED']);
+  if (!allowed.has(watch?.lifecycleStage)) return;
   const store = readJson(NOTIFY_KEY, {});
-  const key = `${watch.id}:${watch.lifecycleStage}:${watch.sourceCandleTime || 0}:${watch.triggerCandleTime || 0}`;
+  const key = `${watch.id || 'WAIT'}:${watch.lifecycleStage}:${watch.sourceCandleTime || 0}:${watch.triggerCandleTime || 0}`;
   if (store[key]) return;
   store[key] = Date.now();
   const recent = Object.fromEntries(Object.entries(store).sort((a, b) => Number(b[1]) - Number(a[1])).slice(0, 80));
@@ -185,7 +225,7 @@ function sendNotification(watch) {
   if (window.Android?.showNotificationWithUrl) {
     window.Android.showNotificationWithUrl(data.title, data.body, route);
   } else if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-    const notification = new Notification(data.title, { body: data.body, tag: `amy-entry-watch-${watch.id}` });
+    const notification = new Notification(data.title, { body: data.body, tag: `amy-entry-watch-${watch.id || watch.lifecycleStage}` });
     notification.onclick = () => { window.focus(); window.setTab?.('Analyze'); };
   }
 }
@@ -210,24 +250,38 @@ function syncScanner(watch) {
 
 function lifecycleHtml(watch) {
   const stage = watch.lifecycleStage;
+  const watched = !['WAIT_LEVEL', 'WAIT_DIRECTION'].includes(stage);
+  const entry = stage === 'ENTRY_TRIGGERED' || stage === 'ENTRY_SPENT';
+  const spent = stage === 'ENTRY_SPENT';
+  const broken = stage === 'VALID_BREAK';
   const steps = [
-    ['LEVEL', true],
-    ['PANTAU', stage !== 'WAIT_LEVEL' && stage !== 'WAIT_DIRECTION'],
-    ['SWEEP / ENTRY', stage === 'ENTRY_TRIGGERED'],
-    ['VALID BREAK', stage === 'VALID_BREAK'],
-    ['iFVG / BB', stage === 'VALID_BREAK' && Boolean(watch.transformed)]
+    ['LEVEL', true, false],
+    ['PANTAU', watched, false],
+    ['SWEEP / ENTRY', entry, broken],
+    ['SPENT', spent, false],
+    ['VALID BREAK', broken, false],
+    ['iFVG / BB', broken && Boolean(watch.transformed), false]
   ];
-  return `<div class="entry-watch-lifecycle">${steps.map(([label, active], index) => {
-    const invalid = stage === 'VALID_BREAK' && index === 2;
-    return `<div class="${invalid ? 'invalid' : active ? 'active' : 'locked'}"><span>${invalid ? '×' : active ? '●' : '○'}</span><small>${label}</small></div>`;
-  }).join('')}</div>`;
+  return `<div class="entry-watch-lifecycle">${steps.map(([label, active, invalid]) =>
+    `<div class="${invalid ? 'invalid' : active ? 'active' : 'locked'}"><span>${invalid ? '×' : active ? '●' : '○'}</span><small>${label}</small></div>`
+  ).join('')}</div>`;
 }
 
 function statusClass(watch) {
   if (watch.lifecycleStage === 'ENTRY_TRIGGERED') return 'entry';
   if (watch.lifecycleStage === 'VALID_BREAK') return 'break';
   if (watch.lifecycleStage === 'LEVEL_TESTING') return 'testing';
+  if (['ENTRY_SPENT', 'LEVEL_EXPIRED', 'LEVEL_RETIRED', 'FORECAST_CHANGED', 'DATA_STALE'].includes(watch.lifecycleStage)) return 'break';
   return 'watch';
+}
+
+function actionText(watch) {
+  if (watch.lifecycleStage === 'ENTRY_TRIGGERED') return `ENTRY ${watch.direction}`;
+  if (watch.lifecycleStage === 'VALID_BREAK') return `BATAL ${watch.direction}`;
+  if (watch.lifecycleStage === 'FORECAST_PAUSED') return 'PAUSE';
+  if (watch.lifecycleStage === 'ENTRY_SPENT') return 'ENTRY SPENT';
+  if (['LEVEL_EXPIRED', 'LEVEL_RETIRED', 'FORECAST_CHANGED', 'DATA_STALE'].includes(watch.lifecycleStage)) return 'DITUTUP';
+  return `PANTAU ${watch.direction}`;
 }
 
 function watchCardHtml(watch) {
@@ -238,21 +292,16 @@ function watchCardHtml(watch) {
   const candidates = (watch.candidates || []).slice(0, 4).map(candidate =>
     `<span>${safe(candidate.sourceTf)} ${safe(candidate.sourceKind)} · ${price(candidate.level)}</span>`
   ).join('');
-  const action = watch.lifecycleStage === 'ENTRY_TRIGGERED'
-    ? `ENTRY ${watch.direction}`
-    : watch.lifecycleStage === 'VALID_BREAK'
-      ? `BATAL ${watch.direction}`
-      : `PANTAU ${watch.direction}`;
   return `<section class="card entry-watch-card ${statusClass(watch)}" id="${CARD_ID}">
-    <div class="entry-watch-head"><div><div class="kicker">MULTI-TIMEFRAME ENTRY WATCH</div><h2>${safe(watch.status)}</h2></div><span class="entry-watch-badge">${safe(action)}</span></div>
+    <div class="entry-watch-head"><div><div class="kicker">MULTI-TIMEFRAME ENTRY WATCH</div><h2>${safe(watch.status)}</h2></div><span class="entry-watch-badge">${safe(actionText(watch))}</span></div>
     ${lifecycleHtml(watch)}
     <div class="entry-watch-grid">
       <div><small>Arah</small><strong>${safe(watch.direction)}</strong></div>
       <div><small>Level Asal</small><strong>${safe(watch.sourceTf)} · ${safe(watch.sourceLabel)}</strong></div>
       <div><small>Area / Level</small><strong>${zone}</strong></div>
       <div><small>Trigger Sweep</small><strong>${safe(watch.triggerTf)}</strong></div>
-      <div><small>Entry</small><strong>Wick sweep + close kembali</strong></div>
-      <div><small>Batal</small><strong>Close ${safe(watch.sourceTf)} menembus ${price(watch.level)}</strong></div>
+      <div><small>Entry</small><strong>Setelah armed: wick sweep + close kembali</strong></div>
+      <div><small>Batal</small><strong>Replay close ${safe(watch.sourceTf)} menembus ${price(watch.level)}</strong></div>
     </div>
     <p class="entry-watch-reason">${safe(watch.reason)}</p>
     ${transformed}
@@ -307,6 +356,21 @@ function signatureOf(watch, forecast) {
   });
 }
 
+function persistAndRender(state, watch, forecast) {
+  if (!watch) return;
+  const signature = signatureOf(watch, forecast);
+  attachToResult(state, watch, forecast);
+  previous = watch;
+  writeJson(STORAGE_KEY, watch);
+  syncScanner(watch);
+  if (signature !== lastSignature) {
+    lastSignature = signature;
+    sendNotification(watch);
+    try { window.render?.(); } catch (_) {}
+  }
+  syncCard(watch);
+}
+
 function sync() {
   if (syncRunning) return;
   syncRunning = true;
@@ -316,29 +380,12 @@ function sync() {
       syncCard(null);
       return;
     }
-    const forecast = resolveForecast(state);
-    if (!forecast) {
-      if (state.result) {
-        state.result.bestSetup = null;
-        state.result.setups = [];
-        state.result.experimentalBestSetup = null;
-        state.result.experimentalSetups = [];
-        state.result.entryWatch = {
-          version: '1.0.0',
-          model: 'AMY_MULTI_TF_LEVEL_WATCH',
-          direction: 'WAIT',
-          status: state.result.dataStale ? 'DATA USANG' : 'WAIT — DIRECTION FORECAST TIDAK AKTIF',
-          lifecycleStage: state.result.dataStale ? 'DATA_STALE' : 'WAIT_DIRECTION',
-          active: false,
-          terminal: Boolean(state.result.dataStale),
-          entryAllowed: false
-        };
-      }
-      syncScanner(null);
-      syncCard(null);
+    if (state.result.dataStale) {
+      persistAndRender(state, dataStaleWatch(state), null);
       return;
     }
     const conceptsByTf = conceptsForTimeframes(state);
+    const forecast = resolveForecast(state);
     const watch = calculateMultiTimeframeEntryWatch({
       conceptsByTf,
       candlesByTf: state.candles,
@@ -346,18 +393,7 @@ function sync() {
       currentPrice: finite(state.price, state.result.price),
       previous
     });
-    if (!watch) return;
-    const signature = signatureOf(watch, forecast);
-    attachToResult(state, watch, forecast);
-    previous = watch;
-    writeJson(STORAGE_KEY, watch);
-    syncScanner(watch);
-    if (signature !== lastSignature) {
-      lastSignature = signature;
-      sendNotification(watch);
-      try { window.render?.(); } catch (_) {}
-    }
-    syncCard(watch);
+    persistAndRender(state, watch, forecast);
   } finally {
     syncRunning = false;
   }

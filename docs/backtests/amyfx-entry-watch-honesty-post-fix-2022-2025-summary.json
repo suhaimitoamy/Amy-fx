@@ -1,0 +1,94 @@
+{
+  "metadata": {
+    "branch": "feature/amyfx-v1.5-full-enhancements",
+    "period": "2022-01-01 through 2025-12-31",
+    "data_2026_used": false,
+    "purpose": "post-fix causal lifecycle verification; not win rate",
+    "source_engine_version": "1.1.0"
+  },
+  "overall_verdict": "JUJUR SECARA LIFECYCLE",
+  "aggregate": {
+    "watch_selected": 1299,
+    "entry_trigger": 469,
+    "entry_spent": 457,
+    "valid_break": 456,
+    "break_reconciled_while_paused": 220,
+    "expired": 260,
+    "retired": 122,
+    "entry_without_prior_watch": 0,
+    "trigger_candle_started_before_level_available": 0,
+    "resurrected_after_hidden_break": 0,
+    "entry_on_orphaned_level": 0,
+    "extra_repeat_entries": 0
+  },
+  "modes": {
+    "M5": {
+      "watch_selected": 162,
+      "entry_trigger": 26,
+      "entry_spent": 25,
+      "valid_break": 77,
+      "break_reconciled_while_paused": 60,
+      "expired": 46,
+      "retired": 10,
+      "entry_without_prior_watch": 0,
+      "trigger_candle_started_before_level_available": 0,
+      "resurrected_after_hidden_break": 0,
+      "entry_on_orphaned_level": 0,
+      "extra_repeat_entries": 0
+    },
+    "M15": {
+      "watch_selected": 315,
+      "entry_trigger": 90,
+      "entry_spent": 86,
+      "valid_break": 143,
+      "break_reconciled_while_paused": 93,
+      "expired": 66,
+      "retired": 20,
+      "entry_without_prior_watch": 0,
+      "trigger_candle_started_before_level_available": 0,
+      "resurrected_after_hidden_break": 0,
+      "entry_on_orphaned_level": 0,
+      "extra_repeat_entries": 0
+    },
+    "H1": {
+      "watch_selected": 822,
+      "entry_trigger": 353,
+      "entry_spent": 346,
+      "valid_break": 236,
+      "break_reconciled_while_paused": 67,
+      "expired": 148,
+      "retired": 92,
+      "entry_without_prior_watch": 0,
+      "trigger_candle_started_before_level_available": 0,
+      "resurrected_after_hidden_break": 0,
+      "entry_on_orphaned_level": 0,
+      "extra_repeat_entries": 0
+    }
+  },
+  "checks": {
+    "watch_before_entry": {
+      "verdict": "JUJUR",
+      "evidence": "0 entry tanpa fase PANTAU/armed."
+    },
+    "trigger_after_available": {
+      "verdict": "JUJUR",
+      "evidence": "0 trigger dimulai sebelum level tersedia."
+    },
+    "hidden_break_reconciliation": {
+      "verdict": "JUJUR",
+      "evidence": "220 break ditemukan saat forecast pause; 0 level hidup kembali."
+    },
+    "detector_consistency": {
+      "verdict": "JUJUR",
+      "evidence": "122 level ditutup saat keluar detector; 0 orphan entry."
+    },
+    "single_entry_lifecycle": {
+      "verdict": "JUJUR",
+      "evidence": "457 lifecycle masuk ENTRY_SPENT; 0 repeat entry."
+    },
+    "expiry": {
+      "verdict": "JUJUR",
+      "evidence": "260 level ditutup oleh expiry eksplisit."
+    }
+  }
+}
