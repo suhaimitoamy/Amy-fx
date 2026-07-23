@@ -77,7 +77,8 @@ test('client Twelve Data requests are canonicalized, deduplicated and cached', (
   assert.match(coordinator, /const responseCache = new Map/);
   assert.match(coordinator, /const intervalSnapshots = new Map/);
   assert.match(coordinator, /LIVE_TTL_MS = 90_000/);
-  assert.match(coordinator, /url\.searchParams\.delete\('_'\)/);
+  assert.match(coordinator, /SHARED_M1_OUTPUT_SIZE = 300/);
+  assert.match(coordinator, /url\.searchParams\.set\('symbol', symbol\)/);
   assert.match(coordinator, /fetchUrl: url\.toString\(\)/);
   assert.match(coordinator, /snapshotResponse/);
   assert.match(coordinator, /window\.fetch = coordinatedFetch/);
@@ -89,5 +90,7 @@ test('backend shares provider responses and serves stale cache during provider f
   assert.match(backend, /CACHE_TTL_SECONDS/);
   assert.match(backend, /Vercel-CDN-Cache-Control/);
   assert.match(backend, /STALE_FALLBACK/);
+  assert.match(backend, /canonicalM1Url/);
+  assert.match(backend, /res\.redirect\(307, canonicalM1Url\(symbol\)\)/);
   assert.match(backend, /s-maxage=\$\{ttl\}/);
 });
