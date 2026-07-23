@@ -1,4 +1,4 @@
-name: Publish Amy FX v1.5 Preview Update
+name: Validate Amy FX v1.5 Production Candidate
 
 on:
   push:
@@ -20,285 +20,67 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   statuses: write
 
 concurrency:
-  group: amyfx-v15-preview-release
+  group: amyfx-v15-production-candidate
   cancel-in-progress: true
 
-env:
-  AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
-  AMYFX_APP_LABEL: Amy FX Preview
-  AMYFX_URI_SCHEME: amyfxpreview
-  AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/feature/amyfx-v1.5-full-enhancements/preview-update.json
-  AMYFX_KEYSTORE_PATH: /tmp/amy-fx-signing.keystore
-  AMYFX_KEYSTORE_PASSWORD: android
-  AMYFX_KEY_ALIAS: androiddebugkey
-  AMYFX_KEY_PASSWORD: android
-  AMYFX_SIGNING_CERT_SHA256: '47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7'
-
 jobs:
-  publish-preview:
+  validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 20
     steps:
       - name: Checkout v1.5 feature branch
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Prepare immutable Preview version
-        run: |
-          set -euo pipefail
-          version_code=$((910000 + GITHUB_RUN_NUMBER))
-          version_name="1.5.0-preview.${GITHUB_RUN_NUMBER}"
-          release_tag="amyfx-preview-${version_name}"
-          {
-            echo "AMYFX_VERSION_CODE=$version_code"
-            echo "AMYFX_VERSION_NAME=$version_name"
-            echo "AMYFX_RELEASE_TAG=$release_tag"
-          } >> "$GITHUB_ENV"
-
-      - name: Mark authoritative Preview release pending
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
-            -f state='pending' \
-            -f context='Amy FX v1.5 Authoritative Preview' \
-            -f description="Building signed Preview $AMYFX_VERSION_NAME" \
-            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Validate hardened Mapping source syntax
+      - name: Validate production source syntax
         run: |
           set -euo pipefail
+          node --check app/src/main/assets/apps/mapping/js/main.js
+          node --check app/src/main/assets/apps/mapping/js/production-branding.js
+          node --check app/src/main/assets/apps/mapping/js/notification-route-sync.js
+          node --check app/src/main/assets/apps/mapping/js/entry-watch-runtime-v2.js
           node --check app/src/main/assets/apps/mapping/js/engine/entry-watch-engine.js
           node --check app/src/main/assets/apps/mapping/js/engine/entry-watch-hardening.js
-          node --check app/src/main/assets/apps/mapping/js/engine/validated-market-context.js
           node --check app/src/main/assets/apps/mapping/js/engine/validated-market-context-balanced.js
-          node --check app/src/main/assets/apps/mapping/js/entry-watch-runtime-v2.js
-          node --check app/src/main/assets/apps/mapping/js/notification-route-sync.js
-          node --check app/src/main/assets/apps/mapping/js/engine/concept-analyze.js
 
-      - name: Test Entry Watch hardening contracts
-        run: node --test --test-force-exit tests/entry-watch-hardening.test.mjs
+      - name: Test group A-F
+        id: tests_af
+        continue-on-error: true
+        run: node --test --test-force-exit tests/[a-f]*.test.mjs
 
-      - name: Test Entry Watch lifecycle contracts
-        run: node --test --test-force-exit tests/entry-watch-engine.test.mjs
+      - name: Test group G-M
+        id: tests_gm
+        continue-on-error: true
+        run: node --test --test-force-exit tests/[g-m]*.test.mjs
 
-      - name: Test notification deep-link contracts
-        run: node --test --test-force-exit tests/notification-route-sync.test.mjs
+      - name: Test group N-Z
+        id: tests_nz
+        continue-on-error: true
+        run: node --test --test-force-exit tests/[n-z]*.test.mjs
 
-      - name: Test complete repository suite
-        run: timeout 10m npm test
-
-      - name: Configure and validate Preview updater
+      - name: Enforce complete repository suite
+        if: steps.tests_af.outcome == 'failure' || steps.tests_gm.outcome == 'failure' || steps.tests_nz.outcome == 'failure'
         run: |
-          set -euo pipefail
-          node tools/configure-preview-web-version.mjs "$AMYFX_VERSION_NAME" "$AMYFX_VERSION_CODE" "$AMYFX_UPDATE_MANIFEST_URL"
-          node --check app/src/main/assets/app-version.js
-          node --check app/src/main/assets/update-checker.js
-          grep -Fq "name: '$AMYFX_VERSION_NAME', code: $AMYFX_VERSION_CODE" app/src/main/assets/app-version.js
-          grep -Fq "window.AmyFXUpdateManifestUrl = '$AMYFX_UPDATE_MANIFEST_URL';" app/src/main/assets/app-version.js
-          grep -Fq 'Update Amy FX Preview Tersedia' app/src/main/assets/update-checker.js
-          grep -Fq 'announceNativeUpdate(latestCode, latestName);' app/src/main/assets/update-checker.js
-
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-          cache: gradle
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK 35
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
-
-      - name: Restore permanent Preview signing key
-        id: signing-cache
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.android/debug.keystore
-          key: amy-fx-debug-keystore-v1
-
-      - name: Verify permanent Preview signing key
-        run: |
-          set -euo pipefail
-          test "${{ steps.signing-cache.outputs.cache-hit }}" = 'true'
-          cp "$HOME/.android/debug.keystore" "$AMYFX_KEYSTORE_PATH"
-          actual="$(keytool -list -v -keystore "$AMYFX_KEYSTORE_PATH" -storepass "$AMYFX_KEYSTORE_PASSWORD" -alias "$AMYFX_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1)"
-          test "$actual" = "$AMYFX_SIGNING_CERT_SHA256"
-
-      - name: Build signed Amy FX Preview
-        run: |
-          set -euo pipefail
-          chmod +x gradlew
-          ./gradlew :app:assembleRelease --stacktrace --no-daemon --no-configuration-cache
-
-      - name: Verify APK identity, version and signer
-        run: |
-          set -euo pipefail
-          APK='app/build/outputs/apk/release/app-release.apk'
-          AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
-          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
-          test -s "$APK"
-          "$AAPT" dump badging "$APK" | tee /tmp/preview-badging.txt
-          grep -Fq "package: name='$AMYFX_APPLICATION_ID' versionCode='$AMYFX_VERSION_CODE' versionName='$AMYFX_VERSION_NAME'" /tmp/preview-badging.txt
-          grep -Fq "application-label:'$AMYFX_APP_LABEL'" /tmp/preview-badging.txt
-          "$APKSIGNER" verify --verbose "$APK"
-          cert_entry="$(unzip -Z1 "$APK" | grep -E '^META-INF/[^/]+\.(RSA|DSA|EC)$' | head -n1)"
-          test -n "$cert_entry"
-          unzip -p "$APK" "$cert_entry" > /tmp/amyfx-preview-cert
-          expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
-          actual="$(keytool -printcert -file /tmp/amyfx-preview-cert | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
-          test "$actual" = "$expected"
-          cp "$APK" AmyFX-Preview-latest.apk
-
-      - name: Publish immutable Preview APK release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          if gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Release $AMYFX_RELEASE_TAG already exists; refusing to replace an installed version."
-            exit 1
-          fi
-          cat > /tmp/release-notes.md <<NOTES
-          Amy FX Preview $AMYFX_VERSION_NAME — Notification Deep-Link Hardening.
-
-          - Klik notifikasi entry membuka tab Analisis setelah WebView benar-benar siap.
-          - Route notifikasi tidak hilang saat aplikasi dibuka dari background atau kondisi cold start.
-          - Kartu Multi-Timeframe Entry Watch otomatis digulir dan disorot.
-          - Version code selalu meningkat dan release tidak pernah diganti diam-diam.
-          - Waktu entry memakai close candle trigger dan geometri setup tetap terkunci.
-          NOTES
-          gh release create "$AMYFX_RELEASE_TAG" \
-            "AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --prerelease \
-            --title "Amy FX Preview $AMYFX_VERSION_NAME — Notification Deep-Link Hardening" \
-            --notes-file /tmp/release-notes.md
-          gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
-
-      - name: Activate update manifest on feature branch
-        run: |
-          set -euo pipefail
-          export RELEASE_DATE="$(date -u +%F)"
-          export APK_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${AMYFX_RELEASE_TAG}/AmyFX-Preview-latest.apk"
-          python - <<'PY'
-          import json
-          import os
-
-          version_code = int(os.environ['AMYFX_VERSION_CODE'])
-          version_name = os.environ['AMYFX_VERSION_NAME']
-          payload = {
-              'channel': 'amyfx-preview-professional-ui',
-              'latest_version_code': version_code,
-              'latest_version_name': version_name,
-              'versionCode': version_code,
-              'version': version_name,
-              'releaseDate': os.environ['RELEASE_DATE'],
-              'apk_url': os.environ['APK_URL'],
-              'downloadUrl': os.environ['APK_URL'],
-              'force_update': False,
-              'mandatory': False,
-              'enabled': True,
-              'release_notes': [
-                  'Klik notifikasi entry membuka tab Analisis setelah WebView siap',
-                  'Route notifikasi dipertahankan selama startup dan resume aplikasi',
-                  'Kartu Entry Watch otomatis digulir dan disorot',
-                  'Version Preview selalu naik sehingga update baru dapat terdeteksi',
-                  'Entry disahkan pada close candle trigger',
-                  'Entry, SL, dan target dikunci saat trigger sah'
-              ],
-              'changelog': [
-                  'Reliable notification deep-link consumption',
-                  'WebView startup route retry',
-                  'One-time URL consumption guard',
-                  'Entry Watch card focus and highlight',
-                  'Immutable Preview release/version code',
-                  'Causal close-time entry timestamp',
-                  'Frozen execution geometry',
-                  'Full npm test gate'
-              ]
-          }
-          with open('/tmp/preview-update.json', 'w', encoding='utf-8') as handle:
-              json.dump(payload, handle, ensure_ascii=False, indent=2)
-              handle.write('\n')
-          PY
-          python -m json.tool /tmp/preview-update.json >/dev/null
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-
-          for attempt in 1 2 3 4; do
-            git fetch origin "$GITHUB_REF_NAME"
-            git checkout -B preview-manifest-update "origin/$GITHUB_REF_NAME"
-
-            remote_code="$(python - <<'PY'
-          import json
-          from pathlib import Path
-          path = Path('preview-update.json')
-          if not path.exists():
-              print(0)
-          else:
-              try:
-                  data = json.loads(path.read_text(encoding='utf-8'))
-                  print(int(data.get('latest_version_code') or data.get('versionCode') or 0))
-              except Exception:
-                  print(0)
-          PY
-          )"
-            if [ "$remote_code" -ge "$AMYFX_VERSION_CODE" ]; then
-              echo "Manifest remote versionCode $remote_code sudah sama atau lebih baru; tidak melakukan downgrade."
-              exit 0
-            fi
-
-            cp /tmp/preview-update.json preview-update.json
-            python -m json.tool preview-update.json >/dev/null
-            git add preview-update.json
-            if git diff --cached --quiet; then
-              echo "Manifest sudah sesuai $AMYFX_VERSION_NAME."
-              exit 0
-            fi
-            git commit -m "release: activate $AMYFX_VERSION_NAME update [skip ci]"
-            if git push origin "HEAD:$GITHUB_REF_NAME"; then
-              exit 0
-            fi
-            echo "Push manifest gagal pada percobaan $attempt; menyelaraskan ulang branch."
-            sleep 2
-          done
-
-          echo 'Gagal mengaktifkan manifest Preview setelah empat percobaan.'
+          echo "A-F=${{ steps.tests_af.outcome }}"
+          echo "G-M=${{ steps.tests_gm.outcome }}"
+          echo "N-Z=${{ steps.tests_nz.outcome }}"
           exit 1
 
-  report-status:
-    if: always()
-    needs: publish-preview
-    runs-on: ubuntu-latest
-    steps:
-      - name: Publish authoritative Preview release status
+      - name: Publish candidate success status
+        if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-          BUILD_RESULT: ${{ needs.publish-preview.result }}
         run: |
-          version_name="1.5.0-preview.${GITHUB_RUN_NUMBER}"
-          state=success
-          description="$version_name published and update manifest activated"
-          if [ "$BUILD_RESULT" != 'success' ]; then
-            state=failure
-            description="Authoritative Preview release failed: $BUILD_RESULT"
-          fi
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
-            -f state="$state" \
-            -f context='Amy FX v1.5 Authoritative Preview' \
-            -f description="$description" \
+            -f state='success' \
+            -f context='Amy FX v1.5 Production Candidate' \
+            -f description='All production candidate tests passed' \
             -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
