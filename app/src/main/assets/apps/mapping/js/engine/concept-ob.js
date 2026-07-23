@@ -21,7 +21,7 @@ export function detectOrderBlockConcepts(candles, structureSnapshot, {
   currentPrice = null,
   maxZones = 12,
   maxPerDirection = 2,
-  useBody = false
+  useBody = true
 } = {}) {
   const values = cleanConceptCandles(candles);
   const events = (structureSnapshot?.structureEvents || []).filter(event =>
