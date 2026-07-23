@@ -46,7 +46,6 @@ export const state = {
 };
 
 const DISPLAY_TIME_ZONE = 'Asia/Makassar';
-const PREVIEW_UPDATE_ID = 'amyfx-preview-update';
 
 export const p2 = value =>
   Number.isFinite(+value) ? Number(value).toFixed(2) : '-';
@@ -180,31 +179,6 @@ function livePriceWatchdog() {
   if (!isLivePriceRunning() || state.conn === 'Offline' || stale) connect();
 }
 
-function mountPreviewUpdateBadge() {
-  if (document.getElementById(PREVIEW_UPDATE_ID)) return;
-  const badge = document.createElement('div');
-  badge.id = PREVIEW_UPDATE_ID;
-  badge.textContent = 'UPDATE · AMY FX v1.5 PREVIEW';
-  badge.setAttribute('aria-label', 'Amy FX preview sudah memakai update terbaru');
-  Object.assign(badge.style, {
-    position: 'fixed',
-    top: '10px',
-    right: '10px',
-    zIndex: '99999',
-    padding: '7px 10px',
-    borderRadius: '999px',
-    border: '1px solid rgba(255, 196, 0, .55)',
-    background: 'rgba(20, 16, 4, .94)',
-    color: '#ffd45a',
-    fontSize: '10px',
-    fontWeight: '800',
-    letterSpacing: '.08em',
-    boxShadow: '0 8px 24px rgba(0, 0, 0, .35)',
-    pointerEvents: 'none'
-  });
-  document.body.appendChild(badge);
-}
-
 function syncAutomaticScannerUi() {
   const button = document.querySelector('[data-scanner-status]');
   const buttonText = '📡 Scanner mengikuti setup tervalidasi';
@@ -251,7 +225,6 @@ function initApp() {
   applyAmyFxRoute();
   render();
   syncAutomaticScannerUi();
-  mountPreviewUpdateBadge();
 
   setTimeout(autoConnectLivePrice, 600);
   setInterval(livePriceWatchdog, 30000);
