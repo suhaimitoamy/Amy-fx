@@ -1,15 +1,6 @@
 name: Amy FX v1.5 Test Diagnostics
 
 on:
-  push:
-    branches:
-      - feature/amyfx-v1.5-full-enhancements
-    paths:
-      - app/**
-      - lib/**
-      - tests/**
-      - package.json
-      - .github/workflows/amyfx-v15-test-diagnostics.yml
   workflow_dispatch:
 
 permissions:
