@@ -62,37 +62,32 @@ jobs:
           node --check app/src/main/assets/apps/mapping/js/engine/validated-market-context-balanced.js
 
       - name: Test group A-F
-        id: tests_af
-        continue-on-error: true
         run: node --test --test-force-exit tests/[a-f]*.test.mjs
 
       - name: Test group G-M
-        id: tests_gm
-        continue-on-error: true
         run: node --test --test-force-exit tests/[g-m]*.test.mjs
 
       - name: Test group N-Z
-        id: tests_nz
-        continue-on-error: true
         run: node --test --test-force-exit tests/[n-z]*.test.mjs
 
-      - name: Publish candidate validation result
-        if: always()
+      - name: Publish candidate success status
+        if: success()
         env:
           GH_TOKEN: ${{ github.token }}
-          AF: ${{ steps.tests_af.outcome }}
-          GM: ${{ steps.tests_gm.outcome }}
-          NZ: ${{ steps.tests_nz.outcome }}
         run: |
-          state=success
-          description="All production candidate tests passed"
-          if [ "$AF" != 'success' ] || [ "$GM" != 'success' ] || [ "$NZ" != 'success' ]; then
-            state=failure
-            description="Test groups: A-F=$AF, G-M=$GM, N-Z=$NZ"
-          fi
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
-            -f state="$state" \
+            -f state='success' \
             -f context='Amy FX v1.5 Production Candidate' \
-            -f description="$description" \
+            -f description='All production candidate tests passed' \
             -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
-          test "$state" = success
+
+      - name: Publish candidate failure status
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='failure' \
+            -f context='Amy FX v1.5 Production Candidate' \
+            -f description='Production candidate validation failed' \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
