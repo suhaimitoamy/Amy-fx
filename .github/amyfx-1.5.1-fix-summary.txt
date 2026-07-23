@@ -1,0 +1,6 @@
+Amy FX 1.5.1
+- Single coordinated Twelve Data request path
+- Entry Watch consumes Mapping candles
+- Stable Analyze scroll position
+- Compact Mapping analysis UI
+- Version code 42
