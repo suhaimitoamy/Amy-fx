@@ -96,7 +96,7 @@
 
     window.setTab(pending.route);
     removeStorage(ROUTE_KEY);
-    if (pending.source === 'DEEP_LINK_URL') writeStorage(CONSUMED_URL_KEY, String(location.href || ''));
+    writeStorage(CONSUMED_URL_KEY, String(location.href || ''));
 
     if (pending.route === 'Analyze') {
       pendingEntryFocus = true;
