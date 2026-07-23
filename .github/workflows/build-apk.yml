@@ -28,8 +28,8 @@ jobs:
       AMYFX_KEYSTORE_PASSWORD: android
       AMYFX_KEY_ALIAS: androiddebugkey
       AMYFX_KEY_PASSWORD: android
-      AMYFX_VERSION_NAME: "1.5.0"
-      AMYFX_VERSION_CODE: "41"
+      AMYFX_VERSION_NAME: "1.5.1"
+      AMYFX_VERSION_CODE: "42"
       AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
     steps:
@@ -40,7 +40,7 @@ jobs:
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state='pending' \
             -f context='Amy FX Production Release' \
-            -f description='Testing and building signed Amy FX 1.5.0' \
+            -f description='Testing and building signed Amy FX 1.5.1' \
             -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
 
       - name: Checkout
@@ -58,13 +58,15 @@ jobs:
           set -euo pipefail
           node --check app/src/main/assets/apps/mapping/js/production-branding.js
           node --check app/src/main/assets/apps/mapping/js/notification-route-sync.js
+          node --check app/src/main/assets/apps/mapping/js/api-request-coordinator.js
+          node --check app/src/main/assets/apps/mapping/js/view-stability.js
           node --check app/src/main/assets/apps/mapping/js/entry-watch-runtime-v2.js
           grep -Fq '<title>Amy FX · Market Intelligence</title>' app/src/main/assets/apps/mapping/index.html
           ! grep -Fq 'Amy FX Preview' app/src/main/assets/apps/mapping/index.html
           ! grep -Fq 'UPDATE · AMY FX v1.5 PREVIEW' app/src/main/assets/apps/mapping/js/main.js
-          grep -Fq "name: '1.5.0', code: 41" app/src/main/assets/app-version.js
-          grep -Fq '?: 41)' app/build.gradle.kts
-          grep -Fq '?: "1.5.0"' app/build.gradle.kts
+          grep -Fq "name: '1.5.1', code: 42" app/src/main/assets/app-version.js
+          grep -Fq '?: 42)' app/build.gradle.kts
+          grep -Fq '?: "1.5.1"' app/build.gradle.kts
           grep -Fq 'com.amyelitesuite' app/build.gradle.kts
           grep -Fq 'main/update.json' app/build.gradle.kts
 
@@ -176,7 +178,7 @@ jobs:
           git tag -f amyfx-latest "$GITHUB_SHA"
           git push origin refs/tags/amyfx-latest --force
 
-          release_notes="Amy FX 1.5.0 menghadirkan Multi-Timeframe Entry Watch tervalidasi, entry yang dikunci pada close candle trigger, perlindungan level retired dan forecast WAIT, perbaikan Order Block, pembelajaran market yang diperbarui, serta deep-link notifikasi entry yang langsung membuka Analisis. Package com.amyelitesuite, data lokal, jalur update produksi, dan sertifikat permanen tetap dipertahankan."
+          release_notes="Amy FX 1.5.1 menghentikan permintaan candle ganda, menambahkan koordinasi cache Twelve Data, membuat Entry Watch memakai data Mapping yang sama, mempertahankan posisi baca pada halaman Analisis, dan merapikan kepadatan UI. Package com.amyelitesuite, data lokal, jalur update produksi, dan sertifikat permanen tetap dipertahankan."
           if gh release view amyfx-latest >/dev/null 2>&1; then
             gh release edit amyfx-latest \
               --title "Amy FX Latest — v${AMYFX_VERSION_NAME}" \
@@ -203,19 +205,18 @@ jobs:
           path = Path('update.json')
           data = json.loads(path.read_text(encoding='utf-8'))
           notes = [
-              'Multi-Timeframe Entry Watch menjadi pemilik setup entry tervalidasi',
-              'Entry, SL, TP1, dan TP2 dikunci saat candle trigger ditutup',
-              'Forecast WAIT dan level retired menonaktifkan sinyal lama',
-              'Order Block dan forecast H1 diperbaiki agar lebih seimbang',
-              'Klik notifikasi entry langsung membuka tab Analisis dan menyorot Entry Watch',
-              'Package com.amyelitesuite, sertifikat permanen, dan data lokal tetap dipertahankan',
+              'Entry Watch memakai candle bersama dari Mapping tanpa jalur API kedua',
+              'Permintaan Twelve Data yang sama digabung dan memakai cache sesuai timeframe',
+              'Posisi baca halaman Analisis dipertahankan saat data diperbarui',
+              'Tampilan Analisis dan Entry Watch dibuat lebih ringkas dan tidak padat',
+              'Fitur, package com.amyelitesuite, sertifikat permanen, dan data lokal tetap dipertahankan',
               'Pembaruan dapat dipasang tanpa menghapus aplikasi'
           ]
           data.update({
-              'latest_version_code': 41,
-              'latest_version_name': '1.5.0',
-              'versionCode': 41,
-              'version': '1.5.0',
+              'latest_version_code': 42,
+              'latest_version_name': '1.5.1',
+              'versionCode': 42,
+              'version': '1.5.1',
               'releaseDate': os.environ['RELEASE_DATE'],
               'apk_url': 'https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',
               'downloadUrl': 'https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',
@@ -236,10 +237,10 @@ jobs:
             python3 -m json.tool update.json >/dev/null
             git add update.json
             if git diff --cached --quiet; then
-              echo "update.json sudah sesuai Amy FX 1.5.0."
+              echo "update.json sudah sesuai Amy FX 1.5.1."
               exit 0
             fi
-            git commit -m "release: activate Amy FX 1.5.0 in-app update [skip ci]"
+            git commit -m "release: activate Amy FX 1.5.1 in-app update [skip ci]"
             if git push origin HEAD:main; then
               exit 0
             fi
@@ -260,10 +261,10 @@ jobs:
           BUILD_RESULT: ${{ needs.build.result }}
         run: |
           state=success
-          description='Amy FX 1.5.0 published and update activated'
+          description='Amy FX 1.5.1 published and update activated'
           if [ "$BUILD_RESULT" != 'success' ]; then
             state=failure
-            description="Amy FX 1.5.0 production release failed: $BUILD_RESULT"
+            description="Amy FX 1.5.1 production release failed: $BUILD_RESULT"
           fi
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state="$state" \
