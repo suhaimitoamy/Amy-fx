@@ -1,113 +1,75 @@
-# Amy FX — Backtest Saran Level RR Sehat 2024
+# Amy FX — Perbandingan Retest vs Buy Stop / Sell Stop 2024
 
-> **Status:** final untuk iterasi RR 1:1,5 dan 1:2.  
+> **Status:** final untuk eksperimen stop order 3–4 poin.  
 > **Periode:** XAU/USD Januari–Desember 2024.  
+> **Catatan:** frasa “3–4 point” diterapkan sebagai **jarak tetap Entry–Stop Loss 3 poin dan 4 poin**.  
 > **Versi aplikasi dan jalur rilis tidak diubah.**
 
-## Perubahan aturan
+## Metodologi yang disamakan
 
-- Dua skenario OCO tetap tersedia: Buy dan Sell.
-- Resistance/support memakai ekstrem **32 candle M15 tertutup** terakhir.
-- Sisi dipilih setelah close M15 melewati level breakout dengan buffer **0,05 ATR**.
-- Entry tidak dikejar pada candle breakout. Harga wajib **retest level entry maksimal 8 candle M15**.
-- Stop Loss berada **1 ATR** di balik resistance/support asal.
-- TP1 = **1,5R**.
-- TP2 = **2R**.
+- Level setup dihitung dari **32 candle M15 tertutup**.
+- Buy dan Sell selalu dipersenjatai bersamaan sebagai **OCO**; sisi pertama yang aktif membatalkan sisi lawan.
+- Buffer pending order: **0,05 ATR M15** di luar resistance/support.
+- TP1 = **1,5R** dan TP2 = **2R**.
 - Setup berlaku **32 candle M15 / 8 jam**.
-- Setelah trade selesai atau setup kedaluwarsa, setup baru langsung dipersenjatai. Tidak ada trade yang tumpang tindih.
-- Tidak ada look-ahead. Pada konflik intrabar, termasuk candle retest, **stop dihitung lebih dahulu**.
+- Setup baru dipersenjatai setelah trade selesai atau setup kedaluwarsa; tidak ada posisi tumpang tindih.
+- Struktur dan level memakai M15, tetapi urutan trigger dan hasil diselesaikan memakai **355.592 candle M1**.
+- Tidak ada look-ahead. Jika SL dan target tersentuh dalam candle M1 yang sama, **SL dihitung lebih dahulu**.
+- Spread, slippage, komisi, news, dan perbedaan eksekusi broker belum dimodelkan.
 
-## Arus setup
+## Model yang dibandingkan
 
-| Metrik | Hasil |
-|---|---:|
-| Setup dipersenjatai | 1008 |
-| Breakout/breakdown terjadi | 764 |
-| Tidak ada breakout | 244 |
-| Breakout tanpa retest | 164 |
-| **Entry valid** | **600** |
-| Entry dari seluruh setup | 59.52% |
-| Entry setelah breakout | 78.53% |
-
-Dibanding iterasi lama yang menghasilkan 524 entry aktif, iterasi ini menghasilkan **600 entry**, bertambah **76 entry atau 14.50%** tanpa membuka dua posisi yang saling berlawanan secara bersamaan.
+1. **Breakout → Retest:** menunggu close M15 melewati level, lalu entry ketika harga kembali menyentuh level maksimal 8 candle M15.
+2. **Stop Order 3 poin:** Buy Stop/Sell Stop aktif saat harga menyentuh pending order; SL tetap 3 poin.
+3. **Stop Order 4 poin:** aturan sama, tetapi SL tetap 4 poin.
 
 ## Hasil keseluruhan
 
-| Metrik | Hasil |
-|---|---:|
-| Entry | 600 |
-| Buy | 373 |
-| Sell | 227 |
-| **TP1 1,5R tercapai** | **246/600 = 41.00%** |
-| Wilson 95% CI TP1 | 37.13–44.98% |
-| **TP2 2R tercapai** | **199/600 = 33.17%** |
-| Wilson 95% CI TP2 | 29.52–37.03% |
-| Stop sebelum TP1 | 322/600 = 53.67% |
-| TP1 lalu stop sebelum TP2 | 29/600 = 4.83% |
-| TP1 lalu expiry tanpa TP2/SL | 18/600 = 3.00% |
-| Tidak menyentuh TP1 atau SL | 32/600 = 5.33% |
-| Rata-rata jarak risiko | 2.96 poin |
-| Median jarak risiko | 2.68 poin |
-| Ekspektasi target TP1 sebelum biaya | **0.078R/entry** |
-| Ekspektasi target TP2 sebelum biaya | **0.078R/entry** |
+| Model | Entry | Buy | Sell | TP1 1,5R | TP2 2R | SL sebelum TP1 | SL langsung | Ekspektasi TP1 | Ekspektasi TP2 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Breakout → Retest | 605 | 376 | 229 | 38.18% | 31.57% | 55.87% | 1.82% | **+0.014R** | **+0.036R** |
+| Buy Stop/Sell Stop · 3 poin | 1270 | 713 | 557 | 37.56% | 30.08% | 59.37% | 4.72% | **-0.030R** | **-0.050R** |
+| Buy Stop/Sell Stop · 4 poin | 1049 | 577 | 472 | 37.37% | 29.08% | 55.20% | 2.86% | **+0.009R** | **-0.017R** |
 
-## Hasil per sisi
+## Dampak terhadap frekuensi entry
 
-| Sisi | Entry | TP1 1,5R | TP2 2R | Ekspektasi TP1 | Ekspektasi TP2 |
-|---|---:|---:|---:|---:|---:|
-| Buy | 373 | 40.75% | 33.78% | 0.083R | 0.105R |
-| Sell | 227 | 41.41% | 32.16% | 0.070R | 0.035R |
+- Stop Order 3 poin menghasilkan **1270 entry**, bertambah **665 entry atau 109.92%** dibanding retest.
+- Stop Order 4 poin menghasilkan **1049 entry**, bertambah **444 entry atau 73.39%** dibanding retest.
+- Dua skenario memang menaikkan frekuensi karena momentum yang langsung berjalan tidak lagi menunggu retest.
 
-## Konsistensi per bulan
+## Namun kualitas entry menurun
 
-| Bulan | Entry | Buy | Sell | TP1 1,5R | TP2 2R | Ekspektasi TP1 | Ekspektasi TP2 |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| 2024-01 | 39 | 26 | 13 | 23.08% | 17.95% | -0.372R | -0.385R |
-| 2024-02 | 47 | 28 | 19 | 46.81% | 44.68% | 0.191R | 0.362R |
-| 2024-03 | 42 | 27 | 15 | 54.76% | 50.00% | 0.393R | 0.524R |
-| 2024-04 | 44 | 27 | 17 | 52.27% | 40.91% | 0.375R | 0.364R |
-| 2024-05 | 62 | 31 | 31 | 43.55% | 38.71% | 0.137R | 0.226R |
-| 2024-06 | 48 | 29 | 19 | 37.50% | 31.25% | 0.042R | 0.063R |
-| 2024-07 | 65 | 41 | 24 | 43.08% | 32.31% | 0.108R | 0.031R |
-| 2024-08 | 48 | 26 | 22 | 33.33% | 29.17% | -0.083R | 0.000R |
-| 2024-09 | 45 | 36 | 9 | 44.44% | 37.78% | 0.222R | 0.244R |
-| 2024-10 | 62 | 44 | 18 | 30.65% | 24.19% | -0.153R | -0.161R |
-| 2024-11 | 51 | 28 | 23 | 47.06% | 29.41% | 0.176R | -0.059R |
-| 2024-12 | 47 | 30 | 17 | 36.17% | 23.40% | -0.074R | -0.213R |
+- Model 3 poin mempunyai **60 SL langsung pada candle M1 pemicu** dan ekspektasi negatif untuk TP1 maupun TP2.
+- Model 4 poin mengurangi SL langsung menjadi **30**, tetapi TP2 masih negatif **−0,017R per entry**.
+- Retest hanya mempunyai **11 SL langsung** dan tetap menjadi model terbaik pada pengujian ini, walaupun edge-nya tipis: **+0,014R** untuk TP1 dan **+0,036R** untuk TP2 sebelum biaya.
+- Karena biaya transaksi belum dihitung, ketiga hasil belum cukup kuat untuk dianggap edge produksi yang aman.
 
-Jumlah entry bulanan berada pada rentang **39–65 entry**. Frekuensi entry relatif terjaga, tetapi hasil tidak merata: beberapa bulan masih negatif. Karena pengujian hanya memakai 2024, angka ini belum boleh dianggap edge final lintas rezim.
+## Konsistensi bulanan — model TP2 2R
 
-## Sepuluh contoh entry nyata
+| Bulan | Retest Entry | Retest Exp. | Stop 3 Entry | Stop 3 Exp. | Stop 4 Entry | Stop 4 Exp. |
+|---|---:|---:|---:|---:|---:|---:|
+| 2024-01 | 39 | -0.385R | 71 | -0.042R | 63 | -0.111R |
+| 2024-02 | 47 | 0.362R | 74 | -0.392R | 59 | -0.153R |
+| 2024-03 | 41 | 0.341R | 84 | 0.214R | 73 | 0.233R |
+| 2024-04 | 44 | 0.159R | 121 | 0.025R | 100 | -0.020R |
+| 2024-05 | 62 | 0.226R | 108 | 0.120R | 90 | 0.156R |
+| 2024-06 | 49 | 0.000R | 106 | -0.047R | 89 | 0.045R |
+| 2024-07 | 65 | 0.031R | 122 | -0.033R | 101 | -0.050R |
+| 2024-08 | 52 | -0.077R | 114 | -0.079R | 93 | 0.161R |
+| 2024-09 | 45 | 0.156R | 113 | -0.142R | 93 | -0.258R |
+| 2024-10 | 63 | -0.175R | 121 | -0.157R | 98 | -0.184R |
+| 2024-11 | 52 | -0.019R | 126 | 0.040R | 103 | 0.068R |
+| 2024-12 | 46 | -0.174R | 110 | -0.155R | 87 | -0.115R |
 
-| No. | Entry | Sisi | Harga entry | Stop | TP1 | TP2 | Hasil |
-|---:|---|---|---:|---:|---:|---:|---|
-| 1 | 2024-01-05 02:00 UTC | SELL | 2042.65 | 2044.02 | 2040.60 | 2039.92 | SL |
-| 2 | 2024-02-20 07:15 UTC | BUY | 2027.06 | 2025.42 | 2029.51 | 2030.33 | TP2 |
-| 3 | 2024-04-03 15:00 UTC | BUY | 2295.34 | 2289.59 | 2303.98 | 2306.86 | TP1 lalu expiry |
-| 4 | 2024-05-15 00:00 UTC | BUY | 2359.63 | 2358.23 | 2361.73 | 2362.43 | SL |
-| 5 | 2024-06-24 05:00 UTC | BUY | 2326.71 | 2323.99 | 2330.79 | 2332.15 | TP1 lalu SL |
-| 6 | 2024-07-24 09:00 UTC | BUY | 2419.23 | 2416.79 | 2422.88 | 2424.10 | TP1 lalu SL |
-| 7 | 2024-09-06 00:00 UTC | BUY | 2517.88 | 2516.80 | 2519.51 | 2520.05 | TP2 |
-| 8 | 2024-10-10 15:30 UTC | BUY | 2629.81 | 2624.59 | 2637.63 | 2640.24 | TP1 lalu expiry |
-| 9 | 2024-11-18 22:15 UTC | BUY | 2624.18 | 2621.42 | 2628.32 | 2629.70 | SL |
-| 10 | 2024-12-31 10:15 UTC | BUY | 2617.72 | 2614.98 | 2621.83 | 2623.20 | TP2 |
+## Keputusan implementasi
 
-## Kesimpulan
-
-- Frekuensi entry tidak berkurang: **524 → 600**.
-- RR sudah diperbaiki menjadi **TP1 1:1,5** dan **TP2 1:2**.
-- Hit rate memang turun dibanding target lama yang terlalu dekat, tetapi ekspektasi matematis awal menjadi **positif 0.078R–0.078R per entry sebelum biaya**.
-- Edge masih tipis dan tidak konsisten setiap bulan. Spread, slippage, komisi, news, serta eksekusi broker dapat menghapus keunggulan tersebut.
-
-## Batasan
-
-- Spread, slippage, komisi, dan perbedaan eksekusi broker belum dimodelkan.
-- News historis tidak dimasukkan.
-- Ini merupakan backtest in-sample pada 2024 dan belum divalidasi pada tahun lain.
-- Ekspektasi TP1 menganggap posisi ditutup penuh di 1,5R. Ekspektasi TP2 menganggap posisi ditutup penuh di 2R; trade yang mencapai TP1 lalu kembali ke SL dihitung rugi untuk model TP2.
+**Buy Stop/Sell Stop tidak menggantikan model retest di aplikasi.** Stop order berhasil meningkatkan jumlah entry secara besar, tetapi tambahan entry didominasi kualitas momentum yang lebih rendah dan tidak memperbaiki ekspektasi. Model retest tetap aktif pada branch ini sampai ditemukan filter yang membuat stop order positif setelah biaya.
 
 ## Audit
 
-- Jumlah candle M15: **23.713**.
+- Candle M15: **23.713**.
+- Candle M1: **355.592**.
 - Rentang UTC: **2024-01-01T18:00:00.000Z — 2024-12-31T16:45:00.000Z**.
-- SHA-256 raw records: `0b7f5010d3d7b1cec6be8768cf73481bf1f4ab1c0340b9ada6e1f7b77dc74c90`.
+- Hash retest: `5cfa61c14360d427e904ac65d7ac690045120e8081d49a1718c3c0f889ddf826`.
+- Hash stop 3 poin: `6350c452634ead048b50f93f8d96e06f12dabf3e5b62475848b70a7356cf51b7`.
+- Hash stop 4 poin: `4556963e5e9990e3d989f4d0902666507d1bde8f895e664a8ee5e7f9a51c2d27`.
