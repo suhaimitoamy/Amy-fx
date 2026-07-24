@@ -4,7 +4,6 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import {
   TRADE_SCENARIO_CONFIG,
-  activateTradeScenario,
   buildTradeScenarios
 } from '../app/src/main/assets/apps/mapping/js/outlook/trade-scenario-core.js';
 
@@ -14,7 +13,6 @@ const DATA_DIR = process.env.AMYFX_2024_DATA || '/mnt/data/amyfx_2024';
 const JSON_PATH = path.join(PATCH_ROOT, 'docs/backtests/amy-fx-trade-scenarios-2024.json');
 const REPORT_PATH = path.join(PATCH_ROOT, 'docs/backtests/AMY_FX_TRADE_SCENARIOS_2024.md');
 const WARMUP_BARS = 299;
-const SNAPSHOT_STEP = TRADE_SCENARIO_CONFIG.validityBars;
 
 function parseCsv(filePath) {
   const lines = fs.readFileSync(filePath, 'utf8').trim().split(/\r?\n/);
@@ -58,32 +56,42 @@ function monthKey(timestamp) {
   return new Date(timestamp).toISOString().slice(0, 7);
 }
 
-function triggerScenario(built, future) {
+function iso(timestamp) {
+  return new Date(timestamp).toISOString();
+}
+
+function selectBreakout(built, candles, startIndex, expiryIndex) {
   const buy = built.scenarios.find(item => item.side === 'BUY');
   const sell = built.scenarios.find(item => item.side === 'SELL');
-  for (let offset = 0; offset < future.length; offset += 1) {
-    const candle = future[offset];
-    if (candle.close > buy.entry) {
-      return { scenario: activateTradeScenario(buy, candle.close), triggerOffset: offset, triggerTime: candle.time };
-    }
-    if (candle.close < sell.entry) {
-      return { scenario: activateTradeScenario(sell, candle.close), triggerOffset: offset, triggerTime: candle.time };
+  for (let index = startIndex; index <= expiryIndex; index += 1) {
+    const candle = candles[index];
+    if (candle.close > buy.entry) return { scenario: buy, index };
+    if (candle.close < sell.entry) return { scenario: sell, index };
+  }
+  return null;
+}
+
+function findRetest(selection, candles, expiryIndex) {
+  const scenario = selection.scenario;
+  const lastIndex = Math.min(expiryIndex, selection.index + Number(scenario.retestBars || 0));
+  for (let index = selection.index + 1; index <= lastIndex; index += 1) {
+    const candle = candles[index];
+    if (candle.low <= scenario.entry && candle.high >= scenario.entry) {
+      return { scenario, index };
     }
   }
   return null;
 }
 
-function evaluateActivated(activation, future) {
-  const scenario = activation.scenario;
+function evaluateEntry(entry, candles, expiryIndex) {
+  const scenario = entry.scenario;
   let tp1Reached = false;
   let tp2Reached = false;
   let stopReached = false;
-  let stopBeforeTp1 = false;
-  let tp1ThenStop = false;
-  let outcomeTime = null;
-  const afterTrigger = future.slice(activation.triggerOffset + 1);
+  let outcomeIndex = expiryIndex;
 
-  for (const candle of afterTrigger) {
+  for (let index = entry.index; index <= expiryIndex; index += 1) {
+    const candle = candles[index];
     const stopTouched = scenario.side === 'BUY'
       ? candle.low <= scenario.stopLoss
       : candle.high >= scenario.stopLoss;
@@ -96,16 +104,14 @@ function evaluateActivated(activation, future) {
 
     if (stopTouched) {
       stopReached = true;
-      stopBeforeTp1 = !tp1Reached;
-      tp1ThenStop = tp1Reached && !tp2Reached;
-      outcomeTime = candle.time;
+      outcomeIndex = index;
       break;
     }
     if (tp1Touched) tp1Reached = true;
     if (tp2Touched) {
       tp1Reached = true;
       tp2Reached = true;
-      outcomeTime = candle.time;
+      outcomeIndex = index;
       break;
     }
   }
@@ -114,12 +120,11 @@ function evaluateActivated(activation, future) {
     tp1Reached,
     tp2Reached,
     stopReached,
-    stopBeforeTp1,
-    tp1ThenStop,
-    noTp1OrStop: !tp1Reached && !stopReached,
+    stoppedBeforeTp1: stopReached && !tp1Reached,
+    tp1ThenStopped: stopReached && tp1Reached && !tp2Reached,
     tp1OnlyAtExpiry: tp1Reached && !tp2Reached && !stopReached,
-    unresolvedBeforeTp2: !tp2Reached && !stopReached,
-    outcomeTime
+    noTp1OrStop: !tp1Reached && !stopReached,
+    outcomeIndex
   };
 }
 
@@ -133,163 +138,283 @@ function wilson(successes, total, z = 1.959963984540054) {
   const denominator = 1 + z * z / total;
   const center = (p + z * z / (2 * total)) / denominator;
   const margin = z * Math.sqrt((p * (1 - p) + z * z / (4 * total)) / total) / denominator;
-  return [Number(((center - margin) * 100).toFixed(2)), Number(((center + margin) * 100).toFixed(2))];
+  return [
+    Number(((center - margin) * 100).toFixed(2)),
+    Number(((center + margin) * 100).toFixed(2))
+  ];
+}
+
+function median(values) {
+  if (!values.length) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
 }
 
 function summarize(records) {
-  const activated = records.filter(item => item.activated);
-  const count = key => activated.filter(item => item[key]).length;
+  const total = records.length;
+  const count = key => records.filter(item => item[key]).length;
+  const tp1Reached = count('tp1Reached');
+  const tp2Reached = count('tp2Reached');
+  const stoppedBeforeTp1 = count('stoppedBeforeTp1');
+  const tp1ThenStopped = count('tp1ThenStopped');
+  const risks = records.map(item => item.risk);
   return {
-    snapshots: records.length,
-    activated: activated.length,
-    activationRate: pct(activated.length, records.length),
-    buyActivations: activated.filter(item => item.side === 'BUY').length,
-    sellActivations: activated.filter(item => item.side === 'SELL').length,
-    noTrigger: records.filter(item => !item.activated).length,
-    tp1Reached: count('tp1Reached'),
-    tp1Rate: pct(count('tp1Reached'), activated.length),
-    tp1Ci95: wilson(count('tp1Reached'), activated.length),
-    tp2Reached: count('tp2Reached'),
-    tp2Rate: pct(count('tp2Reached'), activated.length),
-    tp2Ci95: wilson(count('tp2Reached'), activated.length),
-    stoppedBeforeTp1: count('stopBeforeTp1'),
-    stoppedBeforeTp1Rate: pct(count('stopBeforeTp1'), activated.length),
-    tp1ThenStopped: count('tp1ThenStop'),
-    tp1ThenStoppedRate: pct(count('tp1ThenStop'), activated.length),
-    noTp1OrStop: count('noTp1OrStop'),
-    noTp1OrStopRate: pct(count('noTp1OrStop'), activated.length),
+    entries: total,
+    buyEntries: records.filter(item => item.side === 'BUY').length,
+    sellEntries: records.filter(item => item.side === 'SELL').length,
+    tp1Reached,
+    tp1Rate: pct(tp1Reached, total),
+    tp1Ci95: wilson(tp1Reached, total),
+    tp2Reached,
+    tp2Rate: pct(tp2Reached, total),
+    tp2Ci95: wilson(tp2Reached, total),
+    stoppedBeforeTp1,
+    stoppedBeforeTp1Rate: pct(stoppedBeforeTp1, total),
+    tp1ThenStopped,
+    tp1ThenStoppedRate: pct(tp1ThenStopped, total),
     tp1OnlyAtExpiry: count('tp1OnlyAtExpiry'),
-    tp1OnlyAtExpiryRate: pct(count('tp1OnlyAtExpiry'), activated.length),
-    unresolvedBeforeTp2: count('unresolvedBeforeTp2'),
-    unresolvedBeforeTp2Rate: pct(count('unresolvedBeforeTp2'), activated.length)
+    tp1OnlyAtExpiryRate: pct(count('tp1OnlyAtExpiry'), total),
+    noTp1OrStop: count('noTp1OrStop'),
+    noTp1OrStopRate: pct(count('noTp1OrStop'), total),
+    averageRiskPoints: total ? Number((risks.reduce((sum, value) => sum + value, 0) / total).toFixed(2)) : 0,
+    medianRiskPoints: Number(median(risks).toFixed(2)),
+    expectancyAtTp1R: total
+      ? Number(((tp1Reached * TRADE_SCENARIO_CONFIG.tp1R - stoppedBeforeTp1) / total).toFixed(3))
+      : 0,
+    expectancyAtTp2R: total
+      ? Number(((tp2Reached * TRADE_SCENARIO_CONFIG.tp2R - stoppedBeforeTp1 - tp1ThenStopped) / total).toFixed(3))
+      : 0
   };
 }
 
 function tableMonthly(monthly) {
   const rows = Object.entries(monthly).map(([month, item]) =>
-    `| ${month} | ${item.snapshots} | ${item.activated} | ${item.activationRate.toFixed(2)}% | ${item.tp1Rate.toFixed(2)}% | ${item.tp2Rate.toFixed(2)}% | ${item.stoppedBeforeTp1Rate.toFixed(2)}% |`
+    `| ${month} | ${item.entries} | ${item.buyEntries} | ${item.sellEntries} | ${item.tp1Rate.toFixed(2)}% | ${item.tp2Rate.toFixed(2)}% | ${item.expectancyAtTp1R.toFixed(3)}R | ${item.expectancyAtTp2R.toFixed(3)}R |`
   );
-  return ['| Bulan | Snapshot | Aktif | Aktivasi | TP1 | TP2 | Stop sebelum TP1 |', '|---|---:|---:|---:|---:|---:|---:|', ...rows].join('\n');
+  return [
+    '| Bulan | Entry | Buy | Sell | TP1 1,5R | TP2 2R | Ekspektasi TP1 | Ekspektasi TP2 |',
+    '|---|---:|---:|---:|---:|---:|---:|---:|',
+    ...rows
+  ].join('\n');
+}
+
+function sampleTable(records) {
+  const indexes = Array.from({ length: 10 }, (_, index) => Math.round(index * (records.length - 1) / 9));
+  const rows = indexes.map((recordIndex, position) => {
+    const item = records[recordIndex];
+    const outcome = item.tp2Reached ? 'TP2'
+      : item.tp1ThenStopped ? 'TP1 lalu SL'
+        : item.tp1OnlyAtExpiry ? 'TP1 lalu expiry'
+          : item.stoppedBeforeTp1 ? 'SL'
+            : 'Expiry';
+    return `| ${position + 1} | ${item.entryTime.slice(0, 16).replace('T', ' ')} UTC | ${item.side} | ${item.entry.toFixed(2)} | ${item.stopLoss.toFixed(2)} | ${item.takeProfit1.toFixed(2)} | ${item.takeProfit2.toFixed(2)} | ${outcome} |`;
+  });
+  return [
+    '| No. | Entry | Sisi | Harga entry | Stop | TP1 | TP2 | Hasil |',
+    '|---:|---|---|---:|---:|---:|---:|---|',
+    ...rows
+  ].join('\n');
 }
 
 const candles = loadM15();
 const records = [];
-for (let index = WARMUP_BARS; index < candles.length - SNAPSHOT_STEP - 2; index += SNAPSHOT_STEP) {
-  const history = candles.slice(0, index + 1);
-  const future = candles.slice(index + 1, index + SNAPSHOT_STEP + 1);
-  const snapshotTime = candles[index].time;
-  const built = buildTradeScenarios({ candles: history, price: candles[index].close, now: snapshotTime });
-  if (built.status !== 'READY') continue;
-  const activation = triggerScenario(built, future);
-  if (!activation) {
-    records.push({ snapshotTime, month: monthKey(snapshotTime), activated: false });
+let setupIndex = WARMUP_BARS;
+let armedSetups = 0;
+let breakouts = 0;
+let noBreakout = 0;
+let breakoutWithoutRetest = 0;
+
+while (setupIndex < candles.length - TRADE_SCENARIO_CONFIG.validityBars - 2) {
+  armedSetups += 1;
+  const history = candles.slice(0, setupIndex + 1);
+  const built = buildTradeScenarios({
+    candles: history,
+    price: candles[setupIndex].close,
+    now: candles[setupIndex].time
+  });
+  if (built.status !== 'READY') {
+    setupIndex += 1;
     continue;
   }
-  const evaluation = evaluateActivated(activation, future);
+
+  const expiryIndex = Math.min(
+    candles.length - 1,
+    setupIndex + TRADE_SCENARIO_CONFIG.validityBars
+  );
+  const breakout = selectBreakout(built, candles, setupIndex + 1, expiryIndex);
+  if (!breakout) {
+    noBreakout += 1;
+    setupIndex = expiryIndex + 1;
+    continue;
+  }
+  breakouts += 1;
+
+  const entry = findRetest(breakout, candles, expiryIndex);
+  if (!entry) {
+    breakoutWithoutRetest += 1;
+    setupIndex = expiryIndex + 1;
+    continue;
+  }
+
+  const evaluation = evaluateEntry(entry, candles, expiryIndex);
+  const scenario = entry.scenario;
   records.push({
-    snapshotTime,
-    month: monthKey(snapshotTime),
-    activated: true,
-    side: activation.scenario.side,
-    triggerTime: activation.triggerTime,
-    entry: activation.scenario.entry,
-    stopLoss: activation.scenario.stopLoss,
-    takeProfit1: activation.scenario.takeProfit1,
-    takeProfit2: activation.scenario.takeProfit2,
+    setupTime: iso(candles[setupIndex].time),
+    breakoutTime: iso(candles[breakout.index].time),
+    entryTime: iso(candles[entry.index].time),
+    outcomeTime: iso(candles[evaluation.outcomeIndex].time),
+    month: monthKey(candles[entry.index].time),
+    side: scenario.side,
+    entry: scenario.entry,
+    stopLoss: scenario.stopLoss,
+    takeProfit1: scenario.takeProfit1,
+    takeProfit2: scenario.takeProfit2,
+    risk: scenario.risk,
     ...evaluation
   });
+  setupIndex = evaluation.outcomeIndex + 1;
 }
 
 const overall = summarize(records);
 const monthly = Object.fromEntries(
-  [...new Set(records.map(item => item.month))].sort().map(month => [month, summarize(records.filter(item => item.month === month))])
+  [...new Set(records.map(item => item.month))]
+    .sort()
+    .map(month => [month, summarize(records.filter(item => item.month === month))])
 );
-const rawHash = crypto.createHash('sha256').update(JSON.stringify(records)).digest('hex');
+const bySide = Object.fromEntries(
+  ['BUY', 'SELL'].map(side => [side, summarize(records.filter(item => item.side === side))])
+);
+const rawHash = crypto.createHash('sha256')
+  .update(JSON.stringify(records))
+  .digest('hex');
+
 const result = {
-  status: 'FINAL_BACKTEST_DUAL_CONDITIONAL_SCENARIOS_2024',
+  status: 'FINAL_BACKTEST_DUAL_SCENARIO_RETEST_RR_2024',
   generatedAt: new Date().toISOString(),
   methodology: {
     dataset: 'XAU/USD M15 January–December 2024',
     candleCount: candles.length,
-    firstCandleUtc: new Date(candles[0].time).toISOString(),
-    lastCandleUtc: new Date(candles.at(-1).time).toISOString(),
+    firstCandleUtc: iso(candles[0].time),
+    lastCandleUtc: iso(candles.at(-1).time),
     warmupBars: WARMUP_BARS,
-    snapshotStepBars: SNAPSHOT_STEP,
-    noLookahead: true,
-    ocoActivation: 'First M15 close above Buy entry or below Sell entry activates; opposite scenario is cancelled.',
-    fill: 'Actual trigger candle close.',
-    evaluation: 'From the candle after trigger until the original 32-bar validity window ends.',
-    intrabarConflict: 'Stop-first conservative ordering.',
+    setupScheduling: 'Sequential non-overlapping: a new setup is armed after the prior trade resolves or its validity expires.',
+    ocoActivation: 'First M15 close beyond Buy/Sell breakout level selects the side and cancels the opposite side.',
+    retestEntry: 'Selected side must retest the planned entry during the next 8 M15 candles.',
+    fill: 'Planned retest level.',
+    evaluation: 'Entry candle through original 32-bar setup expiry.',
+    intrabarConflict: 'Stop-first conservative ordering, including the retest entry candle.',
     spreadSlippageCommission: 'Not modeled.',
     news: 'Not modeled.'
   },
   config: TRADE_SCENARIO_CONFIG,
+  setupFlow: {
+    armedSetups,
+    breakouts,
+    noBreakout,
+    breakoutWithoutRetest,
+    entries: records.length,
+    entryRateFromArmed: pct(records.length, armedSetups),
+    entryRateFromBreakout: pct(records.length, breakouts)
+  },
   overall,
+  bySide,
   monthly,
   audit: { rawRecordsSha256: rawHash }
 };
 
-const report = `# Amy FX — Backtest Saran Level Dua Skenario 2024
+const report = `# Amy FX — Backtest Saran Level RR Sehat 2024
 
-> **Status:** final untuk pengecekan awal akurasi desain Saran Level.  
+> **Status:** final untuk iterasi RR 1:1,5 dan 1:2.  
 > **Periode:** XAU/USD Januari–Desember 2024.  
 > **Versi aplikasi dan jalur rilis tidak diubah.**
 
-## Aturan yang diuji
+## Perubahan aturan
 
-- Timeframe pemicu: **M15**.
-- Resistance dan support: ekstrem **32 candle M15 tertutup** terakhir.
-- Buy aktif setelah candle M15 close di atas resistance + **0,05 ATR**.
-- Sell aktif setelah candle M15 close di bawah support − **0,05 ATR**.
-- Skenario pertama yang aktif membatalkan sisi berlawanan.
-- Fill memakai harga close candle pemicu.
-- Stop struktural memakai padding **0,75 ATR**.
-- TP1 = **0,5R** dan TP2 = **1,0R**.
-- Masa berlaku: **32 candle M15 / 8 jam**.
-- Snapshot tidak tumpang tindih dan memakai warm-up **299 candle tertutup**.
-- Tidak ada look-ahead. Jika stop dan target tersentuh dalam candle yang sama, stop dihitung lebih dahulu.
+- Dua skenario OCO tetap tersedia: Buy dan Sell.
+- Resistance/support memakai ekstrem **32 candle M15 tertutup** terakhir.
+- Sisi dipilih setelah close M15 melewati level breakout dengan buffer **0,05 ATR**.
+- Entry tidak dikejar pada candle breakout. Harga wajib **retest level entry maksimal 8 candle M15**.
+- Stop Loss berada **1 ATR** di balik resistance/support asal.
+- TP1 = **1,5R**.
+- TP2 = **2R**.
+- Setup berlaku **32 candle M15 / 8 jam**.
+- Setelah trade selesai atau setup kedaluwarsa, setup baru langsung dipersenjatai. Tidak ada trade yang tumpang tindih.
+- Tidak ada look-ahead. Pada konflik intrabar, termasuk candle retest, **stop dihitung lebih dahulu**.
+
+## Arus setup
+
+| Metrik | Hasil |
+|---|---:|
+| Setup dipersenjatai | ${armedSetups} |
+| Breakout/breakdown terjadi | ${breakouts} |
+| Tidak ada breakout | ${noBreakout} |
+| Breakout tanpa retest | ${breakoutWithoutRetest} |
+| **Entry valid** | **${records.length}** |
+| Entry dari seluruh setup | ${pct(records.length, armedSetups).toFixed(2)}% |
+| Entry setelah breakout | ${pct(records.length, breakouts).toFixed(2)}% |
+
+Dibanding iterasi lama yang menghasilkan 524 entry aktif, iterasi ini menghasilkan **${records.length} entry**, bertambah **${records.length - 524} entry atau ${pct(records.length - 524, 524).toFixed(2)}%** tanpa membuka dua posisi yang saling berlawanan secara bersamaan.
 
 ## Hasil keseluruhan
 
 | Metrik | Hasil |
 |---|---:|
-| Snapshot | ${overall.snapshots} |
-| Skenario aktif | ${overall.activated} |
-| Tingkat aktivasi | ${overall.activationRate.toFixed(2)}% |
-| Buy aktif | ${overall.buyActivations} |
-| Sell aktif | ${overall.sellActivations} |
-| Tidak ada trigger | ${overall.noTrigger} |
-| **TP1 tercapai sebelum stop** | **${overall.tp1Reached} / ${overall.activated} = ${overall.tp1Rate.toFixed(2)}%** |
+| Entry | ${overall.entries} |
+| Buy | ${overall.buyEntries} |
+| Sell | ${overall.sellEntries} |
+| **TP1 1,5R tercapai** | **${overall.tp1Reached}/${overall.entries} = ${overall.tp1Rate.toFixed(2)}%** |
 | Wilson 95% CI TP1 | ${overall.tp1Ci95[0].toFixed(2)}–${overall.tp1Ci95[1].toFixed(2)}% |
-| **TP2 tercapai sebelum stop** | **${overall.tp2Reached} / ${overall.activated} = ${overall.tp2Rate.toFixed(2)}%** |
+| **TP2 2R tercapai** | **${overall.tp2Reached}/${overall.entries} = ${overall.tp2Rate.toFixed(2)}%** |
 | Wilson 95% CI TP2 | ${overall.tp2Ci95[0].toFixed(2)}–${overall.tp2Ci95[1].toFixed(2)}% |
-| Stop sebelum TP1 | ${overall.stoppedBeforeTp1} / ${overall.activated} = ${overall.stoppedBeforeTp1Rate.toFixed(2)}% |
-| TP1 lalu stop sebelum TP2 | ${overall.tp1ThenStopped} / ${overall.activated} = ${overall.tp1ThenStoppedRate.toFixed(2)}% |
-| Tidak menyentuh TP1 maupun SL sampai expiry | ${overall.noTp1OrStop} / ${overall.activated} = ${overall.noTp1OrStopRate.toFixed(2)}% |
-| TP1 tercapai lalu expiry tanpa TP2/SL | ${overall.tp1OnlyAtExpiry} / ${overall.activated} = ${overall.tp1OnlyAtExpiryRate.toFixed(2)}% |
+| Stop sebelum TP1 | ${overall.stoppedBeforeTp1}/${overall.entries} = ${overall.stoppedBeforeTp1Rate.toFixed(2)}% |
+| TP1 lalu stop sebelum TP2 | ${overall.tp1ThenStopped}/${overall.entries} = ${overall.tp1ThenStoppedRate.toFixed(2)}% |
+| TP1 lalu expiry tanpa TP2/SL | ${overall.tp1OnlyAtExpiry}/${overall.entries} = ${overall.tp1OnlyAtExpiryRate.toFixed(2)}% |
+| Tidak menyentuh TP1 atau SL | ${overall.noTp1OrStop}/${overall.entries} = ${overall.noTp1OrStopRate.toFixed(2)}% |
+| Rata-rata jarak risiko | ${overall.averageRiskPoints.toFixed(2)} poin |
+| Median jarak risiko | ${overall.medianRiskPoints.toFixed(2)} poin |
+| Ekspektasi target TP1 sebelum biaya | **${overall.expectancyAtTp1R.toFixed(3)}R/entry** |
+| Ekspektasi target TP2 sebelum biaya | **${overall.expectancyAtTp2R.toFixed(3)}R/entry** |
 
-## Hasil per bulan
+## Hasil per sisi
+
+| Sisi | Entry | TP1 1,5R | TP2 2R | Ekspektasi TP1 | Ekspektasi TP2 |
+|---|---:|---:|---:|---:|---:|
+| Buy | ${bySide.BUY.entries} | ${bySide.BUY.tp1Rate.toFixed(2)}% | ${bySide.BUY.tp2Rate.toFixed(2)}% | ${bySide.BUY.expectancyAtTp1R.toFixed(3)}R | ${bySide.BUY.expectancyAtTp2R.toFixed(3)}R |
+| Sell | ${bySide.SELL.entries} | ${bySide.SELL.tp1Rate.toFixed(2)}% | ${bySide.SELL.tp2Rate.toFixed(2)}% | ${bySide.SELL.expectancyAtTp1R.toFixed(3)}R | ${bySide.SELL.expectancyAtTp2R.toFixed(3)}R |
+
+## Konsistensi per bulan
 
 ${tableMonthly(monthly)}
 
+Jumlah entry bulanan berada pada rentang **${Math.min(...Object.values(monthly).map(item => item.entries))}–${Math.max(...Object.values(monthly).map(item => item.entries))} entry**. Frekuensi entry relatif terjaga, tetapi hasil tidak merata: beberapa bulan masih negatif. Karena pengujian hanya memakai 2024, angka ini belum boleh dianggap edge final lintas rezim.
+
+## Sepuluh contoh entry nyata
+
+${sampleTable(records)}
+
 ## Kesimpulan
 
-Desain dua skenario kondisional lebih terukur daripada Outlook arah tunggal pada data 2024. Skenario tidak menebak sisi sebelum market memilih; sistem menunggu close M15 valid. Dengan definisi TP1 0,5R, tingkat keberhasilan awal adalah **${overall.tp1Rate.toFixed(2)}%**. Untuk TP2 1,0R, hasilnya **${overall.tp2Rate.toFixed(2)}%**.
+- Frekuensi entry tidak berkurang: **524 → ${records.length}**.
+- RR sudah diperbaiki menjadi **TP1 1:1,5** dan **TP2 1:2**.
+- Hit rate memang turun dibanding target lama yang terlalu dekat, tetapi ekspektasi matematis awal menjadi **positif ${overall.expectancyAtTp1R.toFixed(3)}R–${overall.expectancyAtTp2R.toFixed(3)}R per entry sebelum biaya**.
+- Edge masih tipis dan tidak konsisten setiap bulan. Spread, slippage, komisi, news, serta eksekusi broker dapat menghapus keunggulan tersebut.
 
 ## Batasan
 
 - Spread, slippage, komisi, dan perbedaan eksekusi broker belum dimodelkan.
 - News historis tidak dimasukkan.
-- Pengujian ini memakai M15 saja dan mengevaluasi level kondisional, bukan profitabilitas akun.
-- TP1 0,5R dan TP2 1,0R adalah aturan tetap yang dikunci sebelum hasil dibaca.
+- Ini merupakan backtest in-sample pada 2024 dan belum divalidasi pada tahun lain.
+- Ekspektasi TP1 menganggap posisi ditutup penuh di 1,5R. Ekspektasi TP2 menganggap posisi ditutup penuh di 2R; trade yang mencapai TP1 lalu kembali ke SL dihitung rugi untuk model TP2.
 
 ## Audit
 
 - Jumlah candle M15: **${candles.length.toLocaleString('id-ID')}**.
-- Rentang UTC: **${new Date(candles[0].time).toISOString()} — ${new Date(candles.at(-1).time).toISOString()}**.
+- Rentang UTC: **${iso(candles[0].time)} — ${iso(candles.at(-1).time)}**.
 - SHA-256 raw records: \`${rawHash}\`.
 `;
 
+fs.mkdirSync(path.dirname(JSON_PATH), { recursive: true });
 fs.writeFileSync(JSON_PATH, `${JSON.stringify(result, null, 2)}\n`);
 fs.writeFileSync(REPORT_PATH, report);
 console.log(JSON.stringify(result, null, 2));
