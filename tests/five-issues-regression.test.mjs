@@ -31,9 +31,9 @@ test('Mapping UI hardening files remain syntactically valid', () => {
   }
 });
 
-test('README reflects installed Amy FX 1.5.1 identity', () => {
-  assert.match(readme, /\*\*Versi:\*\* `1\.5\.1`/);
-  assert.match(readme, /\*\*Version code:\*\* `42`/);
+test('README reflects Amy FX 1.5.2 release identity', () => {
+  assert.match(readme, /\*\*Versi:\*\* `1\.5\.2`/);
+  assert.match(readme, /\*\*Version code:\*\* `43`/);
   assert.equal(readme.includes('**Versi:** `1.4.6`'), false);
   assert.equal(readme.includes('**Version code:** `29`'), false);
 });
@@ -94,8 +94,8 @@ test('final issue-5 audit separates tracker success from close-direction accurac
   assert.match(fixes, /Skor skenario bukan probabilitas kemenangan/);
 });
 
-test('version and update publication remain locked at existing 1.5.1 metadata', () => {
-  assert.match(appVersion, /name: '1\.5\.1', code: 42/);
-  assert.equal(update.latest_version_name, '1.5.1');
-  assert.equal(update.latest_version_code, 42);
+test('source version is 1.5.2 while published metadata remains safe during release', () => {
+  assert.match(appVersion, /name: '1\.5\.2', code: 43/);
+  assert.ok([42, 43].includes(update.latest_version_code));
+  assert.equal(update.latest_version_name, update.latest_version_code === 43 ? '1.5.2' : '1.5.1');
 });

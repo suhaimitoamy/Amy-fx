@@ -2,9 +2,9 @@
 
 Amy FX adalah aplikasi Android hybrid untuk pemetaan dan pemantauan market **XAU/USD**. Antarmuka utama berjalan melalui WebView lokal, sedangkan notifikasi, background scanner, penyimpanan, Firebase Messaging, download, dan pembaruan aplikasi ditangani oleh Kotlin native.
 
-> **Versi:** `1.5.1`
+> **Versi:** `1.5.2`
 >
-> **Version code:** `42`
+> **Version code:** `43`
 > **Minimum Android:** Android 8.0 / API 26  
 > **Target SDK:** Android SDK 35  
 > **Application ID:** `com.amyelitesuite`
@@ -25,6 +25,17 @@ Amy FX bukan robot trading, Expert Advisor, atau penasihat keuangan. Aplikasi ti
 | **Tutorial Trading** | Materi belajar trading terstruktur di dalam aplikasi |
 | **Indikator TradingView** | Library indikator dan file Pine Script |
 | **Dashboard** | Akses cepat ke seluruh modul Amy FX |
+
+## Update v1.5.2 — AMY Market Context Final
+
+- Market Outlook memakai **AMY Market Context Final** dengan struktur M15 dan trigger M5.
+- Outlook hanya menampilkan BUY atau SELL ketika terdapat event yang memenuhi threshold terkunci; tanpa event valid hasil tetap **WAIT**.
+- Event aktif mencakup **FVG Revisit, Order Block Revisit, Draw on Liquidity**, dan **Asia Entry**.
+- Event yang saling bertentangan ditahan sebagai **KONFLIK · WAIT**.
+- Data M5 atau M15 yang usang menahan seluruh outlook live sampai candle kembali valid.
+- Konteks EMA 5/15 M5, M15, H1, H4, dan D1 tetap tersedia sebagai informasi multi-timeframe.
+- Angka serta periode validasi historis dihapus dari kartu live dan hasil **Salin outlook**.
+- Package, signing key, data aplikasi, dan update channel produksi tetap dipertahankan.
 
 ## Update v1.5.1 — Stabilitas Mapping dan Efisiensi Data
 
@@ -101,7 +112,7 @@ Mapping Amy FX menggunakan rules engine, bukan AI generatif yang menebak harga. 
 4. hierarchy BSL/SSL;
 5. dealing range, premium, discount, dan equilibrium;
 6. Order Block dan Fair Value Gap;
-7. Market Outlook 1–4 jam, sesi berjalan, dan 24 jam;
+7. Market Outlook berbasis event AMY Market Context Final;
 8. setup M15 yang lolos filter kualitas.
 
 ### Peran Timeframe
@@ -170,32 +181,28 @@ app/src/main/assets/apps/mapping/js/clock-sync.js
 
 ## Amy Market Outlook
 
-Market Outlook membuat proyeksi rule-based untuk:
+Market Outlook aktif memakai **AMY Market Context Final**. Mesin membaca struktur M15 dan trigger M5 untuk mencari event berikut:
 
-- **1–4 jam**;
-- **sesi berjalan**;
-- **24 jam**.
+- **FVG Revisit** — fresh FVG M15 yang searah struktur dan masih berada dalam batas jarak ATR;
+- **Order Block Revisit** — fresh OB M15 yang searah struktur dan masih belum tersentuh;
+- **Draw on Liquidity** — liquidity sweep berkualitas dengan target BSL/SSL yang memenuhi jarak maksimum;
+- **Asia Entry** — target range Asia berdasarkan M1 dan event M5 pukul 00:00 New York.
 
-Setiap outlook memiliki arah, skor skenario rule-based, target liquidity, target lanjutan, invalidasi, jalur harga, skenario alternatif, market regime, faktor pendukung, dan faktor risiko.
+Outlook menampilkan arah, status, timeframe, harga acuan, zona konteks bila tersedia, target, invalidasi, masa berlaku, dan alasan. Mesin tetap **WAIT** ketika:
 
-Skor skenario dibatasi pada rentang konservatif dan diturunkan ketika data stale, risiko berita tinggi, struktur timeframe bertentangan, atau harga telah terlalu premium/discount. Skor tersebut **bukan probabilitas kemenangan**.
+- tidak ada qualified context event;
+- arah event aktif saling bertentangan;
+- data M5 atau M15 berstatus stale;
+- jumlah candle belum cukup menjalankan engine.
 
-Prediction Tracker menyimpan outlook sebelum market bergerak. Statistik tracker lokal baru ditampilkan setelah minimal 20 outlook selesai.
+EMA 5/15 pada M5, M15, H1, H4, dan D1 ditampilkan sebagai konteks, bukan sebagai probabilitas kemenangan. Hasil backtest dan eksperimen lama tetap disimpan di `docs/backtests/` untuk audit, tetapi tidak ditampilkan sebagai akurasi live pada kartu Outlook.
 
-### Backtest Market Outlook dan Mapping 2022–2025
+File utama:
 
-Backtest independen memakai 48 arsip bulanan XAU/USD 2022–2025 dengan warm-up Januari–Maret 2022 dan evaluasi hingga 30 Desember 2025.
-
-- Total Market Outlook: **26.226 proyeksi**.
-- Akurasi arah keseluruhan: **42,19%**.
-- Target hit: **26,47%**.
-- Invalidasi: **19,07%**.
-- Akurasi arah 1–4 jam: **42,67%**.
-- Akurasi arah sesi berjalan: **38,51%**.
-- Akurasi arah 24 jam: **46,12%**.
-- Mapping M15 aligned: **48,53%** dari 21.395 snapshot.
-
-Hasil lengkap tersedia di [`docs/backtests/AMY_FX_MARKET_OUTLOOK_MAPPING_2022_2025.md`](docs/backtests/AMY_FX_MARKET_OUTLOOK_MAPPING_2022_2025.md). Backtest memakai port independen rules engine untuk menjalankan histori secara efisien, bukan eksekusi WebView langsung.
+```text
+app/src/main/assets/apps/mapping/js/market-outlook.js
+app/src/main/assets/apps/mapping/js/outlook/amy-market-context-final-core.js
+```
 
 ## Berita dan Notifikasi
 
