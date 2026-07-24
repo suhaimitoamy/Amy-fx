@@ -1,29 +1,35 @@
 {
-  "latest_version_code": 44,
-  "latest_version_name": "1.5.3",
-  "versionCode": 44,
-  "version": "1.5.3",
+  "latest_version_code": 45,
+  "latest_version_name": "1.5.4",
+  "versionCode": 45,
+  "version": "1.5.4",
   "releaseDate": "2026-07-24",
   "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Market Outlook memakai AMY Market Context Final dengan struktur M15 dan trigger M5",
-    "Outlook tetap WAIT saat tidak ada event valid atau arah event bertentangan",
-    "FVG Revisit, Order Block Revisit, Draw on Liquidity, dan Asia Entry memakai threshold terkunci",
-    "Status M15 LIVE dan M15 STALE serta posisi baca halaman Analisis dipertahankan",
-    "Manifest update dipublikasikan ulang setelah APK signed 1.5.3 tersedia",
-    "Package com.amyelitesuite, sertifikat permanen, data lokal, dan jalur update tetap dipertahankan",
-    "Pembaruan dapat dipasang tanpa menghapus aplikasi"
+    "Blok tombol timeframe pada halaman Analisis telah dihapus.",
+    "Urutan halaman Analisis diperbaiki menjadi:",
+    "Header harga/status",
+    "Asia Liquidity",
+    "Market Outlook",
+    "Ringkasan Market",
+    "Valid Break",
+    "Mapping M1–H4",
+    "Penjelasan Mapping",
+    "Setup Aktif"
   ],
   "changelog": [
-    "Market Outlook memakai AMY Market Context Final dengan struktur M15 dan trigger M5",
-    "Outlook tetap WAIT saat tidak ada event valid atau arah event bertentangan",
-    "FVG Revisit, Order Block Revisit, Draw on Liquidity, dan Asia Entry memakai threshold terkunci",
-    "Status M15 LIVE dan M15 STALE serta posisi baca halaman Analisis dipertahankan",
-    "Manifest update dipublikasikan ulang setelah APK signed 1.5.3 tersedia",
-    "Package com.amyelitesuite, sertifikat permanen, data lokal, dan jalur update tetap dipertahankan",
-    "Pembaruan dapat dipasang tanpa menghapus aplikasi"
+    "Blok tombol timeframe pada halaman Analisis telah dihapus.",
+    "Urutan halaman Analisis diperbaiki menjadi:",
+    "Header harga/status",
+    "Asia Liquidity",
+    "Market Outlook",
+    "Ringkasan Market",
+    "Valid Break",
+    "Mapping M1–H4",
+    "Penjelasan Mapping",
+    "Setup Aktif"
   ]
 }
