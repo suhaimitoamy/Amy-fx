@@ -101,15 +101,15 @@ Mapping Amy FX menggunakan rules engine, bukan AI generatif yang menebak harga. 
 4. hierarchy BSL/SSL;
 5. dealing range, premium, discount, dan equilibrium;
 6. Order Block dan Fair Value Gap;
-7. Market Outlook 1–4 jam, sesi berjalan, dan 24 jam;
+7. Market Outlook berbasis AMY Market Context Final;
 8. setup M15 yang lolos filter kualitas.
 
 ### Peran Timeframe
 
-- **M1/M5:** microstructure dan konfirmasi.
-- **M15:** execution mapping.
-- **M30/H1/H4:** konteks struktur.
-- **D1/W1:** HTF Narrative.
+- **M1:** range Asia untuk event Asia Entry.
+- **M5:** trigger dan pemantauan event Outlook.
+- **M15:** struktur, FVG/OB, sweep, dan DOL.
+- **H1/H4/D1:** dashboard tren EMA 5/15.
 
 ### Valid Break
 
@@ -160,9 +160,9 @@ Status FVG:
 - `MITIGATED` — sudah terisi melewati midpoint;
 - `BROKEN` — sisi terjauh telah ditembus.
 
-## Sinkronisasi Jam WIB
+## Sinkronisasi Jam WITA
 
-Semua jam Mapping memakai formatter `Asia/Jakarta` dan satu timestamp per pembaruan. Modul sinkronisasi memperbarui jam Dashboard serta Session Focus secara bersamaan.
+Semua jam Mapping memakai formatter `Asia/Makassar` dan satu timestamp per pembaruan. Modul sinkronisasi memperbarui jam Dashboard serta Session Focus secara bersamaan.
 
 ```text
 app/src/main/assets/apps/mapping/js/clock-sync.js
@@ -170,32 +170,27 @@ app/src/main/assets/apps/mapping/js/clock-sync.js
 
 ## Amy Market Outlook
 
-Market Outlook membuat proyeksi rule-based untuk:
+Market Outlook aktif di branch ini memakai logika **AMY Market Context Final**:
 
-- **1–4 jam**;
-- **sesi berjalan**;
-- **24 jam**.
+- struktur dan invalidasi M15 dengan swing length `3`;
+- filtered FVG dan Order Block dengan threshold ATR terkunci;
+- acceptance setelah tiga close di luar zona dan continuation `0,30 ATR`;
+- FVG revisit maksimal `1,25 ATR`;
+- OB revisit maksimal `1,25 ATR`;
+- qualified DOL maksimal `0,75 ATR` dengan posisi close minimal `80%`;
+- Asia Entry dari range M1 pukul 20:00–00:00 New York;
+- masa aktif setiap event maksimal `48` candle M5 atau empat jam.
 
-Setiap outlook memiliki arah, skor skenario rule-based, target liquidity, target lanjutan, invalidasi, jalur harga, skenario alternatif, market regime, faktor pendukung, dan faktor risiko.
+Outlook hanya menerbitkan arah ketika sedikitnya satu event valid aktif. Jika tidak ada event atau arah event bertentangan, hasilnya `WAIT`. Angka validasi historis yang tampil bukan probabilitas kemenangan live.
 
-Skor skenario dibatasi pada rentang konservatif dan diturunkan ketika data stale, risiko berita tinggi, struktur timeframe bertentangan, atau harga telah terlalu premium/discount. Skor tersebut **bukan probabilitas kemenangan**.
+File utama:
 
-Prediction Tracker menyimpan outlook sebelum market bergerak. Statistik tracker lokal baru ditampilkan setelah minimal 20 outlook selesai.
+```text
+app/src/main/assets/apps/mapping/js/outlook/amy-market-context-final-core.js
+app/src/main/assets/apps/mapping/js/market-outlook.js
+```
 
-### Backtest Market Outlook dan Mapping 2022–2025
-
-Backtest independen memakai 48 arsip bulanan XAU/USD 2022–2025 dengan warm-up Januari–Maret 2022 dan evaluasi hingga 30 Desember 2025.
-
-- Total Market Outlook: **26.226 proyeksi**.
-- Akurasi arah keseluruhan: **42,19%**.
-- Target hit: **26,47%**.
-- Invalidasi: **19,07%**.
-- Akurasi arah 1–4 jam: **42,67%**.
-- Akurasi arah sesi berjalan: **38,51%**.
-- Akurasi arah 24 jam: **46,12%**.
-- Mapping M15 aligned: **48,53%** dari 21.395 snapshot.
-
-Hasil lengkap tersedia di [`docs/backtests/AMY_FX_MARKET_OUTLOOK_MAPPING_2022_2025.md`](docs/backtests/AMY_FX_MARKET_OUTLOOK_MAPPING_2022_2025.md). Backtest memakai port independen rules engine untuk menjalankan histori secara efisien, bukan eksekusi WebView langsung.
+Backtest Market Outlook lama tetap disimpan sebagai arsip audit dan tidak dipakai sebagai klaim akurasi mesin baru.
 
 ## Berita dan Notifikasi
 
