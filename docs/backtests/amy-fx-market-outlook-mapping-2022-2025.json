@@ -1,82 +1,104 @@
 {
+  "status": "FINAL_AUDITED_BACKTEST_FOR_ISSUE_5",
+  "meta": {
+    "generatedAt": "2026-07-24",
+    "engineBranch": "fix/amyfx-five-issues-20260724",
+    "engineSourceCommitAtRun": "7f78631101db834481d92185b2791feac29600f6",
+    "dataset": "XAU/USD 2022-2025 monthly CSV; M1, M5, M15, H1, H4, D1; M30 reconstructed from M15",
+    "scoredPeriod": "2022-04-01 through 2025-12-29 UTC",
+    "developmentPeriod": "2022-2024",
+    "outOfSamplePeriod": "2025",
+    "historicalNews": "Unavailable; newsRisk held UNKNOWN. Results must not be described as news-conditioned.",
+    "versionOrReleaseChanged": false
+  },
   "methodology": {
-    "dataset": "48 arsip bulanan XAU/USD 2022–2025 dari Google Drive pengguna",
-    "sourceTimeframes": ["M1", "M5", "M15", "H1", "H4", "D1"],
-    "resampledTimeframes": ["M30", "W1"],
-    "warmup": "2022-01-01–2022-03-31",
-    "evaluation": "2022-04-01–2025-12-30",
-    "sampling": "Market Outlook mengikuti slot produksi; Mapping diambil per jam",
-    "implementation": "Port independen rule engine saat ini untuk backtest historis; bukan eksekusi WebView/browser langsung"
+    "closedCandleBuffer": "299 closed candles, matching production fetch of 300 followed by removal of the newest unclosed candle.",
+    "noLookahead": "At time t only candles with open time plus timeframe interval less than or equal to t were supplied. Confirmed swings retain production right-side confirmation.",
+    "developmentSplit": "2022-2024",
+    "outOfSample": "2025",
+    "historicalNews": "UNKNOWN; not tested",
+    "mappingNaturalHorizonsHours": { "M1": 1, "M5": 2, "M15": 4, "M30": 6, "H1": 12, "H4": 24 },
+    "zoneReaction": "After zone touch, price must move 0.5 ATR beyond the far edge in zone direction before close-based invalidation."
   },
   "marketOutlook": {
-    "period": "2022-04-01–2025-12-30",
-    "dataset": "48 monthly XAU/USD archives, 2022–2025",
-    "count": 26226,
     "overall": {
-      "directionalAccuracyPct": 42.18714253031343,
-      "targetHitRatePct": 26.46991535117822,
-      "invalidationRatePct": 19.068862960420958
+      "samples": 25223,
+      "trackerDefinedSuccess": { "samples": 25223, "correct": 10791, "accuracy": 42.78, "ci95": [42.17, 43.39] },
+      "closeDirectionAccuracy": { "samples": 25223, "correct": 8903, "accuracy": 35.3, "ci95": [34.71, 35.89] },
+      "baselinePreviousM15Close": { "samples": 25223, "correct": 9190, "accuracy": 36.43, "ci95": [35.84, 37.03] },
+      "baselineH1FourBarMomentumClose": { "samples": 25223, "correct": 8836, "accuracy": 35.03, "ci95": [34.45, 35.62] },
+      "targetHitRate": 28.85,
+      "invalidationRate": 23.38,
+      "averageDisplayedScore": 61.55
     },
     "byHorizon": {
-      "DAILY": {"count": 967, "directionalAccuracyPct": 46.12202688728025, "targetHitRatePct": 25.12926577042399, "invalidationRatePct": 8.790072388831438, "avgProbabilityPct": 59.07135470527405},
-      "INTRADAY": {"count": 21395, "directionalAccuracyPct": 42.673521850899746, "targetHitRatePct": 28.00186959569993, "invalidationRatePct": 21.59383033419023, "avgProbabilityPct": 63.227810236036454},
-      "SESSION": {"count": 3864, "directionalAccuracyPct": 38.50931677018634, "targetHitRatePct": 18.32298136645963, "invalidationRatePct": 7.6604554865424435, "avgProbabilityPct": 61.52820910973085}
+      "DAILY": { "samples": 947, "trackerSuccess": 43.29, "closeAccuracy": 38.44, "targetHitRate": 22.28, "averageScore": 56.44 },
+      "INTRADAY": { "samples": 20499, "trackerSuccess": 43.13, "closeAccuracy": 35.36, "targetHitRate": 30.67, "averageScore": 62.13 },
+      "SESSION": { "samples": 3777, "trackerSuccess": 40.77, "closeAccuracy": 34.15, "targetHitRate": 20.6, "averageScore": 59.68 }
     },
     "byYear": {
-      "2022": {"count": 5413, "directionalAccuracyPct": 42.748937742471824, "targetHitRatePct": 28.209865139479035, "invalidationRatePct": 20.266026233142433},
-      "2023": {"count": 6437, "directionalAccuracyPct": 40.71772564859407, "targetHitRatePct": 25.72627000155352, "invalidationRatePct": 18.3781264564238},
-      "2024": {"count": 7228, "directionalAccuracyPct": 42.00332042058661, "targetHitRatePct": 26.175982291090204, "invalidationRatePct": 19.230769230769234},
-      "2025": {"count": 7148, "directionalAccuracyPct": 43.27084499160605, "targetHitRatePct": 26.119194180190263, "invalidationRatePct": 18.620593172915502}
+      "2022": { "samples": 5327, "trackerSuccess": 42.03, "closeAccuracy": 34.77, "baselineM15": 36.23 },
+      "2023": { "samples": 6316, "trackerSuccess": 40.66, "closeAccuracy": 33.28, "baselineM15": 34.53 },
+      "2024": { "samples": 7107, "trackerSuccess": 42.41, "closeAccuracy": 35.91, "baselineM15": 36.77 },
+      "2025": { "samples": 6473, "trackerSuccess": 45.88, "closeAccuracy": 37.03, "baselineM15": 38.1 }
     },
-    "byProbabilityBucket": {
-      "40–49": {"count": 2243, "directionalAccuracyPct": 44.048149799375835, "avgProbabilityPct": 47.9193045028979},
-      "50–59": {"count": 4472, "directionalAccuracyPct": 44.387298747763865, "avgProbabilityPct": 54.45706618962433},
-      "60–69": {"count": 18083, "directionalAccuracyPct": 41.624730409777136, "avgProbabilityPct": 65.8530664159708},
-      "70–79": {"count": 1428, "directionalAccuracyPct": 39.49579831932773, "avgProbabilityPct": 74.08263305322129}
+    "outOfSample2025": {
+      "samples": 6473,
+      "trackerSuccess": 45.88,
+      "closeAccuracy": 37.03,
+      "closeAccuracyCi95": [35.86, 38.21],
+      "baselineM15": 38.1,
+      "baselineH1Momentum": 36.89
     },
-    "byRegime": {
-      "HIGH_VOLATILITY": {"count": 4210, "directionalAccuracyPct": 40.09501187648456, "targetHitRatePct": 20.30878859857482, "invalidationRatePct": 11.520190023752969},
-      "TRANSITION": {"count": 22016, "directionalAccuracyPct": 42.587209302325576, "targetHitRatePct": 27.648074127906973, "invalidationRatePct": 20.512354651162788}
+    "calibration": {
+      "40-49": { "samples": 1650, "averageScore": 46.75, "trackerSuccess": 43.09, "closeAccuracy": 36.06 },
+      "50-59": { "samples": 5317, "averageScore": 53.15, "trackerSuccess": 44.2, "closeAccuracy": 37.11 },
+      "60-69": { "samples": 15865, "averageScore": 64.32, "trackerSuccess": 42.28, "closeAccuracy": 34.59 },
+      "70-79": { "samples": 2391, "averageScore": 72.08, "trackerSuccess": 42.74, "closeAccuracy": 35.42 }
     }
   },
   "mapping": {
-    "byTimeframe": {
-      "H1": {"samples": 21395, "localCoveragePct": 100.0, "localAccuracyPct": 44.42626781958401, "htfAccuracyPct": 46.33792942276232, "alignmentCoveragePct": 69.8107034353821, "alignedAccuracyPct": 46.12346009641136, "liquidityCoveragePct": 100.0, "liquidityFirstHitAccuracyPct": 29.016125262911896},
-      "H4": {"samples": 21395, "localCoveragePct": 100.0, "localAccuracyPct": 45.74433278803458, "htfAccuracyPct": 44.10376256134611, "alignmentCoveragePct": 60.51413881748072, "alignedAccuracyPct": 47.00702865528694, "liquidityCoveragePct": 100.0, "liquidityFirstHitAccuracyPct": 29.273194671652252},
-      "M1": {"samples": 21395, "localCoveragePct": 100.0, "localAccuracyPct": 35.3119887824258, "htfAccuracyPct": 38.6585650853003, "alignmentCoveragePct": 56.38700630988549, "alignedAccuracyPct": 38.06366047745358, "liquidityCoveragePct": 99.97663005375088, "liquidityFirstHitAccuracyPct": 46.79289387564282},
-      "M15": {"samples": 21395, "localCoveragePct": 100.0, "localAccuracyPct": 45.622809067539144, "htfAccuracyPct": 48.19817714419257, "alignmentCoveragePct": 57.251694321103066, "alignedAccuracyPct": 48.53457425095926, "liquidityCoveragePct": 99.99532601075018, "liquidityFirstHitAccuracyPct": 41.03019538188277},
-      "M30": {"samples": 21395, "localCoveragePct": 100.0, "localAccuracyPct": 43.57560177611591, "htfAccuracyPct": 46.32390745501285, "alignmentCoveragePct": 60.93947183921477, "alignedAccuracyPct": 46.36447307869305, "liquidityCoveragePct": 100.0, "liquidityFirstHitAccuracyPct": 29.44613227389577},
-      "M5": {"samples": 21395, "localCoveragePct": 100.0, "localAccuracyPct": 41.724702033185324, "htfAccuracyPct": 44.11778452909558, "alignmentCoveragePct": 55.85417153540547, "alignedAccuracyPct": 44.10878661087866, "liquidityCoveragePct": 99.99065202150035, "liquidityFirstHitAccuracyPct": 37.657177581451876}
+    "overall": {
+      "M1": { "snapshots": 5416, "accuracy": 32.66, "ci95": [31.43, 33.92], "alignedAccuracy": 34.89, "targetHitRate": 49.83, "baselineCandle": 35.15, "baselineMomentum": 41.46 },
+      "M5": { "snapshots": 5416, "accuracy": 35.91, "ci95": [34.64, 37.2], "alignedAccuracy": 37.89, "targetHitRate": 40.6, "baselineCandle": 36.81, "baselineMomentum": 39.25 },
+      "M15": { "snapshots": 5416, "accuracy": 41.3, "ci95": [40.0, 42.62], "alignedAccuracy": 42.96, "targetHitRate": 35.8, "baselineCandle": 40.54, "baselineMomentum": 40.92 },
+      "M30": { "snapshots": 5416, "accuracy": 41.58, "ci95": [40.27, 42.9], "alignedAccuracy": 43.3, "targetHitRate": 33.15, "baselineCandle": 42.39, "baselineMomentum": 43.19 },
+      "H1": { "snapshots": 5416, "accuracy": 43.13, "ci95": [41.82, 44.45], "alignedAccuracy": 45.76, "targetHitRate": 33.73, "baselineCandle": 44.22, "baselineMomentum": 43.89 },
+      "H4": { "snapshots": 5416, "accuracy": 44.22, "ci95": [42.9, 45.55], "alignedAccuracy": 46.12, "targetHitRate": 32.95, "baselineCandle": 41.83, "baselineMomentum": 41.67 }
     },
-    "validBreak": {
-      "H1": {"events": 1210, "continuation0_5AtrPct": 96.44628099173553, "failedWithinHorizonPct": 97.43801652892562, "displacementPct": 64.7107438016529},
-      "H4": {"events": 377, "continuation0_5AtrPct": 93.89920424403184, "failedWithinHorizonPct": 99.73474801061008, "displacementPct": 72.41379310344827},
-      "M1": {"events": 21245, "continuation0_5AtrPct": 94.83172511179102, "failedWithinHorizonPct": 68.79736408566721, "displacementPct": 70.05413038361968},
-      "M15": {"events": 4798, "continuation0_5AtrPct": 95.01875781575656, "failedWithinHorizonPct": 96.24843684868696, "displacementPct": 64.40183409754064},
-      "M30": {"events": 2439, "continuation0_5AtrPct": 94.0139401394014, "failedWithinHorizonPct": 96.26896268962689, "displacementPct": 65.47765477654777},
-      "M5": {"events": 12686, "continuation0_5AtrPct": 94.39539650007883, "failedWithinHorizonPct": 88.98786063376951, "displacementPct": 66.45908875926217}
-    },
-    "zones": {
-      "H1_FVG": {"zones": 1933, "touchRatePct": 81.01396792550439, "confirmedReactionGivenTouchPct": 68.5823754789272, "invalidationRatePct": 2.224521469218831},
-      "H1_OB": {"zones": 771, "touchRatePct": 59.40337224383917, "confirmedReactionGivenTouchPct": 32.96943231441048, "invalidationRatePct": 11.413748378728924},
-      "H4_FVG": {"zones": 535, "touchRatePct": 79.81308411214954, "confirmedReactionGivenTouchPct": 71.89695550351288, "invalidationRatePct": 2.0560747663551404},
-      "H4_OB": {"zones": 266, "touchRatePct": 57.14285714285714, "confirmedReactionGivenTouchPct": 22.36842105263158, "invalidationRatePct": 12.406015037593985},
-      "M1_FVG": {"zones": 19467, "touchRatePct": 65.53654903169466, "confirmedReactionGivenTouchPct": 42.020692898573444, "invalidationRatePct": 12.395335696306569},
-      "M1_OB": {"zones": 16829, "touchRatePct": 44.47679600689287, "confirmedReactionGivenTouchPct": 43.25985303941216, "invalidationRatePct": 11.783231326876226},
-      "M15_FVG": {"zones": 5720, "touchRatePct": 78.88111888111888, "confirmedReactionGivenTouchPct": 50.62056737588653, "invalidationRatePct": 3.4090909090909087},
-      "M15_OB": {"zones": 2831, "touchRatePct": 59.342988343341574, "confirmedReactionGivenTouchPct": 47.26190476190476, "invalidationRatePct": 7.947721653126104},
-      "M30_FVG": {"zones": 3408, "touchRatePct": 77.40610328638498, "confirmedReactionGivenTouchPct": 57.50568612585292, "invalidationRatePct": 2.3474178403755865},
-      "M30_OB": {"zones": 1528, "touchRatePct": 50.19633507853403, "confirmedReactionGivenTouchPct": 43.285528031290745, "invalidationRatePct": 6.348167539267016},
-      "M5_FVG": {"zones": 11331, "touchRatePct": 68.05224605065749, "confirmedReactionGivenTouchPct": 46.50499286733238, "invalidationRatePct": 4.712734974847763},
-      "M5_OB": {"zones": 7030, "touchRatePct": 48.83357041251778, "confirmedReactionGivenTouchPct": 46.57733760559278, "invalidationRatePct": 7.510668563300142}
-    },
-    "freshness": [
-      {"tf": "M1", "bars": 1372863, "gapCount": 1893, "gapRatePct": 0.1378871292234762, "maxGapHours": 74.03333333333333},
-      {"tf": "M5", "bars": 274665, "gapCount": 1590, "gapRatePct": 0.5788891154283051, "maxGapHours": 74.08333333333333},
-      {"tf": "M15", "bars": 91562, "gapCount": 1581, "gapRatePct": 1.7267177073208024, "maxGapHours": 74.25},
-      {"tf": "M30", "bars": 45785, "gapCount": 1581, "gapRatePct": 3.4531714135942684, "maxGapHours": 74.5},
-      {"tf": "H1", "bars": 22905, "gapCount": 1579, "gapRatePct": 6.893992315752707, "maxGapHours": 75.0},
-      {"tf": "H4", "bars": 6368, "gapCount": 212, "gapRatePct": 3.3296686037380243, "maxGapHours": 76.0}
-    ]
+    "outOfSample2025": {
+      "M1": { "accuracy": 36.09, "alignedAccuracy": 39.35, "targetHitRate": 50.48, "baselineCandle": 38.68, "baselineMomentum": 41.39 },
+      "M5": { "accuracy": 38.65, "alignedAccuracy": 39.76, "targetHitRate": 41.74, "baselineCandle": 39.04, "baselineMomentum": 40.27 },
+      "M15": { "accuracy": 42.7, "alignedAccuracy": 46.25, "targetHitRate": 37.45, "baselineCandle": 40.27, "baselineMomentum": 44.17 },
+      "M30": { "accuracy": 43.49, "alignedAccuracy": 46.29, "targetHitRate": 35.11, "baselineCandle": 41.31, "baselineMomentum": 44.59 },
+      "H1": { "accuracy": 44.2, "alignedAccuracy": 48.84, "targetHitRate": 33.45, "baselineCandle": 45.59, "baselineMomentum": 46.3 },
+      "H4": { "accuracy": 43.56, "alignedAccuracy": 46.84, "targetHitRate": 29.62, "baselineCandle": 42.65, "baselineMomentum": 41.38 }
+    }
+  },
+  "zones": {
+    "M1_FVG": { "weeks": 196, "coverage": 96.94, "touchRate": 88.42, "reactionAfterTouch": 65.48, "reactionCi95": [58.01, 72.25], "invalidationAfterTouch": 34.52 },
+    "M1_OB": { "weeks": 196, "coverage": 91.84, "touchRate": 54.44, "reactionAfterTouch": 54.08, "reactionCi95": [44.25, 63.61], "invalidationAfterTouch": 45.92 },
+    "M5_FVG": { "weeks": 196, "coverage": 97.96, "touchRate": 78.65, "reactionAfterTouch": 60.26, "reactionCi95": [52.3, 67.72], "invalidationAfterTouch": 37.75 },
+    "M5_OB": { "weeks": 196, "coverage": 89.8, "touchRate": 36.36, "reactionAfterTouch": 67.19, "reactionCi95": [55.0, 77.43], "invalidationAfterTouch": 31.25 },
+    "M15_FVG": { "weeks": 196, "coverage": 95.41, "touchRate": 66.84, "reactionAfterTouch": 59.2, "reactionCi95": [50.44, 67.42], "invalidationAfterTouch": 40.0 },
+    "M15_OB": { "weeks": 196, "coverage": 89.8, "touchRate": 34.66, "reactionAfterTouch": 59.02, "reactionCi95": [46.5, 70.46], "invalidationAfterTouch": 40.98 },
+    "M30_FVG": { "weeks": 196, "coverage": 91.84, "touchRate": 62.22, "reactionAfterTouch": 54.46, "reactionCi95": [45.25, 63.39], "invalidationAfterTouch": 43.75 },
+    "M30_OB": { "weeks": 196, "coverage": 89.29, "touchRate": 28.0, "reactionAfterTouch": 48.98, "reactionCi95": [35.58, 62.53], "invalidationAfterTouch": 48.98 },
+    "H1_FVG": { "weeks": 196, "coverage": 95.41, "touchRate": 73.26, "reactionAfterTouch": 53.28, "reactionCi95": [44.95, 61.44], "invalidationAfterTouch": 44.53 },
+    "H1_OB": { "weeks": 196, "coverage": 92.86, "touchRate": 37.36, "reactionAfterTouch": 54.41, "reactionCi95": [42.66, 65.7], "invalidationAfterTouch": 44.12 },
+    "H4_FVG": { "weeks": 196, "coverage": 98.47, "touchRate": 50.26, "reactionAfterTouch": 50.52, "reactionCi95": [40.74, 60.25], "invalidationAfterTouch": 35.05 },
+    "H4_OB": { "weeks": 196, "coverage": 92.86, "touchRate": 29.12, "reactionAfterTouch": 33.96, "reactionCi95": [22.69, 47.41], "invalidationAfterTouch": 60.38 }
+  },
+  "limitations": [
+    "No aligned historical news feed was available, so HIGH/ELEVATED news behavior was not tested.",
+    "M30 was reconstructed from M15 rather than supplied natively.",
+    "CSV timestamps were interpreted as UTC; session calculation itself used production Asia/Jakarta rules.",
+    "OB/FVG statistics are weekly stratified display-snapshot tests, not every zone ever formed.",
+    "Backtest measures rule behavior, not executable trade returns; spread, slippage, commissions, and broker execution were not modeled."
+  ],
+  "audit": {
+    "summarySha256": "b74651ee6310b6c0e519dc25bf8eb4adbc86b774ad6efcea6be1b3a17cd975fc",
+    "rawRecordsSha256": "06a4a5d214f6697e51247985d807e6471471b0fdeafd48a8d9563fbefe4c1ac6",
+    "releaseChanged": false
   }
 }
