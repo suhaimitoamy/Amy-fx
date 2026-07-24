@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { buildAmyMarketContextOutlook } from '../app/src/main/assets/apps/mapping/js/outlook/amy-market-context-final-core.js';
 
 const uiUrl = new URL('../app/src/main/assets/apps/mapping/js/market-outlook.js', import.meta.url);
-const coreUrl = new URL('../app/src/main/assets/apps/mapping/js/outlook/trade-scenario-core.js', import.meta.url);
+const activeCoreUrl = new URL('../app/src/main/assets/apps/mapping/js/outlook/amy-market-context-final-core.js', import.meta.url);
+const archivedCoreUrl = new URL('../app/src/main/assets/apps/mapping/js/outlook/trade-scenario-core.js', import.meta.url);
 const scriptUrl = new URL('../scripts/backtest-trade-scenarios-2024.mjs', import.meta.url);
 const indexUrl = new URL('../app/src/main/assets/apps/mapping/index.html', import.meta.url);
 const cssUrl = new URL('../app/src/main/assets/apps/mapping/css/market-outlook.css', import.meta.url);
@@ -19,9 +21,17 @@ function assertSyntax(url) {
   assert.equal(result.status, 0, result.stderr || result.stdout);
 }
 
-test('Saran Level JavaScript remains syntactically valid', () => {
+function candles(count, step, start = Date.UTC(2026, 0, 1), base = 2600) {
+  return Array.from({ length: count }, (_, index) => {
+    const open = base + index * 0.1;
+    return { time: start + index * step, open, high: open + 0.3, low: open - 0.3, close: open + 0.05 };
+  });
+}
+
+test('Market Outlook Final JavaScript remains syntactically valid', () => {
   assertSyntax(uiUrl);
-  assertSyntax(coreUrl);
+  assertSyntax(activeCoreUrl);
+  assertSyntax(archivedCoreUrl);
   assertSyntax(scriptUrl);
 });
 
@@ -31,29 +41,53 @@ test('mapping keeps the existing Market Outlook asset entry points', () => {
   assert.match(html, /js\/market-outlook\.js/);
 });
 
-test('Market Outlook remains M5 Reaction First while direct entry is experimental', () => {
+test('Market Outlook uses AMY Market Context Final logic', () => {
   const ui = readFileSync(uiUrl, 'utf8');
-  const core = readFileSync(coreUrl, 'utf8');
+  const core = readFileSync(activeCoreUrl, 'utf8');
   const css = readFileSync(cssUrl, 'utf8');
 
-  assert.match(ui, /Saran Level/);
-  assert.match(ui, /M5 Reaction First/);
-  assert.match(ui, /MENUNGGU REJECTION M5/);
-  assert.match(ui, /50% fresh FVG M5/);
-  assert.equal(/Prediction Tracker/i.test(ui), false);
+  assert.match(ui, /AMY Market Context Final/);
+  assert.match(ui, /FVG revisit/);
+  assert.match(ui, /OB revisit/);
+  assert.match(ui, /DOL/);
+  assert.match(ui, /Asia entry/);
+  assert.match(ui, /AMY_MARKET_CONTEXT_FINAL/);
+  assert.match(ui, /state\.candles\?\.M1/);
+  assert.match(ui, /state\.candles\?\.M5/);
+  assert.match(ui, /state\.candles\?\.M15/);
   assert.equal(/Probabilitas model/i.test(ui), false);
 
-  assert.match(core, /timeframe: 'M5'/);
-  assert.match(core, /displacementBodyAtr: 0\.8/);
-  assert.match(core, /minimumLiquidityRoomR: 2\.0/);
-  assert.match(core, /tp1R: 1\.5/);
-  assert.match(core, /tp2R: 2\.0/);
-  assert.match(core, /FVG_FIRST_TOUCH_REACTION/);
+  assert.match(core, /swingLength: 3/);
+  assert.match(core, /fvgBodyMult: 1\.20/);
+  assert.match(core, /fvgMinGapAtr: 0\.15/);
+  assert.match(core, /fvgMaxGapAtr: 0\.75/);
+  assert.match(core, /obBodyMult: 2\.00/);
+  assert.match(core, /acceptCloses: 3/);
+  assert.match(core, /poiMaxDistanceAtr: 1\.25/);
+  assert.match(core, /dolMaxDistanceAtr: 0\.75/);
+  assert.match(core, /asiaEntryRewardRisk: 0\.20/);
+  assert.match(core, /fourHoursM5: 48/);
   assert.match(css, /amy-level-card\.buy/);
   assert.match(css, /amy-level-card\.sell/);
 });
 
-test('2024 M5 Reaction First result is recorded honestly', () => {
+test('Market Context Final stays WAIT without a qualified event', () => {
+  const result = buildAmyMarketContextOutlook({
+    M1: candles(500, 60_000),
+    M5: candles(100, 300_000),
+    M15: candles(100, 900_000),
+    H1: candles(30, 3_600_000),
+    H4: candles(30, 14_400_000),
+    D1: candles(30, 86_400_000),
+    now: Date.UTC(2026, 0, 2)
+  });
+  assert.equal(result.mode, 'AMY_MARKET_CONTEXT_FINAL');
+  assert.equal(result.primaryDirection, 'WAIT');
+  assert.equal(result.status, 'WAITING_EVENT');
+  assert.deepEqual(result.scenarios, []);
+});
+
+test('2024 M5 Reaction First result remains archived honestly', () => {
   const report = readFileSync(reportUrl, 'utf8');
   const result = JSON.parse(readFileSync(dataUrl, 'utf8'));
 
@@ -68,7 +102,7 @@ test('2024 M5 Reaction First result is recorded honestly', () => {
   assert.match(report, /Stress biaya/);
 });
 
-test('direct-entry experiment does not overstate the speed hypothesis', () => {
+test('direct-entry experiment remains archived without overstating the speed hypothesis', () => {
   const report = readFileSync(directReportUrl, 'utf8');
   const result = JSON.parse(readFileSync(directDataUrl, 'utf8'));
   assert.equal(result.status, 'FINAL_BACKTEST_M5_DIRECT_ENTRY_COMPARISON_2024');
