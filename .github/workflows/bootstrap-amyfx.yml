@@ -3,6 +3,10 @@ name: Bootstrap Amy FX Final App (Disabled)
 on:
   workflow_dispatch:
 
+concurrency:
+  group: bootstrap-amyfx-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   disabled:
     runs-on: ubuntu-latest

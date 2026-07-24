@@ -6,6 +6,9 @@ on:
     branches: [ "main" ]
     paths-ignore:
       - "update.json"
+      - "README.md"
+      - "*.md"
+      - "docs/**"
 
 permissions:
   contents: write

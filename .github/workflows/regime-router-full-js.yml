@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: regime-router-full-js-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   full-js:
     runs-on: ubuntu-latest
