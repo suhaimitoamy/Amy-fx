@@ -4,6 +4,7 @@ import { buildTradeScenarios } from './outlook/trade-scenario-core.js';
 const OPEN_KEY = 'amy_mapping_outlook_open';
 let lastSignature = '';
 let lastResult = null;
+let lastPublishSignature = '';
 let timer = 0;
 
 function safeText(value) {
@@ -167,7 +168,7 @@ function publish(result, stale) {
   if (window.AmyFXIntel?.write) {
     const buy = result.scenarios?.find(item => item.side === 'BUY') || null;
     const sell = result.scenarios?.find(item => item.side === 'SELL') || null;
-    window.AmyFXIntel.write('outlook', {
+    const payload = {
       mode: 'DUAL_CONDITIONAL_LEVELS',
       generatedAt: result.generatedAt,
       price: result.referencePrice,
@@ -175,7 +176,12 @@ function publish(result, stale) {
       direction: 'WAIT_CONDITIONAL',
       buy,
       sell
-    });
+    };
+    const nextPublishSignature = JSON.stringify(payload);
+    if (nextPublishSignature !== lastPublishSignature) {
+      lastPublishSignature = nextPublishSignature;
+      window.AmyFXIntel.write('outlook', payload);
+    }
   }
 }
 
