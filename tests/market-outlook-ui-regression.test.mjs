@@ -5,7 +5,8 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const uiUrl = new URL('../app/src/main/assets/apps/mapping/js/market-outlook.js', import.meta.url);
-const coreUrl = new URL('../app/src/main/assets/apps/mapping/js/outlook/trade-scenario-core.js', import.meta.url);
+const activeCoreUrl = new URL('../app/src/main/assets/apps/mapping/js/outlook/amy-market-context-final-core.js', import.meta.url);
+const archivedCoreUrl = new URL('../app/src/main/assets/apps/mapping/js/outlook/trade-scenario-core.js', import.meta.url);
 const scriptUrl = new URL('../scripts/backtest-trade-scenarios-2024.mjs', import.meta.url);
 const cssUrl = new URL('../app/src/main/assets/apps/mapping/css/market-outlook.css', import.meta.url);
 const reportUrl = new URL('../docs/backtests/AMY_FX_TRADE_SCENARIOS_2024.md', import.meta.url);
@@ -16,43 +17,48 @@ function assertSyntax(url) {
   assert.equal(result.status, 0, result.stderr || result.stdout);
 }
 
-test('M5 Reaction First JavaScript remains syntactically valid', () => {
+test('AMY Market Context Final JavaScript remains syntactically valid', () => {
   assertSyntax(uiUrl);
-  assertSyntax(coreUrl);
+  assertSyntax(activeCoreUrl);
+  assertSyntax(archivedCoreUrl);
   assertSyntax(scriptUrl);
 });
 
-test('Saran Level UI exposes M5 reaction lifecycle rather than breakout prediction', () => {
+test('Market Outlook UI exposes qualified context events rather than unrestricted prediction', () => {
   const ui = readFileSync(uiUrl, 'utf8');
-  const core = readFileSync(coreUrl, 'utf8');
+  const core = readFileSync(activeCoreUrl, 'utf8');
   const css = readFileSync(cssUrl, 'utf8');
 
-  assert.match(ui, /M5 Reaction First/);
-  assert.match(ui, /fresh FVG/);
-  assert.match(ui, /first touch/);
-  assert.match(ui, /rejection M5/);
-  assert.match(ui, /50% FVG/);
-  assert.match(ui, /Grade A/);
-  assert.match(ui, /M5_REACTION_FIRST_LEVELS/);
+  assert.match(ui, /AMY Market Context Final/);
+  assert.match(ui, /struktur M15/);
+  assert.match(ui, /trigger M5/);
+  assert.match(ui, /FVG revisit/);
+  assert.match(ui, /OB revisit/);
+  assert.match(ui, /DOL/);
+  assert.match(ui, /Asia entry/);
+  assert.match(ui, /AMY_MARKET_CONTEXT_FINAL/);
+  assert.match(ui, /state\.candles\?\.M1/);
   assert.match(ui, /state\.candles\?\.M5/);
-  assert.equal(/WAIT_CONDITIONAL/.test(ui), false);
+  assert.match(ui, /state\.candles\?\.M15/);
   assert.equal(/Prediction Tracker/i.test(ui), false);
   assert.equal(/Probabilitas model/i.test(ui), false);
 
-  assert.match(core, /timeframe: 'M5'/);
-  assert.match(core, /displacementBodyAtr: 0\.8/);
-  assert.match(core, /entryWaitBars: 5/);
-  assert.match(core, /minimumRiskPoints: 0\.6/);
-  assert.match(core, /minimumLiquidityRoomR: 2\.0/);
-  assert.match(core, /tp1R: 1\.5/);
-  assert.match(core, /tp2R: 2\.0/);
-  assert.match(core, /FVG_FIRST_TOUCH_REACTION/);
-  assert.match(core, /LIQUIDITY_SWEEP_FVG_REACTION/);
+  assert.match(core, /contextTimeframe: 'M15'/);
+  assert.match(core, /executionTimeframe: 'M5'/);
+  assert.match(core, /fvgBodyMult: 1\.20/);
+  assert.match(core, /obBodyMult: 2\.00/);
+  assert.match(core, /acceptCloses: 3/);
+  assert.match(core, /dolMinClosePosition: 0\.80/);
+  assert.match(core, /asiaEntryMinAtr: 0\.35/);
+  assert.match(core, /asiaEntryMaxAtr: 1\.00/);
+  assert.match(core, /FVG_REVISIT/);
+  assert.match(core, /OB_REVISIT/);
+  assert.match(core, /ASIA_ENTRY/);
   assert.match(css, /amy-level-card\.buy/);
   assert.match(css, /amy-level-card\.sell/);
 });
 
-test('2024 M5 backtest is stored with validation and cost stress', () => {
+test('2024 M5 backtest remains stored as archived validation evidence', () => {
   const report = readFileSync(reportUrl, 'utf8');
   const result = JSON.parse(readFileSync(dataUrl, 'utf8'));
 
