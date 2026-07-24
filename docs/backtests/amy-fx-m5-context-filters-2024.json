@@ -1,0 +1,69 @@
+{
+  "status": "FINAL_M5_CONTEXT_FILTER_EXPERIMENT_2024",
+  "generatedAt": "2026-07-24T08:13:35.584Z",
+  "methodology": {
+    "dataset": "XAU/USD M5 signal with M1 execution resolution, January–December 2024",
+    "m5Candles": 71133,
+    "m1Candles": 355592,
+    "noLookahead": true,
+    "cleanPathDefinition": "No known, non-invalidated opposing FVG overlaps the corridor from entry to TP2 at confirmation time.",
+    "trendDefinition": "EMA20/EMA50 separation at least 0.15 ATR and EMA20 six-bar slope aligned with trade direction.",
+    "sessionDefinitionWita": "Asia 06:00–14:00, London 14:00–18:00, Pre-New York 18:00–19:30, New York 19:30–04:00, Post-New York 04:00–06:00.",
+    "selection": "Each filter is re-selected independently using sequential non-overlapping trades.",
+    "costs": "Spread, slippage, commission, news, and broker execution are not modeled in raw results."
+  },
+  "models": {
+    "BASELINE": {
+      "overall": {"entries":165,"tp1Rate":53.94,"tp2Rate":42.42,"expectancyTp2R":0.273},
+      "validationSepDec": {"entries":54,"tp1Rate":50.00,"tp2Rate":37.04,"expectancyTp2R":0.111}
+    },
+    "GRADE_A_ONLY": {
+      "overall": {"entries":44,"tp1Rate":63.64,"tp2Rate":50.00,"expectancyTp2R":0.500},
+      "validationSepDec": {"entries":13,"tp1Rate":76.92,"tp2Rate":46.15,"expectancyTp2R":0.385}
+    },
+    "CLEAN_PATH_ONLY": {
+      "overall": {"entries":147,"tp1Rate":53.74,"tp2Rate":41.50,"expectancyTp2R":0.245},
+      "validationSepDec": {"entries":43,"tp1Rate":51.16,"tp2Rate":37.21,"expectancyTp2R":0.116}
+    },
+    "TREND_ALIGNED_ONLY": {
+      "overall": {"entries":63,"tp1Rate":50.79,"tp2Rate":41.27,"expectancyTp2R":0.238},
+      "validationSepDec": {"entries":28,"tp1Rate":46.43,"tp2Rate":32.14,"expectancyTp2R":-0.036}
+    },
+    "COUNTER_TREND_ONLY": {
+      "overall": {"entries":91,"tp1Rate":58.24,"tp2Rate":43.96,"expectancyTp2R":0.319},
+      "validationSepDec": {"entries":24,"tp1Rate":58.33,"tp2Rate":45.83,"expectancyTp2R":0.375}
+    },
+    "ASIA_ONLY": {
+      "overall": {"entries":53,"tp1Rate":45.28,"tp2Rate":35.85,"expectancyTp2R":0.075},
+      "validationSepDec": {"entries":21,"tp1Rate":38.10,"tp2Rate":23.81,"expectancyTp2R":-0.286}
+    },
+    "LONDON_ONLY": {
+      "overall": {"entries":37,"tp1Rate":43.24,"tp2Rate":29.73,"expectancyTp2R":-0.108},
+      "validationSepDec": {"entries":9,"tp1Rate":44.44,"tp2Rate":33.33,"expectancyTp2R":0.000}
+    },
+    "NEW_YORK_ONLY": {
+      "overall": {"entries":36,"tp1Rate":66.67,"tp2Rate":58.33,"expectancyTp2R":0.750},
+      "validationSepDec": {"entries":9,"tp1Rate":66.67,"tp2Rate":55.56,"expectancyTp2R":0.667}
+    },
+    "PRE_NEW_YORK_ONLY": {
+      "overall": {"entries":27,"tp1Rate":74.07,"tp2Rate":55.56,"expectancyTp2R":0.667},
+      "validationSepDec": {"entries":12,"tp1Rate":75.00,"tp2Rate":58.33,"expectancyTp2R":0.750}
+    },
+    "POST_NEW_YORK_ONLY": {
+      "overall": {"entries":12,"tp1Rate":41.67,"tp2Rate":33.33,"expectancyTp2R":0.000},
+      "validationSepDec": {"entries":3,"tp1Rate":0.00,"tp2Rate":0.00,"expectancyTp2R":-1.000}
+    },
+    "NEW_YORK_OR_PRE_NY": {
+      "overall": {"entries":63,"buy":29,"sell":34,"tp1Rate":69.84,"tp2Rate":57.14,"slRate":30.16,"averageRiskPoints":0.938,"expectancyTp1R":0.746,"expectancyTp2R":0.714},
+      "validationSepDec": {"entries":21,"buy":8,"sell":13,"tp1Rate":71.43,"tp2Rate":57.14,"slRate":28.57,"averageRiskPoints":0.951,"expectancyTp1R":0.786,"expectancyTp2R":0.714},
+      "costStressTp2R": {"0.10":0.597,"0.15":0.538,"0.20":0.480,"0.25":0.421,"0.30":0.362},
+      "validationCostStressTp2R": {"0.10":0.595,"0.15":0.535,"0.20":0.475,"0.25":0.415,"0.30":0.356}
+    }
+  },
+  "winner": "NEW_YORK_OR_PRE_NY",
+  "winnerWindowWita": "18:00–04:00",
+  "audit": {
+    "candidateCount": 171,
+    "candidatesSha256": "e59a1e953ab227e71752fd1296ed61eb73ba63ee68784cd12fd68b361538c567"
+  }
+}

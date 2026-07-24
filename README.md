@@ -2,9 +2,9 @@
 
 Amy FX adalah aplikasi Android hybrid untuk pemetaan dan pemantauan market **XAU/USD**. Antarmuka utama berjalan melalui WebView lokal, sedangkan notifikasi, background scanner, penyimpanan, Firebase Messaging, download, dan pembaruan aplikasi ditangani oleh Kotlin native.
 
-> **Versi:** `1.4.6`
+> **Versi:** `1.5.1`
 >
-> **Version code:** `29`
+> **Version code:** `42`
 > **Minimum Android:** Android 8.0 / API 26  
 > **Target SDK:** Android SDK 35  
 > **Application ID:** `com.amyelitesuite`
@@ -25,6 +25,18 @@ Amy FX bukan robot trading, Expert Advisor, atau penasihat keuangan. Aplikasi ti
 | **Tutorial Trading** | Materi belajar trading terstruktur di dalam aplikasi |
 | **Indikator TradingView** | Library indikator dan file Pine Script |
 | **Dashboard** | Akses cepat ke seluruh modul Amy FX |
+
+## Update v1.5.1 — Stabilitas Mapping dan Efisiensi Data
+
+- Entry Watch memakai candle bersama dari Mapping tanpa jalur API kedua.
+- Permintaan Twelve Data yang sama digabung dan di-cache sesuai timeframe.
+- Scanner native memantau target aktif setiap lima menit ketika aplikasi berada di latar belakang.
+- Posisi baca tab Analisis dipertahankan ketika komponen diperbarui.
+- Bagian Analisis memakai accordion dengan status buka/tutup yang tersimpan.
+- Badge status membedakan **M15 LIVE** dan **M15 STALE** agar data usang tidak terlihat aktif.
+- Reliabilitas historis ditampilkan secara ringkas dan tertutup agar tidak dibaca sebagai akurasi sinyal saat ini.
+- Branding Preview dan kartu Dashboard yang berulang telah dibersihkan.
+- Package, signing key, data aplikasi, dan update channel produksi tetap dipertahankan.
 
 ## Update v1.4.0 — Dynamic Liquidity Heatmap
 
@@ -164,11 +176,26 @@ Market Outlook membuat proyeksi rule-based untuk:
 - **sesi berjalan**;
 - **24 jam**.
 
-Setiap outlook memiliki arah, probabilitas model, target liquidity, target lanjutan, invalidasi, jalur harga, skenario alternatif, market regime, faktor pendukung, dan faktor risiko.
+Setiap outlook memiliki arah, skor skenario rule-based, target liquidity, target lanjutan, invalidasi, jalur harga, skenario alternatif, market regime, faktor pendukung, dan faktor risiko.
 
-Probabilitas dibatasi pada rentang konservatif dan diturunkan ketika data stale, risiko berita tinggi, struktur timeframe bertentangan, atau harga telah terlalu premium/discount.
+Skor skenario dibatasi pada rentang konservatif dan diturunkan ketika data stale, risiko berita tinggi, struktur timeframe bertentangan, atau harga telah terlalu premium/discount. Skor tersebut **bukan probabilitas kemenangan**.
 
-Prediction Tracker menyimpan outlook sebelum market bergerak. Statistik akurasi baru ditampilkan setelah minimal 20 outlook selesai.
+Prediction Tracker menyimpan outlook sebelum market bergerak. Statistik tracker lokal baru ditampilkan setelah minimal 20 outlook selesai.
+
+### Backtest Market Outlook dan Mapping 2022–2025
+
+Backtest independen memakai 48 arsip bulanan XAU/USD 2022–2025 dengan warm-up Januari–Maret 2022 dan evaluasi hingga 30 Desember 2025.
+
+- Total Market Outlook: **26.226 proyeksi**.
+- Akurasi arah keseluruhan: **42,19%**.
+- Target hit: **26,47%**.
+- Invalidasi: **19,07%**.
+- Akurasi arah 1–4 jam: **42,67%**.
+- Akurasi arah sesi berjalan: **38,51%**.
+- Akurasi arah 24 jam: **46,12%**.
+- Mapping M15 aligned: **48,53%** dari 21.395 snapshot.
+
+Hasil lengkap tersedia di [`docs/backtests/AMY_FX_MARKET_OUTLOOK_MAPPING_2022_2025.md`](docs/backtests/AMY_FX_MARKET_OUTLOOK_MAPPING_2022_2025.md). Backtest memakai port independen rules engine untuk menjalankan histori secara efisien, bukan eksekusi WebView langsung.
 
 ## Berita dan Notifikasi
 
@@ -232,7 +259,7 @@ Prasyarat:
 
 - JDK 17;
 - Android SDK 35;
-- Node.js 20.
+- Node.js 22.
 
 Perintah utama:
 

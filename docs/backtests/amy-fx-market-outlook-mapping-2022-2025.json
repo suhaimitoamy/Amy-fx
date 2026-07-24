@@ -1,0 +1,104 @@
+{
+  "status": "FINAL_AUDITED_BACKTEST_FOR_ISSUE_5",
+  "meta": {
+    "generatedAt": "2026-07-24",
+    "engineBranch": "fix/amyfx-five-issues-20260724",
+    "engineSourceCommitAtRun": "7f78631101db834481d92185b2791feac29600f6",
+    "dataset": "XAU/USD 2022-2025 monthly CSV; M1, M5, M15, H1, H4, D1; M30 reconstructed from M15",
+    "scoredPeriod": "2022-04-01 through 2025-12-29 UTC",
+    "developmentPeriod": "2022-2024",
+    "outOfSamplePeriod": "2025",
+    "historicalNews": "Unavailable; newsRisk held UNKNOWN. Results must not be described as news-conditioned.",
+    "versionOrReleaseChanged": false
+  },
+  "methodology": {
+    "closedCandleBuffer": "299 closed candles, matching production fetch of 300 followed by removal of the newest unclosed candle.",
+    "noLookahead": "At time t only candles with open time plus timeframe interval less than or equal to t were supplied. Confirmed swings retain production right-side confirmation.",
+    "developmentSplit": "2022-2024",
+    "outOfSample": "2025",
+    "historicalNews": "UNKNOWN; not tested",
+    "mappingNaturalHorizonsHours": { "M1": 1, "M5": 2, "M15": 4, "M30": 6, "H1": 12, "H4": 24 },
+    "zoneReaction": "After zone touch, price must move 0.5 ATR beyond the far edge in zone direction before close-based invalidation."
+  },
+  "marketOutlook": {
+    "overall": {
+      "samples": 25223,
+      "trackerDefinedSuccess": { "samples": 25223, "correct": 10791, "accuracy": 42.78, "ci95": [42.17, 43.39] },
+      "closeDirectionAccuracy": { "samples": 25223, "correct": 8903, "accuracy": 35.3, "ci95": [34.71, 35.89] },
+      "baselinePreviousM15Close": { "samples": 25223, "correct": 9190, "accuracy": 36.43, "ci95": [35.84, 37.03] },
+      "baselineH1FourBarMomentumClose": { "samples": 25223, "correct": 8836, "accuracy": 35.03, "ci95": [34.45, 35.62] },
+      "targetHitRate": 28.85,
+      "invalidationRate": 23.38,
+      "averageDisplayedScore": 61.55
+    },
+    "byHorizon": {
+      "DAILY": { "samples": 947, "trackerSuccess": 43.29, "closeAccuracy": 38.44, "targetHitRate": 22.28, "averageScore": 56.44 },
+      "INTRADAY": { "samples": 20499, "trackerSuccess": 43.13, "closeAccuracy": 35.36, "targetHitRate": 30.67, "averageScore": 62.13 },
+      "SESSION": { "samples": 3777, "trackerSuccess": 40.77, "closeAccuracy": 34.15, "targetHitRate": 20.6, "averageScore": 59.68 }
+    },
+    "byYear": {
+      "2022": { "samples": 5327, "trackerSuccess": 42.03, "closeAccuracy": 34.77, "baselineM15": 36.23 },
+      "2023": { "samples": 6316, "trackerSuccess": 40.66, "closeAccuracy": 33.28, "baselineM15": 34.53 },
+      "2024": { "samples": 7107, "trackerSuccess": 42.41, "closeAccuracy": 35.91, "baselineM15": 36.77 },
+      "2025": { "samples": 6473, "trackerSuccess": 45.88, "closeAccuracy": 37.03, "baselineM15": 38.1 }
+    },
+    "outOfSample2025": {
+      "samples": 6473,
+      "trackerSuccess": 45.88,
+      "closeAccuracy": 37.03,
+      "closeAccuracyCi95": [35.86, 38.21],
+      "baselineM15": 38.1,
+      "baselineH1Momentum": 36.89
+    },
+    "calibration": {
+      "40-49": { "samples": 1650, "averageScore": 46.75, "trackerSuccess": 43.09, "closeAccuracy": 36.06 },
+      "50-59": { "samples": 5317, "averageScore": 53.15, "trackerSuccess": 44.2, "closeAccuracy": 37.11 },
+      "60-69": { "samples": 15865, "averageScore": 64.32, "trackerSuccess": 42.28, "closeAccuracy": 34.59 },
+      "70-79": { "samples": 2391, "averageScore": 72.08, "trackerSuccess": 42.74, "closeAccuracy": 35.42 }
+    }
+  },
+  "mapping": {
+    "overall": {
+      "M1": { "snapshots": 5416, "accuracy": 32.66, "ci95": [31.43, 33.92], "alignedAccuracy": 34.89, "targetHitRate": 49.83, "baselineCandle": 35.15, "baselineMomentum": 41.46 },
+      "M5": { "snapshots": 5416, "accuracy": 35.91, "ci95": [34.64, 37.2], "alignedAccuracy": 37.89, "targetHitRate": 40.6, "baselineCandle": 36.81, "baselineMomentum": 39.25 },
+      "M15": { "snapshots": 5416, "accuracy": 41.3, "ci95": [40.0, 42.62], "alignedAccuracy": 42.96, "targetHitRate": 35.8, "baselineCandle": 40.54, "baselineMomentum": 40.92 },
+      "M30": { "snapshots": 5416, "accuracy": 41.58, "ci95": [40.27, 42.9], "alignedAccuracy": 43.3, "targetHitRate": 33.15, "baselineCandle": 42.39, "baselineMomentum": 43.19 },
+      "H1": { "snapshots": 5416, "accuracy": 43.13, "ci95": [41.82, 44.45], "alignedAccuracy": 45.76, "targetHitRate": 33.73, "baselineCandle": 44.22, "baselineMomentum": 43.89 },
+      "H4": { "snapshots": 5416, "accuracy": 44.22, "ci95": [42.9, 45.55], "alignedAccuracy": 46.12, "targetHitRate": 32.95, "baselineCandle": 41.83, "baselineMomentum": 41.67 }
+    },
+    "outOfSample2025": {
+      "M1": { "accuracy": 36.09, "alignedAccuracy": 39.35, "targetHitRate": 50.48, "baselineCandle": 38.68, "baselineMomentum": 41.39 },
+      "M5": { "accuracy": 38.65, "alignedAccuracy": 39.76, "targetHitRate": 41.74, "baselineCandle": 39.04, "baselineMomentum": 40.27 },
+      "M15": { "accuracy": 42.7, "alignedAccuracy": 46.25, "targetHitRate": 37.45, "baselineCandle": 40.27, "baselineMomentum": 44.17 },
+      "M30": { "accuracy": 43.49, "alignedAccuracy": 46.29, "targetHitRate": 35.11, "baselineCandle": 41.31, "baselineMomentum": 44.59 },
+      "H1": { "accuracy": 44.2, "alignedAccuracy": 48.84, "targetHitRate": 33.45, "baselineCandle": 45.59, "baselineMomentum": 46.3 },
+      "H4": { "accuracy": 43.56, "alignedAccuracy": 46.84, "targetHitRate": 29.62, "baselineCandle": 42.65, "baselineMomentum": 41.38 }
+    }
+  },
+  "zones": {
+    "M1_FVG": { "weeks": 196, "coverage": 96.94, "touchRate": 88.42, "reactionAfterTouch": 65.48, "reactionCi95": [58.01, 72.25], "invalidationAfterTouch": 34.52 },
+    "M1_OB": { "weeks": 196, "coverage": 91.84, "touchRate": 54.44, "reactionAfterTouch": 54.08, "reactionCi95": [44.25, 63.61], "invalidationAfterTouch": 45.92 },
+    "M5_FVG": { "weeks": 196, "coverage": 97.96, "touchRate": 78.65, "reactionAfterTouch": 60.26, "reactionCi95": [52.3, 67.72], "invalidationAfterTouch": 37.75 },
+    "M5_OB": { "weeks": 196, "coverage": 89.8, "touchRate": 36.36, "reactionAfterTouch": 67.19, "reactionCi95": [55.0, 77.43], "invalidationAfterTouch": 31.25 },
+    "M15_FVG": { "weeks": 196, "coverage": 95.41, "touchRate": 66.84, "reactionAfterTouch": 59.2, "reactionCi95": [50.44, 67.42], "invalidationAfterTouch": 40.0 },
+    "M15_OB": { "weeks": 196, "coverage": 89.8, "touchRate": 34.66, "reactionAfterTouch": 59.02, "reactionCi95": [46.5, 70.46], "invalidationAfterTouch": 40.98 },
+    "M30_FVG": { "weeks": 196, "coverage": 91.84, "touchRate": 62.22, "reactionAfterTouch": 54.46, "reactionCi95": [45.25, 63.39], "invalidationAfterTouch": 43.75 },
+    "M30_OB": { "weeks": 196, "coverage": 89.29, "touchRate": 28.0, "reactionAfterTouch": 48.98, "reactionCi95": [35.58, 62.53], "invalidationAfterTouch": 48.98 },
+    "H1_FVG": { "weeks": 196, "coverage": 95.41, "touchRate": 73.26, "reactionAfterTouch": 53.28, "reactionCi95": [44.95, 61.44], "invalidationAfterTouch": 44.53 },
+    "H1_OB": { "weeks": 196, "coverage": 92.86, "touchRate": 37.36, "reactionAfterTouch": 54.41, "reactionCi95": [42.66, 65.7], "invalidationAfterTouch": 44.12 },
+    "H4_FVG": { "weeks": 196, "coverage": 98.47, "touchRate": 50.26, "reactionAfterTouch": 50.52, "reactionCi95": [40.74, 60.25], "invalidationAfterTouch": 35.05 },
+    "H4_OB": { "weeks": 196, "coverage": 92.86, "touchRate": 29.12, "reactionAfterTouch": 33.96, "reactionCi95": [22.69, 47.41], "invalidationAfterTouch": 60.38 }
+  },
+  "limitations": [
+    "No aligned historical news feed was available, so HIGH/ELEVATED news behavior was not tested.",
+    "M30 was reconstructed from M15 rather than supplied natively.",
+    "CSV timestamps were interpreted as UTC; session calculation itself used production Asia/Jakarta rules.",
+    "OB/FVG statistics are weekly stratified display-snapshot tests, not every zone ever formed.",
+    "Backtest measures rule behavior, not executable trade returns; spread, slippage, commissions, and broker execution were not modeled."
+  ],
+  "audit": {
+    "summarySha256": "b74651ee6310b6c0e519dc25bf8eb4adbc86b774ad6efcea6be1b3a17cd975fc",
+    "rawRecordsSha256": "06a4a5d214f6697e51247985d807e6471471b0fdeafd48a8d9563fbefe4c1ac6",
+    "releaseChanged": false
+  }
+}
