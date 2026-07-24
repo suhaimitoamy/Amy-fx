@@ -8,8 +8,9 @@ const dataUrl = new URL('../docs/backtests/amy-fx-m5-min10-duration-2025.json', 
 test('2025 min-10 point experiment records duration sensitivity honestly', () => {
   const report = readFileSync(reportUrl, 'utf8');
   const result = JSON.parse(readFileSync(dataUrl, 'utf8'));
-  const twoHours = result.durationComparison['24bars'].summary;
-  const twentyFourHours = result.durationComparison['288bars'].summary;
+  const comparison = result.durationComparison || result.variants;
+  const twoHours = comparison['24bars'].summary;
+  const twentyFourHours = comparison['288bars'].summary;
 
   assert.equal(result.status, 'FINAL_BACKTEST_M5_MIN10_DURATION_COMPARISON_2025');
   assert.equal(result.methodology.m5Candles, 70810);
