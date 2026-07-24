@@ -42,6 +42,9 @@ test('Market Outlook UI exposes qualified context events rather than unrestricte
   assert.match(ui, /state\.candles\?\.M15/);
   assert.equal(/Prediction Tracker/i.test(ui), false);
   assert.equal(/Probabilitas model/i.test(ui), false);
+  assert.equal(/Validasi historis/i.test(ui), false);
+  assert.equal(/Periode validasi/i.test(ui), false);
+  assert.equal(/confidenceText/i.test(ui), false);
 
   assert.match(core, /contextTimeframe: 'M15'/);
   assert.match(core, /executionTimeframe: 'M5'/);
