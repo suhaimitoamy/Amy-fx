@@ -51,16 +51,18 @@ function expiryText(result) {
 }
 
 function entryText(scenario) {
+  const price = priceText(scenario.entry);
   return scenario.side === 'BUY'
-    ? `di atas ${priceText(scenario.entry)} setelah breakout`
-    : `di bawah ${priceText(scenario.entry)} setelah breakdown`;
+    ? `area ${price} setelah breakout dan retest`
+    : `area ${price} setelah breakdown dan retest`;
 }
 
 function displayReason(scenario) {
   const level = priceText(scenario.triggerLevel);
+  const retestBars = Number(scenario.retestBars || 8);
   return scenario.side === 'BUY'
-    ? `Breakout resistance ${level} yang dikonfirmasi oleh penutupan candle M15.`
-    : `Breakdown support ${level} yang dikonfirmasi oleh penutupan candle M15.`;
+    ? `Tunggu close M15 di atas resistance ${level}, lalu retest level entry maksimal ${retestBars} candle.`
+    : `Tunggu close M15 di bawah support ${level}, lalu retest level entry maksimal ${retestBars} candle.`;
 }
 
 function scenarioCopyText(scenario, result) {
@@ -69,9 +71,8 @@ function scenarioCopyText(scenario, result) {
     title,
     `Entry ${entryText(scenario)}`,
     `Stop Loss ${priceText(scenario.stopLoss)}`,
-    `Take Profit 1 ${priceText(scenario.takeProfit1)}`,
-    `Take Profit 2 ${priceText(scenario.takeProfit2)}`,
-    `Risk : Reward 1:${scenario.riskReward2.toFixed(1)}`,
+    `Take Profit 1 ${priceText(scenario.takeProfit1)} (1:${scenario.riskReward1.toFixed(1)})`,
+    `Take Profit 2 ${priceText(scenario.takeProfit2)} (1:${scenario.riskReward2.toFixed(1)})`,
     `Berlaku sampai ${expiryText(result)} WITA`,
     `Alasan: ${displayReason(scenario)}`
   ].join('\n');
@@ -87,7 +88,7 @@ function scenarioCard(scenario, result) {
       <span>Stop Loss</span><strong class="loss">${priceText(scenario.stopLoss)}</strong>
       <span>Take Profit 1</span><strong class="profit">${priceText(scenario.takeProfit1)}</strong>
       <span>Take Profit 2</span><strong class="profit">${priceText(scenario.takeProfit2)}</strong>
-      <span>Risk : Reward</span><strong>1:${scenario.riskReward2.toFixed(1)}</strong>
+      <span>Risk : Reward</span><strong>TP1 1:${scenario.riskReward1.toFixed(1)} · TP2 1:${scenario.riskReward2.toFixed(1)}</strong>
     </div>
     <p><b>Alasan:</b> ${safeText(displayReason(scenario))}</p>
     <button type="button" class="amy-copy-level" data-copy-levels="${safeText(scenarioCopyText(scenario, result))}"><span>▣</span> Salin level</button>
@@ -99,16 +100,16 @@ function waitingMarkup({ stale, result }) {
     ? 'Data M15 sedang usang. Saran level ditahan sampai candle live kembali tersedia.'
     : `Candle M15 belum cukup untuk menghitung level (${result.availableBars || 0}/${result.requiredBars || 32}).`;
   return `<section class="amy-level-panel waiting">
-    <p class="amy-level-intro">Harga entry / stop / target konkret untuk skenario buy dan sell — di-anchor ke harga saat analisis dibuat.</p>
+    <p class="amy-level-intro">Harga entry / stop / target konkret untuk skenario buy dan sell — aktif hanya setelah breakout atau breakdown mendapatkan retest valid.</p>
     <div class="amy-level-waiting">${safeText(message)}</div>
   </section>`;
 }
 
 function panelMarkup(result) {
   return `<section class="amy-level-panel">
-    <p class="amy-level-intro">Harga entry / stop / target konkret untuk skenario buy dan sell — di-anchor ke harga saat analisis dibuat.</p>
+    <p class="amy-level-intro">Harga entry / stop / target konkret untuk skenario buy dan sell — aktif hanya setelah breakout atau breakdown mendapatkan retest valid.</p>
     <div class="amy-level-cards">${result.scenarios.map(item => scenarioCard(item, result)).join('')}</div>
-    <p class="amy-level-disclaimer">Hanya skenario yang mendapat konfirmasi close M15 valid yang aktif; sisi berlawanan dibatalkan. Keputusan trading tetap sepenuhnya di tangan kamu.</p>
+    <p class="amy-level-disclaimer">Hanya sisi pertama yang mendapat close M15 dan retest valid yang aktif; sisi berlawanan dibatalkan. TP1 memakai RR 1:1,5 dan TP2 memakai RR 1:2. Keputusan trading tetap sepenuhnya di tangan kamu.</p>
   </section>`;
 }
 
@@ -169,14 +170,16 @@ function signature(result, stale) {
     sourceTime: result.sourceTime,
     referencePrice: Number(result.referencePrice || 0).toFixed(2),
     resistance: Number(result.resistance || 0).toFixed(2),
-    support: Number(result.support || 0).toFixed(2)
+    support: Number(result.support || 0).toFixed(2),
+    tp1R: Number(result.config?.tp1R || 0),
+    tp2R: Number(result.config?.tp2R || 0)
   });
 }
 
 function publish(result, stale) {
   if (state.result) {
     state.result.marketOutlook = {
-      mode: 'DUAL_CONDITIONAL_LEVELS',
+      mode: 'DUAL_CONDITIONAL_RETEST_LEVELS',
       status: stale ? 'DATA_STALE' : result.status,
       generatedAt: result.generatedAt,
       price: result.referencePrice,
@@ -188,7 +191,7 @@ function publish(result, stale) {
     const buy = result.scenarios?.find(item => item.side === 'BUY') || null;
     const sell = result.scenarios?.find(item => item.side === 'SELL') || null;
     const payload = {
-      mode: 'DUAL_CONDITIONAL_LEVELS',
+      mode: 'DUAL_CONDITIONAL_RETEST_LEVELS',
       generatedAt: result.generatedAt,
       price: result.referencePrice,
       status: stale ? 'DATA_STALE' : result.status,
@@ -246,7 +249,7 @@ function boot() {
 window.AmyMarketOutlook = {
   refresh: () => refresh(true),
   history: () => [],
-  stats: () => ({ mode: 'DUAL_CONDITIONAL_LEVELS', current: lastResult })
+  stats: () => ({ mode: 'DUAL_CONDITIONAL_RETEST_LEVELS', current: lastResult })
 };
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
