@@ -87,11 +87,15 @@
     return state.includes('STALE') || state.includes('USANG');
   }
 
+  function setText(element, value) {
+    if (element && element.textContent !== value) element.textContent = value;
+  }
+
   function updateAnalysisBadge(card) {
     const badge = card?.querySelector('.regime-badge');
     if (!badge) return;
     const stale = isM15Stale();
-    badge.textContent = stale ? 'M15 STALE' : 'M15 LIVE';
+    setText(badge, stale ? 'M15 STALE' : 'M15 LIVE');
     badge.classList.toggle('stale', stale);
     badge.classList.toggle('live', !stale);
     badge.setAttribute('aria-label', stale ? 'Data candle M15 sedang usang' : 'Data candle M15 aktif');
@@ -176,27 +180,27 @@
 
     panel.querySelectorAll('.outlook-confidence').forEach(confidence => {
       const label = confidence.querySelector('small');
-      if (label?.textContent.trim() === 'Probabilitas model') label.textContent = 'Skor skenario rule-based';
+      if (label?.textContent.trim() === 'Probabilitas model') setText(label, 'Skor skenario rule-based');
       if (label?.textContent.trim() === 'Skor skenario rule-based') scoreText(confidence.querySelector('strong'));
     });
 
     panel.querySelectorAll('.outlook-probabilities > div').forEach((row, index) => {
       const label = row.querySelector('span');
-      if (label) label.textContent = index === 0 ? 'Skor skenario utama' : index === 1 ? 'Skor alternatif' : 'Skor risiko invalidasi';
+      if (label) setText(label, index === 0 ? 'Skor skenario utama' : index === 1 ? 'Skor alternatif' : 'Skor risiko invalidasi');
       scoreText(row.querySelector('b'));
     });
 
     panel.querySelectorAll('.outlook-calibrated').forEach(element => {
       const match = element.textContent.match(/[\d.,]+%/);
-      element.textContent = match ? `Keberhasilan tracker historis ${match[0]}` : 'Keberhasilan tracker historis';
+      setText(element, match ? `Keberhasilan tracker historis ${match[0]}` : 'Keberhasilan tracker historis');
     });
     const trackerLabel = panel.querySelector('.outlook-tracker-main span');
     if (trackerLabel && trackerLabel.textContent.includes('Akurasi arah historis')) {
-      trackerLabel.textContent = 'Keberhasilan tracker historis · target-first termasuk berhasil';
+      setText(trackerLabel, 'Keberhasilan tracker historis · target-first termasuk berhasil');
     }
     const trackerNote = panel.querySelector('.outlook-tracker-note');
     if (trackerNote) {
-      trackerNote.textContent = 'Tracker produksi menilai target-first, invalidasi, dan arah saat expiry. Nilai tracker bukan akurasi arah close dan baru ditampilkan setelah minimal 20 outlook selesai.';
+      setText(trackerNote, 'Tracker produksi menilai target-first, invalidasi, dan arah saat expiry. Nilai tracker bukan akurasi arah close dan baru ditampilkan setelah minimal 20 outlook selesai.');
     }
 
     let note = panel.querySelector('.amy-outlook-backtest-note');
@@ -207,7 +211,7 @@
       if (disclaimer) disclaimer.insertAdjacentElement('afterend', note);
       else panel.prepend(note);
     }
-    note.textContent = formatBacktestNote();
+    setText(note, formatBacktestNote());
 
     panel.querySelectorAll('.outlook-card').forEach(card => {
       const label = card.querySelector('.outlook-card-head h3')?.textContent?.trim();
@@ -220,7 +224,7 @@
         historical.className = 'amy-outlook-historical-rate';
         confidence.appendChild(historical);
       }
-      historical.textContent = `Akurasi arah close historis ${accuracy.toFixed(2)}%`;
+      setText(historical, `Akurasi arah close historis ${accuracy.toFixed(2)}%`);
     });
   }
 
