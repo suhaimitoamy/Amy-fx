@@ -3,9 +3,10 @@ export const TRADE_SCENARIO_CONFIG = Object.freeze({
   lookbackBars: 32,
   atrPeriod: 14,
   entryBufferAtr: 0.05,
-  stopPadAtr: 0.75,
-  tp1R: 0.5,
-  tp2R: 1.0,
+  retestBars: 8,
+  stopPadAtr: 1.0,
+  tp1R: 1.5,
+  tp2R: 2.0,
   validityBars: 32
 });
 
@@ -49,11 +50,11 @@ function mergeConfig(config) {
   return { ...TRADE_SCENARIO_CONFIG, ...(config || {}) };
 }
 
-function scenarioReason(side, level) {
+function scenarioReason(side, level, retestBars) {
   if (side === 'BUY') {
-    return `Buy hanya aktif setelah candle M15 ditutup di atas resistance ${level.toFixed(2)}.`;
+    return `Buy aktif setelah close M15 breakout di atas ${level.toFixed(2)}, lalu harga retest level entry maksimal ${retestBars} candle.`;
   }
-  return `Sell hanya aktif setelah candle M15 ditutup di bawah support ${level.toFixed(2)}.`;
+  return `Sell aktif setelah close M15 breakdown di bawah ${level.toFixed(2)}, lalu harga retest level entry maksimal ${retestBars} candle.`;
 }
 
 export function activateTradeScenario(scenario, fillPrice = scenario?.entry) {
@@ -136,23 +137,27 @@ export function buildTradeScenarios({
 
   const buyBase = {
     side: 'BUY',
-    trigger: 'M15_CLOSE_ABOVE',
+    trigger: 'M15_CLOSE_ABOVE_THEN_RETEST',
+    entryMode: 'BREAKOUT_RETEST',
     triggerLevel: resistance,
     entry: resistance + buffer,
     stopLoss: resistance - stopPad,
+    retestBars: settings.retestBars,
     tp1R: settings.tp1R,
     tp2R: settings.tp2R,
-    reason: scenarioReason('BUY', resistance)
+    reason: scenarioReason('BUY', resistance, settings.retestBars)
   };
   const sellBase = {
     side: 'SELL',
-    trigger: 'M15_CLOSE_BELOW',
+    trigger: 'M15_CLOSE_BELOW_THEN_RETEST',
+    entryMode: 'BREAKOUT_RETEST',
     triggerLevel: support,
     entry: support - buffer,
     stopLoss: support + stopPad,
+    retestBars: settings.retestBars,
     tp1R: settings.tp1R,
     tp2R: settings.tp2R,
-    reason: scenarioReason('SELL', support)
+    reason: scenarioReason('SELL', support, settings.retestBars)
   };
 
   return {
@@ -170,6 +175,6 @@ export function buildTradeScenarios({
       activateTradeScenario(buyBase, buyBase.entry),
       activateTradeScenario(sellBase, sellBase.entry)
     ],
-    disclaimer: 'Dua skenario bersifat kondisional. Hanya sisi yang memperoleh close M15 valid yang aktif; sisi lain dibatalkan.'
+    disclaimer: 'Dua skenario bersifat OCO. Sisi pertama yang breakout dan mendapat retest valid akan aktif; sisi lain dibatalkan.'
   };
 }
