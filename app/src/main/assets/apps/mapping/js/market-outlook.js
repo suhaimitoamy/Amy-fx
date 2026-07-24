@@ -66,12 +66,6 @@ function scenarioTitle(scenario) {
   })[scenario?.setupType] || 'Context Event';
 }
 
-function confidenceText(scenario) {
-  const band = scenario?.confidenceBand === 'HIGH' ? 'HIGH' : 'MODERATE';
-  const rate = Number.isFinite(Number(scenario?.historicalRate)) ? `${Number(scenario.historicalRate).toFixed(2)}%` : '—';
-  return `${band} · historis ${rate}`;
-}
-
 function invalidationText(scenario) {
   if (Number.isFinite(Number(scenario?.invalidation))) return priceText(scenario.invalidation);
   return `timeout ${expiryText(scenario?.expiresAt)} WITA atau zona tidak lagi fresh`;
@@ -82,7 +76,6 @@ function scenarioCopyText(scenario) {
     scenarioTitle(scenario),
     `Arah ${scenario.side}`,
     `Status ${statusText(scenario)}`,
-    `Validasi ${confidenceText(scenario)} (${scenario.historicalPeriod || '-'})`,
     `Harga acuan ${priceText(scenario.referencePrice)}`,
     `Target ${priceText(scenario.target)}`,
     `Invalidasi ${invalidationText(scenario)}`,
@@ -90,7 +83,7 @@ function scenarioCopyText(scenario) {
     `Alasan: ${scenario.reason}`
   ];
   if (Number.isFinite(Number(scenario.zoneLow)) && Number.isFinite(Number(scenario.zoneHigh))) {
-    rows.splice(5, 0, `Zona ${priceText(scenario.zoneLow)} - ${priceText(scenario.zoneHigh)}`);
+    rows.splice(4, 0, `Zona ${priceText(scenario.zoneLow)} - ${priceText(scenario.zoneHigh)}`);
   }
   return rows.join('\n');
 }
@@ -103,8 +96,6 @@ function scenarioCard(scenario) {
     <div class="amy-level-grid">
       <span>Arah Outlook</span><strong>${safeText(scenario.side)}</strong>
       <span>Status</span><strong>${safeText(statusText(scenario))}</strong>
-      <span>Validasi historis</span><strong>${safeText(confidenceText(scenario))}</strong>
-      <span>Periode validasi</span><strong>${safeText(scenario.historicalPeriod || '—')}</strong>
       <span>Timeframe</span><strong>${safeText(scenario.timeframe || 'M5 + M15')}</strong>
       <span>Harga acuan</span><strong>${priceText(scenario.referencePrice)}</strong>
       ${zone ? `<span>Zona konteks</span><strong>${priceText(scenario.zoneLow)}–${priceText(scenario.zoneHigh)}</strong>` : ''}
@@ -144,7 +135,7 @@ function panelMarkup(result) {
     <p class="amy-level-intro">AMY Market Context Final hanya mengaktifkan outlook ketika event yang memenuhi threshold terkunci terdeteksi.</p>
     ${contextMarkup(result)}
     <div class="amy-level-cards">${result.scenarios.map(scenarioCard).join('')}</div>
-    <p class="amy-level-disclaimer">Angka HIGH/MODERATE adalah hasil validasi historis sesuai definisi event indikator, bukan probabilitas kemenangan live. Jika event bertentangan, Outlook tetap WAIT.</p>
+    <p class="amy-level-disclaimer">Market Outlook adalah konteks berbasis aturan, bukan jaminan hasil. Jika event bertentangan, Outlook tetap WAIT.</p>
   </section>`;
 }
 
