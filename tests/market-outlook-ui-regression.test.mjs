@@ -29,15 +29,18 @@ test('mapping keeps the existing Market Outlook asset entry points', () => {
   assert.match(html, /js\/market-outlook\.js/);
 });
 
-test('Market Outlook is rendered as two conditional level scenarios', () => {
+test('Market Outlook matches the Saran Level reference layout', () => {
   const ui = readFileSync(uiUrl, 'utf8');
   const core = readFileSync(coreUrl, 'utf8');
   const css = readFileSync(cssUrl, 'utf8');
 
-  assert.match(ui, /Amy Market Outlook · Saran Level/);
-  assert.match(ui, /Dua Skenario Kondisional/);
+  assert.match(ui, /Saran Level/);
+  assert.match(ui, /Harga entry \/ stop \/ target konkret/);
   assert.match(ui, /Skenario Buy/);
   assert.match(ui, /Skenario Sell/);
+  assert.match(ui, /setelah breakout/);
+  assert.match(ui, /setelah breakdown/);
+  assert.match(ui, /Salin level/);
   assert.match(ui, /Saran level ditahan/);
   assert.match(ui, /WAIT_CONDITIONAL/);
   assert.equal(/Prediction Tracker/i.test(ui), false);
@@ -52,6 +55,8 @@ test('Market Outlook is rendered as two conditional level scenarios', () => {
   assert.match(core, /M15_CLOSE_BELOW/);
   assert.match(css, /amy-level-card\.buy/);
   assert.match(css, /amy-level-card\.sell/);
+  assert.match(css, /amy-level-summary-status/);
+  assert.match(css, /width:7px/);
 });
 
 test('2024 backtest result is recorded without overstating TP2 accuracy', () => {
