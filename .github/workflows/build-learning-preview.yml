@@ -45,6 +45,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: build-learning-preview-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-preview:
     runs-on: ubuntu-latest

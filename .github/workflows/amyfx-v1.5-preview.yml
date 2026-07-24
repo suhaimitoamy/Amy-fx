@@ -6,6 +6,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: amyfx-v1-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   disabled:
     runs-on: ubuntu-latest

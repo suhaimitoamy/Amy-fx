@@ -7,6 +7,10 @@ permissions:
   contents: read
   statuses: write
 
+concurrency:
+  group: amyfx-v15-test-diagnostics-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   diagnose-tests:
     runs-on: ubuntu-latest
