@@ -7,15 +7,23 @@
   const DISCLOSURE_STATE_KEY = 'amyfx.analysis.disclosures.v3';
   const MARKET_CONTEXT_KEY = 'market-context';
   const BACKTEST = Object.freeze({
+    status: 'FINAL_AUDITED',
     period: '2022–2025',
-    samples: 26226,
-    directionalAccuracy: 42.19,
-    targetHitRate: 26.47,
-    invalidationRate: 19.07,
+    samples: 25223,
+    trackerSuccess: 42.78,
+    closeDirectionAccuracy: 35.30,
+    baselineM15: 36.43,
+    targetHitRate: 28.85,
+    invalidationRate: 23.38,
+    outOfSample2025: Object.freeze({
+      samples: 6473,
+      closeDirectionAccuracy: 37.03,
+      baselineM15: 38.10
+    }),
     horizons: Object.freeze({
-      '1–4 Jam': 42.67,
-      'Sesi Berjalan': 38.51,
-      '24 Jam': 46.12
+      '1–4 Jam': 35.36,
+      'Sesi Berjalan': 34.15,
+      '24 Jam': 38.44
     })
   });
 
@@ -71,10 +79,8 @@
   function isM15Stale() {
     const result = window.state?.result;
     if (result?.dataStale) return true;
-
     const connection = String(document.getElementById('conn')?.textContent || '').toUpperCase();
     if (connection.includes('STALE') || connection.includes('DATA USANG')) return true;
-
     const quality = window.AmyMappingIntegrity?.qualityByInterval || {};
     const m15 = quality['15min'] || quality.M15 || quality.m15;
     const state = qualityState(m15).toUpperCase();
@@ -88,24 +94,30 @@
     badge.textContent = stale ? 'M15 STALE' : 'M15 LIVE';
     badge.classList.toggle('stale', stale);
     badge.classList.toggle('live', !stale);
-    badge.setAttribute('aria-label', stale
-      ? 'Data candle M15 sedang usang'
-      : 'Data candle M15 aktif');
+    badge.setAttribute('aria-label', stale ? 'Data candle M15 sedang usang' : 'Data candle M15 aktif');
   }
 
   function ensureReliabilityDisclosure(card) {
-    if (!card || card.querySelector('.amy-reliability-disclosure')) return;
-    const title = [...card.querySelectorAll('.market-health-title')]
-      .find(element => element.querySelector('span')?.textContent?.trim() === 'RELIABILITAS HISTORIS');
-    const grid = title?.nextElementSibling;
-    if (!title || !grid?.classList.contains('reliability-grid')) return;
-
-    const details = document.createElement('details');
-    details.className = 'amy-reliability-disclosure';
-    details.dataset.stabilityKey = 'historical-reliability';
-    details.innerHTML = '<summary><span>Reliabilitas Historis</span><small>Referensi 2022–2025 · bukan sinyal live</small></summary>';
-    title.replaceWith(details);
-    details.appendChild(grid);
+    if (!card) return;
+    let details = card.querySelector('.amy-reliability-disclosure');
+    if (!details) {
+      const title = [...card.querySelectorAll('.market-health-title')]
+        .find(element => element.querySelector('span')?.textContent?.trim() === 'RELIABILITAS HISTORIS');
+      const grid = title?.nextElementSibling;
+      if (!title || !grid?.classList.contains('reliability-grid')) return;
+      details = document.createElement('details');
+      details.className = 'amy-reliability-disclosure';
+      details.dataset.stabilityKey = 'historical-reliability';
+      details.innerHTML = '<summary><span>Reliabilitas Historis</span><small>Definisi fitur berbeda · bukan sinyal live</small></summary>';
+      title.replaceWith(details);
+      details.appendChild(grid);
+    }
+    if (!details.querySelector('.amy-reliability-audit-note')) {
+      const note = document.createElement('p');
+      note.className = 'professional-note amy-reliability-audit-note';
+      note.textContent = `Audit Market Outlook ${BACKTEST.period}: akurasi arah close ${BACKTEST.closeDirectionAccuracy.toFixed(2)}%. Angka kartu lain memakai definisi klaim berbeda dan tidak boleh dibaca sebagai akurasi sinyal saat ini.`;
+      details.appendChild(note);
+    }
     bindDisclosure(details, false);
   }
 
@@ -117,7 +129,6 @@
       bindDisclosure(currentParent, false);
       return;
     }
-
     const details = document.createElement('details');
     details.className = 'card amy-analysis-section';
     details.dataset.stabilityKey = MARKET_CONTEXT_KEY;
@@ -150,37 +161,66 @@
   }
 
   function formatBacktestNote() {
-    return `Backtest independen ${BACKTEST.period}: akurasi arah ${BACKTEST.directionalAccuracy.toFixed(2)}% dari ${BACKTEST.samples.toLocaleString('en-US')} proyeksi, target hit ${BACKTEST.targetHitRate.toFixed(2)}%, invalidasi ${BACKTEST.invalidationRate.toFixed(2)}%. Angka skenario bukan probabilitas kemenangan.`;
+    return `Audit engine produksi ${BACKTEST.period}: tracker success ${BACKTEST.trackerSuccess.toFixed(2)}%, tetapi akurasi arah close hanya ${BACKTEST.closeDirectionAccuracy.toFixed(2)}% dari ${BACKTEST.samples.toLocaleString('id-ID')} proyeksi. Baseline candle M15 ${BACKTEST.baselineM15.toFixed(2)}%. Target hit ${BACKTEST.targetHitRate.toFixed(2)}%, invalidasi ${BACKTEST.invalidationRate.toFixed(2)}%. Skor skenario bukan probabilitas kemenangan.`;
+  }
+
+  function scoreText(element) {
+    const raw = String(element?.textContent || '').trim();
+    if (!raw.endsWith('%')) return;
+    element.textContent = `${raw.slice(0, -1)}/100`;
   }
 
   function fixMarketOutlook() {
     const panel = document.querySelector('.market-outlook-panel');
     if (!panel) return;
 
-    panel.querySelectorAll('.outlook-confidence small').forEach(label => {
-      if (label.textContent.trim() === 'Probabilitas model') {
-        label.textContent = 'Skor skenario rule-based';
-      }
+    panel.querySelectorAll('.outlook-confidence').forEach(confidence => {
+      const label = confidence.querySelector('small');
+      if (label?.textContent.trim() === 'Probabilitas model') label.textContent = 'Skor skenario rule-based';
+      if (label?.textContent.trim() === 'Skor skenario rule-based') scoreText(confidence.querySelector('strong'));
     });
 
-    if (!panel.querySelector('.amy-outlook-backtest-note')) {
-      const note = document.createElement('p');
+    panel.querySelectorAll('.outlook-probabilities > div').forEach((row, index) => {
+      const label = row.querySelector('span');
+      if (label) label.textContent = index === 0 ? 'Skor skenario utama' : index === 1 ? 'Skor alternatif' : 'Skor risiko invalidasi';
+      scoreText(row.querySelector('b'));
+    });
+
+    panel.querySelectorAll('.outlook-calibrated').forEach(element => {
+      const match = element.textContent.match(/[\d.,]+%/);
+      element.textContent = match ? `Keberhasilan tracker historis ${match[0]}` : 'Keberhasilan tracker historis';
+    });
+    const trackerLabel = panel.querySelector('.outlook-tracker-main span');
+    if (trackerLabel && trackerLabel.textContent.includes('Akurasi arah historis')) {
+      trackerLabel.textContent = 'Keberhasilan tracker historis · target-first termasuk berhasil';
+    }
+    const trackerNote = panel.querySelector('.outlook-tracker-note');
+    if (trackerNote) {
+      trackerNote.textContent = 'Tracker produksi menilai target-first, invalidasi, dan arah saat expiry. Nilai tracker bukan akurasi arah close dan baru ditampilkan setelah minimal 20 outlook selesai.';
+    }
+
+    let note = panel.querySelector('.amy-outlook-backtest-note');
+    if (!note) {
+      note = document.createElement('p');
       note.className = 'amy-outlook-backtest-note';
-      note.textContent = formatBacktestNote();
       const disclaimer = panel.querySelector('.outlook-disclaimer');
       if (disclaimer) disclaimer.insertAdjacentElement('afterend', note);
       else panel.prepend(note);
     }
+    note.textContent = formatBacktestNote();
 
     panel.querySelectorAll('.outlook-card').forEach(card => {
       const label = card.querySelector('.outlook-card-head h3')?.textContent?.trim();
       const accuracy = BACKTEST.horizons[label];
       const confidence = card.querySelector('.outlook-confidence');
-      if (!confidence || !Number.isFinite(accuracy) || confidence.querySelector('.amy-outlook-historical-rate')) return;
-      const historical = document.createElement('span');
-      historical.className = 'amy-outlook-historical-rate';
-      historical.textContent = `Akurasi arah historis ${accuracy.toFixed(2)}%`;
-      confidence.appendChild(historical);
+      if (!confidence || !Number.isFinite(accuracy)) return;
+      let historical = confidence.querySelector('.amy-outlook-historical-rate');
+      if (!historical) {
+        historical = document.createElement('span');
+        historical.className = 'amy-outlook-historical-rate';
+        confidence.appendChild(historical);
+      }
+      historical.textContent = `Akurasi arah close historis ${accuracy.toFixed(2)}%`;
     });
   }
 
@@ -223,9 +263,6 @@
 
   window.AmyFXBacktestReference = BACKTEST;
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', start, { once: true });
-  } else {
-    start();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
+  else start();
 })();
