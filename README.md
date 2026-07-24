@@ -26,13 +26,13 @@ Amy FX bukan robot trading, Expert Advisor, atau penasihat keuangan. Aplikasi ti
 | **Indikator TradingView** | Library indikator dan file Pine Script |
 | **Dashboard** | Akses cepat ke seluruh modul Amy FX |
 
-## Update v1.5.4 — Publikasi Ulang Update Produksi
+## Update v1.5.4 — Pembersihan UI Analisis & Update Produksi
 
-- Versi aplikasi dinaikkan menjadi **1.5.4** dengan **versionCode 44**.
-- AMY Market Context Final dan seluruh perbaikan versi 1.5.2 diterbitkan ulang melalui jalur produksi.
+- Versi aplikasi dinaikkan menjadi **1.5.4** dengan **versionCode 45**.
+- Blok tombol timeframe pada halaman Analisis telah dihapus sepenuhnya dari DOM.
+- Urutan halaman Analisis diperbaiki menjadi: Header harga/status, Asia Liquidity, Market Outlook, Ringkasan Market, Valid Break, Mapping M1–H4, Penjelasan Mapping, Setup Aktif.
 - APK signed dipublikasikan terlebih dahulu sebelum `update.json` diaktifkan.
 - Workflow memverifikasi kembali manifest publik setelah metadata update ditulis ke `main`.
-- Pemeriksa update aplikasi memakai query cache-busting dan `cache: no-store`.
 - Package, sertifikat signing permanen, data lokal, dan update channel tetap dipertahankan.
 
 ## Update v1.5.2 — AMY Market Context Final
