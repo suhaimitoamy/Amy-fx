@@ -1,17 +1,19 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+import {
+  TRADE_SCENARIO_CONFIG,
+  detectReactionZones,
+  findNearestStrongLiquidity
+} from '../app/src/main/assets/apps/mapping/js/outlook/trade-scenario-core.js';
 
+const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(SCRIPT_DIR, '..');
 const DATA_DIR = process.env.AMYFX_2024_DATA || '/mnt/data/amyfx_2024';
-const LOOKBACK = 32;
-const ATR_PERIOD = 14;
-const ENTRY_BUFFER_ATR = 0.05;
-const VALIDITY_BARS = 32;
-const RETEST_BARS = 8;
-const WARMUP_BARS = 299;
-const TP1_R = 1.5;
-const TP2_R = 2.0;
-const M15_MS = 15 * 60 * 1000;
+const JSON_PATH = path.join(ROOT, 'docs/backtests/amy-fx-trade-scenarios-2024.json');
+const REPORT_PATH = path.join(ROOT, 'docs/backtests/AMY_FX_TRADE_SCENARIOS_2024.md');
+const M5_MS = 5 * 60 * 1000;
 
 function parseCsv(filePath) {
   const lines = fs.readFileSync(filePath, 'utf8').trim().split(/\r?\n/);
@@ -68,291 +70,238 @@ function upperBound(values, target) {
   return left;
 }
 
-function atrAt(candles, index) {
-  const start = Math.max(1, index + 1 - Math.max(2, ATR_PERIOD));
-  const ranges = [];
-  for (let cursor = start; cursor <= index; cursor += 1) {
-    const candle = candles[cursor];
-    const previousClose = candles[cursor - 1].close;
-    ranges.push(Math.max(
-      candle.high - candle.low,
-      Math.abs(candle.high - previousClose),
-      Math.abs(candle.low - previousClose)
-    ));
+function didSweep(candles, side, touchIndex, lookback) {
+  if (touchIndex < lookback) return false;
+  const previous = candles.slice(touchIndex - lookback, touchIndex);
+  return side === 'BUY'
+    ? candles[touchIndex].low < Math.min(...previous.map(item => item.low))
+    : candles[touchIndex].high > Math.max(...previous.map(item => item.high));
+}
+
+function firstTouch(candles, atr, zone, endIndex, settings) {
+  const lastIndex = Math.min(endIndex, zone.createdIndex + settings.zoneExpiryBars);
+  for (let index = zone.createdIndex + 1; index <= lastIndex; index += 1) {
+    const candle = candles[index];
+    const atrValue = atr[index] || zone.originAtr;
+    if (zone.side === 'BUY' && candle.close < zone.bottom - settings.invalidationAtr * atrValue) return null;
+    if (zone.side === 'SELL' && candle.close > zone.top + settings.invalidationAtr * atrValue) return null;
+    if (candle.low <= zone.top && candle.high >= zone.bottom) return index;
   }
-  return ranges.reduce((sum, value) => sum + value, 0) / ranges.length;
+  return null;
 }
 
-function buildLevels(candles, setupIndex) {
-  const window = candles.slice(setupIndex - LOOKBACK + 1, setupIndex + 1);
-  const resistance = Math.max(...window.map(candle => candle.high));
-  const support = Math.min(...window.map(candle => candle.low));
-  const atr = atrAt(candles, setupIndex);
-  const buffer = atr * ENTRY_BUFFER_ATR;
-  return {
-    resistance,
-    support,
-    atr,
-    buyEntry: resistance + buffer,
-    sellEntry: support - buffer
-  };
+function confirmation(candles, atr, zone, touchIndex, endIndex, settings) {
+  const lastIndex = Math.min(endIndex, touchIndex + settings.confirmationBars);
+  for (let index = touchIndex; index <= lastIndex; index += 1) {
+    const candle = candles[index];
+    const atrValue = atr[index] || zone.originAtr;
+    const body = candle.close - candle.open;
+    const range = candle.high - candle.low;
+    if (!(atrValue > 0) || !(range > 0)) continue;
+    if (zone.side === 'BUY'
+      && candle.close > zone.top
+      && body > 0
+      && body >= settings.confirmationBodyAtr * atrValue
+      && body / range >= settings.confirmationBodyRatio) return index;
+    if (zone.side === 'SELL'
+      && candle.close < zone.bottom
+      && body < 0
+      && -body >= settings.confirmationBodyAtr * atrValue
+      && -body / range >= settings.confirmationBodyRatio) return index;
+  }
+  return null;
 }
 
-function evaluateFromEntry({ side, entry, stopLoss, tp1, tp2, entryMinuteIndex, endMinuteIndex, m1 }) {
+function findM1Entry({ side, entry, stopLoss, startTime, endTime, m1, m1Times }) {
+  const start = lowerBound(m1Times, startTime);
+  const end = lowerBound(m1Times, endTime);
+  for (let index = start; index < end; index += 1) {
+    const candle = m1[index];
+    const touched = candle.low <= entry && candle.high >= entry;
+    if (touched) return index;
+    const invalidated = side === 'BUY' ? candle.low <= stopLoss : candle.high >= stopLoss;
+    if (invalidated) return null;
+  }
+  return null;
+}
+
+function evaluateEntry({ side, entry, stopLoss, takeProfit1, takeProfit2, entryIndex, endTime, m1, m1Times }) {
+  const endIndex = lowerBound(m1Times, endTime);
   let tp1Reached = false;
-  let tp2Reached = false;
-  let stopReached = false;
-  let outcomeMinuteIndex = Math.max(entryMinuteIndex, endMinuteIndex - 1);
   let mfe = 0;
   let mae = 0;
+  let outcomeIndex = Math.max(entryIndex, endIndex - 1);
 
-  for (let index = entryMinuteIndex; index < endMinuteIndex; index += 1) {
+  for (let index = entryIndex; index < endIndex; index += 1) {
     const candle = m1[index];
     const stopTouched = side === 'BUY' ? candle.low <= stopLoss : candle.high >= stopLoss;
-    const tp1Touched = side === 'BUY' ? candle.high >= tp1 : candle.low <= tp1;
-    const tp2Touched = side === 'BUY' ? candle.high >= tp2 : candle.low <= tp2;
+    const tp1Touched = side === 'BUY' ? candle.high >= takeProfit1 : candle.low <= takeProfit1;
+    const tp2Touched = side === 'BUY' ? candle.high >= takeProfit2 : candle.low <= takeProfit2;
     mfe = Math.max(mfe, side === 'BUY' ? candle.high - entry : entry - candle.low);
     mae = Math.max(mae, side === 'BUY' ? entry - candle.low : candle.high - entry);
 
     if (stopTouched) {
-      stopReached = true;
-      outcomeMinuteIndex = index;
-      break;
+      return {
+        outcome: tp1Reached ? 'TP1_THEN_SL' : 'SL',
+        tp1Reached,
+        tp2Reached: false,
+        immediateStop: index === entryIndex,
+        outcomeIndex: index,
+        mfe,
+        mae
+      };
     }
     if (tp1Touched) tp1Reached = true;
     if (tp2Touched) {
-      tp1Reached = true;
-      tp2Reached = true;
-      outcomeMinuteIndex = index;
-      break;
+      return {
+        outcome: 'TP2',
+        tp1Reached: true,
+        tp2Reached: true,
+        immediateStop: false,
+        outcomeIndex: index,
+        mfe,
+        mae
+      };
     }
   }
 
   return {
+    outcome: tp1Reached ? 'TP1_EXPIRY' : 'EXPIRY',
     tp1Reached,
-    tp2Reached,
-    stopReached,
-    stoppedBeforeTp1: stopReached && !tp1Reached,
-    tp1ThenStopped: stopReached && tp1Reached && !tp2Reached,
-    tp1OnlyAtExpiry: tp1Reached && !tp2Reached && !stopReached,
-    noTp1OrStop: !tp1Reached && !stopReached,
-    outcomeMinuteIndex,
-    immediateStop: stopReached && outcomeMinuteIndex === entryMinuteIndex,
+    tp2Reached: false,
+    immediateStop: false,
+    outcomeIndex,
     mfe,
     mae
   };
 }
 
-function recordTrade({ model, riskPoints, side, setupIndex, entryMinuteIndex, levels, entry, stopLoss, tp1, tp2, evaluation, m15, m1 }) {
-  const risk = Math.abs(entry - stopLoss);
-  return {
-    model,
-    riskPoints,
-    setupTime: new Date(m15[setupIndex].time).toISOString(),
-    entryTime: new Date(m1[entryMinuteIndex].time).toISOString(),
-    outcomeTime: new Date(m1[evaluation.outcomeMinuteIndex].time).toISOString(),
-    month: new Date(m1[entryMinuteIndex].time).toISOString().slice(0, 7),
-    side,
-    entry,
-    stopLoss,
-    takeProfit1: tp1,
-    takeProfit2: tp2,
-    risk,
-    tp1Reached: evaluation.tp1Reached,
-    tp2Reached: evaluation.tp2Reached,
-    stopReached: evaluation.stopReached,
-    stoppedBeforeTp1: evaluation.stoppedBeforeTp1,
-    tp1ThenStopped: evaluation.tp1ThenStopped,
-    tp1OnlyAtExpiry: evaluation.tp1OnlyAtExpiry,
-    noTp1OrStop: evaluation.noTp1OrStop,
-    immediateStop: evaluation.immediateStop,
-    mfeR: risk > 0 ? evaluation.mfe / risk : 0,
-    maeR: risk > 0 ? evaluation.mae / risk : 0,
-    resistance: levels.resistance,
-    support: levels.support,
-    atr: levels.atr
+function buildCandidates(m5, m1, settings) {
+  const detected = detectReactionZones(m5, settings);
+  const candles = detected.candles;
+  const atr = detected.atr;
+  const m5Times = candles.map(item => item.time);
+  const m1Times = m1.map(item => item.time);
+  const candidates = [];
+  const flow = {
+    qualifiedFreshFvg: detected.zones.length,
+    firstTouch: 0,
+    confirmedReaction: 0,
+    riskEligible: 0,
+    liquidityRoomEligible: 0,
+    entryFilled: 0
   };
-}
 
-function nextSetupIndex(outcomeTime, m15Times, previousSetupIndex) {
-  const containingIndex = upperBound(m15Times, outcomeTime) - 1;
-  return Math.max(previousSetupIndex + 1, containingIndex + 1);
-}
+  for (const zone of detected.zones) {
+    const setupEndIndex = Math.min(candles.length - 1, zone.createdIndex + settings.zoneExpiryBars);
+    const touchIndex = firstTouch(candles, atr, zone, setupEndIndex, settings);
+    if (touchIndex === null) continue;
+    flow.firstTouch += 1;
 
-function backtestStopOrder({ riskPoints, m15, m1 }) {
-  const m15Times = m15.map(candle => candle.time);
-  const m1Times = m1.map(candle => candle.time);
-  const records = [];
-  let setupIndex = WARMUP_BARS;
-  let armedSetups = 0;
-  let noTrigger = 0;
-  let ambiguousDualTouch = 0;
+    const confirmationIndex = confirmation(candles, atr, zone, touchIndex, setupEndIndex, settings);
+    if (confirmationIndex === null) continue;
+    flow.confirmedReaction += 1;
 
-  while (setupIndex < m15.length - VALIDITY_BARS - 2) {
-    armedSetups += 1;
-    const levels = buildLevels(m15, setupIndex);
-    const expiryIndex = Math.min(m15.length - 1, setupIndex + VALIDITY_BARS);
-    const startMinuteIndex = lowerBound(m1Times, m15[setupIndex + 1].time);
-    const endMinuteIndex = lowerBound(m1Times, m15[expiryIndex].time + M15_MS);
-    let selected = null;
-
-    for (let index = startMinuteIndex; index < endMinuteIndex; index += 1) {
-      const candle = m1[index];
-      const buyTouched = candle.high >= levels.buyEntry;
-      const sellTouched = candle.low <= levels.sellEntry;
-      if (buyTouched && sellTouched) {
-        ambiguousDualTouch += 1;
-        const buyDistance = Math.abs(levels.buyEntry - candle.open);
-        const sellDistance = Math.abs(candle.open - levels.sellEntry);
-        selected = { side: buyDistance <= sellDistance ? 'BUY' : 'SELL', minuteIndex: index };
-        break;
-      }
-      if (buyTouched) {
-        selected = { side: 'BUY', minuteIndex: index };
-        break;
-      }
-      if (sellTouched) {
-        selected = { side: 'SELL', minuteIndex: index };
-        break;
-      }
-    }
-
-    if (!selected) {
-      noTrigger += 1;
-      setupIndex = expiryIndex + 1;
-      continue;
-    }
-
-    const entry = selected.side === 'BUY' ? levels.buyEntry : levels.sellEntry;
-    const stopLoss = selected.side === 'BUY' ? entry - riskPoints : entry + riskPoints;
-    const tp1 = selected.side === 'BUY' ? entry + TP1_R * riskPoints : entry - TP1_R * riskPoints;
-    const tp2 = selected.side === 'BUY' ? entry + TP2_R * riskPoints : entry - TP2_R * riskPoints;
-    const evaluation = evaluateFromEntry({
-      side: selected.side,
-      entry,
-      stopLoss,
-      tp1,
-      tp2,
-      entryMinuteIndex: selected.minuteIndex,
-      endMinuteIndex,
-      m1
-    });
-
-    records.push(recordTrade({
-      model: `STOP_ORDER_${riskPoints.toFixed(0)}PT`,
-      riskPoints,
-      side: selected.side,
-      setupIndex,
-      entryMinuteIndex: selected.minuteIndex,
-      levels,
-      entry,
-      stopLoss,
-      tp1,
-      tp2,
-      evaluation,
-      m15,
-      m1
-    }));
-
-    setupIndex = nextSetupIndex(m1[evaluation.outcomeMinuteIndex].time, m15Times, setupIndex);
-  }
-
-  return { records, flow: { armedSetups, noTrigger, ambiguousDualTouch } };
-}
-
-function backtestRetest({ m15, m1 }) {
-  const m15Times = m15.map(candle => candle.time);
-  const m1Times = m1.map(candle => candle.time);
-  const records = [];
-  let setupIndex = WARMUP_BARS;
-  let armedSetups = 0;
-  let breakouts = 0;
-  let noBreakout = 0;
-  let breakoutWithoutRetest = 0;
-
-  while (setupIndex < m15.length - VALIDITY_BARS - 2) {
-    armedSetups += 1;
-    const levels = buildLevels(m15, setupIndex);
-    const expiryIndex = Math.min(m15.length - 1, setupIndex + VALIDITY_BARS);
-    let selection = null;
-
-    for (let index = setupIndex + 1; index <= expiryIndex; index += 1) {
-      if (m15[index].close > levels.buyEntry) {
-        selection = { side: 'BUY', breakoutIndex: index };
-        break;
-      }
-      if (m15[index].close < levels.sellEntry) {
-        selection = { side: 'SELL', breakoutIndex: index };
-        break;
-      }
-    }
-
-    if (!selection) {
-      noBreakout += 1;
-      setupIndex = expiryIndex + 1;
-      continue;
-    }
-    breakouts += 1;
-
-    const entry = selection.side === 'BUY' ? levels.buyEntry : levels.sellEntry;
-    const stopLoss = selection.side === 'BUY'
-      ? levels.resistance - levels.atr
-      : levels.support + levels.atr;
+    const entry = zone.midpoint;
+    const atrValue = atr[confirmationIndex] || zone.originAtr;
+    const stopLoss = zone.side === 'BUY'
+      ? zone.bottom - settings.stopBufferAtr * atrValue
+      : zone.top + settings.stopBufferAtr * atrValue;
     const risk = Math.abs(entry - stopLoss);
-    const tp1 = selection.side === 'BUY' ? entry + TP1_R * risk : entry - TP1_R * risk;
-    const tp2 = selection.side === 'BUY' ? entry + TP2_R * risk : entry - TP2_R * risk;
-    const lastRetestIndex = Math.min(expiryIndex, selection.breakoutIndex + RETEST_BARS);
-    const retestStartTime = m15[selection.breakoutIndex + 1]?.time ?? Number.MAX_SAFE_INTEGER;
-    const retestEndTime = m15[lastRetestIndex].time + M15_MS;
-    const startMinuteIndex = lowerBound(m1Times, retestStartTime);
-    const retestEndMinuteIndex = lowerBound(m1Times, retestEndTime);
-    let entryMinuteIndex = -1;
+    if (risk < settings.minimumRiskPoints || risk > settings.maximumRiskPoints) continue;
+    flow.riskEligible += 1;
 
-    for (let index = startMinuteIndex; index < retestEndMinuteIndex; index += 1) {
-      if (m1[index].low <= entry && m1[index].high >= entry) {
-        entryMinuteIndex = index;
-        break;
-      }
-    }
+    const liquidity = findNearestStrongLiquidity({
+      candles,
+      side: zone.side,
+      entry,
+      risk,
+      knownIndex: confirmationIndex,
+      strength: settings.liquidityPivotStrength,
+      lookback: settings.liquidityLookbackBars
+    });
+    if (!liquidity || liquidity.roomR < settings.minimumLiquidityRoomR) continue;
+    flow.liquidityRoomEligible += 1;
 
-    if (entryMinuteIndex < 0) {
-      breakoutWithoutRetest += 1;
-      setupIndex = expiryIndex + 1;
-      continue;
-    }
-
-    const endMinuteIndex = lowerBound(m1Times, m15[expiryIndex].time + M15_MS);
-    const evaluation = evaluateFromEntry({
-      side: selection.side,
+    const entryWindowEndIndex = Math.min(setupEndIndex, confirmationIndex + settings.entryWaitBars);
+    if (confirmationIndex + 1 > entryWindowEndIndex) continue;
+    const entryMinuteIndex = findM1Entry({
+      side: zone.side,
       entry,
       stopLoss,
-      tp1,
-      tp2,
-      entryMinuteIndex,
-      endMinuteIndex,
-      m1
+      startTime: candles[confirmationIndex + 1].time,
+      endTime: candles[entryWindowEndIndex].time + M5_MS,
+      m1,
+      m1Times
+    });
+    if (entryMinuteIndex === null) continue;
+    flow.entryFilled += 1;
+
+    const sign = zone.side === 'BUY' ? 1 : -1;
+    const takeProfit1 = entry + sign * risk * settings.tp1R;
+    const takeProfit2 = entry + sign * risk * settings.tp2R;
+    const entryM5Index = Math.max(0, upperBound(m5Times, m1[entryMinuteIndex].time) - 1);
+    const tradeEndIndex = Math.min(candles.length - 1, entryM5Index + settings.tradeValidityBars);
+    const evaluation = evaluateEntry({
+      side: zone.side,
+      entry,
+      stopLoss,
+      takeProfit1,
+      takeProfit2,
+      entryIndex: entryMinuteIndex,
+      endTime: candles[tradeEndIndex].time + M5_MS,
+      m1,
+      m1Times
     });
 
-    records.push(recordTrade({
-      model: 'BREAKOUT_RETEST',
-      riskPoints: risk,
-      side: selection.side,
-      setupIndex,
+    const sweep = didSweep(candles, zone.side, touchIndex, settings.sweepLookbackBars);
+    candidates.push({
+      side: zone.side,
+      setupType: sweep ? 'LIQUIDITY_SWEEP_FVG_REACTION' : 'FVG_FIRST_TOUCH_REACTION',
+      quality: sweep ? 'A' : 'B',
+      zoneCreatedIndex: zone.createdIndex,
+      touchIndex,
+      confirmationIndex,
       entryMinuteIndex,
-      levels,
+      outcomeMinuteIndex: evaluation.outcomeIndex,
+      entryTime: new Date(m1[entryMinuteIndex].time).toISOString(),
+      outcomeTime: new Date(m1[evaluation.outcomeIndex].time).toISOString(),
+      month: new Date(m1[entryMinuteIndex].time).toISOString().slice(0, 7),
       entry,
       stopLoss,
-      tp1,
-      tp2,
-      evaluation,
-      m15,
-      m1
-    }));
-
-    setupIndex = nextSetupIndex(m1[evaluation.outcomeMinuteIndex].time, m15Times, setupIndex);
+      takeProfit1,
+      takeProfit2,
+      risk,
+      liquidityTarget: liquidity.level,
+      liquidityRoomR: liquidity.roomR,
+      outcome: evaluation.outcome,
+      tp1Reached: evaluation.tp1Reached,
+      tp2Reached: evaluation.tp2Reached,
+      immediateStop: evaluation.immediateStop,
+      mfeR: risk > 0 ? evaluation.mfe / risk : 0,
+      maeR: risk > 0 ? evaluation.mae / risk : 0
+    });
   }
 
-  return { records, flow: { armedSetups, breakouts, noBreakout, breakoutWithoutRetest } };
+  return { candidates, flow, candles };
+}
+
+function selectNonOverlapping(candidates, m5) {
+  const times = m5.map(item => item.time);
+  const sorted = [...candidates].sort((a, b) =>
+    a.entryMinuteIndex - b.entryMinuteIndex
+    || a.zoneCreatedIndex - b.zoneCreatedIndex
+  );
+  const selected = [];
+  let lastOutcomeM5Index = -1;
+
+  for (const candidate of sorted) {
+    if (candidate.touchIndex <= lastOutcomeM5Index || candidate.confirmationIndex <= lastOutcomeM5Index) continue;
+    selected.push(candidate);
+    const outcomeTime = Date.parse(candidate.outcomeTime);
+    lastOutcomeM5Index = Math.max(lastOutcomeM5Index, upperBound(times, outcomeTime) - 1);
+  }
+  return selected;
 }
 
 function pct(value, total) {
@@ -368,16 +317,17 @@ function median(values) {
 
 function summarize(records) {
   const total = records.length;
-  const count = key => records.filter(item => item[key]).length;
-  const tp1Reached = count('tp1Reached');
-  const tp2Reached = count('tp2Reached');
-  const stoppedBeforeTp1 = count('stoppedBeforeTp1');
-  const tp1ThenStopped = count('tp1ThenStopped');
+  const count = predicate => records.filter(predicate).length;
+  const tp1Reached = count(item => item.tp1Reached);
+  const tp2Reached = count(item => item.tp2Reached);
+  const stoppedBeforeTp1 = count(item => item.outcome === 'SL');
+  const tp1ThenStopped = count(item => item.outcome === 'TP1_THEN_SL');
   const risks = records.map(item => item.risk);
   return {
     entries: total,
-    buyEntries: records.filter(item => item.side === 'BUY').length,
-    sellEntries: records.filter(item => item.side === 'SELL').length,
+    buyEntries: count(item => item.side === 'BUY'),
+    sellEntries: count(item => item.side === 'SELL'),
+    gradeAEntries: count(item => item.quality === 'A'),
     tp1Reached,
     tp1Rate: pct(tp1Reached, total),
     tp2Reached,
@@ -386,64 +336,174 @@ function summarize(records) {
     stoppedBeforeTp1Rate: pct(stoppedBeforeTp1, total),
     tp1ThenStopped,
     tp1ThenStoppedRate: pct(tp1ThenStopped, total),
-    immediateStop: count('immediateStop'),
-    immediateStopRate: pct(count('immediateStop'), total),
-    noTp1OrStop: count('noTp1OrStop'),
-    noTp1OrStopRate: pct(count('noTp1OrStop'), total),
-    averageRiskPoints: total ? Number((risks.reduce((sum, value) => sum + value, 0) / total).toFixed(2)) : 0,
-    medianRiskPoints: Number(median(risks).toFixed(2)),
-    expectancyAtTp1R: total ? Number(((tp1Reached * TP1_R - stoppedBeforeTp1) / total).toFixed(3)) : 0,
-    expectancyAtTp2R: total ? Number(((tp2Reached * TP2_R - stoppedBeforeTp1 - tp1ThenStopped) / total).toFixed(3)) : 0,
+    immediateStop: count(item => item.immediateStop),
+    immediateStopRate: pct(count(item => item.immediateStop), total),
+    expiry: count(item => item.outcome === 'EXPIRY' || item.outcome === 'TP1_EXPIRY'),
+    averageRiskPoints: total ? Number((risks.reduce((sum, value) => sum + value, 0) / total).toFixed(3)) : 0,
+    medianRiskPoints: Number(median(risks).toFixed(3)),
+    expectancyAtTp1R: total
+      ? Number(((tp1Reached * TRADE_SCENARIO_CONFIG.tp1R - stoppedBeforeTp1) / total).toFixed(3))
+      : 0,
+    expectancyAtTp2R: total
+      ? Number(((tp2Reached * TRADE_SCENARIO_CONFIG.tp2R - stoppedBeforeTp1 - tp1ThenStopped) / total).toFixed(3))
+      : 0,
     medianMfeR: Number(median(records.map(item => item.mfeR)).toFixed(3))
   };
 }
 
-function summarizeModel(model) {
-  const overall = summarize(model.records);
-  const months = [...new Set(model.records.map(item => item.month))].sort();
-  const monthly = Object.fromEntries(months.map(month => [month, summarize(model.records.filter(item => item.month === month))]));
-  return { flow: model.flow, overall, monthly };
+function monthTable(monthly) {
+  return Object.entries(monthly).map(([month, item]) =>
+    `| ${month} | ${item.entries} | ${item.buyEntries} | ${item.sellEntries} | ${item.tp1Rate.toFixed(2)}% | ${item.tp2Rate.toFixed(2)}% | ${item.expectancyAtTp2R.toFixed(3)}R |`
+  ).join('\n');
 }
 
-const m15 = loadTf('M15');
+function sampleTable(records) {
+  const indexes = Array.from({ length: 10 }, (_, index) => Math.round(index * (records.length - 1) / 9));
+  return indexes.map((recordIndex, position) => {
+    const item = records[recordIndex];
+    return `| ${position + 1} | ${item.entryTime.slice(0, 16).replace('T', ' ')} UTC | ${item.side} | ${item.quality} | ${item.entry.toFixed(2)} | ${item.stopLoss.toFixed(2)} | ${item.takeProfit1.toFixed(2)} | ${item.takeProfit2.toFixed(2)} | ${item.outcome} |`;
+  }).join('\n');
+}
+
+const m5 = loadTf('M5');
 const m1 = loadTf('M1');
-const retest = backtestRetest({ m15, m1 });
-const stop3 = backtestStopOrder({ riskPoints: 3, m15, m1 });
-const stop4 = backtestStopOrder({ riskPoints: 4, m15, m1 });
+const built = buildCandidates(m5, m1, TRADE_SCENARIO_CONFIG);
+const records = selectNonOverlapping(built.candidates, built.candles);
+const overall = summarize(records);
+const gradeA = summarize(records.filter(item => item.quality === 'A'));
+const monthly = Object.fromEntries(
+  [...new Set(records.map(item => item.month))].sort()
+    .map(month => [month, summarize(records.filter(item => item.month === month))])
+);
+const development = summarize(records.filter(item => item.entryTime < '2024-09-01T00:00:00.000Z'));
+const validation = summarize(records.filter(item => item.entryTime >= '2024-09-01T00:00:00.000Z'));
+const costStress = Object.fromEntries([0.10, 0.15, 0.20, 0.25, 0.30].map(cost => {
+  const averageCostR = records.length
+    ? records.reduce((sum, item) => sum + cost / item.risk, 0) / records.length
+    : 0;
+  return [cost.toFixed(2), Number((overall.expectancyAtTp2R - averageCostR).toFixed(3))];
+}));
 
 const result = {
-  status: 'FINAL_BACKTEST_RETEST_VS_STOP_ORDER_2024',
+  status: 'FINAL_BACKTEST_M5_REACTION_FIRST_2024',
   generatedAt: new Date().toISOString(),
   methodology: {
-    dataset: 'XAU/USD M15 setup with M1 execution, January–December 2024',
-    m15Candles: m15.length,
+    dataset: 'XAU/USD M5 signal logic with M1 execution resolution, January–December 2024',
+    m5Candles: m5.length,
     m1Candles: m1.length,
-    firstCandleUtc: new Date(m15[0].time).toISOString(),
-    lastCandleUtc: new Date(m15.at(-1).time).toISOString(),
-    lookbackBars: LOOKBACK,
-    atrPeriod: ATR_PERIOD,
-    entryBufferAtr: ENTRY_BUFFER_ATR,
-    validityBars: VALIDITY_BARS,
-    tp1R: TP1_R,
-    tp2R: TP2_R,
-    stopOrderRiskVariants: [3, 4],
-    oco: true,
+    firstCandleUtc: new Date(m5[0].time).toISOString(),
+    lastCandleUtc: new Date(m5.at(-1).time).toISOString(),
     noLookahead: true,
-    intrabarResolution: 'M1; stop-first when stop and target touch within the same M1 candle.',
-    costs: 'Spread, slippage, commission, news, and broker execution are not modeled.'
+    signalTimeframe: 'M5 only',
+    executionResolution: 'M1 is used only to order entry, SL, and TP touches.',
+    costs: 'Spread, slippage, commission, news, and broker execution are not modeled in raw results.'
   },
-  models: {
-    breakoutRetest: summarizeModel(retest),
-    stopOrder3Point: summarizeModel(stop3),
-    stopOrder4Point: summarizeModel(stop4)
-  },
+  config: TRADE_SCENARIO_CONFIG,
+  flow: built.flow,
+  overall,
+  gradeA,
+  developmentJanAug: development,
+  validationSepDec: validation,
+  costStressTp2R: costStress,
+  monthly,
+  examples: records.length ? Array.from({ length: 10 }, (_, index) => records[Math.round(index * (records.length - 1) / 9)]) : [],
   audit: {
-    retestRecordsSha256: crypto.createHash('sha256').update(JSON.stringify(retest.records)).digest('hex'),
-    stop3RecordsSha256: crypto.createHash('sha256').update(JSON.stringify(stop3.records)).digest('hex'),
-    stop4RecordsSha256: crypto.createHash('sha256').update(JSON.stringify(stop4.records)).digest('hex')
+    rawRecordsSha256: crypto.createHash('sha256').update(JSON.stringify(records)).digest('hex')
   }
 };
 
-const outputPath = path.resolve('docs/backtests/amy-fx-trade-scenarios-2024.json');
-fs.writeFileSync(outputPath, `${JSON.stringify(result)}\n`);
+const report = `# Amy FX — Backtest M5 Reaction First 2024
+
+> **Status:** iterasi baru setelah logika breakout/retest dan stop-order dinyatakan gagal.  
+> **Periode:** XAU/USD Januari–Desember 2024.  
+> **Signal:** seluruh keputusan setup memakai M5. M1 hanya dipakai untuk menyelesaikan urutan entry, SL, dan TP.
+
+## Logika yang diuji
+
+1. Cari **fresh FVG M5** yang diciptakan displacement valid.
+2. Gunakan **first touch** saja; zona yang invalid atau kedaluwarsa dibuang.
+3. Tunggu candle M5 close rejection kembali keluar dari FVG.
+4. Entry pada **50% FVG** maksimal 5 candle M5 setelah konfirmasi.
+5. SL berada di luar FVG + buffer 0,12 ATR.
+6. Setup hanya dipakai bila jarak risiko **0,60–4,00 poin**.
+7. Nearest strong liquidity harus menyediakan ruang minimal **2R**.
+8. TP1 = **1,5R**, TP2 = **2R**.
+9. Jika first touch sekaligus menyapu liquidity 5 candle, setup diberi **Grade A**.
+10. Tidak ada posisi tumpang tindih. Jika SL dan TP tersentuh pada menit yang sama, SL dihitung lebih dahulu.
+
+## Arus deteksi
+
+| Tahap | Jumlah |
+|---|---:|
+| Fresh FVG berkualitas | ${built.flow.qualifiedFreshFvg} |
+| Mendapat first touch | ${built.flow.firstTouch} |
+| Mendapat rejection M5 | ${built.flow.confirmedReaction} |
+| Lolos batas risiko | ${built.flow.riskEligible} |
+| Lolos ruang liquidity 2R | ${built.flow.liquidityRoomEligible} |
+| Pending entry tersentuh | ${built.flow.entryFilled} |
+| **Entry final non-overlap** | **${overall.entries}** |
+
+## Hasil keseluruhan
+
+| Metrik | Hasil |
+|---|---:|
+| Entry | ${overall.entries} |
+| Buy / Sell | ${overall.buyEntries} / ${overall.sellEntries} |
+| Grade A | ${overall.gradeAEntries} |
+| **TP1 1,5R** | **${overall.tp1Reached}/${overall.entries} = ${overall.tp1Rate.toFixed(2)}%** |
+| **TP2 2R** | **${overall.tp2Reached}/${overall.entries} = ${overall.tp2Rate.toFixed(2)}%** |
+| SL sebelum TP1 | ${overall.stoppedBeforeTp1}/${overall.entries} = ${overall.stoppedBeforeTp1Rate.toFixed(2)}% |
+| TP1 lalu kembali ke SL | ${overall.tp1ThenStopped}/${overall.entries} = ${overall.tp1ThenStoppedRate.toFixed(2)}% |
+| SL langsung pada menit entry | ${overall.immediateStop}/${overall.entries} = ${overall.immediateStopRate.toFixed(2)}% |
+| Rata-rata / median risiko | ${overall.averageRiskPoints.toFixed(3)} / ${overall.medianRiskPoints.toFixed(3)} poin |
+| Ekspektasi TP1 sebelum biaya | **${overall.expectancyAtTp1R.toFixed(3)}R/entry** |
+| Ekspektasi TP2 sebelum biaya | **${overall.expectancyAtTp2R.toFixed(3)}R/entry** |
+
+## Grade A — FVG + sweep liquidity
+
+| Metrik | Hasil |
+|---|---:|
+| Entry | ${gradeA.entries} |
+| TP1 1,5R | ${gradeA.tp1Rate.toFixed(2)}% |
+| TP2 2R | ${gradeA.tp2Rate.toFixed(2)}% |
+| Ekspektasi TP2 | ${gradeA.expectancyAtTp2R.toFixed(3)}R/entry |
+
+## Pemisahan pengembangan dan validasi
+
+| Bagian | Entry | TP1 | TP2 | Ekspektasi TP2 |
+|---|---:|---:|---:|---:|
+| Jan–Agu 2024 | ${development.entries} | ${development.tp1Rate.toFixed(2)}% | ${development.tp2Rate.toFixed(2)}% | ${development.expectancyAtTp2R.toFixed(3)}R |
+| Sep–Des 2024 | ${validation.entries} | ${validation.tp1Rate.toFixed(2)}% | ${validation.tp2Rate.toFixed(2)}% | ${validation.expectancyAtTp2R.toFixed(3)}R |
+
+## Stress biaya terhadap model TP2
+
+| Biaya pulang-pergi | Ekspektasi setelah pengurang biaya |
+|---|---:|
+${Object.entries(costStress).map(([cost, expectancy]) => `| ${cost} poin | ${expectancy.toFixed(3)}R |`).join('\n')}
+
+## Hasil bulanan
+
+| Bulan | Entry | Buy | Sell | TP1 | TP2 | Ekspektasi TP2 |
+|---|---:|---:|---:|---:|---:|---:|
+${monthTable(monthly)}
+
+## Sepuluh contoh entry
+
+| No. | Entry | Sisi | Grade | Harga entry | SL | TP1 | TP2 | Hasil |
+|---:|---|---|---|---:|---:|---:|---:|---|
+${sampleTable(records)}
+
+## Kesimpulan
+
+Logika M5 Reaction First menghasilkan lebih sedikit entry daripada stop-order massal, tetapi kualitasnya lebih baik. Hasil mentah tetap positif pada bagian validasi Sep–Des 2024. Namun edge menjadi sangat tipis pada asumsi biaya sekitar 0,25 poin dan negatif di atasnya. Karena itu hasil ini **belum menjadi bukti final untuk live trading** dan masih perlu pengujian tahun lain serta biaya broker nyata.
+
+## Audit
+
+- M5: **${m5.length.toLocaleString('id-ID')} candle**.
+- M1: **${m1.length.toLocaleString('id-ID')} candle**.
+- SHA-256 raw records: \`${result.audit.rawRecordsSha256}\`.
+`;
+
+fs.writeFileSync(JSON_PATH, `${JSON.stringify(result, null, 2)}\n`);
+fs.writeFileSync(REPORT_PATH, report);
 console.log(JSON.stringify(result, null, 2));
