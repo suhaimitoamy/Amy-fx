@@ -28,19 +28,19 @@ function qualityState(value) {
   return String(value.state || value.status || value.label || '');
 }
 
-function isM15Stale() {
+function isM5Stale() {
   if (state?.result?.dataStale) return true;
   const connection = String(document.getElementById('conn')?.textContent || '').toUpperCase();
   if (connection.includes('STALE') || connection.includes('DATA USANG')) return true;
   const quality = window.AmyMappingIntegrity?.qualityByInterval || {};
-  const item = quality['15min'] || quality.M15 || quality.m15;
+  const item = quality['5min'] || quality.M5 || quality.m5;
   const status = qualityState(item).toUpperCase();
   return status.includes('STALE') || status.includes('USANG');
 }
 
 function expiryText(result) {
   const source = Number(result?.sourceTime || result?.generatedAt || Date.now());
-  const expiresAt = source + Number(result?.validityBars || 0) * 15 * 60 * 1000;
+  const expiresAt = source + Number(result?.validityBars || 0) * 5 * 60 * 1000;
   return new Intl.DateTimeFormat('id-ID', {
     timeZone: 'Asia/Makassar',
     day: '2-digit',
@@ -50,71 +50,87 @@ function expiryText(result) {
   }).format(new Date(expiresAt));
 }
 
-function entryText(scenario) {
-  const price = priceText(scenario.entry);
-  return scenario.side === 'BUY'
-    ? `area ${price} setelah breakout dan retest`
-    : `area ${price} setelah breakdown dan retest`;
+function statusText(scenario) {
+  return ({
+    READY_ENTRY: 'SIAP ENTRY',
+    ENTRY_TOUCHED: 'ENTRY TERSENTUH',
+    WAIT_ZONE_TOUCH: 'MENUNGGU FIRST TOUCH',
+    WAIT_CONFIRMATION: 'MENUNGGU REJECTION M5',
+    OCO_CANCELLED: 'DIBATALKAN OCO'
+  })[scenario?.status] || 'PANTAU';
 }
 
-function displayReason(scenario) {
-  const level = priceText(scenario.triggerLevel);
-  const retestBars = Number(scenario.retestBars || 8);
-  return scenario.side === 'BUY'
-    ? `Tunggu close M15 di atas resistance ${level}, lalu retest level entry maksimal ${retestBars} candle.`
-    : `Tunggu close M15 di bawah support ${level}, lalu retest level entry maksimal ${retestBars} candle.`;
+function entryText(scenario) {
+  if (scenario.status === 'WAIT_ZONE_TOUCH') {
+    return `zona ${priceText(scenario.zoneLow)}–${priceText(scenario.zoneHigh)}`;
+  }
+  if (scenario.status === 'WAIT_CONFIRMATION') {
+    return `50% FVG ${priceText(scenario.entry)} · belum aktif`;
+  }
+  if (scenario.status === 'OCO_CANCELLED') return 'dibatalkan karena sisi lain aktif';
+  return `${priceText(scenario.entry)} · 50% fresh FVG M5`;
 }
 
 function scenarioCopyText(scenario, result) {
   const title = scenario.side === 'BUY' ? 'Skenario Buy' : 'Skenario Sell';
-  return [
+  const rows = [
     title,
-    `Entry ${entryText(scenario)}`,
-    `Stop Loss ${priceText(scenario.stopLoss)}`,
-    `Take Profit 1 ${priceText(scenario.takeProfit1)} (1:${scenario.riskReward1.toFixed(1)})`,
-    `Take Profit 2 ${priceText(scenario.takeProfit2)} (1:${scenario.riskReward2.toFixed(1)})`,
-    `Berlaku sampai ${expiryText(result)} WITA`,
-    `Alasan: ${displayReason(scenario)}`
-  ].join('\n');
+    `Status ${statusText(scenario)}`,
+    `Zona FVG ${priceText(scenario.zoneLow)} - ${priceText(scenario.zoneHigh)}`,
+    `Entry ${entryText(scenario)}`
+  ];
+  if (Number.isFinite(Number(scenario.stopLoss))) rows.push(`Stop Loss ${priceText(scenario.stopLoss)}`);
+  if (Number.isFinite(Number(scenario.takeProfit1))) rows.push(`Take Profit 1 ${priceText(scenario.takeProfit1)} (1:${scenario.riskReward1.toFixed(1)})`);
+  if (Number.isFinite(Number(scenario.takeProfit2))) rows.push(`Take Profit 2 ${priceText(scenario.takeProfit2)} (1:${scenario.riskReward2.toFixed(1)})`);
+  if (Number.isFinite(Number(scenario.liquidityTarget))) rows.push(`Liquidity tujuan ${priceText(scenario.liquidityTarget)}`);
+  rows.push(`Berlaku sampai ${expiryText(result)} WITA`);
+  rows.push(`Alasan: ${scenario.reason}`);
+  return rows.join('\n');
 }
 
 function scenarioCard(scenario, result) {
   const buy = scenario.side === 'BUY';
   const title = buy ? 'Skenario Buy' : 'Skenario Sell';
+  const concrete = Number.isFinite(Number(scenario.stopLoss));
+  const grade = safeText(scenario.quality || 'WATCH');
   return `<article class="amy-level-card ${buy ? 'buy' : 'sell'}">
     <h3><span>${buy ? '↗' : '↘'}</span>${title}</h3>
     <div class="amy-level-grid">
+      <span>Status</span><strong>${safeText(statusText(scenario))}</strong>
+      <span>Kualitas</span><strong>Grade ${grade}</strong>
+      <span>Zona FVG M5</span><strong>${priceText(scenario.zoneLow)}–${priceText(scenario.zoneHigh)}</strong>
       <span>Entry</span><strong>${safeText(entryText(scenario))}</strong>
-      <span>Stop Loss</span><strong class="loss">${priceText(scenario.stopLoss)}</strong>
+      ${concrete ? `<span>Stop Loss</span><strong class="loss">${priceText(scenario.stopLoss)}</strong>
       <span>Take Profit 1</span><strong class="profit">${priceText(scenario.takeProfit1)}</strong>
       <span>Take Profit 2</span><strong class="profit">${priceText(scenario.takeProfit2)}</strong>
-      <span>Risk : Reward</span><strong>TP1 1:${scenario.riskReward1.toFixed(1)} · TP2 1:${scenario.riskReward2.toFixed(1)}</strong>
+      <span>Liquidity tujuan</span><strong>${priceText(scenario.liquidityTarget)}</strong>
+      <span>Risk : Reward</span><strong>TP1 1:${scenario.riskReward1.toFixed(1)} · TP2 1:${scenario.riskReward2.toFixed(1)}</strong>` : ''}
     </div>
-    <p><b>Alasan:</b> ${safeText(displayReason(scenario))}</p>
+    <p><b>Alasan:</b> ${safeText(scenario.reason)}</p>
     <button type="button" class="amy-copy-level" data-copy-levels="${safeText(scenarioCopyText(scenario, result))}"><span>▣</span> Salin level</button>
   </article>`;
 }
 
 function waitingMarkup({ stale, result }) {
   const message = stale
-    ? 'Data M15 sedang usang. Saran level ditahan sampai candle live kembali tersedia.'
-    : `Candle M15 belum cukup untuk menghitung level (${result.availableBars || 0}/${result.requiredBars || 32}).`;
+    ? 'Data M5 sedang usang. Seluruh saran level ditahan sampai candle live kembali tersedia.'
+    : result.message || `Candle M5 belum cukup untuk menghitung setup (${result.availableBars || 0}/${result.requiredBars || 64}).`;
   return `<section class="amy-level-panel waiting">
-    <p class="amy-level-intro">Harga entry / stop / target konkret untuk skenario buy dan sell — aktif hanya setelah breakout atau breakdown mendapatkan retest valid.</p>
+    <p class="amy-level-intro">M5 Reaction First: fresh FVG → first touch → rejection M5 → entry 50% zona.</p>
     <div class="amy-level-waiting">${safeText(message)}</div>
   </section>`;
 }
 
 function panelMarkup(result) {
   return `<section class="amy-level-panel">
-    <p class="amy-level-intro">Harga entry / stop / target konkret untuk skenario buy dan sell — aktif hanya setelah breakout atau breakdown mendapatkan retest valid.</p>
+    <p class="amy-level-intro">M5 Reaction First: fresh FVG → first touch → rejection M5 → entry 50% zona. Skenario dengan sweep liquidity diberi Grade A.</p>
     <div class="amy-level-cards">${result.scenarios.map(item => scenarioCard(item, result)).join('')}</div>
-    <p class="amy-level-disclaimer">Hanya sisi pertama yang mendapat close M15 dan retest valid yang aktif; sisi berlawanan dibatalkan. TP1 memakai RR 1:1,5 dan TP2 memakai RR 1:2. Keputusan trading tetap sepenuhnya di tangan kamu.</p>
+    <p class="amy-level-disclaimer">Entry belum aktif hanya karena harga menyentuh zona. Amy menunggu rejection M5, risiko 0,60–4,00 poin, dan ruang menuju liquidity kuat minimal 2R. TP1 1:1,5 · TP2 1:2.</p>
   </section>`;
 }
 
 function summaryMarkup() {
-  return `<span class="amy-level-summary-title"><i>◎</i><b>${SUMMARY_TITLE}</b></span><span class="amy-level-summary-status">SIAP</span>`;
+  return `<span class="amy-level-summary-title"><i>◎</i><b>${SUMMARY_TITLE}</b></span><span class="amy-level-summary-status">PANTAU</span>`;
 }
 
 function ensureDisclosure() {
@@ -151,15 +167,17 @@ function ensureDisclosure() {
   return { details, summary, panel };
 }
 
-function setSummaryState(summary, { stale, ready }) {
+function setSummaryState(summary, { stale, result }) {
   if (!summary) return;
   const badge = summary.querySelector('.amy-level-summary-status');
   if (!badge) return;
-  const text = stale ? 'DATA USANG' : ready ? 'SIAP' : 'WAIT';
+  const active = result.scenarios?.some(item => item.status === 'ENTRY_TOUCHED');
+  const ready = result.scenarios?.some(item => item.status === 'READY_ENTRY');
+  const text = stale ? 'DATA USANG' : active ? 'AKTIF' : ready ? 'SIAP' : result.scenarios?.length ? 'PANTAU' : 'WAIT';
   if (badge.textContent !== text) badge.textContent = text;
   badge.classList.toggle('stale', stale);
-  badge.classList.toggle('ready', ready && !stale);
-  badge.classList.toggle('waiting', !ready && !stale);
+  badge.classList.toggle('ready', (active || ready) && !stale);
+  badge.classList.toggle('waiting', !active && !ready && !stale);
 }
 
 function signature(result, stale) {
@@ -168,18 +186,21 @@ function signature(result, stale) {
     stale,
     status: result.status,
     sourceTime: result.sourceTime,
-    referencePrice: Number(result.referencePrice || 0).toFixed(2),
-    resistance: Number(result.resistance || 0).toFixed(2),
-    support: Number(result.support || 0).toFixed(2),
-    tp1R: Number(result.config?.tp1R || 0),
-    tp2R: Number(result.config?.tp2R || 0)
+    scenarios: (result.scenarios || []).map(item => ({
+      side: item.side,
+      status: item.status,
+      entry: Number(item.entry || 0).toFixed(2),
+      stop: Number(item.stopLoss || 0).toFixed(2),
+      zoneLow: Number(item.zoneLow || 0).toFixed(2),
+      zoneHigh: Number(item.zoneHigh || 0).toFixed(2)
+    }))
   });
 }
 
 function publish(result, stale) {
   if (state.result) {
     state.result.marketOutlook = {
-      mode: 'DUAL_CONDITIONAL_RETEST_LEVELS',
+      mode: 'M5_REACTION_FIRST_LEVELS',
       status: stale ? 'DATA_STALE' : result.status,
       generatedAt: result.generatedAt,
       price: result.referencePrice,
@@ -191,11 +212,11 @@ function publish(result, stale) {
     const buy = result.scenarios?.find(item => item.side === 'BUY') || null;
     const sell = result.scenarios?.find(item => item.side === 'SELL') || null;
     const payload = {
-      mode: 'DUAL_CONDITIONAL_RETEST_LEVELS',
+      mode: 'M5_REACTION_FIRST_LEVELS',
       generatedAt: result.generatedAt,
       price: result.referencePrice,
       status: stale ? 'DATA_STALE' : result.status,
-      direction: 'WAIT_CONDITIONAL',
+      direction: 'WAIT_REACTION',
       buy,
       sell
     };
@@ -210,18 +231,17 @@ function publish(result, stale) {
 function refresh(force = false) {
   const target = ensureDisclosure();
   if (!target || currentTab() !== 'Analyze') return;
-  const candles = state.candles?.M15 || [];
-  const stale = isM15Stale();
+  const candles = state.candles?.M5 || [];
+  const stale = isM5Stale();
   const result = buildTradeScenarios({ candles, price: state.price, now: Date.now() });
-  const ready = !stale && result.status === 'READY';
-  setSummaryState(target.summary, { stale, ready });
+  setSummaryState(target.summary, { stale, result });
   const nextSignature = signature(result, stale);
   if (!force && nextSignature === lastSignature) return;
   lastSignature = nextSignature;
   lastResult = result;
-  target.panel.innerHTML = ready
-    ? panelMarkup(result)
-    : waitingMarkup({ stale, result });
+  target.panel.innerHTML = stale || !result.scenarios?.length
+    ? waitingMarkup({ stale, result })
+    : panelMarkup(result);
   publish(result, stale);
 }
 
@@ -249,7 +269,7 @@ function boot() {
 window.AmyMarketOutlook = {
   refresh: () => refresh(true),
   history: () => [],
-  stats: () => ({ mode: 'DUAL_CONDITIONAL_RETEST_LEVELS', current: lastResult })
+  stats: () => ({ mode: 'M5_REACTION_FIRST_LEVELS', current: lastResult })
 };
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
