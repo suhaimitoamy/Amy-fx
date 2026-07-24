@@ -23,11 +23,11 @@ test('version and update scripts remain syntactically valid', () => {
   assertSyntax(checkerUrl);
 });
 
-test('profile displays Amy FX version 1.5.2 and supports manual update checks', () => {
+test('profile displays Amy FX version 1.5.3 and supports manual update checks', () => {
   const version = source(versionUrl);
   const index = source(indexUrl);
-  assert.match(version, /name: '1\.5\.2'/);
-  assert.match(version, /code: 43/);
+  assert.match(version, /name: '1\.5\.3'/);
+  assert.match(version, /code: 44/);
   assert.match(version, /Versi Aplikasi/);
   assert.match(version, /data-profile-action=\\?"version/);
   assert.match(version, /AmyFXUpdate\?\.checkNow/);
@@ -35,6 +35,15 @@ test('profile displays Amy FX version 1.5.2 and supports manual update checks', 
   const mappingUi = source(mappingUiUrl);
   assert.match(mappingUi, /window\.AmyFXUpdate\?\.checkNow\(\)/);
   assert.doesNotMatch(mappingUi, /window\.AmyFXUpdater/);
+});
+
+test('update checks bypass caches and compare the published version code', () => {
+  const checker = source(checkerUrl);
+  assert.match(checker, /fetch\(`\$\{UPDATE_URL\}\?_\=\$\{now\}`/);
+  assert.match(checker, /cache: 'no-store'/);
+  assert.match(checker, /latestCode > CURRENT_VERSION_CODE/);
+  assert.match(checker, /showUpdatePopup\(data, latestCode, latestName\)/);
+  assert.match(checker, /DOMContentLoaded', scheduleCheck/);
 });
 
 test('native updater owns download progress while browser remains a legacy fallback', () => {
