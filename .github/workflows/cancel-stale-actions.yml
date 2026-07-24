@@ -1,0 +1,69 @@
+name: Cancel Stale Actions Queue
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/cancel-stale-actions.yml"
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cancel-stale-runs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Cancel queued and in-progress runs except current cleanup and newest production build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          repo="${GITHUB_REPOSITORY}"
+          current_run="${GITHUB_RUN_ID}"
+          current_sha="${GITHUB_SHA}"
+
+          mapfile -t runs < <(
+            gh api --paginate "repos/${repo}/actions/runs?per_page=100" \
+              --jq '.workflow_runs[] | select(.status == "queued" or .status == "in_progress") | [.id, .name, .head_sha, .event] | @tsv'
+          )
+
+          production_run=""
+          for row in "${runs[@]}"; do
+            IFS=$'\t' read -r id name sha event <<< "$row"
+            if [[ "$name" == "Build and Publish Amy FX APK" && "$sha" == "$current_sha" ]]; then
+              production_run="$id"
+              break
+            fi
+          done
+
+          cancelled=0
+          preserved=0
+          for row in "${runs[@]}"; do
+            IFS=$'\t' read -r id name sha event <<< "$row"
+
+            if [[ "$id" == "$current_run" ]]; then
+              echo "Preserve cleanup run: $id · $name"
+              preserved=$((preserved + 1))
+              continue
+            fi
+
+            if [[ -n "$production_run" && "$id" == "$production_run" ]]; then
+              echo "Preserve newest production build: $id · $name · $sha"
+              preserved=$((preserved + 1))
+              continue
+            fi
+
+            echo "Cancel: $id · $name · $sha · $event"
+            if gh api --method POST "repos/${repo}/actions/runs/${id}/cancel" >/dev/null 2>&1; then
+              cancelled=$((cancelled + 1))
+            else
+              echo "Run $id sudah selesai/berubah status atau tidak dapat dibatalkan."
+            fi
+          done
+
+          echo "Cancelled: $cancelled"
+          echo "Preserved: $preserved"
