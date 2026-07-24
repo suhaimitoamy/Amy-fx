@@ -25,7 +25,7 @@ const backtest = JSON.parse(read(dataPath));
 const appVersion = read(appVersionPath);
 const update = JSON.parse(read(updatePath));
 
-test('new Mapping UI hardening files remain syntactically valid', () => {
+test('Mapping UI hardening files remain syntactically valid', () => {
   for (const path of [fixScriptPath, stabilityPath]) {
     execFileSync(process.execPath, ['--check', path], { stdio: 'pipe' });
   }
@@ -63,8 +63,9 @@ test('stale M15 never keeps a LIVE analysis badge', () => {
 
 test('historical reliability is a muted closed disclosure rather than a live signal block', () => {
   assert.match(fixes, /amy-reliability-disclosure/);
-  assert.match(fixes, /Referensi 2022–2025 · bukan sinyal live/);
+  assert.match(fixes, /Definisi fitur berbeda · bukan sinyal live/);
   assert.match(fixes, /bindDisclosure\(details, false\)/);
+  assert.match(fixes, /tidak boleh dibaca sebagai akurasi sinyal saat ini/);
   assert.match(css, /opacity:\.76/);
 });
 
@@ -79,12 +80,18 @@ test('Analyze view uses stable keyed accordions and anchor-based scroll restorat
   assert.match(stability, /window\.scrollBy/);
 });
 
-test('backtest results are explicit and Market Outlook score is not presented as win probability', () => {
-  assert.equal(backtest.marketOutlook.count, 26226);
-  assert.ok(Math.abs(backtest.marketOutlook.overall.directionalAccuracyPct - 42.18714253031343) < 1e-9);
-  assert.match(report, /Akurasi arah keseluruhan: \*\*42\.19%\*\*/);
+test('final issue-5 audit separates tracker success from close-direction accuracy', () => {
+  assert.equal(backtest.status, 'FINAL_AUDITED_BACKTEST_FOR_ISSUE_5');
+  assert.equal(backtest.marketOutlook.overall.samples, 25223);
+  assert.equal(backtest.marketOutlook.overall.trackerDefinedSuccess.accuracy, 42.78);
+  assert.equal(backtest.marketOutlook.overall.closeDirectionAccuracy.accuracy, 35.3);
+  assert.equal(backtest.marketOutlook.outOfSample2025.closeAccuracy, 37.03);
+  assert.match(report, /Akurasi arah murni pada close horizon/);
+  assert.match(report, /2025 dipisahkan sebagai out-of-sample/);
   assert.match(fixes, /Skor skenario rule-based/);
-  assert.match(fixes, /Angka skenario bukan probabilitas kemenangan/);
+  assert.match(fixes, /tracker success/);
+  assert.match(fixes, /Akurasi arah close historis/);
+  assert.match(fixes, /Skor skenario bukan probabilitas kemenangan/);
 });
 
 test('version and update publication remain locked at existing 1.5.1 metadata', () => {
