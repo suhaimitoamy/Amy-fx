@@ -1,75 +1,60 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import {
+  TRADE_SCENARIO_CONFIG,
+  buildTradeScenarios,
+  detectReactionZones
+} from '../app/src/main/assets/apps/mapping/js/outlook/trade-scenario-core.js';
 
-const uiUrl = new URL('../app/src/main/assets/apps/mapping/js/market-outlook.js', import.meta.url);
-const coreUrl = new URL('../app/src/main/assets/apps/mapping/js/outlook/trade-scenario-core.js', import.meta.url);
-const scriptUrl = new URL('../scripts/backtest-trade-scenarios-2024.mjs', import.meta.url);
-const indexUrl = new URL('../app/src/main/assets/apps/mapping/index.html', import.meta.url);
-const cssUrl = new URL('../app/src/main/assets/apps/mapping/css/market-outlook.css', import.meta.url);
-const reportUrl = new URL('../docs/backtests/AMY_FX_TRADE_SCENARIOS_2024.md', import.meta.url);
 const dataUrl = new URL('../docs/backtests/amy-fx-trade-scenarios-2024.json', import.meta.url);
 
-function assertSyntax(url) {
-  const result = spawnSync(process.execPath, ['--check', fileURLToPath(url)], { encoding: 'utf8' });
-  assert.equal(result.status, 0, result.stderr || result.stdout);
+function sampleCandles() {
+  const values = [];
+  let price = 2000;
+  for (let index = 0; index < 90; index += 1) {
+    const open = price;
+    const close = price + (index % 2 ? -0.08 : 0.10);
+    values.push({ time: 1700000000000 + index * 300000, open, high: Math.max(open, close) + 0.12, low: Math.min(open, close) - 0.12, close });
+    price = close;
+  }
+  values[70] = { ...values[70], open: 2000.0, high: 2000.12, low: 1999.88, close: 1999.92 };
+  values[71] = { ...values[71], open: 1999.92, high: 2001.10, low: 1999.90, close: 2000.98 };
+  values[72] = { ...values[72], open: 2000.98, high: 2001.24, low: 2000.35, close: 2001.12 };
+  return values;
 }
 
-test('Saran Level JavaScript remains syntactically valid', () => {
-  assertSyntax(uiUrl);
-  assertSyntax(coreUrl);
-  assertSyntax(scriptUrl);
+test('M5 strategy configuration keeps healthy RR and bounded risk', () => {
+  assert.equal(TRADE_SCENARIO_CONFIG.timeframe, 'M5');
+  assert.equal(TRADE_SCENARIO_CONFIG.tp1R, 1.5);
+  assert.equal(TRADE_SCENARIO_CONFIG.tp2R, 2);
+  assert.equal(TRADE_SCENARIO_CONFIG.minimumRiskPoints, 0.6);
+  assert.equal(TRADE_SCENARIO_CONFIG.maximumRiskPoints, 4);
+  assert.equal(TRADE_SCENARIO_CONFIG.minimumLiquidityRoomR, 2);
 });
 
-test('mapping keeps the existing Market Outlook asset entry points', () => {
-  const html = readFileSync(indexUrl, 'utf8');
-  assert.match(html, /css\/market-outlook\.css/);
-  assert.match(html, /js\/market-outlook\.js/);
+test('fresh FVG detection requires displacement and returns directional zones', () => {
+  const detected = detectReactionZones(sampleCandles());
+  assert.ok(Array.isArray(detected.zones));
+  assert.ok(detected.zones.some(zone => zone.side === 'BUY'));
+  for (const zone of detected.zones) {
+    assert.ok(zone.top > zone.bottom);
+    assert.equal(zone.midpoint, (zone.bottom + zone.top) / 2);
+  }
 });
 
-test('Market Outlook remains the safer breakout-retest production model', () => {
-  const ui = readFileSync(uiUrl, 'utf8');
-  const core = readFileSync(coreUrl, 'utf8');
-  const css = readFileSync(cssUrl, 'utf8');
-
-  assert.match(ui, /Saran Level/);
-  assert.match(ui, /Skenario Buy/);
-  assert.match(ui, /Skenario Sell/);
-  assert.match(ui, /Saran level ditahan/);
-  assert.match(ui, /WAIT_CONDITIONAL/);
-  assert.equal(/Prediction Tracker/i.test(ui), false);
-  assert.equal(/Probabilitas model/i.test(ui), false);
-
-  assert.match(core, /lookbackBars: 32/);
-  assert.match(core, /entryBufferAtr: 0\.05/);
-  assert.match(core, /retestBars: 8/);
-  assert.match(core, /tp1R: 1\.5/);
-  assert.match(core, /tp2R: 2\.0/);
-  assert.match(core, /BREAKOUT_RETEST/);
-  assert.match(css, /amy-level-card\.buy/);
-  assert.match(css, /amy-level-card\.sell/);
+test('live builder does not invent levels when data is insufficient', () => {
+  const result = buildTradeScenarios({ candles: sampleCandles().slice(0, 30), price: 2000 });
+  assert.equal(result.status, 'WAITING_DATA');
+  assert.equal(result.scenarios.length, 0);
 });
 
-test('2024 comparison records retest versus 3-point and 4-point stop orders honestly', () => {
-  const report = readFileSync(reportUrl, 'utf8');
+test('stored result remains the audited M5 2024 iteration', () => {
   const result = JSON.parse(readFileSync(dataUrl, 'utf8'));
-
-  assert.equal(result.status, 'FINAL_BACKTEST_RETEST_VS_STOP_ORDER_2024');
-  assert.equal(result.methodology.m15Candles, 23713);
-  assert.equal(result.methodology.m1Candles, 355592);
-
-  assert.equal(result.models.breakoutRetest.overall.entries, 605);
-  assert.equal(result.models.breakoutRetest.overall.expectancyAtTp2R, 0.036);
-
-  assert.equal(result.models.stopOrder3Point.overall.entries, 1270);
-  assert.equal(result.models.stopOrder3Point.overall.expectancyAtTp2R, -0.05);
-
-  assert.equal(result.models.stopOrder4Point.overall.entries, 1049);
-  assert.equal(result.models.stopOrder4Point.overall.expectancyAtTp2R, -0.017);
-
-  assert.match(report, /SL dihitung lebih dahulu/);
-  assert.match(report, /Buy Stop\/Sell Stop tidak menggantikan model retest/);
-  assert.match(report, /Spread, slippage, komisi/);
+  assert.equal(result.status, 'FINAL_BACKTEST_M5_REACTION_FIRST_2024');
+  assert.equal(result.overall.entries, 165);
+  assert.equal(result.overall.buyEntries, 81);
+  assert.equal(result.overall.sellEntries, 84);
+  assert.equal(result.gradeA.tp2Rate, 50);
+  assert.equal(result.validationSepDec.expectancyAtTp2R, 0.111);
 });
