@@ -1,3 +1,64 @@
+.outlook-disclosure{
+  overflow:hidden;
+  border:1px solid #2c2818;
+  border-radius:22px;
+  background:#0c0c0b;
+}
+.outlook-disclosure>summary.amy-level-summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:17px 18px 12px;
+  cursor:pointer;
+  list-style:none;
+  background:#0c0c0b;
+}
+.outlook-disclosure>summary.amy-level-summary::-webkit-details-marker{display:none}
+.outlook-disclosure>summary.amy-level-summary:after{content:none!important}
+.amy-level-summary-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+.amy-level-summary-title i{
+  color:#d9b936;
+  font-style:normal;
+  font-size:25px;
+  line-height:1;
+}
+.amy-level-summary-title b{
+  color:#f1f1f1;
+  font-size:19px;
+  font-weight:900;
+}
+.amy-level-summary-status{
+  flex:0 0 auto;
+  padding:7px 12px;
+  border:1px solid rgba(255,91,102,.34);
+  border-radius:999px;
+  background:rgba(116,20,37,.7);
+  color:#ff8a94;
+  font-size:10px;
+  font-weight:950;
+  letter-spacing:.04em;
+}
+.amy-level-summary-status.ready{
+  border-color:rgba(255,91,102,.34);
+  background:rgba(116,20,37,.7);
+  color:#ff8a94;
+}
+.amy-level-summary-status.waiting{
+  border-color:rgba(255,184,69,.3);
+  background:rgba(255,184,69,.08);
+  color:#e9b963;
+}
+.amy-level-summary-status.stale{
+  border-color:rgba(255,91,102,.45);
+  background:rgba(255,91,102,.12);
+  color:#ff7a84;
+}
 .amy-trade-scenario-panel[data-amy-level-panel="true"]{
   padding:0;
   background:transparent;
@@ -5,135 +66,127 @@
 }
 .amy-level-panel{
   display:grid;
-  gap:14px;
-  padding:16px;
-  background:#0b0b0b;
+  gap:18px;
+  padding:0 18px 18px;
+  background:#0c0c0b;
 }
-.amy-level-heading{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-}
-.amy-level-heading small{
-  color:#8f8f8f;
-  font-size:9px;
-  font-weight:900;
-  letter-spacing:.12em;
-}
-.amy-level-heading h2{
-  margin:3px 0 0;
-  color:#f0f0f0;
-  font-size:17px;
-}
-.amy-level-heading>span{
-  padding:7px 10px;
-  border:1px solid rgba(59,213,139,.28);
-  border-radius:999px;
-  background:rgba(59,213,139,.08);
-  color:#61d99c;
-  font-size:9px;
-  font-weight:900;
-}
-.amy-level-intro,.amy-level-disclaimer,.amy-level-panel.waiting p{
+.amy-level-intro{
   margin:0;
-  color:#a4a4a4;
-  font-size:10px;
-  line-height:1.55;
-}
-.amy-level-reference{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:8px;
-}
-.amy-level-reference>div{
-  padding:10px;
-  border:1px solid #242424;
-  border-radius:12px;
-  background:#111;
-}
-.amy-level-reference small{
-  display:block;
-  margin-bottom:4px;
-  color:#777;
-  font-size:8px;
-  text-transform:uppercase;
-}
-.amy-level-reference strong{
-  color:#e4e4e4;
-  font-size:12px;
+  max-width:620px;
+  color:#aaa7a0;
+  font-size:13px;
+  line-height:1.48;
 }
 .amy-level-cards{
   display:grid;
-  gap:14px;
+  gap:18px;
 }
 .amy-level-card{
   position:relative;
-  padding:16px 16px 14px 18px;
-  border:1px solid #2b2b2b;
-  border-radius:18px;
-  background:linear-gradient(180deg,#111,#0d0d0d);
+  padding:20px 20px 17px 28px;
+  border:1px solid #292824;
+  border-radius:22px;
+  background:linear-gradient(180deg,#11110f 0%,#0d0d0c 100%);
   overflow:hidden;
+  box-shadow:0 8px 24px rgba(0,0,0,.18);
 }
 .amy-level-card:before{
   content:"";
   position:absolute;
   inset:0 auto 0 0;
-  width:5px;
-  border-radius:18px 0 0 18px;
+  width:7px;
+  border-radius:22px 0 0 22px;
 }
-.amy-level-card.buy:before{background:#28d99a}
-.amy-level-card.sell:before{background:#ff5b66}
-.amy-level-card.buy{border-color:rgba(40,217,154,.24)}
-.amy-level-card.sell{border-color:rgba(255,91,102,.24)}
+.amy-level-card.buy:before{background:#20d5a0}
+.amy-level-card.sell:before{background:#ff5d66}
+.amy-level-card.buy{border-color:rgba(32,213,160,.18)}
+.amy-level-card.sell{border-color:rgba(212,175,55,.62)}
 .amy-level-card h3{
-  margin:0 0 14px;
-  font-size:16px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:0 0 20px;
+  font-size:19px;
+  font-weight:950;
 }
-.amy-level-card.buy h3{color:#35dca2}
-.amy-level-card.sell h3{color:#ff6872}
+.amy-level-card h3 span{
+  font-size:21px;
+  line-height:1;
+}
+.amy-level-card.buy h3{color:#28d7a3}
+.amy-level-card.sell h3{color:#ff626c}
 .amy-level-grid{
   display:grid;
-  grid-template-columns:minmax(92px,.72fr) minmax(0,1.28fr);
-  gap:9px 12px;
+  grid-template-columns:minmax(108px,.82fr) minmax(0,1.18fr);
+  gap:13px 16px;
   align-items:start;
 }
 .amy-level-grid span{
-  color:#999;
-  font-size:11px;
+  color:#a3a3a0;
+  font-size:15px;
+  line-height:1.35;
 }
 .amy-level-grid strong{
-  color:#e9e9e9;
-  font-size:11px;
+  color:#f1f1ee;
+  font-size:15px;
+  font-weight:850;
+  line-height:1.35;
   text-align:right;
   overflow-wrap:anywhere;
 }
-.amy-level-grid strong.loss{color:#ff6b75}
-.amy-level-grid strong.profit{color:#43d6a4}
+.amy-level-grid strong.loss{color:#ff626c}
+.amy-level-grid strong.profit{color:#28d7a3}
 .amy-level-card p{
-  margin:14px 0 0;
-  padding-top:12px;
-  border-top:1px solid #242424;
-  color:#a9a9a9;
-  font-size:10px;
-  line-height:1.5;
+  margin:19px 0 0;
+  padding-top:15px;
+  border-top:1px solid #262622;
+  color:#a9a8a3;
+  font-size:13px;
+  line-height:1.52;
 }
+.amy-level-card p b{color:#deddd8}
 .amy-copy-level{
-  margin-top:12px;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-top:15px;
   padding:0;
   border:0;
   background:transparent;
-  color:#8e8e8e;
+  color:#9b9a95;
   font:inherit;
-  font-size:10px;
+  font-size:13px;
   cursor:pointer;
 }
-.amy-level-panel.waiting .amy-level-heading>span{
-  border-color:rgba(255,184,69,.28);
-  background:rgba(255,184,69,.08);
-  color:#e8b861;
+.amy-copy-level span{
+  color:#b7b6b0;
+  font-size:15px;
 }
-@media(min-width:720px){
-  .amy-level-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .amy-level-reference{grid-template-columns:repeat(4,minmax(0,1fr))}
+.amy-level-disclaimer{
+  margin:0;
+  padding:13px 14px;
+  border:1px solid rgba(255,126,55,.32);
+  border-radius:16px;
+  background:rgba(255,91,43,.06);
+  color:#c6a783;
+  font-size:11px;
+  line-height:1.5;
+  text-align:center;
+}
+.amy-level-waiting{
+  padding:16px;
+  border:1px solid rgba(255,184,69,.26);
+  border-radius:16px;
+  background:rgba(255,184,69,.06);
+  color:#c9a76c;
+  font-size:12px;
+  line-height:1.5;
+}
+@media(max-width:420px){
+  .outlook-disclosure>summary.amy-level-summary{padding:15px 15px 11px}
+  .amy-level-panel{padding:0 15px 15px}
+  .amy-level-card{padding:18px 16px 15px 24px}
+  .amy-level-grid{grid-template-columns:minmax(94px,.78fr) minmax(0,1.22fr);gap:12px 10px}
+  .amy-level-grid span,.amy-level-grid strong{font-size:13px}
+  .amy-level-card h3{font-size:18px}
 }
