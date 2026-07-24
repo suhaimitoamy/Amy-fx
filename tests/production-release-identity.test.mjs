@@ -15,7 +15,7 @@ test('Amy FX 1.5.4 keeps the production Android identity and updater channel', (
 
   assert.match(gradle, /com\.amyelitesuite/);
   assert.match(gradle, /main\/update\.json/);
-  assert.match(gradle, /\?: 44\)/);
+  assert.match(gradle, /\?: 45\)/);
   assert.match(gradle, /\?: "1\.5\.4"/);
   assert.match(version, /name: '1\.5\.4', code: 45/);
   assert.match(workflow, /AMYFX_APPLICATION_ID: com\.amyelitesuite/);

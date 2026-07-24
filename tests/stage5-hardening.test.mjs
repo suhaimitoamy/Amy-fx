@@ -19,9 +19,11 @@ test('published metadata is never ahead of the APK source version', () => {
   assert.ok([40, 41, 42, 43, 44, 45].includes(metadata.latest_version_code));
   const expected = metadata.latest_version_code === 45
     ? '1.5.4'
-    : metadata.latest_version_code === 43
-      ? '1.5.2'
-      : metadata.latest_version_code === 42
+    : metadata.latest_version_code === 44
+      ? '1.5.3'
+      : metadata.latest_version_code === 43
+        ? '1.5.2'
+        : metadata.latest_version_code === 42
         ? '1.5.1'
         : metadata.latest_version_code === 41
           ? '1.5.0'

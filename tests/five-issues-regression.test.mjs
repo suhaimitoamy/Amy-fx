@@ -33,7 +33,7 @@ test('Mapping UI hardening files remain syntactically valid', () => {
 
 test('README reflects Amy FX 1.5.4 release identity', () => {
   assert.match(readme, /\*\*Versi:\*\* `1\.5\.4`/);
-  assert.match(readme, /\*\*Version code:\*\* `44`/);
+  assert.match(readme, /\*\*Version code:\*\* `45`/);
   assert.equal(readme.includes('**Versi:** `1.4.6`'), false);
   assert.equal(readme.includes('**Version code:** `29`'), false);
 });
@@ -99,8 +99,10 @@ test('source version is 1.5.4 while publication stays safe during release', () =
   assert.ok([42, 43, 44, 45].includes(update.latest_version_code));
   const expected = update.latest_version_code === 45
     ? '1.5.4'
-    : update.latest_version_code === 43
-      ? '1.5.2'
-      : '1.5.1';
+    : update.latest_version_code === 44
+      ? '1.5.3'
+      : update.latest_version_code === 43
+        ? '1.5.2'
+        : '1.5.1';
   assert.equal(update.latest_version_name, expected);
 });
