@@ -1,0 +1,82 @@
+{
+  "methodology": {
+    "dataset": "48 arsip bulanan XAU/USD 2022–2025 dari Google Drive pengguna",
+    "sourceTimeframes": ["M1", "M5", "M15", "H1", "H4", "D1"],
+    "resampledTimeframes": ["M30", "W1"],
+    "warmup": "2022-01-01–2022-03-31",
+    "evaluation": "2022-04-01–2025-12-30",
+    "sampling": "Market Outlook mengikuti slot produksi; Mapping diambil per jam",
+    "implementation": "Port independen rule engine saat ini untuk backtest historis; bukan eksekusi WebView/browser langsung"
+  },
+  "marketOutlook": {
+    "period": "2022-04-01–2025-12-30",
+    "dataset": "48 monthly XAU/USD archives, 2022–2025",
+    "count": 26226,
+    "overall": {
+      "directionalAccuracyPct": 42.18714253031343,
+      "targetHitRatePct": 26.46991535117822,
+      "invalidationRatePct": 19.068862960420958
+    },
+    "byHorizon": {
+      "DAILY": {"count": 967, "directionalAccuracyPct": 46.12202688728025, "targetHitRatePct": 25.12926577042399, "invalidationRatePct": 8.790072388831438, "avgProbabilityPct": 59.07135470527405},
+      "INTRADAY": {"count": 21395, "directionalAccuracyPct": 42.673521850899746, "targetHitRatePct": 28.00186959569993, "invalidationRatePct": 21.59383033419023, "avgProbabilityPct": 63.227810236036454},
+      "SESSION": {"count": 3864, "directionalAccuracyPct": 38.50931677018634, "targetHitRatePct": 18.32298136645963, "invalidationRatePct": 7.6604554865424435, "avgProbabilityPct": 61.52820910973085}
+    },
+    "byYear": {
+      "2022": {"count": 5413, "directionalAccuracyPct": 42.748937742471824, "targetHitRatePct": 28.209865139479035, "invalidationRatePct": 20.266026233142433},
+      "2023": {"count": 6437, "directionalAccuracyPct": 40.71772564859407, "targetHitRatePct": 25.72627000155352, "invalidationRatePct": 18.3781264564238},
+      "2024": {"count": 7228, "directionalAccuracyPct": 42.00332042058661, "targetHitRatePct": 26.175982291090204, "invalidationRatePct": 19.230769230769234},
+      "2025": {"count": 7148, "directionalAccuracyPct": 43.27084499160605, "targetHitRatePct": 26.119194180190263, "invalidationRatePct": 18.620593172915502}
+    },
+    "byProbabilityBucket": {
+      "40–49": {"count": 2243, "directionalAccuracyPct": 44.048149799375835, "avgProbabilityPct": 47.9193045028979},
+      "50–59": {"count": 4472, "directionalAccuracyPct": 44.387298747763865, "avgProbabilityPct": 54.45706618962433},
+      "60–69": {"count": 18083, "directionalAccuracyPct": 41.624730409777136, "avgProbabilityPct": 65.8530664159708},
+      "70–79": {"count": 1428, "directionalAccuracyPct": 39.49579831932773, "avgProbabilityPct": 74.08263305322129}
+    },
+    "byRegime": {
+      "HIGH_VOLATILITY": {"count": 4210, "directionalAccuracyPct": 40.09501187648456, "targetHitRatePct": 20.30878859857482, "invalidationRatePct": 11.520190023752969},
+      "TRANSITION": {"count": 22016, "directionalAccuracyPct": 42.587209302325576, "targetHitRatePct": 27.648074127906973, "invalidationRatePct": 20.512354651162788}
+    }
+  },
+  "mapping": {
+    "byTimeframe": {
+      "H1": {"samples": 21395, "localCoveragePct": 100.0, "localAccuracyPct": 44.42626781958401, "htfAccuracyPct": 46.33792942276232, "alignmentCoveragePct": 69.8107034353821, "alignedAccuracyPct": 46.12346009641136, "liquidityCoveragePct": 100.0, "liquidityFirstHitAccuracyPct": 29.016125262911896},
+      "H4": {"samples": 21395, "localCoveragePct": 100.0, "localAccuracyPct": 45.74433278803458, "htfAccuracyPct": 44.10376256134611, "alignmentCoveragePct": 60.51413881748072, "alignedAccuracyPct": 47.00702865528694, "liquidityCoveragePct": 100.0, "liquidityFirstHitAccuracyPct": 29.273194671652252},
+      "M1": {"samples": 21395, "localCoveragePct": 100.0, "localAccuracyPct": 35.3119887824258, "htfAccuracyPct": 38.6585650853003, "alignmentCoveragePct": 56.38700630988549, "alignedAccuracyPct": 38.06366047745358, "liquidityCoveragePct": 99.97663005375088, "liquidityFirstHitAccuracyPct": 46.79289387564282},
+      "M15": {"samples": 21395, "localCoveragePct": 100.0, "localAccuracyPct": 45.622809067539144, "htfAccuracyPct": 48.19817714419257, "alignmentCoveragePct": 57.251694321103066, "alignedAccuracyPct": 48.53457425095926, "liquidityCoveragePct": 99.99532601075018, "liquidityFirstHitAccuracyPct": 41.03019538188277},
+      "M30": {"samples": 21395, "localCoveragePct": 100.0, "localAccuracyPct": 43.57560177611591, "htfAccuracyPct": 46.32390745501285, "alignmentCoveragePct": 60.93947183921477, "alignedAccuracyPct": 46.36447307869305, "liquidityCoveragePct": 100.0, "liquidityFirstHitAccuracyPct": 29.44613227389577},
+      "M5": {"samples": 21395, "localCoveragePct": 100.0, "localAccuracyPct": 41.724702033185324, "htfAccuracyPct": 44.11778452909558, "alignmentCoveragePct": 55.85417153540547, "alignedAccuracyPct": 44.10878661087866, "liquidityCoveragePct": 99.99065202150035, "liquidityFirstHitAccuracyPct": 37.657177581451876}
+    },
+    "validBreak": {
+      "H1": {"events": 1210, "continuation0_5AtrPct": 96.44628099173553, "failedWithinHorizonPct": 97.43801652892562, "displacementPct": 64.7107438016529},
+      "H4": {"events": 377, "continuation0_5AtrPct": 93.89920424403184, "failedWithinHorizonPct": 99.73474801061008, "displacementPct": 72.41379310344827},
+      "M1": {"events": 21245, "continuation0_5AtrPct": 94.83172511179102, "failedWithinHorizonPct": 68.79736408566721, "displacementPct": 70.05413038361968},
+      "M15": {"events": 4798, "continuation0_5AtrPct": 95.01875781575656, "failedWithinHorizonPct": 96.24843684868696, "displacementPct": 64.40183409754064},
+      "M30": {"events": 2439, "continuation0_5AtrPct": 94.0139401394014, "failedWithinHorizonPct": 96.26896268962689, "displacementPct": 65.47765477654777},
+      "M5": {"events": 12686, "continuation0_5AtrPct": 94.39539650007883, "failedWithinHorizonPct": 88.98786063376951, "displacementPct": 66.45908875926217}
+    },
+    "zones": {
+      "H1_FVG": {"zones": 1933, "touchRatePct": 81.01396792550439, "confirmedReactionGivenTouchPct": 68.5823754789272, "invalidationRatePct": 2.224521469218831},
+      "H1_OB": {"zones": 771, "touchRatePct": 59.40337224383917, "confirmedReactionGivenTouchPct": 32.96943231441048, "invalidationRatePct": 11.413748378728924},
+      "H4_FVG": {"zones": 535, "touchRatePct": 79.81308411214954, "confirmedReactionGivenTouchPct": 71.89695550351288, "invalidationRatePct": 2.0560747663551404},
+      "H4_OB": {"zones": 266, "touchRatePct": 57.14285714285714, "confirmedReactionGivenTouchPct": 22.36842105263158, "invalidationRatePct": 12.406015037593985},
+      "M1_FVG": {"zones": 19467, "touchRatePct": 65.53654903169466, "confirmedReactionGivenTouchPct": 42.020692898573444, "invalidationRatePct": 12.395335696306569},
+      "M1_OB": {"zones": 16829, "touchRatePct": 44.47679600689287, "confirmedReactionGivenTouchPct": 43.25985303941216, "invalidationRatePct": 11.783231326876226},
+      "M15_FVG": {"zones": 5720, "touchRatePct": 78.88111888111888, "confirmedReactionGivenTouchPct": 50.62056737588653, "invalidationRatePct": 3.4090909090909087},
+      "M15_OB": {"zones": 2831, "touchRatePct": 59.342988343341574, "confirmedReactionGivenTouchPct": 47.26190476190476, "invalidationRatePct": 7.947721653126104},
+      "M30_FVG": {"zones": 3408, "touchRatePct": 77.40610328638498, "confirmedReactionGivenTouchPct": 57.50568612585292, "invalidationRatePct": 2.3474178403755865},
+      "M30_OB": {"zones": 1528, "touchRatePct": 50.19633507853403, "confirmedReactionGivenTouchPct": 43.285528031290745, "invalidationRatePct": 6.348167539267016},
+      "M5_FVG": {"zones": 11331, "touchRatePct": 68.05224605065749, "confirmedReactionGivenTouchPct": 46.50499286733238, "invalidationRatePct": 4.712734974847763},
+      "M5_OB": {"zones": 7030, "touchRatePct": 48.83357041251778, "confirmedReactionGivenTouchPct": 46.57733760559278, "invalidationRatePct": 7.510668563300142}
+    },
+    "freshness": [
+      {"tf": "M1", "bars": 1372863, "gapCount": 1893, "gapRatePct": 0.1378871292234762, "maxGapHours": 74.03333333333333},
+      {"tf": "M5", "bars": 274665, "gapCount": 1590, "gapRatePct": 0.5788891154283051, "maxGapHours": 74.08333333333333},
+      {"tf": "M15", "bars": 91562, "gapCount": 1581, "gapRatePct": 1.7267177073208024, "maxGapHours": 74.25},
+      {"tf": "M30", "bars": 45785, "gapCount": 1581, "gapRatePct": 3.4531714135942684, "maxGapHours": 74.5},
+      {"tf": "H1", "bars": 22905, "gapCount": 1579, "gapRatePct": 6.893992315752707, "maxGapHours": 75.0},
+      {"tf": "H4", "bars": 6368, "gapCount": 212, "gapRatePct": 3.3296686037380243, "maxGapHours": 76.0}
+    ]
+  }
+}
