@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       versionName:
-        description: "Version Name (e.g., 1.5.3)"
+        description: "Version Name (e.g., 1.5.4)"
         required: true
-        default: "1.5.3"
+        default: "1.5.4"
       versionCode:
         description: "Version Code (must increase)"
         required: true
-        default: "44"
+        default: "45"
 
 permissions:
   contents: read

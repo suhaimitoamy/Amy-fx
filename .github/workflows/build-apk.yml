@@ -31,8 +31,8 @@ jobs:
       AMYFX_KEYSTORE_PASSWORD: android
       AMYFX_KEY_ALIAS: androiddebugkey
       AMYFX_KEY_PASSWORD: android
-      AMYFX_VERSION_NAME: "1.5.3"
-      AMYFX_VERSION_CODE: "44"
+      AMYFX_VERSION_NAME: "1.5.4"
+      AMYFX_VERSION_CODE: "45"
       AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
     steps:
@@ -43,7 +43,7 @@ jobs:
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state='pending' \
             -f context='Amy FX Production Release' \
-            -f description='Testing and building signed Amy FX 1.5.3' \
+            -f description='Testing and building signed Amy FX 1.5.4' \
             -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
 
       - name: Checkout
@@ -70,9 +70,9 @@ jobs:
           grep -Fq '<title>Amy FX · Market Intelligence</title>' app/src/main/assets/apps/mapping/index.html
           ! grep -Fq 'Amy FX Preview' app/src/main/assets/apps/mapping/index.html
           ! grep -Fq 'UPDATE · AMY FX v1.5 PREVIEW' app/src/main/assets/apps/mapping/js/main.js
-          grep -Fq "name: '1.5.3', code: 44" app/src/main/assets/app-version.js
-          grep -Fq '?: 44)' app/build.gradle.kts
-          grep -Fq '?: "1.5.3"' app/build.gradle.kts
+          grep -Fq "name: '1.5.4', code: 45" app/src/main/assets/app-version.js
+          grep -Fq '?: 45)' app/build.gradle.kts
+          grep -Fq '?: "1.5.4"' app/build.gradle.kts
           grep -Fq 'com.amyelitesuite' app/build.gradle.kts
           grep -Fq 'main/update.json' app/build.gradle.kts
           grep -Fq 'cache: '\''no-store'\''' app/src/main/assets/update-checker.js
@@ -185,7 +185,7 @@ jobs:
           git tag -f amyfx-latest "$GITHUB_SHA"
           git push origin refs/tags/amyfx-latest --force
 
-          release_notes="Amy FX 1.5.3 menerbitkan ulang AMY Market Context Final melalui jalur update produksi yang tervalidasi, memastikan manifest update baru aktif setelah APK signed selesai diunggah. Package com.amyelitesuite, data lokal, jalur update produksi, dan sertifikat permanen tetap dipertahankan."
+          release_notes="Blok tombol timeframe pada halaman Analisis telah dihapus. Urutan halaman Analisis diperbaiki menjadi: Header harga/status, Asia Liquidity, Market Outlook, Ringkasan Market, Valid Break, Mapping M1–H4, Penjelasan Mapping, Setup Aktif."
           if gh release view amyfx-latest >/dev/null 2>&1; then
             gh release edit amyfx-latest \
               --title "Amy FX Latest — v${AMYFX_VERSION_NAME}" \
@@ -212,19 +212,22 @@ jobs:
           path = Path('update.json')
           data = json.loads(path.read_text(encoding='utf-8'))
           notes = [
-              'Market Outlook memakai AMY Market Context Final dengan struktur M15 dan trigger M5',
-              'Outlook tetap WAIT saat tidak ada event valid atau arah event bertentangan',
-              'FVG Revisit, Order Block Revisit, Draw on Liquidity, dan Asia Entry memakai threshold terkunci',
-              'Status M15 LIVE dan M15 STALE serta posisi baca halaman Analisis dipertahankan',
-              'Manifest update dipublikasikan ulang setelah APK signed 1.5.3 tersedia',
-              'Package com.amyelitesuite, sertifikat permanen, data lokal, dan jalur update tetap dipertahankan',
-              'Pembaruan dapat dipasang tanpa menghapus aplikasi'
+              'Blok tombol timeframe pada halaman Analisis telah dihapus.',
+              'Urutan halaman Analisis diperbaiki menjadi:',
+              'Header harga/status',
+              'Asia Liquidity',
+              'Market Outlook',
+              'Ringkasan Market',
+              'Valid Break',
+              'Mapping M1–H4',
+              'Penjelasan Mapping',
+              'Setup Aktif'
           ]
           data.update({
-              'latest_version_code': 44,
-              'latest_version_name': '1.5.3',
-              'versionCode': 44,
-              'version': '1.5.3',
+              'latest_version_code': 45,
+              'latest_version_name': '1.5.4',
+              'versionCode': 45,
+              'version': '1.5.4',
               'releaseDate': os.environ['RELEASE_DATE'],
               'apk_url': 'https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',
               'downloadUrl': 'https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',
@@ -245,10 +248,10 @@ jobs:
             python3 -m json.tool update.json >/dev/null
             git add update.json
             if git diff --cached --quiet; then
-              echo "update.json sudah sesuai Amy FX 1.5.3."
+              echo "update.json sudah sesuai Amy FX 1.5.4."
               exit 0
             fi
-            git commit -m "release: activate Amy FX 1.5.3 in-app update [skip ci]"
+            git commit -m "release: activate Amy FX 1.5.4 in-app update [skip ci]"
             if git push origin HEAD:main; then
               exit 0
             fi
@@ -263,8 +266,8 @@ jobs:
           set -euo pipefail
           git fetch origin main
           manifest="$(git show origin/main:update.json)"
-          printf '%s\n' "$manifest" | grep -F '"latest_version_code": 44'
-          printf '%s\n' "$manifest" | grep -F '"latest_version_name": "1.5.3"'
+          printf '%s\n' "$manifest" | grep -F '"latest_version_code": 45'
+          printf '%s\n' "$manifest" | grep -F '"latest_version_name": "1.5.4"'
 
   report-status:
     if: always()
@@ -277,10 +280,10 @@ jobs:
           BUILD_RESULT: ${{ needs.build.result }}
         run: |
           state=success
-          description='Amy FX 1.5.3 published and update activated'
+          description='Amy FX 1.5.4 published and update activated'
           if [ "$BUILD_RESULT" != 'success' ]; then
             state=failure
-            description="Amy FX 1.5.3 production release failed: $BUILD_RESULT"
+            description="Amy FX 1.5.4 production release failed: $BUILD_RESULT"
           fi
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state="$state" \

@@ -8,7 +8,7 @@ const root = new URL('../', import.meta.url);
 const path = relative => new URL(relative, root);
 const source = relative => readFileSync(path(relative), 'utf8');
 
-test('Amy FX 1.5.3 keeps the production Android identity and updater channel', () => {
+test('Amy FX 1.5.4 keeps the production Android identity and updater channel', () => {
   const gradle = source('app/build.gradle.kts');
   const version = source('app/src/main/assets/app-version.js');
   const workflow = source('.github/workflows/build-apk.yml');
@@ -16,16 +16,16 @@ test('Amy FX 1.5.3 keeps the production Android identity and updater channel', (
   assert.match(gradle, /com\.amyelitesuite/);
   assert.match(gradle, /main\/update\.json/);
   assert.match(gradle, /\?: 44\)/);
-  assert.match(gradle, /\?: "1\.5\.3"/);
-  assert.match(version, /name: '1\.5\.3', code: 44/);
+  assert.match(gradle, /\?: "1\.5\.4"/);
+  assert.match(version, /name: '1\.5\.4', code: 45/);
   assert.match(workflow, /AMYFX_APPLICATION_ID: com\.amyelitesuite/);
   assert.match(workflow, /AMYFX_APP_LABEL: Amy FX/);
   assert.match(workflow, /AMYFX_URI_SCHEME: amyfx/);
-  assert.match(workflow, /AMYFX_VERSION_NAME: "1\.5\.3"/);
-  assert.match(workflow, /AMYFX_VERSION_CODE: "44"/);
+  assert.match(workflow, /AMYFX_VERSION_NAME: "1\.5\.4"/);
+  assert.match(workflow, /AMYFX_VERSION_CODE: "45"/);
   assert.match(workflow, /releases\/download\/amyfx-latest\/AmyFX-latest\.apk/);
-  assert.match(workflow, /latest_version_code': 44/);
-  assert.match(workflow, /latest_version_name': '1\.5\.3'/);
+  assert.match(workflow, /latest_version_code': 45/);
+  assert.match(workflow, /latest_version_name': '1\.5\.4'/);
   assert.match(workflow, /Verify public update manifest source/);
 });
 
