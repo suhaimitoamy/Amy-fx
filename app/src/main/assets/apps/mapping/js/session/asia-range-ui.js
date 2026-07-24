@@ -85,7 +85,7 @@ function mountDashboard(range) {
 function mountAnalyze(range) {
   const app = document.getElementById('app');
   if (!app) return;
-  const anchor = app.querySelector('.regime-router-card') || app.querySelector('.tf-card') || app.firstElementChild;
+  const anchor = app.firstElementChild;
   if (!anchor) return;
   let strip = app.querySelector('[data-asia-range-analyze]');
   if (!strip) {

@@ -154,9 +154,10 @@ function ensureDisclosure() {
     details.open = localStorage.getItem(OPEN_KEY) !== 'false';
     details.innerHTML = `<summary class="amy-level-summary">${summaryMarkup()}</summary><div class="amy-trade-scenario-panel" data-amy-level-panel="true"></div>`;
     details.addEventListener('toggle', () => localStorage.setItem(OPEN_KEY, String(details.open)));
-    const validBreak = [...app.querySelectorAll('details.disclosure')]
-      .find(item => item.querySelector(':scope > summary')?.textContent.trim().startsWith('Valid Break'));
-    if (validBreak) app.insertBefore(details, validBreak);
+    const ringkasan = app.querySelector('.amy-analysis-section') || app.querySelector('#amy-regime-router-v3');
+    const validBreak = [...app.querySelectorAll('details.disclosure')].find(item => item.querySelector(':scope > summary')?.textContent.trim().startsWith('Valid Break'));
+    if (ringkasan) app.insertBefore(details, ringkasan);
+    else if (validBreak) app.insertBefore(details, validBreak);
     else app.appendChild(details);
   }
   details.dataset.stabilityKey = 'market-outlook';

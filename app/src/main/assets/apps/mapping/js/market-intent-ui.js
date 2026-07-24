@@ -327,7 +327,9 @@ export function syncMarketIntentV3() {
   if (current) {
     if (current.outerHTML !== markup) current.outerHTML = markup;
   } else {
-    app.insertAdjacentHTML('afterbegin', markup);
+    const validBreak = [...app.querySelectorAll('details.disclosure')].find(item => item.querySelector(':scope > summary')?.textContent.trim().startsWith('Valid Break'));
+    if (validBreak) validBreak.insertAdjacentHTML('beforebegin', markup);
+    else app.insertAdjacentHTML('beforeend', markup);
   }
   lastSignature = signature;
   bindCard();
