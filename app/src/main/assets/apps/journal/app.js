@@ -3,8 +3,11 @@
 const STORAGE_KEY = "tradingLibraryManager.items.v1";
 const SETTINGS_KEY = "tradingLibraryManager.settings.v1";
 const DB_NAME = "tradingLibraryManager.files";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const FILE_STORE = "files";
+const META_STORE = "metadata";
+const ITEMS_META_RECORD = "items.v2";
+const JOURNALS_META_RECORD = "journals.v2";
 const APP_VERSION = "20260519MaterialContentCache1";
 const JOURNAL_STORAGE_KEY = "tradingLibraryManager.journals.v1";
 const NOTES_STORAGE_KEY = "tradingLibraryManager.notes.v1";
@@ -272,8 +275,8 @@ const state = {
 async function boot() {
   await requestPersistentStorage();
   await enforcePinLock();
-  state.items = normalizeItems(loadItems());
-  state.journals = normalizeJournals(loadJournals());
+  state.items = normalizeItems(await loadItems());
+  state.journals = normalizeJournals(await loadJournals());
   state.personalNotes = loadNotes();
   loadAssistantSettings();
   state.assistantChatHistory = loadAssistantChatHistory();
@@ -542,19 +545,58 @@ function closeTopLayerForBack() {
   return false;
 }
 
-function loadItems() {
+function parseLegacyArrayStorage(key) {
   try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    const parsed = JSON.parse(localStorage.getItem(key) || "[]");
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
 }
 
-function saveItems(items = state.items) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items.map(cleanItemForStorage)));
+async function loadMetadataArray(recordId, legacyKey) {
+  try {
+    const record = await getMetadataRecord(recordId);
+    if (Array.isArray(record?.value)) return record.value;
+  } catch (error) {
+    console.warn(`Metadata ${recordId} belum bisa dibaca dari IndexedDB.`, error);
+  }
+
+  const legacy = parseLegacyArrayStorage(legacyKey);
+  if (!legacy.length) return legacy;
+
+  try {
+    await putMetadataRecord({ id: recordId, value: legacy, updatedAt: new Date().toISOString() });
+    localStorage.removeItem(legacyKey);
+  } catch (error) {
+    console.warn(`Migrasi metadata ${recordId} ke IndexedDB belum berhasil.`, error);
+  }
+  return legacy;
+}
+
+async function saveMetadataArray(recordId, legacyKey, value, options = {}) {
+  try {
+    await putMetadataRecord({ id: recordId, value, updatedAt: new Date().toISOString() });
+    try { localStorage.removeItem(legacyKey); } catch {}
+    return true;
+  } catch (error) {
+    console.error(`Penyimpanan metadata ${recordId} gagal.`, error);
+    if (options.throwOnError) throw error;
+    window.showToast?.("Penyimpanan lokal penuh atau tidak tersedia.");
+    return false;
+  }
+}
+
+function loadItems() {
+  return loadMetadataArray(ITEMS_META_RECORD, STORAGE_KEY);
+}
+
+async function saveItems(items = state.items, options = {}) {
+  const cleaned = items.map(cleanItemForStorage);
+  const saved = await saveMetadataArray(ITEMS_META_RECORD, STORAGE_KEY, cleaned, options);
   invalidateRenderCache();
   refreshInsightCache();
+  return saved;
 }
 
 function cleanItemForStorage(item) {
@@ -3582,6 +3624,9 @@ function openFileDb() {
       if (!db.objectStoreNames.contains(FILE_STORE)) {
         db.createObjectStore(FILE_STORE, { keyPath: "id" });
       }
+      if (!db.objectStoreNames.contains(META_STORE)) {
+        db.createObjectStore(META_STORE, { keyPath: "id" });
+      }
     };
 
     request.onsuccess = () => resolve(request.result);
@@ -3607,6 +3652,28 @@ async function withFileStore(mode, action) {
     transaction.onerror = () => reject(transaction.error);
     transaction.onabort = () => reject(transaction.error);
   });
+}
+
+function withMetadataStore(mode, action) {
+  return openFileDb().then((db) => new Promise((resolve, reject) => {
+    const transaction = db.transaction(META_STORE, mode);
+    const store = transaction.objectStore(META_STORE);
+    const request = action(store);
+    let result;
+    request.onsuccess = () => { result = request.result; };
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => resolve(result);
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error);
+  }));
+}
+
+function putMetadataRecord(record) {
+  return withMetadataStore("readwrite", (store) => store.put(record));
+}
+
+function getMetadataRecord(recordId) {
+  return withMetadataStore("readonly", (store) => store.get(recordId));
 }
 
 function putFileRecord(record) {
@@ -4440,8 +4507,8 @@ async function importBackup(event) {
     state.items = [...existingById.values()];
     state.journals = [...existingJournalsById.values()];
     state.insightCache = payload.insightCache || state.insightCache;
-    saveItems();
-    saveJournals();
+    await saveItems(state.items, { throwOnError: true });
+    await saveJournals(state.journals, { throwOnError: true });
     saveInsightCache();
     render();
 
@@ -4607,17 +4674,13 @@ function closeOpenCardMenus() {
 }
 
 function loadJournals() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(JOURNAL_STORAGE_KEY) || "[]");
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  return loadMetadataArray(JOURNALS_META_RECORD, JOURNAL_STORAGE_KEY);
 }
 
-function saveJournals(journals = state.journals) {
-  localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify(journals));
+async function saveJournals(journals = state.journals, options = {}) {
+  const saved = await saveMetadataArray(JOURNALS_META_RECORD, JOURNAL_STORAGE_KEY, journals, options);
   refreshInsightCache();
+  return saved;
 }
 
 function normalizeJournals(journals) {
