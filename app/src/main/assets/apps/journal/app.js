@@ -4183,58 +4183,260 @@ async function exportSingleItem(id) {
   await downloadBlob(blob, `${sanitizeFileName(item.title || "item")}.zip`);
 }
 
-async function importBackup(event) {
-  const file = event.target.files?.[0];
-  event.target.value = "";
-  if (!file || !window.JSZip) return;
+function waitForRestoreFrame() {
+  return new Promise((resolve) => window.setTimeout(resolve, 0));
+}
+
+function decodeZipEntryName(bytes) {
   try {
-    const zip = await window.JSZip.loadAsync(file);
-    const payload = JSON.parse(await zip.file("data.json").async("string"));
-    const incomingItems = normalizeItems(payload.items || []);
-    const incomingJournals = normalizeJournals(payload.journals || []);
+    return new TextDecoder('utf-8').decode(bytes);
+  } catch {
+    return Array.from(bytes, (byte) => String.fromCharCode(byte)).join('');
+  }
+}
+
+async function readStreamingZipDirectory(file) {
+  const tailSize = Math.min(file.size, 65557);
+  const tailOffset = file.size - tailSize;
+  const tailBytes = new Uint8Array(await file.slice(tailOffset).arrayBuffer());
+  const tailView = new DataView(tailBytes.buffer, tailBytes.byteOffset, tailBytes.byteLength);
+  let endOffset = -1;
+
+  for (let index = tailBytes.length - 22; index >= 0; index -= 1) {
+    if (tailView.getUint32(index, true) === 0x06054b50) {
+      endOffset = index;
+      break;
+    }
+  }
+
+  if (endOffset < 0) throw new Error('Struktur akhir ZIP tidak ditemukan.');
+
+  const totalEntries = tailView.getUint16(endOffset + 10, true);
+  const centralSize = tailView.getUint32(endOffset + 12, true);
+  const centralOffset = tailView.getUint32(endOffset + 16, true);
+  if (totalEntries === 0xffff || centralSize === 0xffffffff || centralOffset === 0xffffffff) {
+    throw new Error('Backup ZIP64 belum didukung oleh mode hemat memori.');
+  }
+
+  const centralBytes = new Uint8Array(await file.slice(centralOffset, centralOffset + centralSize).arrayBuffer());
+  const centralView = new DataView(centralBytes.buffer, centralBytes.byteOffset, centralBytes.byteLength);
+  const entries = [];
+  let cursor = 0;
+
+  while (cursor + 46 <= centralBytes.length && entries.length < totalEntries) {
+    if (centralView.getUint32(cursor, true) !== 0x02014b50) {
+      throw new Error('Central directory ZIP tidak valid.');
+    }
+
+    const flags = centralView.getUint16(cursor + 8, true);
+    const method = centralView.getUint16(cursor + 10, true);
+    const compressedSize = centralView.getUint32(cursor + 20, true);
+    const uncompressedSize = centralView.getUint32(cursor + 24, true);
+    const nameLength = centralView.getUint16(cursor + 28, true);
+    const extraLength = centralView.getUint16(cursor + 30, true);
+    const commentLength = centralView.getUint16(cursor + 32, true);
+    const localOffset = centralView.getUint32(cursor + 42, true);
+    const nameStart = cursor + 46;
+    const nameEnd = nameStart + nameLength;
+    const name = decodeZipEntryName(centralBytes.subarray(nameStart, nameEnd));
+
+    entries.push({
+      name,
+      flags,
+      method,
+      compressedSize,
+      uncompressedSize,
+      localOffset,
+      dir: name.endsWith('/')
+    });
+
+    cursor = nameEnd + extraLength + commentLength;
+  }
+
+  return entries;
+}
+
+async function readStreamingZipEntry(file, entry, outputType) {
+  if (!entry || entry.dir) throw new Error('File ZIP tidak ditemukan.');
+  if ((entry.flags & 0x1) !== 0) throw new Error(`File terenkripsi tidak didukung: ${entry.name}`);
+
+  const headerBytes = new Uint8Array(await file.slice(entry.localOffset, entry.localOffset + 30).arrayBuffer());
+  const headerView = new DataView(headerBytes.buffer, headerBytes.byteOffset, headerBytes.byteLength);
+  if (headerView.getUint32(0, true) !== 0x04034b50) throw new Error(`Header ZIP rusak: ${entry.name}`);
+
+  const nameLength = headerView.getUint16(26, true);
+  const extraLength = headerView.getUint16(28, true);
+  const dataOffset = entry.localOffset + 30 + nameLength + extraLength;
+  const compressedBlob = file.slice(dataOffset, dataOffset + entry.compressedSize);
+  let outputBlob;
+
+  if (entry.method === 0) {
+    outputBlob = compressedBlob;
+  } else if (entry.method === 8) {
+    if (typeof DecompressionStream !== 'function') {
+      throw new Error('WebView belum mendukung restore ZIP hemat memori.');
+    }
+    const stream = compressedBlob.stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    outputBlob = await new Response(stream).blob();
+  } else {
+    throw new Error(`Metode kompresi ZIP ${entry.method} belum didukung.`);
+  }
+
+  if (outputType === 'string') return outputBlob.text();
+  if (outputType === 'uint8array') return new Uint8Array(await outputBlob.arrayBuffer());
+  return outputBlob;
+}
+
+async function openBackupArchive(file) {
+  if (typeof DecompressionStream === 'function') {
+    try {
+      const entries = await readStreamingZipDirectory(file);
+      return {
+        mode: 'stream',
+        entries,
+        read: (entry, outputType) => readStreamingZipEntry(file, entry, outputType),
+        release: () => {}
+      };
+    } catch (error) {
+      console.warn('Restore hemat memori tidak tersedia, memakai JSZip.', error);
+    }
+  }
+
+  if (!window.JSZip) throw new Error('JSZip belum termuat.');
+  const zip = await window.JSZip.loadAsync(file, { createFolders: false });
+  const entries = Object.values(zip.files)
+    .filter((entry) => !entry.dir)
+    .map((entry) => ({ name: entry.name, dir: false, source: entry }));
+  return {
+    mode: 'memory',
+    entries,
+    read: (entry, outputType) => entry.source.async(outputType),
+    release: (entry) => { delete zip.files[entry.name]; }
+  };
+}
+
+function findBackupFileEntry(entries, fileId) {
+  if (!fileId) return null;
+  const prefix = `files/${fileId}-`;
+  return entries.find((entry) => !entry.dir && entry.name.startsWith(prefix)) || null;
+}
+
+function setRestoreProgress(label, originalText, current, total) {
+  if (!label) return;
+  label.textContent = total > 0 ? `Restore ${current}/${total}` : originalText;
+}
+
+async function importBackup(event) {
+  const input = event.target;
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+
+  const restoreLabel = document.querySelector('label[for="importBackupInput"]');
+  const originalLabel = restoreLabel?.textContent || 'Restore';
+  input.disabled = true;
+  if (restoreLabel) restoreLabel.textContent = 'Membaca backup...';
+
+  try {
+    const archive = await openBackupArchive(file);
+    const dataEntry = archive.entries.find((entry) => entry.name === 'data.json');
+    if (!dataEntry) throw new Error('data.json tidak ditemukan di dalam backup.');
+
+    const payload = JSON.parse(await archive.read(dataEntry, 'string'));
+    archive.release(dataEntry);
+    if (!payload || typeof payload !== 'object') throw new Error('Isi data.json tidak valid.');
+    if (!Array.isArray(payload.items) && !Array.isArray(payload.journals)) {
+      throw new Error('Backup tidak memiliki data library atau jurnal.');
+    }
+
+    const incomingItems = normalizeItems(Array.isArray(payload.items) ? payload.items : []);
+    const incomingJournals = normalizeJournals(Array.isArray(payload.journals) ? payload.journals : []);
     const existingById = new Map(state.items.map((item) => [item.id, item]));
-    for (const item of incomingItems) existingById.set(item.id, item);
-    for (const item of incomingItems) {
-      if (!item.fileId) continue;
-      const fileEntry = Object.values(zip.files).find((entry) => !entry.dir && entry.name.startsWith(`files/${item.fileId}-`));
-      if (!fileEntry) continue;
-      const blob = await fileEntry.async("blob");
-      await putFileRecord({
-        id: item.fileId,
-        itemId: item.id,
-        blob,
-        name: item.mediaName || fileEntry.name.split("-").slice(1).join("-") || "file",
-        type: item.mediaType || blob.type || getMimeForFileExtension(item.mediaName),
-        size: item.mediaSize || blob.size,
+    const existingJournalsById = new Map(state.journals.map((journal) => [journal.id, journal]));
+    incomingItems.forEach((item) => existingById.set(item.id, item));
+    incomingJournals.forEach((journal) => existingJournalsById.set(journal.id, journal));
+
+    const restoreTasks = [];
+    const queuedFileIds = new Set();
+
+    incomingItems.forEach((item) => {
+      if (!item.fileId || queuedFileIds.has(item.fileId)) return;
+      queuedFileIds.add(item.fileId);
+      restoreTasks.push({
+        fileId: item.fileId,
+        ownerId: item.id,
+        name: item.mediaName || '',
+        type: item.mediaType || '',
+        size: item.mediaSize || 0,
         kind: item.mediaKind || inferMediaKind(item),
-        documentType: item.documentType || (isDocumentItem(item) ? getDocumentType(item) : ""),
-        documentText: item.documentText || "",
-        fileHash: item.fileHash || "",
+        documentType: item.documentType || (isDocumentItem(item) ? getDocumentType(item) : ''),
+        documentText: item.documentText || '',
+        fileHash: item.fileHash || '',
         uploadedAt: item.uploadedAt || new Date().toISOString()
       });
-    }
-    const existingJournalsById = new Map(state.journals.map((journal) => [journal.id, journal]));
-    for (const journal of incomingJournals) existingJournalsById.set(journal.id, journal);
-    for (const journal of incomingJournals) {
-      for (const attachment of journal.attachments || []) {
-        if (!attachment.fileId) continue;
-        const fileEntry = Object.values(zip.files).find((entry) => !entry.dir && entry.name.startsWith(`files/${attachment.fileId}-`));
-        if (!fileEntry) continue;
-        const blob = await fileEntry.async("blob");
-        await putFileRecord({
-          id: attachment.fileId,
-          itemId: journal.id,
-          blob,
-          name: attachment.name || fileEntry.name.split("-").slice(1).join("-") || "file",
-          type: attachment.type || blob.type || getMimeForFileExtension(attachment.name),
-          size: attachment.size || blob.size,
+    });
+
+    incomingJournals.forEach((journal) => {
+      (journal.attachments || []).forEach((attachment) => {
+        if (!attachment.fileId || queuedFileIds.has(attachment.fileId)) return;
+        queuedFileIds.add(attachment.fileId);
+        restoreTasks.push({
+          fileId: attachment.fileId,
+          ownerId: journal.id,
+          name: attachment.name || '',
+          type: attachment.type || '',
+          size: attachment.size || 0,
           kind: attachment.kind || inferMediaKind({ mediaName: attachment.name, mediaType: attachment.type }),
-          documentType: attachment.documentType || "",
-          documentText: attachment.documentText || "",
+          documentType: attachment.documentType || '',
+          documentText: attachment.documentText || '',
+          fileHash: attachment.fileHash || '',
           uploadedAt: attachment.uploadedAt || new Date().toISOString()
         });
+      });
+    });
+
+    let importedFiles = 0;
+    let missingFiles = 0;
+    let failedFiles = 0;
+
+    for (let index = 0; index < restoreTasks.length; index += 1) {
+      const task = restoreTasks[index];
+      setRestoreProgress(restoreLabel, originalLabel, index + 1, restoreTasks.length);
+      const fileEntry = findBackupFileEntry(archive.entries, task.fileId);
+      if (!fileEntry) {
+        missingFiles += 1;
+        continue;
       }
+
+      try {
+        const rawBlob = await archive.read(fileEntry, 'blob');
+        const mime = task.type || rawBlob.type || getMimeForFileExtension(task.name) || 'application/octet-stream';
+        const blob = rawBlob.type ? rawBlob : rawBlob.slice(0, rawBlob.size, mime);
+        const restoredName = task.name || fileEntry.name.slice(`files/${task.fileId}-`.length) || 'file';
+        await putFileRecord({
+          id: task.fileId,
+          itemId: task.ownerId,
+          blob,
+          name: restoredName,
+          type: mime,
+          size: task.size || blob.size,
+          kind: task.kind,
+          documentType: task.documentType,
+          documentText: task.documentText,
+          fileHash: task.fileHash,
+          uploadedAt: task.uploadedAt
+        });
+        importedFiles += 1;
+      } catch (error) {
+        failedFiles += 1;
+        console.error(`Gagal memulihkan ${fileEntry.name}`, error);
+      } finally {
+        archive.release(fileEntry);
+      }
+
+      await waitForRestoreFrame();
     }
+
     state.items = [...existingById.values()];
     state.journals = [...existingJournalsById.values()];
     state.insightCache = payload.insightCache || state.insightCache;
@@ -4242,28 +4444,70 @@ async function importBackup(event) {
     saveJournals();
     saveInsightCache();
     render();
-    window.showToast("Restore selesai.");
-  } catch {
-    window.showToast("Backup belum bisa dibaca.");
+
+    if (failedFiles || missingFiles) {
+      window.showToast(`Restore selesai: ${importedFiles} file pulih, ${failedFiles} gagal, ${missingFiles} tidak ditemukan.`);
+    } else {
+      window.showToast(`Restore selesai. ${incomingItems.length} item dan ${incomingJournals.length} jurnal dipulihkan.`);
+    }
+  } catch (error) {
+    console.error('Restore backup gagal.', error);
+    const detail = String(error?.message || error || 'Kesalahan tidak diketahui').slice(0, 160);
+    window.showToast(`Restore gagal: ${detail}`);
+  } finally {
+    input.disabled = false;
+    if (restoreLabel) restoreLabel.textContent = originalLabel;
   }
 }
 
+function bytesToBase64(bytes) {
+  let binary = '';
+  const step = 0x8000;
+  for (let offset = 0; offset < bytes.length; offset += step) {
+    binary += String.fromCharCode(...bytes.subarray(offset, Math.min(offset + step, bytes.length)));
+  }
+  return window.btoa(binary);
+}
+
 async function downloadBlob(blob, filename) {
-  const file = new File([blob], filename, { type: blob.type || "application/zip" });
+  const nativeBridge = window.Android;
+  if (
+    nativeBridge &&
+    typeof nativeBridge.startFile === 'function' &&
+    typeof nativeBridge.appendFileChunk === 'function' &&
+    typeof nativeBridge.finishFile === 'function'
+  ) {
+    try {
+      nativeBridge.startFile(filename);
+      const chunkSize = 256 * 1024;
+      for (let offset = 0; offset < blob.size; offset += chunkSize) {
+        const bytes = new Uint8Array(await blob.slice(offset, Math.min(offset + chunkSize, blob.size)).arrayBuffer());
+        nativeBridge.appendFileChunk(bytesToBase64(bytes));
+        await waitForRestoreFrame();
+      }
+      nativeBridge.finishFile();
+      return;
+    } catch (error) {
+      console.error('Penyimpanan native bertahap gagal.', error);
+      try { nativeBridge.abortFile?.(); } catch {}
+    }
+  }
+
+  const file = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
   if (navigator.canShare?.({ files: [file] })) {
     try {
       await navigator.share({ files: [file], title: filename });
       return;
     } catch (error) {
-      if (error?.name === "AbortError") return;
+      if (error?.name === 'AbortError') return;
     }
   }
 
   const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
+  const link = document.createElement('a');
   link.href = url;
   link.download = filename;
-  link.rel = "noopener";
+  link.rel = 'noopener';
   document.body.append(link);
   link.click();
   link.remove();
