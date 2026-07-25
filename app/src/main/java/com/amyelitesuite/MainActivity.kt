@@ -105,7 +105,8 @@ class MainActivity : Activity() {
         webSettings.domStorageEnabled = true
         webSettings.loadWithOverviewMode = true
         webSettings.useWideViewPort = true
-        webSettings.cacheMode = WebSettings.LOAD_DEFAULT
+        webSettings.cacheMode = if (BuildConfig.DEBUG) WebSettings.LOAD_NO_CACHE else WebSettings.LOAD_DEFAULT
+        if (BuildConfig.DEBUG) webView.clearCache(true)
         webSettings.allowFileAccess = false
         webSettings.allowContentAccess = true
         webSettings.allowFileAccessFromFileURLs = false
@@ -825,7 +826,11 @@ class MainActivity : Activity() {
         @JavascriptInterface
         fun startFile(filename: String) {
             try {
-                currentFileOutputStream = openDownloadOutputStream(filename, "application/octet-stream")
+                val extension = File(filename).extension.lowercase()
+                val mimeType = android.webkit.MimeTypeMap.getSingleton()
+                    .getMimeTypeFromExtension(extension)
+                    ?: "application/octet-stream"
+                currentFileOutputStream = openDownloadOutputStream(filename, mimeType)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -856,6 +861,16 @@ class MainActivity : Activity() {
                 (mContext as Activity).runOnUiThread {
                     Toast.makeText(mContext, "Gagal menyimpan file", Toast.LENGTH_LONG).show()
                 }
+            }
+        }
+
+        @JavascriptInterface
+        fun abortFile() {
+            try {
+                currentFileOutputStream?.close()
+            } catch (_: Exception) {
+            } finally {
+                currentFileOutputStream = null
             }
         }
 
