@@ -66,6 +66,9 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Run complete JavaScript regression suite
+        run: timeout 12m npm test
+
       - name: Stamp Preview identity and update channel
         run: |
           set -euo pipefail
@@ -78,9 +81,6 @@ jobs:
           grep -Fq "name: '$AMYFX_VERSION_NAME', code: $AMYFX_VERSION_CODE" app/src/main/assets/app-version.js
           grep -Fq "window.AmyFXUpdateManifestUrl = '$AMYFX_UPDATE_MANIFEST_URL';" app/src/main/assets/app-version.js
           grep -Fq 'amy-preview-api-access.js?v=20260725-preview-api1' app/src/main/assets/apps/journal/amy-journal-final-fix.js
-
-      - name: Run complete JavaScript regression suite
-        run: timeout 12m npm test
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
