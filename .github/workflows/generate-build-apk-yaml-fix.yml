@@ -1,0 +1,60 @@
+name: Generate Amy FX build APK YAML fix
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/generate-build-apk-yaml-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Repair production workflow indentation
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          source = Path('.github/workflows/build-apk.yml')
+          lines = source.read_text(encoding='utf-8').splitlines()
+          start = lines.index('          notes = [')
+          end = next(index for index in range(start + 1, len(lines)) if lines[index] == ']')
+          entries = [line.strip() for line in lines[start + 1:end] if line.strip()]
+          fixed = lines[:start + 1]
+          fixed.extend('              ' + entry for entry in entries)
+          fixed.append('          ]')
+          fixed.extend(lines[end + 1:])
+          output = '\n'.join(fixed) + '\n'
+
+          if "'latest_version_code': 46" not in output:
+              raise SystemExit('Metadata versionCode 46 tidak ditemukan')
+          if "'latest_version_name': '1.5.5'" not in output:
+              raise SystemExit('Metadata versi 1.5.5 tidak ditemukan')
+
+          target = Path('release-generated/build-apk-fixed.yml.txt')
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_text(output, encoding='utf-8')
+          PY
+
+      - name: Commit corrected workflow copy
+        shell: bash
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          git config user.name "Amy FX Release Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add release-generated/build-apk-fixed.yml.txt
+          git commit -m "ci: generate corrected Amy FX 1.5.5 production workflow"
+          git push origin "HEAD:${HEAD_BRANCH}"
