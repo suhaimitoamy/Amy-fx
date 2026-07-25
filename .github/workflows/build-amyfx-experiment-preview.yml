@@ -1,0 +1,207 @@
+name: Build Amy FX Experiment Preview
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - preview/amyfx-experiment
+    paths-ignore:
+      - preview-update.json
+      - "*.md"
+      - "docs/**"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: amyfx-experiment-preview
+  cancel-in-progress: true
+
+env:
+  AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
+  AMYFX_APP_LABEL: Amy FX Preview
+  AMYFX_URI_SCHEME: amyfxpreview
+  AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/refs/heads/preview/amyfx-experiment/preview-update.json
+  AMYFX_KEYSTORE_PATH: /tmp/amy-fx-preview-signing.keystore
+  AMYFX_KEYSTORE_PASSWORD: android
+  AMYFX_KEY_ALIAS: androiddebugkey
+  AMYFX_KEY_PASSWORD: android
+  AMYFX_SIGNING_CERT_SHA256: 47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7
+
+jobs:
+  build-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout Preview branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare Preview version
+        run: |
+          set -euo pipefail
+          version_code=$((920000 + GITHUB_RUN_NUMBER))
+          version_name="1.5.9-preview.${GITHUB_RUN_NUMBER}"
+          release_tag="amyfx-preview-${version_name}"
+          {
+            echo "AMYFX_VERSION_CODE=$version_code"
+            echo "AMYFX_VERSION_NAME=$version_name"
+            echo "AMYFX_RELEASE_TAG=$release_tag"
+          } >> "$GITHUB_ENV"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Stamp Preview identity and update channel
+        run: |
+          set -euo pipefail
+          node tools/configure-preview-web-version.mjs "$AMYFX_VERSION_NAME" "$AMYFX_VERSION_CODE" "$AMYFX_UPDATE_MANIFEST_URL"
+          node --check app/src/main/assets/app-version.js
+          node --check app/src/main/assets/update-checker.js
+          node --check app/src/main/assets/apps/journal/amy-journal-final-fix.js
+          node --check app/src/main/assets/apps/journal/amy-journal-ai-runtime-fix.js
+          node --check app/src/main/assets/apps/journal/amy-preview-api-access.js
+          grep -Fq "name: '$AMYFX_VERSION_NAME', code: $AMYFX_VERSION_CODE" app/src/main/assets/app-version.js
+          grep -Fq "window.AmyFXUpdateManifestUrl = '$AMYFX_UPDATE_MANIFEST_URL';" app/src/main/assets/app-version.js
+          grep -Fq 'amy-preview-api-access.js?v=20260725-preview-api1' app/src/main/assets/apps/journal/amy-journal-final-fix.js
+
+      - name: Run complete JavaScript regression suite
+        run: timeout 12m npm test
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Restore permanent Amy FX signing key
+        id: signing-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: amy-fx-debug-keystore-v1
+
+      - name: Verify permanent signing key
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.signing-cache.outputs.cache-hit }}" != "true" ]; then
+            echo "Permanent Amy FX signing key tidak ditemukan."
+            exit 1
+          fi
+          cp "$HOME/.android/debug.keystore" "$AMYFX_KEYSTORE_PATH"
+          actual="$(keytool -list -v -keystore "$AMYFX_KEYSTORE_PATH" -storepass "$AMYFX_KEYSTORE_PASSWORD" -alias "$AMYFX_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1)"
+          test "$actual" = "$AMYFX_SIGNING_CERT_SHA256"
+
+      - name: Make Gradle executable
+        run: chmod +x ./gradlew
+
+      - name: Run Android unit tests
+        run: ./gradlew testReleaseUnitTest --no-configuration-cache
+
+      - name: Run Android lint
+        run: ./gradlew lintRelease --no-configuration-cache
+
+      - name: Build signed Amy FX Preview APK
+        run: ./gradlew assembleRelease --no-configuration-cache --stacktrace
+
+      - name: Verify Preview APK identity and signer
+        run: |
+          set -euo pipefail
+          apk="app/build/outputs/apk/release/app-release.apk"
+          aapt="$ANDROID_HOME/build-tools/35.0.0/aapt"
+          apksigner="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          test -s "$apk"
+          "$aapt" dump badging "$apk" | tee /tmp/amyfx-preview-badging.txt
+          grep -Fq "package: name='${AMYFX_APPLICATION_ID}' versionCode='${AMYFX_VERSION_CODE}' versionName='${AMYFX_VERSION_NAME}'" /tmp/amyfx-preview-badging.txt
+          grep -Fq "application-label:'${AMYFX_APP_LABEL}'" /tmp/amyfx-preview-badging.txt
+          "$apksigner" verify --verbose "$apk"
+          cert_entry="$(unzip -Z1 "$apk" | grep -E '^META-INF/[^/]+\.(RSA|DSA|EC)$' | head -n1)"
+          test -n "$cert_entry"
+          unzip -p "$apk" "$cert_entry" > /tmp/amyfx-preview-cert
+          expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          actual="$(keytool -printcert -file /tmp/amyfx-preview-cert | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          test "$actual" = "$expected"
+          cp "$apk" AmyFX-Preview-latest.apk
+
+      - name: Upload signed Preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Amy-FX-${{ env.AMYFX_VERSION_NAME }}-signed-apk
+          path: AmyFX-Preview-latest.apk
+          if-no-files-found: error
+
+      - name: Publish immutable Preview release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cat > /tmp/preview-notes.md <<NOTES
+          Amy FX Preview $AMYFX_VERSION_NAME dibuat langsung dari main 1.5.9.
+
+          - Pengaturan API kembali terlihat jelas di bagian atas Asisten.
+          - Mendukung pool API Gemini dan OpenRouter dengan rotasi otomatis.
+          - Package Preview tetap terpisah sehingga dapat dipasang berdampingan dengan Amy FX utama.
+          - Data Amy FX utama tidak disentuh oleh aplikasi Preview.
+          NOTES
+          gh release create "$AMYFX_RELEASE_TAG" \
+            "AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --title "Amy FX Preview $AMYFX_VERSION_NAME" \
+            --notes-file /tmp/preview-notes.md
+          gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
+
+      - name: Activate Preview update manifest
+        run: |
+          set -euo pipefail
+          git reset --hard HEAD
+          export RELEASE_DATE="$(date -u +%F)"
+          export APK_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${AMYFX_RELEASE_TAG}/AmyFX-Preview-latest.apk"
+          python3 - <<'PY'
+          import json
+          import os
+
+          notes = [
+              'Amy FX Preview dibangun langsung dari main 1.5.9.',
+              'Pengaturan API Gemini dan OpenRouter kembali terlihat jelas di bagian Asisten.',
+              'Pool API key mendukung rotasi otomatis, timeout, dan cooldown.',
+              'Package Preview terpisah sehingga dapat dipasang berdampingan dengan Amy FX utama.'
+          ]
+          payload = {
+              'channel': 'amyfx-preview-experiment',
+              'latest_version_code': int(os.environ['AMYFX_VERSION_CODE']),
+              'latest_version_name': os.environ['AMYFX_VERSION_NAME'],
+              'versionCode': int(os.environ['AMYFX_VERSION_CODE']),
+              'version': os.environ['AMYFX_VERSION_NAME'],
+              'releaseDate': os.environ['RELEASE_DATE'],
+              'apk_url': os.environ['APK_URL'],
+              'downloadUrl': os.environ['APK_URL'],
+              'force_update': False,
+              'mandatory': False,
+              'enabled': True,
+              'release_notes': notes,
+              'changelog': notes,
+          }
+          with open('preview-update.json', 'w', encoding='utf-8') as handle:
+              json.dump(payload, handle, ensure_ascii=False, indent=2)
+              handle.write('\n')
+          PY
+          python3 -m json.tool preview-update.json >/dev/null
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add preview-update.json
+          if ! git diff --cached --quiet; then
+            git commit -m "release: activate $AMYFX_VERSION_NAME preview update [skip ci]"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
