@@ -1,6 +1,6 @@
 // Amy FX production release identity.
 (function () {
-  const VERSION = Object.freeze({ name: '1.5.8', code: 49 });
+  const VERSION = Object.freeze({ name: '1.5.9', code: 50 });
   window.AmyFXAppVersion = VERSION;
 
   function versionText() {

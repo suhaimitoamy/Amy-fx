@@ -17,8 +17,8 @@ test('journal runtime files remain syntactically valid and load in order', () =>
   ]) {
     execFileSync(process.execPath, ['--check', fileURLToPath(path(relative))], { stdio: 'pipe' });
   }
-  assert.match(loader, /amy-journal-final-fix-legacy\.js\?v=20260725-v158/);
-  assert.match(loader, /amy-journal-ai-runtime-fix\.js\?v=20260725-v158/);
+  assert.match(loader, /amy-journal-final-fix-legacy\.js\?v=20260725-v159/);
+  assert.match(loader, /amy-journal-ai-runtime-fix\.js\?v=20260725-v159/);
 });
 
 test('journal history bridge persists the IndexedDB state used by the core app', () => {
@@ -53,8 +53,16 @@ test('assistant rotates free Gemini and OpenRouter keys with bounded retries', (
   assert.match(runtime, /state\.isAiProcessing = false/);
 });
 
-test('Amy FX source identity is 1.5.8 code 49', () => {
-  assert.match(source('app/build.gradle.kts'), /\?: 49\)/);
-  assert.match(source('app/build.gradle.kts'), /\?: "1\.5\.8"/);
-  assert.match(source('app/src/main/assets/app-version.js'), /name: '1\.5\.8', code: 49/);
+test('journal runtime cannot create the global MutationObserver feedback loop that freezes navigation', () => {
+  const runtime = source('app/src/main/assets/apps/journal/amy-journal-ai-runtime-fix.js');
+  assert.doesNotMatch(runtime, /new MutationObserver\(ensurePoolUi\)/);
+  assert.match(runtime, /if \(target\.textContent !== next\) target\.textContent = next/);
+  assert.match(runtime, /poolUiScheduled/);
+  assert.match(runtime, /bindPoolUiNavigation/);
+});
+
+test('Amy FX source identity is 1.5.9 code 50', () => {
+  assert.match(source('app/build.gradle.kts'), /\?: 50\)/);
+  assert.match(source('app/build.gradle.kts'), /\?: "1\.5\.9"/);
+  assert.match(source('app/src/main/assets/app-version.js'), /name: '1\.5\.9', code: 50/);
 });

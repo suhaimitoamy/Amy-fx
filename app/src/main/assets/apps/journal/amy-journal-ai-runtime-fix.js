@@ -1,8 +1,8 @@
 "use strict";
 
 (function () {
-  if (window.__amyJournalAiFix158) return;
-  window.__amyJournalAiFix158 = true;
+  if (window.__amyJournalAiFix159) return;
+  window.__amyJournalAiFix159 = true;
 
   const JOURNAL_KEY = "tradingLibraryManager.journals.v1";
   const SETTINGS_KEY = "tradingLibraryManager.assistantSettings.v1";
@@ -10,6 +10,7 @@
   const cooldowns = new Map();
   let cursor = 0;
   let ready = false;
+  let poolUiScheduled = false;
 
   const parseJson = (value, fallback) => {
     try { return JSON.parse(value) ?? fallback; } catch { return fallback; }
@@ -89,7 +90,8 @@
     const list = credentials();
     const free = list.filter(item => FREE.has(item.provider)).length;
     const paid = list.filter(item => item.provider === "deepseek").length;
-    target.textContent = text || `${free} API gratis${paid ? ` • ${paid} fallback berbayar` : ""} • Rotasi otomatis`;
+    const next = text || `${free} API gratis${paid ? ` • ${paid} fallback berbayar` : ""} • Rotasi otomatis`;
+    if (target.textContent !== next) target.textContent = next;
   }
 
   function savePool() {
@@ -106,7 +108,7 @@
     const keyInput = document.querySelector("#geminiApiKeyInput");
     if (!keyInput) return;
     const oldPanel = document.querySelector("#amyAiKeyPanel");
-    if (oldPanel) oldPanel.hidden = true;
+    if (oldPanel && !oldPanel.hidden) oldPanel.hidden = true;
     if (!document.querySelector("#amyAiKeyPoolInput")) {
       const saved = settings();
       const field = document.createElement("label");
@@ -128,7 +130,8 @@
       save.addEventListener("click", () => {
         savePool();
         const message = document.querySelector("#assistantMessage");
-        if (message) message.textContent = `${credentials().length} API tersimpan. Rotasi otomatis aktif.`;
+        const next = `${credentials().length} API tersimpan. Rotasi otomatis aktif.`;
+        if (message && message.textContent !== next) message.textContent = next;
       });
     }
     const clear = document.querySelector("#clearGeminiKeyBtn");
@@ -147,7 +150,30 @@
     updateSummary();
   }
 
+  function schedulePoolUi() {
+    if (poolUiScheduled) return;
+    poolUiScheduled = true;
+    const run = () => {
+      poolUiScheduled = false;
+      ensurePoolUi();
+    };
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(run);
+    else setTimeout(run, 0);
+  }
+
+  function bindPoolUiNavigation() {
+    document.addEventListener("click", event => {
+      const nav = event.target.closest?.(".bottom-nav .nav-button, .side-nav-button");
+      if (!nav) return;
+      const view = nav.dataset?.view || nav.dataset?.target || nav.getAttribute?.("data-view") || "";
+      if (view === "assistant" || nav.matches?.('[data-view="assistant"]')) setTimeout(schedulePoolUi, 0);
+    }, true);
+    window.addEventListener("focus", schedulePoolUi);
+  }
+
   function bridgeIndexedDbJournals() {
+    if (window.__amyJournalStorageBridge159) return;
+    window.__amyJournalStorageBridge159 = true;
     const getItem = Storage.prototype.getItem;
     const setItem = Storage.prototype.setItem;
     Storage.prototype.getItem = function (key) {
@@ -267,7 +293,8 @@
       localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...saved, apiPoolText: document.querySelector("#amyAiKeyPoolInput")?.value ?? saved.apiPoolText ?? "", paidFallback: document.querySelector("#amyAiPaidFallbackInput")?.checked ?? Boolean(saved.paidFallback) }));
       if (showMessage) {
         const message = document.querySelector("#assistantMessage");
-        if (message) message.textContent = list.length ? `${list.length} API tersimpan. Rotasi otomatis aktif.` : "API key kosong.";
+        const next = list.length ? `${list.length} API tersimpan. Rotasi otomatis aktif.` : "API key kosong.";
+        if (message && message.textContent !== next) message.textContent = next;
       }
     };
 
@@ -278,7 +305,8 @@
         if (state.isAiProcessing) return;
         state.isAiProcessing = true;
         appendAssistantChat("user", question);
-        loadingId = appendAssistantChat("assistant", "Memproses perintah...", { transient: true }).id;
+        const loading = appendAssistantChat("assistant", "Memproses perintah...", { transient: true });
+        loadingId = loading?.id || "";
       } else renderAiPopupText("Memproses perintah...");
       const finish = (text, extra = {}) => {
         const safe = text || "Tidak ada jawaban.";
@@ -312,6 +340,7 @@
     patchCalendar();
     patchAssistant();
     ensurePoolUi();
+    bindPoolUiNavigation();
     ready = true;
     if (typeof render === "function") render();
     setTimeout(() => {
@@ -319,7 +348,6 @@
       if (typeof renderJournals === "function") renderJournals();
       if (typeof renderStatistics === "function" && typeof getFilteredItems === "function") renderStatistics(getFilteredItems(state.items));
     }, 120);
-    new MutationObserver(ensurePoolUi).observe(document.documentElement, { childList: true, subtree: true });
     return true;
   }
 

@@ -1,7 +1,7 @@
 (function () {
   'use strict';
-  if (window.__amyJournalFixLoader158) return;
-  window.__amyJournalFixLoader158 = true;
+  if (window.__amyJournalFixLoader159) return;
+  window.__amyJournalFixLoader159 = true;
 
   function loadScript(source, onload) {
     const script = document.createElement('script');
@@ -11,7 +11,7 @@
     document.head.appendChild(script);
   }
 
-  loadScript('./amy-journal-final-fix-legacy.js?v=20260725-v158', function () {
-    loadScript('./amy-journal-ai-runtime-fix.js?v=20260725-v158');
+  loadScript('./amy-journal-final-fix-legacy.js?v=20260725-v159', function () {
+    loadScript('./amy-journal-ai-runtime-fix.js?v=20260725-v159');
   });
 })();
