@@ -1,6 +1,7 @@
 name: Prepare Amy FX 1.5.7 release
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - release/amyfx-1.5.7
