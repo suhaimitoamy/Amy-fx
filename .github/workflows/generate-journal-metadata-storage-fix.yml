@@ -1,4 +1,4 @@
-name: Locate remaining journal metadata writes
+name: Apply and validate remaining journal storage fix
 
 on:
   push:
@@ -9,20 +9,31 @@ permissions:
   contents: write
 
 jobs:
-  diagnose:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/journal-metadata-quota-20260725
           fetch-depth: 0
-      - name: Locate legacy writes
+      - name: Apply remaining storage migration
         run: |
-          grep -n -E 'localStorage\.setItem\((STORAGE_KEY|JOURNAL_STORAGE_KEY)' app/src/main/assets/apps/journal/app.js > tests/journal-storage-write-locations.txt || true
-      - name: Commit concise diagnostic
+          python3 tools/fix_remaining_journal_storage_write.py
+          rm -f tests/journal-syntax-diagnostic.txt
+          rm -f tests/journal-regression-diagnostic.txt
+          rm -f tests/journal-storage-write-locations.txt
+      - name: Check app syntax
+        run: node --check app/src/main/assets/apps/journal/app.js
+      - name: Run focused regression
+        run: node --test tests/journal-metadata-storage-regression.test.mjs
+      - name: Run full JavaScript regression
+        run: timeout 10m npm test
+      - name: Check repository diff
+        run: git diff --check
+      - name: Commit validated app changes
         run: |
           git config user.name "Amy FX Fix Automation"
           git config user.email "actions@users.noreply.github.com"
-          git add tests/journal-storage-write-locations.txt
-          git commit -m "test: locate remaining journal metadata writes"
+          git add -A app/src/main/assets/apps/journal/app.js tests/journal-syntax-diagnostic.txt tests/journal-regression-diagnostic.txt tests/journal-storage-write-locations.txt
+          git commit -m "fix(journal): finish IndexedDB metadata migration"
           git push origin HEAD:fix/journal-metadata-quota-20260725
