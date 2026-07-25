@@ -1,32 +1,26 @@
-name: Generate journal metadata storage fix
+name: Validate journal metadata storage fix
 
 on:
   push:
     branches:
       - fix/journal-metadata-quota-20260725
+  pull_request:
+    branches:
+      - main
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  generate:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: fix/journal-metadata-quota-20260725
-          fetch-depth: 0
-      - name: Apply patch
-        run: python3 tools/apply_journal_quota_fix.py
-      - name: Inspect generated files
-        run: |
-          node --check app/src/main/assets/apps/journal/app.js || true
-          node --test tests/journal-metadata-storage-regression.test.mjs || true
-          git diff --check || true
-      - name: Commit generated files
-        run: |
-          git config user.name "Amy FX Fix Automation"
-          git config user.email "actions@users.noreply.github.com"
-          git add app/src/main/assets/apps/journal/app.js tests/journal-metadata-storage-regression.test.mjs
-          git commit -m "fix(journal): store metadata in IndexedDB to avoid quota errors"
-          git push origin HEAD:fix/journal-metadata-quota-20260725
+      - name: Check app syntax
+        run: node --check app/src/main/assets/apps/journal/app.js
+      - name: Run focused regression
+        run: node --test tests/journal-metadata-storage-regression.test.mjs
+      - name: Run full JavaScript regression
+        run: timeout 10m npm test
+      - name: Check repository diff
+        run: git diff --check
