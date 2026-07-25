@@ -4,12 +4,16 @@ on:
   push:
     branches:
       - fix/journal-metadata-quota-20260725
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
 
 jobs:
   persist:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
