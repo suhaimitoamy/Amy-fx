@@ -1,0 +1,28 @@
+name: Diagnose Amy FX 1.5.8
+
+on:
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  changed-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Journal and AI rotation regression
+        run: node --test tests/journal-ai-rotation-v158.test.mjs
+      - name: Profile version regression
+        run: node --test tests/profile-version-update-regression.test.mjs
+      - name: Production identity regression
+        run: node --test tests/production-release-identity.test.mjs
+      - name: Stage 5 hardening regression
+        run: node --test tests/stage5-hardening.test.mjs
+      - name: Five issues regression
+        run: node --test tests/five-issues-regression.test.mjs
