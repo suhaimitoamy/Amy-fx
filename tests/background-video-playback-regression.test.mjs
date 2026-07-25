@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
+// Regression guard for the native/background video handoff pipeline.
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const gradle = read("app/build.gradle.kts");
 const manifest = read("app/src/main/AndroidManifest.xml");
