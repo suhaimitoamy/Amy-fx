@@ -29,6 +29,8 @@ new = '''function makeStatCard(label, value) {
   card.append(title, number);
   return card;
 }'''
-if text.count(old) != 1:
-    raise SystemExit(f'Expected one malformed statistics helper, found {text.count(old)}')
-path.write_text(text.replace(old, new), encoding='utf-8')
+count = text.count(old)
+if count == 1:
+    path.write_text(text.replace(old, new), encoding='utf-8')
+elif new not in text:
+    raise SystemExit(f'Unexpected statistics helper state; malformed count={count}')
