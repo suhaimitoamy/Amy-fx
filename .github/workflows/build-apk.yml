@@ -31,8 +31,8 @@ jobs:
       AMYFX_KEYSTORE_PASSWORD: android
       AMYFX_KEY_ALIAS: androiddebugkey
       AMYFX_KEY_PASSWORD: android
-      AMYFX_VERSION_NAME: "1.5.5"
-      AMYFX_VERSION_CODE: "46"
+      AMYFX_VERSION_NAME: "1.5.6"
+      AMYFX_VERSION_CODE: "47"
       AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
     steps:
@@ -43,7 +43,7 @@ jobs:
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state='pending' \
             -f context='Amy FX Production Release' \
-            -f description='Testing and building signed Amy FX 1.5.5' \
+            -f description='Testing and building signed Amy FX 1.5.6' \
             -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
 
       - name: Checkout
@@ -70,9 +70,9 @@ jobs:
           grep -Fq '<title>Amy FX · Market Intelligence</title>' app/src/main/assets/apps/mapping/index.html
           ! grep -Fq 'Amy FX Preview' app/src/main/assets/apps/mapping/index.html
           ! grep -Fq 'UPDATE · AMY FX v1.5 PREVIEW' app/src/main/assets/apps/mapping/js/main.js
-          grep -Fq "name: '1.5.5', code: 46" app/src/main/assets/app-version.js
-          grep -Fq '?: 46)' app/build.gradle.kts
-          grep -Fq '?: "1.5.5"' app/build.gradle.kts
+          grep -Fq "name: '1.5.6', code: 47" app/src/main/assets/app-version.js
+          grep -Fq '?: 47)' app/build.gradle.kts
+          grep -Fq '?: "1.5.6"' app/build.gradle.kts
           grep -Fq 'com.amyelitesuite' app/build.gradle.kts
           grep -Fq 'main/update.json' app/build.gradle.kts
           grep -Fq 'cache: '\''no-store'\''' app/src/main/assets/update-checker.js
@@ -185,7 +185,7 @@ jobs:
           git tag -f amyfx-latest "$GITHUB_SHA"
           git push origin refs/tags/amyfx-latest --force
 
-          release_notes="Amy FX 1.5.5 memperbaiki restore backup jurnal dan library berukuran besar, menampilkan progress serta detail error, dan menyimpan backup ZIP dengan nama serta format yang benar. Data lokal, package com.amyelitesuite, jalur update produksi, dan sertifikat permanen tetap dipertahankan."
+          release_notes="Amy FX 1.5.6 memindahkan metadata Library dan Jurnal ke IndexedDB untuk memperbaiki kegagalan restore akibat kuota localStorage. Data lama dan lampiran tetap dipertahankan, sementara package serta sertifikat signing permanen tidak berubah."
           if gh release view amyfx-latest >/dev/null 2>&1; then
             gh release edit amyfx-latest \
               --title "Amy FX Latest — v${AMYFX_VERSION_NAME}" \
@@ -212,19 +212,19 @@ jobs:
           path = Path('update.json')
           data = json.loads(path.read_text(encoding='utf-8'))
           notes = [
-              'Restore backup jurnal dan library berukuran besar kini lebih stabil.',
-              'Lampiran dipulihkan bertahap agar WebView tidak memuat seluruh ZIP sekaligus.',
-              'Progress restore dan detail error kini ditampilkan.',
-              'File yang gagal tidak menghentikan seluruh proses restore.',
-              'Backup ZIP disimpan dengan nama, ekstensi, dan format yang benar.',
+              'Restore backup tidak lagi gagal karena kuota localStorage metadata.',
+              'Metadata Library dan Jurnal kini disimpan di IndexedDB.',
+              'Data lama dimigrasikan otomatis tanpa menghapus lampiran.',
+              'Restore menunggu penyimpanan metadata selesai sebelum menampilkan hasil.',
+              'Cache thumbnail video memakai penyimpanan yang sama dan aman.',
               'Package com.amyelitesuite, sertifikat permanen, data lokal, dan jalur update tetap dipertahankan.',
               'Pembaruan dapat dipasang tanpa menghapus aplikasi.'
           ]
           data.update({
-              'latest_version_code': 46,
-              'latest_version_name': '1.5.5',
-              'versionCode': 46,
-              'version': '1.5.5',
+              'latest_version_code': 47,
+              'latest_version_name': '1.5.6',
+              'versionCode': 47,
+              'version': '1.5.6',
               'releaseDate': os.environ['RELEASE_DATE'],
               'apk_url': 'https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',
               'downloadUrl': 'https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',
@@ -245,10 +245,10 @@ jobs:
             python3 -m json.tool update.json >/dev/null
             git add update.json
             if git diff --cached --quiet; then
-              echo "update.json sudah sesuai Amy FX 1.5.5."
+              echo "update.json sudah sesuai Amy FX 1.5.6."
               exit 0
             fi
-            git commit -m "release: activate Amy FX 1.5.5 in-app update [skip ci]"
+            git commit -m "release: activate Amy FX 1.5.6 in-app update [skip ci]"
             if git push origin HEAD:main; then
               exit 0
             fi
@@ -263,8 +263,8 @@ jobs:
           set -euo pipefail
           git fetch origin main
           manifest="$(git show origin/main:update.json)"
-          printf '%s\n' "$manifest" | grep -F '"latest_version_code": 46'
-          printf '%s\n' "$manifest" | grep -F '"latest_version_name": "1.5.5"'
+          printf '%s\n' "$manifest" | grep -F '"latest_version_code": 47'
+          printf '%s\n' "$manifest" | grep -F '"latest_version_name": "1.5.6"'
 
   report-status:
     if: always()
@@ -277,10 +277,10 @@ jobs:
           BUILD_RESULT: ${{ needs.build.result }}
         run: |
           state=success
-          description='Amy FX 1.5.5 published and update activated'
+          description='Amy FX 1.5.6 published and update activated'
           if [ "$BUILD_RESULT" != 'success' ]; then
             state=failure
-            description="Amy FX 1.5.5 production release failed: $BUILD_RESULT"
+            description="Amy FX 1.5.6 production release failed: $BUILD_RESULT"
           fi
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state="$state" \
