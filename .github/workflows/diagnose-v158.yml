@@ -8,29 +8,33 @@ permissions:
   contents: read
 
 jobs:
-  changed-tests:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.files.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: files
+        name: Discover regression files
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import glob
+          import json
+          print("matrix=" + json.dumps(sorted(glob.glob("tests/*.test.mjs"))))
+          PY
+
+  test-file:
+    needs: discover
+    name: ${{ matrix.file }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        file: ${{ fromJson(needs.discover.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Changed regression files
-        run: |
-          node --test tests/journal-ai-rotation-v158.test.mjs
-          node --test tests/profile-version-update-regression.test.mjs
-          node --test tests/production-release-identity.test.mjs
-          node --test tests/stage5-hardening.test.mjs
-          node --test tests/five-issues-regression.test.mjs
-      - name: Find first failing full regression file
-        run: |
-          set -euo pipefail
-          for file in $(find tests -maxdepth 1 -name '*.test.mjs' | sort); do
-            echo "Checking $file"
-            if ! node --test --test-force-exit "$file" >/tmp/amyfx-test-output.txt 2>&1; then
-              echo "FAILED_FILE=$file"
-              cat /tmp/amyfx-test-output.txt
-              exit 1
-            fi
-          done
+      - run: node --test --test-force-exit "${{ matrix.file }}"
