@@ -43,18 +43,29 @@ jobs:
           Path('/tmp/prepare-amyfx-1.5.5.py').write_text('\n'.join(output) + '\n', encoding='utf-8')
           PY
           python3 /tmp/prepare-amyfx-1.5.5.py || true
-          git diff --check || true
+          git restore --source=HEAD -- \
+            .github/workflows/build-apk.yml \
+            .github/workflows/build-release.yml \
+            .github/workflows/stage5-apply.yml
+          node --check app/src/main/assets/app-version.js
+          node --check app/src/main/assets/apps/journal/app.js
+          git diff --check
 
-      - name: Commit generated release for diagnosis
+      - name: Commit source and test updates
         shell: bash
         env:
           HEAD_BRANCH: ${{ github.head_ref }}
         run: |
           set -euo pipefail
-          rm -f .github/workflows/prepare-amyfx-1.5.5.yml
-          rm -f .github/workflows/run-prepare-amyfx-1.5.5-pr.yml
           git config user.name "Amy FX Release Automation"
           git config user.email "actions@users.noreply.github.com"
-          git add -A
-          git commit -m "release: prepare Amy FX 1.5.5 (code 46)"
+          git add \
+            app/build.gradle.kts \
+            app/src/main/assets/app-version.js \
+            README.md \
+            tests/five-issues-regression.test.mjs \
+            tests/production-release-identity.test.mjs \
+            tests/profile-version-update-regression.test.mjs \
+            tests/stage5-hardening.test.mjs
+          git commit -m "release: prepare Amy FX 1.5.5 source identity (code 46)"
           git push origin "HEAD:${HEAD_BRANCH}"
