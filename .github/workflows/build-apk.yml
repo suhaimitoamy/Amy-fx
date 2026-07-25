@@ -212,14 +212,14 @@ jobs:
           path = Path('update.json')
           data = json.loads(path.read_text(encoding='utf-8'))
           notes = [
-    'Restore backup jurnal dan library berukuran besar kini lebih stabil.',
-    'Lampiran dipulihkan bertahap agar WebView tidak memuat seluruh ZIP sekaligus.',
-    'Progress restore dan detail error kini ditampilkan.',
-    'File yang gagal tidak menghentikan seluruh proses restore.',
-    'Backup ZIP disimpan dengan nama, ekstensi, dan format yang benar.',
-    'Package com.amyelitesuite, sertifikat permanen, data lokal, dan jalur update tetap dipertahankan.',
-    'Pembaruan dapat dipasang tanpa menghapus aplikasi.'
-]
+              'Restore backup jurnal dan library berukuran besar kini lebih stabil.',
+              'Lampiran dipulihkan bertahap agar WebView tidak memuat seluruh ZIP sekaligus.',
+              'Progress restore dan detail error kini ditampilkan.',
+              'File yang gagal tidak menghentikan seluruh proses restore.',
+              'Backup ZIP disimpan dengan nama, ekstensi, dan format yang benar.',
+              'Package com.amyelitesuite, sertifikat permanen, data lokal, dan jalur update tetap dipertahankan.',
+              'Pembaruan dapat dipasang tanpa menghapus aplikasi.'
+          ]
           data.update({
               'latest_version_code': 46,
               'latest_version_name': '1.5.5',
