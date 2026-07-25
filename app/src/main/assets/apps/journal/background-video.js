@@ -202,7 +202,15 @@
         try { video.currentTime = targetSeconds; } catch {}
       }
       pauseOtherVideos(video);
-      await video.play().catch(() => {});
+      let resumedInWebView = false;
+      try {
+        await video.play();
+        resumedInWebView = true;
+      } catch {
+        try { window.Android.resumeBackgroundVideo(); } catch {}
+        updateStatus(video, "Tetap diputar di latar belakang");
+      }
+      if (!resumedInWebView) return;
       window.Android.stopBackgroundVideo();
       preparedSources.delete(nativeState.sourceKey);
       activeVideo = video;
