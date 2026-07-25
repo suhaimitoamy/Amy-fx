@@ -12,6 +12,8 @@
   }
 
   loadScript('./amy-journal-final-fix-legacy.js?v=20260725-v159', function () {
-    loadScript('./amy-journal-ai-runtime-fix.js?v=20260725-v159');
+    loadScript('./amy-journal-ai-runtime-fix.js?v=20260725-v159', function () {
+      loadScript('./amy-preview-api-access.js?v=20260725-preview-api1');
+    });
   });
 })();
