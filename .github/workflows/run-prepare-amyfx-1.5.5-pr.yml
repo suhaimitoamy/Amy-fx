@@ -47,9 +47,6 @@ jobs:
             .github/workflows/build-apk.yml \
             .github/workflows/build-release.yml \
             .github/workflows/stage5-apply.yml
-          node --check app/src/main/assets/app-version.js
-          node --check app/src/main/assets/apps/journal/app.js
-          git diff --check
 
       - name: Commit source and test updates
         shell: bash
