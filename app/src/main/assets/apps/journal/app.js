@@ -2783,7 +2783,7 @@ async function processVideoThumbnailQueue() {
     const thumb = await createVideoThumbnailForItem(item);
     if (thumb) {
       state.items = state.items.map((entry) => entry.id === item.id ? { ...entry, videoThumb: thumb } : entry);
-      saveItemsWithoutInsightRefresh();
+      await saveItemsWithoutInsightRefresh();
       applyCachedVideoThumbnailToDom(item.id, thumb);
     }
   } catch {}
@@ -2791,9 +2791,11 @@ async function processVideoThumbnailQueue() {
   window.setTimeout(processVideoThumbnailQueue, 250);
 }
 
-function saveItemsWithoutInsightRefresh(items = state.items) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items.map(cleanItemForStorage)));
+async function saveItemsWithoutInsightRefresh(items = state.items) {
+  const cleaned = items.map(cleanItemForStorage);
+  const saved = await saveMetadataArray(ITEMS_META_RECORD, STORAGE_KEY, cleaned);
   invalidateRenderCache();
+  return saved;
 }
 
 function applyCachedVideoThumbnailToDom(itemId, thumb) {
