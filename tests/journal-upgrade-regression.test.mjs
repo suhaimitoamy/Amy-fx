@@ -4,6 +4,10 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const source = fs.readFileSync(
+  new URL('../app/src/main/assets/apps/journal/amy-journal-final-fix-legacy.js', import.meta.url),
+  'utf8'
+);
+const loader = fs.readFileSync(
   new URL('../app/src/main/assets/apps/journal/amy-journal-final-fix.js', import.meta.url),
   'utf8'
 );
@@ -102,6 +106,8 @@ test('journal upgrade exposes stable statistics and filtering helpers', () => {
 });
 
 test('journal upgrade keeps reliability, draft, export, and trade-plan features', () => {
+  assert.match(loader, /amy-journal-final-fix-legacy\.js\?v=20260725-v158/);
+  assert.match(loader, /amy-journal-ai-runtime-fix\.js\?v=20260725-v158/);
   assert.match(source, /CSS\.escape/);
   assert.match(source, /makeStatCard/);
   assert.match(source, /filterGridItems/);
