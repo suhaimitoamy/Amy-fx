@@ -51,6 +51,8 @@ test("web player autoplays, loops, hands off on lifecycle and prevents dual play
   assert.match(journal, /visibilitychange/);
   assert.match(journal, /handoffFromNativeLifecycle/);
   assert.match(journal, /restoreHtmlPlayback/);
+  assert.match(journal, /let resumedInWebView = false/);
+  assert.match(journal, /window\.Android\.resumeBackgroundVideo\(\)/);
   assert.match(activity, /mediaPlaybackRequiresUserGesture = false/);
   assert.match(activity, /AmyBackgroundVideo\?\.handoffFromNativeLifecycle/);
   assert.match(activity, /AmyBackgroundVideo\?\.resumeFromNativeLifecycle/);
