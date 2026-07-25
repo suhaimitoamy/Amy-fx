@@ -1,6 +1,8 @@
 name: Generate journal metadata storage fix
 
 on:
+  push:
+    branches: [fix/journal-metadata-quota-20260725]
   pull_request:
     branches: [main]
     paths:
@@ -11,12 +13,12 @@ permissions:
 
 jobs:
   generate:
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.head_ref || github.ref_name }}
           fetch-depth: 0
 
       - name: Patch journal metadata persistence
@@ -206,7 +208,7 @@ async function saveJournals(journals = state.journals, options = {}) {
       - name: Commit generated fix
         shell: bash
         env:
-          HEAD_BRANCH: ${{ github.head_ref }}
+          HEAD_BRANCH: ${{ github.head_ref || github.ref_name }}
         run: |
           set -euo pipefail
           git config user.name "Amy FX Fix Automation"
