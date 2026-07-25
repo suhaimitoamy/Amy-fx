@@ -22,33 +22,28 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
 
-      - name: Update release workflows to 1.5.5
+      - name: Generate Amy FX 1.5.5 workflows
         shell: bash
         run: |
           python3 <<'PY'
           from pathlib import Path
 
-          # Manual release workflow.
           path = Path('.github/workflows/build-release.yml')
           text = path.read_text(encoding='utf-8')
           if '1.5.4' not in text or 'default: "45"' not in text:
-              raise SystemExit('build-release.yml tidak lagi cocok dengan versi 1.5.4/code 45')
-          text = text.replace('1.5.4', '1.5.5').replace('default: "45"', 'default: "46"')
-          path.write_text(text, encoding='utf-8')
+              raise SystemExit('build-release.yml tidak cocok dengan 1.5.4/code 45')
+          path.write_text(text.replace('1.5.4', '1.5.5').replace('default: "45"', 'default: "46"'), encoding='utf-8')
 
-          # Release-candidate workflow.
           path = Path('.github/workflows/stage5-apply.yml')
           text = path.read_text(encoding='utf-8')
           if '1.5.4' not in text or 'AMYFX_VERSION_CODE: "45"' not in text:
-              raise SystemExit('stage5-apply.yml tidak lagi cocok dengan versi 1.5.4/code 45')
-          text = text.replace('1.5.4', '1.5.5').replace('AMYFX_VERSION_CODE: "45"', 'AMYFX_VERSION_CODE: "46"')
-          path.write_text(text, encoding='utf-8')
+              raise SystemExit('stage5-apply.yml tidak cocok dengan 1.5.4/code 45')
+          path.write_text(text.replace('1.5.4', '1.5.5').replace('AMYFX_VERSION_CODE: "45"', 'AMYFX_VERSION_CODE: "46"'), encoding='utf-8')
 
-          # Production build and publication workflow.
           path = Path('.github/workflows/build-apk.yml')
           text = path.read_text(encoding='utf-8')
           if '1.5.4' not in text or 'AMYFX_VERSION_CODE: "45"' not in text:
-              raise SystemExit('build-apk.yml tidak lagi cocok dengan versi 1.5.4/code 45')
+              raise SystemExit('build-apk.yml tidak cocok dengan 1.5.4/code 45')
           text = text.replace('1.5.4', '1.5.5')
           for old, new in {
               'AMYFX_VERSION_CODE: "45"': 'AMYFX_VERSION_CODE: "46"',
@@ -65,7 +60,7 @@ jobs:
           old_release_notes = 'release_notes="Blok tombol timeframe pada halaman Analisis telah dihapus. Urutan halaman Analisis diperbaiki menjadi: Header harga/status, Asia Liquidity, Market Outlook, Ringkasan Market, Valid Break, Mapping M1–H4, Penjelasan Mapping, Setup Aktif."'
           new_release_notes = 'release_notes="Amy FX 1.5.5 memperbaiki restore backup jurnal dan library berukuran besar, menampilkan progress serta detail error, dan menyimpan backup ZIP dengan nama serta format yang benar. Data lokal, package com.amyelitesuite, jalur update produksi, dan sertifikat permanen tetap dipertahankan."'
           if old_release_notes not in text:
-              raise SystemExit('Catatan rilis 1.5.4 tidak ditemukan di build-apk.yml')
+              raise SystemExit('Catatan rilis 1.5.4 tidak ditemukan')
           text = text.replace(old_release_notes, new_release_notes)
 
           notes_start = text.index('          notes = [')
@@ -82,15 +77,18 @@ jobs:
           text = text[:notes_start] + notes_block + text[notes_end:]
           path.write_text(text, encoding='utf-8')
           PY
-          grep -Fq 'AMYFX_VERSION_NAME: "1.5.5"' .github/workflows/build-apk.yml
-          grep -Fq 'AMYFX_VERSION_CODE: "46"' .github/workflows/build-apk.yml
-          grep -Fq 'default: "1.5.5"' .github/workflows/build-release.yml
-          grep -Fq 'default: "46"' .github/workflows/build-release.yml
-          grep -Fq 'AMYFX_VERSION_NAME: "1.5.5"' .github/workflows/stage5-apply.yml
-          grep -Fq 'AMYFX_VERSION_CODE: "46"' .github/workflows/stage5-apply.yml
+
+          mkdir -p release-generated
+          cp .github/workflows/build-apk.yml release-generated/build-apk.yml.txt
+          cp .github/workflows/build-release.yml release-generated/build-release.yml.txt
+          cp .github/workflows/stage5-apply.yml release-generated/stage5-apply.yml.txt
+          git restore --source=HEAD -- \
+            .github/workflows/build-apk.yml \
+            .github/workflows/build-release.yml \
+            .github/workflows/stage5-apply.yml
           git diff --check
 
-      - name: Commit release workflow updates
+      - name: Commit generated workflow copies
         shell: bash
         env:
           HEAD_BRANCH: ${{ github.head_ref }}
@@ -98,9 +96,6 @@ jobs:
           set -euo pipefail
           git config user.name "Amy FX Release Automation"
           git config user.email "actions@users.noreply.github.com"
-          git add \
-            .github/workflows/build-apk.yml \
-            .github/workflows/build-release.yml \
-            .github/workflows/stage5-apply.yml
-          git commit -m "release: align Amy FX 1.5.5 build workflows (code 46)"
+          git add release-generated
+          git commit -m "chore: generate Amy FX 1.5.5 release workflows"
           git push origin "HEAD:${HEAD_BRANCH}"
