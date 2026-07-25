@@ -2,9 +2,9 @@
 
 Amy FX adalah aplikasi Android hybrid untuk pemetaan dan pemantauan market **XAU/USD**. Antarmuka utama berjalan melalui WebView lokal, sedangkan notifikasi, background scanner, penyimpanan, Firebase Messaging, download, dan pembaruan aplikasi ditangani oleh Kotlin native.
 
-> **Versi:** `1.5.5`
+> **Versi:** `1.5.6`
 >
-> **Version code:** `46`
+> **Version code:** `47`
 > **Minimum Android:** Android 8.0 / API 26  
 > **Target SDK:** Android SDK 35  
 > **Application ID:** `com.amyelitesuite`
@@ -25,6 +25,15 @@ Amy FX bukan robot trading, Expert Advisor, atau penasihat keuangan. Aplikasi ti
 | **Tutorial Trading** | Materi belajar trading terstruktur di dalam aplikasi |
 | **Indikator TradingView** | Library indikator dan file Pine Script |
 | **Dashboard** | Akses cepat ke seluruh modul Amy FX |
+
+## Update v1.5.6 — Perbaikan Restore Kuota Metadata
+
+- Metadata Library dan Jurnal dipindahkan dari `localStorage` berkuota kecil ke IndexedDB.
+- Data lama dimigrasikan otomatis setelah penyimpanan baru berhasil, tanpa menghapus lampiran.
+- Restore menunggu metadata benar-benar tersimpan sebelum menampilkan status selesai.
+- Cache thumbnail video tidak lagi menulis langsung ke `localStorage`.
+- Error `tradingLibraryManager.items.v1 exceeded the quota` diperbaiki.
+- Package, signing key permanen, data aplikasi, dan kanal update tetap dipertahankan.
 
 ## Update v1.5.5 — Restore Backup Besar
 

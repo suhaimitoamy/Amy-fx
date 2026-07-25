@@ -31,9 +31,9 @@ test('Mapping UI hardening files remain syntactically valid', () => {
   }
 });
 
-test('README reflects Amy FX 1.5.5 release identity', () => {
-  assert.match(readme, /\*\*Versi:\*\* `1\.5\.5`/);
-  assert.match(readme, /\*\*Version code:\*\* `46`/);
+test('README reflects Amy FX 1.5.6 release identity', () => {
+  assert.match(readme, /\*\*Versi:\*\* `1\.5\.6`/);
+  assert.match(readme, /\*\*Version code:\*\* `47`/);
   assert.equal(readme.includes('**Versi:** `1.4.6`'), false);
   assert.equal(readme.includes('**Version code:** `29`'), false);
 });
@@ -95,10 +95,12 @@ test('final issue-5 audit separates tracker success from close-direction accurac
 });
 
 test('source version is 1.5.5 while publication stays safe during release', () => {
-  assert.match(appVersion, /name: '1\.5\.5', code: 46/);
-  assert.ok([42, 43, 44, 45, 46].includes(update.latest_version_code));
-  const expected = update.latest_version_code === 46
-    ? '1.5.5'
+  assert.match(appVersion, /name: '1\.5\.6', code: 47/);
+  assert.ok([42, 43, 44, 45, 46, 47].includes(update.latest_version_code));
+  const expected = update.latest_version_code === 47
+    ? '1.5.6'
+    : update.latest_version_code === 46
+      ? '1.5.5'
     : update.latest_version_code === 45
       ? '1.5.4'
       : update.latest_version_code === 44
