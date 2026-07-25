@@ -106,8 +106,8 @@ test('journal upgrade exposes stable statistics and filtering helpers', () => {
 });
 
 test('journal upgrade keeps reliability, draft, export, and trade-plan features', () => {
-  assert.match(loader, /amy-journal-final-fix-legacy\.js\?v=20260725-v158/);
-  assert.match(loader, /amy-journal-ai-runtime-fix\.js\?v=20260725-v158/);
+  assert.match(loader, /amy-journal-final-fix-legacy\.js\?v=20260725-v159/);
+  assert.match(loader, /amy-journal-ai-runtime-fix\.js\?v=20260725-v159/);
   assert.match(source, /CSS\.escape/);
   assert.match(source, /makeStatCard/);
   assert.match(source, /filterGridItems/);
