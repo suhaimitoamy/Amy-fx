@@ -1,0 +1,213 @@
+name: Prepare Amy FX 1.5.5 release
+
+on:
+  push:
+    branches:
+      - release/amyfx-1.5.5
+    paths:
+      - .github/workflows/prepare-amyfx-1.5.5.yml
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/amyfx-1.5.5
+          fetch-depth: 0
+
+      - name: Apply version and release updates
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          def read(path):
+              return Path(path).read_text(encoding='utf-8')
+
+          def write(path, text):
+              Path(path).write_text(text, encoding='utf-8')
+
+          def replace(path, old, new, minimum=1):
+              text = read(path)
+              count = text.count(old)
+              if count < minimum:
+                  raise SystemExit(f'{path}: pola tidak ditemukan: {old!r}')
+              write(path, text.replace(old, new))
+
+          # Android and web source identity.
+          replace('app/build.gradle.kts', '?: 45)', '?: 46)')
+          replace('app/build.gradle.kts', '?: "1.5.4"', '?: "1.5.5"')
+          replace('app/src/main/assets/app-version.js', "name: '1.5.4', code: 45", "name: '1.5.5', code: 46")
+
+          # Manual build workflow.
+          path = '.github/workflows/build-release.yml'
+          text = read(path).replace('1.5.4', '1.5.5')
+          if 'default: "45"' not in text:
+              raise SystemExit(f'{path}: versionCode lama tidak ditemukan')
+          text = text.replace('default: "45"', 'default: "46"')
+          write(path, text)
+
+          # Release candidate validation workflow.
+          path = '.github/workflows/stage5-apply.yml'
+          text = read(path).replace('1.5.4', '1.5.5')
+          if 'AMYFX_VERSION_CODE: "45"' not in text:
+              raise SystemExit(f'{path}: versionCode lama tidak ditemukan')
+          text = text.replace('AMYFX_VERSION_CODE: "45"', 'AMYFX_VERSION_CODE: "46"')
+          write(path, text)
+
+          # Production publication workflow. update.json remains at 1.5.4 until the signed APK is uploaded.
+          path = '.github/workflows/build-apk.yml'
+          text = read(path).replace('1.5.4', '1.5.5')
+          replacements = {
+              'AMYFX_VERSION_CODE: "45"': 'AMYFX_VERSION_CODE: "46"',
+              "name: '1.5.5', code: 45": "name: '1.5.5', code: 46",
+              "grep -Fq '?: 45)'": "grep -Fq '?: 46)'",
+              "'latest_version_code': 45": "'latest_version_code': 46",
+              "'versionCode': 45": "'versionCode': 46",
+              "\"latest_version_code\": 45": "\"latest_version_code\": 46",
+          }
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f'{path}: pola tidak ditemukan: {old}')
+              text = text.replace(old, new)
+
+          old_release_notes = 'release_notes="Blok tombol timeframe pada halaman Analisis telah dihapus. Urutan halaman Analisis diperbaiki menjadi: Header harga/status, Asia Liquidity, Market Outlook, Ringkasan Market, Valid Break, Mapping M1–H4, Penjelasan Mapping, Setup Aktif."'
+          new_release_notes = 'release_notes="Amy FX 1.5.5 memperbaiki restore backup jurnal dan library berukuran besar, menampilkan progress serta detail error, dan menyimpan backup ZIP dengan nama serta format yang benar. Data lokal, package com.amyelitesuite, jalur update produksi, dan sertifikat permanen tetap dipertahankan."'
+          if old_release_notes not in text:
+              raise SystemExit(f'{path}: catatan rilis lama tidak ditemukan')
+          text = text.replace(old_release_notes, new_release_notes)
+
+          notes_start = text.index('          notes = [')
+          notes_end = text.index('          ]\n          data.update({', notes_start) + len('          ]')
+          notes_block = """          notes = [
+              'Restore backup jurnal dan library berukuran besar kini lebih stabil.',
+              'Lampiran dipulihkan bertahap agar WebView tidak memuat seluruh ZIP sekaligus.',
+              'Progress restore dan detail error kini ditampilkan.',
+              'File yang gagal tidak menghentikan seluruh proses restore.',
+              'Backup ZIP disimpan dengan nama, ekstensi, dan format yang benar.',
+              'Package com.amyelitesuite, sertifikat permanen, data lokal, dan jalur update tetap dipertahankan.',
+              'Pembaruan dapat dipasang tanpa menghapus aplikasi.'
+          ]"""
+          text = text[:notes_start] + notes_block + text[notes_end:]
+          write(path, text)
+
+          # README release identity and notes.
+          path = 'README.md'
+          text = read(path)
+          text = text.replace('> **Versi:** `1.5.4`', '> **Versi:** `1.5.5`')
+          text = text.replace('> **Version code:** `45`', '> **Version code:** `46`')
+          section_start = text.index('## Update v1.5.4')
+          section_end = text.index('\n## Update v1.5.2', section_start)
+          section = """## Update v1.5.5 — Restore Backup Besar
+
+- Versi aplikasi dinaikkan menjadi **1.5.5** dengan **versionCode 46**.
+- Restore backup jurnal dan library berukuran besar diproses bertahap untuk mengurangi beban memori WebView.
+- Progress restore dan detail error ditampilkan agar kegagalan dapat diketahui dengan jelas.
+- File yang gagal tidak menghentikan pemulihan file lainnya.
+- Backup ZIP disimpan dengan nama, ekstensi, dan MIME yang benar melalui penyimpanan native bertahap.
+- APK signed dipublikasikan terlebih dahulu sebelum `update.json` diaktifkan.
+- Package, sertifikat signing permanen, data lokal, dan update channel tetap dipertahankan.
+"""
+          text = text[:section_start] + section + text[section_end:]
+          write(path, text)
+
+          # Regression tests: source is 1.5.5/code 46 while public manifest may remain 1.5.4/code 45 during staging.
+          path = 'tests/five-issues-regression.test.mjs'
+          text = read(path).replace('1.5.4 release identity', '1.5.5 release identity')
+          text = text.replace(r'`1\.5\.4`', r'`1\.5\.5`')
+          text = text.replace(r'`45`', r'`46`', 1)
+          text = text.replace('source version is 1.5.4', 'source version is 1.5.5')
+          text = text.replace(r"name: '1\.5\.4', code: 45", r"name: '1\.5\.5', code: 46")
+          text = text.replace('[42, 43, 44, 45]', '[42, 43, 44, 45, 46]')
+          old = """  const expected = update.latest_version_code === 45
+    ? '1.5.4'
+    : update.latest_version_code === 44
+      ? '1.5.3'
+      : update.latest_version_code === 43
+        ? '1.5.2'
+        : '1.5.1';"""
+          new = """  const expected = update.latest_version_code === 46
+    ? '1.5.5'
+    : update.latest_version_code === 45
+      ? '1.5.4'
+      : update.latest_version_code === 44
+        ? '1.5.3'
+        : update.latest_version_code === 43
+          ? '1.5.2'
+          : '1.5.1';"""
+          if old not in text:
+              raise SystemExit(f'{path}: blok mapping versi tidak ditemukan')
+          write(path, text.replace(old, new))
+
+          path = 'tests/production-release-identity.test.mjs'
+          text = read(path).replace('1.5.4', '1.5.5')
+          text = text.replace(r'\?: 45\)', r'\?: 46\)')
+          text = text.replace('code: 45', 'code: 46')
+          text = text.replace('VERSION_CODE: "45"', 'VERSION_CODE: "46"')
+          text = text.replace("latest_version_code': 45", "latest_version_code': 46")
+          write(path, text)
+
+          path = 'tests/profile-version-update-regression.test.mjs'
+          text = read(path).replace('version 1.5.4', 'version 1.5.5')
+          text = text.replace(r"name: '1\.5\.4'", r"name: '1\.5\.5'")
+          text = text.replace(r'code: 45', r'code: 46')
+          write(path, text)
+
+          path = 'tests/stage5-hardening.test.mjs'
+          text = read(path).replace('1.5.4', '1.5.5')
+          text = text.replace('versionCode 45', 'versionCode 46')
+          text = text.replace(r'versionCode[^\n]*45', r'versionCode[^\n]*46')
+          text = text.replace('code: 45', 'code: 46')
+          text = text.replace('[40, 41, 42, 43, 44, 45]', '[40, 41, 42, 43, 44, 45, 46]')
+          old = """  const expected = metadata.latest_version_code === 45
+    ? '1.5.5'
+    : metadata.latest_version_code === 44
+      ? '1.5.3'"""
+          new = """  const expected = metadata.latest_version_code === 46
+    ? '1.5.5'
+    : metadata.latest_version_code === 45
+      ? '1.5.4'
+      : metadata.latest_version_code === 44
+        ? '1.5.3'"""
+          if old not in text:
+              raise SystemExit(f'{path}: blok mapping versi tidak ditemukan')
+          text = text.replace(old, new)
+          text = text.replace('metadata.latest_version_code <= 45', 'metadata.latest_version_code <= 46')
+          text = text.replace('VERSION_CODE: "45"', 'VERSION_CODE: "46"')
+          text = text.replace('default: "45"', 'default: "46"')
+          write(path, text)
+
+          # Final invariants before tests.
+          assert "name: '1.5.5', code: 46" in read('app/src/main/assets/app-version.js')
+          assert '?: 46)' in read('app/build.gradle.kts')
+          assert '?: "1.5.5"' in read('app/build.gradle.kts')
+          assert 'AMYFX_VERSION_NAME: "1.5.5"' in read('.github/workflows/build-apk.yml')
+          assert 'AMYFX_VERSION_CODE: "46"' in read('.github/workflows/build-apk.yml')
+          assert 'latest_version_code: 46' not in read('update.json')
+          PY
+
+      - name: Validate release sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check app/src/main/assets/app-version.js
+          node --check app/src/main/assets/apps/journal/app.js
+          python3 -m json.tool update.json >/dev/null
+          timeout 10m npm test
+          git diff --check
+
+      - name: Commit release candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/prepare-amyfx-1.5.5.yml
+          git config user.name "Amy FX Release Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "release: prepare Amy FX 1.5.5 (code 46)"
+          git push origin HEAD:release/amyfx-1.5.5
