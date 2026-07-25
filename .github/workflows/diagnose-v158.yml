@@ -16,13 +16,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Journal and AI rotation regression
-        run: node --test tests/journal-ai-rotation-v158.test.mjs
-      - name: Profile version regression
-        run: node --test tests/profile-version-update-regression.test.mjs
-      - name: Production identity regression
-        run: node --test tests/production-release-identity.test.mjs
-      - name: Stage 5 hardening regression
-        run: node --test tests/stage5-hardening.test.mjs
-      - name: Five issues regression
-        run: node --test tests/five-issues-regression.test.mjs
+      - name: Changed regression files
+        run: |
+          node --test tests/journal-ai-rotation-v158.test.mjs
+          node --test tests/profile-version-update-regression.test.mjs
+          node --test tests/production-release-identity.test.mjs
+          node --test tests/stage5-hardening.test.mjs
+          node --test tests/five-issues-regression.test.mjs
+      - name: Find first failing full regression file
+        run: |
+          set -euo pipefail
+          for file in $(find tests -maxdepth 1 -name '*.test.mjs' | sort); do
+            echo "Checking $file"
+            if ! node --test --test-force-exit "$file" >/tmp/amyfx-test-output.txt 2>&1; then
+              echo "FAILED_FILE=$file"
+              cat /tmp/amyfx-test-output.txt
+              exit 1
+            fi
+          done
