@@ -1,0 +1,1 @@
+2795:  localStorage.setItem(STORAGE_KEY, JSON.stringify(items.map(cleanItemForStorage)));
