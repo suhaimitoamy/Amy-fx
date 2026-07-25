@@ -1,0 +1,70 @@
+name: Run Amy FX journal restore hotfix
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/amyfx-journal-restore-hotfix.yml
+      - .github/workflows/amyfx-journal-restore-pr-runner.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Extract and run patch
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          workflow = Path('.github/workflows/amyfx-journal-restore-hotfix.yml').read_text(encoding='utf-8').splitlines()
+          output = []
+          inside = False
+          for line in workflow:
+              if line.strip() == "python3 <<'PY'":
+                  inside = True
+                  continue
+              if inside and line.strip() == 'PY':
+                  break
+              if inside:
+                  output.append(line[10:] if line.startswith('          ') else line)
+          if not output:
+              raise SystemExit('Patch script tidak ditemukan')
+          Path('/tmp/apply_hotfix.py').write_text('\n'.join(output) + '\n', encoding='utf-8')
+          PY
+          python3 /tmp/apply_hotfix.py
+
+      - name: Validate patched sources
+        shell: bash
+        run: |
+          node --check app/src/main/assets/apps/journal/app.js
+          grep -Fq 'v=20260725-restore1' app/src/main/assets/apps/journal/index.html
+          grep -Fq "new DecompressionStream('deflate-raw')" app/src/main/assets/apps/journal/app.js
+          grep -Fq 'nativeBridge.appendFileChunk' app/src/main/assets/apps/journal/app.js
+          grep -Fq 'fun abortFile()' app/src/main/java/com/amyelitesuite/MainActivity.kt
+          node --test tests/*.test.mjs
+          chmod +x gradlew
+          ./gradlew testDebugUnitTest --no-configuration-cache
+
+      - name: Commit tested hotfix
+        shell: bash
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          rm .github/workflows/amyfx-journal-restore-hotfix.yml
+          rm .github/workflows/amyfx-journal-restore-pr-runner.yml
+          git config user.name 'Amy FX Automation'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix(journal): restore large backup files safely'
+          git push origin "HEAD:${HEAD_BRANCH}"
