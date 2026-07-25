@@ -1,32 +1,44 @@
-name: Capture journal metadata syntax diagnostic
+name: Apply and validate journal metadata storage fix
 
 on:
   push:
     branches:
       - fix/journal-metadata-quota-20260725
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
 
 jobs:
-  diagnose:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/journal-metadata-quota-20260725
           fetch-depth: 0
-      - name: Capture syntax output
+      - name: Correct statistics helper
         run: |
-          set +e
-          node --check app/src/main/assets/apps/journal/app.js > tests/journal-syntax-diagnostic.txt 2>&1
-          status=$?
-          echo "exit_code=$status" >> tests/journal-syntax-diagnostic.txt
-          exit 0
-      - name: Commit diagnostic
+          python3 tools/fix_journal_statistics_name.py
+          rm -f tests/journal-syntax-diagnostic.txt
+      - name: Check app syntax
+        run: node --check app/src/main/assets/apps/journal/app.js
+      - name: Run focused regression
+        run: node --test tests/journal-metadata-storage-regression.test.mjs
+      - name: Run full JavaScript regression
+        run: timeout 10m npm test
+      - name: Check repository diff
+        run: git diff --check
+      - name: Commit corrected app
         run: |
+          if git diff --quiet; then
+            echo "Journal fix already committed."
+            exit 0
+          fi
           git config user.name "Amy FX Fix Automation"
           git config user.email "actions@users.noreply.github.com"
-          git add tests/journal-syntax-diagnostic.txt
-          git commit -m "test: capture journal syntax diagnostic"
+          git add app/src/main/assets/apps/journal/app.js tests/journal-syntax-diagnostic.txt
+          git commit -m "fix(journal): correct statistics helper after metadata migration"
           git push origin HEAD:fix/journal-metadata-quota-20260725
