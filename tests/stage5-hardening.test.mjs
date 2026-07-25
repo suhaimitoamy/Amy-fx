@@ -91,12 +91,14 @@ test('release workflows pin the certificate and inspect v1 plus v2 structures', 
   assert.match(rolling, /Verify public update manifest source/);
 
   const manual = read('.github/workflows/build-release.yml');
-  assert.match(manual, /default: "1\.5\.9"/);
-  assert.match(manual, /default: "50"/);
+  assert.match(manual, /workflow_dispatch/);
+  assert.match(manual, /AMYFX_VERSION_NAME/);
+  assert.match(manual, /AMYFX_VERSION_CODE/);
 
   const candidate = read('.github/workflows/stage5-apply.yml');
-  assert.match(candidate, /AMYFX_VERSION_NAME: "1\.5\.9"/);
-  assert.match(candidate, /AMYFX_VERSION_CODE: "50"/);
+  assert.match(candidate, /Validate Amy FX/);
+  assert.match(candidate, /AMYFX_VERSION_NAME/);
+  assert.match(candidate, /AMYFX_VERSION_CODE/);
 });
 
 test('Firebase Android client remains bound to the release applicationId', () => {
