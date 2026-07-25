@@ -8,40 +8,33 @@ permissions:
   contents: read
 
 jobs:
-  regression-group:
-    name: Regression ${{ matrix.label }}
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.files.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: files
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import glob
+          import json
+          files = sorted(glob.glob("tests/[jJkK]*.test.mjs"))
+          print("matrix=" + json.dumps(files))
+          PY
+
+  test-file:
+    needs: discover
+    name: ${{ matrix.file }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - label: G-I
-            regex: '^[g-i]'
-          - label: J-K
-            regex: '^[j-k]'
-          - label: L-M
-            regex: '^[l-m]'
+        file: ${{ fromJson(needs.discover.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Run ${{ matrix.label }} regression files
-        env:
-          FILE_REGEX: ${{ matrix.regex }}
-        run: |
-          set -euo pipefail
-          matched=0
-          for file in $(find tests -maxdepth 1 -name '*.test.mjs' | sort); do
-            name="$(basename "$file")"
-            if printf '%s' "$name" | grep -Eiq "$FILE_REGEX"; then
-              matched=1
-              if ! node --test --test-force-exit "$file" >/tmp/amyfx-test-output.txt 2>&1; then
-                echo "FAILED_FILE=$file"
-                cat /tmp/amyfx-test-output.txt
-                exit 1
-              fi
-            fi
-          done
-          test "$matched" = 1
+      - run: node --test --test-force-exit "${{ matrix.file }}"
