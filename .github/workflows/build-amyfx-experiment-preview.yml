@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  statuses: write
 
 concurrency:
   group: amyfx-experiment-preview
@@ -49,6 +50,16 @@ jobs:
             echo "AMYFX_VERSION_NAME=$version_name"
             echo "AMYFX_RELEASE_TAG=$release_tag"
           } >> "$GITHUB_ENV"
+
+      - name: Mark Preview build pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='pending' \
+            -f context='Amy FX Experiment Preview' \
+            -f description="Building signed $AMYFX_VERSION_NAME" \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -205,3 +216,25 @@ jobs:
             git commit -m "release: activate $AMYFX_VERSION_NAME preview update [skip ci]"
             git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
+
+      - name: Mark Preview build successful
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='success' \
+            -f context='Amy FX Experiment Preview' \
+            -f description="$AMYFX_VERSION_NAME published and ready to install" \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+
+      - name: Mark Preview build failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='failure' \
+            -f context='Amy FX Experiment Preview' \
+            -f description='Preview build failed; inspect workflow logs' \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
