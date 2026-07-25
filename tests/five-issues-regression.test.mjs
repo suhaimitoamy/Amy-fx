@@ -94,21 +94,23 @@ test('final issue-5 audit separates tracker success from close-direction accurac
   assert.match(fixes, /Skor skenario bukan probabilitas kemenangan/);
 });
 
-test('source version is 1.5.7 while publication stays safe during release', () => {
-  assert.match(appVersion, /name: '1\.5\.7', code: 48/);
-  assert.ok([42, 43, 44, 45, 46, 47, 48].includes(update.latest_version_code));
-  const expected = update.latest_version_code === 48
-    ? '1.5.7'
-    : update.latest_version_code === 47
-      ? '1.5.6'
-      : update.latest_version_code === 46
-        ? '1.5.5'
-        : update.latest_version_code === 45
-          ? '1.5.4'
-          : update.latest_version_code === 44
-            ? '1.5.3'
-            : update.latest_version_code === 43
-              ? '1.5.2'
-              : '1.5.1';
+test('source version is 1.5.8 while publication stays safe during release', () => {
+  assert.match(appVersion, /name: '1\.5\.8', code: 49/);
+  assert.ok([42, 43, 44, 45, 46, 47, 48, 49].includes(update.latest_version_code));
+  const expected = update.latest_version_code === 49
+    ? '1.5.8'
+    : update.latest_version_code === 48
+      ? '1.5.7'
+      : update.latest_version_code === 47
+        ? '1.5.6'
+        : update.latest_version_code === 46
+          ? '1.5.5'
+          : update.latest_version_code === 45
+            ? '1.5.4'
+            : update.latest_version_code === 44
+              ? '1.5.3'
+              : update.latest_version_code === 43
+                ? '1.5.2'
+                : '1.5.1';
   assert.equal(update.latest_version_name, expected);
 });

@@ -31,8 +31,8 @@ jobs:
       AMYFX_KEYSTORE_PASSWORD: android
       AMYFX_KEY_ALIAS: androiddebugkey
       AMYFX_KEY_PASSWORD: android
-      AMYFX_VERSION_NAME: "1.5.7"
-      AMYFX_VERSION_CODE: "48"
+      AMYFX_VERSION_NAME: "1.5.8"
+      AMYFX_VERSION_CODE: "49"
       AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
     steps:
@@ -43,7 +43,7 @@ jobs:
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state='pending' \
             -f context='Amy FX Production Release' \
-            -f description='Testing and building signed Amy FX 1.5.7' \
+            -f description='Testing and building signed Amy FX 1.5.8' \
             -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
 
       - name: Checkout
@@ -61,16 +61,20 @@ jobs:
           set -euo pipefail
           node --check app/src/main/assets/app-version.js
           node --check app/src/main/assets/apps/journal/app.js
+          node --check app/src/main/assets/apps/journal/amy-journal-final-fix.js
+          node --check app/src/main/assets/apps/journal/amy-journal-final-fix-legacy.js
+          node --check app/src/main/assets/apps/journal/amy-journal-ai-runtime-fix.js
           node --check app/src/main/assets/apps/journal/background-video.js
           node --check app/src/main/assets/update-checker.js
-          grep -Fq "name: '1.5.7', code: 48" app/src/main/assets/app-version.js
-          grep -Fq '?: 48)' app/build.gradle.kts
-          grep -Fq '?: "1.5.7"' app/build.gradle.kts
+          grep -Fq "name: '1.5.8', code: 49" app/src/main/assets/app-version.js
+          grep -Fq '?: 49)' app/build.gradle.kts
+          grep -Fq '?: "1.5.8"' app/build.gradle.kts
           grep -Fq 'com.amyelitesuite' app/build.gradle.kts
           grep -Fq 'main/update.json' app/build.gradle.kts
           grep -Fq 'cache: '\''no-store'\''' app/src/main/assets/update-checker.js
           grep -Fq 'BackgroundVideoPlaybackService' app/src/main/AndroidManifest.xml
           grep -Fq 'foregroundServiceType="mediaPlayback"' app/src/main/AndroidManifest.xml
+          grep -Fq 'amy-journal-ai-runtime-fix.js?v=20260725-v158' app/src/main/assets/apps/journal/amy-journal-final-fix.js
 
       - name: Run complete JavaScript regression suite
         run: timeout 10m npm test
@@ -180,7 +184,7 @@ jobs:
           git tag -f amyfx-latest "$GITHUB_SHA"
           git push origin refs/tags/amyfx-latest --force
 
-          release_notes="Amy FX 1.5.7 menambahkan video otomatis dan loop di Trading Library/Jurnal, pemutaran latar belakang berbasis AndroidX Media3 ketika aplikasi diminimalkan atau layar dikunci, kontrol MediaSession, sinkronisasi posisi, serta transfer video IndexedDB bertahap tanpa menghapus data lama."
+          release_notes="Amy FX 1.5.8 memperbaiki sinkronisasi riwayat Jurnal, menampilkan nominal Win/Loss pada kalender, memperbaiki Asisten AI yang dapat terkunci tanpa jawaban, serta menambahkan rotasi otomatis API gratis Gemini dan OpenRouter dengan timeout, cooldown, dan DeepSeek sebagai fallback berbayar opsional."
           if gh release view amyfx-latest >/dev/null 2>&1; then
             gh release edit amyfx-latest \
               --title "Amy FX Latest — v${AMYFX_VERSION_NAME}" \
@@ -207,19 +211,20 @@ jobs:
           path = Path('update.json')
           data = json.loads(path.read_text(encoding='utf-8'))
           notes = [
-              'Video Trading Library dan Jurnal dapat diputar otomatis serta mengulang otomatis.',
-              'Video tetap diputar melalui AndroidX Media3 ketika aplikasi berada di latar belakang atau layar dikunci.',
-              'Kontrol Play, Pause, Seek, dan Stop tersedia melalui MediaSession dan notifikasi Android.',
-              'Posisi tontonan disinkronkan saat kembali ke aplikasi tanpa membuat dua suara berjalan bersamaan.',
-              'Video IndexedDB dipindahkan ke cache privat Android bertahap 512 KB tanpa memuat seluruh Base64 ke memori.',
+              'Riwayat kalender dan halaman Jurnal kembali membaca sumber data IndexedDB yang sama.',
+              'Tanggal jurnal dapat diklik dan langsung menampilkan jurnal yang tersimpan.',
+              'Kalender menampilkan nominal Win berwarna hijau dan Loss berwarna merah.',
+              'Asisten AI tidak lagi terkunci tanpa jawaban setelah proses gagal atau selesai.',
+              'Gemini dan OpenRouter mendukung rotasi otomatis banyak API key dengan timeout dan cooldown.',
+              'DeepSeek dapat diaktifkan sebagai fallback berbayar terakhir.',
               'Package com.amyelitesuite, sertifikat permanen, data lokal, Backup/Restore, dan jalur update tetap dipertahankan.',
               'Pembaruan dapat dipasang tanpa menghapus aplikasi.'
           ]
           data.update({
-              'latest_version_code': 48,
-              'latest_version_name': '1.5.7',
-              'versionCode': 48,
-              'version': '1.5.7',
+              'latest_version_code': 49,
+              'latest_version_name': '1.5.8',
+              'versionCode': 49,
+              'version': '1.5.8',
               'releaseDate': os.environ['RELEASE_DATE'],
               'apk_url': 'https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',
               'downloadUrl': 'https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',
@@ -240,10 +245,10 @@ jobs:
             python3 -m json.tool update.json >/dev/null
             git add update.json
             if git diff --cached --quiet; then
-              echo "update.json sudah sesuai Amy FX 1.5.7."
+              echo "update.json sudah sesuai Amy FX 1.5.8."
               exit 0
             fi
-            git commit -m "release: activate Amy FX 1.5.7 in-app update [skip ci]"
+            git commit -m "release: activate Amy FX 1.5.8 in-app update [skip ci]"
             if git push origin HEAD:main; then
               exit 0
             fi
@@ -258,8 +263,8 @@ jobs:
           set -euo pipefail
           git fetch origin main
           manifest="$(git show origin/main:update.json)"
-          printf '%s\n' "$manifest" | grep -F '"latest_version_code": 48'
-          printf '%s\n' "$manifest" | grep -F '"latest_version_name": "1.5.7"'
+          printf '%s\n' "$manifest" | grep -F '"latest_version_code": 49'
+          printf '%s\n' "$manifest" | grep -F '"latest_version_name": "1.5.8"'
 
   report-status:
     if: always()
@@ -272,10 +277,10 @@ jobs:
           BUILD_RESULT: ${{ needs.build.result }}
         run: |
           state=success
-          description='Amy FX 1.5.7 published and update activated'
+          description='Amy FX 1.5.8 published and update activated'
           if [ "$BUILD_RESULT" != 'success' ]; then
             state=failure
-            description="Amy FX 1.5.7 production release failed: $BUILD_RESULT"
+            description="Amy FX 1.5.8 production release failed: $BUILD_RESULT"
           fi
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state="$state" \
