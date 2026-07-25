@@ -22,33 +22,75 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
 
-      - name: Extract and apply release patch
+      - name: Update release workflows to 1.5.5
         shell: bash
         run: |
           python3 <<'PY'
           from pathlib import Path
-          lines = Path('.github/workflows/prepare-amyfx-1.5.5.yml').read_text(encoding='utf-8').splitlines()
-          output = []
-          inside = False
-          for line in lines:
-              if line.strip() == "python3 <<'PY'":
-                  inside = True
-                  continue
-              if inside and line.strip() == 'PY':
-                  break
-              if inside:
-                  output.append(line[10:] if line.startswith('          ') else line)
-          if not output:
-              raise SystemExit('Patch versi 1.5.5 tidak ditemukan')
-          Path('/tmp/prepare-amyfx-1.5.5.py').write_text('\n'.join(output) + '\n', encoding='utf-8')
-          PY
-          python3 /tmp/prepare-amyfx-1.5.5.py || true
-          git restore --source=HEAD -- \
-            .github/workflows/build-apk.yml \
-            .github/workflows/build-release.yml \
-            .github/workflows/stage5-apply.yml
 
-      - name: Commit source and test updates
+          # Manual release workflow.
+          path = Path('.github/workflows/build-release.yml')
+          text = path.read_text(encoding='utf-8')
+          if '1.5.4' not in text or 'default: "45"' not in text:
+              raise SystemExit('build-release.yml tidak lagi cocok dengan versi 1.5.4/code 45')
+          text = text.replace('1.5.4', '1.5.5').replace('default: "45"', 'default: "46"')
+          path.write_text(text, encoding='utf-8')
+
+          # Release-candidate workflow.
+          path = Path('.github/workflows/stage5-apply.yml')
+          text = path.read_text(encoding='utf-8')
+          if '1.5.4' not in text or 'AMYFX_VERSION_CODE: "45"' not in text:
+              raise SystemExit('stage5-apply.yml tidak lagi cocok dengan versi 1.5.4/code 45')
+          text = text.replace('1.5.4', '1.5.5').replace('AMYFX_VERSION_CODE: "45"', 'AMYFX_VERSION_CODE: "46"')
+          path.write_text(text, encoding='utf-8')
+
+          # Production build and publication workflow.
+          path = Path('.github/workflows/build-apk.yml')
+          text = path.read_text(encoding='utf-8')
+          if '1.5.4' not in text or 'AMYFX_VERSION_CODE: "45"' not in text:
+              raise SystemExit('build-apk.yml tidak lagi cocok dengan versi 1.5.4/code 45')
+          text = text.replace('1.5.4', '1.5.5')
+          for old, new in {
+              'AMYFX_VERSION_CODE: "45"': 'AMYFX_VERSION_CODE: "46"',
+              "name: '1.5.5', code: 45": "name: '1.5.5', code: 46",
+              "grep -Fq '?: 45)'": "grep -Fq '?: 46)'",
+              "'latest_version_code': 45": "'latest_version_code': 46",
+              "'versionCode': 45": "'versionCode': 46",
+              "\"latest_version_code\": 45": "\"latest_version_code\": 46",
+          }.items():
+              if old not in text:
+                  raise SystemExit(f'build-apk.yml pola hilang: {old}')
+              text = text.replace(old, new)
+
+          old_release_notes = 'release_notes="Blok tombol timeframe pada halaman Analisis telah dihapus. Urutan halaman Analisis diperbaiki menjadi: Header harga/status, Asia Liquidity, Market Outlook, Ringkasan Market, Valid Break, Mapping M1–H4, Penjelasan Mapping, Setup Aktif."'
+          new_release_notes = 'release_notes="Amy FX 1.5.5 memperbaiki restore backup jurnal dan library berukuran besar, menampilkan progress serta detail error, dan menyimpan backup ZIP dengan nama serta format yang benar. Data lokal, package com.amyelitesuite, jalur update produksi, dan sertifikat permanen tetap dipertahankan."'
+          if old_release_notes not in text:
+              raise SystemExit('Catatan rilis 1.5.4 tidak ditemukan di build-apk.yml')
+          text = text.replace(old_release_notes, new_release_notes)
+
+          notes_start = text.index('          notes = [')
+          notes_end = text.index('          ]\n          data.update({', notes_start) + len('          ]')
+          notes_block = """          notes = [
+              'Restore backup jurnal dan library berukuran besar kini lebih stabil.',
+              'Lampiran dipulihkan bertahap agar WebView tidak memuat seluruh ZIP sekaligus.',
+              'Progress restore dan detail error kini ditampilkan.',
+              'File yang gagal tidak menghentikan seluruh proses restore.',
+              'Backup ZIP disimpan dengan nama, ekstensi, dan format yang benar.',
+              'Package com.amyelitesuite, sertifikat permanen, data lokal, dan jalur update tetap dipertahankan.',
+              'Pembaruan dapat dipasang tanpa menghapus aplikasi.'
+          ]"""
+          text = text[:notes_start] + notes_block + text[notes_end:]
+          path.write_text(text, encoding='utf-8')
+          PY
+          grep -Fq 'AMYFX_VERSION_NAME: "1.5.5"' .github/workflows/build-apk.yml
+          grep -Fq 'AMYFX_VERSION_CODE: "46"' .github/workflows/build-apk.yml
+          grep -Fq 'default: "1.5.5"' .github/workflows/build-release.yml
+          grep -Fq 'default: "46"' .github/workflows/build-release.yml
+          grep -Fq 'AMYFX_VERSION_NAME: "1.5.5"' .github/workflows/stage5-apply.yml
+          grep -Fq 'AMYFX_VERSION_CODE: "46"' .github/workflows/stage5-apply.yml
+          git diff --check
+
+      - name: Commit release workflow updates
         shell: bash
         env:
           HEAD_BRANCH: ${{ github.head_ref }}
@@ -57,12 +99,8 @@ jobs:
           git config user.name "Amy FX Release Automation"
           git config user.email "actions@users.noreply.github.com"
           git add \
-            app/build.gradle.kts \
-            app/src/main/assets/app-version.js \
-            README.md \
-            tests/five-issues-regression.test.mjs \
-            tests/production-release-identity.test.mjs \
-            tests/profile-version-update-regression.test.mjs \
-            tests/stage5-hardening.test.mjs
-          git commit -m "release: prepare Amy FX 1.5.5 source identity (code 46)"
+            .github/workflows/build-apk.yml \
+            .github/workflows/build-release.yml \
+            .github/workflows/stage5-apply.yml
+          git commit -m "release: align Amy FX 1.5.5 build workflows (code 46)"
           git push origin "HEAD:${HEAD_BRANCH}"
