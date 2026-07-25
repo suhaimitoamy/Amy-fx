@@ -1,0 +1,39 @@
+name: Diagnose Amy FX 1.5.9
+
+on:
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.files.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: files
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import glob
+          import json
+          print("matrix=" + json.dumps(sorted(glob.glob("tests/*.test.mjs"))))
+          PY
+
+  test-file:
+    needs: discover
+    name: ${{ matrix.file }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        file: ${{ fromJson(needs.discover.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --test --test-force-exit "${{ matrix.file }}"
