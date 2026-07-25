@@ -10,8 +10,8 @@ test('Amy FX 1.5.5 uses versionCode 46 without changing the production applicati
   assert.match(gradle, /val configuredApplicationId = System\.getenv\("AMYFX_APPLICATION_ID"\) \?: "com\.amyelitesuite"/);
   assert.match(gradle, /applicationId = configuredApplicationId/);
   assert.match(gradle, /versionCode[^\n]*46/);
-  assert.match(gradle, /versionName[^\n]*"1\.5\.4"/);
-  assert.match(version, /name: '1\.5\.4', code: 46/);
+  assert.match(gradle, /versionName[^\n]*"1\.5\.5"/);
+  assert.match(version, /name: '1\.5\.5', code: 46/);
 });
 
 test('published metadata is never ahead of the APK source version', () => {
@@ -23,13 +23,13 @@ test('published metadata is never ahead of the APK source version', () => {
       ? '1.5.4'
       : metadata.latest_version_code === 44
         ? '1.5.3'
-      : metadata.latest_version_code === 43
-        ? '1.5.2'
-        : metadata.latest_version_code === 42
-        ? '1.5.1'
-        : metadata.latest_version_code === 41
-          ? '1.5.0'
-          : '1.4.17';
+        : metadata.latest_version_code === 43
+          ? '1.5.2'
+          : metadata.latest_version_code === 42
+            ? '1.5.1'
+            : metadata.latest_version_code === 41
+              ? '1.5.0'
+              : '1.4.17';
   assert.equal(metadata.latest_version_name, expected);
   assert.ok(metadata.latest_version_code <= 46);
   assert.ok(Array.isArray(metadata.release_notes));
@@ -78,16 +78,16 @@ test('release workflows pin the certificate and inspect v1 plus v2 structures', 
   }
 
   const rolling = read('.github/workflows/build-apk.yml');
-  assert.match(rolling, /AMYFX_VERSION_NAME: "1\.5\.4"/);
+  assert.match(rolling, /AMYFX_VERSION_NAME: "1\.5\.5"/);
   assert.match(rolling, /AMYFX_VERSION_CODE: "46"/);
   assert.match(rolling, /Verify public update manifest source/);
 
   const manual = read('.github/workflows/build-release.yml');
-  assert.match(manual, /default: "1\.5\.4"/);
+  assert.match(manual, /default: "1\.5\.5"/);
   assert.match(manual, /default: "46"/);
 
   const candidate = read('.github/workflows/stage5-apply.yml');
-  assert.match(candidate, /AMYFX_VERSION_NAME: "1\.5\.4"/);
+  assert.match(candidate, /AMYFX_VERSION_NAME: "1\.5\.5"/);
   assert.match(candidate, /AMYFX_VERSION_CODE: "46"/);
 });
 
