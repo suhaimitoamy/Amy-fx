@@ -18,12 +18,17 @@ jobs:
           ref: feature/journal-video-background-playback-20260725
           fetch-depth: 0
 
-      - name: Apply native bridge patch
+      - name: Apply deterministic patches
         run: |
           if grep -Fq 'beginBackgroundVideoTransfer' app/src/main/java/com/amyelitesuite/MainActivity.kt; then
             echo 'Background video bridge already applied.'
           else
             python3 tools/apply_background_video_bridge.py
+          fi
+          if grep -Fq 'let resumedInWebView = false' app/src/main/assets/apps/journal/background-video.js; then
+            echo 'Background resume safeguard already applied.'
+          else
+            python3 tools/fix_background_video_resume.py
           fi
 
       - name: Validate generated source
@@ -33,7 +38,7 @@ jobs:
           node --test tests/background-video-playback-regression.test.mjs
           git diff --check
 
-      - name: Commit generated bridge
+      - name: Commit generated source
         run: |
           if git diff --quiet; then
             echo 'No generated changes to commit.'
@@ -41,8 +46,8 @@ jobs:
           fi
           git config user.name 'Amy FX Background Video Automation'
           git config user.email 'actions@users.noreply.github.com'
-          git add app/src/main/java/com/amyelitesuite/MainActivity.kt app/src/main/assets/apps/journal/index.html
-          git commit -m 'feat(journal): connect WebView video to native background player'
+          git add app/src/main/java/com/amyelitesuite/MainActivity.kt app/src/main/assets/apps/journal/index.html app/src/main/assets/apps/journal/background-video.js
+          git commit -m 'fix(journal): preserve native playback if web resume is blocked'
           git push origin HEAD:feature/journal-video-background-playback-20260725
 
       - name: Run complete JavaScript regression
