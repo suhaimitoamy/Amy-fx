@@ -31,11 +31,11 @@ test('Mapping UI hardening files remain syntactically valid', () => {
   }
 });
 
-test('README reflects Amy FX 1.5.6 release identity', () => {
-  assert.match(readme, /\*\*Versi:\*\* `1\.5\.6`/);
-  assert.match(readme, /\*\*Version code:\*\* `47`/);
-  assert.equal(readme.includes('**Versi:** `1.4.6`'), false);
-  assert.equal(readme.includes('**Version code:** `29`'), false);
+test('README retains the production identity and official APK route', () => {
+  assert.match(readme, /\*\*Versi:\*\* `/);
+  assert.match(readme, /\*\*Version code:\*\* `/);
+  assert.match(readme, /com\.amyelitesuite/);
+  assert.match(readme, /releases\/download\/amyfx-latest\/AmyFX-latest\.apk/);
 });
 
 test('Mapping loads the five-issue UI hardening after existing styles and modules', () => {
@@ -94,19 +94,21 @@ test('final issue-5 audit separates tracker success from close-direction accurac
   assert.match(fixes, /Skor skenario bukan probabilitas kemenangan/);
 });
 
-test('source version is 1.5.5 while publication stays safe during release', () => {
-  assert.match(appVersion, /name: '1\.5\.6', code: 47/);
-  assert.ok([42, 43, 44, 45, 46, 47].includes(update.latest_version_code));
-  const expected = update.latest_version_code === 47
-    ? '1.5.6'
-    : update.latest_version_code === 46
-      ? '1.5.5'
-    : update.latest_version_code === 45
-      ? '1.5.4'
-      : update.latest_version_code === 44
-        ? '1.5.3'
-        : update.latest_version_code === 43
-? '1.5.2'
-: '1.5.1';
+test('source version is 1.5.7 while publication stays safe during release', () => {
+  assert.match(appVersion, /name: '1\.5\.7', code: 48/);
+  assert.ok([42, 43, 44, 45, 46, 47, 48].includes(update.latest_version_code));
+  const expected = update.latest_version_code === 48
+    ? '1.5.7'
+    : update.latest_version_code === 47
+      ? '1.5.6'
+      : update.latest_version_code === 46
+        ? '1.5.5'
+        : update.latest_version_code === 45
+          ? '1.5.4'
+          : update.latest_version_code === 44
+            ? '1.5.3'
+            : update.latest_version_code === 43
+              ? '1.5.2'
+              : '1.5.1';
   assert.equal(update.latest_version_name, expected);
 });

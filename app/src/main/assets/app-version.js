@@ -1,6 +1,6 @@
-// Amy FX 1.5.5 production release trigger.
+// Amy FX production release identity.
 (function () {
-  const VERSION = Object.freeze({ name: '1.5.6', code: 47 });
+  const VERSION = Object.freeze({ name: '1.5.7', code: 48 });
   window.AmyFXAppVersion = VERSION;
 
   function versionText() {
