@@ -1,0 +1,52 @@
+name: Prepare Amy FX 1.5.7 release
+
+on:
+  push:
+    branches:
+      - release/amyfx-1.5.7
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/amyfx-1.5.7
+          fetch-depth: 0
+
+      - name: Apply release preparation
+        run: |
+          if grep -Fq "name: '1.5.7', code: 48" app/src/main/assets/app-version.js; then
+            echo 'Amy FX 1.5.7 source already prepared.'
+          else
+            python3 tools/prepare_amyfx_1_5_7.py
+          fi
+
+      - name: Validate generated release
+        run: |
+          node --check app/src/main/assets/app-version.js
+          node --check app/src/main/assets/apps/journal/background-video.js
+          timeout 10m npm test
+          grep -Fq 'AMYFX_VERSION_NAME: "1.5.7"' release-generated/build-apk.yml
+          grep -Fq 'AMYFX_VERSION_CODE: "48"' release-generated/build-apk.yml
+          grep -Fq 'default: "1.5.7"' release-generated/build-release.yml
+          grep -Fq 'default: "48"' release-generated/build-release.yml
+          grep -Fq 'AMYFX_VERSION_NAME: "1.5.7"' release-generated/stage5-apply.yml
+          grep -Fq 'AMYFX_VERSION_CODE: "48"' release-generated/stage5-apply.yml
+          git diff --check
+
+      - name: Commit prepared source and workflow copies
+        run: |
+          if git diff --quiet; then
+            echo 'No generated changes to commit.'
+            exit 0
+          fi
+          git config user.name 'Amy FX Release Automation'
+          git config user.email 'actions@users.noreply.github.com'
+          git add app/build.gradle.kts app/src/main/assets/app-version.js README.md tests release-generated
+          git commit -m 'release: prepare Amy FX 1.5.7 (code 48)'
+          git push origin HEAD:release/amyfx-1.5.7
