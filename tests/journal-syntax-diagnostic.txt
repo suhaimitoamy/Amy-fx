@@ -1,9 +1,0 @@
-/home/runner/work/Amy-fx/Amy-fx/app/src/main/assets/apps/journal/app.js:1297
-function renderStatistics(items) {
-^
-
-SyntaxError: Identifier 'renderStatistics' has already been declared
-    at checkSyntax (node:internal/main/check_syntax:74:5)
-
-Node.js v22.23.1
-exit_code=1

@@ -1278,8 +1278,7 @@ function renderDashboard(items) {
   );
 }
 
-function renderStatistics(items) {
-  renderDashboard(items);
+function makeStatCard(label, value) {
   const card = document.createElement("div");
   card.className = "stat-card";
 
