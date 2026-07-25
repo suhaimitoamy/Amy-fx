@@ -16,16 +16,16 @@ test('Amy FX 1.5.5 keeps the production Android identity and updater channel', (
   assert.match(gradle, /com\.amyelitesuite/);
   assert.match(gradle, /main\/update\.json/);
   assert.match(gradle, /\?: 46\)/);
-  assert.match(gradle, /\?: "1\.5\.4"/);
-  assert.match(version, /name: '1\.5\.4', code: 46/);
+  assert.match(gradle, /\?: "1\.5\.5"/);
+  assert.match(version, /name: '1\.5\.5', code: 46/);
   assert.match(workflow, /AMYFX_APPLICATION_ID: com\.amyelitesuite/);
   assert.match(workflow, /AMYFX_APP_LABEL: Amy FX/);
   assert.match(workflow, /AMYFX_URI_SCHEME: amyfx/);
-  assert.match(workflow, /AMYFX_VERSION_NAME: "1\.5\.4"/);
+  assert.match(workflow, /AMYFX_VERSION_NAME: "1\.5\.5"/);
   assert.match(workflow, /AMYFX_VERSION_CODE: "46"/);
   assert.match(workflow, /releases\/download\/amyfx-latest\/AmyFX-latest\.apk/);
   assert.match(workflow, /latest_version_code': 46/);
-  assert.match(workflow, /latest_version_name': '1\.5\.4'/);
+  assert.match(workflow, /latest_version_name': '1\.5\.5'/);
   assert.match(workflow, /Verify public update manifest source/);
 });
 
