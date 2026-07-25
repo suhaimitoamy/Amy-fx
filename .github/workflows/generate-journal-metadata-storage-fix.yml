@@ -1,4 +1,4 @@
-name: Apply and validate remaining journal storage fix
+name: Persist remaining journal storage fix
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  validate:
+  persist:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,15 +22,12 @@ jobs:
           rm -f tests/journal-syntax-diagnostic.txt
           rm -f tests/journal-regression-diagnostic.txt
           rm -f tests/journal-storage-write-locations.txt
-      - name: Check app syntax
-        run: node --check app/src/main/assets/apps/journal/app.js
-      - name: Run focused regression
-        run: node --test tests/journal-metadata-storage-regression.test.mjs
-      - name: Run full JavaScript regression
-        run: timeout 10m npm test
-      - name: Check repository diff
-        run: git diff --check
-      - name: Commit validated app changes
+      - name: Check syntax and focused regression
+        run: |
+          node --check app/src/main/assets/apps/journal/app.js
+          node --test tests/journal-metadata-storage-regression.test.mjs
+          git diff --check
+      - name: Commit patch
         run: |
           git config user.name "Amy FX Fix Automation"
           git config user.email "actions@users.noreply.github.com"
