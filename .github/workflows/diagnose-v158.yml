@@ -16,14 +16,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - label: A-F
-            regex: '^[a-f]'
-          - label: G-M
-            regex: '^[g-m]'
-          - label: N-S
-            regex: '^[n-s]'
-          - label: T-Z
-            regex: '^[t-z]'
+          - label: G-I
+            regex: '^[g-i]'
+          - label: J-K
+            regex: '^[j-k]'
+          - label: L-M
+            regex: '^[l-m]'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
