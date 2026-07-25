@@ -1,0 +1,191 @@
+name: Apply Amy FX 1.5.8 Journal and AI Fixes
+
+on:
+  push:
+    branches:
+      - fix/journal-ai-rotation-v1.5.8
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/journal-ai-rotation-v1.5.8
+          fetch-depth: 0
+
+      - name: Apply journal, AI, tests, and release identity
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('.')
+
+          def read(path):
+              return (root / path).read_text(encoding='utf-8')
+
+          def write(path, text):
+              target = root / path
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_text(text, encoding='utf-8')
+
+          index_path = 'app/src/main/assets/apps/journal/index.html'
+          index = read(index_path)
+          marker = '<script src="amy-journal-final-fix.js"></script>'
+          runtime = '<script src="amy-journal-ai-runtime-fix.js?v=20260725-v158"></script>'
+          if runtime not in index:
+              if marker not in index:
+                  raise SystemExit('journal script marker not found')
+              index = index.replace(marker, marker + '\n  ' + runtime, 1)
+          write(index_path, index)
+
+          gradle_path = 'app/build.gradle.kts'
+          gradle = read(gradle_path)
+          gradle = gradle.replace('?: 48)', '?: 49)').replace('?: "1.5.7"', '?: "1.5.8"')
+          write(gradle_path, gradle)
+
+          version_path = 'app/src/main/assets/app-version.js'
+          version = read(version_path).replace("name: '1.5.7', code: 48", "name: '1.5.8', code: 49")
+          write(version_path, version)
+
+          readme_path = 'README.md'
+          readme = read(readme_path)
+          readme = re.sub(r'> \*\*Versi:\*\* `[^`]+`', '> **Versi:** `1.5.8`', readme, count=1)
+          readme = re.sub(r'> \*\*Version code:\*\* `\d+`', '> **Version code:** `49`', readme, count=1)
+          heading = '## Update v1.5.8 — Jurnal dan Rotasi API AI'
+          if heading not in readme:
+              anchor = re.search(r'\n## Update v', readme)
+              section = (
+                  '\n## Update v1.5.8 — Jurnal dan Rotasi API AI\n\n'
+                  '- Riwayat kalender jurnal kembali membuka dan menampilkan jurnal yang tersimpan di IndexedDB.\n'
+                  '- Kalender menampilkan nominal hasil harian: Win hijau dengan tanda plus dan Loss merah dengan tanda minus.\n'
+                  '- Asisten AI tidak lagi terkunci tanpa jawaban karena status proses selalu dilepas setelah selesai atau gagal.\n'
+                  '- Gemini dan OpenRouter mendukung banyak API key dengan rotasi otomatis, timeout, cooldown, serta fallback.\n'
+                  '- DeepSeek tersedia sebagai fallback berbayar terakhir dan harus diaktifkan secara manual.\n'
+              )
+              if anchor:
+                  readme = readme[:anchor.start()] + section + readme[anchor.start():]
+              else:
+                  readme += section
+          write(readme_path, readme)
+
+          for path in (root / '.github/workflows').glob('*.yml'):
+              if path.name == 'apply-journal-ai-v1.5.8.yml':
+                  continue
+              text = path.read_text(encoding='utf-8')
+              text = text.replace('1.5.7', '1.5.8')
+              text = re.sub(r'(?<!\d)48(?!\d)', '49', text)
+              if path.name == 'build-apk.yml':
+                  old_release = 'Amy FX 1.5.8 menambahkan video otomatis dan loop di Trading Library/Jurnal, pemutaran latar belakang berbasis AndroidX Media3 ketika aplikasi diminimalkan atau layar dikunci, kontrol MediaSession, sinkronisasi posisi, serta transfer video IndexedDB bertahap tanpa menghapus data lama.'
+                  new_release = 'Amy FX 1.5.8 memperbaiki sinkronisasi riwayat Jurnal, menampilkan nominal Win/Loss pada kalender, memperbaiki Asisten AI yang dapat terkunci tanpa jawaban, serta menambahkan rotasi otomatis API gratis Gemini dan OpenRouter dengan timeout, cooldown, dan DeepSeek sebagai fallback berbayar opsional.'
+                  text = text.replace(old_release, new_release)
+                  old_notes = """              'Video Trading Library dan Jurnal dapat diputar otomatis serta mengulang otomatis.',
+              'Video tetap diputar melalui AndroidX Media3 ketika aplikasi berada di latar belakang atau layar dikunci.',
+              'Kontrol Play, Pause, Seek, dan Stop tersedia melalui MediaSession dan notifikasi Android.',
+              'Posisi tontonan disinkronkan saat kembali ke aplikasi tanpa membuat dua suara berjalan bersamaan.',
+              'Video IndexedDB dipindahkan ke cache privat Android bertahap 512 KB tanpa memuat seluruh Base64 ke memori.',
+              'Package com.amyelitesuite, sertifikat permanen, data lokal, Backup/Restore, dan jalur update tetap dipertahankan.',
+              'Pembaruan dapat dipasang tanpa menghapus aplikasi.'"""
+                  new_notes = """              'Riwayat kalender dan halaman Jurnal kembali membaca sumber data IndexedDB yang sama.',
+              'Tanggal jurnal dapat diklik dan langsung menampilkan jurnal yang tersimpan.',
+              'Kalender menampilkan nominal Win berwarna hijau dan Loss berwarna merah.',
+              'Asisten AI tidak lagi terkunci tanpa jawaban setelah proses gagal atau selesai.',
+              'Gemini dan OpenRouter mendukung rotasi otomatis banyak API key dengan timeout dan cooldown.',
+              'DeepSeek dapat diaktifkan sebagai fallback berbayar terakhir.',
+              'Package com.amyelitesuite, sertifikat permanen, data lokal, Backup/Restore, dan jalur update tetap dipertahankan.',
+              'Pembaruan dapat dipasang tanpa menghapus aplikasi.'"""
+                  text = text.replace(old_notes, new_notes)
+                  check_line = '          node --check app/src/main/assets/apps/journal/amy-journal-ai-runtime-fix.js\n'
+                  anchor = '          node --check app/src/main/assets/apps/journal/background-video.js\n'
+                  if check_line not in text:
+                      text = text.replace(anchor, anchor + check_line)
+                  grep_line = "          grep -Fq 'amy-journal-ai-runtime-fix.js?v=20260725-v158' app/src/main/assets/apps/journal/index.html\n"
+                  anchor = "          grep -Fq 'foregroundServiceType=\"mediaPlayback\"' app/src/main/AndroidManifest.xml\n"
+                  if grep_line not in text:
+                      text = text.replace(anchor, anchor + grep_line)
+              path.write_text(text, encoding='utf-8')
+
+          for path in (root / 'tests').glob('*.test.mjs'):
+              text = path.read_text(encoding='utf-8')
+              if '1.5.7' in text:
+                  text = text.replace('1.5.7', '1.5.8').replace('1\\.5\\.7', '1\\.5\\.8')
+                  text = re.sub(r'(?<!\d)48(?!\d)', '49', text)
+                  path.write_text(text, encoding='utf-8')
+
+          regression = '''import test from 'node:test';
+          import assert from 'node:assert/strict';
+          import { execFileSync } from 'node:child_process';
+          import { readFileSync } from 'node:fs';
+          import { fileURLToPath } from 'node:url';
+
+          const root = new URL('../', import.meta.url);
+          const source = relative => readFileSync(new URL(relative, root), 'utf8');
+
+          test('Jurnal uses the IndexedDB bridge and calendar shows signed amounts', () => {
+            const runtime = source('app/src/main/assets/apps/journal/amy-journal-ai-runtime-fix.js');
+            const html = source('app/src/main/assets/apps/journal/index.html');
+            assert.match(html, /amy-journal-ai-runtime-fix\.js\?v=20260725-v158/);
+            assert.match(runtime, /JOURNAL_KEY/);
+            assert.match(runtime, /Array\.isArray\(state\.journals\)/);
+            assert.match(runtime, /saveJournals\(state\.journals\)/);
+            assert.match(runtime, /net > 0 \? `\+\$\{formatTradeAmount\(net\)\}`/);
+            assert.match(runtime, /is-win/);
+            assert.match(runtime, /is-loss/);
+          });
+
+          test('AI uses free-key rotation, bounded timeout, cooldown, and optional paid fallback', () => {
+            const runtimePath = new URL('app/src/main/assets/apps/journal/amy-journal-ai-runtime-fix.js', root);
+            const runtime = source('app/src/main/assets/apps/journal/amy-journal-ai-runtime-fix.js');
+            execFileSync(process.execPath, ['--check', fileURLToPath(runtimePath)], { stdio: 'pipe' });
+            assert.match(runtime, /new Set\(\["gemini", "openrouter"\]\)/);
+            assert.match(runtime, /amyAiPaidFallbackInput/);
+            assert.match(runtime, /DeepSeek sebagai fallback berbayar terakhir/);
+            assert.match(runtime, /timeout = 18000/);
+            assert.match(runtime, /Date\.now\(\) - started > 65000/);
+            assert.match(runtime, /cooldowns\.set/);
+            assert.match(runtime, /loadingId/);
+            assert.match(runtime, /state\.isAiProcessing = false/);
+          });
+
+          test('Amy FX release identity is 1.5.8 code 49', () => {
+            assert.match(source('app/build.gradle.kts'), /\?: 49\)/);
+            assert.match(source('app/build.gradle.kts'), /\?: "1\.5\.8"/);
+            assert.match(source('app/src/main/assets/app-version.js'), /name: '1\.5\.8', code: 49/);
+          });
+          '''
+          regression = '\n'.join(line[10:] if line.startswith('          ') else line for line in regression.splitlines()) + '\n'
+          write('tests/journal-ai-rotation-v158.test.mjs', regression)
+
+          release_notes = '''# Amy FX 1.5.8
+
+          - Sinkronisasi kalender dan daftar Jurnal diperbaiki agar keduanya membaca data IndexedDB yang sama.
+          - Nominal hasil tampil pada kalender: Win hijau dengan tanda plus dan Loss merah dengan tanda minus.
+          - Asisten AI tidak lagi terkunci tanpa jawaban setelah error atau proses selesai.
+          - Banyak API key Gemini dan OpenRouter dapat dirotasi otomatis dengan timeout dan cooldown.
+          - DeepSeek tersedia sebagai fallback berbayar terakhir yang dapat dinonaktifkan.
+          '''
+          release_notes = '\n'.join(line[10:] if line.startswith('          ') else line for line in release_notes.splitlines()) + '\n'
+          write('release-notes/1.5.8.md', release_notes)
+
+          Path('.github/workflows/apply-journal-ai-v1.5.8.yml').unlink()
+          PY
+
+      - name: Validate changes
+        run: |
+          node --check app/src/main/assets/apps/journal/amy-journal-ai-runtime-fix.js
+          node --check app/src/main/assets/app-version.js
+          npm test
+          git diff --check
+
+      - name: Commit prepared Amy FX 1.5.8
+        run: |
+          git config user.name "Amy FX Release Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "fix: journal sync and AI rotation for Amy FX 1.5.8"
+          git push origin HEAD:fix/journal-ai-rotation-v1.5.8
