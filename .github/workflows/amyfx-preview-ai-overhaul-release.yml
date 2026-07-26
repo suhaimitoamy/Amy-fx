@@ -1,0 +1,311 @@
+name: Amy FX Preview AI Overhaul Release
+
+on:
+  push:
+    branches:
+      - preview/amyfx-experiment
+    paths:
+      - app/src/main/assets/apps/journal/**
+      - .github/workflows/amyfx-preview-ai-overhaul-release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  statuses: write
+
+concurrency:
+  group: amyfx-preview-ai-overhaul-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
+  AMYFX_APP_LABEL: Amy FX Preview
+  AMYFX_URI_SCHEME: amyfxpreview
+  AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/refs/heads/preview/amyfx-experiment/preview-update.json
+  AMYFX_KEYSTORE_PATH: /tmp/amy-fx-preview-signing.keystore
+  AMYFX_KEYSTORE_PASSWORD: android
+  AMYFX_KEY_ALIAS: androiddebugkey
+  AMYFX_KEY_PASSWORD: android
+  AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout Preview branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare next Preview version
+        shell: bash
+        run: |
+          set -euo pipefail
+          readarray -t version < <(python - <<'PY'
+          import json
+          import re
+
+          with open('preview-update.json', encoding='utf-8') as handle:
+              manifest = json.load(handle)
+          previous_code = int(manifest.get('latest_version_code') or manifest.get('versionCode') or 920007)
+          previous_name = str(manifest.get('latest_version_name') or manifest.get('version') or '1.5.9-preview.7')
+          match = re.search(r'preview\.(\d+)$', previous_name)
+          suffix = int(match.group(1)) + 1 if match else 8
+          print(max(previous_code + 1, 920000 + suffix))
+          print(f'1.5.9-preview.{suffix}')
+          PY
+          )
+          version_code="${version[0]}"
+          version_name="${version[1]}"
+          release_tag="amyfx-preview-${version_name}"
+          {
+            echo "AMYFX_VERSION_CODE=$version_code"
+            echo "AMYFX_VERSION_NAME=$version_name"
+            echo "AMYFX_RELEASE_TAG=$release_tag"
+          } >> "$GITHUB_ENV"
+          echo "Building $version_name ($version_code)"
+
+      - name: Mark Preview build pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='pending' \
+            -f context='Amy FX Preview AI Overhaul' \
+            -f description="Building $AMYFX_VERSION_NAME" \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate rebuilt Assistant runtime
+        run: |
+          set -euo pipefail
+          node --check app/src/main/assets/apps/journal/amy-preview-ai-overhaul.js
+          node --check app/src/main/assets/apps/journal/amy-journal-final-fix.js
+          npm test
+
+      - name: Stamp Preview web identity and update channel
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          name = os.environ['AMYFX_VERSION_NAME']
+          code = int(os.environ['AMYFX_VERSION_CODE'])
+          manifest_url = os.environ['AMYFX_UPDATE_MANIFEST_URL']
+
+          app_path = Path('app/src/main/assets/app-version.js')
+          app = app_path.read_text(encoding='utf-8')
+          app, count = re.subn(
+              r"const VERSION = Object\.freeze\(\{ name: '[^']+', code: \d+ \}\);",
+              f"const VERSION = Object.freeze({{ name: '{name}', code: {code} }});",
+              app,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit('app-version identity marker not found')
+          assignment = f"  window.AmyFXUpdateManifestUrl = '{manifest_url}';"
+          if re.search(r'^\s*window\.AmyFXUpdateManifestUrl\s*=.*;$', app, re.M):
+              app = re.sub(r'^\s*window\.AmyFXUpdateManifestUrl\s*=.*;$', assignment, app, count=1, flags=re.M)
+          else:
+              marker = '  window.AmyFXAppVersion = VERSION;'
+              if marker not in app:
+                  raise SystemExit('AmyFXAppVersion marker not found')
+              app = app.replace(marker, marker + '\n' + assignment, 1)
+          app_path.write_text(app, encoding='utf-8')
+
+          checker_path = Path('app/src/main/assets/update-checker.js')
+          checker = checker_path.read_text(encoding='utf-8')
+          replacements = [
+              (r"const VERSION = window\.AmyFXAppVersion \|\| \{ name: '[^']+', code: \d+ \};", f"const VERSION = window.AmyFXAppVersion || {{ name: '{name}', code: {code} }};"),
+              (r"const CURRENT_VERSION_CODE = Number\(VERSION\.code\) \|\| \d+;", f"const CURRENT_VERSION_CODE = Number(VERSION.code) || {code};"),
+              (r"const CURRENT_VERSION_NAME = String\(VERSION\.name \|\| '[^']+'\);", f"const CURRENT_VERSION_NAME = String(VERSION.name || '{name}');"),
+          ]
+          for pattern, replacement in replacements:
+              checker, count = re.subn(pattern, replacement, checker, count=1)
+              if count != 1:
+                  raise SystemExit(f'update checker marker not found: {pattern}')
+          checker, count = re.subn(
+              r"const UPDATE_URL = (?:window\.AmyFXUpdateManifestUrl\s*\n\s*\|\|\s*)?'[^']+';",
+              f"const UPDATE_URL = window.AmyFXUpdateManifestUrl\n    || '{manifest_url}';",
+              checker,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit('update URL marker not found')
+          checker = checker.replace('Update Amy FX Tersedia', 'Update Amy FX Preview Tersedia')
+          checker_path.write_text(checker, encoding='utf-8')
+          PY
+          node --check app/src/main/assets/app-version.js
+          node --check app/src/main/assets/update-checker.js
+          grep -Fq "name: '$AMYFX_VERSION_NAME', code: $AMYFX_VERSION_CODE" app/src/main/assets/app-version.js
+          grep -Fq "$AMYFX_UPDATE_MANIFEST_URL" app/src/main/assets/app-version.js
+          grep -Fq 'Update Amy FX Preview Tersedia' app/src/main/assets/update-checker.js
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Restore permanent Preview signing key
+        id: signing-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: amy-fx-debug-keystore-v1
+
+      - name: Verify permanent Preview signing key
+        run: |
+          set -euo pipefail
+          test "${{ steps.signing-cache.outputs.cache-hit }}" = "true"
+          cp "$HOME/.android/debug.keystore" "$AMYFX_KEYSTORE_PATH"
+          actual="$(keytool -list -v -keystore "$AMYFX_KEYSTORE_PATH" -storepass "$AMYFX_KEYSTORE_PASSWORD" -alias "$AMYFX_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1)"
+          test "$actual" = "$AMYFX_SIGNING_CERT_SHA256"
+
+      - name: Run Android tests and lint
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew :app:testReleaseUnitTest :app:lintRelease --stacktrace --no-daemon --no-configuration-cache
+
+      - name: Build signed Amy FX Preview APK
+        run: |
+          set -euo pipefail
+          ./gradlew :app:assembleRelease --stacktrace --no-daemon --no-configuration-cache
+          cp app/build/outputs/apk/release/app-release.apk AmyFX-Preview-latest.apk
+
+      - name: Verify Preview APK identity and signer
+        run: |
+          set -euo pipefail
+          AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
+          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          "$AAPT" dump badging AmyFX-Preview-latest.apk | tee /tmp/preview-badging.txt
+          grep -Fq "package: name='com.amyelitesuite.learningpreview' versionCode='$AMYFX_VERSION_CODE' versionName='$AMYFX_VERSION_NAME'" /tmp/preview-badging.txt
+          grep -Fq "application-label:'Amy FX Preview'" /tmp/preview-badging.txt
+          "$APKSIGNER" verify --verbose AmyFX-Preview-latest.apk
+          cert_entry="$(unzip -Z1 AmyFX-Preview-latest.apk | grep -E '^META-INF/[^/]+\.(RSA|DSA|EC)$' | head -n1)"
+          test -n "$cert_entry"
+          unzip -p AmyFX-Preview-latest.apk "$cert_entry" > /tmp/amyfx-preview-cert
+          expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          actual="$(keytool -printcert -file /tmp/amyfx-preview-cert | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          test "$actual" = "$expected"
+
+      - name: Upload signed Preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AmyFX-Preview-AI-Overhaul-${{ env.AMYFX_VERSION_NAME }}
+          path: AmyFX-Preview-latest.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish immutable Preview release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $AMYFX_RELEASE_TAG already exists; refusing to overwrite it."
+            exit 1
+          fi
+          cat > /tmp/release-notes.md <<NOTES
+          Amy FX Preview $AMYFX_VERSION_NAME — Assistant AI Overhaul.
+
+          - Panel API dibangun ulang dengan input terpisah untuk Gemini, OpenRouter, dan DeepSeek.
+          - Model lama yang sudah dihentikan diganti dengan model aktif.
+          - Setiap provider dapat dites secara terpisah dengan status error yang jelas.
+          - Rotasi API, timeout, cooldown, dan fallback antar-provider dibangun ulang.
+          - DeepSeek dapat dipilih sebagai provider utama dan tidak lagi tersembunyi sebagai fallback.
+          - Respons chat diperbaiki agar status proses selalu dilepas setelah berhasil atau gagal.
+          NOTES
+          gh release create "$AMYFX_RELEASE_TAG" \
+            "AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --title "Amy FX Preview $AMYFX_VERSION_NAME — Assistant AI Overhaul" \
+            --notes-file /tmp/release-notes.md
+
+      - name: Activate Preview update manifest
+        run: |
+          set -euo pipefail
+          git reset --hard HEAD
+          export RELEASE_DATE="$(date -u +%F)"
+          export APK_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${AMYFX_RELEASE_TAG}/AmyFX-Preview-latest.apk"
+          python - <<'PY'
+          import json
+          import os
+
+          payload = {
+              'channel': 'amyfx-preview-experiment',
+              'latest_version_code': int(os.environ['AMYFX_VERSION_CODE']),
+              'latest_version_name': os.environ['AMYFX_VERSION_NAME'],
+              'versionCode': int(os.environ['AMYFX_VERSION_CODE']),
+              'version': os.environ['AMYFX_VERSION_NAME'],
+              'releaseDate': os.environ['RELEASE_DATE'],
+              'apk_url': os.environ['APK_URL'],
+              'downloadUrl': os.environ['APK_URL'],
+              'force_update': False,
+              'mandatory': False,
+              'enabled': True,
+              'release_notes': [
+                  'UI Asisten dan Pengaturan API dibangun ulang total',
+                  'Input terpisah untuk Gemini, OpenRouter, dan DeepSeek',
+                  'Model AI lama diganti dengan model aktif',
+                  'Tes koneksi menampilkan hasil setiap provider',
+                  'Rotasi, timeout, cooldown, dan fallback AI diperbaiki',
+                  'DeepSeek dapat dipakai langsung sebagai provider utama'
+              ],
+              'changelog': [
+                  'Assistant UI total overhaul',
+                  'Provider-specific API fields',
+                  'Current Gemini, OpenRouter, and DeepSeek models',
+                  'Per-provider connection diagnostics',
+                  'Rebuilt AI request rotation and lifecycle lock'
+              ]
+          }
+          with open('preview-update.json', 'w', encoding='utf-8') as handle:
+              json.dump(payload, handle, ensure_ascii=False, indent=2)
+              handle.write('\n')
+          PY
+          python -m json.tool preview-update.json >/dev/null
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add preview-update.json
+          git commit -m "release: activate $AMYFX_VERSION_NAME AI overhaul [skip ci]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Mark Preview build successful
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='success' \
+            -f context='Amy FX Preview AI Overhaul' \
+            -f description="$AMYFX_VERSION_NAME published" \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+
+      - name: Mark Preview build failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='failure' \
+            -f context='Amy FX Preview AI Overhaul' \
+            -f description='Preview AI overhaul release failed' \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
