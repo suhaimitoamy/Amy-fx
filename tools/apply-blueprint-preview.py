@@ -13,7 +13,9 @@ UPDATE_CHECKER = ASSETS / "update-checker.js"
 SHARED_CSS = ASSETS / "apps/shared/amyfx-blueprint-v1.css"
 SHARED_JS = ASSETS / "apps/shared/amyfx-blueprint-v1.js"
 HOTFIX_JS = ASSETS / "apps/shared/amyfx-blueprint-hotfix-v1.js"
+PROVIDER_FIX_JS = ASSETS / "apps/shared/amyfx-provider-detection-v1.js"
 MAIN_ACTIVITY = ROOT / "app/src/main/java/com/amyelitesuite/MainActivity.kt"
+PROVIDER_REPAIR_BRIDGE = ROOT / "app/src/main/java/com/amyelitesuite/AmyFxAiProviderRepairBridge.kt"
 ACADEMY_INDEX = ASSETS / "apps/academy/index.html"
 MODULE_HTML = [
     ASSETS / "index.html",
@@ -25,6 +27,7 @@ MODULE_HTML = [
 CSS_MARKER = "data-amyfx-blueprint-css"
 JS_MARKER = "data-amyfx-blueprint-js"
 HOTFIX_MARKER = "data-amyfx-blueprint-hotfix"
+PROVIDER_FIX_MARKER = "data-amyfx-provider-detection"
 
 
 def relative_url(source: Path, target: Path) -> str:
@@ -191,9 +194,17 @@ def inject_html(path: Path) -> bool:
         else:
             raise RuntimeError(f"Missing </body> in {path}")
 
+    if PROVIDER_FIX_MARKER not in updated:
+        tag = f'  <script src="{relative_url(path, PROVIDER_FIX_JS)}" {PROVIDER_FIX_MARKER}="v1"></script>\n'
+        if re.search(r"</body\s*>", updated, flags=re.I):
+            updated = re.sub(r"</body\s*>", tag + "</body>", updated, count=1, flags=re.I)
+        else:
+            raise RuntimeError(f"Missing </body> in {path}")
+
     blueprint_index = updated.find(JS_MARKER)
     hotfix_index = updated.find(HOTFIX_MARKER)
-    if blueprint_index < 0 or hotfix_index <= blueprint_index:
+    provider_fix_index = updated.find(PROVIDER_FIX_MARKER)
+    if blueprint_index < 0 or hotfix_index <= blueprint_index or provider_fix_index <= hotfix_index:
         raise RuntimeError(f"Blueprint stabilization order is invalid in {path}")
 
     if updated == raw:
@@ -206,26 +217,43 @@ def patch_main_activity() -> bool:
     if not MAIN_ACTIVITY.is_file():
         raise RuntimeError(f"Missing MainActivity: {MAIN_ACTIVITY}")
     raw = MAIN_ACTIVITY.read_text(encoding="utf-8")
-    bridge = 'webView.addJavascriptInterface(AmyFxAiBridge(this, webView), "AmyNativeAI")'
-    if bridge in raw:
-        return False
+    lines = raw.splitlines()
     anchor = 'webView.addJavascriptInterface(WebAppInterface(this), "Android")'
-    position = raw.find(anchor)
-    if position < 0:
+    anchor_index = next((index for index, line in enumerate(lines) if anchor in line), -1)
+    if anchor_index < 0:
         raise RuntimeError("MainActivity Android bridge anchor missing")
-    line_start = raw.rfind("\n", 0, position) + 1
-    indent = raw[line_start:position]
-    line_end = raw.find("\n", position)
-    if line_end < 0:
-        line_end = len(raw)
-    insertion = "\n" + indent + bridge
-    MAIN_ACTIVITY.write_text(raw[:line_end] + insertion + raw[line_end:], encoding="utf-8")
-    return True
+
+    indent = lines[anchor_index][: len(lines[anchor_index]) - len(lines[anchor_index].lstrip())]
+    bridges = [
+        'webView.addJavascriptInterface(AmyFxAiBridge(this, webView), "AmyNativeAI")',
+        'webView.addJavascriptInterface(AmyFxAiProviderRepairBridge(this), "AmyNativeAIRepair")',
+    ]
+    insertion_index = anchor_index + 1
+    changed = False
+    for bridge in bridges:
+        if bridge in raw:
+            continue
+        lines.insert(insertion_index, indent + bridge)
+        insertion_index += 1
+        changed = True
+
+    if changed:
+        MAIN_ACTIVITY.write_text("\n".join(lines) + ("\n" if raw.endswith("\n") else ""), encoding="utf-8")
+    return changed
 
 
 def main() -> None:
     changed: list[str] = []
-    for required in (APP_VERSION, UPDATE_CHECKER, SHARED_CSS, SHARED_JS, HOTFIX_JS):
+    required_files = (
+        APP_VERSION,
+        UPDATE_CHECKER,
+        SHARED_CSS,
+        SHARED_JS,
+        HOTFIX_JS,
+        PROVIDER_FIX_JS,
+        PROVIDER_REPAIR_BRIDGE,
+    )
+    for required in required_files:
         if not required.is_file():
             raise SystemExit(f"Required Blueprint asset missing: {required}")
 
