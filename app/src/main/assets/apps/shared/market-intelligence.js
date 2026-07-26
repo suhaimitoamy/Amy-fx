@@ -17,21 +17,38 @@
     const time = Number.isFinite(numeric) && numeric > 86_400_000 ? numeric : new Date(value || 0).getTime();
     return Number.isFinite(time) && time > 86_400_000 ? time : 0;
   }
+  function explicitPartTimestamp(part) {
+    return Math.max(
+      timestamp(part?.updated),
+      timestamp(part?.capturedAt),
+      timestamp(part?.captured_at),
+      timestamp(part?.analyzedAt)
+    );
+  }
   function partTimestamp(part) {
-    return Math.max(timestamp(part?.updated), timestamp(part?.capturedAt), timestamp(part?.captured_at), timestamp(part?.analyzedAt), timestamp(part?.storedAt));
+    return explicitPartTimestamp(part) || timestamp(part?.storedAt);
   }
   function syncGlobals(state = read()) {
     const stamps = Object.values(state).map(partTimestamp).filter(Boolean);
     window.AmyFXIntelState = { ...state, updatedAt: stamps.length ? new Date(Math.max(...stamps)).toISOString() : null };
-    if (state.heatmap) window.AmyFXHeatmapState = { ...state.heatmap, sourceMethod: state.heatmap.sourceMethod || state.heatmap.source || 'OHLC-derived/modelled liquidity' };
+    if (state.heatmap) {
+      window.AmyFXHeatmapState = { ...state.heatmap, sourceMethod: state.heatmap.sourceMethod || state.heatmap.source || 'OHLC-derived/modelled liquidity' };
+    } else {
+      window.AmyFXHeatmapState = null;
+    }
     return state;
   }
   function write(part, payload) {
     const state = read();
     const storedAt = Date.now();
-    const sourceTimestamp = partTimestamp(payload);
+    const sourceTimestamp = explicitPartTimestamp(payload);
     const updated = sourceTimestamp ? new Date(sourceTimestamp).toISOString() : new Date(storedAt).toISOString();
-    state[part] = { ...payload, updated, capturedAt: payload?.capturedAt || payload?.captured_at || updated, storedAt };
+    state[part] = {
+      ...payload,
+      updated,
+      capturedAt: payload?.capturedAt || payload?.captured_at || updated,
+      storedAt
+    };
     memoryState = state;
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (_) {}
     syncGlobals(state);
@@ -50,32 +67,36 @@
     return Boolean(part?.dataStale) || /DATA USANG|EXPIRED|INVALID/.test(String(part?.status || part?.statusText || '').toUpperCase());
   }
   function partIsFresh(part) {
-    const storedAt = partTimestamp(part);
-    return storedAt > 0 && Date.now() - storedAt <= MAX_AGE && !partExplicitlyStale(part);
+    const capturedAt = partTimestamp(part);
+    return capturedAt > 0 && Date.now() - capturedAt <= MAX_AGE && !partExplicitlyStale(part);
   }
-  function priceCandidate(part, value) {
+  function priceCandidate(part, value, source) {
     const price = Number(value);
-    const storedAt = partTimestamp(part);
-    if (!Number.isFinite(price) || price <= 0 || storedAt <= 0) return null;
-    return { price, storedAt, fresh: partIsFresh(part) };
+    const capturedAt = partTimestamp(part);
+    if (!Number.isFinite(price) || price <= 0 || capturedAt <= 0) return null;
+    return { source, price, capturedAt, storedAt: capturedAt, fresh: partIsFresh(part), part };
+  }
+  function marketPriceCandidates(state = read()) {
+    return [
+      priceCandidate(state.mapping, state.mapping?.price, 'mapping'),
+      priceCandidate(state.liquidity, state.liquidity?.currentPrice, 'liquidity'),
+      priceCandidate(state.heatmap, state.heatmap?.currentPrice, 'heatmap')
+    ].filter(Boolean);
   }
   function bestCurrentPrice(state = read()) {
-    const candidates = [priceCandidate(state.mapping, state.mapping?.price), priceCandidate(state.liquidity, state.liquidity?.currentPrice), priceCandidate(state.heatmap, state.heatmap?.currentPrice)].filter(Boolean);
-    const fresh = candidates.filter(item => item.fresh).sort((a, b) => b.storedAt - a.storedAt);
-    const fallback = candidates.sort((a, b) => b.storedAt - a.storedAt);
+    const candidates = marketPriceCandidates(state);
+    const fresh = candidates.filter(item => item.fresh).sort((a, b) => b.capturedAt - a.capturedAt);
+    const fallback = [...candidates].sort((a, b) => b.capturedAt - a.capturedAt);
     return Number((fresh[0] || fallback[0])?.price || 0);
   }
   function freshness(state = read()) {
-    const candidates = [state.mapping, state.liquidity, state.heatmap].filter(Boolean)
-      .map(part => ({ timestamp: partTimestamp(part), stale: partExplicitlyStale(part) }))
-      .filter(item => item.timestamp > 0).sort((a, b) => b.timestamp - a.timestamp);
-    const price = bestCurrentPrice(state);
-    if (!navigator.onLine) return { label: 'OFFLINE', className: 'offline', ageMs: Number.MAX_SAFE_INTEGER };
-    if (!candidates.length || !price) return { label: 'WAITING', className: 'stale', ageMs: Number.MAX_SAFE_INTEGER };
+    const candidates = marketPriceCandidates(state).sort((a, b) => b.capturedAt - a.capturedAt);
+    if (!navigator.onLine) return { label: 'OFFLINE', className: 'offline', ageMs: Number.MAX_SAFE_INTEGER, source: null };
+    if (!candidates.length) return { label: 'WAITING', className: 'stale', ageMs: Number.MAX_SAFE_INTEGER, source: null };
     const latest = candidates[0];
-    const age = Date.now() - latest.timestamp;
-    if (latest.stale || age > MAX_AGE) return { label: 'STALE', className: 'stale', ageMs: age };
-    return { label: 'LIVE', className: 'live', ageMs: age };
+    const age = Math.max(0, Date.now() - latest.capturedAt);
+    if (!latest.fresh) return { label: 'STALE', className: 'stale', ageMs: age, source: latest.source };
+    return { label: 'LIVE', className: 'live', ageMs: age, source: latest.source };
   }
   function normalizeLevel(item, type, currentPrice) {
     const price = Number(item?.price ?? item?.level);
