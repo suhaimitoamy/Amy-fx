@@ -37,3 +37,14 @@ test('epoch timestamp is replaced with Belum ada data', async () => {
   assert.match(mentor, /1970-01-01/);
   assert.match(mentor, /node\.textContent = "Belum ada data"/);
 });
+
+test('mentor shows and clears an accessible animated loading state while waiting for provider', async () => {
+  const mentor = await read('app/src/main/assets/apps/shared/amyfx-mentor-conversation-v1.js');
+  assert.match(mentor, /function showThinkingIndicator\(\)/);
+  assert.match(mentor, /Amy sedang berpikir/);
+  assert.match(mentor, /data-amy-thinking='v1'/);
+  assert.match(mentor, /aria-busy/);
+  assert.match(mentor, /amy-thinking-pulse-v1/);
+  assert.match(mentor, /const thinkingRow = showThinkingIndicator\(\)/);
+  assert.match(mentor, /finally \{\s*removeThinkingIndicator\(thinkingRow\);\s*\}/);
+});
