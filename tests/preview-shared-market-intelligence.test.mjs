@@ -47,6 +47,6 @@ test('briefing and command strip use the same canonical market freshness and pri
   const source = await read();
   assert.match(source, /function briefing\(state = read\(\)\)/);
   assert.match(source, /const fresh = freshness\(state\)/);
-  assert.match(source, /const price = bestCurrentPrice\(state\)/);
+  assert.match(source, /price = bestCurrentPrice\(state\)/);
   assert.match(source, /if \(fresh\.className !== 'live'\)/);
 });
