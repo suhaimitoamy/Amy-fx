@@ -112,12 +112,30 @@
     } else warning?.remove();
   }
   function runtimeUrl(filename) { return PROVIDER_SCRIPT_URL ? new URL(filename, PROVIDER_SCRIPT_URL).href : filename; }
+
+  function loadRuleChatFinalRuntime() {
+    if (window.__amyFxMentorRuleChatFinalV2 || document.querySelector("script[data-amyfx-rule-chat-final='v2']")) return;
+    const script = document.createElement("script");
+    script.src = runtimeUrl("amyfx-mentor-rule-chat-final-v2.js");
+    script.dataset.amyfxRuleChatFinal = "v2";
+    script.async = false;
+    (document.head || document.documentElement).appendChild(script);
+  }
+
   function loadFinalConnectivityRuntime() {
-    if (window.__amyFxConnectivityFinalV3 || document.querySelector("script[data-amyfx-connectivity-final='v3']")) return;
+    if (window.__amyFxConnectivityFinalV3) { loadRuleChatFinalRuntime(); return; }
+    const existing = document.querySelector("script[data-amyfx-connectivity-final='v3']");
+    if (existing) {
+      existing.addEventListener("load", loadRuleChatFinalRuntime, { once: true });
+      existing.addEventListener("error", loadRuleChatFinalRuntime, { once: true });
+      return;
+    }
     const script = document.createElement("script");
     script.src = runtimeUrl("amyfx-connectivity-final-v3.js");
     script.dataset.amyfxConnectivityFinal = "v3";
     script.async = false;
+    script.addEventListener("load", loadRuleChatFinalRuntime, { once: true });
+    script.addEventListener("error", loadRuleChatFinalRuntime, { once: true });
     (document.head || document.documentElement).appendChild(script);
   }
   function loadConnectivityRuntime() {
@@ -191,5 +209,5 @@
     setTimeout(() => clearInterval(timer), 20_000);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true }); else boot();
-  window.AmyFXProviderDetection = Object.freeze({ inferProviderFromKey, normalizePool, repairNow, loadCustomerServiceRuntime, loadUniversalAccessRuntime, loadConnectivityRuntime, loadFinalConnectivityRuntime });
+  window.AmyFXProviderDetection = Object.freeze({ inferProviderFromKey, normalizePool, repairNow, loadCustomerServiceRuntime, loadUniversalAccessRuntime, loadConnectivityRuntime, loadFinalConnectivityRuntime, loadRuleChatFinalRuntime });
 })();
