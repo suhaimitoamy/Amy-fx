@@ -1,0 +1,134 @@
+Amy FX Preview regression failure
+Run: 30200719556
+Commit: c99891622b1bfcdc2b553543122aa0649b13bbe3
+
+===== amy-mentor-conversation.test.mjs =====
+not ok 1 - concise mentor runtime is valid JavaScript and loaded by the installed provider runtime
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+  operator: 'match'
+Regression failed: amy-mentor-conversation.test.mjs
+
+--- final log lines ---
+          return `<div class="amy-os-key-row"><span>${escapeHtml(label)} • ${escapeHtml(provider)} ••••${escapeHtml(clean(ref.masked_tail).slice(-4))}</span><button type="button" data-remove-key="${escapeHtml(ref.id)}">Hapus</button></div>`;
+        }).join("") : "<small>Belum ada key.</small>";
+        if (list.innerHTML !== html) list.innerHTML = html;
+    
+        const hasDeepSeek = refs.some(ref => normalizeProvider(ref.provider) === "deepseek");
+        const warningId = "amy-deepseek-paid-warning";
+        let warning = document.getElementById(warningId);
+        if (hasDeepSeek && !settings.paid_fallback) {
+          if (!warning) {
+            warning = document.createElement("small");
+            warning.id = warningId;
+            warning.style.display = "block";
+            warning.style.margin = "8px 0";
+            warning.style.color = "#f0bd4f";
+            list.insertAdjacentElement("afterend", warning);
+          }
+          warning.textContent = "DeepSeek sudah dikenali, tetapi belum digunakan sampai opsi fallback berbayar dicentang.";
+        } else {
+          warning?.remove();
+        }
+      }
+    
+      function loadMentorConversationRuntime() {
+        if (!PROVIDER_SCRIPT_URL || document.querySelector("script[data-amyfx-mentor-conversation='v1']")) return;
+        const script = document.createElement("script");
+        script.src = new URL("amyfx-mentor-conversation-v1.js", PROVIDER_SCRIPT_URL).href;
+        script.dataset.amyfxMentorConversation = "v1";
+        script.async = false;
+        (document.head || document.documentElement).appendChild(script);
+      }
+    
+      let scheduled = false;
+      function repairNow() {
+        installProviderPicker();
+        const rows = nativeRepairRows();
+        reconcileRows(rows);
+        renderRows();
+      }
+    
+      function scheduleRepair() {
+        if (scheduled) return;
+        scheduled = true;
+        const run = () => {
+          scheduled = false;
+          repairNow();
+        };
+        if (typeof requestAnimationFrame === "function") requestAnimationFrame(run);
+        else setTimeout(run, 0);
+      }
+    
+      document.addEventListener("click", event => {
+        if (event.target.closest?.("[data-amy-save-keys]")) {
+          normalizeBeforeSave();
+          setTimeout(scheduleRepair, 80);
+        }
+        if (event.target.closest?.("[data-amy-settings]")) setTimeout(scheduleRepair, 0);
+      }, true);
+    
+      document.addEventListener("change", event => {
+        if (event.target.matches?.("[data-amy-provider-select]")) normalizeBeforeSave();
+        if (event.target.matches?.("[data-amy-paid-fallback]")) setTimeout(scheduleRepair, 0);
+      }, true);
+    
+      function boot() {
+        loadMentorConversationRuntime();
+        const timer = setInterval(() => {
+          if (!window.AmyFXOS) return;
+          clearInterval(timer);
+          scheduleRepair();
+          new MutationObserver(scheduleRepair).observe(document.body || document.documentElement, { childList: true, subtree: true });
+          window.addEventListener("focus", scheduleRepair);
+          document.addEventListener("visibilitychange", () => { if (!document.hidden) scheduleRepair(); });
+        }, 80);
+        setTimeout(() => clearInterval(timer), 20_000);
+      }
+    
+      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
+      else boot();
+    
+      window.AmyFXProviderDetection = Object.freeze({
+        inferProviderFromKey,
+        normalizePool,
+        repairNow
+      });
+    })();
+    
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/amy-mentor-conversation.test.mjs:14:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: simple home action question is answered locally without a trading lecture
+ok 2 - simple home action question is answered locally without a trading lecture
+  ---
+  duration_ms: 3.914994
+  type: 'test'
+  ...
+# Subtest: provider prompt forbids audit-style headings and internal metadata leakage
+ok 3 - provider prompt forbids audit-style headings and internal metadata leakage
+  ---
+  duration_ms: 1.270822
+  type: 'test'
+  ...
+# Subtest: epoch timestamp is replaced with Belum ada data
+ok 4 - epoch timestamp is replaced with Belum ada data
+  ---
+  duration_ms: 1.161239
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 3
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 73.595187
+Regression failed: amy-mentor-conversation.test.mjs
