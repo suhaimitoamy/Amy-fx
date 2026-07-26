@@ -1,34 +1,29 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 930035,
-  "latest_version_name": "2.0.0-preview.35",
-  "versionCode": 930035,
-  "version": "2.0.0-preview.35",
+  "latest_version_code": 930036,
+  "latest_version_name": "2.0.0-preview.36",
+  "versionCode": 930036,
+  "version": "2.0.0-preview.36",
   "releaseDate": "2026-07-26",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.35/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.35/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.36/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.36/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Audit menyeluruh koneksi Beranda, Mapping, Market Intel, Jurnal, Library, Academy, Amy bot/AI, provider, secure vault, updater, dan Android bridge telah diselesaikan.",
-    "Perintah Amy kini membuka tujuan yang tepat, termasuk Mapping Analyze/Setups/History, Heatmap, Liquidity, Library, Media, Catatan, Asisten Jurnal, Statistik, Profil, dan Academy.",
-    "Setiap modul memiliki registry dan navigation intent bersama sehingga perpindahan halaman tetap membawa tujuan yang diminta.",
-    "Amy Mentor sekarang tersedia pada halaman materi Academy yang bertingkat, bukan hanya halaman utama Academy.",
-    "Versi aplikasi dapat dibaca dari seluruh modul dan tombol pemeriksaan update Beranda terhubung ke updater Preview sebenarnya.",
-    "Pembersihan cache hanya menghapus data sementara serta mempertahankan Jurnal, Library, riwayat Mapping, lisensi, API key, dan sesi Academy.",
-    "Market Intelligence menyatukan timestamp Mapping, Heatmap, dan Liquidity serta menolak status LIVE ketika data usang, invalid, tanpa harga, atau hanya berisi berita.",
-    "Shared state Market Intel tetap tersedia ketika localStorage bermasalah dan perubahan data dipropagasikan antarmodul melalui event yang sama.",
-    "Seluruh regression JavaScript, Android unit test, lint, signed APK, package, version, dan signer berhasil diverifikasi."
+    "Asisten AI tidak lagi terkunci dan memiliki batas waktu total 45 detik.",
+    "Asisten Jurnal tetap memakai API key yang sudah dipindahkan ke secure vault.",
+    "Journal v2 hanya tampil pada halaman Jurnal dan tidak merusak navigasi modul lain.",
+    "Status data market tidak lagi menyatakan fresh ketika data live belum tersedia.",
+    "Panel Amy, status module, dan navigasi bawah tidak lagi saling menutupi.",
+    "Markup Amy FX Academy yang rusak telah diperbaiki."
   ],
   "changelog": [
-    "Cross-module connectivity coordinator v3",
-    "Exact destination routing for Amy customer-service bot",
-    "Nested Academy Mentor runtime",
-    "Canonical Market Intelligence timestamps and stale-state propagation",
-    "Module registry and persistent navigation intents",
-    "Global app-version availability",
-    "Real updater integration and safe cache clearing",
-    "Expanded cross-module connectivity regression coverage"
+    "Assistant timeout and stuck-state recovery",
+    "Secure-vault compatibility for legacy Journal assistant",
+    "Journal v2 placement and layout stabilization",
+    "Missing-data freshness correction",
+    "Academy markup repair",
+    "Expanded Preview regression gates"
   ]
 }
