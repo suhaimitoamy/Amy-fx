@@ -11,19 +11,20 @@
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Asisten AI tidak lagi terkunci dan memiliki batas waktu total 45 detik.",
-    "Asisten Jurnal tetap memakai API key yang sudah dipindahkan ke secure vault.",
-    "Journal v2 hanya tampil pada halaman Jurnal dan tidak merusak navigasi modul lain.",
-    "Status data market tidak lagi menyatakan fresh ketika data live belum tersedia.",
-    "Panel Amy, status module, dan navigasi bawah tidak lagi saling menutupi.",
-    "Markup Amy FX Academy yang rusak telah diperbaiki."
+    "Profil kini membaca jumlah jurnal langsung dari penyimpanan IndexedDB yang digunakan Jurnal Trading.",
+    "Amy AI Mentor menerima jurnal, entry terpilih, Mapping, berita, liquidity, dan heatmap melalui kontrak data yang sama.",
+    "Mapping kembali berjalan dalam standards mode dan memublikasikan context live XAU/USD ke seluruh modul.",
+    "Market Intel dan Heatmap menggunakan zona waktu WITA/Asia Makassar secara konsisten.",
+    "Koneksi secure vault, deteksi provider, loading AI, navigasi modul, updater, package Preview, dan Android bridge telah diaudit.",
+    "Regression JavaScript, Android unit test, lint, signed APK, package, version, dan signer semuanya lulus."
   ],
   "changelog": [
-    "Assistant timeout and stuck-state recovery",
-    "Secure-vault compatibility for legacy Journal assistant",
-    "Journal v2 placement and layout stabilization",
-    "Missing-data freshness correction",
-    "Academy markup repair",
-    "Expanded Preview regression gates"
+    "IndexedDB Journal-to-Profile counter integration",
+    "Authoritative Journal state bridge for Amy Mentor",
+    "Mapping live Context Envelope bridge",
+    "Market Intel news/liquidity/heatmap context integration",
+    "Mapping standards-mode document repair",
+    "WITA timezone normalization",
+    "Full cross-module integration regression gate"
   ]
 }
