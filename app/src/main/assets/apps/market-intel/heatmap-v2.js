@@ -102,8 +102,8 @@
     const parsed = new Date(value);
     if (!Number.isNaN(parsed.getTime())) {
       return `candle ${new Intl.DateTimeFormat('id-ID', {
-        timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false
-      }).format(parsed)} WIB`;
+        timeZone: 'Asia/Makassar', hour: '2-digit', minute: '2-digit', hour12: false
+      }).format(parsed)} WITA`;
     }
     return `candle ${text}`;
   }

@@ -16,13 +16,15 @@
     const state = read();
     state[part] = { ...payload, storedAt: Date.now() };
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    window.AmyFXIntelState = { ...state, updatedAt: payload?.updated || new Date().toISOString() };
+    if (part === 'heatmap') window.AmyFXHeatmapState = { ...state[part], sourceMethod: payload?.source || payload?.sourceMethod || 'OHLC-derived/modelled liquidity' };
     window.dispatchEvent(new CustomEvent('amyfx:market-update', { detail: state }));
     return state;
   }
 
   function sessionInfo(date = new Date()) {
     const parts = new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false
+      timeZone: 'Asia/Makassar', hour: '2-digit', minute: '2-digit', hour12: false
     }).format(date).split(':').map(Number);
     const minutes = parts[0] * 60 + parts[1];
     if (minutes >= 6 * 60 && minutes < 12 * 60) return { id: 'ASIA', label: 'ASIA ACTIVE' };

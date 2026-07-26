@@ -272,6 +272,22 @@ const state = {
   scanProgress: null
 };
 
+function publishAmyFxJournalState() {
+  const journals = Array.isArray(state.journals) ? state.journals : [];
+  const selectedJournalId = state.journalOpenId || "";
+  const selectedJournal = journals.find(row => String(row?.id || "") === String(selectedJournalId)) || null;
+  window.AmyFXJournalState = {
+    getJournals: () => state.journals,
+    journals,
+    selectedJournalId: selectedJournalId || null,
+    selectedJournal,
+    view: state.view,
+    updatedAt: new Date().toISOString()
+  };
+  window.dispatchEvent(new CustomEvent("amyfx:journal-state-change", { detail: window.AmyFXJournalState }));
+  return window.AmyFXJournalState;
+}
+
 async function boot() {
   await requestPersistentStorage();
   await enforcePinLock();
@@ -794,6 +810,7 @@ function render() {
   updateRenderCounters(data);
   renderActiveView(data);
   syncSelectControls();
+  publishAmyFxJournalState();
 }
 
 function getRenderData() {

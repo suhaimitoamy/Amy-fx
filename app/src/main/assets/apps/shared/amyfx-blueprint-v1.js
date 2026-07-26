@@ -236,7 +236,11 @@
       window.lastMappingResult?.capturedAt,
       window.lastMappingResult?.timestamp,
       window.AmyFXHeatmapState?.updatedAt,
-      window.AmyFXIntel?.updatedAt
+      window.AmyFXIntelState?.updatedAt,
+      window.AmyFXIntel?.read?.()?.mapping?.updated,
+      window.AmyFXIntel?.read?.()?.heatmap?.updated,
+      window.AmyFXIntel?.read?.()?.liquidity?.updated,
+      window.AmyFXIntel?.read?.()?.news?.updated
     ];
     for (const value of values) {
       const date = new Date(value);
@@ -251,7 +255,12 @@
   }
 
   function journalRows() {
-    if (Array.isArray(window.state?.journals)) return clone(window.state.journals);
+    const bridge = window.AmyFXJournalState;
+    if (typeof bridge?.getJournals === "function") {
+      const rows = bridge.getJournals();
+      if (Array.isArray(rows)) return clone(rows);
+    }
+    if (Array.isArray(bridge?.journals)) return clone(bridge.journals);
     const value = readJsonStorage(CONFIG.legacyJournalKey, []);
     return Array.isArray(value) ? value : [];
   }
@@ -284,12 +293,17 @@
   }
 
   function intelPayload() {
+    const shared = window.AmyFXIntel?.read?.() || window.AmyFXIntelState || {};
+    const heatmap = window.AmyFXHeatmapState || shared.heatmap || null;
+    const news = shared.news || null;
     return {
       pair: resolvePair(),
       scheduled_event: clone(window.AmyFXIntel?.scheduledEvent || null),
-      published_news: clone(window.AmyFXIntel?.selectedNews || null),
-      heatmap: clone(window.AmyFXHeatmapState || null),
-      source_method: window.AmyFXHeatmapState?.sourceMethod || "OHLC-derived/modelled liquidity",
+      published_news: clone(window.AmyFXIntel?.selectedNews || news?.items?.[0] || null),
+      news_items: clone(news?.items || []),
+      heatmap: clone(heatmap),
+      liquidity: clone(shared.liquidity || null),
+      source_method: heatmap?.sourceMethod || heatmap?.source || "OHLC-derived/modelled liquidity",
       visible_summary: visibleText("main, #app, .intel-container", 1000)
     };
   }
@@ -305,10 +319,15 @@
   }
 
   function journalPayload() {
+    const bridge = window.AmyFXJournalState || {};
+    const selectedId = bridge.selectedJournalId || null;
+    const selected = bridge.selectedJournal
+      || journalRows().find(row => String(row?.id || "") === String(selectedId || ""))
+      || null;
     return {
       summary: journalSummary(),
-      selected_entry_id: window.state?.selectedJournalId || null,
-      selected_entry: clone(window.state?.selectedJournal || null),
+      selected_entry_id: selectedId,
+      selected_entry: clone(selected),
       visible_summary: visibleText("main, #app, .journal-shell", 1000)
     };
   }
@@ -1012,6 +1031,8 @@
     if (observerTarget) {
       new MutationObserver(syncUi).observe(observerTarget, { childList: true, subtree: true });
     }
+    ["amyfx:journal-state-change", "amyfx:mapping-state-change", "amyfx:market-update", "amyfx:home-stats-change"]
+      .forEach(name => window.addEventListener(name, () => refreshMentorContext()));
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) refreshMentorContext();
     });

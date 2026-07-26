@@ -388,7 +388,7 @@ function formatTime(iso) {
     const diff = now - d;
     if (diff < 60 * 1000) return 'Baru saja';
     if (diff < 60 * 60 * 1000) return `${Math.floor(diff / 60000)}m lalu`;
-    return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }) + ' WIB';
+    return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Makassar' }) + ' WITA';
   } catch { return iso; }
 }
 
