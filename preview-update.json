@@ -1,30 +1,29 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 930017,
-  "latest_version_name": "2.0.0-preview.17",
-  "versionCode": 930017,
-  "version": "2.0.0-preview.17",
+  "latest_version_code": 930018,
+  "latest_version_name": "2.0.0-preview.18",
+  "versionCode": 930018,
+  "version": "2.0.0-preview.18",
   "releaseDate": "2026-07-26",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.17/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.17/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.18/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.18/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Profil kini membaca jumlah jurnal langsung dari penyimpanan IndexedDB yang digunakan Jurnal Trading.",
-    "Amy AI Mentor menerima jurnal, entry terpilih, Mapping, berita, liquidity, dan heatmap melalui kontrak data yang sama.",
-    "Mapping kembali berjalan dalam standards mode dan memublikasikan context live XAU/USD ke seluruh modul.",
-    "Market Intel dan Heatmap menggunakan zona waktu WITA/Asia Makassar secara konsisten.",
-    "Koneksi secure vault, deteksi provider, loading AI, navigasi modul, updater, package Preview, dan Android bridge telah diaudit.",
-    "Regression JavaScript, Android unit test, lint, signed APK, package, version, dan signer semuanya lulus."
+    "Asisten AI tidak lagi terkunci dan memiliki batas waktu total 45 detik.",
+    "Asisten Jurnal tetap memakai API key yang sudah dipindahkan ke secure vault.",
+    "Journal v2 hanya tampil pada halaman Jurnal dan tidak merusak navigasi modul lain.",
+    "Status data market tidak lagi menyatakan fresh ketika data live belum tersedia.",
+    "Panel Amy, status module, dan navigasi bawah tidak lagi saling menutupi.",
+    "Markup Amy FX Academy yang rusak telah diperbaiki."
   ],
   "changelog": [
-    "IndexedDB Journal-to-Profile counter integration",
-    "Authoritative Journal state bridge for Amy Mentor",
-    "Mapping live Context Envelope bridge",
-    "Market Intel news/liquidity/heatmap context integration",
-    "Mapping standards-mode document repair",
-    "WITA timezone normalization",
-    "Full cross-module integration regression gate"
+    "Assistant timeout and stuck-state recovery",
+    "Secure-vault compatibility for legacy Journal assistant",
+    "Journal v2 placement and layout stabilization",
+    "Missing-data freshness correction",
+    "Academy markup repair",
+    "Expanded Preview regression gates"
   ]
 }
