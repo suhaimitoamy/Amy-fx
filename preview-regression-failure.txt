@@ -1,0 +1,189 @@
+Amy FX Preview regression failure
+Run: 30208650098
+Commit: 185dd407d7b0bb2d1a569706617ccd9a2db528fe
+
+===== amy-mentor-conversation.test.mjs =====
+===== api-polling-coordinator.test.mjs =====
+===== asia-range-ui-freeze-regression.test.mjs =====
+===== asia-range.test.mjs =====
+===== background-video-playback-regression.test.mjs =====
+===== blueprint-preview-stabilization.test.mjs =====
+===== blueprint-preview-v1.test.mjs =====
+===== bos-mss.test.mjs =====
+===== bsl-ssl.test.mjs =====
+===== concept-engine.integration.test.mjs =====
+===== dashboard-analyze-separation.test.mjs =====
+===== deepseek-provider-detection.test.mjs =====
+===== dynamic-heatmap-ui-regression.test.mjs =====
+===== dynamic-heatmap.test.mjs =====
+===== entry-sl-tp.test.mjs =====
+===== entry-watch-engine.test.mjs =====
+===== entry-watch-hardening.test.mjs =====
+===== equal-high-low.test.mjs =====
+===== final-integration.test.mjs =====
+===== five-issues-regression.test.mjs =====
+===== fvg-ob.test.mjs =====
+===== ict-core-regression.test.mjs =====
+===== journal-ai-rotation-v158.test.mjs =====
+===== journal-metadata-storage-regression.test.mjs =====
+===== journal-upgrade-regression.test.mjs =====
+===== learning-live-engine.test.mjs =====
+===== liquidity-draw-context.test.mjs =====
+===== m5-context-filter-experiment.test.mjs =====
+===== m5-min10-duration-2025.test.mjs =====
+===== m5-session-2025-validation.test.mjs =====
+===== mapping-candle-stale-ttl.test.mjs =====
+===== mapping-claim-accuracy.test.mjs =====
+===== mapping-clock-zone-alignment.test.mjs =====
+===== mapping-command-strip-integrity.test.mjs =====
+===== mapping-context-safety.test.mjs =====
+===== mapping-logic-v2.test.mjs =====
+===== mapping-market-integrity-regression.test.mjs =====
+===== mapping-navigation-regression.test.mjs =====
+===== mapping-structure-hierarchy.test.mjs =====
+===== mapping-webview-startup.test.mjs =====
+===== market-intelligence-strip.test.mjs =====
+===== market-intent-engine-v3.test.mjs =====
+===== market-learning-live-examples.test.mjs =====
+===== market-outlook-ui-regression.test.mjs =====
+===== market-outlook.test.mjs =====
+===== market-regime-engine-v2.test.mjs =====
+===== mentor-customer-service.test.mjs =====
+===== mentor-universal-access.test.mjs =====
+===== native-updater.test.mjs =====
+===== news-relevance-regression.test.mjs =====
+===== news-routing-regression.test.mjs =====
+===== notification-icon-regression.test.mjs =====
+===== notification-route-regression.test.mjs =====
+===== notification-route-sync.test.mjs =====
+===== preview-connectivity-audit-v2.test.mjs =====
+===== preview-connectivity-final-v3.test.mjs =====
+not ok 2 - provider loads final coordinator after audited Mentor stack
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+Regression failed: preview-connectivity-final-v3.test.mjs
+
+--- final log lines ---
+  ---
+  duration_ms: 0.794722
+  type: 'test'
+  ...
+# Subtest: market status requires a price and timestamp from the same fresh Mapping, Liquidity, Heatmap, or live-state candidate
+ok 5 - market status requires a price and timestamp from the same fresh Mapping, Liquidity, Heatmap, or live-state candidate
+  ---
+  duration_ms: 1.695872
+  type: 'test'
+  ...
+# Subtest: 90 percent bot route stays local while AI escalation receives corrected full workspace freshness
+ok 6 - 90 percent bot route stays local while AI escalation receives corrected full workspace freshness
+  ---
+  duration_ms: 1.493298
+  type: 'test'
+  ...
+# Subtest: customer-service numeric menu and module navigation are connected
+ok 7 - customer-service numeric menu and module navigation are connected
+  ---
+  duration_ms: 1.025633
+  type: 'test'
+  ...
+# Subtest: Journal deep links connect Library, Media, Journal, Notes, Assistant and Statistics views
+ok 8 - Journal deep links connect Library, Media, Journal, Notes, Assistant and Statistics views
+  ---
+  duration_ms: 1.036818
+  type: 'test'
+  ...
+# Subtest: bot workspace supports nested Journal v2 outcomes and accurate completed win rate
+ok 9 - bot workspace supports nested Journal v2 outcomes and accurate completed win rate
+  ---
+  duration_ms: 0.985143
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 91.389311
+
+===== preview-connectivity-final-v3.test.mjs =====
+TAP version 13
+# Subtest: connectivity files exist and parse
+ok 1 - connectivity files exist and parse
+  ---
+  duration_ms: 173.740966
+  type: 'test'
+  ...
+# Subtest: provider loads final coordinator after audited Mentor stack
+not ok 2 - provider loads final coordinator after audited Mentor stack
+  ---
+  duration_ms: 8.185265
+  type: 'test'
+  location: '/home/runner/work/Amy-fx/Amy-fx/tests/preview-connectivity-final-v3.test.mjs:34:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(source.indexOf('amyfx-connectivity-audit-v2.js') < source.indexOf('amyfx-connectivity-final-v3.js'))
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-connectivity-final-v3.test.mjs:39:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: final coordinator routes exact views across five modules
+ok 3 - final coordinator routes exact views across five modules
+  ---
+  duration_ms: 1.782167
+  type: 'test'
+  ...
+# Subtest: nested Academy lessons load Amy shared runtime
+ok 4 - nested Academy lessons load Amy shared runtime
+  ---
+  duration_ms: 0.945598
+  type: 'test'
+  ...
+# Subtest: Market Intel normalizes timestamps and propagates stale state
+ok 5 - Market Intel normalizes timestamps and propagates stale state
+  ---
+  duration_ms: 1.083457
+  type: 'test'
+  ...
+# Subtest: Home update and cache actions use real services and preserve primary data
+ok 6 - Home update and cache actions use real services and preserve primary data
+  ---
+  duration_ms: 1.798621
+  type: 'test'
+  ...
+# Subtest: Journal and Mapping publish events consumed across modules
+ok 7 - Journal and Mapping publish events consumed across modules
+  ---
+  duration_ms: 2.873566
+  type: 'test'
+  ...
+# Subtest: final router wraps only after connectivity audit v2
+ok 8 - final router wraps only after connectivity audit v2
+  ---
+  duration_ms: 0.967826
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 7
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 241.563136
+Regression failed: preview-connectivity-final-v3.test.mjs
