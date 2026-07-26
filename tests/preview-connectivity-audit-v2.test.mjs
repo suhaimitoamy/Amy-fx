@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { access, readFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -22,8 +23,10 @@ const modulePages = [
   'app/src/main/assets/apps/academy/index.html'
 ];
 
-test('final connectivity runtime exists and is loaded after universal Mentor access', async () => {
+test('final connectivity runtime exists, parses, and is loaded after universal Mentor access', async () => {
   assert.equal(await exists(connectivityPath), true);
+  const syntax = spawnSync(process.execPath, ['--check', path.join(root, connectivityPath)], { encoding: 'utf8' });
+  assert.equal(syntax.status, 0, syntax.stderr || syntax.stdout);
   const provider = await read(providerPath);
   assert.match(provider, /amyfx-connectivity-audit-v2\.js/);
   assert.match(provider, /data-amyfx-connectivity-audit/);
@@ -51,32 +54,41 @@ test('bot data adapter matches customer-service contracts for version, providers
   assert.doesNotMatch(source, /secret\s*:\s*ref/);
 });
 
-test('IndexedDB reads never create an empty database or overwrite Journal schema', async () => {
+test('IndexedDB reads never create an empty database, overwrite Journal schema, or leak late handles', async () => {
   const source = await read(connectivityPath);
   assert.match(source, /indexedDB\.databases/);
   assert.match(source, /request\.onupgradeneeded\s*=\s*\(\)\s*=>\s*\{[\s\S]*abort\(\)/);
+  assert.match(source, /if \(settled\) \{[\s\S]*value\?\.close\?\.\(\)/);
   assert.match(source, /tradingLibraryManager\.files/);
   assert.match(source, /journals\.v2/);
   assert.match(source, /items\.v2/);
   assert.match(source, /transaction\(META_STORE,\s*"readonly"\)/);
 });
 
-test('market status requires a real price and fresh Mapping, Liquidity or Heatmap storage', async () => {
+test('market status requires a price and timestamp from the same fresh Mapping, Liquidity, Heatmap, or live-state candidate', async () => {
   const source = await read(connectivityPath);
   assert.match(source, /MARKET_MAX_AGE\s*=\s*5\s*\*\s*60\s*\*\s*1000/);
-  assert.match(source, /shared\.mapping,\s*shared\.liquidity,\s*shared\.heatmap/);
-  assert.match(source, /ageMs\s*<=\s*MARKET_MAX_AGE\s*&&\s*hasPrice/);
+  assert.match(source, /function marketCandidate\(part, price, timestamp\)/);
+  assert.match(source, /marketCandidate\(shared\.mapping, shared\.mapping\?\.price/);
+  assert.match(source, /marketCandidate\(shared\.liquidity, shared\.liquidity\?\.currentPrice/);
+  assert.match(source, /marketCandidate\(shared\.heatmap, shared\.heatmap\?\.currentPrice/);
+  assert.match(source, /ageMs <= MARKET_MAX_AGE && liveState\?\.dataStale !== true/);
   assert.match(source, /captured_at:\s*fresh\s*\?\s*capturedAt\s*:\s*null/);
-  assert.doesNotMatch(source, /shared\.news[^\n]*newestStoredAt/);
+  const snapshot = source.slice(source.indexOf('function marketSnapshot'), source.indexOf('function providerSnapshot'));
+  assert.doesNotMatch(snapshot, /shared\.news/);
 });
 
-test('90 percent bot route avoids universal AI context and escalates only explicit complex requests', async () => {
+test('90 percent bot route stays local while AI escalation receives corrected full workspace freshness', async () => {
   const source = await read(connectivityPath);
-  assert.match(source, /if\s*\(customer\.needsAi\(normalized\)\)\s*\{\s*return originalAsk/);
   assert.match(source, /const workspace = await buildBotWorkspace\(normalized\)/);
   assert.match(source, /provider:\s*"amy-bot"/);
   assert.match(source, /model:\s*"customer-service-connectivity-v2"/);
   assert.match(source, /recordRoute\("bot"\)/);
+  assert.match(source, /async function buildAiContext\(question, options = \{\}\)/);
+  assert.match(source, /AmyFXUniversalContext\?\.collect\?\.\(question\)/);
+  assert.match(source, /workspace\.market = \{ \.\.\.\(workspace\.market \|\| \{\}\), \.\.\.market \}/);
+  assert.match(source, /const context = await buildAiContext\(normalized, options\)/);
+  assert.match(source, /return originalAsk\(normalized, \{ \.\.\.options, context \}\)/);
 });
 
 test('customer-service numeric menu and module navigation are connected', async () => {
