@@ -1,31 +1,29 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 930021,
-  "latest_version_name": "2.0.0-preview.21",
-  "versionCode": 930021,
-  "version": "2.0.0-preview.21",
+  "latest_version_code": 930022,
+  "latest_version_name": "2.0.0-preview.22",
+  "versionCode": 930022,
+  "version": "2.0.0-preview.22",
   "releaseDate": "2026-07-26",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.21/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.21/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.22/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.22/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Amy Mentor sekarang menggunakan customer-service bot sebagai jalur utama dengan target 90% bot dan 10% AI.",
-    "Status aplikasi, navigasi, Mapping, Market Intel, Jurnal, Library, Academy, provider API, versi, update, dan bantuan umum dijawab lokal tanpa memakai kuota AI.",
-    "AI hanya dipanggil untuk analisis, review mendalam, perbandingan, prediksi, strategi, atau pertanyaan yang diawali dengan AI:.",
-    "Menu cepat baru menyediakan Status, Mapping, Jurnal, Academy, API, dan Tanya AI.",
-    "Perintah membuka modul dapat mengarahkan pengguna langsung ke halaman yang diminta.",
-    "Statistik pemakaian bot dan AI disimpan lokal tanpa menyimpan atau membocorkan API key.",
-    "Seluruh regression JavaScript, Android unit test, lint, signed APK, package, version, dan signer berhasil diverifikasi."
+    "Asisten AI tidak lagi terkunci dan memiliki batas waktu total 45 detik.",
+    "Asisten Jurnal tetap memakai API key yang sudah dipindahkan ke secure vault.",
+    "Journal v2 hanya tampil pada halaman Jurnal dan tidak merusak navigasi modul lain.",
+    "Status data market tidak lagi menyatakan fresh ketika data live belum tersedia.",
+    "Panel Amy, status module, dan navigasi bawah tidak lagi saling menutupi.",
+    "Markup Amy FX Academy yang rusak telah diperbaiki."
   ],
   "changelog": [
-    "90 percent local customer-service bot routing",
-    "10 percent explicit AI escalation policy",
-    "Customer-service quick menu and navigation",
-    "Local status answers for all Amy FX modules",
-    "Bot and AI usage routing ledger",
-    "Read-only safety for destructive requests",
-    "Customer-service regression coverage"
+    "Assistant timeout and stuck-state recovery",
+    "Secure-vault compatibility for legacy Journal assistant",
+    "Journal v2 placement and layout stabilization",
+    "Missing-data freshness correction",
+    "Academy markup repair",
+    "Expanded Preview regression gates"
   ]
 }
