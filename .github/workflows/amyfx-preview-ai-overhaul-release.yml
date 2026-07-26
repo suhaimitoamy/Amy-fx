@@ -6,6 +6,7 @@ on:
       - preview/amyfx-experiment
     paths:
       - app/src/main/assets/apps/journal/**
+      - app/src/main/java/com/amyelitesuite/NativeAiBridge.kt
       - .github/workflows/amyfx-preview-ai-overhaul-release.yml
   workflow_dispatch:
 
@@ -48,10 +49,10 @@ jobs:
 
           with open('preview-update.json', encoding='utf-8') as handle:
               manifest = json.load(handle)
-          previous_code = int(manifest.get('latest_version_code') or manifest.get('versionCode') or 920007)
-          previous_name = str(manifest.get('latest_version_name') or manifest.get('version') or '1.5.9-preview.7')
+          previous_code = int(manifest.get('latest_version_code') or manifest.get('versionCode') or 920008)
+          previous_name = str(manifest.get('latest_version_name') or manifest.get('version') or '1.5.9-preview.8')
           match = re.search(r'preview\.(\d+)$', previous_name)
-          suffix = int(match.group(1)) + 1 if match else 8
+          suffix = int(match.group(1)) + 1 if match else 9
           print(max(previous_code + 1, 920000 + suffix))
           print(f'1.5.9-preview.{suffix}')
           PY
@@ -84,8 +85,12 @@ jobs:
       - name: Validate rebuilt Assistant runtime
         run: |
           set -euo pipefail
+          node --check app/src/main/assets/apps/journal/amy-preview-ai-native-transport.js
           node --check app/src/main/assets/apps/journal/amy-preview-ai-overhaul.js
           node --check app/src/main/assets/apps/journal/amy-journal-final-fix.js
+          grep -Fq 'amy-preview-ai-native-transport.js' app/src/main/assets/apps/journal/amy-journal-final-fix.js
+          grep -Fq 'window.AmyNative.request' app/src/main/assets/apps/journal/amy-preview-ai-native-transport.js
+          grep -Fq 'api.deepseek.com' app/src/main/java/com/amyelitesuite/NativeAiBridge.kt
           npm test
 
       - name: Stamp Preview web identity and update channel
@@ -148,6 +153,24 @@ jobs:
           grep -Fq "name: '$AMYFX_VERSION_NAME', code: $AMYFX_VERSION_CODE" app/src/main/assets/app-version.js
           grep -Fq "$AMYFX_UPDATE_MANIFEST_URL" app/src/main/assets/app-version.js
           grep -Fq 'Update Amy FX Preview Tersedia' app/src/main/assets/update-checker.js
+
+      - name: Register native AI bridge in Preview WebView
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('app/src/main/java/com/amyelitesuite/MainActivity.kt')
+          source = path.read_text(encoding='utf-8')
+          marker = '        webView.addJavascriptInterface(WebAppInterface(this), "Android")'
+          bridge = '        webView.addJavascriptInterface(NativeAiBridge(webView), "AmyNative")'
+          if bridge not in source:
+              if marker not in source:
+                  raise SystemExit('WebAppInterface registration marker not found')
+              source = source.replace(marker, marker + '\n' + bridge, 1)
+              path.write_text(source, encoding='utf-8')
+          PY
+          grep -Fq 'addJavascriptInterface(NativeAiBridge(webView), "AmyNative")' app/src/main/java/com/amyelitesuite/MainActivity.kt
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -223,21 +246,22 @@ jobs:
             exit 1
           fi
           cat > /tmp/release-notes.md <<NOTES
-          Amy FX Preview $AMYFX_VERSION_NAME — Assistant AI Overhaul.
+          Amy FX Preview $AMYFX_VERSION_NAME — Native Assistant AI Overhaul.
 
           - Panel API dibangun ulang dengan input terpisah untuk Gemini, OpenRouter, dan DeepSeek.
           - Model lama yang sudah dihentikan diganti dengan model aktif.
           - Setiap provider dapat dites secara terpisah dengan status error yang jelas.
           - Rotasi API, timeout, cooldown, dan fallback antar-provider dibangun ulang.
           - DeepSeek dapat dipilih sebagai provider utama dan tidak lagi tersembunyi sebagai fallback.
-          - Respons chat diperbaiki agar status proses selalu dilepas setelah berhasil atau gagal.
+          - Permintaan AI melewati transport native Android agar tidak tertahan CORS WebView.
+          - Respons chat selalu melepas status proses setelah berhasil maupun gagal.
           NOTES
           gh release create "$AMYFX_RELEASE_TAG" \
             "AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --prerelease \
-            --title "Amy FX Preview $AMYFX_VERSION_NAME — Assistant AI Overhaul" \
+            --title "Amy FX Preview $AMYFX_VERSION_NAME — Native Assistant AI Overhaul" \
             --notes-file /tmp/release-notes.md
 
       - name: Activate Preview update manifest
@@ -265,7 +289,7 @@ jobs:
               'release_notes': [
                   'UI Asisten dan Pengaturan API dibangun ulang total',
                   'Input terpisah untuk Gemini, OpenRouter, dan DeepSeek',
-                  'Model AI lama diganti dengan model aktif',
+                  'Permintaan AI sekarang melewati transport native Android',
                   'Tes koneksi menampilkan hasil setiap provider',
                   'Rotasi, timeout, cooldown, dan fallback AI diperbaiki',
                   'DeepSeek dapat dipakai langsung sebagai provider utama'
@@ -273,7 +297,7 @@ jobs:
               'changelog': [
                   'Assistant UI total overhaul',
                   'Provider-specific API fields',
-                  'Current Gemini, OpenRouter, and DeepSeek models',
+                  'Native Android OkHttp AI transport',
                   'Per-provider connection diagnostics',
                   'Rebuilt AI request rotation and lifecycle lock'
               ]
@@ -286,7 +310,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add preview-update.json
-          git commit -m "release: activate $AMYFX_VERSION_NAME AI overhaul [skip ci]"
+          git commit -m "release: activate $AMYFX_VERSION_NAME native AI overhaul [skip ci]"
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - name: Mark Preview build successful
@@ -307,5 +331,5 @@ jobs:
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state='failure' \
             -f context='Amy FX Preview AI Overhaul' \
-            -f description='Preview AI overhaul release failed' \
+            -f description='Preview native AI overhaul release failed' \
             -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
