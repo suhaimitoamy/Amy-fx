@@ -193,12 +193,32 @@
     return PROVIDER_SCRIPT_URL ? new URL(filename, PROVIDER_SCRIPT_URL).href : filename;
   }
 
+  function loadConnectivityRuntime() {
+    if (window.__amyFxConnectivityAuditV2 || document.querySelector("script[data-amyfx-connectivity-audit='v2']")) return;
+    const script = document.createElement("script");
+    script.src = runtimeUrl("amyfx-connectivity-audit-v2.js");
+    script.dataset.amyfxConnectivityAudit = "v2";
+    script.async = false;
+    (document.head || document.documentElement).appendChild(script);
+  }
+
   function loadUniversalAccessRuntime() {
-    if (window.__amyFxMentorUniversalAccessV1 || document.querySelector("script[data-amyfx-mentor-universal='v1']")) return;
+    if (window.__amyFxMentorUniversalAccessV1) {
+      loadConnectivityRuntime();
+      return;
+    }
+    const existing = document.querySelector("script[data-amyfx-mentor-universal='v1']");
+    if (existing) {
+      existing.addEventListener("load", loadConnectivityRuntime, { once: true });
+      existing.addEventListener("error", loadConnectivityRuntime, { once: true });
+      return;
+    }
     const script = document.createElement("script");
     script.src = runtimeUrl("amyfx-mentor-universal-access-v1.js");
     script.dataset.amyfxMentorUniversal = "v1";
     script.async = false;
+    script.addEventListener("load", loadConnectivityRuntime, { once: true });
+    script.addEventListener("error", loadConnectivityRuntime, { once: true });
     (document.head || document.documentElement).appendChild(script);
   }
 
@@ -295,6 +315,7 @@
     normalizePool,
     repairNow,
     loadCustomerServiceRuntime,
-    loadUniversalAccessRuntime
+    loadUniversalAccessRuntime,
+    loadConnectivityRuntime
   });
 })();
