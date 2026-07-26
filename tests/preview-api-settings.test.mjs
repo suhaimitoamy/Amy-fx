@@ -16,12 +16,15 @@ test('preview API access scripts remain syntactically valid and load after AI ru
   assert.ok(loader.indexOf('amy-preview-api-access.js') > loader.indexOf('amy-journal-ai-runtime-fix.js'));
 });
 
-test('preview keeps API settings visible and easy to open', () => {
+test('preview keeps API settings visible without duplicating assistant controls', () => {
   assert.match(access, /#assistantApiSettings/);
-  assert.match(access, /amyOpenApiSettingsBtn/);
-  assert.match(access, /Pengaturan API/);
+  assert.match(access, /amy-assistant-page-head/);
+  assert.match(access, /document\.querySelector\("#amyOpenApiSettingsBtn"\)\?\.remove\(\)/);
+  assert.doesNotMatch(access, /button\.textContent\s*=\s*["']Pengaturan API["']/);
   assert.match(access, /workspace\.insertBefore\(settings, workspace\.firstElementChild\)/);
   assert.match(access, /if \(!hasStoredApi\(\)\) settings\.open = true/);
   assert.match(access, /#amyAiKeyPoolInput, #geminiApiKeyInput/);
   assert.match(access, /Gemini dan OpenRouter/);
+  assert.match(access, /assistant-quick-prompts/);
+  assert.match(access, /assistant-chat-bar/);
 });
