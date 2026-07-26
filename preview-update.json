@@ -4,26 +4,27 @@
   "latest_version_name": "2.0.0-preview.37",
   "versionCode": 930037,
   "version": "2.0.0-preview.37",
-  "releaseDate": "2026-07-26",
+  "releaseDate": "2026-07-27",
   "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.37/AmyFX-Preview-latest.apk",
   "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.37/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Asisten AI tidak lagi terkunci dan memiliki batas waktu total 45 detik.",
-    "Asisten Jurnal tetap memakai API key yang sudah dipindahkan ke secure vault.",
-    "Journal v2 hanya tampil pada halaman Jurnal dan tidak merusak navigasi modul lain.",
-    "Status data market tidak lagi menyatakan fresh ketika data live belum tersedia.",
-    "Panel Amy, status module, dan navigasi bawah tidak lagi saling menutupi.",
-    "Markup Amy FX Academy yang rusak telah diperbaiki."
+    "Amy Mentor kini tampil sebagai Amy Assistant dengan gaya customer service yang lebih natural.",
+    "Sebagian besar percakapan menggunakan chat rule-based lokal yang cepat tanpa memanggil API AI.",
+    "Amy dapat melakukan percakapan bertahap, memahami jawaban singkat seperti iya atau tidak, dan meminta klarifikasi fitur yang bermasalah.",
+    "Tombol balasan cepat berubah mengikuti percakapan untuk Mapping, Market Intel, Jurnal, Academy, API, update, dan bantuan aplikasi.",
+    "Istilah teknis seperti Context Envelope, deterministic, provider, TERHUBUNG, dan SYNC tidak lagi ditampilkan pada percakapan biasa.",
+    "AI tetap digunakan otomatis untuk analisis mendalam, sedangkan bantuan umum ditangani bot lokal.",
+    "Seluruh regression JavaScript, Android unit test, lint, signed APK, package, version, dan signer berhasil diverifikasi."
   ],
   "changelog": [
-    "Assistant timeout and stuck-state recovery",
-    "Secure-vault compatibility for legacy Journal assistant",
-    "Journal v2 placement and layout stabilization",
-    "Missing-data freshness correction",
-    "Academy markup repair",
-    "Expanded Preview regression gates"
+    "Natural rule-based customer-service conversation engine",
+    "Multi-turn issue clarification state",
+    "Contextual quick-reply actions",
+    "Friendly customer-service panel and welcome message",
+    "Technical metadata suppression",
+    "Final UI enforcement after connectivity runtimes"
   ]
 }
