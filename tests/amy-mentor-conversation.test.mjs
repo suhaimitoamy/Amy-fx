@@ -11,7 +11,7 @@ test('concise mentor runtime is valid JavaScript and loaded by the installed pro
   assert.doesNotThrow(() => new Function(mentor));
   assert.doesNotThrow(() => new Function(provider));
   assert.match(provider, /amyfx-mentor-conversation-v1\.js/);
-  assert.match(provider, /data\.amyfxMentorConversation = "v1"/);
+  assert.match(provider, /dataset\.amyfxMentorConversation = "v1"/);
 });
 
 test('simple home action question is answered locally without a trading lecture', async () => {
