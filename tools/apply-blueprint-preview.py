@@ -8,6 +8,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "app/src/main/assets"
+APP_VERSION = ASSETS / "app-version.js"
+UPDATE_CHECKER = ASSETS / "update-checker.js"
 SHARED_CSS = ASSETS / "apps/shared/amyfx-blueprint-v1.css"
 SHARED_JS = ASSETS / "apps/shared/amyfx-blueprint-v1.js"
 HOTFIX_JS = ASSETS / "apps/shared/amyfx-blueprint-hotfix-v1.js"
@@ -38,6 +40,68 @@ def replace_once(source: str, old: str, new: str, label: str) -> tuple[str, bool
     if count != 1:
         raise RuntimeError(f"{label}: expected one source pattern, found {count}")
     return source.replace(old, new, 1), True
+
+
+def normalize_source_identity() -> list[Path]:
+    """Keep the branch on production source identity; stamp Preview only inside CI build."""
+    changed: list[Path] = []
+
+    app_raw = APP_VERSION.read_text(encoding="utf-8")
+    app_updated = re.sub(
+        r"const VERSION = Object\.freeze\(\{ name: '[^']+', code: \d+ \}\);",
+        "const VERSION = Object.freeze({ name: '1.5.9', code: 50 });",
+        app_raw,
+        count=1,
+    )
+    app_updated = re.sub(
+        r"^\s*window\.AmyFXUpdateManifestUrl\s*=.*;\s*\n?",
+        "",
+        app_updated,
+        count=1,
+        flags=re.M,
+    )
+    if app_updated != app_raw:
+        APP_VERSION.write_text(app_updated, encoding="utf-8")
+        changed.append(APP_VERSION)
+
+    checker_raw = UPDATE_CHECKER.read_text(encoding="utf-8")
+    checker_updated = checker_raw
+    replacements = [
+        (
+            r"const VERSION = window\.AmyFXAppVersion \|\| \{ name: '[^']+', code: \d+ \};",
+            "const VERSION = window.AmyFXAppVersion || { name: '1.4.11', code: 34 };",
+        ),
+        (
+            r"const CURRENT_VERSION_CODE = Number\(VERSION\.code\) \|\| \d+;",
+            "const CURRENT_VERSION_CODE = Number(VERSION.code) || 34;",
+        ),
+        (
+            r"const CURRENT_VERSION_NAME = String\(VERSION\.name \|\| '[^']+'\);",
+            "const CURRENT_VERSION_NAME = String(VERSION.name || '1.4.11');",
+        ),
+        (
+            r"const UPDATE_URL = (?:window\.AmyFXUpdateManifestUrl\s*\n\s*\|\|\s*)?'[^']+';",
+            "const UPDATE_URL = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json';",
+        ),
+    ]
+    for pattern, replacement in replacements:
+        checker_updated, count = re.subn(pattern, replacement, checker_updated, count=1)
+        if count != 1:
+            raise RuntimeError(f"Updater source identity pattern missing: {pattern}")
+
+    checker_updated = re.sub(
+        r"\n  function announceNativeUpdate\(latestCode, latestName\) \{.*?\n  \}\n\n(?=  function showUpdatePopup)",
+        "\n",
+        checker_updated,
+        count=1,
+        flags=re.S,
+    )
+    checker_updated = checker_updated.replace("          announceNativeUpdate(latestCode, latestName);\n", "", 1)
+    if checker_updated != checker_raw:
+        UPDATE_CHECKER.write_text(checker_updated, encoding="utf-8")
+        changed.append(UPDATE_CHECKER)
+
+    return changed
 
 
 def patch_blueprint_runtime() -> bool:
@@ -161,10 +225,12 @@ def patch_main_activity() -> bool:
 
 def main() -> None:
     changed: list[str] = []
-    for required in (SHARED_CSS, SHARED_JS, HOTFIX_JS):
+    for required in (APP_VERSION, UPDATE_CHECKER, SHARED_CSS, SHARED_JS, HOTFIX_JS):
         if not required.is_file():
             raise SystemExit(f"Required Blueprint asset missing: {required}")
 
+    for path in normalize_source_identity():
+        changed.append(path.relative_to(ROOT).as_posix())
     if patch_blueprint_runtime():
         changed.append(SHARED_JS.relative_to(ROOT).as_posix())
     if patch_academy_markup():
