@@ -5,6 +5,7 @@ import android.webkit.WebView
 import java.util.Locale
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -42,7 +43,13 @@ class NativeAiBridge(private val webView: WebView) {
         val requestJson = try {
             JSONObject(rawRequest.orEmpty())
         } catch (_: Exception) {
-            emit(JSONObject().put("id", "").put("ok", false).put("status", 0).put("error", "Format permintaan native tidak valid."))
+            emit(
+                JSONObject()
+                    .put("id", "")
+                    .put("ok", false)
+                    .put("status", 0)
+                    .put("error", "Format permintaan native tidak valid.")
+            )
             return
         }
 
@@ -50,10 +57,9 @@ class NativeAiBridge(private val webView: WebView) {
         executor.execute {
             val result = JSONObject().put("id", requestId)
             try {
-                val url = requestJson.optString("url")
-                val parsed = okhttp3.HttpUrl.parse(url)
+                val parsed = requestJson.optString("url").toHttpUrlOrNull()
                     ?: throw IllegalArgumentException("URL API tidak valid.")
-                if (parsed.scheme() != "https" || parsed.host() !in allowedHosts) {
+                if (parsed.scheme != "https" || parsed.host !in allowedHosts) {
                     throw SecurityException("Host API tidak diizinkan.")
                 }
 
@@ -85,10 +91,10 @@ class NativeAiBridge(private val webView: WebView) {
                     .build()
 
                 client.newCall(builder.build()).execute().use { response ->
-                    val responseText = response.body()?.string().orEmpty().take(2_000_000)
+                    val responseText = response.body?.string().orEmpty().take(2_000_000)
                     result
                         .put("ok", response.isSuccessful)
-                        .put("status", response.code())
+                        .put("status", response.code)
                         .put("body", responseText)
                         .put("error", "")
                 }
