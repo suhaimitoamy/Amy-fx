@@ -36,7 +36,9 @@ test('provider loads final coordinator after audited Mentor stack', async () => 
   for (const token of ['amyfx-mentor-conversation-v1.js', 'amyfx-mentor-customer-service-v1.js', 'amyfx-mentor-universal-access-v1.js', 'amyfx-connectivity-audit-v2.js', 'amyfx-connectivity-final-v3.js']) {
     assert.match(source, new RegExp(token.replaceAll('.', '\\.')));
   }
-  assert.ok(source.indexOf('amyfx-connectivity-audit-v2.js') < source.indexOf('amyfx-connectivity-final-v3.js'));
+  assert.match(source, /if \(window\.__amyFxConnectivityAuditV2\) \{ loadFinalConnectivityRuntime\(\); return; \}/);
+  assert.match(source, /script\.addEventListener\("load", loadFinalConnectivityRuntime, \{ once: true \}\)/);
+  assert.match(source, /loadUniversalAccessRuntime[\s\S]*loadConnectivityRuntime/);
 });
 
 test('final coordinator routes exact views across five modules', async () => {
