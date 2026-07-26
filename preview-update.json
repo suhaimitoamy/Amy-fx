@@ -11,19 +11,26 @@
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Asisten AI tidak lagi terkunci dan memiliki batas waktu total 45 detik.",
-    "Asisten Jurnal tetap memakai API key yang sudah dipindahkan ke secure vault.",
-    "Journal v2 hanya tampil pada halaman Jurnal dan tidak merusak navigasi modul lain.",
-    "Status data market tidak lagi menyatakan fresh ketika data live belum tersedia.",
-    "Panel Amy, status module, dan navigasi bawah tidak lagi saling menutupi.",
-    "Markup Amy FX Academy yang rusak telah diperbaiki."
+    "Koneksi Mapping, Market Intel, Home, Amy Mentor, Jurnal, Library, Academy, provider AI, dan updater telah diaudit ulang.",
+    "Mapping sekarang memublikasikan snapshot pair, timeframe, harga, setup, arah, BSL, SSL, dan liquidity level ke shared Market Intelligence.",
+    "Data tanpa timestamp asli, harga valid, atau freshness yang cukup tidak lagi dapat dianggap sebagai data market live.",
+    "Berita baru saja tidak dapat mengubah status keseluruhan market menjadi LIVE tanpa Mapping, Liquidity, atau Heatmap yang valid.",
+    "Amy customer-service bot membaca bentuk data versi, provider, secure vault, Jurnal, dan Library yang sama dengan modul sumbernya.",
+    "Menu angka 1–6 dan perintah membuka Mapping, Market Intel, Jurnal, Library, Media, Catatan, Asisten, Statistik, Academy, dan Beranda sudah terhubung.",
+    "Pembacaan IndexedDB dari Home dan Amy dibuat read-only, tidak membuat database kosong, serta menutup handle yang terlambat setelah timeout.",
+    "Jalur AI menerima workspace seluruh modul dengan canonical market freshness, sementara jalur bot tetap lokal dan hemat API.",
+    "Seluruh regression JavaScript, Android unit test, lint, signed APK, package, version, dan signer berhasil diverifikasi."
   ],
   "changelog": [
-    "Assistant timeout and stuck-state recovery",
-    "Secure-vault compatibility for legacy Journal assistant",
-    "Journal v2 placement and layout stabilization",
-    "Missing-data freshness correction",
-    "Academy markup repair",
-    "Expanded Preview regression gates"
+    "Canonical Mapping-to-Market-Intel shared snapshot",
+    "No fabricated market timestamps",
+    "Market freshness requires valid price-bearing source",
+    "News-only LIVE state prevention",
+    "Customer-service data contract repair",
+    "Numeric menu and Journal deep-link routing",
+    "Safe read-only IndexedDB connectivity",
+    "Corrected full-workspace AI escalation context",
+    "Resilient shared-state memory fallback",
+    "Cross-module connectivity regression coverage"
   ]
 }
