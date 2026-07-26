@@ -1,0 +1,276 @@
+name: Amy FX Blueprint Preview Release
+
+on:
+  push:
+    branches:
+      - experiment/heatmap-news-20260722
+    paths-ignore:
+      - preview-update.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  statuses: write
+
+concurrency:
+  group: amyfx-blueprint-preview-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
+  AMYFX_APP_LABEL: Amy FX Preview
+  AMYFX_URI_SCHEME: amyfxpreview
+  AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/heatmap-news-20260722/preview-update.json
+  AMYFX_KEYSTORE_PATH: /tmp/amy-fx-preview-signing.keystore
+  AMYFX_KEYSTORE_PASSWORD: android
+  AMYFX_KEY_ALIAS: androiddebugkey
+  AMYFX_KEY_PASSWORD: android
+  AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
+
+jobs:
+  build-publish-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout Preview branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare immutable Preview identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          version_code=$((930000 + GITHUB_RUN_NUMBER))
+          version_name="2.0.0-preview.${GITHUB_RUN_NUMBER}"
+          release_tag="amyfx-blueprint-preview-${version_name}"
+          artifact_name="AmyFX-Preview-${version_name}-signed"
+          {
+            echo "AMYFX_VERSION_CODE=$version_code"
+            echo "AMYFX_VERSION_NAME=$version_name"
+            echo "AMYFX_RELEASE_TAG=$release_tag"
+            echo "AMYFX_ARTIFACT_NAME=$artifact_name"
+          } >> "$GITHUB_ENV"
+
+      - name: Mark Preview release pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='pending' \
+            -f context='Amy FX Blueprint Preview' \
+            -f description="Building $AMYFX_VERSION_NAME" \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Apply Blueprint to Preview source
+        run: |
+          set -euo pipefail
+          python3 tools/apply-blueprint-preview.py
+
+      - name: Validate Blueprint contracts and JavaScript
+        run: |
+          set -euo pipefail
+          node --check app/src/main/assets/apps/shared/amyfx-blueprint-v1.js
+          node --check app/src/main/assets/app-version.js
+          node --check app/src/main/assets/update-checker.js
+          python3 -m py_compile tools/apply-blueprint-preview.py
+          node --test --test-force-exit tests/blueprint-preview-v1.test.mjs
+
+      - name: Run full JavaScript regression against production baseline
+        run: npm test
+
+      - name: Configure Preview identity and updater channel
+        run: |
+          set -euo pipefail
+          node tools/configure-preview-web-version.mjs "$AMYFX_VERSION_NAME" "$AMYFX_VERSION_CODE" "$AMYFX_UPDATE_MANIFEST_URL"
+          node --check app/src/main/assets/app-version.js
+          node --check app/src/main/assets/update-checker.js
+          grep -Fq "name: '$AMYFX_VERSION_NAME', code: $AMYFX_VERSION_CODE" app/src/main/assets/app-version.js
+          grep -Fq "window.AmyFXUpdateManifestUrl = '$AMYFX_UPDATE_MANIFEST_URL';" app/src/main/assets/app-version.js
+          grep -Fq 'Update Amy FX Preview Tersedia' app/src/main/assets/update-checker.js
+          grep -Fq 'announceNativeUpdate(latestCode, latestName);' app/src/main/assets/update-checker.js
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Restore permanent Preview signing key
+        id: signing-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: amy-fx-debug-keystore-v1
+
+      - name: Verify permanent Preview signing key
+        run: |
+          set -euo pipefail
+          test "${{ steps.signing-cache.outputs.cache-hit }}" = "true"
+          cp "$HOME/.android/debug.keystore" "$AMYFX_KEYSTORE_PATH"
+          actual="$(keytool -list -v -keystore "$AMYFX_KEYSTORE_PATH" -storepass "$AMYFX_KEYSTORE_PASSWORD" -alias "$AMYFX_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1)"
+          test "$actual" = "$AMYFX_SIGNING_CERT_SHA256"
+
+      - name: Android tests, lint, and signed build
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease --stacktrace --no-daemon --no-configuration-cache
+
+      - name: Verify APK identity and signer
+        run: |
+          set -euo pipefail
+          APK='app/build/outputs/apk/release/app-release.apk'
+          AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
+          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          test -s "$APK"
+          "$AAPT" dump badging "$APK" | tee /tmp/preview-badging.txt
+          grep -Fq "package: name='com.amyelitesuite.learningpreview' versionCode='$AMYFX_VERSION_CODE' versionName='$AMYFX_VERSION_NAME'" /tmp/preview-badging.txt
+          grep -Fq "application-label:'Amy FX Preview'" /tmp/preview-badging.txt
+          "$APKSIGNER" verify --verbose "$APK"
+          cert_entry="$(unzip -Z1 "$APK" | grep -E '^META-INF/[^/]+\.(RSA|DSA|EC)$' | head -n1)"
+          test -n "$cert_entry"
+          unzip -p "$APK" "$cert_entry" > /tmp/amyfx-preview-cert
+          expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          actual="$(keytool -printcert -file /tmp/amyfx-preview-cert | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          test "$actual" = "$expected"
+          cp "$APK" AmyFX-Preview-latest.apk
+          sha256sum AmyFX-Preview-latest.apk | tee AmyFX-Preview-latest.apk.sha256
+
+      - name: Commit Blueprint source checkpoint
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "release(preview): install Blueprint v1 as $AMYFX_VERSION_NAME [skip ci]"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+          echo "AMYFX_SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Publish immutable signed Preview release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $AMYFX_RELEASE_TAG already exists; refusing replacement."
+            exit 1
+          fi
+          cat > /tmp/amyfx-preview-release-notes.md <<NOTES
+          Amy FX Preview $AMYFX_VERSION_NAME — Blueprint Upgrade v1.0.
+
+          - Canonical Market Snapshot, Decision Contract, Setup Lifecycle, Liquidity Contract, Context Envelope, Journal v2, Conversation, dan Migration Ledger.
+          - Global Amy AI Mentor tersedia dari Beranda, Mapping, Market Intel, Jurnal, dan Academy.
+          - API key dipindahkan ke secure native vault berbasis Android Keystore/EncryptedSharedPreferences.
+          - Provider Gemini, OpenRouter, dan DeepSeek memakai routing, timeout, cancel, fallback, dan error category yang aman.
+          - Command Center, freshness/TTL, notification ledger, dan Plan → Execution → Outcome diaktifkan.
+          - Package Preview dan sertifikat permanen tetap sama; Amy FX produksi/main tidak diubah.
+          NOTES
+          gh release create "$AMYFX_RELEASE_TAG" \
+            "AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
+            "AmyFX-Preview-latest.apk.sha256#AmyFX-Preview-latest.apk.sha256" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$AMYFX_SOURCE_SHA" \
+            --prerelease \
+            --title "Amy FX Preview $AMYFX_VERSION_NAME — Blueprint Upgrade v1.0" \
+            --notes-file /tmp/amyfx-preview-release-notes.md
+          gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
+
+      - name: Activate Preview update notification channel
+        run: |
+          set -euo pipefail
+          export RELEASE_DATE="$(date -u +%F)"
+          export APK_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${AMYFX_RELEASE_TAG}/AmyFX-Preview-latest.apk"
+          python3 - <<'PY'
+          import json
+          import os
+
+          version_code = int(os.environ['AMYFX_VERSION_CODE'])
+          assert version_code > 920011, 'Preview versionCode must exceed installed 920011'
+          payload = {
+              'channel': 'amyfx-preview-blueprint-v1',
+              'latest_version_code': version_code,
+              'latest_version_name': os.environ['AMYFX_VERSION_NAME'],
+              'versionCode': version_code,
+              'version': os.environ['AMYFX_VERSION_NAME'],
+              'releaseDate': os.environ['RELEASE_DATE'],
+              'apk_url': os.environ['APK_URL'],
+              'downloadUrl': os.environ['APK_URL'],
+              'force_update': False,
+              'mandatory': False,
+              'enabled': True,
+              'release_notes': [
+                  'Amy FX Preview sekarang memakai Blueprint Upgrade v1.0.',
+                  'Global Amy AI Mentor tersedia lintas Beranda, Mapping, Intel, Jurnal, dan Academy.',
+                  'API key dipindahkan aman ke native secure vault.',
+                  'Market Snapshot, freshness, Decision Contract, dan Setup Lifecycle disatukan.',
+                  'Journal v2 menghubungkan Plan, Execution, Outcome, dan tindakan berikutnya.',
+                  'Command Center dan notifikasi proaktif memakai deduplikasi event.'
+              ],
+              'changelog': [
+                  'Blueprint contracts and IndexedDB repositories',
+                  'Global context-aware Amy Mentor overlay',
+                  'Android Keystore backed provider vault',
+                  'Canonical freshness and setup lifecycle',
+                  'Journal v2 migration and review loop',
+                  'Immutable signed Preview release'
+              ]
+          }
+          with open('preview-update.json', 'w', encoding='utf-8') as handle:
+              json.dump(payload, handle, ensure_ascii=False, indent=2)
+              handle.write('\n')
+          PY
+          python3 -m json.tool preview-update.json >/dev/null
+          git add preview-update.json
+          git commit -m "release(preview): activate $AMYFX_VERSION_NAME update notification [skip ci]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Upload signed Preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.AMYFX_ARTIFACT_NAME }}
+          path: |
+            AmyFX-Preview-latest.apk
+            AmyFX-Preview-latest.apk.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Mark Preview release success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='success' \
+            -f context='Amy FX Blueprint Preview' \
+            -f description="$AMYFX_VERSION_NAME published; update notification channel activated" \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+
+      - name: Mark Preview release failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='failure' \
+            -f context='Amy FX Blueprint Preview' \
+            -f description='Blueprint Preview release failed before update activation' \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
