@@ -1,8 +1,8 @@
 "use strict";
 
 (function () {
-  if (window.__amyPreviewApiAccessV2) return;
-  window.__amyPreviewApiAccessV2 = true;
+  if (window.__amyPreviewApiAccessV3) return;
+  window.__amyPreviewApiAccessV3 = true;
 
   const SETTINGS_KEY = "tradingLibraryManager.assistantSettings.v1";
   let mounted = false;
@@ -15,6 +15,11 @@
     }
   }
 
+  function writeSettings(patch) {
+    const current = readSettings();
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...current, ...patch }));
+  }
+
   function hasStoredApi() {
     const saved = readSettings();
     return Boolean(
@@ -24,17 +29,17 @@
   }
 
   function injectStyle() {
-    if (document.querySelector("#amyPreviewAssistantUiV2")) return;
+    if (document.querySelector("#amyPreviewAssistantUiV3")) return;
     const style = document.createElement("style");
-    style.id = "amyPreviewAssistantUiV2";
+    style.id = "amyPreviewAssistantUiV3";
     style.textContent = `
       #assistantView {
-        padding-bottom: 144px !important;
+        padding-bottom: 190px !important;
       }
 
       #assistantView .amy-assistant-page-head {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: space-between;
         gap: 12px;
         margin: 2px 0 14px;
@@ -47,7 +52,7 @@
 
       #assistantView .amy-assistant-page-copy span {
         display: block;
-        margin-bottom: 3px;
+        margin-bottom: 4px;
         color: #d4af37;
         font-size: .7rem;
         font-weight: 900;
@@ -58,19 +63,21 @@
       #assistantView .amy-assistant-page-copy h2 {
         margin: 0;
         color: #f9fafb;
-        font-size: clamp(1.5rem, 7vw, 2rem);
+        font-size: clamp(1.55rem, 7vw, 2rem);
         line-height: 1.08;
         letter-spacing: -.04em;
       }
 
       #assistantView .amy-assistant-page-copy p {
-        margin: 6px 0 0;
+        max-width: 330px;
+        margin: 7px 0 0;
         color: rgba(229, 231, 235, .68);
         font-size: .8rem;
-        line-height: 1.45;
+        line-height: 1.5;
       }
 
       #assistantView #clearAssistantHistoryBtn {
+        position: static !important;
         flex: 0 0 auto;
         min-height: 42px;
         border: 1px solid rgba(248, 113, 113, .42);
@@ -78,7 +85,7 @@
         background: rgba(248, 113, 113, .07);
         padding: 0 14px;
         color: #ff858d;
-        font-size: .78rem;
+        font-size: .75rem;
         font-weight: 900;
         white-space: nowrap;
       }
@@ -90,7 +97,10 @@
 
       #assistantApiSettings.amy-preview-api-settings {
         order: 0 !important;
-        overflow: hidden;
+        width: 100%;
+        height: auto !important;
+        max-height: none !important;
+        overflow: hidden !important;
         border: 1px solid rgba(212, 175, 55, .32) !important;
         border-radius: 22px !important;
         background:
@@ -150,63 +160,101 @@
       }
 
       #assistantApiSettings .assistant-api-body {
+        position: relative !important;
         display: grid !important;
+        width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 12px !important;
+        overflow: visible !important;
         border-top: 1px solid rgba(212, 175, 55, .14) !important;
         padding: 14px !important;
       }
 
-      #assistantApiSettings .assistant-api-body > .field {
-        display: grid !important;
+      #assistantApiSettings .assistant-api-body > * {
+        position: static !important;
         min-width: 0;
-        gap: 7px;
+        height: auto;
+        max-height: none;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
       }
 
+      #assistantApiSettings .assistant-api-body > [hidden],
       #assistantApiSettings .assistant-api-body > .field[hidden] {
         display: none !important;
       }
 
+      #assistantApiSettings .assistant-api-body > .field {
+        display: grid !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        height: auto !important;
+        max-height: none !important;
+        gap: 7px;
+        overflow: visible !important;
+      }
+
       #assistantApiSettings .assistant-api-body > .field > span {
-        color: rgba(229, 231, 235, .75);
-        font-size: .72rem;
+        display: block !important;
+        color: rgba(229, 231, 235, .78);
+        font-size: .74rem;
         font-weight: 850;
       }
 
       #assistantApiSettings .assistant-api-body input,
       #assistantApiSettings .assistant-api-body select,
       #assistantApiSettings .assistant-api-body textarea {
-        width: 100%;
-        min-width: 0;
-        border: 1px solid rgba(212, 175, 55, .18) !important;
+        position: static !important;
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        min-height: 48px !important;
+        height: auto !important;
+        max-height: none;
+        overflow: visible;
+        border: 1px solid rgba(212, 175, 55, .22) !important;
         border-radius: 13px !important;
-        background: rgba(0, 0, 0, .27) !important;
+        background-color: rgba(0, 0, 0, .34) !important;
         color: #f9fafb !important;
         padding: 11px 12px !important;
         font-size: 16px !important;
+        line-height: 1.4 !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        z-index: auto !important;
         outline: none;
+      }
+
+      #assistantApiSettings .assistant-api-body select {
+        padding-right: 38px !important;
       }
 
       #assistantApiSettings .assistant-api-body input:focus,
       #assistantApiSettings .assistant-api-body select:focus,
       #assistantApiSettings .assistant-api-body textarea:focus {
-        border-color: rgba(212, 175, 55, .7) !important;
-        box-shadow: 0 0 0 3px rgba(212, 175, 55, .08);
+        border-color: rgba(212, 175, 55, .78) !important;
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, .09);
       }
 
       #assistantApiSettings #amyAiKeyPoolInput {
-        min-height: 108px;
-        max-height: 180px;
-        resize: vertical;
+        display: block !important;
+        min-height: 132px !important;
+        max-height: 230px !important;
+        resize: vertical !important;
         font-family: "JetBrains Mono", monospace;
         font-size: 13px !important;
-        line-height: 1.45;
+        line-height: 1.5 !important;
       }
 
       #assistantApiSettings #amyAiKeyPoolInput + small {
-        color: rgba(229, 231, 235, .55);
+        display: block;
+        color: rgba(229, 231, 235, .58);
         font-size: .68rem;
-        line-height: 1.45;
+        line-height: 1.5;
       }
 
       #assistantApiSettings .amy-api-pool-field,
@@ -222,45 +270,79 @@
         border: 1px solid rgba(212, 175, 55, .2) !important;
         border-radius: 14px !important;
         background: rgba(212, 175, 55, .065) !important;
-        color: rgba(249, 250, 251, .72) !important;
+        color: rgba(249, 250, 251, .74) !important;
         padding: 11px 12px !important;
         font-size: .74rem;
         line-height: 1.5;
       }
 
       #assistantApiSettings .toggle-field {
-        min-height: 44px;
-        border-color: rgba(212, 175, 55, .16) !important;
+        position: static !important;
+        display: flex !important;
+        min-height: 46px;
+        align-items: center;
+        gap: 9px;
+        border: 1px solid rgba(212, 175, 55, .16) !important;
         border-radius: 13px !important;
         background: rgba(255, 255, 255, .025) !important;
-        padding: 9px 11px !important;
+        padding: 10px 11px !important;
+      }
+
+      #assistantApiSettings .toggle-field input {
+        width: 18px !important;
+        min-width: 18px !important;
+        min-height: 18px !important;
+        height: 18px !important;
+        padding: 0 !important;
       }
 
       #assistantApiSettings .assistant-api-body > .form-actions {
+        position: static !important;
+        right: auto !important;
+        bottom: auto !important;
+        left: auto !important;
+        z-index: auto !important;
         display: grid !important;
-        grid-template-columns: minmax(0, 1.25fr) minmax(0, .8fr) minmax(0, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
         align-items: stretch !important;
         justify-content: stretch !important;
         gap: 8px !important;
-        margin: 0 !important;
+        width: 100% !important;
+        margin: 2px 0 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
       }
 
       #assistantApiSettings .assistant-api-body > .form-actions > button {
-        width: 100%;
-        min-width: 0;
-        min-height: 44px;
+        position: static !important;
+        grid-column: auto !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        min-height: 46px !important;
         border-radius: 13px !important;
-        padding: 9px 8px !important;
-        font-size: .75rem;
-        font-weight: 900;
+        padding: 9px 7px !important;
+        font-size: .75rem !important;
+        font-weight: 900 !important;
         white-space: nowrap;
+      }
+
+      #assistantView .assistant-room-card,
+      #assistantView .assistant-insight-card {
+        border-radius: 22px !important;
+        padding: 14px !important;
       }
 
       #assistantView .assistant-room-card {
         order: 1;
         min-height: 0 !important;
-        border-radius: 22px !important;
-        padding: 15px !important;
+      }
+
+      #assistantView .assistant-insight-card {
+        order: 2;
       }
 
       #assistantView .assistant-chat-headline {
@@ -343,11 +425,6 @@
         padding: 6px !important;
       }
 
-      #assistantView .mode-dropdown-container {
-        position: relative;
-        align-self: end;
-      }
-
       #assistantView .assistant-mode-toggle,
       #assistantView .assistant-send-button {
         display: grid;
@@ -365,16 +442,15 @@
         border: 1px solid rgba(57, 255, 136, .18);
         background: rgba(57, 255, 136, .07);
         color: #f9fafb;
-        font-size: 1.05rem;
       }
 
       #assistantView .assistant-send-button {
         background: #d4af37 !important;
         color: #111 !important;
-        box-shadow: 0 10px 22px rgba(212, 175, 55, .16);
       }
 
-      #assistantView .assistant-chat-input {
+      #assistantView .assistant-chat-input,
+      #assistantView .assistant-chat-input textarea {
         min-width: 0;
       }
 
@@ -390,23 +466,7 @@
         line-height: 1.4 !important;
       }
 
-      #assistantView .mode-dropdown-menu {
-        right: auto;
-        bottom: 52px;
-        left: 0;
-        z-index: 40;
-        min-width: 190px;
-        border: 1px solid rgba(57, 255, 136, .18);
-        border-radius: 16px;
-        background: rgba(4, 10, 7, .98);
-        padding: 6px;
-        box-shadow: 0 18px 48px rgba(0, 0, 0, .45);
-      }
-
       #assistantView .assistant-note {
-        display: flex;
-        align-items: flex-start;
-        gap: 9px;
         margin: 10px 0 0 !important;
         border: 1px solid rgba(57, 255, 136, .1);
         border-radius: 14px;
@@ -417,45 +477,31 @@
         line-height: 1.5 !important;
       }
 
-      #assistantView .assistant-note::before {
-        flex: 0 0 auto;
-        color: #d4af37;
-        content: "✓";
-        font-weight: 950;
-      }
-
-      #assistantView .assistant-insight-card {
-        order: 2;
-        border-radius: 22px !important;
-        padding: 14px !important;
-      }
-
       #assistantView .assistant-insight-card .assistant-card-headline {
         align-items: center !important;
         margin-bottom: 10px !important;
       }
 
       #assistantView .assistant-insight-card .compact-actions {
+        position: static !important;
+        bottom: auto !important;
         display: grid !important;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr 1fr !important;
         gap: 7px !important;
-        flex: 0 0 auto;
+        margin: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        padding: 0 !important;
+        backdrop-filter: none !important;
       }
 
       #assistantView .assistant-insight-card .compact-actions button {
+        position: static !important;
+        grid-column: auto !important;
         min-height: 42px;
         border-radius: 13px;
         padding: 8px 13px;
         font-size: .75rem;
-      }
-
-      #assistantView .assistant-insight-card .insight-box {
-        min-height: 0 !important;
-        max-height: 280px !important;
-        border-radius: 15px !important;
-        padding: 11px !important;
-        color: rgba(249, 250, 251, .72);
-        font-size: .82rem;
       }
 
       #assistantView #amyOpenApiSettingsBtn {
@@ -463,10 +509,6 @@
       }
 
       @media (max-width: 520px) {
-        #assistantView .amy-assistant-page-head {
-          align-items: flex-start;
-        }
-
         #assistantView .amy-assistant-page-copy p {
           max-width: 220px;
         }
@@ -478,7 +520,7 @@
         }
 
         #assistantApiSettings .assistant-api-body {
-          grid-template-columns: 1fr;
+          grid-template-columns: 1fr !important;
           padding: 12px !important;
         }
 
@@ -487,21 +529,16 @@
         }
 
         #assistantApiSettings .assistant-api-body > .form-actions {
-          grid-template-columns: minmax(0, 1.2fr) minmax(0, .75fr) minmax(0, 1fr);
+          grid-template-columns: 1fr 1fr !important;
+        }
+
+        #assistantApiSettings .assistant-api-body > .form-actions > button:nth-child(3) {
+          grid-column: 1 / -1 !important;
         }
 
         #assistantView .assistant-room-card,
         #assistantView .assistant-insight-card {
           padding: 12px !important;
-        }
-
-        #assistantView .assistant-quick-prompts {
-          grid-template-columns: 1fr 1fr;
-        }
-
-        #assistantView .assistant-insight-card .assistant-card-headline {
-          display: grid !important;
-          grid-template-columns: minmax(0, 1fr) auto;
         }
       }
 
@@ -514,24 +551,14 @@
           justify-self: start;
         }
 
-        #assistantView .assistant-quick-prompts {
-          grid-template-columns: 1fr;
-        }
-
-        #assistantView .quick-prompt-btn:nth-child(3) {
-          grid-column: auto;
-        }
-
+        #assistantView .assistant-quick-prompts,
         #assistantApiSettings .assistant-api-body > .form-actions {
-          grid-template-columns: 1fr;
+          grid-template-columns: 1fr !important;
         }
 
-        #assistantView .assistant-insight-card .assistant-card-headline {
-          grid-template-columns: 1fr;
-        }
-
-        #assistantView .assistant-insight-card .compact-actions {
-          width: 100%;
+        #assistantView .quick-prompt-btn:nth-child(3),
+        #assistantApiSettings .assistant-api-body > .form-actions > button:nth-child(3) {
+          grid-column: auto !important;
         }
       }
     `;
@@ -554,7 +581,7 @@
     settings.open = true;
     requestAnimationFrame(() => {
       settings.scrollIntoView({ behavior: "smooth", block: "start" });
-      setTimeout(focusApiInput, 280);
+      setTimeout(focusApiInput, 220);
     });
   }
 
@@ -581,21 +608,75 @@
     document.querySelector("#amyOpenApiSettingsBtn")?.remove();
   }
 
-  function tidyApiBody(settings) {
+  function ensurePoolUi(settings) {
     const body = settings.querySelector(".assistant-api-body");
     if (!body) return;
 
-    if (!body.querySelector(".amy-preview-api-hint")) {
-      const hint = document.createElement("p");
+    const saved = readSettings();
+    const actions = body.querySelector(".form-actions");
+    const providerField = body.querySelector("#aiProviderInput")?.closest(".field");
+
+    let hint = body.querySelector(".amy-preview-api-hint");
+    if (!hint) {
+      hint = document.createElement("p");
       hint.className = "amy-preview-api-hint";
       hint.textContent = "Masukkan API Gemini dan OpenRouter ke Pool API Keys. Sistem merotasi key otomatis saat limit, timeout, atau error.";
-      body.insertBefore(hint, body.firstElementChild);
+    }
+    if (body.firstElementChild !== hint) body.insertBefore(hint, body.firstElementChild);
+
+    let pool = body.querySelector("#amyAiKeyPoolInput");
+    let poolField = pool?.closest(".field");
+    if (!pool) {
+      poolField = document.createElement("label");
+      poolField.className = "field amy-api-pool-field";
+      poolField.innerHTML = `
+        <span>Pool API Keys</span>
+        <textarea id="amyAiKeyPoolInput" rows="6" autocomplete="off" spellcheck="false" placeholder="gemini:API_KEY_1&#10;gemini:API_KEY_2&#10;openrouter:API_KEY"></textarea>
+        <small>Satu API per baris. Format: provider:API_KEY. Gemini dan OpenRouter dipakai lebih dahulu.</small>`;
+      pool = poolField.querySelector("textarea");
+      pool.value = saved.apiPoolText || "";
+      body.insertBefore(poolField, actions || null);
+    } else {
+      poolField?.classList.add("amy-api-pool-field");
+      pool.rows = 6;
     }
 
-    const pool = body.querySelector("#amyAiKeyPoolInput");
-    if (pool) {
-      pool.rows = 4;
-      pool.closest(".field")?.classList.add("amy-api-pool-field");
+    let paid = body.querySelector("#amyAiPaidFallbackInput");
+    let paidField = paid?.closest(".toggle-field");
+    if (!paid) {
+      paidField = document.createElement("label");
+      paidField.className = "toggle-field form-toggle";
+      paidField.innerHTML = `<input id="amyAiPaidFallbackInput" type="checkbox"><span>Gunakan DeepSeek sebagai fallback berbayar terakhir</span>`;
+      paid = paidField.querySelector("input");
+      paid.checked = Boolean(saved.paidFallback);
+      body.insertBefore(paidField, actions || null);
+    }
+
+    if (providerField && poolField && providerField.nextElementSibling !== poolField) {
+      providerField.insertAdjacentElement("afterend", poolField);
+      poolField.insertAdjacentElement("afterend", paidField);
+    }
+
+    const saveButton = body.querySelector("#saveGeminiKeyBtn");
+    if (saveButton && !saveButton.dataset.amyPreviewPoolSave) {
+      saveButton.dataset.amyPreviewPoolSave = "1";
+      saveButton.addEventListener("click", () => {
+        writeSettings({
+          apiPoolText: pool.value || "",
+          paidFallback: Boolean(paid.checked),
+          provider: body.querySelector("#aiProviderInput")?.value || saved.provider || "gemini"
+        });
+      });
+    }
+
+    const clearButton = body.querySelector("#clearGeminiKeyBtn");
+    if (clearButton && !clearButton.dataset.amyPreviewPoolClear) {
+      clearButton.dataset.amyPreviewPoolClear = "1";
+      clearButton.addEventListener("click", () => {
+        pool.value = "";
+        paid.checked = false;
+        writeSettings({ apiPoolText: "", paidFallback: false });
+      });
     }
   }
 
@@ -614,7 +695,7 @@
     }
 
     ensurePageHeader(view, headline);
-    tidyApiBody(settings);
+    ensurePoolUi(settings);
 
     if (!hasStoredApi()) settings.open = true;
     mounted = true;
@@ -625,6 +706,7 @@
     if (mount()) {
       setTimeout(mount, 120);
       setTimeout(mount, 500);
+      setTimeout(mount, 1200);
       return;
     }
     const timer = setInterval(() => {
