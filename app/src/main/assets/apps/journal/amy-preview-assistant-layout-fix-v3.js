@@ -248,11 +248,8 @@
 
     [view, workspace, settings, room, log, barContainer, insight].forEach(removeInlineSizing);
 
-    if (settings) {
-      settings.dataset.amyLayoutFixed = "1";
-      if (options.collapseStored && hasStoredApi() && settings.dataset.amyUserOpened !== "1") {
-        settings.open = false;
-      }
+    if (settings && options.collapseStored && hasStoredApi() && settings.dataset.amyUserOpened !== "1") {
+      settings.open = false;
     }
   }
 
@@ -265,6 +262,7 @@
 
   document.addEventListener("click", event => {
     const settings = document.querySelector("#assistantApiSettings");
+
     if (event.target.closest?.("#assistantApiSettings > summary") && settings) {
       settings.dataset.amyUserOpened = settings.open ? "0" : "1";
       setTimeout(() => normalizeLayout(), 0);
@@ -289,30 +287,13 @@
     }
   }, true);
 
-  const observer = new MutationObserver(mutations => {
-    if (mutations.some(row => row.type === "childList" || row.attributeName === "style")) {
-      normalizeLayout();
-    }
+  window.addEventListener("focus", () => {
+    setTimeout(() => normalizeLayout({ collapseStored: true }), 80);
   });
 
-  function startObserver() {
-    const view = document.querySelector("#assistantView");
-    if (!view) return;
-    observer.observe(view, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["style"]
-    });
-  }
-
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => {
-      boot();
-      startObserver();
-    }, { once: true });
+    document.addEventListener("DOMContentLoaded", boot, { once: true });
   } else {
     boot();
-    startObserver();
   }
 })();
