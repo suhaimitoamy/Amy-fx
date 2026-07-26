@@ -189,12 +189,36 @@
     }
   }
 
-  function loadMentorConversationRuntime() {
-    if (!PROVIDER_SCRIPT_URL || document.querySelector("script[data-amyfx-mentor-conversation='v1']")) return;
+  function runtimeUrl(filename) {
+    return PROVIDER_SCRIPT_URL ? new URL(filename, PROVIDER_SCRIPT_URL).href : filename;
+  }
+
+  function loadUniversalAccessRuntime() {
+    if (window.__amyFxMentorUniversalAccessV1 || document.querySelector("script[data-amyfx-mentor-universal='v1']")) return;
     const script = document.createElement("script");
-    script.src = new URL("amyfx-mentor-conversation-v1.js", PROVIDER_SCRIPT_URL).href;
+    script.src = runtimeUrl("amyfx-mentor-universal-access-v1.js");
+    script.dataset.amyfxMentorUniversal = "v1";
+    script.async = false;
+    (document.head || document.documentElement).appendChild(script);
+  }
+
+  function loadMentorConversationRuntime() {
+    if (!PROVIDER_SCRIPT_URL) return;
+    const existing = document.querySelector("script[data-amyfx-mentor-conversation='v1']");
+    if (existing) {
+      if (window.__amyFxMentorConversationV1) loadUniversalAccessRuntime();
+      else {
+        existing.addEventListener("load", loadUniversalAccessRuntime, { once: true });
+        existing.addEventListener("error", loadUniversalAccessRuntime, { once: true });
+      }
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = runtimeUrl("amyfx-mentor-conversation-v1.js");
     script.dataset.amyfxMentorConversation = "v1";
     script.async = false;
+    script.addEventListener("load", loadUniversalAccessRuntime, { once: true });
+    script.addEventListener("error", loadUniversalAccessRuntime, { once: true });
     (document.head || document.documentElement).appendChild(script);
   }
 
@@ -249,6 +273,7 @@
   window.AmyFXProviderDetection = Object.freeze({
     inferProviderFromKey,
     normalizePool,
-    repairNow
+    repairNow,
+    loadUniversalAccessRuntime
   });
 })();
