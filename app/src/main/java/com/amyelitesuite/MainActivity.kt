@@ -133,6 +133,7 @@ class MainActivity : Activity() {
             .build()
 
         webView.addJavascriptInterface(WebAppInterface(this), "Android")
+        webView.addJavascriptInterface(AmyFxAiProviderRepairBridge(this), "AmyNativeAIRepair")
         webView.addJavascriptInterface(AmyFxAiBridge(this, webView), "AmyNativeAI")
 
         webView.webChromeClient = object : WebChromeClient() {
