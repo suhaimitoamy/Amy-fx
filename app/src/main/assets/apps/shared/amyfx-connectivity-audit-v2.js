@@ -4,7 +4,7 @@
   if (window.__amyFxConnectivityAuditV2) return;
   window.__amyFxConnectivityAuditV2 = true;
 
-  const VERSION = "2.0.0";
+  const VERSION = "2.1.0";
   const ROUTING_KEY = "amyfx.mentor.routing.v1";
   const SETTINGS_KEY = "amyfx.globalAiSettings.v1";
   const INTEL_KEY = "amyfx.market.intel.v1";
@@ -59,7 +59,10 @@
 
       let settled = false;
       const finish = value => {
-        if (settled) return;
+        if (settled) {
+          try { value?.close?.(); } catch {}
+          return;
+        }
         settled = true;
         resolve(value);
       };
@@ -100,6 +103,11 @@
           resolve(Array.isArray(rows) ? rows : []);
         };
         request.onerror = () => {
+          db.close();
+          const legacy = readLocalJson(legacyKey, []);
+          resolve(Array.isArray(legacy) ? legacy : []);
+        };
+        transaction.onabort = () => {
           db.close();
           const legacy = readLocalJson(legacyKey, []);
           resolve(Array.isArray(legacy) ? legacy : []);
@@ -158,37 +166,38 @@
     return { total: rows.length, by_category: byCategory, by_type: byType, by_status: byStatus };
   }
 
+  function marketCandidate(part, price, timestamp) {
+    const numericPrice = Number(price);
+    const numericTime = Number(part?.storedAt || 0) || new Date(timestamp || 0).getTime();
+    if (!Number.isFinite(numericPrice) || numericPrice <= 0 || !Number.isFinite(numericTime) || numericTime <= 86_400_000) return null;
+    return { price: numericPrice, time: numericTime, part };
+  }
+
   function marketSnapshot() {
     const shared = window.AmyFXIntel?.read?.() || window.AmyFXIntelState || readLocalJson(INTEL_KEY, {});
     const liveState = window.AmyFXMarketState || window.lastMappingResult || shared.mapping || null;
-    const parts = [shared.mapping, shared.liquidity, shared.heatmap].filter(Boolean);
-    const newestStoredAt = Math.max(0, ...parts.map(part => Number(part?.storedAt || 0)));
-    const ageMs = newestStoredAt ? Math.max(0, Date.now() - newestStoredAt) : Number.MAX_SAFE_INTEGER;
-    const hasPrice = Number(liveState?.price || shared.mapping?.price || shared.liquidity?.currentPrice || shared.heatmap?.currentPrice || localStorage.getItem("last_price") || 0) > 0;
-    const fresh = navigator.onLine !== false && newestStoredAt > 0 && ageMs <= MARKET_MAX_AGE && hasPrice;
-    const timestampCandidates = [
-      liveState?.capturedAt,
-      liveState?.updatedAt,
-      shared.mapping?.updated,
-      shared.liquidity?.updated,
-      shared.heatmap?.updated,
-      newestStoredAt || null
-    ];
-    let capturedAt = null;
-    for (const value of timestampCandidates) {
-      const time = new Date(value || 0).getTime();
-      if (Number.isFinite(time) && time > 86_400_000) { capturedAt = new Date(time).toISOString(); break; }
-    }
+    const candidates = [
+      marketCandidate(shared.mapping, shared.mapping?.price, shared.mapping?.updated || shared.mapping?.capturedAt),
+      marketCandidate(shared.liquidity, shared.liquidity?.currentPrice, shared.liquidity?.updated),
+      marketCandidate(shared.heatmap, shared.heatmap?.currentPrice, shared.heatmap?.updated),
+      marketCandidate(null, liveState?.price, liveState?.capturedAt || liveState?.updatedAt)
+    ].filter(Boolean).sort((left, right) => right.time - left.time);
+    const latest = candidates[0] || null;
+    const ageMs = latest ? Math.max(0, Date.now() - latest.time) : Number.MAX_SAFE_INTEGER;
+    const fresh = navigator.onLine !== false && Boolean(latest) && ageMs <= MARKET_MAX_AGE && liveState?.dataStale !== true;
+    const capturedAt = latest ? new Date(latest.time).toISOString() : null;
+    const setups = readLocalJson("amy_mapping_setups", []);
+    const analyses = readLocalJson("amy_mapping_analyses", []);
     return {
       pair: "XAU/USD",
       captured_at: fresh ? capturedAt : null,
       last_captured_at: capturedAt,
-      freshness: { state: fresh ? "fresh" : newestStoredAt ? "stale" : "missing", age_ms: ageMs, max_age_ms: MARKET_MAX_AGE },
+      freshness: { state: fresh ? "fresh" : latest ? "stale" : "missing", age_ms: ageMs, max_age_ms: MARKET_MAX_AGE },
       live_state: liveState,
       shared_intelligence: shared,
-      current_price: Number(liveState?.price || shared.mapping?.price || shared.liquidity?.currentPrice || shared.heatmap?.currentPrice || localStorage.getItem("last_price") || 0) || null,
-      active_and_recent_setups: Array.isArray(readLocalJson("amy_mapping_setups", [])) ? newest(readLocalJson("amy_mapping_setups", []), 12) : [],
-      recent_analyses: Array.isArray(readLocalJson("amy_mapping_analyses", [])) ? newest(readLocalJson("amy_mapping_analyses", []), 10) : []
+      current_price: latest?.price || Number(localStorage.getItem("last_price") || 0) || null,
+      active_and_recent_setups: Array.isArray(setups) ? newest(setups, 12) : [],
+      recent_analyses: Array.isArray(analyses) ? newest(analyses, 10) : []
     };
   }
 
@@ -251,6 +260,36 @@
         provider_status: ai,
         secure_vault: { available: ai.secure_vault_available }
       }
+    };
+  }
+
+  async function buildAiContext(question, options = {}) {
+    const market = marketSnapshot();
+    let workspace = null;
+    try {
+      workspace = await window.AmyFXUniversalContext?.collect?.(question);
+    } catch {}
+    if (!workspace || typeof workspace !== "object") {
+      workspace = await buildBotWorkspace(question);
+      workspace.schema = "AmyFXUniversalWorkspaceContext";
+      workspace.request_query = clean(question);
+    }
+    workspace.request_query = clean(question);
+    workspace.market = { ...(workspace.market || {}), ...market };
+    const capturedAt = market.captured_at;
+    return {
+      id: `ctx-ai-${Date.now()}`,
+      schema: "ContextEnvelope",
+      schema_version: 1,
+      source_module: options.sourceModule || currentModule(),
+      captured_at: capturedAt,
+      display_time: capturedAt ? new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Makassar", dateStyle: "medium", timeStyle: "short", hour12: false }).format(new Date(capturedAt)) + " WITA" : "Belum ada data",
+      privacy_scope: "all_modules_read_only_no_secrets",
+      access_scope: "all_amy_fx_modules",
+      freshness: market.freshness,
+      source_refs: [{ module: "workspace", scope: "all_modules", captured_at: workspace.generated_at || new Date().toISOString() }],
+      payload: { workspace },
+      errors: []
     };
   }
 
@@ -353,7 +392,8 @@
     const ask = async function (question, options = {}) {
       const normalized = normalizeMenuInput(question);
       if (customer.needsAi(normalized)) {
-        return originalAsk(normalized, options);
+        const context = await buildAiContext(normalized, options);
+        return originalAsk(normalized, { ...options, context });
       }
 
       const workspace = await buildBotWorkspace(normalized);
@@ -385,7 +425,7 @@
     window.AmyFXOS = Object.freeze({
       ...os,
       ask,
-      connectivityAudit: Object.freeze({ version: VERSION, buildBotWorkspace, navigate, applyJournalDeepLink }),
+      connectivityAudit: Object.freeze({ version: VERSION, buildBotWorkspace, buildAiContext, navigate, applyJournalDeepLink }),
       __amyConnectivityAuditV2: true
     });
     window.dispatchEvent(new CustomEvent("amyfx:connectivity-ready", { detail: { version: VERSION } }));
@@ -430,6 +470,7 @@
   window.AmyFXConnectivityAudit = Object.freeze({
     version: VERSION,
     buildBotWorkspace,
+    buildAiContext,
     normalizeMenuInput,
     navigationIntent,
     navigate,
