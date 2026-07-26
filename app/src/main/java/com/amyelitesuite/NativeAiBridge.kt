@@ -35,6 +35,8 @@ class NativeAiBridge(private val webView: WebView) {
         "authorization",
         "content-type",
         "http-referer",
+        "x-goog-api-key",
+        "x-openrouter-title",
         "x-title"
     )
 
