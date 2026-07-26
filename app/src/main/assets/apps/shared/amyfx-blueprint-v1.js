@@ -242,7 +242,7 @@
       const date = new Date(value);
       if (value && !Number.isNaN(date.getTime())) return date.toISOString();
     }
-    return nowIso();
+    return null;
   }
 
   function visibleText(selector, limit = 900) {
@@ -314,7 +314,7 @@
   }
 
   async function buildContext(sourceModule = moduleName) {
-    const capturedAt = resolveCapturedAt();
+    const capturedAt = resolveCapturedAt() || (["journal", "academy"].includes(sourceModule) ? nowIso() : null);
     const timeframe = resolveTimeframe();
     const freshnessKey = TTL[timeframe] ? timeframe : sourceModule === "intel" ? "news" : sourceModule === "journal" ? "journal" : sourceModule === "academy" ? "academy" : "quote";
     const payload = sourceModule === "mapping" ? mappingPayload()
@@ -328,7 +328,7 @@
       schema_version: 1,
       source_module: sourceModule,
       captured_at: capturedAt,
-      display_time: Time.wita(capturedAt),
+      display_time: capturedAt ? Time.wita(capturedAt) : "Belum ada data",
       privacy_scope: sourceModule === "journal" ? "selected_or_aggregate_only" : "module_visible_state",
       freshness: Freshness.assess(capturedAt, freshnessKey),
       source_refs: [{ module: sourceModule, url: location.pathname, captured_at: capturedAt }],
@@ -672,7 +672,9 @@
       lines.push("Periksa invalidasi, expiry, dan bukti yang bertentangan sebelum membuat rencana.");
     } else if (context.source_module === "journal") {
       const summary = payload.summary || {};
-      lines.push(`Data terpilih: ${summary.total || 0} jurnal, win rate ${summary.winRate ?? "belum cukup sampel"}%.`);
+      lines.push(summary.winRate == null
+        ? `Data terpilih: ${summary.total || 0} jurnal, win rate belum cukup sampel.`
+        : `Data terpilih: ${summary.total || 0} jurnal, win rate ${summary.winRate}%.`);
       lines.push("Pisahkan rencana awal, eksekusi aktual, outcome, dan satu tindakan perbaikan.");
     } else if (context.source_module === "intel") {
       lines.push("Berita dipakai sebagai risiko dan konteks, bukan sumber arah otomatis.");
@@ -935,7 +937,7 @@
 
   function ensureJournalTimeline() {
     if (moduleName !== "journal" || !flags.journal_schema_v2 || document.querySelector("[data-amy-journal-v2]")) return;
-    const target = document.querySelector("main, #app, .journal-shell");
+    const target = document.querySelector("#journalView, [data-journal-view]");
     if (!target) return;
     const draft = readJsonStorage("amyfx.os.journalDraft.v2", { plan: "", execution: "", outcome: "", next_action: "" });
     const card = document.createElement("section");
@@ -1008,7 +1010,7 @@
     syncUi();
     const observerTarget = moduleName === "home" ? document.getElementById("main-content") : document.body;
     if (observerTarget) {
-      new MutationObserver(syncUi).observe(observerTarget, { childList: true, subtree: moduleName === "home" });
+      new MutationObserver(syncUi).observe(observerTarget, { childList: true, subtree: true });
     }
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) refreshMentorContext();
