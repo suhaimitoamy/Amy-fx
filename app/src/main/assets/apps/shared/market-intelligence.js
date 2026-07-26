@@ -3,19 +3,26 @@
 
   const STORE_KEY = 'amyfx.market.intel.v1';
   const MAX_AGE = 5 * 60 * 1000;
+  let memoryState = {};
 
   function safeParse(value, fallback) {
     try { return JSON.parse(value); } catch (_) { return fallback; }
   }
 
   function read() {
-    return safeParse(localStorage.getItem(STORE_KEY) || '{}', {});
+    try {
+      const parsed = safeParse(localStorage.getItem(STORE_KEY) || '{}', {});
+      if (parsed && typeof parsed === 'object' && Object.keys(parsed).length) memoryState = parsed;
+      return parsed && typeof parsed === 'object' ? parsed : memoryState;
+    } catch (_) {
+      return memoryState;
+    }
   }
 
   function write(part, payload) {
-    const state = read();
-    state[part] = { ...payload, storedAt: Date.now() };
-    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    const state = { ...read(), [part]: { ...payload, storedAt: Date.now() } };
+    memoryState = state;
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (_) {}
     window.AmyFXIntelState = { ...state, updatedAt: payload?.updated || new Date().toISOString() };
     if (part === 'heatmap') window.AmyFXHeatmapState = { ...state[part], sourceMethod: payload?.source || payload?.sourceMethod || 'OHLC-derived/modelled liquidity' };
     window.dispatchEvent(new CustomEvent('amyfx:market-update', { detail: state }));
@@ -31,16 +38,6 @@
     if (minutes >= 13 * 60 && minutes < 17 * 60) return { id: 'LONDON', label: 'LONDON ACTIVE' };
     if (minutes >= 19 * 60 + 30 && minutes < 23 * 60) return { id: 'NEW_YORK', label: 'NEW YORK ACTIVE' };
     return { id: 'OFF_SESSION', label: 'OFF-SESSION' };
-  }
-
-  function freshness(state) {
-    const stamps = ['heatmap', 'liquidity', 'news', 'mapping']
-      .map(key => Number(state[key]?.storedAt || 0)).filter(Boolean);
-    if (!navigator.onLine) return { label: 'OFFLINE', className: 'offline' };
-    if (!stamps.length) return { label: 'WAITING', className: 'stale' };
-    const age = Date.now() - Math.max(...stamps);
-    if (age > MAX_AGE) return { label: 'STALE', className: 'stale' };
-    return { label: 'LIVE', className: 'live' };
   }
 
   function partIsFresh(part) {
@@ -64,6 +61,17 @@
     const fresh = candidates.filter(item => item.fresh).sort((a, b) => b.storedAt - a.storedAt);
     const fallback = candidates.sort((a, b) => b.storedAt - a.storedAt);
     return Number((fresh[0] || fallback[0])?.price || 0);
+  }
+
+  function freshness(state = read()) {
+    const marketParts = [state.mapping, state.liquidity, state.heatmap].filter(Boolean);
+    const stamps = marketParts.map(part => Number(part?.storedAt || 0)).filter(Boolean);
+    const price = bestCurrentPrice(state);
+    if (!navigator.onLine) return { label: 'OFFLINE', className: 'offline', ageMs: Number.MAX_SAFE_INTEGER };
+    if (!stamps.length || !price) return { label: 'WAITING', className: 'stale', ageMs: Number.MAX_SAFE_INTEGER };
+    const age = Date.now() - Math.max(...stamps);
+    if (age > MAX_AGE) return { label: 'STALE', className: 'stale', ageMs: age };
+    return { label: 'LIVE', className: 'live', ageMs: age };
   }
 
   function normalizeLevel(item, type, currentPrice) {
@@ -111,7 +119,7 @@
       }));
   }
 
-  function nearestLevels(state) {
+  function nearestLevels(state = read()) {
     const mapping = state.mapping || {};
     const liquidity = state.liquidity || {};
     const heatmap = state.heatmap || {};
@@ -140,7 +148,7 @@
     };
   }
 
-  function newsRisk(state) {
+  function newsRisk(state = read()) {
     const items = state.news?.items || [];
     const high = /fomc|powell|cpi|nfp|payroll|interest rate|suku bunga|fed decision|war|tariff/i;
     const medium = /inflation|ppi|pce|yield|treasury|jobless|gdp|geopolitical|sanction/i;
