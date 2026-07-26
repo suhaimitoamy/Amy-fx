@@ -11,19 +11,21 @@
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Asisten AI tidak lagi terkunci dan memiliki batas waktu total 45 detik.",
-    "Asisten Jurnal tetap memakai API key yang sudah dipindahkan ke secure vault.",
-    "Journal v2 hanya tampil pada halaman Jurnal dan tidak merusak navigasi modul lain.",
-    "Status data market tidak lagi menyatakan fresh ketika data live belum tersedia.",
-    "Panel Amy, status module, dan navigasi bawah tidak lagi saling menutupi.",
-    "Markup Amy FX Academy yang rusak telah diperbaiki."
+    "Amy Mentor kini dapat membaca seluruh modul Amy FX dari halaman mana pun.",
+    "Akses mencakup Mapping, setup, berita, heatmap, liquidity, Jurnal, Library, catatan, Academy, indikator, profil, versi aplikasi, dan status provider AI.",
+    "Materi Academy dan source indikator dimuat sesuai pertanyaan agar respons tetap cepat dan tidak memenuhi context secara berlebihan.",
+    "Riwayat percakapan Amy tersimpan lintas modul agar pembahasan dapat dilanjutkan setelah berpindah halaman.",
+    "API key, PIN, token, credential, signing key, dan secret lain tetap diblokir dari context AI.",
+    "Seluruh regression JavaScript, Android unit test, lint, signed APK, package, version, dan signer berhasil diverifikasi."
   ],
   "changelog": [
-    "Assistant timeout and stuck-state recovery",
-    "Secure-vault compatibility for legacy Journal assistant",
-    "Journal v2 placement and layout stabilization",
-    "Missing-data freshness correction",
-    "Academy markup repair",
-    "Expanded Preview regression gates"
+    "Universal read-only Amy FX workspace context",
+    "IndexedDB Journal and Library retrieval",
+    "Query-aware Academy lesson retrieval",
+    "Query-aware TradingView indicator source retrieval",
+    "Cross-module Mapping and Market Intel access",
+    "Persistent Mentor conversation history",
+    "Credential and secret redaction guard",
+    "Universal Mentor UI submission routing"
   ]
 }
