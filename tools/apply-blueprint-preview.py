@@ -14,12 +14,19 @@ SHARED_CSS = ASSETS / "apps/shared/amyfx-blueprint-v1.css"
 SHARED_JS = ASSETS / "apps/shared/amyfx-blueprint-v1.js"
 HOTFIX_JS = ASSETS / "apps/shared/amyfx-blueprint-hotfix-v1.js"
 PROVIDER_FIX_JS = ASSETS / "apps/shared/amyfx-provider-detection-v1.js"
+HOME_DATA_JS = ASSETS / "apps/shared/amyfx-home-data-integration-v1.js"
+MAPPING_BRIDGE_JS = ASSETS / "apps/mapping/js/blueprint-context-bridge.js"
+MAPPING_INDEX = ASSETS / "apps/mapping/index.html"
+JOURNAL_APP = ASSETS / "apps/journal/app.js"
+MARKET_INTEL_SHARED = ASSETS / "apps/shared/market-intelligence.js"
+MARKET_INTEL_APP = ASSETS / "apps/market-intel/app.js"
+HEATMAP_V2 = ASSETS / "apps/market-intel/heatmap-v2.js"
 MAIN_ACTIVITY = ROOT / "app/src/main/java/com/amyelitesuite/MainActivity.kt"
 PROVIDER_REPAIR_BRIDGE = ROOT / "app/src/main/java/com/amyelitesuite/AmyFxAiProviderRepairBridge.kt"
 ACADEMY_INDEX = ASSETS / "apps/academy/index.html"
 MODULE_HTML = [
     ASSETS / "index.html",
-    ASSETS / "apps/mapping/index.html",
+    MAPPING_INDEX,
     ASSETS / "apps/market-intel/index.html",
     ASSETS / "apps/journal/index.html",
     ACADEMY_INDEX,
@@ -143,15 +150,152 @@ def patch_blueprint_runtime() -> bool:
             "      new MutationObserver(syncUi).observe(observerTarget, { childList: true, subtree: true });",
             "dynamic module observer",
         ),
+        (
+            "  function journalRows() {\n    if (Array.isArray(window.state?.journals)) return clone(window.state.journals);\n    const value = readJsonStorage(CONFIG.legacyJournalKey, []);\n    return Array.isArray(value) ? value : [];\n  }",
+            "  function journalRows() {\n    const bridge = window.AmyFXJournalState;\n    if (typeof bridge?.getJournals === \"function\") {\n      const rows = bridge.getJournals();\n      if (Array.isArray(rows)) return clone(rows);\n    }\n    if (Array.isArray(bridge?.journals)) return clone(bridge.journals);\n    const value = readJsonStorage(CONFIG.legacyJournalKey, []);\n    return Array.isArray(value) ? value : [];\n  }",
+            "authoritative Journal bridge",
+        ),
+        (
+            "  function journalPayload() {\n    return {\n      summary: journalSummary(),\n      selected_entry_id: window.state?.selectedJournalId || null,\n      selected_entry: clone(window.state?.selectedJournal || null),\n      visible_summary: visibleText(\"main, #app, .journal-shell\", 1000)\n    };\n  }",
+            "  function journalPayload() {\n    const bridge = window.AmyFXJournalState || {};\n    const selectedId = bridge.selectedJournalId || null;\n    const selected = bridge.selectedJournal\n      || journalRows().find(row => String(row?.id || \"\") === String(selectedId || \"\"))\n      || null;\n    return {\n      summary: journalSummary(),\n      selected_entry_id: selectedId,\n      selected_entry: clone(selected),\n      visible_summary: visibleText(\"main, #app, .journal-shell\", 1000)\n    };\n  }",
+            "Journal selected-entry bridge",
+        ),
+        (
+            "  function intelPayload() {\n    return {\n      pair: resolvePair(),\n      scheduled_event: clone(window.AmyFXIntel?.scheduledEvent || null),\n      published_news: clone(window.AmyFXIntel?.selectedNews || null),\n      heatmap: clone(window.AmyFXHeatmapState || null),\n      source_method: window.AmyFXHeatmapState?.sourceMethod || \"OHLC-derived/modelled liquidity\",\n      visible_summary: visibleText(\"main, #app, .intel-container\", 1000)\n    };\n  }",
+            "  function intelPayload() {\n    const shared = window.AmyFXIntel?.read?.() || window.AmyFXIntelState || {};\n    const heatmap = window.AmyFXHeatmapState || shared.heatmap || null;\n    const news = shared.news || null;\n    return {\n      pair: resolvePair(),\n      scheduled_event: clone(window.AmyFXIntel?.scheduledEvent || null),\n      published_news: clone(window.AmyFXIntel?.selectedNews || news?.items?.[0] || null),\n      news_items: clone(news?.items || []),\n      heatmap: clone(heatmap),\n      liquidity: clone(shared.liquidity || null),\n      source_method: heatmap?.sourceMethod || heatmap?.source || \"OHLC-derived/modelled liquidity\",\n      visible_summary: visibleText(\"main, #app, .intel-container\", 1000)\n    };\n  }",
+            "Market Intel shared-state bridge",
+        ),
     ]
 
     for old, new, label in replacements:
         updated, did_change = replace_once(updated, old, new, label)
         changed = changed or did_change
 
+    old_values = """      window.AmyFXHeatmapState?.updatedAt,
+      window.AmyFXIntel?.updatedAt
+    ];"""
+    new_values = """      window.AmyFXHeatmapState?.updatedAt,
+      window.AmyFXIntelState?.updatedAt,
+      window.AmyFXIntel?.read?.()?.mapping?.updated,
+      window.AmyFXIntel?.read?.()?.heatmap?.updated,
+      window.AmyFXIntel?.read?.()?.liquidity?.updated,
+      window.AmyFXIntel?.read?.()?.news?.updated
+    ];"""
+    updated, did_change = replace_once(updated, old_values, new_values, "shared market timestamps")
+    changed = changed or did_change
+
+    listener_anchor = """    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) refreshMentorContext();
+    });"""
+    listener_new = """    ["amyfx:journal-state-change", "amyfx:mapping-state-change", "amyfx:market-update", "amyfx:home-stats-change"]
+      .forEach(name => window.addEventListener(name, () => refreshMentorContext()));
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) refreshMentorContext();
+    });"""
+    updated, did_change = replace_once(updated, listener_anchor, listener_new, "live context refresh events")
+    changed = changed or did_change
+
     if changed:
         SHARED_JS.write_text(updated, encoding="utf-8")
     return changed
+
+
+def patch_journal_runtime() -> bool:
+    raw = JOURNAL_APP.read_text(encoding="utf-8")
+    updated = raw
+    changed = False
+    marker = "window.AmyFXJournalState"
+
+    if marker not in updated:
+        anchor = "async function boot() {"
+        bridge = r'''function publishAmyFxJournalState() {
+  const journals = Array.isArray(state.journals) ? state.journals : [];
+  const selectedJournalId = state.journalOpenId || "";
+  const selectedJournal = journals.find(row => String(row?.id || "") === String(selectedJournalId)) || null;
+  window.AmyFXJournalState = {
+    getJournals: () => state.journals,
+    journals,
+    selectedJournalId: selectedJournalId || null,
+    selectedJournal,
+    view: state.view,
+    updatedAt: new Date().toISOString()
+  };
+  window.dispatchEvent(new CustomEvent("amyfx:journal-state-change", { detail: window.AmyFXJournalState }));
+  return window.AmyFXJournalState;
+}
+
+'''
+        if anchor not in updated:
+            raise RuntimeError("Journal boot anchor missing")
+        updated = updated.replace(anchor, bridge + anchor, 1)
+        changed = True
+
+    old_render = """function render() {
+  revokeRenderedObjectUrls();
+  const data = getRenderData();
+  updateRenderCounters(data);
+  renderActiveView(data);
+  syncSelectControls();
+}"""
+    new_render = """function render() {
+  revokeRenderedObjectUrls();
+  const data = getRenderData();
+  updateRenderCounters(data);
+  renderActiveView(data);
+  syncSelectControls();
+  publishAmyFxJournalState();
+}"""
+    updated, did_change = replace_once(updated, old_render, new_render, "Journal state publication after render")
+    changed = changed or did_change
+
+    if changed:
+        JOURNAL_APP.write_text(updated, encoding="utf-8")
+    return changed
+
+
+def patch_market_intel_runtime() -> list[Path]:
+    changed: list[Path] = []
+
+    shared_raw = MARKET_INTEL_SHARED.read_text(encoding="utf-8")
+    shared_updated = shared_raw.replace("timeZone: 'Asia/Jakarta'", "timeZone: 'Asia/Makassar'")
+    write_old = """    state[part] = { ...payload, storedAt: Date.now() };
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    window.dispatchEvent(new CustomEvent('amyfx:market-update', { detail: state }));"""
+    write_new = """    state[part] = { ...payload, storedAt: Date.now() };
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    window.AmyFXIntelState = { ...state, updatedAt: payload?.updated || new Date().toISOString() };
+    if (part === 'heatmap') window.AmyFXHeatmapState = { ...state[part], sourceMethod: payload?.source || payload?.sourceMethod || 'OHLC-derived/modelled liquidity' };
+    window.dispatchEvent(new CustomEvent('amyfx:market-update', { detail: state }));"""
+    shared_updated, _ = replace_once(shared_updated, write_old, write_new, "Market Intel global contract")
+    if shared_updated != shared_raw:
+        MARKET_INTEL_SHARED.write_text(shared_updated, encoding="utf-8")
+        changed.append(MARKET_INTEL_SHARED)
+
+    intel_raw = MARKET_INTEL_APP.read_text(encoding="utf-8")
+    intel_updated = intel_raw.replace("timeZone: 'Asia/Jakarta' }) + ' WIB'", "timeZone: 'Asia/Makassar' }) + ' WITA'")
+    if intel_updated != intel_raw:
+        MARKET_INTEL_APP.write_text(intel_updated, encoding="utf-8")
+        changed.append(MARKET_INTEL_APP)
+
+    heat_raw = HEATMAP_V2.read_text(encoding="utf-8")
+    heat_updated = heat_raw.replace("timeZone: 'Asia/Jakarta', hour:", "timeZone: 'Asia/Makassar', hour:")
+    heat_updated = heat_updated.replace("}).format(parsed)} WIB`", "}).format(parsed)} WITA`")
+    if heat_updated != heat_raw:
+        HEATMAP_V2.write_text(heat_updated, encoding="utf-8")
+        changed.append(HEATMAP_V2)
+
+    return changed
+
+
+def validate_mapping_document() -> None:
+    raw = MAPPING_INDEX.read_text(encoding="utf-8")
+    first = raw.lstrip("\ufeff\n\r\t ")
+    if not first.lower().startswith("<!doctype html>"):
+        raise RuntimeError("Mapping document must start with <!doctype html>")
+    head_close = raw.lower().find("</head>")
+    body_open = raw.lower().find("<body")
+    if head_close < 0 or body_open < 0 or head_close > body_open:
+        raise RuntimeError("Mapping document has an invalid head/body boundary")
 
 
 def patch_academy_markup() -> bool:
@@ -251,16 +395,27 @@ def main() -> None:
         SHARED_JS,
         HOTFIX_JS,
         PROVIDER_FIX_JS,
+        HOME_DATA_JS,
+        MAPPING_BRIDGE_JS,
+        JOURNAL_APP,
+        MARKET_INTEL_SHARED,
+        MARKET_INTEL_APP,
+        HEATMAP_V2,
         PROVIDER_REPAIR_BRIDGE,
     )
     for required in required_files:
         if not required.is_file():
             raise SystemExit(f"Required Blueprint asset missing: {required}")
 
+    validate_mapping_document()
     for path in normalize_source_identity():
         changed.append(path.relative_to(ROOT).as_posix())
     if patch_blueprint_runtime():
         changed.append(SHARED_JS.relative_to(ROOT).as_posix())
+    if patch_journal_runtime():
+        changed.append(JOURNAL_APP.relative_to(ROOT).as_posix())
+    for path in patch_market_intel_runtime():
+        changed.append(path.relative_to(ROOT).as_posix())
     if patch_academy_markup():
         changed.append(ACADEMY_INDEX.relative_to(ROOT).as_posix())
 
