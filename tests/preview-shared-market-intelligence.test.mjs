@@ -25,10 +25,11 @@ test('shared state survives localStorage read and write failures', async () => {
 
 test('news alone cannot mark XAU USD market data as LIVE', async () => {
   const source = await read();
-  assert.match(source, /const marketParts = \[state\.mapping, state\.liquidity, state\.heatmap\]/);
-  assert.match(source, /if \(!stamps\.length \|\| !price\) return \{ label: 'WAITING'/);
   const freshnessBlock = source.slice(source.indexOf('function freshness'), source.indexOf('function normalizeLevel'));
+  assert.match(freshnessBlock, /\[state\.mapping, state\.liquidity, state\.heatmap\]/);
+  assert.match(freshnessBlock, /if \(!candidates\.length \|\| !price\) return \{ label: 'WAITING'/);
   assert.doesNotMatch(freshnessBlock, /state\.news/);
+  assert.match(source, /function bestCurrentPrice\(state = read\(\)\)/);
 });
 
 test('briefing and command strip use the same canonical market freshness and price', async () => {
