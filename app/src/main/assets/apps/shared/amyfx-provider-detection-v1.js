@@ -202,14 +202,34 @@
     (document.head || document.documentElement).appendChild(script);
   }
 
+  function loadCustomerServiceRuntime() {
+    if (window.__amyFxMentorCustomerServiceV1) {
+      loadUniversalAccessRuntime();
+      return;
+    }
+    const existing = document.querySelector("script[data-amyfx-mentor-customer-service='v1']");
+    if (existing) {
+      existing.addEventListener("load", loadUniversalAccessRuntime, { once: true });
+      existing.addEventListener("error", loadUniversalAccessRuntime, { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = runtimeUrl("amyfx-mentor-customer-service-v1.js");
+    script.dataset.amyfxMentorCustomerService = "v1";
+    script.async = false;
+    script.addEventListener("load", loadUniversalAccessRuntime, { once: true });
+    script.addEventListener("error", loadUniversalAccessRuntime, { once: true });
+    (document.head || document.documentElement).appendChild(script);
+  }
+
   function loadMentorConversationRuntime() {
     if (!PROVIDER_SCRIPT_URL) return;
     const existing = document.querySelector("script[data-amyfx-mentor-conversation='v1']");
     if (existing) {
-      if (window.__amyFxMentorConversationV1) loadUniversalAccessRuntime();
+      if (window.__amyFxMentorConversationV1) loadCustomerServiceRuntime();
       else {
-        existing.addEventListener("load", loadUniversalAccessRuntime, { once: true });
-        existing.addEventListener("error", loadUniversalAccessRuntime, { once: true });
+        existing.addEventListener("load", loadCustomerServiceRuntime, { once: true });
+        existing.addEventListener("error", loadCustomerServiceRuntime, { once: true });
       }
       return;
     }
@@ -217,8 +237,8 @@
     script.src = runtimeUrl("amyfx-mentor-conversation-v1.js");
     script.dataset.amyfxMentorConversation = "v1";
     script.async = false;
-    script.addEventListener("load", loadUniversalAccessRuntime, { once: true });
-    script.addEventListener("error", loadUniversalAccessRuntime, { once: true });
+    script.addEventListener("load", loadCustomerServiceRuntime, { once: true });
+    script.addEventListener("error", loadCustomerServiceRuntime, { once: true });
     (document.head || document.documentElement).appendChild(script);
   }
 
@@ -274,6 +294,7 @@
     inferProviderFromKey,
     normalizePool,
     repairNow,
+    loadCustomerServiceRuntime,
     loadUniversalAccessRuntime
   });
 })();
