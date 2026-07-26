@@ -21,7 +21,7 @@ jobs:
       AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
       AMYFX_APP_LABEL: Amy FX Preview
       AMYFX_URI_SCHEME: amyfxpreview
-      AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/heatmap-news-20260722/preview-update.json
+      AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/audit/preview-full-integration-20260726/preview-update.json
     steps:
       - name: Checkout audit branch
         uses: actions/checkout@v4
