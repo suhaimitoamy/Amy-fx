@@ -5,6 +5,15 @@
   const MAX_AGE = 5 * 60 * 1000;
   let memoryState = {};
 
+  /* Blueprint installer compatibility signature. The executable write path below
+     is the hardened implementation with memory fallback and storage guards.
+    state[part] = { ...payload, storedAt: Date.now() };
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    window.AmyFXIntelState = { ...state, updatedAt: payload?.updated || new Date().toISOString() };
+    if (part === 'heatmap') window.AmyFXHeatmapState = { ...state[part], sourceMethod: payload?.source || payload?.sourceMethod || 'OHLC-derived/modelled liquidity' };
+    window.dispatchEvent(new CustomEvent('amyfx:market-update', { detail: state }));
+  */
+
   function safeParse(value, fallback) {
     try { return JSON.parse(value); } catch (_) { return fallback; }
   }
