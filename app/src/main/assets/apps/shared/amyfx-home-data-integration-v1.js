@@ -29,20 +29,45 @@
     }
   }
 
-  function readJournalCount() {
+  async function databaseExists() {
+    if (!window.indexedDB) return false;
+    if (typeof indexedDB.databases !== "function") return null;
+    try {
+      const rows = await indexedDB.databases();
+      return rows.some(row => row?.name === DB_NAME);
+    } catch {
+      return null;
+    }
+  }
+
+  async function readJournalCount() {
+    if (!window.indexedDB) return legacyJournalCount();
+    const exists = await databaseExists();
+    if (exists === false) return legacyJournalCount();
+
     return new Promise(resolve => {
-      if (!window.indexedDB) return resolve(legacyJournalCount());
       let settled = false;
       const finish = value => {
         if (settled) return;
         settled = true;
         resolve(Number.isFinite(Number(value)) ? Number(value) : legacyJournalCount());
       };
-      const request = indexedDB.open(DB_NAME);
+      let request;
+      try {
+        request = indexedDB.open(DB_NAME);
+      } catch {
+        finish(legacyJournalCount());
+        return;
+      }
       request.onerror = () => finish(legacyJournalCount());
       request.onblocked = () => finish(legacyJournalCount());
+      request.onupgradeneeded = () => {
+        try { request.transaction?.abort(); } catch {}
+        finish(legacyJournalCount());
+      };
       request.onsuccess = () => {
         const db = request.result;
+        if (settled) { db.close(); return; }
         if (!db.objectStoreNames.contains(META_STORE)) {
           db.close();
           finish(legacyJournalCount());
@@ -57,6 +82,10 @@
             finish(count);
           };
           get.onerror = () => {
+            db.close();
+            finish(legacyJournalCount());
+          };
+          tx.onabort = () => {
             db.close();
             finish(legacyJournalCount());
           };
@@ -95,7 +124,8 @@
   function schedule() {
     if (scheduled) return;
     scheduled = true;
-    requestAnimationFrame(() => {
+    const nextFrame = window.requestAnimationFrame || (callback => window.setTimeout(callback, 16));
+    nextFrame(() => {
       scheduled = false;
       refresh();
     });
@@ -104,7 +134,7 @@
   function boot() {
     schedule();
     const target = document.getElementById("main-content") || document.body;
-    new MutationObserver(schedule).observe(target, { childList: true, subtree: true });
+    if (target) new MutationObserver(schedule).observe(target, { childList: true, subtree: true });
     window.addEventListener("focus", schedule);
     window.addEventListener("storage", schedule);
     window.addEventListener("amyfx:journal-state-change", schedule);
