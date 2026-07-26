@@ -1,19 +1,19 @@
 {
   "channel": "amyfx-preview-experiment",
-  "latest_version_code": 920008,
-  "latest_version_name": "1.5.9-preview.8",
-  "versionCode": 920008,
-  "version": "1.5.9-preview.8",
+  "latest_version_code": 920009,
+  "latest_version_name": "1.5.9-preview.9",
+  "versionCode": 920009,
+  "version": "1.5.9-preview.9",
   "releaseDate": "2026-07-26",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-1.5.9-preview.8/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-1.5.9-preview.8/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-1.5.9-preview.9/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-preview-1.5.9-preview.9/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
     "UI Asisten dan Pengaturan API dibangun ulang total",
     "Input terpisah untuk Gemini, OpenRouter, dan DeepSeek",
-    "Model AI lama diganti dengan model aktif",
+    "Permintaan AI sekarang melewati transport native Android",
     "Tes koneksi menampilkan hasil setiap provider",
     "Rotasi, timeout, cooldown, dan fallback AI diperbaiki",
     "DeepSeek dapat dipakai langsung sebagai provider utama"
@@ -21,7 +21,7 @@
   "changelog": [
     "Assistant UI total overhaul",
     "Provider-specific API fields",
-    "Current Gemini, OpenRouter, and DeepSeek models",
+    "Native Android OkHttp AI transport",
     "Per-provider connection diagnostics",
     "Rebuilt AI request rotation and lifecycle lock"
   ]
