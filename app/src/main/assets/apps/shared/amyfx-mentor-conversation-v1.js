@@ -89,6 +89,67 @@
     return reply;
   }
 
+  function ensureThinkingStyles() {
+    if (document.getElementById("amy-mentor-thinking-style-v1")) return;
+    const style = document.createElement("style");
+    style.id = "amy-mentor-thinking-style-v1";
+    style.textContent = `
+      @keyframes amy-thinking-pulse-v1 {
+        0%, 80%, 100% { opacity: .3; transform: translateY(0); }
+        40% { opacity: 1; transform: translateY(-4px); }
+      }
+      .amy-os-message--loading .amy-thinking-v1 {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        color: #d8d8d8;
+      }
+      .amy-thinking-v1__dots {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .amy-thinking-v1__dots i {
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: #d4af37;
+        animation: amy-thinking-pulse-v1 1.15s infinite ease-in-out;
+      }
+      .amy-thinking-v1__dots i:nth-child(2) { animation-delay: .14s; }
+      .amy-thinking-v1__dots i:nth-child(3) { animation-delay: .28s; }
+      @media (prefers-reduced-motion: reduce) {
+        .amy-thinking-v1__dots i { animation: none; opacity: .75; }
+      }
+    `;
+    (document.head || document.documentElement).appendChild(style);
+  }
+
+  function removeThinkingIndicator(row = null) {
+    const target = row || document.querySelector("[data-amy-thinking='v1']");
+    const messages = target?.closest?.(".amy-os-messages") || document.querySelector(".amy-os-messages");
+    target?.remove();
+    if (!document.querySelector("[data-amy-thinking='v1']")) messages?.setAttribute("aria-busy", "false");
+  }
+
+  function showThinkingIndicator() {
+    const messages = document.querySelector(".amy-os-messages");
+    if (!messages) return null;
+    removeThinkingIndicator();
+    ensureThinkingStyles();
+
+    const row = document.createElement("div");
+    row.className = "amy-os-message amy-os-message--amy amy-os-message--loading";
+    row.dataset.amyThinking = "v1";
+    row.setAttribute("role", "status");
+    row.setAttribute("aria-live", "polite");
+    row.innerHTML = `<div class="amy-thinking-v1"><span>Amy sedang berpikir</span><span class="amy-thinking-v1__dots" aria-hidden="true"><i></i><i></i><i></i></span></div>`;
+    messages.setAttribute("aria-busy", "true");
+    messages.appendChild(row);
+    messages.scrollTop = messages.scrollHeight;
+    return row;
+  }
+
   function installAskWrapper() {
     const originalOs = window.AmyFXOS;
     if (!originalOs?.ask || originalOs.__amyConciseRepliesV1) return Boolean(originalOs?.__amyConciseRepliesV1);
@@ -108,11 +169,16 @@
         };
       }
 
-      const result = await originalAsk(stylePrompt(question, context), { ...options, context });
-      return {
-        ...result,
-        text: cleanProviderReply(result?.text, question, context)
-      };
+      const thinkingRow = showThinkingIndicator();
+      try {
+        const result = await originalAsk(stylePrompt(question, context), { ...options, context });
+        return {
+          ...result,
+          text: cleanProviderReply(result?.text, question, context)
+        };
+      } finally {
+        removeThinkingIndicator(thinkingRow);
+      }
     };
 
     window.AmyFXOS = Object.freeze({
