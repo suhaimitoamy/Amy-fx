@@ -12,6 +12,7 @@
     openrouter: "google/gemini-2.0-flash-001",
     deepseek: "deepseek-chat"
   });
+  const PROVIDER_SCRIPT_URL = document.currentScript?.src || "";
 
   const clean = value => String(value ?? "").trim();
   const safeParse = (value, fallback = null) => {
@@ -188,6 +189,15 @@
     }
   }
 
+  function loadMentorConversationRuntime() {
+    if (!PROVIDER_SCRIPT_URL || document.querySelector("script[data-amyfx-mentor-conversation='v1']")) return;
+    const script = document.createElement("script");
+    script.src = new URL("amyfx-mentor-conversation-v1.js", PROVIDER_SCRIPT_URL).href;
+    script.dataset.amyfxMentorConversation = "v1";
+    script.async = false;
+    (document.head || document.documentElement).appendChild(script);
+  }
+
   let scheduled = false;
   function repairNow() {
     installProviderPicker();
@@ -221,6 +231,7 @@
   }, true);
 
   function boot() {
+    loadMentorConversationRuntime();
     const timer = setInterval(() => {
       if (!window.AmyFXOS) return;
       clearInterval(timer);
