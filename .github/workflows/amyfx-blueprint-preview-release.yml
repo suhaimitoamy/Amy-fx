@@ -109,7 +109,19 @@ jobs:
           fi
           rm -f preview-regression-failure.txt
 
-      - name: Configure Preview identity and updater channel
+      - name: Commit stabilized Preview source checkpoint
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "fix(preview): apply stabilized Blueprint source [skip ci]"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+          echo "AMYFX_SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Configure Preview identity and updater channel for APK only
         run: |
           set -euo pipefail
           node tools/configure-preview-web-version.mjs "$AMYFX_VERSION_NAME" "$AMYFX_VERSION_CODE" "$AMYFX_UPDATE_MANIFEST_URL"
@@ -173,18 +185,6 @@ jobs:
           test "$actual" = "$expected"
           cp "$APK" AmyFX-Preview-latest.apk
           sha256sum AmyFX-Preview-latest.apk | tee AmyFX-Preview-latest.apk.sha256
-
-      - name: Commit stabilized Preview source checkpoint
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          if ! git diff --cached --quiet; then
-            git commit -m "release(preview): stabilize Blueprint v1 as $AMYFX_VERSION_NAME [skip ci]"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
-          fi
-          echo "AMYFX_SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Publish immutable signed Preview release
         env:
