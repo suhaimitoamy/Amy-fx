@@ -1,0 +1,93 @@
+name: Amy FX Preview Post-35 Connectivity Audit
+
+on:
+  push:
+    branches:
+      - audit/preview-post35-connectivity-20260726
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: amyfx-preview-post35-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
+      AMYFX_APP_LABEL: Amy FX Preview
+      AMYFX_URI_SCHEME: amyfxpreview
+      AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/audit/preview-post35-connectivity-20260726/preview-update.json
+    steps:
+      - name: Checkout post-35 audit branch
+        uses: actions/checkout@v4
+
+      - name: Mark audit pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='pending' \
+            -f context='Amy FX Preview Post-35 Audit' \
+            -f description='Running post-35 connectivity audit' \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply and validate Preview stabilization
+        run: |
+          set -euo pipefail
+          python3 tools/apply-blueprint-preview.py
+          python3 -m py_compile tools/apply-blueprint-preview.py
+          node --check app/src/main/assets/apps/shared/market-intelligence.js
+          node --check app/src/main/assets/apps/shared/amyfx-home-data-integration-v1.js
+          node --check app/src/main/assets/apps/shared/amyfx-provider-detection-v1.js
+          node --check app/src/main/assets/apps/shared/amyfx-connectivity-audit-v2.js
+          node --check app/src/main/assets/apps/shared/amyfx-connectivity-final-v3.js
+
+      - name: Run all JavaScript regressions
+        run: npm test
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Android unit test, lint, and release compile
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease --stacktrace --no-daemon --no-configuration-cache
+
+      - name: Publish audit result
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            state='success'
+            description='Post-35 connectivity audit passed'
+          else
+            state='failure'
+            description='Post-35 connectivity audit failed'
+          fi
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state="$state" \
+            -f context='Amy FX Preview Post-35 Audit' \
+            -f description="$description" \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
