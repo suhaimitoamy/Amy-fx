@@ -1,8 +1,8 @@
 // Amy FX production release identity.
 (function () {
-  const VERSION = Object.freeze({ name: '1.5.9', code: 50 });
+  const VERSION = Object.freeze({ name: '2.0.0-preview.5', code: 930005 });
   window.AmyFXAppVersion = VERSION;
-
+  window.AmyFXUpdateManifestUrl = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/heatmap-news-20260722/preview-update.json';
   function versionText() {
     return `Amy FX v${VERSION.name} • Version code ${VERSION.code}`;
   }

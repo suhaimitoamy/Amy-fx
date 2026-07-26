@@ -133,6 +133,7 @@ class MainActivity : Activity() {
             .build()
 
         webView.addJavascriptInterface(WebAppInterface(this), "Android")
+        webView.addJavascriptInterface(AmyFxAiBridge(this, webView), "AmyNativeAI")
 
         webView.webChromeClient = object : WebChromeClient() {
             override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
