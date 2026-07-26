@@ -1049,6 +1049,8 @@
       .forEach(name => window.addEventListener(name, () => refreshMentorContext()));
     ["amyfx:journal-state-change", "amyfx:mapping-state-change", "amyfx:market-update", "amyfx:home-stats-change"]
       .forEach(name => window.addEventListener(name, () => refreshMentorContext()));
+    ["amyfx:journal-state-change", "amyfx:mapping-state-change", "amyfx:market-update", "amyfx:home-stats-change"]
+      .forEach(name => window.addEventListener(name, () => refreshMentorContext()));
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) refreshMentorContext();
     });
