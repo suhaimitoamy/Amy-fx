@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: amyfx-blueprint-preview-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
@@ -67,19 +67,20 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Apply Blueprint to Preview source
+      - name: Apply Blueprint stabilization to Preview source
         run: |
           set -euo pipefail
           python3 tools/apply-blueprint-preview.py
 
-      - name: Validate Blueprint contracts and JavaScript
+      - name: Validate Blueprint contracts, stabilization and JavaScript
         run: |
           set -euo pipefail
           node --check app/src/main/assets/apps/shared/amyfx-blueprint-v1.js
+          node --check app/src/main/assets/apps/shared/amyfx-blueprint-hotfix-v1.js
           node --check app/src/main/assets/app-version.js
           node --check app/src/main/assets/update-checker.js
           python3 -m py_compile tools/apply-blueprint-preview.py
-          node --test --test-force-exit tests/blueprint-preview-v1.test.mjs
+          node --test --test-force-exit tests/blueprint-preview-v1.test.mjs tests/blueprint-preview-stabilization.test.mjs
 
       - name: Run full JavaScript regression against production baseline
         run: npm test
@@ -149,14 +150,14 @@ jobs:
           cp "$APK" AmyFX-Preview-latest.apk
           sha256sum AmyFX-Preview-latest.apk | tee AmyFX-Preview-latest.apk.sha256
 
-      - name: Commit Blueprint source checkpoint
+      - name: Commit stabilized Preview source checkpoint
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           if ! git diff --cached --quiet; then
-            git commit -m "release(preview): install Blueprint v1 as $AMYFX_VERSION_NAME [skip ci]"
+            git commit -m "release(preview): stabilize Blueprint v1 as $AMYFX_VERSION_NAME [skip ci]"
             git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
           echo "AMYFX_SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
@@ -171,13 +172,13 @@ jobs:
             exit 1
           fi
           cat > /tmp/amyfx-preview-release-notes.md <<NOTES
-          Amy FX Preview $AMYFX_VERSION_NAME — Blueprint Upgrade v1.0.
+          Amy FX Preview $AMYFX_VERSION_NAME — Blueprint Upgrade v1.0 Stabilization.
 
-          - Canonical Market Snapshot, Decision Contract, Setup Lifecycle, Liquidity Contract, Context Envelope, Journal v2, Conversation, dan Migration Ledger.
-          - Global Amy AI Mentor tersedia dari Beranda, Mapping, Market Intel, Jurnal, dan Academy.
-          - API key dipindahkan ke secure native vault berbasis Android Keystore/EncryptedSharedPreferences.
-          - Provider Gemini, OpenRouter, dan DeepSeek memakai routing, timeout, cancel, fallback, dan error category yang aman.
-          - Command Center, freshness/TTL, notification ledger, dan Plan → Execution → Outcome diaktifkan.
+          - Memperbaiki Asisten AI yang terkunci, timeout tak terbatas, dan kompatibilitas key setelah migrasi secure vault.
+          - Memindahkan Journal v2 hanya ke halaman Jurnal serta menghilangkan overlap panel, status, dan navigasi bawah.
+          - Data market yang belum tersedia tidak lagi ditandai fresh.
+          - Memulihkan referensi API key dari secure native vault tanpa membuka secret ke WebView.
+          - Memperbaiki markup Academy yang rusak dan menambahkan regression gate khusus stabilisasi.
           - Package Preview dan sertifikat permanen tetap sama; Amy FX produksi/main tidak diubah.
           NOTES
           gh release create "$AMYFX_RELEASE_TAG" \
@@ -186,7 +187,7 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$AMYFX_SOURCE_SHA" \
             --prerelease \
-            --title "Amy FX Preview $AMYFX_VERSION_NAME — Blueprint Upgrade v1.0" \
+            --title "Amy FX Preview $AMYFX_VERSION_NAME — Blueprint Stabilization" \
             --notes-file /tmp/amyfx-preview-release-notes.md
           gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
 
@@ -214,20 +215,20 @@ jobs:
               'mandatory': False,
               'enabled': True,
               'release_notes': [
-                  'Amy FX Preview sekarang memakai Blueprint Upgrade v1.0.',
-                  'Global Amy AI Mentor tersedia lintas Beranda, Mapping, Intel, Jurnal, dan Academy.',
-                  'API key dipindahkan aman ke native secure vault.',
-                  'Market Snapshot, freshness, Decision Contract, dan Setup Lifecycle disatukan.',
-                  'Journal v2 menghubungkan Plan, Execution, Outcome, dan tindakan berikutnya.',
-                  'Command Center dan notifikasi proaktif memakai deduplikasi event.'
+                  'Asisten AI tidak lagi terkunci dan memiliki batas waktu total 45 detik.',
+                  'Asisten Jurnal tetap memakai API key yang sudah dipindahkan ke secure vault.',
+                  'Journal v2 hanya tampil pada halaman Jurnal dan tidak merusak navigasi modul lain.',
+                  'Status data market tidak lagi menyatakan fresh ketika data live belum tersedia.',
+                  'Panel Amy, status module, dan navigasi bawah tidak lagi saling menutupi.',
+                  'Markup Amy FX Academy yang rusak telah diperbaiki.'
               ],
               'changelog': [
-                  'Blueprint contracts and IndexedDB repositories',
-                  'Global context-aware Amy Mentor overlay',
-                  'Android Keystore backed provider vault',
-                  'Canonical freshness and setup lifecycle',
-                  'Journal v2 migration and review loop',
-                  'Immutable signed Preview release'
+                  'Assistant timeout and stuck-state recovery',
+                  'Secure-vault compatibility for legacy Journal assistant',
+                  'Journal v2 placement and layout stabilization',
+                  'Missing-data freshness correction',
+                  'Academy markup repair',
+                  'Expanded Preview regression gates'
               ]
           }
           with open('preview-update.json', 'w', encoding='utf-8') as handle:
@@ -236,7 +237,7 @@ jobs:
           PY
           python3 -m json.tool preview-update.json >/dev/null
           git add preview-update.json
-          git commit -m "release(preview): activate $AMYFX_VERSION_NAME update notification [skip ci]"
+          git commit -m "release(preview): activate $AMYFX_VERSION_NAME stabilized update [skip ci]"
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - name: Upload signed Preview artifact
@@ -257,7 +258,7 @@ jobs:
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state='success' \
             -f context='Amy FX Blueprint Preview' \
-            -f description="$AMYFX_VERSION_NAME published; update notification channel activated" \
+            -f description="$AMYFX_VERSION_NAME stabilized and published; update channel activated" \
             -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
 
       - name: Mark Preview release failure
@@ -268,5 +269,5 @@ jobs:
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state='failure' \
             -f context='Amy FX Blueprint Preview' \
-            -f description='Blueprint Preview release failed before update activation' \
+            -f description='Blueprint Preview stabilization failed before update activation' \
             -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
