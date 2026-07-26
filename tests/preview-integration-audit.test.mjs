@@ -99,11 +99,14 @@ test('Journal navigation, storage and Blueprint context share one authoritative 
 });
 
 test('home profile reads actual Mapping and IndexedDB Journal counts', async () => {
-  const app = await read('app/src/main/assets/app.js');
-  assert.doesNotMatch(app, /amy_journal_entries/, 'obsolete journal counter is disconnected from Trading Library Journal');
-  assert.match(app, /tradingLibraryManager\.files/, 'profile must read Journal metadata database');
-  assert.match(app, /journals\.v2/, 'profile must read the authoritative Journal metadata record');
-  assert.match(app, /amy_mapping_analyses/, 'profile must use Mapping analysis storage');
+  const home = await read('app/src/main/assets/index.html');
+  const integration = await read('app/src/main/assets/apps/shared/amyfx-home-data-integration-v1.js');
+  assert.match(home, /amyfx-home-data-integration-v1\.js/);
+  assert.match(integration, /tradingLibraryManager\.files/);
+  assert.match(integration, /journals\.v2/);
+  assert.match(integration, /amy_mapping_analyses/);
+  assert.match(integration, /Catatan Jurnal/);
+  assert.match(integration, /Analisis Mapping/);
 });
 
 test('Mapping publishes a live context contract consumed by Amy Mentor', async () => {
@@ -111,14 +114,20 @@ test('Mapping publishes a live context contract consumed by Amy Mentor', async (
   const mappingSource = (await Promise.all(mappingFiles.map(read))).join('\n');
   const blueprint = await read('app/src/main/assets/apps/shared/amyfx-blueprint-v1.js');
   assert.match(mappingSource, /window\.(?:AmyFXMarketState|lastMappingResult)\s*=/, 'Mapping must publish result, timeframe and capture time');
+  assert.match(mappingSource, /amyfx:mapping-state-change/);
   assert.match(blueprint, /AmyFXMarketState|lastMappingResult/, 'Blueprint must consume Mapping contract');
 });
 
-test('Market Intel publishes news and heatmap context contracts', async () => {
+test('Market Intel publishes news, liquidity and heatmap context contracts in WITA', async () => {
   const intelFiles = (await walk('app/src/main/assets/apps/market-intel')).filter(file => file.endsWith('.js'));
-  const source = (await Promise.all(intelFiles.map(read))).join('\n');
-  assert.match(source, /window\.AmyFXIntel/, 'Market Intel contract missing');
-  assert.match(source, /window\.AmyFXHeatmapState/, 'Heatmap contract missing');
+  const shared = await read('app/src/main/assets/apps/shared/market-intelligence.js');
+  const source = (await Promise.all(intelFiles.map(read))).join('\n') + '\n' + shared;
+  assert.match(source, /window\.AmyFXIntel/);
+  assert.match(source, /window\.AmyFXIntelState/);
+  assert.match(source, /window\.AmyFXHeatmapState/);
+  assert.match(source, /Asia\/Makassar/);
+  assert.doesNotMatch(source, /Asia\/Jakarta/);
+  assert.doesNotMatch(source, /\bWIB\b/);
 });
 
 test('AI secure vault, provider repair and concise conversation runtime are connected end-to-end', async () => {
@@ -147,7 +156,7 @@ test('only one Preview release workflow owns the active branch and update channe
   const owners = [];
   for (const file of workflowFiles) {
     const source = await read(file);
-    if (source.includes('experiment/heatmap-news-20260722') && /push:/m.test(source)) owners.push(file);
+    if (/push:[\s\S]{0,220}branches:[\s\S]{0,120}experiment\/heatmap-news-20260722/.test(source)) owners.push(file);
   }
   assert.deepEqual(owners, ['.github/workflows/amyfx-blueprint-preview-release.yml']);
 
