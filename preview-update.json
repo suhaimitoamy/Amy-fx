@@ -11,19 +11,24 @@
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Asisten AI tidak lagi terkunci dan memiliki batas waktu total 45 detik.",
-    "Asisten Jurnal tetap memakai API key yang sudah dipindahkan ke secure vault.",
-    "Journal v2 hanya tampil pada halaman Jurnal dan tidak merusak navigasi modul lain.",
-    "Status data market tidak lagi menyatakan fresh ketika data live belum tersedia.",
-    "Panel Amy, status module, dan navigasi bawah tidak lagi saling menutupi.",
-    "Markup Amy FX Academy yang rusak telah diperbaiki."
+    "Audit menyeluruh koneksi Beranda, Mapping, Market Intel, Jurnal, Library, Academy, Amy bot/AI, provider, secure vault, updater, dan Android bridge telah diselesaikan.",
+    "Perintah Amy kini membuka tujuan yang tepat, termasuk Mapping Analyze/Setups/History, Heatmap, Liquidity, Library, Media, Catatan, Asisten Jurnal, Statistik, Profil, dan Academy.",
+    "Setiap modul memiliki registry dan navigation intent bersama sehingga perpindahan halaman tetap membawa tujuan yang diminta.",
+    "Amy Mentor sekarang tersedia pada halaman materi Academy yang bertingkat, bukan hanya halaman utama Academy.",
+    "Versi aplikasi dapat dibaca dari seluruh modul dan tombol pemeriksaan update Beranda terhubung ke updater Preview sebenarnya.",
+    "Pembersihan cache hanya menghapus data sementara serta mempertahankan Jurnal, Library, riwayat Mapping, lisensi, API key, dan sesi Academy.",
+    "Market Intelligence menyatukan timestamp Mapping, Heatmap, dan Liquidity serta menolak status LIVE ketika data usang, invalid, tanpa harga, atau hanya berisi berita.",
+    "Shared state Market Intel tetap tersedia ketika localStorage bermasalah dan perubahan data dipropagasikan antarmodul melalui event yang sama.",
+    "Seluruh regression JavaScript, Android unit test, lint, signed APK, package, version, dan signer berhasil diverifikasi."
   ],
   "changelog": [
-    "Assistant timeout and stuck-state recovery",
-    "Secure-vault compatibility for legacy Journal assistant",
-    "Journal v2 placement and layout stabilization",
-    "Missing-data freshness correction",
-    "Academy markup repair",
-    "Expanded Preview regression gates"
+    "Cross-module connectivity coordinator v3",
+    "Exact destination routing for Amy customer-service bot",
+    "Nested Academy Mentor runtime",
+    "Canonical Market Intelligence timestamps and stale-state propagation",
+    "Module registry and persistent navigation intents",
+    "Global app-version availability",
+    "Real updater integration and safe cache clearing",
+    "Expanded cross-module connectivity regression coverage"
   ]
 }
