@@ -6,6 +6,7 @@ on:
       - experiment/heatmap-news-20260722
     paths-ignore:
       - preview-update.json
+      - preview-regression-failure.txt
   workflow_dispatch:
 
 permissions:
@@ -83,7 +84,30 @@ jobs:
           node --test --test-force-exit tests/blueprint-preview-v1.test.mjs tests/blueprint-preview-stabilization.test.mjs
 
       - name: Run full JavaScript regression against production baseline
-        run: npm test
+        run: |
+          set +e
+          npm test > /tmp/amyfx-preview-regression.log 2>&1
+          status=$?
+          cat /tmp/amyfx-preview-regression.log
+          if [ "$status" -ne 0 ]; then
+            {
+              echo "Amy FX Preview regression failure"
+              echo "Run: $GITHUB_RUN_ID"
+              echo "Commit: $GITHUB_SHA"
+              echo
+              grep -E '=====|Regression failed:|not ok|AssertionError|ERR_|Expected|actual:|expected:|operator:' /tmp/amyfx-preview-regression.log | tail -n 160 || true
+              echo
+              echo "--- final log lines ---"
+              tail -n 120 /tmp/amyfx-preview-regression.log
+            } > preview-regression-failure.txt
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add preview-regression-failure.txt
+            git commit -m 'ci(preview): capture baseline regression failure [skip ci]' || true
+            git push origin "HEAD:${GITHUB_REF_NAME}" || true
+            exit "$status"
+          fi
+          rm -f preview-regression-failure.txt
 
       - name: Configure Preview identity and updater channel
         run: |
