@@ -15,6 +15,7 @@ const files = {
   provider: 'app/src/main/assets/apps/shared/amyfx-provider-detection-v1.js',
   customer: 'app/src/main/assets/apps/shared/amyfx-mentor-customer-service-v1.js',
   universal: 'app/src/main/assets/apps/shared/amyfx-mentor-universal-access-v1.js',
+  safe: 'app/src/main/assets/apps/shared/amyfx-mentor-rule-chat-safe-v3.js',
   intel: 'app/src/main/assets/apps/shared/market-intelligence.js',
   academyAuth: 'app/src/main/assets/apps/academy/assets/js/auth.js',
   academyLesson: 'app/src/main/assets/apps/academy/bagian-15-menjadi-trader-mandiri/dari-belajar-ke-eksekusi.html',
@@ -25,20 +26,23 @@ const files = {
 
 test('connectivity files exist and parse', async () => {
   for (const file of Object.values(files)) assert.equal(await exists(file), true, `missing ${file}`);
-  for (const file of [files.final, files.audit, files.provider, files.customer, files.universal, files.intel, files.academyAuth]) {
+  for (const file of [files.final, files.audit, files.provider, files.customer, files.universal, files.safe, files.intel, files.academyAuth]) {
     const result = spawnSync(process.execPath, ['--check', path.join(root, file)], { encoding: 'utf8' });
     assert.equal(result.status, 0, `${file}: ${result.stderr || result.stdout}`);
   }
 });
 
-test('provider loads final coordinator after audited Mentor stack', async () => {
+test('provider loads safe rule chat after universal access and excludes deprecated coordinators', async () => {
   const source = await read(files.provider);
-  for (const token of ['amyfx-mentor-conversation-v1.js', 'amyfx-mentor-customer-service-v1.js', 'amyfx-mentor-universal-access-v1.js', 'amyfx-connectivity-audit-v2.js', 'amyfx-connectivity-final-v3.js']) {
+  for (const token of ['amyfx-mentor-conversation-v1.js', 'amyfx-mentor-universal-access-v1.js', 'amyfx-mentor-rule-chat-safe-v3.js']) {
     assert.match(source, new RegExp(token.replaceAll('.', '\\.')));
   }
-  assert.match(source, /if \(window\.__amyFxConnectivityAuditV2\) \{ loadFinalConnectivityRuntime\(\); return; \}/);
-  assert.match(source, /script\.addEventListener\("load", loadFinalConnectivityRuntime, \{ once: true \}\)/);
-  assert.match(source, /loadUniversalAccessRuntime[\s\S]*loadConnectivityRuntime/);
+  assert.match(source, /loadScriptOnce\("amyfx-mentor-conversation-v1\.js"[\s\S]*loadCustomerServiceRuntime/);
+  assert.match(source, /function loadCustomerServiceRuntime\(\) \{ loadUniversalAccessRuntime\(\); \}/);
+  assert.match(source, /loadScriptOnce\("amyfx-mentor-universal-access-v1\.js"[\s\S]*loadSafeRuleChatRuntime/);
+  assert.doesNotMatch(source, /script\.src\s*=\s*runtimeUrl\("amyfx-connectivity-audit-v2\.js"\)/);
+  assert.doesNotMatch(source, /script\.src\s*=\s*runtimeUrl\("amyfx-connectivity-final-v3\.js"\)/);
+  assert.doesNotMatch(source, /script\.src\s*=\s*runtimeUrl\("amyfx-mentor-customer-service-v1\.js"\)/);
 });
 
 test('final coordinator routes exact views across five modules', async () => {
@@ -91,7 +95,7 @@ test('Journal and Mapping publish events consumed across modules', async () => {
   assert.match(final, /window\.addEventListener\("amyfx:market-update"/);
 });
 
-test('final router wraps only after connectivity audit v2', async () => {
+test('deprecated final router remains internally guarded', async () => {
   const source = await read(files.final);
   assert.match(source, /!os\.__amyConnectivityAuditV2/);
   assert.match(source, /__amyConnectivityFinalV3: true/);
