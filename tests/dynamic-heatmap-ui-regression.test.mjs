@@ -40,12 +40,14 @@ test('dynamic heatmap refreshes independently and tracks strength changes', () =
   assert.match(ui, /window\.loadHeatmap = loadDynamicHeatmap/);
 });
 
-test('heatmap API uses dynamic lifecycle engine and short CDN cache', () => {
+test('heatmap API uses dynamic lifecycle engine and shared candle cache', () => {
   const api = readFileSync(apiUrl, 'utf8');
   assert.match(api, /computeDynamicHeatmap/);
   assert.match(api, /await import\('\.\.\/lib\/heatmap-core\.mjs'\)/);
-  assert.match(api, /s-maxage=15, stale-while-revalidate=20/);
+  assert.match(api, /import \{ getCandles \} from '\.\.\/lib\/market-candle-store\.mjs'/);
+  assert.match(api, /s-maxage=60, stale-while-revalidate=120/);
   assert.match(api, /sourceCandleTime/);
+  assert.doesNotMatch(api, /api\.twelvedata\.com/);
   assert.doesNotMatch(api, /const BUCKET_SIZE = 2\.0/);
 });
 
