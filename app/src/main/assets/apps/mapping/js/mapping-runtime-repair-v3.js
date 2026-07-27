@@ -148,7 +148,6 @@ function repairEntryWatchVisibility() {
   const watch = readWatch();
   const actionable = Boolean(
     watch?.active
-    && watch?.entryAllowed !== false
     && String(watch?.direction || 'WAIT').toUpperCase() !== 'WAIT'
     && ACTIONABLE_WATCH_STAGES.has(String(watch?.lifecycleStage || '').toUpperCase())
   );
