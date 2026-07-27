@@ -11,20 +11,19 @@
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Amy Mentor kini tampil sebagai Amy Assistant dengan gaya customer service yang lebih natural.",
-    "Sebagian besar percakapan menggunakan chat rule-based lokal yang cepat tanpa memanggil API AI.",
-    "Amy dapat melakukan percakapan bertahap, memahami jawaban singkat seperti iya atau tidak, dan meminta klarifikasi fitur yang bermasalah.",
-    "Tombol balasan cepat berubah mengikuti percakapan untuk Mapping, Market Intel, Jurnal, Academy, API, update, dan bantuan aplikasi.",
-    "Istilah teknis seperti Context Envelope, deterministic, provider, TERHUBUNG, dan SYNC tidak lagi ditampilkan pada percakapan biasa.",
-    "AI tetap digunakan otomatis untuk analisis mendalam, sedangkan bantuan umum ditangani bot lokal.",
-    "Seluruh regression JavaScript, Android unit test, lint, signed APK, package, version, dan signer berhasil diverifikasi."
+    "Hotfix freeze Amy FX Preview setelah pemasangan chat customer service.",
+    "Runtime lama yang saling memantau seluruh DOM tidak lagi dimuat.",
+    "Amy Assistant kini memakai satu chat rule-based ringan tanpa MutationObserver global atau repaint UI berulang.",
+    "Tombol Amy dipastikan kembali terlihat ketika panel sedang tertutup.",
+    "Akses seluruh modul dan secure provider vault tetap dipertahankan.",
+    "Seluruh regression JavaScript, Android unit test, lint, dan release compile berhasil diverifikasi."
   ],
   "changelog": [
-    "Natural rule-based customer-service conversation engine",
-    "Multi-turn issue clarification state",
-    "Contextual quick-reply actions",
-    "Friendly customer-service panel and welcome message",
-    "Technical metadata suppression",
-    "Final UI enforcement after connectivity runtimes"
+    "Removed freeze-prone mentor observer chain",
+    "Lightweight safe rule-chat runtime v3",
+    "Bounded initialization with no permanent polling",
+    "Idempotent customer-service UI updates",
+    "Amy launcher visibility recovery",
+    "Freeze regression protection"
   ]
 }
