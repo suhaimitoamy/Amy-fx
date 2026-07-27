@@ -70,7 +70,7 @@ class AmyFirebaseMessagingService : FirebaseMessagingService() {
             return
         }
 
-        val channelId = "amy_news_v1"
+        val channelId = AmyFxApplication.NEWS_CHANNEL_ID
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -79,10 +79,11 @@ class AmyFirebaseMessagingService : FirebaseMessagingService() {
                 "Amy FX Breaking News",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Breaking news yang relevan untuk XAU/USD"
+                description = "Breaking news XAU/USD yang tetap muncul saat Amy FX ditutup"
                 enableLights(true)
                 lightColor = Color.YELLOW
                 enableVibration(true)
+                setShowBadge(true)
             }
             manager.createNotificationChannel(channel)
         }
@@ -90,6 +91,7 @@ class AmyFirebaseMessagingService : FirebaseMessagingService() {
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("target_url", targetUrl)
+            putExtra("amyfx_route", "MarketIntel")
         }
         val requestCode = if (newsId.isBlank()) gateKey.hashCode() else newsId.hashCode()
         val pendingIntent = PendingIntent.getActivity(
@@ -104,9 +106,10 @@ class AmyFirebaseMessagingService : FirebaseMessagingService() {
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .build()
