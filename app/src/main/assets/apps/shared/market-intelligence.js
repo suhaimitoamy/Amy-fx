@@ -1,142 +1,29 @@
 (function () {
   if (window.AmyFXIntel) return;
 
-  const STORE_KEY = 'amyfx.market.intel.v1';
-  const MAX_AGE = 5 * 60 * 1000;
-  let memoryState = {};
-  function safeParse(value, fallback) { try { return JSON.parse(value); } catch (_) { return fallback; } }
-  function read() {
-    try {
-      const parsed = safeParse(localStorage.getItem(STORE_KEY) || '{}', {});
-      if (parsed && typeof parsed === 'object' && Object.keys(parsed).length) memoryState = parsed;
-      return parsed && typeof parsed === 'object' ? parsed : memoryState;
-    } catch (_) { return memoryState; }
+  const contract = window.AmyFXMarketContract;
+  if (!contract) {
+    console.error('AmyFXMarketContract must load before market-intelligence.js');
+    return;
   }
-  function timestamp(value) {
-    const numeric = Number(value);
-    const time = Number.isFinite(numeric) && numeric > 86_400_000 ? numeric : new Date(value || 0).getTime();
-    return Number.isFinite(time) && time > 86_400_000 ? time : 0;
-  }
-  function explicitPartTimestamp(part) {
-    return Math.max(
-      timestamp(part?.updated),
-      timestamp(part?.capturedAt),
-      timestamp(part?.captured_at),
-      timestamp(part?.analyzedAt)
-    );
-  }
-  function partTimestamp(part) {
-    return explicitPartTimestamp(part) || timestamp(part?.storedAt);
-  }
-  function syncGlobals(state = read()) {
-    const stamps = Object.values(state).map(partTimestamp).filter(Boolean);
-    window.AmyFXIntelState = { ...state, updatedAt: stamps.length ? new Date(Math.max(...stamps)).toISOString() : null };
-    if (state.heatmap) {
-      window.AmyFXHeatmapState = { ...state.heatmap, sourceMethod: state.heatmap.sourceMethod || state.heatmap.source || 'OHLC-derived/modelled liquidity' };
-    } else {
-      window.AmyFXHeatmapState = null;
-    }
-    return state;
-  }
-  function write(part, payload) {
-    const state = read();
-    const storedAt = Date.now();
-    const sourceTimestamp = explicitPartTimestamp(payload);
-    const updated = sourceTimestamp ? new Date(sourceTimestamp).toISOString() : new Date(storedAt).toISOString();
-    state[part] = {
-      ...payload,
-      updated,
-      capturedAt: payload?.capturedAt || payload?.captured_at || updated,
-      storedAt
-    };
-    memoryState = state;
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (_) {}
-    syncGlobals(state);
-    window.dispatchEvent(new CustomEvent('amyfx:market-update', { detail: { part, state, value: state[part] } }));
-    return state;
-  }
+
   function sessionInfo(date = new Date()) {
-    const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Makassar', hour: '2-digit', minute: '2-digit', hour12: false }).format(date).split(':').map(Number);
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Makassar', hour: '2-digit', minute: '2-digit', hour12: false
+    }).format(date).split(':').map(Number);
     const minutes = parts[0] * 60 + parts[1];
-    if (minutes >= 6 * 60 && minutes < 12 * 60) return { id: 'ASIA', label: 'ASIA ACTIVE' };
-    if (minutes >= 13 * 60 && minutes < 17 * 60) return { id: 'LONDON', label: 'LONDON ACTIVE' };
-    if (minutes >= 19 * 60 + 30 && minutes < 23 * 60) return { id: 'NEW_YORK', label: 'NEW YORK ACTIVE' };
+    if (minutes >= 6 * 60 && minutes < 14 * 60) return { id: 'ASIA', label: 'ASIA ACTIVE' };
+    if (minutes >= 14 * 60 && minutes < 18 * 60) return { id: 'LONDON', label: 'LONDON ACTIVE' };
+    if (minutes >= 19 * 60 + 30 || minutes < 4 * 60) return { id: 'NEW_YORK', label: 'NEW YORK ACTIVE' };
     return { id: 'OFF_SESSION', label: 'OFF-SESSION' };
   }
-  function partExplicitlyStale(part) {
-    return Boolean(part?.dataStale) || /DATA USANG|EXPIRED|INVALID/.test(String(part?.status || part?.statusText || '').toUpperCase());
+
+  function newsText(item) {
+    return [item?.text, item?.textOriginal, item?.title, item?.headline, item?.summary, item?.description]
+      .filter(Boolean).join(' ');
   }
-  function partIsFresh(part) {
-    const capturedAt = partTimestamp(part);
-    return capturedAt > 0 && Date.now() - capturedAt <= MAX_AGE && !partExplicitlyStale(part);
-  }
-  function priceCandidate(part, value, source) {
-    const price = Number(value);
-    const capturedAt = partTimestamp(part);
-    if (!Number.isFinite(price) || price <= 0 || capturedAt <= 0) return null;
-    return { source, price, capturedAt, storedAt: capturedAt, fresh: partIsFresh(part), part };
-  }
-  function marketPriceCandidates(state = read()) {
-    return [
-      priceCandidate(state.mapping, state.mapping?.price, 'mapping'),
-      priceCandidate(state.liquidity, state.liquidity?.currentPrice, 'liquidity'),
-      priceCandidate(state.heatmap, state.heatmap?.currentPrice, 'heatmap')
-    ].filter(Boolean);
-  }
-  function bestCurrentPrice(state = read()) {
-    const candidates = marketPriceCandidates(state);
-    const fresh = candidates.filter(item => item.fresh).sort((a, b) => b.capturedAt - a.capturedAt);
-    const fallback = [...candidates].sort((a, b) => b.capturedAt - a.capturedAt);
-    return Number((fresh[0] || fallback[0])?.price || 0);
-  }
-  function freshness(state = read()) {
-    const candidates = marketPriceCandidates(state).sort((a, b) => b.capturedAt - a.capturedAt);
-    if (!navigator.onLine) return { label: 'OFFLINE', className: 'offline', ageMs: Number.MAX_SAFE_INTEGER, source: null };
-    if (!candidates.length) return { label: 'WAITING', className: 'stale', ageMs: Number.MAX_SAFE_INTEGER, source: null };
-    const latest = candidates[0];
-    const age = Math.max(0, Date.now() - latest.capturedAt);
-    if (!latest.fresh) return { label: 'STALE', className: 'stale', ageMs: age, source: latest.source };
-    return { label: 'LIVE', className: 'live', ageMs: age, source: latest.source };
-  }
-  function normalizeLevel(item, type, currentPrice) {
-    const price = Number(item?.price ?? item?.level);
-    if (!Number.isFinite(price) || price <= 0) return null;
-    const rawDistance = Number(item?.distance ?? item?.distanceFromPrice);
-    return { ...item, type, price, distance: Number.isFinite(rawDistance) ? rawDistance : price - currentPrice };
-  }
-  function levelIsOnCorrectSide(level, type, currentPrice) {
-    if (!level || !Number.isFinite(currentPrice) || currentPrice <= 0) return Boolean(level);
-    return type === 'BSL' ? level.price > currentPrice : type === 'SSL' ? level.price < currentPrice : false;
-  }
-  function levelIsActive(item) {
-    const status = String(item?.status || 'ACTIVE').toUpperCase();
-    if (status === 'SWEPT_RECLAIMED') return item?.active !== false;
-    return item?.active !== false && !/(SWEPT|TOUCHED|INVALID|BROKEN|EXPIRED|HISTORICAL)/.test(status);
-  }
-  function pickNearest(levels, type, currentPrice, fallbackPrice) {
-    const candidates = (Array.isArray(levels) ? levels : []).filter(item => item?.type === type && levelIsActive(item)).map(item => normalizeLevel(item, type, currentPrice)).filter(item => levelIsOnCorrectSide(item, type, currentPrice)).sort((a, b) => Math.abs(a.distance) - Math.abs(b.distance));
-    if (candidates[0]) return candidates[0];
-    const fallback = normalizeLevel({ price: fallbackPrice }, type, currentPrice);
-    return levelIsOnCorrectSide(fallback, type, currentPrice) ? fallback : null;
-  }
-  function normalizedHeatmapLevels(heatmap, currentPrice) {
-    return (Array.isArray(heatmap?.zones) ? heatmap.zones : []).filter(zone => zone?.liquidityType === 'BSL' || zone?.liquidityType === 'SSL').map(zone => ({ ...zone, type: zone.liquidityType, level: Number(zone.price), distance: Number(zone.price) - currentPrice }));
-  }
-  function nearestLevels(state = read()) {
-    const mapping = state.mapping || {}, liquidity = state.liquidity || {}, heatmap = state.heatmap || {};
-    const currentPrice = bestCurrentPrice(state);
-    const mappingBsl = partIsFresh(mapping) ? pickNearest(mapping.levels, 'BSL', currentPrice, mapping.bsl) : null;
-    const mappingSsl = partIsFresh(mapping) ? pickNearest(mapping.levels, 'SSL', currentPrice, mapping.ssl) : null;
-    const liquidityBsl = partIsFresh(liquidity) ? pickNearest(liquidity.levels, 'BSL', currentPrice, null) : null;
-    const liquiditySsl = partIsFresh(liquidity) ? pickNearest(liquidity.levels, 'SSL', currentPrice, null) : null;
-    const heatmapLevels = partIsFresh(heatmap) ? normalizedHeatmapLevels(heatmap, currentPrice) : [];
-    const heatmapBsl = partIsFresh(heatmap) ? pickNearest(heatmapLevels, 'BSL', currentPrice, heatmap.summary?.nearestBsl?.price) : null;
-    const heatmapSsl = partIsFresh(heatmap) ? pickNearest(heatmapLevels, 'SSL', currentPrice, heatmap.summary?.nearestSsl?.price) : null;
-    const sources = [{ storedAt: partTimestamp(mapping), bsl: mappingBsl, ssl: mappingSsl }, { storedAt: partTimestamp(liquidity), bsl: liquidityBsl, ssl: liquiditySsl }, { storedAt: partTimestamp(heatmap), bsl: heatmapBsl, ssl: heatmapSsl }].sort((a, b) => b.storedAt - a.storedAt);
-    return { bsl: sources.find(source => source.bsl)?.bsl || null, ssl: sources.find(source => source.ssl)?.ssl || null };
-  }
-  function newsText(item) { return [item?.text, item?.textOriginal, item?.title, item?.headline, item?.summary, item?.description].filter(Boolean).join(' '); }
-  function newsRisk(state = read()) {
+
+  function newsRisk(state = contract.read()) {
     const items = state.news?.items || [];
     const high = /fomc|powell|cpi|nfp|payroll|interest rate|suku bunga|fed decision|war|tariff/i;
     const medium = /inflation|ppi|pce|yield|treasury|jobless|gdp|geopolitical|sanction/i;
@@ -144,37 +31,118 @@
     if (items.some(item => medium.test(newsText(item)))) return 'ELEVATED';
     return items.length ? 'NORMAL' : 'UNKNOWN';
   }
-  function briefing(state = read()) {
-    const fresh = freshness(state);
-    if (fresh.className !== 'live') return { tone: 'wait', title: 'DATA ' + fresh.label, lines: ['Briefing ditahan sampai data market kembali segar.'] };
-    const { bsl, ssl } = nearestLevels(state);
-    const bslDist = bsl ? Math.abs(Number(bsl.distance)) : Infinity, sslDist = ssl ? Math.abs(Number(ssl.distance)) : Infinity;
-    const pressure = bslDist < sslDist ? 'ABOVE PRICE' : sslDist < bslDist ? 'BELOW PRICE' : String(state.heatmap?.summary?.pressure || '') || 'BALANCED';
-    const draw = bslDist < sslDist ? bsl : sslDist < bslDist ? ssl : (bsl || ssl);
-    const mapping = state.mapping || {}, action = mapping.direction || mapping.status || 'WAIT';
-    return { tone: String(action).includes('BUY') ? 'buy' : String(action).includes('SELL') ? 'sell' : 'wait', title: 'RULE-BASED MARKET BRIEFING', lines: [`Liquidity pressure: ${pressure}`, `Nearest draw: ${draw ? `${draw.type} ${Number(draw.price).toFixed(2)}` : 'WAITING DATA'}`, `Mapping: ${mapping.bias || 'WAIT'} · ${action}`, `News risk: ${newsRisk(state)} · ${sessionInfo().label}`] };
-  }
-  function mountStrip(target) {
-    if (!target) return;
-    const paint = () => {
-      const state = read(), { bsl, ssl } = nearestLevels(state), fresh = freshness(state), price = bestCurrentPrice(state);
-      target.innerHTML = `<div class="amy-command-main"><span>XAU/USD</span><strong>${price ? price.toFixed(2) : '--'}</strong></div><div class="amy-command-metric"><small>SESSION</small><b>${sessionInfo().id}</b></div><div class="amy-command-metric"><small>BSL</small><b class="red">${bsl ? Number(bsl.price).toFixed(2) : '--'}</b></div><div class="amy-command-metric"><small>SSL</small><b class="green">${ssl ? Number(ssl.price).toFixed(2) : '--'}</b></div><div class="amy-command-metric"><small>NEWS</small><b>${newsRisk(state)}</b></div><div class="amy-data-state ${fresh.className}"><i></i>${fresh.label}</div>`;
-    };
-    paint();window.addEventListener('amyfx:market-update', paint);window.addEventListener('online', paint);window.addEventListener('offline', paint);window.addEventListener('storage', event => { if (event.key === STORE_KEY) { syncGlobals(); paint(); } });target._amyPaint = paint;
-  }
-  function mountBriefing(target) {
-    if (!target) return;
-    const paint = () => { const data = briefing();target.className = `amy-briefing ${data.tone}`;target.innerHTML = `<div class="amy-briefing-title">${data.title}</div>${data.lines.map(line => `<div>${line}</div>`).join('')}`; };
-    paint();window.addEventListener('amyfx:market-update', paint);window.addEventListener('storage', event => { if (event.key === STORE_KEY) { syncGlobals(); paint(); } });target._amyPaint = paint;
-  }
-  syncGlobals();
-  window.AmyFXIntel = { read, write, syncGlobals, partTimestamp, sessionInfo, freshness, nearestLevels, bestCurrentPrice, newsRisk, briefing, mountStrip, mountBriefing };
-})();
 
-/* Stabilizer compatibility marker for the superseded Market Intel write contract.
-    state[part] = { ...payload, storedAt: Date.now() };
-    localStorage.setItem(STORE_KEY, JSON.stringify(state));
-    window.AmyFXIntelState = { ...state, updatedAt: payload?.updated || new Date().toISOString() };
-    if (part === 'heatmap') window.AmyFXHeatmapState = { ...state[part], sourceMethod: payload?.source || payload?.sourceMethod || 'OHLC-derived/modelled liquidity' };
-    window.dispatchEvent(new CustomEvent('amyfx:market-update', { detail: state }));
-*/
+  function priceText(value) {
+    const price = Number(value);
+    return Number.isFinite(price) && price > 0 ? price.toFixed(2) : '--';
+  }
+
+  function levelText(level) {
+    if (!level) return '--';
+    const suffix = level.freshness === 'STRUCTURAL' ? ' · STRUCTURAL' : '';
+    return `${priceText(level.price)}${suffix}`;
+  }
+
+  function freshness(state = contract.read()) {
+    return contract.freshness(state);
+  }
+
+  function briefing(state = contract.read()) {
+    const quoteFreshness = freshness(state);
+    const levels = contract.nearestLevels(state);
+    const mapping = state.mapping || {};
+    const conflicts = contract.conflicts(state);
+
+    if (quoteFreshness.state !== 'LIVE') {
+      const lines = [`Quote XAU/USD ${quoteFreshness.label}.`];
+      if (levels.bsl || levels.ssl) lines.push(`Level Intel masih berstatus ${levels.freshness.state}.`);
+      if (conflicts.length) lines.push('Snapshot market memiliki perbedaan waktu atau sumber yang harus diperhatikan.');
+      return { tone: 'wait', title: `DATA ${quoteFreshness.label}`, lines };
+    }
+
+    const bslDist = levels.bsl ? Math.abs(Number(levels.bsl.distance)) : Infinity;
+    const sslDist = levels.ssl ? Math.abs(Number(levels.ssl.distance)) : Infinity;
+    const pressure = bslDist < sslDist ? 'ABOVE PRICE' : sslDist < bslDist ? 'BELOW PRICE' : 'BALANCED';
+    const draw = bslDist < sslDist ? levels.bsl : sslDist < bslDist ? levels.ssl : (levels.bsl || levels.ssl);
+    const action = mapping.direction || mapping.status || 'WAIT';
+    return {
+      tone: String(action).includes('BUY') ? 'buy' : String(action).includes('SELL') ? 'sell' : 'wait',
+      title: 'RULE-BASED MARKET BRIEFING',
+      lines: [
+        `Liquidity pressure: ${pressure}`,
+        `Nearest draw: ${draw ? `${draw.type} ${priceText(draw.price)}` : 'WAITING INTEL LIQUIDITY'}`,
+        `Mapping: ${mapping.bias || 'WAIT'} · ${action}`,
+        `News risk: ${newsRisk(state)} · ${sessionInfo().label}`,
+        ...(conflicts.length ? ['Catatan: terdapat perbedaan sumber/timestamp; keputusan tetap WAIT sampai selaras.'] : [])
+      ]
+    };
+  }
+
+  function mountStrip(target) {
+    if (!target || target._amyCanonicalStripMounted) return;
+    target._amyCanonicalStripMounted = true;
+
+    const paint = () => {
+      const state = contract.read();
+      const quote = state.quote || {};
+      const quoteFreshness = contract.assess('quote', quote);
+      const levels = contract.nearestLevels(state);
+      const price = contract.bestCurrentPrice(state);
+      target.innerHTML = `<div class="amy-command-main"><span>XAU/USD</span><strong>${priceText(price)}</strong></div>`
+        + `<div class="amy-command-metric"><small>SESSION</small><b>${sessionInfo().id}</b></div>`
+        + `<div class="amy-command-metric"><small>BSL</small><b class="red" data-freshness="${levels.bsl?.freshness || 'UNAVAILABLE'}">${levelText(levels.bsl)}</b></div>`
+        + `<div class="amy-command-metric"><small>SSL</small><b class="green" data-freshness="${levels.ssl?.freshness || 'UNAVAILABLE'}">${levelText(levels.ssl)}</b></div>`
+        + `<div class="amy-command-metric"><small>NEWS</small><b>${newsRisk(state)}</b></div>`
+        + `<div class="amy-data-state ${quoteFreshness.className}" data-domain="quote" data-freshness="${quoteFreshness.state}"><i></i>${quoteFreshness.label}</div>`;
+    };
+
+    paint();
+    window.addEventListener('amyfx:market-update', paint);
+    window.addEventListener('online', paint);
+    window.addEventListener('offline', paint);
+    window.addEventListener('storage', event => {
+      if (event.key === contract.storeKey) {
+        contract.syncGlobals();
+        paint();
+      }
+    });
+    target._amyPaint = paint;
+  }
+
+  function mountBriefing(target) {
+    if (!target || target._amyCanonicalBriefingMounted) return;
+    target._amyCanonicalBriefingMounted = true;
+    const paint = () => {
+      const data = briefing();
+      target.className = `amy-briefing ${data.tone}`;
+      target.innerHTML = `<div class="amy-briefing-title">${data.title}</div>${data.lines.map(line => `<div>${line}</div>`).join('')}`;
+    };
+    paint();
+    window.addEventListener('amyfx:market-update', paint);
+    window.addEventListener('storage', event => {
+      if (event.key === contract.storeKey) paint();
+    });
+    target._amyPaint = paint;
+  }
+
+  contract.syncGlobals();
+  window.AmyFXIntel = Object.freeze({
+    version: '2.0.0',
+    read: contract.read,
+    write: contract.write,
+    syncGlobals: contract.syncGlobals,
+    partTimestamp: contract.partTimestamp,
+    assessFreshness: contract.assess,
+    sessionInfo,
+    freshness,
+    nearestLevels: contract.nearestLevels,
+    bestCurrentPrice: contract.bestCurrentPrice,
+    conflicts: contract.conflicts,
+    snapshot: contract.snapshot,
+    newsRisk,
+    briefing,
+    mountStrip,
+    mountBriefing,
+    __amyCanonicalMarketContractV2: true
+  });
+})();
