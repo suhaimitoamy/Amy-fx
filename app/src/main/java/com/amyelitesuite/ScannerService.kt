@@ -355,7 +355,7 @@ class ScannerService : Service() {
         const val ACTION_STOP_SCANNER = "com.amyelitesuite.action.STOP_SCANNER"
 
         private const val MARKET_URL =
-            "https://amy-fx.vercel.app/api/twelvedata?symbol=XAU/USD&interval=1min&outputsize=1"
+            "https://amy-fx-git-personal-amyfx-private-aplikasi-trading.vercel.app/api/twelvedata?symbol=XAU/USD&interval=1min&outputsize=1"
         private const val MARKET_POLL_MS = 5L * 60L * 1000L
         private const val RETRY_STEP_MS = 60_000L
         private const val MAX_RETRY_MS = 5L * 60L * 1000L
