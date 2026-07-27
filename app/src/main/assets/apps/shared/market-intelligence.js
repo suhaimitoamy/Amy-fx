@@ -39,8 +39,7 @@
 
   function levelText(level) {
     if (!level) return '--';
-    const suffix = level.freshness === 'STRUCTURAL' ? ' · STRUCTURAL' : '';
-    return `${priceText(level.price)}${suffix}`;
+    return priceText(level.price);
   }
 
   function freshness(state = contract.read()) {
@@ -90,8 +89,8 @@
       const price = contract.bestCurrentPrice(state);
       target.innerHTML = `<div class="amy-command-main"><span>XAU/USD</span><strong>${priceText(price)}</strong></div>`
         + `<div class="amy-command-metric"><small>SESSION</small><b>${sessionInfo().id}</b></div>`
-        + `<div class="amy-command-metric"><small>BSL</small><b class="red" data-freshness="${levels.bsl?.freshness || 'UNAVAILABLE'}">${levelText(levels.bsl)}</b></div>`
-        + `<div class="amy-command-metric"><small>SSL</small><b class="green" data-freshness="${levels.ssl?.freshness || 'UNAVAILABLE'}">${levelText(levels.ssl)}</b></div>`
+        + `<div class="amy-command-metric"><small>BSL</small><b class="red" title="${levels.bsl?.freshness || 'UNAVAILABLE'}" data-freshness="${levels.bsl?.freshness || 'UNAVAILABLE'}">${levelText(levels.bsl)}</b></div>`
+        + `<div class="amy-command-metric"><small>SSL</small><b class="green" title="${levels.ssl?.freshness || 'UNAVAILABLE'}" data-freshness="${levels.ssl?.freshness || 'UNAVAILABLE'}">${levelText(levels.ssl)}</b></div>`
         + `<div class="amy-command-metric"><small>NEWS</small><b>${newsRisk(state)}</b></div>`
         + `<div class="amy-data-state ${quoteFreshness.className}" data-domain="quote" data-freshness="${quoteFreshness.state}"><i></i>${quoteFreshness.label}</div>`;
     };
