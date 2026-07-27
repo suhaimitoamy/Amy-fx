@@ -1,3 +1,4 @@
+// Freeze hotfix release gate: the Preview APK must never reload the observer-loop mentor chain.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
