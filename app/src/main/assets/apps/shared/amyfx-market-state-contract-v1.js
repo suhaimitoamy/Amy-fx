@@ -71,7 +71,7 @@
       : domain === "mapping"
         ? [payload.sourceCandleAt, payload.capturedAt, payload.captured_at, payload.analyzedAt]
         : domain === "quote"
-          ? [payload.providerCapturedAt, payload.capturedAt, payload.captured_at, payload.updated]
+          ? [payload.providerCapturedAt, payload.capturedAt, payload.captured_at]
           : [payload.capturedAt, payload.captured_at, payload.updated, payload.generatedAt];
     return Math.max(...candidates.map(timestamp), 0);
   }
@@ -198,8 +198,8 @@
     const price = Number(payload?.price || payload?.currentPrice || 0);
     if (!Number.isFinite(price) || price <= 0) return previousQuote || null;
     const tickAt = timestamp(payload?.quoteCapturedAt)
-      || timestamp(localStorage.getItem("last_ws_tick_at"))
-      || sourceTime("quote", payload);
+      || timestamp(payload?.providerCapturedAt)
+      || timestamp(localStorage.getItem("last_ws_tick_at"));
     if (!tickAt) return previousQuote || null;
     return {
       ...(previousQuote || {}),
