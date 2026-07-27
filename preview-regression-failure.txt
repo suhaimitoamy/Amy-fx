@@ -1,0 +1,137 @@
+Amy FX Private Preview regression failure
+Run: 30282212847
+Commit: 96a948e16b2569112ca044da851bff56b8e77039
+
+===== amy-mentor-conversation.test.mjs =====
+===== api-polling-coordinator.test.mjs =====
+===== asia-range-ui-freeze-regression.test.mjs =====
+===== asia-range.test.mjs =====
+not ok 7 - TwelveData backend normalizes UTC timestamps for session boundaries
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+  operator: 'match'
+Regression failed: asia-range.test.mjs
+
+--- final log lines ---
+    
+      if (memoryCache.size <= MEMORY_CACHE_LIMIT) return;
+      [...memoryCache.entries()]
+        .sort((a, b) => a[1].storedAt - b[1].storedAt)
+        .slice(0, memoryCache.size - 30)
+        .forEach(([entryKey]) => memoryCache.delete(entryKey));
+    }
+    
+    function setCacheHeaders(res, ttl, state = 'MISS', source = '') {
+      const staleSeconds = Math.max(ttl * 4, 300);
+      const cacheControl = `public, s-maxage=${ttl}, stale-while-revalidate=${staleSeconds}, stale-if-error=${staleSeconds}`;
+      res.setHeader('Cache-Control', cacheControl);
+      res.setHeader('CDN-Cache-Control', cacheControl);
+      res.setHeader('Vercel-CDN-Cache-Control', cacheControl);
+      res.setHeader('X-AmyFX-Market-Cache', state);
+      if (source) res.setHeader('X-AmyFX-Market-Source', source);
+    }
+    
+    function canonicalM1Url(symbol) {
+      const params = new URLSearchParams({
+        symbol,
+        interval: '1min',
+        outputsize: String(SHARED_M1_OUTPUT_SIZE)
+      });
+      return `/api/twelvedata?${params.toString()}`;
+    }
+    
+    export default async function handler(req, res) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Accept, Content-Type');
+      res.setHeader('Vary', 'Origin');
+    
+      if (req.method === 'OPTIONS') return res.status(204).end();
+      if (req.method !== 'GET') {
+        res.setHeader('Allow', 'GET, OPTIONS');
+        return res.status(405).json({ status: 'error', message: 'Method not allowed' });
+      }
+    
+      const { symbol = 'XAU/USD', interval, outputsize = '300' } = req.query;
+      if (symbol !== 'XAU/USD') {
+        return res.status(403).json({ status: 'error', message: 'Hanya XAU/USD yang diizinkan' });
+      }
+      if (!ALLOWED_INTERVALS.has(interval)) {
+        return res.status(400).json({ status: 'error', message: 'Interval tidak didukung' });
+      }
+    
+      const requestedOutputSize = parseOutputSize(outputsize);
+      if (interval === '1min' && requestedOutputSize < SHARED_M1_OUTPUT_SIZE) {
+        res.setHeader('Cache-Control', 'public, s-maxage=86400');
+        return res.redirect(307, canonicalM1Url(symbol));
+      }
+    
+      const ttl = ttlSeconds(interval);
+      const key = cacheKey(symbol, interval, requestedOutputSize);
+      const fresh = readCache(key);
+      if (fresh) {
+        setCacheHeaders(res, ttl, 'MEMORY_HIT', fresh.source || 'memory');
+        return res.status(200).json(fresh);
+      }
+    
+      let request = inFlight.get(key);
+      if (!request) {
+        request = getCandles({
+          symbol,
+          interval,
+          outputsize: requestedOutputSize,
+          apiKey: process.env.TWELVEDATA_API_KEY
+        });
+        inFlight.set(key, request);
+      }
+    
+      try {
+        const data = await request;
+        writeCache(key, data, ttl);
+        const cacheState = data.amyfxCacheState || 'PROVIDER_MISS';
+        const responseTtl = cacheState === 'SUPABASE_STALE_FALLBACK' ? Math.min(ttl, 60) : ttl;
+        setCacheHeaders(res, responseTtl, cacheState, data.source || 'unknown');
+        return res.status(200).json(data);
+      } catch (error) {
+        const stale = readCache(key, { allowStale: true });
+        if (stale) {
+          setCacheHeaders(res, Math.min(ttl, 60), 'STALE_FALLBACK', stale.source || 'memory-stale');
+          return res.status(200).json({
+            ...stale,
+            amyfxCacheState: 'STALE_FALLBACK'
+          });
+        }
+    
+        if (error?.providerData) return res.status(502).json(error.providerData);
+        return res.status(error?.name === 'AbortError' ? 504 : 502).json({
+          status: 'error',
+          message: error?.message || 'Market service unavailable',
+          store: marketStoreInfo()
+        });
+      } finally {
+        if (inFlight.get(key) === request) inFlight.delete(key);
+      }
+    }
+    
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/asia-range.test.mjs:100:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 6
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 86.08117
+Regression failed: asia-range.test.mjs
