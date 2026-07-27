@@ -13,6 +13,7 @@ const exists = async relative => {
 };
 
 const connectivityPath = 'app/src/main/assets/apps/shared/amyfx-connectivity-audit-v2.js';
+const safeRuntimePath = 'app/src/main/assets/apps/shared/amyfx-mentor-rule-chat-safe-v3.js';
 const providerPath = 'app/src/main/assets/apps/shared/amyfx-provider-detection-v1.js';
 
 const modulePages = [
@@ -23,15 +24,19 @@ const modulePages = [
   'app/src/main/assets/apps/academy/index.html'
 ];
 
-test('final connectivity runtime exists, parses, and is loaded after universal Mentor access', async () => {
+test('deprecated connectivity runtime remains available for reference but safe v3 is the loaded runtime', async () => {
   assert.equal(await exists(connectivityPath), true);
-  const syntax = spawnSync(process.execPath, ['--check', path.join(root, connectivityPath)], { encoding: 'utf8' });
-  assert.equal(syntax.status, 0, syntax.stderr || syntax.stdout);
+  assert.equal(await exists(safeRuntimePath), true);
+  for (const runtime of [connectivityPath, safeRuntimePath]) {
+    const syntax = spawnSync(process.execPath, ['--check', path.join(root, runtime)], { encoding: 'utf8' });
+    assert.equal(syntax.status, 0, `${runtime}\n${syntax.stderr || syntax.stdout}`);
+  }
   const provider = await read(providerPath);
-  assert.match(provider, /amyfx-connectivity-audit-v2\.js/);
-  assert.match(provider, /data-amyfx-connectivity-audit/);
-  assert.match(provider, /loadUniversalAccessRuntime[\s\S]*loadConnectivityRuntime/);
-  assert.match(provider, /script\.addEventListener\("load", loadConnectivityRuntime/);
+  assert.match(provider, /amyfx-mentor-universal-access-v1\.js/);
+  assert.match(provider, /amyfx-mentor-rule-chat-safe-v3\.js/);
+  assert.match(provider, /loadScriptOnce\("amyfx-mentor-universal-access-v1\.js"[\s\S]*loadSafeRuleChatRuntime/);
+  assert.doesNotMatch(provider, /script\.src\s*=\s*runtimeUrl\("amyfx-connectivity-audit-v2\.js"\)/);
+  assert.doesNotMatch(provider, /script\.src\s*=\s*runtimeUrl\("amyfx-connectivity-final-v3\.js"\)/);
 });
 
 test('all primary modules install the shared provider/bootstrap chain', async () => {
