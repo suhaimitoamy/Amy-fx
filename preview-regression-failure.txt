@@ -1,6 +1,6 @@
 Amy FX Preview regression failure
-Run: 30267539638
-Commit: bc5488e5595f514f2de3a6a0665e07d1890d4573
+Run: 30267758059
+Commit: b7c79aef17026edade8271487afe84b1fd575b3d
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -63,13 +63,7 @@ Commit: bc5488e5595f514f2de3a6a0665e07d1890d4573
 ===== preview-connectivity-final-v3.test.mjs =====
 ===== preview-home-journal-connection.test.mjs =====
 ===== preview-integration-audit.test.mjs =====
-not ok 2 - Blueprint runtime is installed exactly once and in a stable order in every module
-  code: 'ERR_ASSERTION'
-  name: 'AssertionError'
-  expected: true
-  actual: false
-  operator: '=='
-not ok 7 - Market Intel publishes news, liquidity and heatmap context contracts in WITA
+not ok 7 - Market Intel publishes news, liquidity and heatmap through canonical WITA contracts
       ' * ========================\n' +
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
@@ -80,123 +74,123 @@ not ok 7 - Market Intel publishes news, liquidity and heatmap context contracts 
 Regression failed: preview-integration-audit.test.mjs
 
 --- final log lines ---
-        const sslDist = levels.ssl ? Math.abs(Number(levels.ssl.distance)) : Infinity;
-        const pressure = bslDist < sslDist ? 'ABOVE PRICE' : sslDist < bslDist ? 'BELOW PRICE' : 'BALANCED';
-        const draw = bslDist < sslDist ? levels.bsl : sslDist < bslDist ? levels.ssl : (levels.bsl || levels.ssl);
-        const action = mapping.direction || mapping.status || 'WAIT';
+          .filter(Boolean)
+          .sort((a, b) => Math.abs(a.distance) - Math.abs(b.distance))[0] || null;
+        const levelFreshness = assess("liquidity", liquidity, { structural: true });
+        const decorate = level => level ? { ...level, freshness: levelFreshness.state, capturedAt: liquidity?.capturedAt || null } : null;
         return {
-          tone: String(action).includes('BUY') ? 'buy' : String(action).includes('SELL') ? 'sell' : 'wait',
-          title: 'RULE-BASED MARKET BRIEFING',
-          lines: [
-            `Liquidity pressure: ${pressure}`,
-            `Nearest draw: ${draw ? `${draw.type} ${priceText(draw.price)}` : 'WAITING INTEL LIQUIDITY'}`,
-            `Mapping: ${mapping.bias || 'WAIT'} · ${action}`,
-            `News risk: ${newsRisk(state)} · ${sessionInfo().label}`,
-            ...(conflicts.length ? ['Catatan: terdapat perbedaan sumber/timestamp; keputusan tetap WAIT sampai selaras.'] : [])
-          ]
+          bsl: decorate(select("BSL")),
+          ssl: decorate(select("SSL")),
+          source: "INTEL_LIQUIDITY_ONLY",
+          freshness: levelFreshness,
+          unavailable: !liquidity
         };
       }
     
-      function mountStrip(target) {
-        if (!target || target._amyCanonicalStripMounted) return;
-        target._amyCanonicalStripMounted = true;
+      function conflicts(state = read()) {
+        const rows = [];
+        const quoteAt = timestamp(state?.quote?.capturedAt);
+        const mappingAt = timestamp(state?.mapping?.capturedAt);
+        if (quoteAt && mappingAt) {
+          const skewMs = Math.abs(quoteAt - mappingAt);
+          if (skewMs > 5 * 60_000) rows.push({ code: "QUOTE_MAPPING_TIMESTAMP_SKEW", severity: "WARN", skewMs, quoteCapturedAt: iso(quoteAt), mappingCapturedAt: iso(mappingAt) });
+        }
+        const official = nearestLevels(state);
+        const mappingBsl = Number(state?.mapping?.bsl || 0);
+        const mappingSsl = Number(state?.mapping?.ssl || 0);
+        if (official.bsl?.price && mappingBsl && Math.abs(official.bsl.price - mappingBsl) >= 0.01) rows.push({ code: "BSL_SOURCE_DIFFERENCE", severity: "INFO", official: official.bsl.price, mapping: mappingBsl });
+        if (official.ssl?.price && mappingSsl && Math.abs(official.ssl.price - mappingSsl) >= 0.01) rows.push({ code: "SSL_SOURCE_DIFFERENCE", severity: "INFO", official: official.ssl.price, mapping: mappingSsl });
+        return rows;
+      }
     
-        const paint = () => {
-          const state = contract.read();
-          const quote = state.quote || {};
-          const quoteFreshness = contract.assess('quote', quote);
-          const levels = contract.nearestLevels(state);
-          const price = contract.bestCurrentPrice(state);
-          target.innerHTML = `<div class="amy-command-main"><span>XAU/USD</span><strong>${priceText(price)}</strong></div>`
-            + `<div class="amy-command-metric"><small>SESSION</small><b>${sessionInfo().id}</b></div>`
-            + `<div class="amy-command-metric"><small>BSL</small><b class="red" data-freshness="${levels.bsl?.freshness || 'UNAVAILABLE'}">${levelText(levels.bsl)}</b></div>`
-            + `<div class="amy-command-metric"><small>SSL</small><b class="green" data-freshness="${levels.ssl?.freshness || 'UNAVAILABLE'}">${levelText(levels.ssl)}</b></div>`
-            + `<div class="amy-command-metric"><small>NEWS</small><b>${newsRisk(state)}</b></div>`
-            + `<div class="amy-data-state ${quoteFreshness.className}" data-domain="quote" data-freshness="${quoteFreshness.state}"><i></i>${quoteFreshness.label}</div>`;
-        };
-    
-        paint();
-        window.addEventListener('amyfx:market-update', paint);
-        window.addEventListener('online', paint);
-        window.addEventListener('offline', paint);
-        window.addEventListener('storage', event => {
-          if (event.key === contract.storeKey) {
-            contract.syncGlobals();
-            paint();
-          }
+      function snapshot(state = read()) {
+        const domains = {};
+        ["quote", "mapping", "liquidity", "heatmap", "news", "outlook"].forEach(domain => {
+          if (state?.[domain]) domains[domain] = { ...clone(state[domain]), freshness: assess(domain, state[domain]) };
         });
-        target._amyPaint = paint;
-      }
-    
-      function mountBriefing(target) {
-        if (!target || target._amyCanonicalBriefingMounted) return;
-        target._amyCanonicalBriefingMounted = true;
-        const paint = () => {
-          const data = briefing();
-          target.className = `amy-briefing ${data.tone}`;
-          target.innerHTML = `<div class="amy-briefing-title">${data.title}</div>${data.lines.map(line => `<div>${line}</div>`).join('')}`;
+        const times = Object.values(domains).map(part => timestamp(part?.capturedAt)).filter(Boolean);
+        return {
+          schema: "AmyFXCanonicalMarketSnapshotV2",
+          schemaVersion: SCHEMA_VERSION,
+          contractVersion: VERSION,
+          pair: "XAU/USD",
+          updatedAt: times.length ? new Date(Math.max(...times)).toISOString() : null,
+          currentPrice: bestCurrentPrice(state) || null,
+          nearestLiquidity: nearestLevels(state),
+          domains,
+          conflicts: conflicts(state)
         };
-        paint();
-        window.addEventListener('amyfx:market-update', paint);
-        window.addEventListener('storage', event => {
-          if (event.key === contract.storeKey) paint();
-        });
-        target._amyPaint = paint;
       }
     
-      contract.syncGlobals();
-      window.AmyFXIntel = Object.freeze({
-        version: '2.0.0',
-        read: contract.read,
-        write: contract.write,
-        syncGlobals: contract.syncGlobals,
-        partTimestamp: contract.partTimestamp,
-        assessFreshness: contract.assess,
-        sessionInfo,
+      function freshness(state = read()) {
+        const result = assess("quote", state?.quote || null);
+        return { ...result, source: state?.quote?.source || null };
+      }
+    
+      function purgeLegacyMarketCaches() {
+        const state = read();
+        ["amyfx.bot.market.registry.v1", "amy_heatmap_dynamic_snapshot_v2"].forEach(key => {
+          try {
+            const value = safeParse(localStorage.getItem(key) || "{}", {});
+            if (value && typeof value === "object" && !sourceTime("heatmap", value) && !timestamp(value.capturedAt)) localStorage.removeItem(key);
+          } catch (_) {}
+        });
+        return state;
+      }
+    
+      migrate();
+      purgeLegacyMarketCaches();
+      syncGlobals();
+    
+      window.AmyFXMarketContract = Object.freeze({
+        version: VERSION,
+        schemaVersion: SCHEMA_VERSION,
+        storeKey: STORE_KEY,
+        read,
+        write,
+        assess,
         freshness,
-        nearestLevels: contract.nearestLevels,
-        bestCurrentPrice: contract.bestCurrentPrice,
-        conflicts: contract.conflicts,
-        snapshot: contract.snapshot,
-        newsRisk,
-        briefing,
-        mountStrip,
-        mountBriefing,
-        __amyCanonicalMarketContractV2: true
+        bestCurrentPrice,
+        nearestLevels,
+        conflicts,
+        snapshot,
+        partTimestamp(part) { return timestamp(part?.capturedAt || part?.captured_at || part?.sourceCandleTime || part?.sourceCandleAt); },
+        syncGlobals,
+        purgeLegacyMarketCaches
       });
     })();
     
   operator: 'match'
   stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-integration-audit.test.mjs:126:10)
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-integration-audit.test.mjs:149:10)
     async Test.run (node:internal/test_runner/test:1054:7)
     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
 # Subtest: AI secure vault, provider repair and concise conversation runtime are connected end-to-end
 ok 8 - AI secure vault, provider repair and concise conversation runtime are connected end-to-end
   ---
-  duration_ms: 4.172972
+  duration_ms: 7.123709
   type: 'test'
   ...
 # Subtest: only one Preview release workflow owns the active branch and update channel
 ok 9 - only one Preview release workflow owns the active branch and update channel
   ---
-  duration_ms: 4.597712
+  duration_ms: 5.53484
   type: 'test'
   ...
 # Subtest: Preview update manifest is active and points to an immutable Preview APK
 ok 10 - Preview update manifest is active and points to an immutable Preview APK
   ---
-  duration_ms: 0.732183
+  duration_ms: 1.069109
   type: 'test'
   ...
 1..10
 # tests 10
 # suites 0
-# pass 8
-# fail 2
+# pass 9
+# fail 1
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 92.876284
+# duration_ms 126.404991
 Regression failed: preview-integration-audit.test.mjs
