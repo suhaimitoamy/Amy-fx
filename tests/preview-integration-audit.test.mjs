@@ -176,12 +176,12 @@ test('AI secure vault, provider repair and concise conversation runtime are conn
   assert.match(mentor, /finally\s*\{\s*removeThinkingIndicator/);
 });
 
-test('only one Preview release workflow owns the active branch and update channel', async () => {
+test('only one Preview release workflow owns the permanent private branch and update channel', async () => {
   const workflowFiles = (await walk('.github/workflows')).filter(file => /\.ya?ml$/i.test(file));
   const owners = [];
   for (const file of workflowFiles) {
     const source = await read(file);
-    if (/push:[\s\S]{0,220}branches:[\s\S]{0,120}experiment\/heatmap-news-20260722/.test(source)) owners.push(file);
+    if (/push:[\s\S]{0,220}branches:[\s\S]{0,120}personal\/amyfx-private/.test(source)) owners.push(file);
   }
   assert.deepEqual(owners, ['.github/workflows/amyfx-blueprint-preview-release.yml']);
 
