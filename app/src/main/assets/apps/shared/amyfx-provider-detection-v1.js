@@ -163,8 +163,12 @@
     (document.head || document.documentElement).appendChild(script);
   }
 
+  function loadProfessionalBotHandlerLockRuntime() {
+    loadScriptOnce("amyfx-professional-bot-handler-lock-v1.js", "data-amyfx-professional-bot-handler-lock", "__amyFxProfessionalBotHandlerLockV1");
+  }
+
   function loadMappingIntentHotfixRuntime() {
-    loadScriptOnce("amyfx-mentor-mapping-intent-hotfix-v1.js", "data-amyfx-mentor-mapping-intent", "__amyFxMentorMappingIntentHotfixV1");
+    loadScriptOnce("amyfx-mentor-mapping-intent-hotfix-v1.js", "data-amyfx-mentor-mapping-intent", "__amyFxMentorMappingIntentHotfixV1", loadProfessionalBotHandlerLockRuntime);
   }
 
   function loadSafeRuleChatRuntime() {
@@ -230,6 +234,7 @@
     loadFinalConnectivityRuntime,
     loadRuleChatFinalRuntime,
     loadSafeRuleChatRuntime,
-    loadMappingIntentHotfixRuntime
+    loadMappingIntentHotfixRuntime,
+    loadProfessionalBotHandlerLockRuntime
   });
 })();
