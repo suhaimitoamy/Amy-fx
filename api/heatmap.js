@@ -1,29 +1,31 @@
+import { getCandles } from '../lib/market-candle-store.mjs';
+
 /**
  * Amy FX — Dynamic Liquidity Heatmap API
- *
- * Sumber: TwelveData M15 candle data.
- * Mesin: swing clustering adaptif, recency weighting, sweep/reclaim,
- * close-break lifecycle, polarity flip, dan active-zone selection.
+ * Candle source is centralized through the Supabase-first market gateway.
  */
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'GET') return res.status(405).json({ zones: [], error: 'method_not_allowed' });
 
   try {
     const { symbol = 'XAU/USD', interval = '15min', outputsize = '240' } = req.query;
-    const apiKey = process.env.TWELVEDATA_API_KEY || req.query.apikey;
-
     if (symbol !== 'XAU/USD') {
       return res.status(403).json({ zones: [], error: 'symbol_not_allowed' });
     }
-    if (!apiKey) {
-      return res.status(400).json({ zones: [], error: 'api_key_required' });
-    }
 
-    const safeSize = Math.min(Math.max(parseInt(outputsize, 10) || 240, 80), 500);
-    const candles = await fetchCandles(symbol, interval, safeSize, apiKey);
+    const safeSize = Math.min(Math.max(Number.parseInt(String(outputsize), 10) || 240, 80), 5_000);
+    const marketData = await getCandles({
+      symbol,
+      interval,
+      outputsize: safeSize,
+      apiKey: process.env.TWELVEDATA_API_KEY
+    });
+    const candles = normalizeCandles(marketData?.values);
+
     if (!candles.length) {
       return res.status(200).json({
         symbol,
@@ -33,7 +35,11 @@ export default async function handler(req, res) {
         sourceCandleTime: null,
         zones: [],
         summary: emptySummary(),
-        meta: { candleCount: 0, accuracyProfile: 'BACKTEST_2022_2026' },
+        meta: {
+          candleCount: 0,
+          accuracyProfile: 'BACKTEST_2022_2026',
+          dataSource: marketData?.source || 'unavailable'
+        },
         error: 'no_data'
       });
     }
@@ -45,7 +51,8 @@ export default async function handler(req, res) {
     });
     const summary = precisionSummary(result);
 
-    res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=20');
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+    res.setHeader('X-AmyFX-Market-Source', marketData?.source || 'unknown');
     return res.status(200).json({
       symbol,
       interval,
@@ -56,6 +63,8 @@ export default async function handler(req, res) {
       summary,
       meta: {
         ...result.meta,
+        dataSource: marketData?.source || 'unknown',
+        cacheState: marketData?.amyfxCacheState || 'UNKNOWN',
         accuracyProfile: 'BACKTEST_2022_2026',
         nearestDrawRole: 'LIQUIDITY_TARGET_ONLY',
         primaryDistanceAtr: 1.5,
@@ -69,9 +78,23 @@ export default async function handler(req, res) {
       updated: new Date().toISOString(),
       zones: [],
       summary: emptySummary(),
-      error: 'provider_failed'
+      error: 'provider_failed',
+      message: error?.message || 'Market data unavailable'
     });
   }
+}
+
+function normalizeCandles(values) {
+  return [...(Array.isArray(values) ? values : [])]
+    .reverse()
+    .map(candle => ({
+      time: candle.datetime,
+      open: Number(candle.open),
+      high: Number(candle.high),
+      low: Number(candle.low),
+      close: Number(candle.close)
+    }))
+    .filter(candle => [candle.open, candle.high, candle.low, candle.close].every(Number.isFinite));
 }
 
 function emptySummary() {
@@ -120,20 +143,4 @@ function precisionSummary(result) {
     nearestSsl: classifyDraw(base.nearestSsl, currentPrice, atr),
     interpretation: 'Pressure menunjukkan konsentrasi likuiditas, bukan prediksi arah market.'
   };
-}
-
-async function fetchCandles(symbol, interval, size, apiKey) {
-  const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&outputsize=${size}&apikey=${encodeURIComponent(apiKey)}`;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`TwelveData HTTP ${response.status}`);
-  const data = await response.json();
-  if (data?.status === 'error') throw new Error(data.message || 'TwelveData error');
-
-  return (data.values || []).reverse().map(candle => ({
-    time: candle.datetime,
-    open: Number(candle.open),
-    high: Number(candle.high),
-    low: Number(candle.low),
-    close: Number(candle.close)
-  }));
 }
