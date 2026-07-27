@@ -1,29 +1,29 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 930046,
-  "latest_version_name": "2.0.0-preview.46",
-  "versionCode": 930046,
-  "version": "2.0.0-preview.46",
+  "latest_version_code": 930047,
+  "latest_version_name": "2.0.0-preview.47",
+  "versionCode": 930047,
+  "version": "2.0.0-preview.47",
   "releaseDate": "2026-07-27",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.46/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.46/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.47/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.47/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Memperbaiki perbedaan status antara harga live dan snapshot analisis Mapping M15.",
-    "Header tidak lagi menampilkan M15 Fresh ketika analisis Mapping sebenarnya sudah expired.",
-    "Analisis M15 yang kedaluwarsa otomatis dimuat ulang setelah harga live tersambung sehingga BSL dan SSL dapat terisi dari data terbaru.",
-    "BSL dan SSL lama tetap disembunyikan sampai sumber analisis valid agar level kedaluwarsa tidak dianggap aktif.",
-    "Label waktu Mapping telah diseragamkan dari WIB menjadi WITA.",
-    "Seluruh regression JavaScript, Android unit test, lint, signed APK, package, version, dan signer berhasil diverifikasi."
+    "Asisten AI tidak lagi terkunci dan memiliki batas waktu total 45 detik.",
+    "Asisten Jurnal tetap memakai API key yang sudah dipindahkan ke secure vault.",
+    "Journal v2 hanya tampil pada halaman Jurnal dan tidak merusak navigasi modul lain.",
+    "Status data market tidak lagi menyatakan fresh ketika data live belum tersedia.",
+    "Panel Amy, status module, dan navigasi bawah tidak lagi saling menutupi.",
+    "Markup Amy FX Academy yang rusak telah diperbaiki."
   ],
   "changelog": [
-    "Unified live-price and Mapping-analysis freshness state",
-    "Automatic guarded M15 analysis refresh",
-    "Accurate Connected, Fresh, and Expired header labels",
-    "Fresh-only BSL and SSL repopulation",
-    "Mapping WITA normalization",
-    "Mapping consistency regression protection"
+    "Assistant timeout and stuck-state recovery",
+    "Secure-vault compatibility for legacy Journal assistant",
+    "Journal v2 placement and layout stabilization",
+    "Missing-data freshness correction",
+    "Academy markup repair",
+    "Expanded Preview regression gates"
   ]
 }
