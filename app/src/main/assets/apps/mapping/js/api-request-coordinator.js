@@ -8,12 +8,12 @@
   const inFlight = new Map();
   const responseCache = new Map();
   const intervalSnapshots = new Map();
-  const PRIVATE_API_ORIGIN = 'https://amy-fx-git-personal-amyfx-private-aplikasi-trading.vercel.app';
+  const PRIVATE_MARKET_URL = 'https://wliecyxzlwhmtftnfnps.supabase.co/functions/v1/market-candles';
   const MARKET_API_HOSTS = new Set([
     'amy-fx.vercel.app',
-    'amy-fx-git-personal-amyfx-private-aplikasi-trading.vercel.app'
+    'amy-fx-git-personal-amyfx-private-aplikasi-trading.vercel.app',
+    'wliecyxzlwhmtftnfnps.supabase.co'
   ]);
-  const API_PATH = '/api/twelvedata';
   const LIVE_TTL_MS = 90_000;
   const SHARED_M1_OUTPUT_SIZE = 300;
 
@@ -22,7 +22,9 @@
     if (method !== 'GET') return false;
     try {
       const url = new URL(input instanceof Request ? input.url : String(input), location.href);
-      return MARKET_API_HOSTS.has(url.hostname) && url.pathname === API_PATH;
+      const supportedPath = url.pathname === '/api/twelvedata'
+        || url.pathname === '/functions/v1/market-candles';
+      return MARKET_API_HOSTS.has(url.hostname) && supportedPath;
     } catch (_) {
       return false;
     }
@@ -37,7 +39,7 @@
       : Math.max(requestedOutputsize || 300, 1);
     const symbol = String(sourceUrl.searchParams.get('symbol') || 'XAU/USD').toUpperCase();
 
-    const url = new URL(API_PATH, PRIVATE_API_ORIGIN);
+    const url = new URL(PRIVATE_MARKET_URL);
     url.searchParams.set('symbol', symbol);
     url.searchParams.set('interval', interval);
     url.searchParams.set('outputsize', String(outputsize));
@@ -191,7 +193,7 @@
 
   window.fetch = coordinatedFetch;
   window.AmyFXRequestCoordinator = Object.freeze({
-    privateApiOrigin: PRIVATE_API_ORIGIN,
+    privateMarketUrl: PRIVATE_MARKET_URL,
     clear() {
       responseCache.clear();
       intervalSnapshots.clear();
