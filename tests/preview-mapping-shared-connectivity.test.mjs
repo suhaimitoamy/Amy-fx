@@ -20,7 +20,7 @@ test('Mapping bridge JavaScript is syntactically valid', () => {
 test('Mapping engine publishes canonical state once and bridge consumes that shared snapshot', async () => {
   const bridge = await readBridge();
   const marketData = await readMarketData();
-  assert.match(marketData, /intel\.write\('mapping', snapshot\)/);
+  assert.match(marketData, /intel\.write\('mapping', \{/);
   assert.match(bridge, /const contract = window\.AmyFXMarketContract/);
   assert.match(bridge, /contract\?\.read\?\.\(\)/);
   assert.match(bridge, /contract\?\.snapshot\?\.\(state\)/);
