@@ -48,13 +48,13 @@ test('native secret vault never exposes a secret getter to WebView', async () =>
   for (const host of ['generativelanguage.googleapis.com', 'openrouter.ai', 'api.deepseek.com']) assert.match(bridge, new RegExp(host.replaceAll('.', '\\.')));
 });
 
-test('preview release remains isolated from production main', async () => {
+test('private Preview release remains isolated from production main', async () => {
   const workflow = await read('.github/workflows/amyfx-blueprint-preview-release.yml');
-  assert.match(workflow, /experiment\/heatmap-news-20260722/);
+  assert.match(workflow, /personal\/amyfx-private/);
   assert.match(workflow, /com\.amyelitesuite\.learningpreview/);
   assert.match(workflow, /Amy FX Preview/);
   assert.match(workflow, /amyfxpreview/);
-  assert.match(workflow, /930000 \+ GITHUB_RUN_NUMBER/);
+  assert.match(workflow, /940000 \+ GITHUB_RUN_NUMBER/);
   assert.match(workflow, /preview-update\.json/);
   assert.doesNotMatch(workflow, /git push origin (?:HEAD:)?main/);
   assert.doesNotMatch(workflow, /refs\/heads\/main/);
