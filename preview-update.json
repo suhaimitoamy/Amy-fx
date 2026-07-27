@@ -11,19 +11,19 @@
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Asisten AI tidak lagi terkunci dan memiliki batas waktu total 45 detik.",
-    "Asisten Jurnal tetap memakai API key yang sudah dipindahkan ke secure vault.",
-    "Journal v2 hanya tampil pada halaman Jurnal dan tidak merusak navigasi modul lain.",
-    "Status data market tidak lagi menyatakan fresh ketika data live belum tersedia.",
-    "Panel Amy, status module, dan navigasi bawah tidak lagi saling menutupi.",
-    "Markup Amy FX Academy yang rusak telah diperbaiki."
+    "Memperbaiki perbedaan status antara harga live dan snapshot analisis Mapping M15.",
+    "Header tidak lagi menampilkan M15 Fresh ketika analisis Mapping sebenarnya sudah expired.",
+    "Analisis M15 yang kedaluwarsa otomatis dimuat ulang setelah harga live tersambung sehingga BSL dan SSL dapat terisi dari data terbaru.",
+    "BSL dan SSL lama tetap disembunyikan sampai sumber analisis valid agar level kedaluwarsa tidak dianggap aktif.",
+    "Label waktu Mapping telah diseragamkan dari WIB menjadi WITA.",
+    "Seluruh regression JavaScript, Android unit test, lint, signed APK, package, version, dan signer berhasil diverifikasi."
   ],
   "changelog": [
-    "Assistant timeout and stuck-state recovery",
-    "Secure-vault compatibility for legacy Journal assistant",
-    "Journal v2 placement and layout stabilization",
-    "Missing-data freshness correction",
-    "Academy markup repair",
-    "Expanded Preview regression gates"
+    "Unified live-price and Mapping-analysis freshness state",
+    "Automatic guarded M15 analysis refresh",
+    "Accurate Connected, Fresh, and Expired header labels",
+    "Fresh-only BSL and SSL repopulation",
+    "Mapping WITA normalization",
+    "Mapping consistency regression protection"
   ]
 }
