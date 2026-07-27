@@ -1,17 +1,52 @@
 Amy FX Preview regression failure
-Run: 30228082200
-Commit: e5ccdb8a3e2d93c7f2c2d4583ae1ca4865672f52
+Run: 30228141135
+Commit: 30f8385f09f0e16d8e9a92bcacd5b660f07def6d
 
 ===== amy-mentor-conversation.test.mjs =====
-not ok 1 - concise mentor runtime is valid JavaScript and loaded by the installed provider runtime
+===== api-polling-coordinator.test.mjs =====
+===== asia-range-ui-freeze-regression.test.mjs =====
+===== asia-range.test.mjs =====
+===== background-video-playback-regression.test.mjs =====
+===== blueprint-preview-stabilization.test.mjs =====
+===== blueprint-preview-v1.test.mjs =====
+===== bos-mss.test.mjs =====
+===== bsl-ssl.test.mjs =====
+===== concept-engine.integration.test.mjs =====
+===== dashboard-analyze-separation.test.mjs =====
+===== deepseek-provider-detection.test.mjs =====
+not ok 5 - DeepSeek remains explicit about paid fallback usage
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
   actual: |-
   operator: 'match'
-Regression failed: amy-mentor-conversation.test.mjs
+Regression failed: deepseek-provider-detection.test.mjs
 
 --- final log lines ---
+        if (hasDeepSeek && !settings.paid_fallback) {
+          if (!warning) {
+            warning = document.createElement("small");
+            warning.id = "amy-deepseek-paid-warning";
+            warning.style.cssText = "display:block;margin:8px 0;color:#f0bd4f";
+            list.insertAdjacentElement("afterend", warning);
+          }
+          if (warning.textContent !== "DeepSeek dikenali, tetapi belum dipakai sampai fallback berbayar diaktifkan.") warning.textContent = "DeepSeek dikenali, tetapi belum dipakai sampai fallback berbayar diaktifkan.";
+        } else warning?.remove();
+      }
+    
+      function repairNow() {
+        installProviderPicker();
+        reconcileRows(nativeRepairRows());
+        renderRows();
+      }
+    
+      function runtimeUrl(filename) {
+        return PROVIDER_SCRIPT_URL ? new URL(filename, PROVIDER_SCRIPT_URL).href : filename;
+      }
+    
+      function loadScriptOnce(filename, marker, readyFlag, next) {
+        if (readyFlag && window[readyFlag]) { next?.(); return; }
+        const existing = document.querySelector(`script[${marker}]`);
         if (existing) {
           existing.addEventListener("load", () => next?.(), { once: true });
           existing.addEventListener("error", () => next?.(), { once: true });
@@ -94,33 +129,9 @@ Regression failed: amy-mentor-conversation.test.mjs
     
   operator: 'match'
   stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/amy-mentor-conversation.test.mjs:14:10)
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/deepseek-provider-detection.test.mjs:56:10)
     async Test.run (node:internal/test_runner/test:1054:7)
-    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
-  ...
-# Subtest: simple home action question is answered locally without a trading lecture
-ok 2 - simple home action question is answered locally without a trading lecture
-  ---
-  duration_ms: 4.535651
-  type: 'test'
-  ...
-# Subtest: provider prompt forbids audit-style headings and internal metadata leakage
-ok 3 - provider prompt forbids audit-style headings and internal metadata leakage
-  ---
-  duration_ms: 1.386804
-  type: 'test'
-  ...
-# Subtest: epoch timestamp is replaced with Belum ada data
-ok 4 - epoch timestamp is replaced with Belum ada data
-  ---
-  duration_ms: 1.324817
-  type: 'test'
-  ...
-# Subtest: mentor shows and clears an accessible animated loading state while waiting for provider
-ok 5 - mentor shows and clears an accessible animated loading state while waiting for provider
-  ---
-  duration_ms: 1.398696
-  type: 'test'
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
 1..5
 # tests 5
@@ -130,5 +141,5 @@ ok 5 - mentor shows and clears an accessible animated loading state while waitin
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 85.586519
-Regression failed: amy-mentor-conversation.test.mjs
+# duration_ms 61.634502
+Regression failed: deepseek-provider-detection.test.mjs
