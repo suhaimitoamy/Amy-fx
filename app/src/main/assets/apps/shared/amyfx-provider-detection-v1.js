@@ -147,8 +147,11 @@
     if (readyFlag && window[readyFlag]) { next?.(); return; }
     const existing = document.querySelector(`script[${marker}]`);
     if (existing) {
-      existing.addEventListener("load", () => next?.(), { once: true });
-      existing.addEventListener("error", () => next?.(), { once: true });
+      if (readyFlag && window[readyFlag]) next?.();
+      else {
+        existing.addEventListener("load", () => next?.(), { once: true });
+        existing.addEventListener("error", () => next?.(), { once: true });
+      }
       return;
     }
     const script = document.createElement("script");
@@ -160,8 +163,12 @@
     (document.head || document.documentElement).appendChild(script);
   }
 
+  function loadMappingIntentHotfixRuntime() {
+    loadScriptOnce("amyfx-mentor-mapping-intent-hotfix-v1.js", "data-amyfx-mentor-mapping-intent", "__amyFxMentorMappingIntentHotfixV1");
+  }
+
   function loadSafeRuleChatRuntime() {
-    loadScriptOnce("amyfx-mentor-rule-chat-safe-v3.js", "data-amyfx-rule-chat-safe", "__amyFxMentorRuleChatSafeV3");
+    loadScriptOnce("amyfx-mentor-rule-chat-safe-v3.js", "data-amyfx-rule-chat-safe", "__amyFxMentorRuleChatSafeV3", loadMappingIntentHotfixRuntime);
   }
 
   function loadUniversalAccessRuntime() {
@@ -222,6 +229,7 @@
     loadConnectivityRuntime,
     loadFinalConnectivityRuntime,
     loadRuleChatFinalRuntime,
-    loadSafeRuleChatRuntime
+    loadSafeRuleChatRuntime,
+    loadMappingIntentHotfixRuntime
   });
 })();
