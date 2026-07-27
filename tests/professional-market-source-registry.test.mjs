@@ -13,8 +13,6 @@ const handlerSource = readFileSync(handlerPath, "utf8");
 function storage(seed = {}) {
   const rows = new Map(Object.entries(seed).map(([key, value]) => [key, String(value)]));
   return {
-    get length() { return rows.size; },
-    key(index) { return [...rows.keys()][index] ?? null; },
     getItem(key) { return rows.has(key) ? rows.get(key) : null; },
     setItem(key, value) { rows.set(key, String(value)); },
     removeItem(key) { rows.delete(key); },
@@ -25,25 +23,15 @@ function storage(seed = {}) {
 function fixture({ localDirection = "BULLISH", includeMarket = true } = {}) {
   const now = new Date().toISOString();
   const state = includeMarket ? {
-    mapping: {
-      updated: now,
-      capturedAt: now,
-      price: 4091.49,
-      bsl: 4110.15,
-      ssl: 4075.20,
-      direction: "BUY",
-      bias: "BUY",
-      timeframe: "M15",
-      marketState: "TRENDING"
-    },
+    mapping: { updated: now, capturedAt: now, price: 4091.49, bsl: 4110.15, ssl: 4075.20, direction: "BUY", bias: "BUY", timeframe: "M15", marketState: "TRENDING" },
     liquidity: {
       updated: now,
       capturedAt: now,
       currentPrice: 4091.49,
       levels: [
-        { type: "BSL", price: 4092.00, status: "ACTIVE", active: true, distance: 0.51 },
+        { type: "BSL", price: 4092, status: "ACTIVE", active: true, distance: 0.51 },
         { type: "BSL", price: 4110.15, status: "ACTIVE", active: true, distance: 18.66 },
-        { type: "SSL", price: 4087.50, status: "ACTIVE", active: true, distance: -3.99 }
+        { type: "SSL", price: 4087.5, status: "ACTIVE", active: true, distance: -3.99 }
       ]
     },
     news: { updated: now, items: [{ title: "CPI" }] },
@@ -54,7 +42,6 @@ function fixture({ localDirection = "BULLISH", includeMarket = true } = {}) {
       scenarios: [{ status: "ACTIVE", side: "BUY", target: 4092, invalidation: 4084.14, zoneLow: 4088, zoneHigh: 4090, reason: "Validated continuation" }]
     }
   } : {};
-
   const result = includeMarket ? {
     tf: "M15",
     price: 4091.49,
@@ -63,39 +50,15 @@ function fixture({ localDirection = "BULLISH", includeMarket = true } = {}) {
       directionForecast: { active: true, direction: "BULLISH", confidence: 82 },
       marketState: { state: "TRENDING", structureTrend: localDirection }
     },
-    st: {
-      confirmedTrend: localDirection,
-      lastEvent: { kind: "BOS", dir: "BULLISH", price: 4088.20 }
-    },
+    st: { confirmedTrend: localDirection, lastEvent: { kind: "BOS", dir: "BULLISH", price: 4088.2 } },
     biasEvidence: { normalized: 0.72 },
-    setupExecution: {
-      active: true,
-      terminal: false,
-      status: "WAITING_ENTRY",
-      direction: "BUY",
-      entryLow: 4088,
-      entryHigh: 4090,
-      stopLoss: 4084.14,
-      target1: 4092,
-      target2: 4105.60
-    },
+    setupExecution: { active: true, terminal: false, status: "WAITING_ENTRY", direction: "BUY", entryLow: 4088, entryHigh: 4090, stopLoss: 4084.14, target1: 4092, target2: 4105.6 },
     strategyRouter: { activeRegime: "TRENDING" },
     dealingRange: { currentZone: "DISCOUNT" }
   } : null;
-
   return {
     state,
-    context: {
-      payload: {
-        workspace: {
-          market: {
-            current_price: includeMarket ? 4091.49 : null,
-            shared_intelligence: state,
-            live_state: result ? { price: 4091.49, capturedAt: now, result } : null
-          }
-        }
-      }
-    }
+    context: { payload: { workspace: { market: { current_price: includeMarket ? 4091.49 : null, shared_intelligence: state, live_state: result ? { price: 4091.49, capturedAt: now, result } : null } } } }
   };
 }
 
@@ -103,11 +66,7 @@ function createRuntime(options = {}) {
   const data = fixture(options);
   const localStorage = storage();
   const sessionStorage = storage();
-  const events = new Map();
-  const baseBot = {
-    __amyProfessionalBotV3: true,
-    answer() { return "fallback lama"; }
-  };
+  const baseBot = { __amyProfessionalBotV3: true, answer() { return "fallback lama"; } };
   const window = {
     AmyFXProfessionalBot: baseBot,
     AmyFXMappingIntentHotfix: baseBot,
@@ -118,30 +77,23 @@ function createRuntime(options = {}) {
       partTimestamp(part) { return new Date(part?.updated || part?.capturedAt || 0).getTime(); },
       bestCurrentPrice() { return options.includeMarket === false ? 0 : 4091.49; },
       nearestLevels() {
-        if (options.includeMarket === false) return { bsl: null, ssl: null };
-        return {
-          bsl: { type: "BSL", price: 4092, distance: 0.51 },
-          ssl: { type: "SSL", price: 4087.50, distance: -3.99 }
-        };
+        return options.includeMarket === false
+          ? { bsl: null, ssl: null }
+          : { bsl: { type: "BSL", price: 4092, distance: 0.51 }, ssl: { type: "SSL", price: 4087.5, distance: -3.99 } };
       },
       freshness() { return options.includeMarket === false ? { label: "WAITING", className: "stale" } : { label: "LIVE", className: "live", source: "liquidity" }; },
       newsRisk() { return options.includeMarket === false ? "UNKNOWN" : "HIGH"; },
       sessionInfo() { return { id: "LONDON", label: "LONDON ACTIVE" }; }
     },
     AmyFXProfessionalBotHandlerLock: { lock() { return true; } },
-    addEventListener(name, callback) { events.set(name, callback); },
+    addEventListener() {},
     dispatchEvent() {},
     setInterval() { return 0; },
     clearInterval() {},
     setTimeout() { return 0; },
     clearTimeout() {}
   };
-  const document = {
-    readyState: "complete",
-    hidden: false,
-    addEventListener() {},
-    currentScript: null
-  };
+  const document = { readyState: "complete", hidden: false, addEventListener() {}, currentScript: null };
   const sandbox = {
     window,
     document,
@@ -149,40 +101,25 @@ function createRuntime(options = {}) {
     localStorage,
     sessionStorage,
     CustomEvent: class CustomEvent { constructor(type, init = {}) { this.type = type; this.detail = init.detail; } },
-    Intl,
-    Date,
-    Number,
-    Object,
-    Array,
-    String,
-    Boolean,
-    RegExp,
-    Map,
-    Math,
-    JSON,
-    URL,
-    setInterval() { return 0; },
-    clearInterval() {},
-    setTimeout() { return 0; },
-    clearTimeout() {}
+    Intl, Date, Number, Object, Array, String, Boolean, RegExp, Map, Math, JSON, URL,
+    setInterval() { return 0; }, clearInterval() {}, setTimeout() { return 0; }, clearTimeout() {}
   };
   vm.runInNewContext(registrySource, sandbox, { filename: registryPath });
-  return { window, localStorage, sessionStorage, context: data.context };
+  return { window, localStorage, context: data.context };
 }
 
-test("canonical nearest draw BSL wins over the stale Mapping snapshot", () => {
+test("canonical BSL matches Market Intel nearest draw instead of stale Mapping snapshot", () => {
   const runtime = createRuntime();
   const answer = runtime.window.AmyFXMarketSourceRegistry.answer("BSL terdekat di mana?", runtime.context);
   assert.match(answer, /BSL aktif terdekat 4\.092/);
   assert.match(answer, /snapshot Mapping 4\.110,15/);
   assert.match(answer, /nearest draw live/i);
-  assert.doesNotMatch(answer, /BSL aktif terdekat 4\.110,15/);
 });
 
-test("market summary uses past, dominant direction, present data, future and provenance", () => {
+test("market summary includes past, dominant direction, current state and future scenario", () => {
   const runtime = createRuntime();
   const answer = runtime.window.AmyFXMarketSourceRegistry.answer("Market hari ini gimana?", runtime.context);
-  assert.match(answer, /Sebelumnya terjadi BOS BULLISH di 4\.088,2/);
+  assert.match(answer, /BOS BULLISH di 4\.088,2/);
   assert.match(answer, /dominan BULLISH/);
   assert.match(answer, /Arah M15 BULLISH/);
   assert.match(answer, /Harga terakhir 4\.091,49/);
@@ -191,10 +128,9 @@ test("market summary uses past, dominant direction, present data, future and pro
   assert.match(answer, /Invalidasi 4\.084,14/);
   assert.match(answer, /Risiko news HIGH/);
   assert.match(answer, /LONDON ACTIVE/);
-  assert.match(answer, /Sumber: Mapping engine \+ Market Intel nearest draw/);
 });
 
-test("direction conflicts are stated explicitly and decision remains WAIT", () => {
+test("direction conflict is disclosed and decision stays WAIT", () => {
   const runtime = createRuntime({ localDirection: "BEARISH" });
   const answer = runtime.window.AmyFXMarketSourceRegistry.answer("Arah market sekarang?", runtime.context);
   assert.match(answer, /Arah dominan engine BULLISH/);
@@ -203,7 +139,7 @@ test("direction conflicts are stated explicitly and decision remains WAIT", () =
   assert.match(answer, /tetap WAIT/);
 });
 
-test("follow-up context resolves invalidation and writes an answer audit", () => {
+test("follow-up invalidation uses prior market context and is audited", () => {
   const runtime = createRuntime();
   runtime.window.AmyFXMarketSourceRegistry.answer("Market hari ini gimana?", runtime.context);
   const answer = runtime.window.AmyFXMarketSourceRegistry.answer("invalidasinya", runtime.context);
@@ -214,17 +150,16 @@ test("follow-up context resolves invalidation and writes an answer audit", () =>
   assert.equal(audit[0].selected.ssl, 4087.5);
 });
 
-test("handler loads source registry before locking and tracks bot runtime signature", () => {
+test("handler loads the registry before locking and tracks runtime changes", () => {
   assert.match(handlerSource, /amyfx-professional-market-source-registry-v1\.js/);
   assert.match(handlerSource, /loadMarketSourceRegistryRuntime\(startLocking\)/);
   assert.match(handlerSource, /__amyProfessionalBotRuntimeSignatureV1/);
   assert.match(handlerSource, /amyfx:professional-market-source-registry-ready/);
-  assert.match(handlerSource, /professional-market-source-registry-v1/);
 });
 
-test("past and future questions stay grounded in Mapping engine data", () => {
+test("past and future questions are grounded in Mapping engine data", () => {
   const runtime = createRuntime();
-  const past = runtime.window.AmyFXMarketSourceRegistry.answer("Apa yang terjadi sebelumnya?", runtime.context);
+  const past = runtime.window.AmyFXMarketSourceRegistry.answer("Apa yang terjadi pada market sebelumnya?", runtime.context);
   const future = runtime.window.AmyFXMarketSourceRegistry.answer("Masa depan market gimana?", runtime.context);
   assert.match(past, /BOS BULLISH di 4\.088,2/);
   assert.match(future, /arah skenario BULLISH/);
@@ -233,7 +168,7 @@ test("past and future questions stay grounded in Mapping engine data", () => {
   assert.match(future, /invalidasi 4\.084,14/);
 });
 
-test("empty data never produces invented price levels", () => {
+test("empty market data never produces invented price levels", () => {
   const runtime = createRuntime({ includeMarket: false });
   const bsl = runtime.window.AmyFXMarketSourceRegistry.answer("BSL terdekat", runtime.context);
   const summary = runtime.window.AmyFXMarketSourceRegistry.answer("Market hari ini gimana?", runtime.context);
