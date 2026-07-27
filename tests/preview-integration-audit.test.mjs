@@ -30,6 +30,10 @@ const modules = [
   'app/src/main/assets/apps/journal/index.html',
   'app/src/main/assets/apps/academy/index.html'
 ];
+const canonicalMarketModules = new Set([
+  'app/src/main/assets/apps/mapping/index.html',
+  'app/src/main/assets/apps/market-intel/index.html'
+]);
 
 function localReferences(html) {
   const refs = [];
@@ -65,15 +69,26 @@ test('all Preview module documents are standards-mode and their local assets exi
   assert.deepEqual(failures, []);
 });
 
-test('Blueprint runtime is installed exactly once and in a stable order in every module', async () => {
+test('Blueprint runtime is installed exactly once with canonical guard order on market modules', async () => {
   for (const file of modules) {
     const html = await read(file);
     assert.equal(count(html, 'data-amyfx-blueprint-css="v1"'), 1, `${file}: blueprint CSS count`);
     assert.equal(count(html, 'data-amyfx-blueprint-js="v1"'), 1, `${file}: blueprint JS count`);
     assert.equal(count(html, 'data-amyfx-blueprint-hotfix="v1"'), 1, `${file}: hotfix count`);
     assert.equal(count(html, 'data-amyfx-provider-detection="v1"'), 1, `${file}: provider runtime count`);
-    assert.ok(html.indexOf('data-amyfx-blueprint-js="v1"') < html.indexOf('data-amyfx-blueprint-hotfix="v1"'), `${file}: blueprint must load before hotfix`);
-    assert.ok(html.indexOf('data-amyfx-blueprint-hotfix="v1"') < html.indexOf('data-amyfx-provider-detection="v1"'), `${file}: provider runtime must load last`);
+
+    const blueprintIndex = html.indexOf('data-amyfx-blueprint-js="v1"');
+    const hotfixIndex = html.indexOf('data-amyfx-blueprint-hotfix="v1"');
+    const providerIndex = html.indexOf('data-amyfx-provider-detection="v1"');
+    if (canonicalMarketModules.has(file)) {
+      assert.equal(count(html, 'data-amyfx-market-contract="v2"'), 1, `${file}: canonical market contract count`);
+      const contractIndex = html.indexOf('data-amyfx-market-contract="v2"');
+      assert.ok(contractIndex < hotfixIndex, `${file}: canonical market contract must load before guard`);
+      assert.ok(hotfixIndex < blueprintIndex, `${file}: listener guard must load before Blueprint`);
+    } else {
+      assert.ok(blueprintIndex < hotfixIndex, `${file}: Blueprint must load before compatibility hotfix`);
+    }
+    assert.ok(Math.max(blueprintIndex, hotfixIndex) < providerIndex, `${file}: provider runtime must load last`);
   }
 });
 
@@ -113,18 +128,28 @@ test('Mapping publishes a live context contract consumed by Amy Mentor', async (
   const mappingFiles = (await walk('app/src/main/assets/apps/mapping/js')).filter(file => file.endsWith('.js'));
   const mappingSource = (await Promise.all(mappingFiles.map(read))).join('\n');
   const blueprint = await read('app/src/main/assets/apps/shared/amyfx-blueprint-v1.js');
+  const bridge = await read('app/src/main/assets/apps/mapping/js/blueprint-context-bridge.js');
   assert.match(mappingSource, /window\.(?:AmyFXMarketState|lastMappingResult)\s*=/, 'Mapping must publish result, timeframe and capture time');
   assert.match(mappingSource, /amyfx:mapping-state-change/);
+  assert.match(bridge, /quoteCapturedAt/);
+  assert.match(bridge, /mappingCapturedAt/);
+  assert.match(bridge, /liquidityCapturedAt/);
+  assert.match(bridge, /heatmapCapturedAt/);
   assert.match(blueprint, /AmyFXMarketState|lastMappingResult/, 'Blueprint must consume Mapping contract');
 });
 
-test('Market Intel publishes news, liquidity and heatmap context contracts in WITA', async () => {
+test('Market Intel publishes news, liquidity and heatmap through canonical WITA contracts', async () => {
   const intelFiles = (await walk('app/src/main/assets/apps/market-intel')).filter(file => file.endsWith('.js'));
   const shared = await read('app/src/main/assets/apps/shared/market-intelligence.js');
-  const source = (await Promise.all(intelFiles.map(read))).join('\n') + '\n' + shared;
+  const contract = await read('app/src/main/assets/apps/shared/amyfx-market-state-contract-v1.js');
+  const source = (await Promise.all(intelFiles.map(read))).join('\n') + '\n' + shared + '\n' + contract;
   assert.match(source, /window\.AmyFXIntel/);
   assert.match(source, /window\.AmyFXIntelState/);
   assert.match(source, /window\.AmyFXHeatmapState/);
+  assert.match(source, /AmyFXIntel\?\.write\?\.\('news'/);
+  assert.match(source, /AmyFXIntel\?\.write\?\.\('liquidity'/);
+  assert.match(source, /AmyFXIntel\?\.write\?\.\('heatmap'/);
+  assert.match(source, /sourceCandleTime/);
   assert.match(source, /Asia\/Makassar/);
   assert.doesNotMatch(source, /Asia\/Jakarta/);
   assert.doesNotMatch(source, /\bWIB\b/);
