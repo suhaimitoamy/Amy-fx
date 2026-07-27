@@ -3,7 +3,7 @@ name: Amy FX Preview PR Validation
 on:
   pull_request:
     branches:
-      - experiment/heatmap-news-20260722
+      - personal/amyfx-private
 
 permissions:
   contents: read
@@ -16,7 +16,7 @@ env:
   AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
   AMYFX_APP_LABEL: Amy FX Preview
   AMYFX_URI_SCHEME: amyfxpreview
-  AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/heatmap-news-20260722/preview-update.json
+  AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json
   AMYFX_VERSION_CODE: 939999
   AMYFX_VERSION_NAME: 2.0.0-preview.validation
   AMYFX_KEYSTORE_PATH: /tmp/amy-fx-preview-signing.keystore
@@ -35,11 +35,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify PR targets Preview only
+      - name: Verify PR targets private Preview only
         shell: bash
         run: |
           set -euo pipefail
-          test "${{ github.base_ref }}" = "experiment/heatmap-news-20260722"
+          test "${{ github.base_ref }}" = "personal/amyfx-private"
           test "${{ github.base_ref }}" != "main"
 
       - name: Setup Node.js
