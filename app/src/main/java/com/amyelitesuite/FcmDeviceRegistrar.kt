@@ -15,6 +15,7 @@ object FcmDeviceRegistrar {
         "https://wliecyxzlwhmtftnfnps.supabase.co/functions/v1/device-register"
     private const val PREFS = "amy_fcm_registration"
     private const val KEY_TOKEN = "last_token"
+    private const val KEY_APP_VERSION = "last_app_version"
     private const val KEY_REGISTERED_AT = "registered_at"
     private const val REFRESH_AFTER_MS = 24L * 60L * 60L * 1000L
 
@@ -40,8 +41,11 @@ object FcmDeviceRegistrar {
         val appContext = context.applicationContext
         val prefs = appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val previousToken = prefs.getString(KEY_TOKEN, null)
+        val previousVersion = prefs.getString(KEY_APP_VERSION, null)
+        val currentVersion = BuildConfig.VERSION_NAME
         val registeredAt = prefs.getLong(KEY_REGISTERED_AT, 0L)
         val registrationFresh = previousToken == token &&
+            previousVersion == currentVersion &&
             System.currentTimeMillis() - registeredAt < REFRESH_AFTER_MS
 
         if (!force && registrationFresh) return
@@ -56,13 +60,13 @@ object FcmDeviceRegistrar {
                 val payload = JSONObject().apply {
                     put("deviceId", deviceId)
                     put("fcmToken", token)
-                    put("appVersion", BuildConfig.VERSION_NAME)
+                    put("appVersion", currentVersion)
                     put("enabled", true)
                 }
 
                 val request = Request.Builder()
                     .url(ENDPOINT)
-                    .header("User-Agent", "AmyFX-Android/${BuildConfig.VERSION_NAME}")
+                    .header("User-Agent", "AmyFX-Android/$currentVersion")
                     .post(
                         payload.toString()
                             .toRequestBody("application/json; charset=utf-8".toMediaType())
@@ -73,6 +77,7 @@ object FcmDeviceRegistrar {
                     if (response.isSuccessful) {
                         prefs.edit()
                             .putString(KEY_TOKEN, token)
+                            .putString(KEY_APP_VERSION, currentVersion)
                             .putLong(KEY_REGISTERED_AT, System.currentTimeMillis())
                             .apply()
                     } else {
