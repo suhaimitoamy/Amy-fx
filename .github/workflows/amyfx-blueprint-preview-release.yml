@@ -1,9 +1,9 @@
-name: Amy FX Blueprint Preview Release
+name: Amy FX Private Preview Release
 
 on:
   push:
     branches:
-      - experiment/heatmap-news-20260722
+      - personal/amyfx-private
     paths-ignore:
       - preview-update.json
       - preview-regression-failure.txt
@@ -14,14 +14,14 @@ permissions:
   statuses: write
 
 concurrency:
-  group: amyfx-blueprint-preview-${{ github.ref }}
+  group: amyfx-private-preview-${{ github.ref }}
   cancel-in-progress: true
 
 env:
   AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
   AMYFX_APP_LABEL: Amy FX Preview
   AMYFX_URI_SCHEME: amyfxpreview
-  AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/heatmap-news-20260722/preview-update.json
+  AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json
   AMYFX_KEYSTORE_PATH: /tmp/amy-fx-preview-signing.keystore
   AMYFX_KEYSTORE_PASSWORD: android
   AMYFX_KEY_ALIAS: androiddebugkey
@@ -33,16 +33,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
-      - name: Checkout Preview branch
+      - name: Checkout private Preview branch
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Prepare immutable Preview identity
+      - name: Prepare immutable private Preview identity
         shell: bash
         run: |
           set -euo pipefail
-          version_code=$((930000 + GITHUB_RUN_NUMBER))
+          test "$GITHUB_REF_NAME" = "personal/amyfx-private"
+          test "$GITHUB_REF_NAME" != "main"
+          version_code=$((940000 + GITHUB_RUN_NUMBER))
           version_name="2.0.0-preview.${GITHUB_RUN_NUMBER}"
           release_tag="amyfx-blueprint-preview-${version_name}"
           artifact_name="AmyFX-Preview-${version_name}-signed"
@@ -53,13 +55,13 @@ jobs:
             echo "AMYFX_ARTIFACT_NAME=$artifact_name"
           } >> "$GITHUB_ENV"
 
-      - name: Mark Preview release pending
+      - name: Mark private Preview release pending
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state='pending' \
-            -f context='Amy FX Blueprint Preview' \
+            -f context='Amy FX Private Preview' \
             -f description="Building $AMYFX_VERSION_NAME" \
             -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
 
@@ -91,7 +93,7 @@ jobs:
           cat /tmp/amyfx-preview-regression.log
           if [ "$status" -ne 0 ]; then
             {
-              echo "Amy FX Preview regression failure"
+              echo "Amy FX Private Preview regression failure"
               echo "Run: $GITHUB_RUN_ID"
               echo "Commit: $GITHUB_SHA"
               echo
@@ -103,25 +105,25 @@ jobs:
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git add preview-regression-failure.txt
-            git commit -m 'ci(preview): capture baseline regression failure [skip ci]' || true
+            git commit -m 'ci(private): capture Preview regression failure [skip ci]' || true
             git push origin "HEAD:${GITHUB_REF_NAME}" || true
             exit "$status"
           fi
           rm -f preview-regression-failure.txt
 
-      - name: Commit stabilized Preview source checkpoint
+      - name: Commit stabilized private Preview source checkpoint
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           if ! git diff --cached --quiet; then
-            git commit -m "fix(preview): apply stabilized Blueprint source [skip ci]"
+            git commit -m "fix(private): apply stabilized Preview source [skip ci]"
             git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
           echo "AMYFX_SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
-      - name: Configure Preview identity and updater channel for APK only
+      - name: Configure Preview identity and private updater channel for APK only
         run: |
           set -euo pipefail
           node tools/configure-preview-web-version.mjs "$AMYFX_VERSION_NAME" "$AMYFX_VERSION_CODE" "$AMYFX_UPDATE_MANIFEST_URL"
@@ -186,7 +188,7 @@ jobs:
           cp "$APK" AmyFX-Preview-latest.apk
           sha256sum AmyFX-Preview-latest.apk | tee AmyFX-Preview-latest.apk.sha256
 
-      - name: Publish immutable signed Preview release
+      - name: Publish immutable signed private Preview release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -196,14 +198,13 @@ jobs:
             exit 1
           fi
           cat > /tmp/amyfx-preview-release-notes.md <<NOTES
-          Amy FX Preview $AMYFX_VERSION_NAME — Blueprint Upgrade v1.0 Stabilization.
+          Amy FX Preview $AMYFX_VERSION_NAME — Private branch release.
 
-          - Memperbaiki Asisten AI yang terkunci, timeout tak terbatas, dan kompatibilitas key setelah migrasi secure vault.
-          - Memindahkan Journal v2 hanya ke halaman Jurnal serta menghilangkan overlap panel, status, dan navigasi bawah.
-          - Data market yang belum tersedia tidak lagi ditandai fresh.
-          - Memulihkan referensi API key dari secure native vault tanpa membuka secret ke WebView.
-          - Memperbaiki markup Academy yang rusak dan menambahkan regression gate khusus stabilisasi.
-          - Package Preview dan sertifikat permanen tetap sama; Amy FX produksi/main tidak diubah.
+          - Sumber pengembangan dipindahkan secara permanen ke branch personal/amyfx-private.
+          - Package Preview, data aplikasi, URI scheme, dan sertifikat signing permanen tetap dipertahankan.
+          - Update berikutnya dibaca dari manifest pada branch pribadi.
+          - Seluruh regression test JavaScript, Android unit test, lint, build, identitas APK, dan signer diverifikasi sebelum publikasi.
+          - Amy FX publik pada branch main tidak diubah.
           NOTES
           gh release create "$AMYFX_RELEASE_TAG" \
             "AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
@@ -211,11 +212,11 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$AMYFX_SOURCE_SHA" \
             --prerelease \
-            --title "Amy FX Preview $AMYFX_VERSION_NAME — Blueprint Stabilization" \
+            --title "Amy FX Preview $AMYFX_VERSION_NAME — Private Branch" \
             --notes-file /tmp/amyfx-preview-release-notes.md
           gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
 
-      - name: Activate Preview update notification channel
+      - name: Activate private Preview update notification channel
         run: |
           set -euo pipefail
           export RELEASE_DATE="$(date -u +%F)"
@@ -225,7 +226,7 @@ jobs:
           import os
 
           version_code = int(os.environ['AMYFX_VERSION_CODE'])
-          assert version_code > 920011, 'Preview versionCode must exceed installed 920011'
+          assert version_code > 930087, 'Private Preview versionCode must exceed installed Preview 930087'
           payload = {
               'channel': 'amyfx-preview-blueprint-v1',
               'latest_version_code': version_code,
@@ -239,20 +240,16 @@ jobs:
               'mandatory': False,
               'enabled': True,
               'release_notes': [
-                  'Asisten AI tidak lagi terkunci dan memiliki batas waktu total 45 detik.',
-                  'Asisten Jurnal tetap memakai API key yang sudah dipindahkan ke secure vault.',
-                  'Journal v2 hanya tampil pada halaman Jurnal dan tidak merusak navigasi modul lain.',
-                  'Status data market tidak lagi menyatakan fresh ketika data live belum tersedia.',
-                  'Panel Amy, status module, dan navigasi bawah tidak lagi saling menutupi.',
-                  'Markup Amy FX Academy yang rusak telah diperbaiki.'
+                  'Amy FX Preview sekarang menggunakan branch pribadi permanen personal/amyfx-private.',
+                  'Package, data aplikasi, URI scheme, dan sertifikat signing Preview tetap dipertahankan.',
+                  'Update berikutnya akan dibaca langsung dari channel branch pribadi.',
+                  'Amy FX publik pada branch main tidak diubah.'
               ],
               'changelog': [
-                  'Assistant timeout and stuck-state recovery',
-                  'Secure-vault compatibility for legacy Journal assistant',
-                  'Journal v2 placement and layout stabilization',
-                  'Missing-data freshness correction',
-                  'Academy markup repair',
-                  'Expanded Preview regression gates'
+                  'Permanent private development branch',
+                  'Private update manifest migration',
+                  'Preview package and signer continuity',
+                  'Public main isolation guard'
               ]
           }
           with open('preview-update.json', 'w', encoding='utf-8') as handle:
@@ -261,7 +258,7 @@ jobs:
           PY
           python3 -m json.tool preview-update.json >/dev/null
           git add preview-update.json
-          git commit -m "release(preview): activate $AMYFX_VERSION_NAME stabilized update [skip ci]"
+          git commit -m "release(private): activate $AMYFX_VERSION_NAME update [skip ci]"
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - name: Upload signed Preview artifact
@@ -274,24 +271,24 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Mark Preview release success
+      - name: Mark private Preview release success
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state='success' \
-            -f context='Amy FX Blueprint Preview' \
-            -f description="$AMYFX_VERSION_NAME stabilized and published; update channel activated" \
+            -f context='Amy FX Private Preview' \
+            -f description="$AMYFX_VERSION_NAME published; private update channel activated" \
             -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
 
-      - name: Mark Preview release failure
+      - name: Mark private Preview release failure
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state='failure' \
-            -f context='Amy FX Blueprint Preview' \
-            -f description='Blueprint Preview stabilization failed before update activation' \
+            -f context='Amy FX Private Preview' \
+            -f description='Private Preview build failed before update activation' \
             -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
