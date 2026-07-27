@@ -1,6 +1,6 @@
 Amy FX Preview regression failure
-Run: 30267012228
-Commit: bcb0b45675ca4f3ea83bf4c646868edcdd5288dd
+Run: 30267208679
+Commit: 2a7e744553a3dcff6c4c984f922694b1e3dc1093
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -36,130 +36,152 @@ Commit: bcb0b45675ca4f3ea83bf4c646868edcdd5288dd
 ===== mapping-claim-accuracy.test.mjs =====
 ===== mapping-clock-zone-alignment.test.mjs =====
 ===== mapping-command-strip-integrity.test.mjs =====
-not ok 1 - command strip hanya memilih BSL di atas harga dan SSL di bawah harga
-  code: 'ERR_TEST_FAILURE'
-not ok 2 - command strip menolak level touched dan fallback data yang stale
-  code: 'ERR_TEST_FAILURE'
-Regression failed: mapping-command-strip-integrity.test.mjs
+===== mapping-context-safety.test.mjs =====
+===== mapping-live-consistency-regression.test.mjs =====
+not ok 3 - fresh label requires same-timeframe non-expired analysis timestamp
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+  operator: 'match'
+not ok 4 - connected live price never claims M15 Fresh while Mapping is expired
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+  operator: 'match'
+not ok 5 - expired Mapping triggers guarded candle analysis refresh so BSL and SSL can repopulate
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+  operator: 'match'
+not ok 7 - command strip only exposes BSL and SSL from fresh source data
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+  operator: 'match'
+Regression failed: mapping-live-consistency-regression.test.mjs
 
 --- final log lines ---
-# Subtest: claim registry exposes the audited 2022-2025 app metrics
-ok 1 - claim registry exposes the audited 2022-2025 app metrics
-  ---
-  duration_ms: 0.880669
-  type: 'test'
+      function freshness(state = contract.read()) {
+        return contract.freshness(state);
+      }
+    
+      function briefing(state = contract.read()) {
+        const quoteFreshness = freshness(state);
+        const levels = contract.nearestLevels(state);
+        const mapping = state.mapping || {};
+        const conflicts = contract.conflicts(state);
+    
+        if (quoteFreshness.state !== 'LIVE') {
+          const lines = [`Quote XAU/USD ${quoteFreshness.label}.`];
+          if (levels.bsl || levels.ssl) lines.push(`Level Intel masih berstatus ${levels.freshness.state}.`);
+          if (conflicts.length) lines.push('Snapshot market memiliki perbedaan waktu atau sumber yang harus diperhatikan.');
+          return { tone: 'wait', title: `DATA ${quoteFreshness.label}`, lines };
+        }
+    
+        const bslDist = levels.bsl ? Math.abs(Number(levels.bsl.distance)) : Infinity;
+        const sslDist = levels.ssl ? Math.abs(Number(levels.ssl.distance)) : Infinity;
+        const pressure = bslDist < sslDist ? 'ABOVE PRICE' : sslDist < bslDist ? 'BELOW PRICE' : 'BALANCED';
+        const draw = bslDist < sslDist ? levels.bsl : sslDist < bslDist ? levels.ssl : (levels.bsl || levels.ssl);
+        const action = mapping.direction || mapping.status || 'WAIT';
+        return {
+          tone: String(action).includes('BUY') ? 'buy' : String(action).includes('SELL') ? 'sell' : 'wait',
+          title: 'RULE-BASED MARKET BRIEFING',
+          lines: [
+            `Liquidity pressure: ${pressure}`,
+            `Nearest draw: ${draw ? `${draw.type} ${priceText(draw.price)}` : 'WAITING INTEL LIQUIDITY'}`,
+            `Mapping: ${mapping.bias || 'WAIT'} · ${action}`,
+            `News risk: ${newsRisk(state)} · ${sessionInfo().label}`,
+            ...(conflicts.length ? ['Catatan: terdapat perbedaan sumber/timestamp; keputusan tetap WAIT sampai selaras.'] : [])
+          ]
+        };
+      }
+    
+      function mountStrip(target) {
+        if (!target || target._amyCanonicalStripMounted) return;
+        target._amyCanonicalStripMounted = true;
+    
+        const paint = () => {
+          const state = contract.read();
+          const quote = state.quote || {};
+          const quoteFreshness = contract.assess('quote', quote);
+          const levels = contract.nearestLevels(state);
+          const price = contract.bestCurrentPrice(state);
+          target.innerHTML = `<div class="amy-command-main"><span>XAU/USD</span><strong>${priceText(price)}</strong></div>`
+            + `<div class="amy-command-metric"><small>SESSION</small><b>${sessionInfo().id}</b></div>`
+            + `<div class="amy-command-metric"><small>BSL</small><b class="red" data-freshness="${levels.bsl?.freshness || 'UNAVAILABLE'}">${levelText(levels.bsl)}</b></div>`
+            + `<div class="amy-command-metric"><small>SSL</small><b class="green" data-freshness="${levels.ssl?.freshness || 'UNAVAILABLE'}">${levelText(levels.ssl)}</b></div>`
+            + `<div class="amy-command-metric"><small>NEWS</small><b>${newsRisk(state)}</b></div>`
+            + `<div class="amy-data-state ${quoteFreshness.className}" data-domain="quote" data-freshness="${quoteFreshness.state}"><i></i>${quoteFreshness.label}</div>`;
+        };
+    
+        paint();
+        window.addEventListener('amyfx:market-update', paint);
+        window.addEventListener('online', paint);
+        window.addEventListener('offline', paint);
+        window.addEventListener('storage', event => {
+          if (event.key === contract.storeKey) {
+            contract.syncGlobals();
+            paint();
+          }
+        });
+        target._amyPaint = paint;
+      }
+    
+      function mountBriefing(target) {
+        if (!target || target._amyCanonicalBriefingMounted) return;
+        target._amyCanonicalBriefingMounted = true;
+        const paint = () => {
+          const data = briefing();
+          target.className = `amy-briefing ${data.tone}`;
+          target.innerHTML = `<div class="amy-briefing-title">${data.title}</div>${data.lines.map(line => `<div>${line}</div>`).join('')}`;
+        };
+        paint();
+        window.addEventListener('amyfx:market-update', paint);
+        window.addEventListener('storage', event => {
+          if (event.key === contract.storeKey) paint();
+        });
+        target._amyPaint = paint;
+      }
+    
+      contract.syncGlobals();
+      window.AmyFXIntel = Object.freeze({
+        version: '2.0.0',
+        read: contract.read,
+        write: contract.write,
+        syncGlobals: contract.syncGlobals,
+        partTimestamp: contract.partTimestamp,
+        assessFreshness: contract.assess,
+        sessionInfo,
+        freshness,
+        nearestLevels: contract.nearestLevels,
+        bestCurrentPrice: contract.bestCurrentPrice,
+        conflicts: contract.conflicts,
+        snapshot: contract.snapshot,
+        newsRisk,
+        briefing,
+        mountStrip,
+        mountBriefing,
+        __amyCanonicalMarketContractV2: true
+      });
+    })();
+    
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/mapping-live-consistency-regression.test.mjs:61:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
-# Subtest: every metric states its own claim and authority
-ok 2 - every metric states its own claim and authority
-  ---
-  duration_ms: 0.339175
-  type: 'test'
-  ...
-# Subtest: locked Pine references are preserved without retuning
-ok 3 - locked Pine references are preserved without retuning
-  ---
-  duration_ms: 0.216756
-  type: 'test'
-  ...
-1..3
-# tests 3
+1..7
+# tests 7
 # suites 0
 # pass 3
-# fail 0
+# fail 4
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 60.101068
-
-===== mapping-clock-zone-alignment.test.mjs =====
-TAP version 13
-# Subtest: new mapping modules are syntactically valid and loaded by the page
-ok 1 - new mapping modules are syntactically valid and loaded by the page
-  ---
-  duration_ms: 77.180839
-  type: 'test'
-  ...
-# Subtest: WIB clock paints dashboard and session from one timestamp without observer loop
-ok 2 - WIB clock paints dashboard and session from one timestamp without observer loop
-  ---
-  duration_ms: 0.314288
-  type: 'test'
-  ...
-# Subtest: Pine-aligned FVG remains visible while price has not retested it
-ok 3 - Pine-aligned FVG remains visible while price has not retested it
-  ---
-  duration_ms: 0.93463
-  type: 'test'
-  ...
-# Subtest: Order Block display adapter uses validated body zone and keeps it available above price
-ok 4 - Order Block display adapter uses validated body zone and keeps it available above price
-  ---
-  duration_ms: 0.279763
-  type: 'test'
-  ...
-# Subtest: zone UI uses nearest active zones instead of requiring live price inside zone
-ok 5 - zone UI uses nearest active zones instead of requiring live price inside zone
-  ---
-  duration_ms: 0.429794
-  type: 'test'
-  ...
-1..5
-# tests 5
-# suites 0
-# pass 5
-# fail 0
-# cancelled 0
-# skipped 0
-# todo 0
-# duration_ms 143.135797
-
-===== mapping-command-strip-integrity.test.mjs =====
-TAP version 13
-# AmyFXMarketContract must load before market-intelligence.js
-# AmyFXMarketContract must load before market-intelligence.js
-# Subtest: command strip hanya memilih BSL di atas harga dan SSL di bawah harga
-not ok 1 - command strip hanya memilih BSL di atas harga dan SSL di bawah harga
-  ---
-  duration_ms: 2.695807
-  type: 'test'
-  location: '/home/runner/work/Amy-fx/Amy-fx/tests/mapping-command-strip-integrity.test.mjs:42:1'
-  failureType: 'testCodeFailure'
-  error: "Cannot read properties of undefined (reading 'write')"
-  code: 'ERR_TEST_FAILURE'
-  name: 'TypeError'
-  stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/mapping-command-strip-integrity.test.mjs:44:7)
-    Test.runInAsyncScope (node:async_hooks:214:14)
-    Test.run (node:internal/test_runner/test:1047:25)
-    Test.start (node:internal/test_runner/test:944:17)
-    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
-  ...
-# Subtest: command strip menolak level touched dan fallback data yang stale
-not ok 2 - command strip menolak level touched dan fallback data yang stale
-  ---
-  duration_ms: 0.885939
-  type: 'test'
-  location: '/home/runner/work/Amy-fx/Amy-fx/tests/mapping-command-strip-integrity.test.mjs:61:1'
-  failureType: 'testCodeFailure'
-  error: "Cannot read properties of undefined (reading 'nearestLevels')"
-  code: 'ERR_TEST_FAILURE'
-  name: 'TypeError'
-  stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/mapping-command-strip-integrity.test.mjs:85:22)
-    Test.runInAsyncScope (node:async_hooks:214:14)
-    Test.run (node:internal/test_runner/test:1047:25)
-    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
-    Test.postRun (node:internal/test_runner/test:1173:19)
-    Test.run (node:internal/test_runner/test:1101:12)
-    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
-  ...
-1..2
-# tests 2
-# suites 0
-# pass 0
-# fail 2
-# cancelled 0
-# skipped 0
-# todo 0
-# duration_ms 65.226333
-Regression failed: mapping-command-strip-integrity.test.mjs
+# duration_ms 99.619948
+Regression failed: mapping-live-consistency-regression.test.mjs
