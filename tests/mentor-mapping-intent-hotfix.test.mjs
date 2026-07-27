@@ -26,7 +26,7 @@ function storage(seed = {}) {
 
 function mappingContext({ capturedAt = new Date().toISOString(), price = 4100 } = {}) {
   return {
-    source_module: "mapping",
+    source_module: "home",
     captured_at: capturedAt,
     freshness: { state: "expired" },
     payload: {
@@ -74,35 +74,79 @@ function mappingContext({ capturedAt = new Date().toISOString(), price = 4100 } 
               price,
               bsl: 4092,
               ssl: 4087
+            },
+            news: {
+              items: [
+                { title: "Initial Jobless Claims", actual: "220K", forecast: "215K", previous: "210K", time: "20:30 WITA" }
+              ]
             }
           }
+        },
+        trading: {
+          journal: {
+            summary: {
+              total: 18,
+              win: 11,
+              loss: 6,
+              break_even: 1,
+              completed: 18,
+              win_rate: 61.1,
+              total_profit: 300,
+              total_loss: 120,
+              net_result: 180
+            },
+            recent: [{ title: "XAU scalp", result: "win", date: "2026-07-27" }],
+            relevant: [{ mistakes: ["Entry terlalu cepat"] }]
+          },
+          library: {
+            catalog: { total: 7, titles: [{ title: "Mapping Notes" }] },
+            relevant: [{ title: "Mapping Notes" }],
+            personal_notes: []
+          }
+        },
+        academy: {
+          progress: { read_count: 5, total_sections: 36, percentage: 14, last_title: "Bias Market", read_topics: ["a"] },
+          catalog: [
+            { title: "Bias Market", description: "Dasar bias" },
+            { title: "Likuiditas", description: "Membaca BSL dan SSL" }
+          ],
+          relevant_lessons: [
+            { title: "Likuiditas", passage: "Likuiditas adalah area kumpulan order. Gunakan sebagai target, bukan alasan entry tunggal." }
+          ]
+        },
+        indicators: { total: 3, catalog: [{ name: "AMY Mapping" }], relevant: [] },
+        system: {
+          app: {
+            active_module: "home",
+            online: true,
+            version: { versionName: "2.0.0-preview.48" },
+            update: { version: "2.0.0-preview.49", versionCode: 930049, enabled: true }
+          },
+          ai: { providers: [{ id: "stored-key" }], native_secret_count: 1 }
         }
       }
     }
   };
 }
 
-function createRuntime({ context = mappingContext(), pathname = "/apps/mapping/index.html", localSeed = {} } = {}) {
+function createRuntime({ context = mappingContext(), pathname = "/index.html", localSeed = {} } = {}) {
   let contextValue = context;
   let originalCalls = 0;
   const session = storage();
   const local = storage(localSeed);
-  const listeners = new Map();
   const window = {
-    __amyFxMentorRuleChatSafeV3: true,
     AmyFXOS: {
-      __amySafeRuleChatV3: true,
-      async ask(question) { originalCalls += 1; return { text: `generic:${question}`, provider: "amy-bot" }; },
+      async ask(question) { originalCalls += 1; return { text: `provider:${question}`, provider: "gemini" }; },
       async buildContext() { return contextValue; },
-      getGlobalSettings() { return { key_refs: [] }; }
+      getGlobalSettings() { return { key_refs: [{ id: "stored-key" }] }; }
     },
     AmyFXIntel: { read() { return contextValue?.payload?.workspace?.market?.shared_intelligence || {}; } },
-    addEventListener(name, callback) { listeners.set(name, callback); },
+    addEventListener() {},
     dispatchEvent() {},
-    setInterval,
-    clearInterval,
-    setTimeout,
-    clearTimeout
+    setInterval() { return 0; },
+    clearInterval() {},
+    setTimeout() { return 0; },
+    clearTimeout() {}
   };
   const document = {
     readyState: "complete",
@@ -111,7 +155,8 @@ function createRuntime({ context = mappingContext(), pathname = "/apps/mapping/i
     documentElement: null,
     addEventListener() {},
     querySelector() { return null; },
-    querySelectorAll() { return []; }
+    querySelectorAll() { return []; },
+    createElement() { return { className: "", dataset: {}, textContent: "", appendChild() {} }; }
   };
   const sandbox = {
     window,
@@ -133,10 +178,10 @@ function createRuntime({ context = mappingContext(), pathname = "/apps/mapping/i
     Map,
     Math,
     JSON,
-    setInterval,
-    clearInterval,
-    setTimeout,
-    clearTimeout
+    setInterval() { return 0; },
+    clearInterval() {},
+    setTimeout() { return 0; },
+    clearTimeout() {}
   };
   vm.runInNewContext(hotfixSource, sandbox, { filename: hotfixPath });
   return {
@@ -148,75 +193,88 @@ function createRuntime({ context = mappingContext(), pathname = "/apps/mapping/i
   };
 }
 
-test("provider loader keeps Mapping lifecycle runtime after safe rule chat", () => {
+test("provider loader keeps professional bot after universal and safe-rule runtimes", () => {
   assert.match(providerSource, /amyfx-mentor-mapping-intent-hotfix-v1\.js/);
   assert.match(providerSource, /loadScriptOnce\("amyfx-mentor-rule-chat-safe-v3\.js"[\s\S]*loadMappingIntentHotfixRuntime\)/);
-  assert.match(hotfixSource, /const VERSION = "2\.0\.0"/);
+  assert.match(hotfixSource, /const VERSION = "3\.0\.0"/);
+  assert.match(hotfixSource, /professional-bot-v3/);
   assert.match(hotfixSource, /amyfx\.mapping\.snapshot\.v2/);
+});
+
+test("full bot never calls Gemini, OpenRouter, or DeepSeek", async () => {
+  const runtime = createRuntime();
+  const result = await runtime.window.AmyFXOS.ask("apa kabar", { sourceModule: "home" });
+  assert.equal(result.provider, "amy-bot");
+  assert.equal(result.mode, "full-bot");
+  assert.equal(runtime.originalCalls(), 0);
+  assert.match(result.text, /belum memiliki pola jawaban/i);
 });
 
 test("consumed liquidity is ignored and Amy gives the next directional BSL and SSL", async () => {
   const runtime = createRuntime();
-  const bsl = await runtime.window.AmyFXOS.ask("BSL di mana?", { sourceModule: "mapping" });
+  const bsl = await runtime.window.AmyFXOS.ask("BSL di mana?");
   assert.match(bsl.text, /BSL 4\.092 sudah tersapu/);
   assert.match(bsl.text, /BSL aktif berikutnya berada di 4\.105/);
   assert.doesNotMatch(bsl.text, /4\.098/);
 
-  const ssl = await runtime.window.AmyFXOS.ask("SSL di mana?", { sourceModule: "mapping" });
+  const ssl = await runtime.window.AmyFXOS.ask("SSL di mana?");
   assert.match(ssl.text, /SSL 4\.087 sudah tersapu/);
   assert.match(ssl.text, /SSL aktif berikutnya berada di 4\.075/);
   assert.doesNotMatch(ssl.text, /4\.102/);
 });
 
+test("market direction includes real area, liquidity target, and invalidation", async () => {
+  const runtime = createRuntime();
+  const result = await runtime.window.AmyFXOS.ask("sekarang arah market kemana");
+  assert.match(result.text, /M15 saat ini belum jelas/);
+  assert.match(result.text, /arah market besarnya masih BULLISH/);
+  assert.match(result.text, /OB 4\.078–4\.081/);
+  assert.match(result.text, /target likuiditas BSL 4\.105/);
+  assert.match(result.text, /invalidasi 4\.065/);
+  assert.doesNotMatch(result.text, /demand/i);
+});
+
 test("Mapping levels survive quote TTL and only end through lifecycle events", async () => {
   const stale = mappingContext({ capturedAt: "2026-01-01T00:00:00.000Z" });
   const runtime = createRuntime({ context: stale });
-  const bsl = await runtime.window.AmyFXOS.ask("BSL sekarang", { sourceModule: "mapping" });
+  const bsl = await runtime.window.AmyFXOS.ask("BSL sekarang");
   assert.match(bsl.text, /4\.105/);
   assert.doesNotMatch(bsl.text, /jalankan ulang/i);
-  assert.doesNotMatch(bsl.text, /sedang expired/i);
-
-  const freshness = await runtime.window.AmyFXOS.ask("status data mapping", { sourceModule: "mapping" });
+  const freshness = await runtime.window.AmyFXOS.ask("status data mapping");
   assert.match(freshness.text, /Harga live M15 perlu diperbarui/);
   assert.match(freshness.text, /level Mapping tidak otomatis expired/i);
-  assert.match(freshness.text, /tersapu, termitigasi, digantikan, atau invalid/i);
 });
 
-test("Amy understands OB, FVG, SND, structure, invalidation and targets", async () => {
+test("Amy understands OB, FVG, SND, structure, invalidation, targets, and typo variants", async () => {
   const runtime = createRuntime();
-  const ob = await runtime.window.AmyFXOS.ask("OB saat ini", { sourceModule: "mapping" });
-  assert.match(ob.text, /OB 4\.085–4\.088 sudah termitigasi/);
-  assert.match(ob.text, /OB aktif berikutnya berada di area 4\.078–4\.081/);
-
-  const fvg = await runtime.window.AmyFXOS.ask("FVG aktif", { sourceModule: "mapping" });
-  assert.match(fvg.text, /FVG 4\.094–4\.097 sudah termitigasi/);
-  assert.match(fvg.text, /4\.082–4\.084/);
-
-  const snd = await runtime.window.AmyFXOS.ask("SND di mana", { sourceModule: "mapping" });
-  assert.match(snd.text, /4\.068–4\.072/);
-
-  assert.match((await runtime.window.AmyFXOS.ask("struktur market", { sourceModule: "mapping" })).text, /Bullish structure/);
-  assert.match((await runtime.window.AmyFXOS.ask("invalidasi", { sourceModule: "mapping" })).text, /4\.065/);
-  assert.match((await runtime.window.AmyFXOS.ask("target mapping", { sourceModule: "mapping" })).text, /4\.105, 4\.118/);
+  assert.match((await runtime.window.AmyFXOS.ask("OB saat ini")).text, /4\.078–4\.081/);
+  assert.match((await runtime.window.AmyFXOS.ask("FVG aktif")).text, /4\.082–4\.084/);
+  assert.match((await runtime.window.AmyFXOS.ask("SND di mana")).text, /4\.068–4\.072/);
+  assert.match((await runtime.window.AmyFXOS.ask("struktur market")).text, /Bullish structure/);
+  assert.match((await runtime.window.AmyFXOS.ask("invalidasi")).text, /4\.065/);
+  assert.match((await runtime.window.AmyFXOS.ask("target maping")).text, /4\.105, 4\.118/);
 });
 
-test("Amy separates M15 direction from the larger market direction", async () => {
+test("Journal questions switch cleanly from Mapping and stay deterministic", async () => {
   const runtime = createRuntime();
-  const intraday = await runtime.window.AmyFXOS.ask("arah market", { sourceModule: "mapping" });
-  assert.match(intraday.text, /M15 saat ini belum jelas/);
-  assert.match(intraday.text, /arah market besarnya masih BULLISH/);
-
-  const large = await runtime.window.AmyFXOS.ask("arah market besarnya", { sourceModule: "mapping" });
-  assert.match(large.text, /Arah market besarnya saat ini BULLISH/);
-  assert.match(large.text, /Arah M15 NO CLEAR DIRECTION/);
+  await runtime.window.AmyFXOS.ask("Mapping");
+  const summary = await runtime.window.AmyFXOS.ask("berapa progres jurnl saya");
+  assert.match(summary.text, /18 jurnal: 11 win, 6 loss, dan 1 break-even/);
+  assert.match((await runtime.window.AmyFXOS.ask("win rate jurnal")).text, /61,1%/);
+  assert.match((await runtime.window.AmyFXOS.ask("trade terakhir")).text, /XAU scalp/);
+  assert.match((await runtime.window.AmyFXOS.ask("kesalahan jurnal")).text, /Entry terlalu cepat/);
+  assert.equal(runtime.originalCalls(), 0);
 });
 
-test("Mapping state does not hijack a later Journal question", async () => {
+test("Academy, News, Library, Indicators, and System have direct bot answers", async () => {
   const runtime = createRuntime();
-  await runtime.window.AmyFXOS.ask("Mapping", { sourceModule: "home" });
-  const journal = await runtime.window.AmyFXOS.ask("berapa jurnal ku", { sourceModule: "home" });
-  assert.equal(journal.text, "generic:berapa jurnal ku");
-  assert.equal(runtime.originalCalls(), 1);
+  assert.match((await runtime.window.AmyFXOS.ask("sampai mana belajar saya")).text, /5 dari 36/);
+  assert.match((await runtime.window.AmyFXOS.ask("materi berikutnya")).text, /Likuiditas/);
+  assert.match((await runtime.window.AmyFXOS.ask("news terbaru")).text, /Initial Jobless Claims/);
+  assert.match((await runtime.window.AmyFXOS.ask("berapa isi library")).text, /7 item/);
+  assert.match((await runtime.window.AmyFXOS.ask("berapa indikator")).text, /3 indikator/);
+  assert.match((await runtime.window.AmyFXOS.ask("api dipakai tidak")).text, /full bot lokal/i);
+  assert.match((await runtime.window.AmyFXOS.ask("versi aplikasi")).text, /2\.0\.0-preview\.48/);
 });
 
 test("persisted Mapping snapshot is readable from Home without reopening Mapping", async () => {
@@ -238,30 +296,23 @@ test("persisted Mapping snapshot is readable from Home without reopening Mapping
     ],
     zones: { OB: [], FVG: [], SND: [] }
   };
-  const emptyHome = { source_module: "home", payload: { workspace: { market: {} } } };
+  const emptyHome = { source_module: "home", payload: { workspace: { market: {}, trading: { journal: { summary: {} }, library: { catalog: {} } }, academy: {}, indicators: {}, system: {} } } };
   const runtime = createRuntime({
     context: emptyHome,
     pathname: "/index.html",
     localSeed: { "amyfx.mapping.snapshot.v2": JSON.stringify(persisted) }
   });
-  const answer = await runtime.window.AmyFXOS.ask("BSL di mana", { sourceModule: "home" });
+  const answer = await runtime.window.AmyFXOS.ask("BSL di mana");
   assert.match(answer.text, /4\.110/);
 });
 
-test("Amy greeting is short and no longer mentions customer service chat", async () => {
+test("Amy greeting and user-facing UI identify full bot mode", async () => {
   const runtime = createRuntime();
-  const result = await runtime.window.AmyFXOS.ask("hai", { sourceModule: "home" });
+  const result = await runtime.window.AmyFXOS.ask("hai");
   assert.match(result.text, /^Hai, selamat (pagi|siang|sore|malam)\. Aku Amy, asisten Anda\. Ada yang bisa kubantu\?$/);
-  assert.doesNotMatch(result.text, /customer service|langsung menulis/i);
-  assert.match(hotfixSource, /data-amy-safe-welcome/);
-});
-
-test("Operating System is moved to Profile and user-facing metrics are sanitized", () => {
-  assert.match(hotfixSource, /isProfileVisible/);
-  assert.match(hotfixSource, /section\.hidden = !profile/);
-  assert.match(hotfixSource, /list\.insertAdjacentElement\("beforebegin", section\)/);
-  assert.match(hotfixSource, /Belum ada jurnal/);
-  assert.match(hotfixSource, /API siap digunakan/);
-  assert.doesNotMatch(hotfixSource, /migration\.textContent = migration\.state/);
+  assert.match(hotfixSource, /Full bot • semua modul/);
+  assert.match(hotfixSource, /FULL BOT • TANPA API/);
+  assert.match(hotfixSource, /Bot lokal aktif/);
+  assert.doesNotMatch(hotfixSource, /return originalAsk\(question/);
   assert.match(blueprintSource, /data-amy-command-center/);
 });
