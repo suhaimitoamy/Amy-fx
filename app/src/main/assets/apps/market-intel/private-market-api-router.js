@@ -5,13 +5,17 @@
   window.__amyFxPrivateMarketApiRouterV1 = true;
 
   const nativeFetch = window.fetch.bind(window);
-  const PRIVATE_ORIGIN = 'https://amy-fx-git-personal-amyfx-private-aplikasi-trading.vercel.app';
-  const MARKET_PATHS = new Set(['/api/twelvedata', '/api/heatmap', '/api/liquidity']);
+  const EDGE_ORIGIN = 'https://wliecyxzlwhmtftnfnps.supabase.co';
+  const ROUTES = Object.freeze({
+    '/api/twelvedata': '/functions/v1/market-candles',
+    '/api/heatmap': '/functions/v1/market-heatmap',
+    '/api/liquidity': '/functions/v1/market-liquidity'
+  });
 
   function route(input) {
     const source = new URL(input instanceof Request ? input.url : String(input), location.href);
-    if (source.hostname !== 'amy-fx.vercel.app' || !MARKET_PATHS.has(source.pathname)) return null;
-    const target = new URL(source.pathname, PRIVATE_ORIGIN);
+    if (source.hostname !== 'amy-fx.vercel.app' || !ROUTES[source.pathname]) return null;
+    const target = new URL(ROUTES[source.pathname], EDGE_ORIGIN);
     target.search = source.search;
     return target.toString();
   }
@@ -27,5 +31,8 @@
     }
   };
 
-  window.AmyFXPrivateMarketApi = Object.freeze({ origin: PRIVATE_ORIGIN });
+  window.AmyFXPrivateMarketApi = Object.freeze({
+    origin: EDGE_ORIGIN,
+    routes: ROUTES
+  });
 })();
