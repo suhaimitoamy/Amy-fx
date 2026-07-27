@@ -1,0 +1,118 @@
+name: Amy FX Preview PR Validation
+
+on:
+  pull_request:
+    branches:
+      - experiment/heatmap-news-20260722
+
+permissions:
+  contents: read
+
+concurrency:
+  group: amyfx-preview-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
+  AMYFX_APP_LABEL: Amy FX Preview
+  AMYFX_URI_SCHEME: amyfxpreview
+  AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/experiment/heatmap-news-20260722/preview-update.json
+  AMYFX_VERSION_CODE: 939999
+  AMYFX_VERSION_NAME: 2.0.0-preview.validation
+  AMYFX_KEYSTORE_PATH: /tmp/amy-fx-preview-signing.keystore
+  AMYFX_KEYSTORE_PASSWORD: android
+  AMYFX_KEY_ALIAS: androiddebugkey
+  AMYFX_KEY_PASSWORD: android
+  AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
+
+jobs:
+  validate-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout isolated Preview branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify PR targets Preview only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.base_ref }}" = "experiment/heatmap-news-20260722"
+          test "${{ github.base_ref }}" != "main"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Apply Preview source stabilization
+        run: |
+          set -euo pipefail
+          python3 tools/apply-blueprint-preview.py
+          python3 -m py_compile tools/apply-blueprint-preview.py
+
+      - name: Validate JavaScript and full regression
+        run: |
+          set -euo pipefail
+          node --check app/src/main/assets/apps/shared/amyfx-blueprint-v1.js
+          node --check app/src/main/assets/apps/shared/amyfx-blueprint-hotfix-v1.js
+          node --check app/src/main/assets/apps/shared/amyfx-mentor-mapping-intent-hotfix-v1.js
+          node --check app/src/main/assets/apps/shared/amyfx-mentor-universal-access-v1.js
+          node --check app/src/main/assets/apps/shared/amyfx-mentor-rule-chat-safe-v3.js
+          node --check app/src/main/assets/app-version.js
+          node --check app/src/main/assets/update-checker.js
+          npm test
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Restore permanent Preview signing key
+        id: signing-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: amy-fx-debug-keystore-v1
+
+      - name: Verify permanent Preview signing key
+        run: |
+          set -euo pipefail
+          test "${{ steps.signing-cache.outputs.cache-hit }}" = "true"
+          cp "$HOME/.android/debug.keystore" "$AMYFX_KEYSTORE_PATH"
+          actual="$(keytool -list -v -keystore "$AMYFX_KEYSTORE_PATH" -storepass "$AMYFX_KEYSTORE_PASSWORD" -alias "$AMYFX_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1)"
+          test "$actual" = "$AMYFX_SIGNING_CERT_SHA256"
+
+      - name: Android unit test, lint, and signed release build
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease --stacktrace --no-daemon --no-configuration-cache
+
+      - name: Verify Preview package, version, label, and signer
+        run: |
+          set -euo pipefail
+          APK='app/build/outputs/apk/release/app-release.apk'
+          AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
+          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          test -s "$APK"
+          "$AAPT" dump badging "$APK" | tee /tmp/preview-pr-badging.txt
+          grep -Fq "package: name='com.amyelitesuite.learningpreview' versionCode='939999' versionName='2.0.0-preview.validation'" /tmp/preview-pr-badging.txt
+          grep -Fq "application-label:'Amy FX Preview'" /tmp/preview-pr-badging.txt
+          "$APKSIGNER" verify --verbose "$APK"
+          cert_entry="$(unzip -Z1 "$APK" | grep -E '^META-INF/[^/]+\.(RSA|DSA|EC)$' | head -n1)"
+          test -n "$cert_entry"
+          unzip -p "$APK" "$cert_entry" > /tmp/amyfx-preview-pr-cert
+          expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          actual="$(keytool -printcert -file /tmp/amyfx-preview-pr-cert | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          test "$actual" = "$expected"
