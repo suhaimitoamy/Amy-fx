@@ -1,0 +1,134 @@
+Amy FX Preview regression failure
+Run: 30228082200
+Commit: e5ccdb8a3e2d93c7f2c2d4583ae1ca4865672f52
+
+===== amy-mentor-conversation.test.mjs =====
+not ok 1 - concise mentor runtime is valid JavaScript and loaded by the installed provider runtime
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+  operator: 'match'
+Regression failed: amy-mentor-conversation.test.mjs
+
+--- final log lines ---
+        if (existing) {
+          existing.addEventListener("load", () => next?.(), { once: true });
+          existing.addEventListener("error", () => next?.(), { once: true });
+          return;
+        }
+        const script = document.createElement("script");
+        script.src = runtimeUrl(filename);
+        script.setAttribute(marker, "1");
+        script.async = false;
+        script.addEventListener("load", () => next?.(), { once: true });
+        script.addEventListener("error", () => next?.(), { once: true });
+        (document.head || document.documentElement).appendChild(script);
+      }
+    
+      function loadSafeRuleChatRuntime() {
+        loadScriptOnce("amyfx-mentor-rule-chat-safe-v3.js", "data-amyfx-rule-chat-safe", "__amyFxMentorRuleChatSafeV3");
+      }
+    
+      function loadUniversalAccessRuntime() {
+        loadScriptOnce("amyfx-mentor-universal-access-v1.js", "data-amyfx-mentor-universal", "__amyFxMentorUniversalAccessV1", loadSafeRuleChatRuntime);
+      }
+    
+      function loadCustomerServiceRuntime() { loadUniversalAccessRuntime(); }
+      function loadConnectivityRuntime() { loadSafeRuleChatRuntime(); }
+      function loadFinalConnectivityRuntime() { loadSafeRuleChatRuntime(); }
+      function loadRuleChatFinalRuntime() { loadSafeRuleChatRuntime(); }
+    
+      function loadMentorConversationRuntime() {
+        if (!PROVIDER_SCRIPT_URL) return;
+        loadScriptOnce("amyfx-mentor-conversation-v1.js", "data-amyfx-mentor-conversation", "__amyFxMentorConversationV1", loadCustomerServiceRuntime);
+      }
+    
+      let repairScheduled = false;
+      function scheduleRepair() {
+        if (repairScheduled) return;
+        repairScheduled = true;
+        const run = () => { repairScheduled = false; repairNow(); };
+        if (typeof requestAnimationFrame === "function") requestAnimationFrame(run); else setTimeout(run, 0);
+      }
+    
+      document.addEventListener("click", event => {
+        if (event.target.closest?.("[data-amy-save-keys]")) { normalizeBeforeSave(); setTimeout(scheduleRepair, 80); }
+        if (event.target.closest?.("[data-amy-settings]")) setTimeout(scheduleRepair, 0);
+      }, true);
+    
+      document.addEventListener("change", event => {
+        if (event.target.matches?.("[data-amy-provider-select]")) normalizeBeforeSave();
+        if (event.target.matches?.("[data-amy-paid-fallback]")) setTimeout(scheduleRepair, 0);
+      }, true);
+    
+      function boot() {
+        loadMentorConversationRuntime();
+        let attempts = 0;
+        const timer = setInterval(() => {
+          attempts += 1;
+          if (window.AmyFXOS) {
+            clearInterval(timer);
+            scheduleRepair();
+          } else if (attempts >= 160) clearInterval(timer);
+        }, 100);
+        window.addEventListener("focus", scheduleRepair);
+        document.addEventListener("visibilitychange", () => { if (!document.hidden) scheduleRepair(); });
+      }
+    
+      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
+      else boot();
+    
+      window.AmyFXProviderDetection = Object.freeze({
+        inferProviderFromKey,
+        normalizePool,
+        repairNow,
+        loadCustomerServiceRuntime,
+        loadUniversalAccessRuntime,
+        loadConnectivityRuntime,
+        loadFinalConnectivityRuntime,
+        loadRuleChatFinalRuntime,
+        loadSafeRuleChatRuntime
+      });
+    })();
+    
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/amy-mentor-conversation.test.mjs:14:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: simple home action question is answered locally without a trading lecture
+ok 2 - simple home action question is answered locally without a trading lecture
+  ---
+  duration_ms: 4.535651
+  type: 'test'
+  ...
+# Subtest: provider prompt forbids audit-style headings and internal metadata leakage
+ok 3 - provider prompt forbids audit-style headings and internal metadata leakage
+  ---
+  duration_ms: 1.386804
+  type: 'test'
+  ...
+# Subtest: epoch timestamp is replaced with Belum ada data
+ok 4 - epoch timestamp is replaced with Belum ada data
+  ---
+  duration_ms: 1.324817
+  type: 'test'
+  ...
+# Subtest: mentor shows and clears an accessible animated loading state while waiting for provider
+ok 5 - mentor shows and clears an accessible animated loading state while waiting for provider
+  ---
+  duration_ms: 1.398696
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 4
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 85.586519
+Regression failed: amy-mentor-conversation.test.mjs
