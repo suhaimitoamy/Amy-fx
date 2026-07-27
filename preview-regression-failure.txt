@@ -1,6 +1,6 @@
 Amy FX Preview regression failure
-Run: 30268439008
-Commit: 17559ceeba4ef64d2b581437ac7cdb12aaddab28
+Run: 30268538373
+Commit: bea56a480ec17eeec68feb15aa448411891b4e41
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -66,150 +66,145 @@ Commit: 17559ceeba4ef64d2b581437ac7cdb12aaddab28
 ===== preview-mapping-shared-connectivity.test.mjs =====
 ===== preview-post35-connectivity-regression.test.mjs =====
 ===== preview-shared-market-intelligence.test.mjs =====
-not ok 2 - shared state survives localStorage read and write failures
+===== preview-updater-config.test.mjs =====
+===== previous-period-levels.test.mjs =====
+===== production-copy-polish.test.mjs =====
+===== production-release-identity.test.mjs =====
+===== professional-bot-handler-lock.test.mjs =====
+===== professional-market-repair.test.mjs =====
+===== professional-market-source-registry.test.mjs =====
+not ok 1 - canonical BSL matches Market Intel nearest draw instead of stale Mapping snapshot
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
-  actual: |-
+  actual: 'BSL aktif terdekat 4.092 dari nearest draw live Intel Liquidity. Snapshot Mapping 4.110,15 hanya level struktural internal, bukan sumber resmi BSL.'
   operator: 'match'
-not ok 3 - news or timestamp-only state cannot mark XAU USD market data as LIVE
+not ok 4 - follow-up invalidation uses prior market context and is audited
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
-  actual: ''
+  actual: ~
   operator: 'match'
-not ok 4 - explicit source timestamp is preferred over storage time
-  code: 'ERR_ASSERTION'
-  name: 'AssertionError'
-  expected:
-  actual: |-
-  operator: 'match'
-not ok 5 - briefing and command strip use the same canonical market freshness and price
-  code: 'ERR_ASSERTION'
-  name: 'AssertionError'
-  expected:
-  actual: |-
-  operator: 'match'
-Regression failed: preview-shared-market-intelligence.test.mjs
+Regression failed: professional-market-source-registry.test.mjs
 
 --- final log lines ---
-      function freshness(state = contract.read()) {
-        return contract.freshness(state);
-      }
-    
-      function briefing(state = contract.read()) {
-        const quoteFreshness = freshness(state);
-        const levels = contract.nearestLevels(state);
-        const mapping = state.mapping || {};
-        const conflicts = contract.conflicts(state);
-    
-        if (quoteFreshness.state !== 'LIVE') {
-          const lines = [`Quote XAU/USD ${quoteFreshness.label}.`];
-          if (levels.bsl || levels.ssl) lines.push(`Level Intel masih berstatus ${levels.freshness.state}.`);
-          if (conflicts.length) lines.push('Snapshot market memiliki perbedaan waktu atau sumber yang harus diperhatikan.');
-          return { tone: 'wait', title: `DATA ${quoteFreshness.label}`, lines };
-        }
-    
-        const bslDist = levels.bsl ? Math.abs(Number(levels.bsl.distance)) : Infinity;
-        const sslDist = levels.ssl ? Math.abs(Number(levels.ssl.distance)) : Infinity;
-        const pressure = bslDist < sslDist ? 'ABOVE PRICE' : sslDist < bslDist ? 'BELOW PRICE' : 'BALANCED';
-        const draw = bslDist < sslDist ? levels.bsl : sslDist < bslDist ? levels.ssl : (levels.bsl || levels.ssl);
-        const action = mapping.direction || mapping.status || 'WAIT';
-        return {
-          tone: String(action).includes('BUY') ? 'buy' : String(action).includes('SELL') ? 'sell' : 'wait',
-          title: 'RULE-BASED MARKET BRIEFING',
-          lines: [
-            `Liquidity pressure: ${pressure}`,
-            `Nearest draw: ${draw ? `${draw.type} ${priceText(draw.price)}` : 'WAITING INTEL LIQUIDITY'}`,
-            `Mapping: ${mapping.bias || 'WAIT'} · ${action}`,
-            `News risk: ${newsRisk(state)} · ${sessionInfo().label}`,
-            ...(conflicts.length ? ['Catatan: terdapat perbedaan sumber/timestamp; keputusan tetap WAIT sampai selaras.'] : [])
-          ]
-        };
-      }
-    
-      function mountStrip(target) {
-        if (!target || target._amyCanonicalStripMounted) return;
-        target._amyCanonicalStripMounted = true;
-    
-        const paint = () => {
-          const state = contract.read();
-          const quote = state.quote || {};
-          const quoteFreshness = contract.assess('quote', quote);
-          const levels = contract.nearestLevels(state);
-          const price = contract.bestCurrentPrice(state);
-          target.innerHTML = `<div class="amy-command-main"><span>XAU/USD</span><strong>${priceText(price)}</strong></div>`
-            + `<div class="amy-command-metric"><small>SESSION</small><b>${sessionInfo().id}</b></div>`
-            + `<div class="amy-command-metric"><small>BSL</small><b class="red" data-freshness="${levels.bsl?.freshness || 'UNAVAILABLE'}">${levelText(levels.bsl)}</b></div>`
-            + `<div class="amy-command-metric"><small>SSL</small><b class="green" data-freshness="${levels.ssl?.freshness || 'UNAVAILABLE'}">${levelText(levels.ssl)}</b></div>`
-            + `<div class="amy-command-metric"><small>NEWS</small><b>${newsRisk(state)}</b></div>`
-            + `<div class="amy-data-state ${quoteFreshness.className}" data-domain="quote" data-freshness="${quoteFreshness.state}"><i></i>${quoteFreshness.label}</div>`;
-        };
-    
-        paint();
-        window.addEventListener('amyfx:market-update', paint);
-        window.addEventListener('online', paint);
-        window.addEventListener('offline', paint);
-        window.addEventListener('storage', event => {
-          if (event.key === contract.storeKey) {
-            contract.syncGlobals();
-            paint();
-          }
-        });
-        target._amyPaint = paint;
-      }
-    
-      function mountBriefing(target) {
-        if (!target || target._amyCanonicalBriefingMounted) return;
-        target._amyCanonicalBriefingMounted = true;
-        const paint = () => {
-          const data = briefing();
-          target.className = `amy-briefing ${data.tone}`;
-          target.innerHTML = `<div class="amy-briefing-title">${data.title}</div>${data.lines.map(line => `<div>${line}</div>`).join('')}`;
-        };
-        paint();
-        window.addEventListener('amyfx:market-update', paint);
-        window.addEventListener('storage', event => {
-          if (event.key === contract.storeKey) paint();
-        });
-        target._amyPaint = paint;
-      }
-    
-      contract.syncGlobals();
-      window.AmyFXIntel = Object.freeze({
-        version: '2.0.0',
-        read: contract.read,
-        write: contract.write,
-        syncGlobals: contract.syncGlobals,
-        partTimestamp: contract.partTimestamp,
-        assessFreshness: contract.assess,
-        sessionInfo,
-        freshness,
-        nearestLevels: contract.nearestLevels,
-        bestCurrentPrice: contract.bestCurrentPrice,
-        conflicts: contract.conflicts,
-        snapshot: contract.snapshot,
-        newsRisk,
-        briefing,
-        mountStrip,
-        mountBriefing,
-        __amyCanonicalMarketContractV2: true
-      });
-    })();
-    
-  operator: 'match'
-  stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-shared-market-intelligence.test.mjs:48:10)
-    async Test.run (node:internal/test_runner/test:1054:7)
-    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ---
+  duration_ms: 4.378128
+  type: 'test'
   ...
-1..5
-# tests 5
+# Subtest: FVG and Order Block are read from the current Mapping concept engine and persisted
+ok 2 - FVG and Order Block are read from the current Mapping concept engine and persisted
+  ---
+  duration_ms: 20.286704
+  type: 'test'
+  ...
+# Subtest: market direction and FVG answers bypass a buildContext promise that never resolves
+ok 3 - market direction and FVG answers bypass a buildContext promise that never resolves
+  ---
+  duration_ms: 1.981493
+  type: 'test'
+  ...
+# Subtest: handler loads the repair runtime and limits slow context building
+ok 4 - handler loads the repair runtime and limits slow context building
+  ---
+  duration_ms: 0.265662
+  type: 'test'
+  ...
+1..4
+# tests 4
 # suites 0
-# pass 1
-# fail 4
+# pass 4
+# fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 99.828293
-Regression failed: preview-shared-market-intelligence.test.mjs
+# duration_ms 94.468025
+
+===== professional-market-source-registry.test.mjs =====
+TAP version 13
+# Subtest: canonical BSL matches Market Intel nearest draw instead of stale Mapping snapshot
+not ok 1 - canonical BSL matches Market Intel nearest draw instead of stale Mapping snapshot
+  ---
+  duration_ms: 20.65712
+  type: 'test'
+  location: '/home/runner/work/Amy-fx/Amy-fx/tests/professional-market-source-registry.test.mjs:111:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /snapshot Mapping 4\.110,15/. Input:
+    
+    'BSL aktif terdekat 4.092 dari nearest draw live Intel Liquidity. Snapshot Mapping 4.110,15 hanya level struktural internal, bukan sumber resmi BSL.'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: 'BSL aktif terdekat 4.092 dari nearest draw live Intel Liquidity. Snapshot Mapping 4.110,15 hanya level struktural internal, bukan sumber resmi BSL.'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/professional-market-source-registry.test.mjs:115:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: market summary includes past, dominant direction, current state and future scenario
+ok 2 - market summary includes past, dominant direction, current state and future scenario
+  ---
+  duration_ms: 2.114529
+  type: 'test'
+  ...
+# Subtest: direction conflict is disclosed and decision stays WAIT
+ok 3 - direction conflict is disclosed and decision stays WAIT
+  ---
+  duration_ms: 1.30168
+  type: 'test'
+  ...
+# Subtest: follow-up invalidation uses prior market context and is audited
+not ok 4 - follow-up invalidation uses prior market context and is audited
+  ---
+  duration_ms: 1.346706
+  type: 'test'
+  location: '/home/runner/work/Amy-fx/Amy-fx/tests/professional-market-source-registry.test.mjs:142:1'
+  failureType: 'testCodeFailure'
+  error: 'The "string" argument must be of type string. Received type object (null)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: ~
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/professional-market-source-registry.test.mjs:146:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: handler loads the registry before locking and tracks runtime changes
+ok 5 - handler loads the registry before locking and tracks runtime changes
+  ---
+  duration_ms: 0.16957
+  type: 'test'
+  ...
+# Subtest: past and future questions are grounded in Mapping engine data
+ok 6 - past and future questions are grounded in Mapping engine data
+  ---
+  duration_ms: 6.401022
+  type: 'test'
+  ...
+# Subtest: empty market data never produces invented price levels
+ok 7 - empty market data never produces invented price levels
+  ---
+  duration_ms: 1.29485
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 5
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 94.841535
+Regression failed: professional-market-source-registry.test.mjs
