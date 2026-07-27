@@ -337,7 +337,7 @@
     const value = lower(question);
     if (/\b(bsl|buy side liquidity|buy-side liquidity)\b/.test(value)) return "bsl";
     if (/\b(ssl|sell side liquidity|sell-side liquidity)\b/.test(value)) return "ssl";
-    if (/\b(invalidasi|invalidation|batal|tidak berlaku)\b/.test(value)) return "invalidation";
+    if (/\b(invalidasi(?:nya)?|invalidation|batal|tidak berlaku)\b/.test(value)) return "invalidation";
     if (/\b(sebelum|sebelumnya|masa lalu|past|terjadi)\b/.test(value)) return "past";
     if (/\b(masa depan|future|nanti|skenario|target berikut)\b/.test(value)) return "future";
     if (/\b(setup|entry|sl|tp|stop loss|take profit)\b/.test(value)) return "setup";
