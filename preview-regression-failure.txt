@@ -1,6 +1,6 @@
 Amy FX Preview regression failure
-Run: 30267427655
-Commit: ff81ad9ce13c1bc858aab1f560235f5a0c92ed2e
+Run: 30267539638
+Commit: bc5488e5595f514f2de3a6a0665e07d1890d4573
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -61,13 +61,23 @@ Commit: ff81ad9ce13c1bc858aab1f560235f5a0c92ed2e
 ===== notification-route-sync.test.mjs =====
 ===== preview-connectivity-audit-v2.test.mjs =====
 ===== preview-connectivity-final-v3.test.mjs =====
-not ok 5 - Market Intel normalizes timestamps and propagates stale state
+===== preview-home-journal-connection.test.mjs =====
+===== preview-integration-audit.test.mjs =====
+not ok 2 - Blueprint runtime is installed exactly once and in a stable order in every module
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+not ok 7 - Market Intel publishes news, liquidity and heatmap context contracts in WITA
+      ' * ========================\n' +
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
   actual: |-
+     * ========================
   operator: 'match'
-Regression failed: preview-connectivity-final-v3.test.mjs
+Regression failed: preview-integration-audit.test.mjs
 
 --- final log lines ---
         const sslDist = levels.ssl ? Math.abs(Number(levels.ssl.distance)) : Infinity;
@@ -158,35 +168,35 @@ Regression failed: preview-connectivity-final-v3.test.mjs
     
   operator: 'match'
   stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-connectivity-final-v3.test.mjs:67:98)
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-integration-audit.test.mjs:126:10)
     async Test.run (node:internal/test_runner/test:1054:7)
     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
-# Subtest: Home update and cache actions use real services and preserve primary data
-ok 6 - Home update and cache actions use real services and preserve primary data
+# Subtest: AI secure vault, provider repair and concise conversation runtime are connected end-to-end
+ok 8 - AI secure vault, provider repair and concise conversation runtime are connected end-to-end
   ---
-  duration_ms: 2.082276
+  duration_ms: 4.172972
   type: 'test'
   ...
-# Subtest: Journal and Mapping publish events consumed across modules
-ok 7 - Journal and Mapping publish events consumed across modules
+# Subtest: only one Preview release workflow owns the active branch and update channel
+ok 9 - only one Preview release workflow owns the active branch and update channel
   ---
-  duration_ms: 2.510718
+  duration_ms: 4.597712
   type: 'test'
   ...
-# Subtest: deprecated final router remains internally guarded
-ok 8 - deprecated final router remains internally guarded
+# Subtest: Preview update manifest is active and points to an immutable Preview APK
+ok 10 - Preview update manifest is active and points to an immutable Preview APK
   ---
-  duration_ms: 0.888021
+  duration_ms: 0.732183
   type: 'test'
   ...
-1..8
-# tests 8
+1..10
+# tests 10
 # suites 0
-# pass 7
-# fail 1
+# pass 8
+# fail 2
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 301.786303
-Regression failed: preview-connectivity-final-v3.test.mjs
+# duration_ms 92.876284
+Regression failed: preview-integration-audit.test.mjs
