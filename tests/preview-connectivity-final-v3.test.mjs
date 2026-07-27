@@ -17,6 +17,7 @@ const files = {
   universal: 'app/src/main/assets/apps/shared/amyfx-mentor-universal-access-v1.js',
   safe: 'app/src/main/assets/apps/shared/amyfx-mentor-rule-chat-safe-v3.js',
   intel: 'app/src/main/assets/apps/shared/market-intelligence.js',
+  marketContract: 'app/src/main/assets/apps/shared/amyfx-market-state-contract-v1.js',
   academyAuth: 'app/src/main/assets/apps/academy/assets/js/auth.js',
   academyLesson: 'app/src/main/assets/apps/academy/bagian-15-menjadi-trader-mandiri/dari-belajar-ke-eksekusi.html',
   journal: 'app/src/main/assets/apps/journal/app.js',
@@ -26,7 +27,7 @@ const files = {
 
 test('connectivity files exist and parse', async () => {
   for (const file of Object.values(files)) assert.equal(await exists(file), true, `missing ${file}`);
-  for (const file of [files.final, files.audit, files.provider, files.customer, files.universal, files.safe, files.intel, files.academyAuth]) {
+  for (const file of [files.final, files.audit, files.provider, files.customer, files.universal, files.safe, files.intel, files.marketContract, files.academyAuth]) {
     const result = spawnSync(process.execPath, ['--check', path.join(root, file)], { encoding: 'utf8' });
     assert.equal(result.status, 0, `${file}: ${result.stderr || result.stdout}`);
   }
@@ -62,13 +63,20 @@ test('nested Academy lessons load Amy shared runtime', async () => {
   assert.match(auth, /new URL\('\.\.\/shared\/',academyRoot\)/);
 });
 
-test('Market Intel normalizes timestamps and propagates stale state', async () => {
-  const source = await read(files.intel);
-  for (const token of ['updated', 'capturedAt', 'captured_at', 'analyzedAt', 'storedAt']) assert.match(source, new RegExp(`timestamp\\(part\\?\\.${token}\\)`));
-  assert.match(source, /partExplicitlyStale/);
-  assert.match(source, /DATA USANG\|EXPIRED\|INVALID/);
-  assert.match(source, /syncGlobals/);
-  assert.match(source, /window\.addEventListener\('storage'/);
+test('Market Intel delegates source timestamps and stale propagation to canonical market contract', async () => {
+  const intel = await read(files.intel);
+  const contract = await read(files.marketContract);
+  assert.match(intel, /const contract = window\.AmyFXMarketContract/);
+  assert.match(intel, /freshness\(state = contract\.read\(\)\)/);
+  assert.match(intel, /contract\.assess\('quote', quote\)/);
+  assert.match(intel, /contract\.syncGlobals/);
+  assert.match(intel, /window\.addEventListener\('storage'/);
+  for (const token of ['capturedAt', 'captured_at', 'sourceCandleTime', 'sourceCandleAt']) assert.match(contract, new RegExp(token));
+  assert.match(contract, /function explicitlyInvalid/);
+  assert.match(contract, /DATA USANG\|INVALID/);
+  assert.match(contract, /state = "EXPIRED"/);
+  assert.match(contract, /storedAt: now/);
+  assert.doesNotMatch(contract, /storedAt\s*\|\|\s*capturedAt/);
 });
 
 test('Home update and cache actions use real services and preserve primary data', async () => {
