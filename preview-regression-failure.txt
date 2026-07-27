@@ -1,6 +1,6 @@
 Amy FX Preview regression failure
-Run: 30228292041
-Commit: ef87c749e89e0a6b2ed4318419e4bf9e3d406829
+Run: 30228352321
+Commit: 20a06541f0a4e5641fc848538d94301285a9781e
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -57,15 +57,28 @@ Commit: ef87c749e89e0a6b2ed4318419e4bf9e3d406829
 ===== notification-route-regression.test.mjs =====
 ===== notification-route-sync.test.mjs =====
 ===== preview-connectivity-audit-v2.test.mjs =====
-not ok 1 - final connectivity runtime exists, parses, and is loaded after universal Mentor access
+===== preview-connectivity-final-v3.test.mjs =====
+not ok 2 - provider loads final coordinator after audited Mentor stack
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
   actual: |-
   operator: 'match'
-Regression failed: preview-connectivity-audit-v2.test.mjs
+Regression failed: preview-connectivity-final-v3.test.mjs
 
 --- final log lines ---
+      }
+    
+      function loadSafeRuleChatRuntime() {
+        loadScriptOnce("amyfx-mentor-rule-chat-safe-v3.js", "data-amyfx-rule-chat-safe", "__amyFxMentorRuleChatSafeV3");
+      }
+    
+      function loadUniversalAccessRuntime() {
+        loadScriptOnce("amyfx-mentor-universal-access-v1.js", "data-amyfx-mentor-universal", "__amyFxMentorUniversalAccessV1", loadSafeRuleChatRuntime);
+      }
+    
+      function loadCustomerServiceRuntime() { loadUniversalAccessRuntime(); }
+      function loadConnectivityRuntime() { loadSafeRuleChatRuntime(); }
       function loadFinalConnectivityRuntime() { loadSafeRuleChatRuntime(); }
       function loadRuleChatFinalRuntime() { loadSafeRuleChatRuntime(); }
     
@@ -124,65 +137,53 @@ Regression failed: preview-connectivity-audit-v2.test.mjs
     
   operator: 'match'
   stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-connectivity-audit-v2.test.mjs:31:10)
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-connectivity-final-v3.test.mjs:37:12)
     async Test.run (node:internal/test_runner/test:1054:7)
-    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
-# Subtest: all primary modules install the shared provider/bootstrap chain
-ok 2 - all primary modules install the shared provider/bootstrap chain
+# Subtest: final coordinator routes exact views across five modules
+ok 3 - final coordinator routes exact views across five modules
   ---
-  duration_ms: 3.483659
+  duration_ms: 3.432298
   type: 'test'
   ...
-# Subtest: bot data adapter matches customer-service contracts for version, providers and secure vault
-ok 3 - bot data adapter matches customer-service contracts for version, providers and secure vault
+# Subtest: nested Academy lessons load Amy shared runtime
+ok 4 - nested Academy lessons load Amy shared runtime
   ---
-  duration_ms: 1.221637
+  duration_ms: 1.151285
   type: 'test'
   ...
-# Subtest: IndexedDB reads never create an empty database, overwrite Journal schema, or leak late handles
-ok 4 - IndexedDB reads never create an empty database, overwrite Journal schema, or leak late handles
+# Subtest: Market Intel normalizes timestamps and propagates stale state
+ok 5 - Market Intel normalizes timestamps and propagates stale state
   ---
-  duration_ms: 1.643744
+  duration_ms: 1.156255
   type: 'test'
   ...
-# Subtest: market status requires a price and timestamp from the same fresh Mapping, Liquidity, Heatmap, or live-state candidate
-ok 5 - market status requires a price and timestamp from the same fresh Mapping, Liquidity, Heatmap, or live-state candidate
+# Subtest: Home update and cache actions use real services and preserve primary data
+ok 6 - Home update and cache actions use real services and preserve primary data
   ---
-  duration_ms: 1.018594
+  duration_ms: 1.229282
   type: 'test'
   ...
-# Subtest: 90 percent bot route stays local while AI escalation receives corrected full workspace freshness
-ok 6 - 90 percent bot route stays local while AI escalation receives corrected full workspace freshness
+# Subtest: Journal and Mapping publish events consumed across modules
+ok 7 - Journal and Mapping publish events consumed across modules
   ---
-  duration_ms: 0.946457
+  duration_ms: 2.885173
   type: 'test'
   ...
-# Subtest: customer-service numeric menu and module navigation are connected
-ok 7 - customer-service numeric menu and module navigation are connected
+# Subtest: final router wraps only after connectivity audit v2
+ok 8 - final router wraps only after connectivity audit v2
   ---
-  duration_ms: 1.012101
+  duration_ms: 1.002557
   type: 'test'
   ...
-# Subtest: Journal deep links connect Library, Media, Journal, Notes, Assistant and Statistics views
-ok 8 - Journal deep links connect Library, Media, Journal, Notes, Assistant and Statistics views
-  ---
-  duration_ms: 1.212499
-  type: 'test'
-  ...
-# Subtest: bot workspace supports nested Journal v2 outcomes and accurate completed win rate
-ok 9 - bot workspace supports nested Journal v2 outcomes and accurate completed win rate
-  ---
-  duration_ms: 1.22884
-  type: 'test'
-  ...
-1..9
-# tests 9
+1..8
+# tests 8
 # suites 0
-# pass 8
+# pass 7
 # fail 1
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 102.646548
-Regression failed: preview-connectivity-audit-v2.test.mjs
+# duration_ms 275.792029
+Regression failed: preview-connectivity-final-v3.test.mjs
