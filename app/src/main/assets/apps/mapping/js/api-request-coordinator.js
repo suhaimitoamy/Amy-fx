@@ -8,7 +8,11 @@
   const inFlight = new Map();
   const responseCache = new Map();
   const intervalSnapshots = new Map();
-  const API_HOST = 'amy-fx.vercel.app';
+  const PRIVATE_API_ORIGIN = 'https://amy-fx-git-personal-amyfx-private-aplikasi-trading.vercel.app';
+  const MARKET_API_HOSTS = new Set([
+    'amy-fx.vercel.app',
+    'amy-fx-git-personal-amyfx-private-aplikasi-trading.vercel.app'
+  ]);
   const API_PATH = '/api/twelvedata';
   const LIVE_TTL_MS = 90_000;
   const SHARED_M1_OUTPUT_SIZE = 300;
@@ -18,7 +22,7 @@
     if (method !== 'GET') return false;
     try {
       const url = new URL(input instanceof Request ? input.url : String(input), location.href);
-      return url.hostname === API_HOST && url.pathname === API_PATH;
+      return MARKET_API_HOSTS.has(url.hostname) && url.pathname === API_PATH;
     } catch (_) {
       return false;
     }
@@ -33,7 +37,7 @@
       : Math.max(requestedOutputsize || 300, 1);
     const symbol = String(sourceUrl.searchParams.get('symbol') || 'XAU/USD').toUpperCase();
 
-    const url = new URL(`${sourceUrl.origin}${sourceUrl.pathname}`);
+    const url = new URL(API_PATH, PRIVATE_API_ORIGIN);
     url.searchParams.set('symbol', symbol);
     url.searchParams.set('interval', interval);
     url.searchParams.set('outputsize', String(outputsize));
@@ -187,6 +191,7 @@
 
   window.fetch = coordinatedFetch;
   window.AmyFXRequestCoordinator = Object.freeze({
+    privateApiOrigin: PRIVATE_API_ORIGIN,
     clear() {
       responseCache.clear();
       intervalSnapshots.clear();
