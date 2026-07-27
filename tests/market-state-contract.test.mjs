@@ -21,6 +21,10 @@ const registrySource = readFileSync(sourcePath(
   'app/src/main/assets/apps/shared/amyfx-professional-market-source-registry-v1.js',
   'amyfx-professional-market-source-registry-v1.js'
 ), 'utf8');
+const hotfixSource = readFileSync(sourcePath(
+  'app/src/main/assets/apps/shared/amyfx-blueprint-hotfix-v1.js',
+  'amyfx-blueprint-hotfix-v1.js'
+), 'utf8');
 
 function storage(seed = {}) {
   const rows = new Map(Object.entries(seed).map(([key, value]) => [key, String(value)]));
@@ -184,4 +188,83 @@ test('Amy Bot discloses quote versus Mapping timestamp skew and stays WAIT', () 
   const answer = runtime.window.AmyFXMarketSourceRegistry.answer('Arah market sekarang?');
   assert.match(answer, /tidak sinkron/i);
   assert.match(answer, /tetap WAIT/i);
+});
+
+test('Blueprint duplicate market listeners are registered only once', async () => {
+  const registrations = [];
+  const window = {
+    addEventListener(name, listener, options) { registrations.push({ name, listener, options }); },
+    dispatchEvent() {}
+  };
+  const document = {
+    readyState: 'loading',
+    hidden: false,
+    addEventListener() {},
+    querySelector() { return null; }
+  };
+  const sandbox = {
+    window, document,
+    location: { pathname: '/apps/mapping/index.html' },
+    localStorage: storage(),
+    sessionStorage: storage(),
+    CustomEvent: class {},
+    Date, Number, Object, Array, String, Boolean, RegExp, Set, Map, Math, JSON, Intl, Promise,
+    setTimeout, clearTimeout, setInterval() { return 0; }, clearInterval() {}, console
+  };
+  vm.runInNewContext(hotfixSource, sandbox, { filename: 'amyfx-blueprint-hotfix-v1.js' });
+  const listener = function () { return refreshMentorContext(); };
+  window.addEventListener('amyfx:market-update', listener);
+  window.addEventListener('amyfx:market-update', listener);
+  window.addEventListener('amyfx:market-update', listener);
+  assert.equal(registrations.filter(row => row.name === 'amyfx:market-update').length, 1);
+  await new Promise(resolve => setTimeout(resolve, 5));
+});
+
+test('Blueprint context exposes separate market timestamps and canonical conflicts', async () => {
+  const now = new Date().toISOString();
+  const old = new Date(Date.now() - 10 * 60_000).toISOString();
+  const canonicalState = {
+    quote: { price: 4092, capturedAt: now },
+    mapping: { capturedAt: old, timeframe: 'M15' },
+    liquidity: { capturedAt: now },
+    heatmap: { capturedAt: old },
+    news: { capturedAt: now }
+  };
+  const contract = {
+    read() { return canonicalState; },
+    snapshot() { return { currentPrice: 4092, conflicts: [{ code: 'QUOTE_MAPPING_TIMESTAMP_SKEW' }] }; },
+    assess(domain, value) { return { state: domain === 'quote' ? 'LIVE' : 'FRESH', capturedAt: value?.capturedAt || null }; }
+  };
+  const window = {
+    AmyFXMarketContract: contract,
+    AmyFXMarketState: { result: { tf: 'M15' } },
+    AmyFXOS: {
+      async buildContext(sourceModule) { return { source_module: sourceModule, payload: {}, source_refs: [] }; },
+      repository: null
+    },
+    addEventListener() {},
+    dispatchEvent() {}
+  };
+  const document = {
+    readyState: 'loading',
+    hidden: false,
+    addEventListener() {},
+    querySelector() { return null; }
+  };
+  const sandbox = {
+    window, document,
+    location: { pathname: '/apps/mapping/index.html' },
+    localStorage: storage(),
+    sessionStorage: storage(),
+    CustomEvent: class {},
+    Date, Number, Object, Array, String, Boolean, RegExp, Set, Map, Math, JSON, Intl, Promise,
+    setTimeout, clearTimeout, setInterval() { return 0; }, clearInterval() {}, console
+  };
+  vm.runInNewContext(hotfixSource, sandbox, { filename: 'amyfx-blueprint-hotfix-v1.js' });
+  assert.equal(window.AmyFXBlueprintHotfix.patchCanonicalContext(), true);
+  const context = await window.AmyFXOS.buildContext('mapping');
+  assert.equal(context.captured_at, old);
+  assert.equal(context.payload.workspace.market.timestamps.quote, now);
+  assert.equal(context.payload.workspace.market.timestamps.mapping, old);
+  assert.equal(context.conflicts[0].code, 'QUOTE_MAPPING_TIMESTAMP_SKEW');
 });
