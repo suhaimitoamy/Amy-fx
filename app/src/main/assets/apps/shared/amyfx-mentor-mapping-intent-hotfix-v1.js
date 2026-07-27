@@ -4,8 +4,8 @@
   if (window.__amyFxMentorMappingIntentHotfixV1) return;
   window.__amyFxMentorMappingIntentHotfixV1 = true;
 
-  const VERSION = "2.0.0";
-  const SESSION_KEY = "amyfx.mentor.safeRuleChat.v3";
+  const VERSION = "3.0.0";
+  const SESSION_KEY = "amyfx.mentor.professionalBot.v1";
   const SNAPSHOT_KEY = "amyfx.mapping.snapshot.v2";
   const JOURNAL_DB = "tradingLibraryManager.files";
   const JOURNAL_STORE = "metadata";
@@ -13,9 +13,24 @@
   const LEGACY_JOURNAL_KEY = "tradingLibraryManager.journals.v1";
   const TTL_MS = Object.freeze({ M1: 300_000, M5: 900_000, M15: 1_800_000, H1: 10_800_000, H4: 43_200_000, D1: 259_200_000 });
   const INACTIVE_STATUS = /(SWEPT|CONSUMED|TOUCHED|TAKEN|MITIGATED|FILLED|INVALID|BROKEN|EXPIRED|HISTORICAL|INACTIVE|REPLACED)/i;
-  const NON_MAPPING = /\b(jurnal|journal|academy|belajar|materi|api|gemini|openrouter|deepseek|berita|news|heatmap|profil|update|versi|library|koleksi)\b/i;
+
   const clean = value => String(value ?? "").trim();
-  const lower = value => clean(value).toLowerCase().replace(/\s+/g, " ");
+  const lower = value => clean(value).toLowerCase().replace(/[^a-z0-9À-ÿ%./+\-\s]/gi, " ").replace(/\s+/g, " ").trim();
+
+  function normalizeQuestion(value) {
+    return lower(value)
+      .replace(/\b(mapp?ing|maping)\b/g, "mapping")
+      .replace(/\b(jurn+l|jurnel|journal)\b/g, "jurnal")
+      .replace(/\b(academy|akademi)\b/g, "academy")
+      .replace(/\b(brta|brita|newss)\b/g, "berita")
+      .replace(/\b(updet|updte)\b/g, "update")
+      .replace(/\b(winrate|wr)\b/g, "win rate")
+      .replace(/\b(kemna|kemana)\b/g, "ke mana")
+      .replace(/\b(dimana)\b/g, "di mana")
+      .replace(/\b(trde)\b/g, "trade")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
 
   function safeParse(value, fallback = null) {
     try { return JSON.parse(value); } catch { return fallback; }
@@ -38,7 +53,7 @@
   }
 
   function writeSession(patch) {
-    const next = { ...readSession(), ...patch };
+    const next = { ...readSession(), ...patch, updatedAt: new Date().toISOString() };
     try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(next)); } catch {}
     return next;
   }
@@ -49,6 +64,7 @@
     if (path.includes("/apps/market-intel/")) return "intel";
     if (path.includes("/apps/journal/")) return "journal";
     if (path.includes("/apps/academy/")) return "academy";
+    if (path.includes("/apps/indikator/")) return "indicators";
     return "home";
   }
 
@@ -64,17 +80,32 @@
 
   function number(value) {
     const parsed = Number(value);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  function positiveNumber(value) {
+    const parsed = number(value);
+    return parsed !== null && parsed > 0 ? parsed : null;
+  }
+
+  function numberText(value, digits = 2) {
+    const parsed = number(value);
+    return parsed === null ? "—" : new Intl.NumberFormat("id-ID", { maximumFractionDigits: digits }).format(parsed);
   }
 
   function priceText(value) {
+    const parsed = positiveNumber(value);
+    return parsed ? new Intl.NumberFormat("id-ID", { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(parsed) : "—";
+  }
+
+  function percentText(value) {
     const parsed = number(value);
-    return parsed ? new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(Math.round(parsed)) : "—";
+    return parsed === null ? "—" : `${new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 }).format(parsed)}%`;
   }
 
   function rangeText(row) {
     if (!row) return "—";
-    if (number(row.low) && number(row.high) && Math.abs(row.high - row.low) > 0.0001) return `${priceText(row.low)}–${priceText(row.high)}`;
+    if (positiveNumber(row.low) && positiveNumber(row.high) && Math.abs(row.high - row.low) > 0.0001) return `${priceText(row.low)}–${priceText(row.high)}`;
     return priceText(row.price || row.low || row.high);
   }
 
@@ -93,6 +124,10 @@
 
   function arraysAt(sources, paths) {
     return valuesAt(sources, paths).filter(Array.isArray).flat();
+  }
+
+  function firstValue(sources, paths) {
+    return valuesAt(sources, paths).find(value => value !== undefined && value !== null);
   }
 
   function normalizeStatus(item, kind) {
@@ -114,7 +149,7 @@
   function normalizeLevel(item, typeHint = "") {
     const type = clean(item?.type || item?.liquidityType || item?.kind || typeHint).toUpperCase();
     if (!/^(BSL|SSL)$/.test(type)) return null;
-    const price = number(item?.price ?? item?.level ?? item?.value ?? item?.y);
+    const price = positiveNumber(item?.price ?? item?.level ?? item?.value ?? item?.y);
     if (!price) return null;
     const status = normalizeStatus(item, type);
     return {
@@ -125,16 +160,16 @@
       high: price,
       status,
       active: status === "ACTIVE" && item?.active !== false,
-      strength: Number(item?.strength ?? item?.score) || null,
+      strength: number(item?.strength ?? item?.score),
       updatedAt: firstTime([item?.updatedAt, item?.updated_at, item?.capturedAt, item?.timestamp]),
       source: clean(item?.source || "mapping")
     };
   }
 
   function normalizeZone(item, kind) {
-    let low = number(item?.low ?? item?.bottom ?? item?.min ?? item?.zoneLow ?? item?.priceLow ?? item?.from);
-    let high = number(item?.high ?? item?.top ?? item?.max ?? item?.zoneHigh ?? item?.priceHigh ?? item?.to);
-    const price = number(item?.price ?? item?.level ?? item?.midpoint ?? item?.mid ?? item?.value);
+    let low = positiveNumber(item?.low ?? item?.bottom ?? item?.min ?? item?.zoneLow ?? item?.priceLow ?? item?.from);
+    let high = positiveNumber(item?.high ?? item?.top ?? item?.max ?? item?.zoneHigh ?? item?.priceHigh ?? item?.to);
+    const price = positiveNumber(item?.price ?? item?.level ?? item?.midpoint ?? item?.mid ?? item?.value);
     if (!low && price) low = price;
     if (!high && price) high = price;
     if (!low || !high) return null;
@@ -203,7 +238,7 @@
     const rows = arraysAt(sources, paths).map(item => normalizeLevel(item));
     sources.forEach(source => {
       ["BSL", "SSL"].forEach(type => {
-        const direct = number(source?.[type.toLowerCase()] ?? source?.[`active${type}`] ?? source?.[`next${type}`]);
+        const direct = positiveNumber(source?.[type.toLowerCase()] ?? source?.[`active${type}`] ?? source?.[`next${type}`]);
         if (direct) rows.push(normalizeLevel({ type, price: direct, status: "ACTIVE", source: "direct" }, type));
       });
     });
@@ -255,7 +290,7 @@
     })[0] || null;
   }
 
-  function firstText(sources, paths) {
+  function firstDirection(sources, paths) {
     for (const value of valuesAt(sources, paths)) {
       const normalized = normalizeDirection(value);
       if (normalized) return normalized;
@@ -295,25 +330,25 @@
 
   function mappingSnapshot(context, options = {}) {
     const sources = sourcesFrom(context);
-    const price = valuesAt(sources, ["price", "current_price", "currentPrice", "marketPrice", "close"]).map(number).find(Boolean)
-      || number(localStorage.getItem("last_price"));
+    const price = valuesAt(sources, ["price", "current_price", "currentPrice", "marketPrice", "close"]).map(positiveNumber).find(Boolean)
+      || positiveNumber(localStorage.getItem("last_price"));
     const timeframe = clean(valuesAt(sources, ["timeframe", "tf", "mapping.timeframe"])[0] || "M15").toUpperCase();
     const capturedAt = firstTime(valuesAt(sources, ["capturedAt", "captured_at", "updatedAt", "updated", "timestamp"]));
     const levels = collectLevels(sources);
     const zones = { OB: collectZones(sources, "OB"), FVG: collectZones(sources, "FVG"), SND: collectZones(sources, "SND") };
-    const direction = firstText(sources, [
+    const direction = firstDirection(sources, [
       "directionDecision.signal", "directionDecision.bias", "direction", "bias", "hypothesis.direction", "hypothesis.bias",
       "validatedMarketContext.directionForecast.signal", "validatedMarketContext.directionForecast.bias", "result.directionDecision.signal"
     ]);
-    const higherTimeframeDirection = firstText(sources, [
+    const higherTimeframeDirection = firstDirection(sources, [
       "higherTimeframeDirection", "higherTimeframeBias", "htfDirection", "htfBias", "topDownBias",
       "multiTimeframe.H4.bias", "multiTimeframe.H1.bias", "mtf.H4.bias", "mtf.H1.bias",
       "validatedMarketContext.higherTimeframeBias", "directionDecision.higherTimeframeBias"
     ]);
     const setup = firstObject(sources, ["setup", "bestSetup", "setupExecution", "experimentalBestSetup", "entryMap.setup"]);
-    const structure = valuesAt(sources, ["structure", "marketStructure", "validatedMarketContext.structure", "facts.structure"])[0] || null;
-    const invalidation = valuesAt(sources, ["invalidation", "setup.invalidation", "bestSetup.invalidation", "setupExecution.invalidation", "invalidLevel"])[0] || null;
-    const targets = valuesAt(sources, ["targets", "target", "setup.targets", "bestSetup.targets", "setupExecution.targets"])[0] || null;
+    const structure = firstValue(sources, ["structure", "marketStructure", "validatedMarketContext.structure", "facts.structure"]);
+    const invalidation = firstValue(sources, ["invalidation", "setup.invalidation", "bestSetup.invalidation", "setupExecution.invalidation", "invalidLevel"]);
+    const targets = firstValue(sources, ["targets", "target", "setup.targets", "bestSetup.targets", "setupExecution.targets"]);
     const age = capturedAt ? Math.max(0, Date.now() - validTime(capturedAt)) : Number.MAX_SAFE_INTEGER;
     const quoteFresh = Boolean(capturedAt) && age <= (TTL_MS[timeframe] || TTL_MS.M15);
     const structuralValid = Boolean(levels.some(row => row.active) || zones.OB.some(row => row.active) || zones.FVG.some(row => row.active) || zones.SND.some(row => row.active) || direction || higherTimeframeDirection || setup);
@@ -387,9 +422,9 @@
     if (hasSsl) return "ssl";
     if (/\b(order block|ob)\b/.test(value)) return "ob";
     if (/\b(fvg|fair value gap)\b/.test(value)) return "fvg";
-    if (/\b(snd|supply demand|supply|demand)\b/.test(value)) return "snd";
+    if (/\b(snd|supply demand)\b/.test(value)) return "snd";
     if (/arah market (besar|besarnya)|arah besar|bias besar|htf|higher timeframe|timeframe besar/.test(value)) return "direction-large";
-    if (/arah|bias|direction|bullish|bearish/.test(value)) return "direction";
+    if (/arah|bias|direction|bullish|bearish|ke mana/.test(value)) return "direction";
     if (/struktur|structure|mss|bos|choch/.test(value)) return "structure";
     if (/invalidasi|invalidation/.test(value)) return "invalidation";
     if (/target|tp|draw on liquidity|dol/.test(value)) return "target";
@@ -400,44 +435,52 @@
     return "";
   }
 
-  function isMappingMenu(value) {
-    return /^(mapping|ini tentang mapping|tentang mapping|cek mapping|mapping dulu|bahas mapping)$/.test(value);
+  function invalidationText(value) {
+    if (typeof value === "number") return priceText(value);
+    if (positiveNumber(value?.price ?? value?.level ?? value?.value)) return priceText(value.price ?? value.level ?? value.value);
+    const raw = clean(value);
+    return raw && raw !== "[object Object]" ? raw : "";
   }
 
-  function shouldHandle(question) {
-    const value = lower(question);
-    if (!value) return false;
-    if (/^(buka|masuk|pergi ke|arahkan ke)\s+mapping/.test(value)) return false;
-    if (NON_MAPPING.test(value) && !/mapping|bsl|ssl|order block|\bob\b|fvg|snd|arah market|harga xau/.test(value)) {
-      writeSession({ awaiting: "", issueArea: "", lastIntent: "other-module" });
-      return false;
-    }
-    if (isMappingMenu(value) || mappingTopic(value)) return true;
-    const session = readSession();
-    return session.awaiting === "mapping_topic" && /^(bsl|ssl|ob|fvg|snd|arah|arah besar|setup|harga|freshness|struktur|invalidasi|target)$/.test(value);
+  function targetList(value) {
+    const rows = Array.isArray(value) ? value : value == null ? [] : [value];
+    return rows.map(item => {
+      if (typeof item === "number") return priceText(item);
+      const parsed = positiveNumber(item?.price ?? item?.level ?? item?.value);
+      return parsed ? priceText(parsed) : clean(item?.label || item?.name || item);
+    }).filter(item => item && item !== "—" && item !== "[object Object]");
+  }
+
+  function directionReply(snapshot) {
+    const intraday = snapshot.direction || "NO CLEAR DIRECTION";
+    const large = snapshot.higherTimeframeDirection;
+    const effective = intraday !== "NO CLEAR DIRECTION" ? intraday : large;
+    const opening = intraday === "NO CLEAR DIRECTION" && large
+      ? `Arah ${snapshot.timeframe} saat ini belum jelas, tetapi arah market besarnya masih ${large}.`
+      : `Arah Mapping ${snapshot.timeframe} saat ini ${intraday || "belum terbaca"}.`;
+    const area = snapshot.activeOb ? `OB ${rangeText(snapshot.activeOb)}`
+      : snapshot.activeFvg ? `FVG ${rangeText(snapshot.activeFvg)}`
+        : snapshot.activeSnd ? `SND ${rangeText(snapshot.activeSnd)}` : "";
+    const liquidity = effective === "BULLISH" ? (snapshot.bsl ? `BSL ${priceText(snapshot.bsl.price)}` : "")
+      : effective === "BEARISH" ? (snapshot.ssl ? `SSL ${priceText(snapshot.ssl.price)}` : "")
+        : [snapshot.bsl ? `BSL ${priceText(snapshot.bsl.price)}` : "", snapshot.ssl ? `SSL ${priceText(snapshot.ssl.price)}` : ""].filter(Boolean).join(" dan ");
+    const invalidation = invalidationText(snapshot.invalidation);
+    const details = [];
+    if (area) details.push(`area penting terdekat ${area}`);
+    if (liquidity) details.push(`target likuiditas ${liquidity}`);
+    if (invalidation) details.push(`invalidasi ${invalidation}`);
+    return details.length ? `${opening} ${details.join(", ")}.` : opening;
   }
 
   function mappingSummary(snapshot) {
-    const direction = snapshot.direction === "NO CLEAR DIRECTION" && snapshot.higherTimeframeDirection
-      ? `M15 belum jelas, tetapi arah besarnya ${snapshot.higherTimeframeDirection}`
-      : snapshot.direction;
-    const liquidity = `BSL ${snapshot.bsl ? priceText(snapshot.bsl.price) : "belum ada"} dan SSL ${snapshot.ssl ? priceText(snapshot.ssl.price) : "belum ada"}`;
-    const extras = [snapshot.activeOb ? `OB ${rangeText(snapshot.activeOb)}` : "", snapshot.activeFvg ? `FVG ${rangeText(snapshot.activeFvg)}` : "", snapshot.activeSnd ? `SND ${rangeText(snapshot.activeSnd)}` : ""].filter(Boolean).join(", ");
-    return `Arah Mapping ${snapshot.timeframe}: ${direction || "belum terbaca"}. ${liquidity}.${extras ? ` Area aktif lainnya: ${extras}.` : ""}`;
+    const direction = directionReply(snapshot);
+    const liquidity = `BSL ${snapshot.bsl ? priceText(snapshot.bsl.price) : "belum ada"} dan SSL ${snapshot.ssl ? priceText(snapshot.ssl.price) : "belum ada"}.`;
+    return `${direction} ${liquidity}`;
   }
 
-  function answer(question, context) {
-    const value = lower(question);
-    if (/^(halo|hai|hello|pagi|siang|sore|malam|tes|test|permisi)$/.test(value)) return greeting();
+  function answerMapping(topic, context) {
     const snapshot = mappingSnapshot(context);
-    const topic = mappingTopic(value);
-
-    if (isMappingMenu(value)) {
-      writeSession({ awaiting: "mapping_topic", issueArea: "mapping", lastIntent: "mapping-menu" });
-      return "Di Mapping kamu mau cek BSL, SSL, OB, FVG, SND, struktur, arah market, setup, invalidasi, target, harga, atau status datanya?";
-    }
-
-    writeSession({ awaiting: "", issueArea: "", lastIntent: topic ? `mapping-${topic}` : "mapping-summary" });
+    if (topic === "menu") return "Di Mapping kamu bisa cek arah market, BSL, SSL, OB, FVG, SND, struktur, setup, invalidasi, target, harga, atau status data.";
     if (topic === "bsl") return levelReply("BSL", snapshot);
     if (topic === "ssl") return levelReply("SSL", snapshot);
     if (topic === "both") return `${levelReply("BSL", snapshot)} ${levelReply("SSL", snapshot)}`;
@@ -448,22 +491,344 @@
       if (snapshot.higherTimeframeDirection) return `Arah market besarnya saat ini ${snapshot.higherTimeframeDirection}. Arah ${snapshot.timeframe} ${snapshot.direction}.`;
       return `Arah timeframe besar belum tersedia. Arah ${snapshot.timeframe} terakhir ${snapshot.direction}.`;
     }
-    if (topic === "direction") {
-      if (snapshot.direction === "NO CLEAR DIRECTION" && snapshot.higherTimeframeDirection) return `Arah ${snapshot.timeframe} saat ini belum jelas, tetapi arah market besarnya masih ${snapshot.higherTimeframeDirection}.`;
-      return `Arah Mapping ${snapshot.timeframe} saat ini ${snapshot.direction || "belum terbaca"}.`;
+    if (topic === "direction") return directionReply(snapshot);
+    if (topic === "structure") {
+      const structure = typeof snapshot.structure === "string" ? snapshot.structure : snapshot.structure?.state || snapshot.structure?.trend || snapshot.structure?.label;
+      return structure ? `Struktur market saat ini ${clean(structure)}.` : "Struktur market belum tersedia pada data Mapping terakhir.";
     }
-    if (topic === "structure") return snapshot.structure ? `Struktur market saat ini ${clean(typeof snapshot.structure === "string" ? snapshot.structure : snapshot.structure?.state || snapshot.structure?.trend || JSON.stringify(snapshot.structure))}.` : "Struktur market belum tersedia pada data Mapping terakhir.";
     if (topic === "setup") {
       const state = clean(snapshot.setup?.state || snapshot.setup?.status || snapshot.setup?.signal || "WAIT").toUpperCase();
-      return `Status setup Mapping ${snapshot.timeframe} saat ini ${state}.`;
+      const entry = positiveNumber(snapshot.setup?.entry ?? snapshot.setup?.entryPrice ?? snapshot.setup?.price);
+      return `Status setup Mapping ${snapshot.timeframe} saat ini ${state}${entry ? ` dengan area entry ${priceText(entry)}` : ""}.`;
     }
-    if (topic === "invalidation") return snapshot.invalidation ? `Invalidasi setup saat ini berada di ${typeof snapshot.invalidation === "number" ? priceText(snapshot.invalidation) : clean(snapshot.invalidation?.price ? priceText(snapshot.invalidation.price) : JSON.stringify(snapshot.invalidation))}.` : "Invalidasi setup belum tersedia pada data Mapping terakhir.";
-    if (topic === "target") return snapshot.targets ? `Target Mapping saat ini ${clean(Array.isArray(snapshot.targets) ? snapshot.targets.map(item => typeof item === "number" ? priceText(item) : priceText(item?.price || item?.level) || clean(item)).join(", ") : typeof snapshot.targets === "number" ? priceText(snapshot.targets) : JSON.stringify(snapshot.targets))}.` : "Target Mapping belum tersedia pada data terakhir.";
+    if (topic === "invalidation") {
+      const invalidation = invalidationText(snapshot.invalidation);
+      return invalidation ? `Invalidasi setup saat ini berada di ${invalidation}.` : "Invalidasi setup belum tersedia pada data Mapping terakhir.";
+    }
+    if (topic === "target") {
+      const targets = targetList(snapshot.targets);
+      if (targets.length) return `Target Mapping saat ini ${targets.join(", ")}.`;
+      const directional = snapshot.direction === "BEARISH" ? snapshot.ssl : snapshot.bsl;
+      return directional ? `Target likuiditas terdekat berada di ${directional.kind} ${priceText(directional.price)}.` : "Target Mapping belum tersedia pada data terakhir.";
+    }
     if (topic === "price") return snapshot.price ? `Harga XAU/USD terakhir ${priceText(snapshot.price)}${snapshot.quoteFresh ? "." : ". Harga live perlu diperbarui."}` : "Harga XAU/USD belum tersedia.";
     if (topic === "freshness") return snapshot.quoteFresh
       ? `Harga live ${snapshot.timeframe} masih fresh. Level Mapping tetap berlaku sampai tersapu, termitigasi, digantikan, atau invalid.`
       : `Harga live ${snapshot.timeframe} perlu diperbarui, tetapi level Mapping tidak otomatis expired. Level tetap berlaku sampai tersapu, termitigasi, digantikan, atau invalid.`;
     return mappingSummary(snapshot);
+  }
+
+  function workspaceFrom(context) {
+    return context?.payload?.workspace || {};
+  }
+
+  function journalData(context) {
+    const workspace = workspaceFrom(context);
+    const source = workspace.trading?.journal || {};
+    const summary = source.summary || context?.payload?.summary || {};
+    const recent = Array.isArray(source.recent) ? source.recent : [];
+    const relevant = Array.isArray(source.relevant) ? source.relevant : [];
+    return {
+      summary: {
+        total: number(summary.total) ?? 0,
+        win: number(summary.win) ?? 0,
+        loss: number(summary.loss) ?? 0,
+        be: number(summary.break_even ?? summary.be) ?? 0,
+        completed: number(summary.completed),
+        winRate: number(summary.win_rate ?? summary.winRate),
+        totalProfit: number(summary.total_profit ?? summary.totalProfit),
+        totalLoss: number(summary.total_loss ?? summary.totalLoss),
+        net: number(summary.net_result ?? summary.netResult)
+      },
+      recent,
+      relevant
+    };
+  }
+
+  function journalTopic(value) {
+    if (/win rate|akurasi jurnal/.test(value)) return "win-rate";
+    if (/berapa.*win|jumlah win|trade win|menang/.test(value)) return "win";
+    if (/berapa.*loss|jumlah loss|trade loss|kalah/.test(value)) return "loss";
+    if (/break even|breakeven|\bbe\b/.test(value)) return "be";
+    if (/profit|untung|rugi|net|hasil bersih/.test(value)) return "profit";
+    if (/terakhir|terbaru|entry terakhir|trade terakhir/.test(value)) return "latest";
+    if (/kesalahan|mistake|error|disiplin|evaluasi|pola buruk/.test(value)) return "mistakes";
+    if (/berapa|jumlah|total|ringkas|status|progres/.test(value)) return "summary";
+    return "menu";
+  }
+
+  function journalResult(row) {
+    return clean(row?.result || row?.outcome?.result || row?.status).toUpperCase() || "BELUM DINILAI";
+  }
+
+  function journalLabel(row) {
+    return clean(row?.title || row?.market || row?.pair || row?.symbol || row?.setup || "Trade terakhir");
+  }
+
+  function mistakeText(rows) {
+    const counts = new Map();
+    rows.forEach(row => {
+      const raw = row?.mistakes ?? row?.mistake ?? row?.errors ?? row?.evaluation?.mistakes ?? row?.lessons;
+      const values = Array.isArray(raw) ? raw : raw ? [raw] : [];
+      values.forEach(value => {
+        const text = clean(typeof value === "string" ? value : value?.label || value?.text || value?.name);
+        if (!text) return;
+        const key = text.toLowerCase();
+        counts.set(key, { text, count: (counts.get(key)?.count || 0) + 1 });
+      });
+    });
+    return [...counts.values()].sort((a, b) => b.count - a.count).slice(0, 3);
+  }
+
+  function answerJournal(topic, context) {
+    const { summary, recent, relevant } = journalData(context);
+    if (topic === "win-rate") return summary.winRate === null ? "Win rate jurnal belum bisa dihitung karena belum ada trade selesai." : `Win rate jurnal saat ini ${percentText(summary.winRate)} dari ${summary.completed ?? (summary.win + summary.loss + summary.be)} trade selesai.`;
+    if (topic === "win") return `Jumlah trade win saat ini ${summary.win}.`;
+    if (topic === "loss") return `Jumlah trade loss saat ini ${summary.loss}.`;
+    if (topic === "be") return `Jumlah trade break-even saat ini ${summary.be}.`;
+    if (topic === "profit") {
+      const parts = [];
+      if (summary.totalProfit !== null) parts.push(`profit tercatat ${numberText(summary.totalProfit)}`);
+      if (summary.totalLoss !== null) parts.push(`loss tercatat ${numberText(summary.totalLoss)}`);
+      if (summary.net !== null) parts.push(`hasil bersih ${numberText(summary.net)}`);
+      return parts.length ? `Ringkasan hasil jurnal: ${parts.join(", ")}.` : "Nilai profit dan loss belum tersedia pada jurnal.";
+    }
+    if (topic === "latest") {
+      const row = recent[0] || relevant[0];
+      if (!row) return "Belum ada jurnal tersimpan.";
+      const date = clean(row.date || row.createdAt || row.created_at || row.updatedAt || row.updated_at);
+      return `Jurnal terakhir: ${journalLabel(row)}, hasil ${journalResult(row)}${date ? `, tercatat ${date}` : ""}.`;
+    }
+    if (topic === "mistakes") {
+      const mistakes = mistakeText([...recent, ...relevant]);
+      return mistakes.length ? `Kesalahan yang paling sering tercatat: ${mistakes.map(item => `${item.text}${item.count > 1 ? ` (${item.count}x)` : ""}`).join(", ")}.` : "Belum ada catatan kesalahan yang cukup untuk diringkas.";
+    }
+    if (topic === "menu") return "Di Jurnal kamu bisa cek jumlah entry, win, loss, break-even, win rate, hasil bersih, trade terakhir, atau pola kesalahan.";
+    return summary.total
+      ? `Saat ini ada ${summary.total} jurnal: ${summary.win} win, ${summary.loss} loss, dan ${summary.be} break-even${summary.winRate === null ? "" : `. Win rate ${percentText(summary.winRate)}`}.`
+      : "Belum ada jurnal tersimpan.";
+  }
+
+  function academyData(context) {
+    const academy = workspaceFrom(context).academy || {};
+    return {
+      progress: academy.progress || {},
+      catalog: Array.isArray(academy.catalog) ? academy.catalog : [],
+      relevant: Array.isArray(academy.relevant_lessons) ? academy.relevant_lessons : [],
+      current: academy.current_page || null
+    };
+  }
+
+  function academyTopic(value) {
+    if (/sampai mana|progres|progress|sudah belajar/.test(value)) return "progress";
+    if (/terakhir|materi terakhir|pelajaran terakhir/.test(value)) return "last";
+    if (/berikutnya|selanjutnya|lanjut belajar|materi selanjutnya/.test(value)) return "next";
+    if (/cari|tentang|jelaskan|ringkas|apa itu|materi/.test(value)) return "search";
+    return "menu";
+  }
+
+  function firstSentence(value, limit = 260) {
+    const text = clean(value).replace(/\s+/g, " ");
+    if (!text) return "";
+    const sentence = text.match(/^.{1,260}?(?:[.!?](?:\s|$)|$)/)?.[0] || text.slice(0, limit);
+    return sentence.length > limit ? `${sentence.slice(0, limit)}…` : sentence;
+  }
+
+  function answerAcademy(topic, context) {
+    const { progress, catalog, relevant, current } = academyData(context);
+    const readCount = number(progress.read_count) ?? (Array.isArray(progress.read_topics) ? progress.read_topics.length : 0);
+    const total = number(progress.total_sections) ?? (catalog.length || 36);
+    const percentage = number(progress.percentage) ?? (total ? Math.round((readCount / total) * 100) : 0);
+    const lastTitle = clean(progress.last_title);
+    if (topic === "progress") return `Progres Academy saat ini ${readCount} dari ${total} bagian (${percentText(percentage)})${lastTitle ? `. Materi terakhir: ${lastTitle}` : ""}.`;
+    if (topic === "last") return lastTitle ? `Materi terakhir yang dibuka adalah ${lastTitle}.` : current?.title ? `Materi yang sedang dibuka adalah ${clean(current.title)}.` : "Materi terakhir belum tercatat.";
+    if (topic === "next") {
+      let next = null;
+      if (lastTitle) {
+        const index = catalog.findIndex(row => clean(row.title).toLowerCase() === lastTitle.toLowerCase());
+        if (index >= 0) next = catalog[index + 1] || null;
+      }
+      next ||= catalog.find(row => !Array.isArray(progress.read_topics) || !progress.read_topics.includes(row.href) && !progress.read_topics.includes(row.title));
+      return next ? `Materi berikutnya yang bisa dipelajari: ${clean(next.title)}${next.description ? ` — ${firstSentence(next.description, 180)}` : ""}.` : "Belum ada materi berikutnya yang terdeteksi.";
+    }
+    if (topic === "search") {
+      const lesson = relevant[0];
+      if (lesson) {
+        const title = clean(lesson.matched_topic || lesson.title);
+        const passage = firstSentence(lesson.matched_topic_passage || lesson.passage || lesson.description);
+        return `${title || "Materi ditemukan"}${passage ? `: ${passage}` : "."}`;
+      }
+      if (current?.title) return `Materi aktif: ${clean(current.title)}${current.passage ? `. ${firstSentence(current.passage)}` : ""}`;
+      return "Materi yang cocok belum ditemukan. Sebutkan topiknya, misalnya bias, likuiditas, FVG, OB, risk, atau psikologi trading.";
+    }
+    return "Di Academy kamu bisa cek progres, materi terakhir, materi berikutnya, atau mencari topik belajar tertentu.";
+  }
+
+  function intelData(context) {
+    const workspace = workspaceFrom(context);
+    const market = workspace.market || {};
+    const shared = market.shared_intelligence || {};
+    const news = shared.news || market.news || context?.payload?.news || {};
+    const items = [
+      ...(Array.isArray(news.items) ? news.items : []),
+      ...(Array.isArray(news.events) ? news.events : []),
+      ...(Array.isArray(news.calendar) ? news.calendar : []),
+      ...(Array.isArray(market.news_items) ? market.news_items : [])
+    ];
+    const selected = market.published_news || context?.payload?.published_news || news.selected || items[0] || null;
+    return {
+      market,
+      shared,
+      news,
+      items,
+      selected,
+      scheduled: market.scheduled_event || context?.payload?.scheduled_event || news.next_event || null,
+      heatmap: shared.heatmap || market.heatmap || window.AmyFXHeatmapState || null,
+      liquidity: shared.liquidity || market.liquidity || null
+    };
+  }
+
+  function eventName(event) {
+    return clean(event?.title || event?.name || event?.event || event?.indicator || event?.headline || "News ekonomi");
+  }
+
+  function eventValue(event, keys) {
+    for (const key of keys) {
+      const value = event?.[key];
+      if (value !== undefined && value !== null && clean(value) !== "") return clean(value);
+    }
+    return "";
+  }
+
+  function usdBias(event) {
+    const name = eventName(event).toLowerCase();
+    const actual = number(String(eventValue(event, ["actual", "value", "released"])).replace(/[^0-9.\-]/g, ""));
+    const forecast = number(String(eventValue(event, ["forecast", "consensus", "expected"])).replace(/[^0-9.\-]/g, ""));
+    const previous = number(String(eventValue(event, ["previous", "prev"])).replace(/[^0-9.\-]/g, ""));
+    const left = actual !== null ? actual : forecast;
+    const right = actual !== null ? forecast : previous;
+    if (left === null || right === null || left === right) return "netral untuk USD";
+    const higher = left > right;
+    const inverse = /jobless|unemployment|pengangguran|klaim|claims|layoff/.test(name);
+    const positive = inverse ? !higher : higher;
+    return positive ? "cenderung positif untuk USD dan menekan XAU/USD" : "cenderung negatif untuk USD dan mendukung XAU/USD";
+  }
+
+  function eventReply(event, prefix = "News terbaru") {
+    if (!event) return "Belum ada data news yang tersedia.";
+    const actual = eventValue(event, ["actual", "value", "released"]);
+    const forecast = eventValue(event, ["forecast", "consensus", "expected"]);
+    const previous = eventValue(event, ["previous", "prev"]);
+    const time = eventValue(event, ["time", "displayTime", "scheduled_at", "date", "published_at"]);
+    const values = [actual ? `actual ${actual}` : "", forecast ? `forecast ${forecast}` : "", previous ? `previous ${previous}` : ""].filter(Boolean).join(", ");
+    return `${prefix}: ${eventName(event)}${time ? ` pada ${time}` : ""}${values ? ` — ${values}` : ""}. Bias awal ${usdBias(event)}.`;
+  }
+
+  function clusterRows(value) {
+    const candidates = [value?.clusters, value?.levels, value?.liquidityLevels, value?.zones, value?.items].filter(Array.isArray).flat();
+    return candidates.map(row => ({
+      price: positiveNumber(row?.price ?? row?.level ?? row?.value),
+      low: positiveNumber(row?.low ?? row?.bottom),
+      high: positiveNumber(row?.high ?? row?.top),
+      side: clean(row?.side || row?.type || row?.direction).toUpperCase(),
+      strength: number(row?.strength ?? row?.score ?? row?.intensity)
+    })).filter(row => row.price || row.low || row.high);
+  }
+
+  function intelTopic(value) {
+    if (/heatmap/.test(value)) return "heatmap";
+    if (/likuiditas|liquidity/.test(value)) return "liquidity";
+    if (/berikutnya|selanjutnya|jadwal|malam ini|hari ini|kapan/.test(value)) return "schedule";
+    if (/terbaru|terakhir|hasil|actual|forecast|previous|dampak|bias/.test(value)) return "latest";
+    return "menu";
+  }
+
+  function answerIntel(topic, context) {
+    const data = intelData(context);
+    if (topic === "latest") return eventReply(data.selected || data.items[0]);
+    if (topic === "schedule") {
+      const rows = [data.scheduled, ...data.items].filter(Boolean).slice(0, 3);
+      return rows.length ? rows.map((event, index) => eventReply(event, index === 0 ? "News berikutnya" : `News ${index + 1}`)).join(" ") : "Belum ada jadwal news yang tersedia.";
+    }
+    if (topic === "heatmap") {
+      const rows = clusterRows(data.heatmap);
+      const price = positiveNumber(data.heatmap?.currentPrice ?? data.market?.current_price ?? data.liquidity?.currentPrice);
+      if (!rows.length) return price ? `Heatmap tersedia dengan harga terakhir ${priceText(price)}, tetapi cluster aktif belum terbaca.` : "Data Heatmap belum tersedia.";
+      const nearest = [...rows].sort((a, b) => price ? Math.abs((a.price || (a.low + a.high) / 2) - price) - Math.abs((b.price || (b.low + b.high) / 2) - price) : (b.strength || 0) - (a.strength || 0))[0];
+      const zone = nearest.low && nearest.high ? `${priceText(nearest.low)}–${priceText(nearest.high)}` : priceText(nearest.price);
+      return `Cluster Heatmap terdekat berada di ${zone}${nearest.side ? ` (${nearest.side})` : ""}${nearest.strength !== null ? ` dengan kekuatan ${numberText(nearest.strength)}` : ""}.`;
+    }
+    if (topic === "liquidity") {
+      const snapshot = mappingSnapshot(context, { persist: false });
+      if (snapshot.bsl || snapshot.ssl) return `Likuiditas aktif terdekat: BSL ${snapshot.bsl ? priceText(snapshot.bsl.price) : "belum ada"} dan SSL ${snapshot.ssl ? priceText(snapshot.ssl.price) : "belum ada"}.`;
+      const rows = clusterRows(data.liquidity);
+      return rows.length ? `Terdapat ${rows.length} level likuiditas pada data terakhir.` : "Data likuiditas belum tersedia.";
+    }
+    return "Di Berita dan Heatmap kamu bisa cek news terbaru, jadwal berikutnya, dampak ke USD/XAU, cluster Heatmap, atau level likuiditas.";
+  }
+
+  function libraryData(context) {
+    const workspace = workspaceFrom(context);
+    return {
+      library: workspace.trading?.library || {},
+      indicators: workspace.indicators || {}
+    };
+  }
+
+  function answerLibrary(value, context) {
+    const { library } = libraryData(context);
+    const catalog = library.catalog || {};
+    const relevant = Array.isArray(library.relevant) ? library.relevant : [];
+    const notes = Array.isArray(library.personal_notes) ? library.personal_notes : [];
+    if (/catatan|note/.test(value)) return notes.length ? `Catatan pribadi yang cocok: ${notes.slice(0, 5).map(row => clean(row.title || row.content).slice(0, 80)).join(", ")}.` : "Belum ada catatan pribadi yang cocok.";
+    if (/cari|mana|tentang|judul|daftar/.test(value)) {
+      const rows = relevant.length ? relevant : Array.isArray(catalog.titles) ? catalog.titles : [];
+      return rows.length ? `Item Library yang ditemukan: ${rows.slice(0, 6).map(row => clean(row.title || row.name)).filter(Boolean).join(", ")}.` : "Item Library yang cocok belum ditemukan.";
+    }
+    return `Library saat ini berisi ${number(catalog.total) ?? 0} item.`;
+  }
+
+  function answerIndicators(value, context) {
+    const { indicators } = libraryData(context);
+    const catalog = Array.isArray(indicators.catalog) ? indicators.catalog : [];
+    const relevant = Array.isArray(indicators.relevant) ? indicators.relevant : [];
+    if (/cari|mana|tentang|daftar|nama/.test(value)) {
+      const rows = relevant.length ? relevant : catalog;
+      return rows.length ? `Indikator yang ditemukan: ${rows.slice(0, 8).map(row => clean(row.name || row.title)).filter(Boolean).join(", ")}.` : "Indikator yang cocok belum ditemukan.";
+    }
+    return `Library Indikator TradingView saat ini berisi ${number(indicators.total) ?? catalog.length} indikator.`;
+  }
+
+  function systemData(context) {
+    return workspaceFrom(context).system || {};
+  }
+
+  function answerSystem(value, context) {
+    const system = systemData(context);
+    const app = system.app || {};
+    const ai = system.ai || {};
+    const update = app.update || {};
+    if (/api|gemini|openrouter|deepseek|provider|key/.test(value)) {
+      const count = Array.isArray(ai.providers) ? ai.providers.length : number(ai.native_secret_count) ?? 0;
+      return `Amy sedang memakai mode full bot lokal. API provider tidak dipakai untuk menjawab${count ? `; ${count} key yang tersimpan tetap dibiarkan aman dan tidak digunakan` : ""}.`;
+    }
+    if (/update|rilis|release/.test(value)) {
+      const version = clean(update.version || update.latestVersion || update.versionName);
+      const code = clean(update.versionCode || update.code);
+      return version ? `Update Preview terbaru ${version}${code ? ` (version code ${code})` : ""}${update.enabled === false ? " dan kanal update sedang nonaktif" : " dan kanal update aktif"}.` : "Status update belum tersedia pada data aplikasi.";
+    }
+    if (/versi|version/.test(value)) {
+      const version = clean(app.version?.version || app.version?.versionName || app.version || window.AmyFXAppVersion?.version || window.AmyFXAppVersion?.versionName);
+      return version ? `Versi Amy FX Preview yang terbaca ${version}.` : "Versi aplikasi belum terbaca.";
+    }
+    if (/status|kesehatan|sistem|online|offline/.test(value)) {
+      return `Status sistem: mode FULL BOT aktif, modul ${clean(app.active_module || currentModule()).toUpperCase()}, koneksi ${app.online === false ? "offline" : "online"}.`;
+    }
+    return "Amy FX memakai full bot lokal untuk membaca seluruh modul tanpa mengirim pertanyaan ke provider AI.";
+  }
+
+  function isGreeting(value) {
+    return /^(halo|hai|hello|pagi|siang|sore|malam|tes|test|permisi)$/.test(value);
   }
 
   function greeting() {
@@ -474,6 +839,50 @@
     } catch {}
     const period = hour < 11 ? "pagi" : hour < 15 ? "siang" : hour < 19 ? "sore" : "malam";
     return `Hai, selamat ${period}. Aku Amy, asisten Anda. Ada yang bisa kubantu?`;
+  }
+
+  function classify(question) {
+    const value = normalizeQuestion(question);
+    const session = readSession();
+    if (isGreeting(value)) return { area: "general", topic: "greeting", value };
+    if (/siapa kamu|kamu siapa|mode apa|ai atau bot/.test(value)) return { area: "system", topic: "identity", value };
+    if (/bisa apa|fitur kamu|bantuan|help|menu utama|semua modul/.test(value)) return { area: "general", topic: "capabilities", value };
+
+    const mapping = mappingTopic(value);
+    if (mapping || /\bmapping\b|market sekarang|kondisi market|xau|gold/.test(value)) return { area: "mapping", topic: mapping || "menu", value };
+    if (/jurnal|trade|entry|win rate|profit|rugi|loss|menang|break even|evaluasi|disiplin|kesalahan/.test(value)) return { area: "journal", topic: journalTopic(value), value };
+    if (/academy|belajar|materi|pelajaran|topik|kurikulum/.test(value)) return { area: "academy", topic: academyTopic(value), value };
+    if (/berita|news|heatmap|kalender ekonomi|actual|forecast|previous|pmi|cpi|nfp|jobless|likuiditas/.test(value)) return { area: "intel", topic: intelTopic(value), value };
+    if (/indikator|tradingview|pine script/.test(value)) return { area: "indicators", topic: "answer", value };
+    if (/library|koleksi|file|dokumen|catatan tersimpan/.test(value)) return { area: "library", topic: "answer", value };
+    if (/versi|version|update|rilis|release|api|gemini|openrouter|deepseek|provider|key|status sistem|profil|online|offline/.test(value)) return { area: "system", topic: "answer", value };
+
+    if (/^(yang )?(berikutnya|selanjutnya|terakhir|terdekat|berapa|lanjut|ringkas|statusnya|dimana|di mana)$/.test(value) && session.lastArea) {
+      if (session.lastArea === "mapping") return { area: "mapping", topic: session.lastTopic || "summary", value };
+      if (session.lastArea === "journal") return { area: "journal", topic: /terakhir/.test(value) ? "latest" : session.lastTopic || "summary", value };
+      if (session.lastArea === "academy") return { area: "academy", topic: /berikutnya|selanjutnya|lanjut/.test(value) ? "next" : session.lastTopic || "progress", value };
+      if (session.lastArea === "intel") return { area: "intel", topic: /berikutnya|selanjutnya/.test(value) ? "schedule" : session.lastTopic || "latest", value };
+    }
+
+    return { area: "general", topic: "fallback", value };
+  }
+
+  function answer(question, context) {
+    const route = classify(question);
+    writeSession({ lastArea: route.area, lastTopic: route.topic, lastQuestion: clean(question) });
+    if (route.topic === "greeting") return greeting();
+    if (route.topic === "capabilities") return "Saya bisa membaca Mapping, Jurnal, Academy, Berita dan Heatmap, Library, Indikator, serta status aplikasi. Semua dijawab dengan bot lokal berdasarkan data Amy FX.";
+    if (route.area === "mapping") return answerMapping(route.topic, context);
+    if (route.area === "journal") return answerJournal(route.topic, context);
+    if (route.area === "academy") return answerAcademy(route.topic, context);
+    if (route.area === "intel") return answerIntel(route.topic, context);
+    if (route.area === "library") return answerLibrary(route.value, context);
+    if (route.area === "indicators") return answerIndicators(route.value, context);
+    if (route.area === "system") {
+      if (route.topic === "identity") return "Saya Amy, full bot lokal Amy FX. Saya tidak memakai provider AI untuk menjawab.";
+      return answerSystem(route.value, context);
+    }
+    return "Pertanyaan itu belum memiliki pola jawaban. Saya bisa membaca Mapping, Jurnal, Academy, Berita/Heatmap, Library, Indikator, dan status aplikasi. Sebutkan objeknya, misalnya ‘win rate jurnal’ atau ‘news terbaru’.";
   }
 
   function enrichContext(context) {
@@ -494,8 +903,7 @@
 
   function install() {
     const os = window.AmyFXOS;
-    if (!os?.ask || os.__amyMappingLifecycleV2) return Boolean(os?.__amyMappingLifecycleV2);
-    const originalAsk = os.ask.bind(os);
+    if (!os?.ask || os.__amyProfessionalBotV3) return Boolean(os?.__amyProfessionalBotV3);
     const originalBuild = typeof os.buildContext === "function" ? os.buildContext.bind(os) : null;
 
     const buildContext = async function (sourceModule = currentModule(), options = {}) {
@@ -504,25 +912,31 @@
     };
 
     const ask = async function (question, options = {}) {
-      const value = lower(question);
-      if (/^(halo|hai|hello|pagi|siang|sore|malam|tes|test|permisi)$/.test(value)) {
-        return { text: greeting(), provider: "amy-bot", model: "mapping-lifecycle-v2", source: "Amy", route: "bot", context: options.context || null };
-      }
-      if (!shouldHandle(question)) return originalAsk(question, options);
       const sourceModule = options.sourceModule || currentModule();
       const context = enrichContext(options.context || (originalBuild ? await originalBuild(sourceModule, { question }) : {}));
-      return { text: answer(question, context), provider: "amy-bot", model: "mapping-lifecycle-v2", source: "Amy Mapping", route: "bot", context };
+      return {
+        text: answer(question, context),
+        provider: "amy-bot",
+        model: "professional-bot-v3",
+        source: "Amy FX",
+        route: "bot",
+        mode: "full-bot",
+        context
+      };
     };
 
     window.AmyFXOS = Object.freeze({
       ...os,
       buildContext,
       ask,
-      mappingIntent: Object.freeze({ version: VERSION, answer, snapshot: mappingSnapshot }),
+      mappingIntent: Object.freeze({ version: VERSION, answer: answerMapping, snapshot: mappingSnapshot }),
+      professionalBot: Object.freeze({ version: VERSION, answer, classify }),
       __amyMappingIntentHotfixV1: true,
-      __amyMappingLifecycleV2: true
+      __amyMappingLifecycleV2: true,
+      __amyProfessionalBotV3: true
     });
-    window.dispatchEvent(new CustomEvent("amyfx:mapping-intent-ready", { detail: { version: VERSION } }));
+    window.AmyFXBotMode = "full";
+    window.dispatchEvent(new CustomEvent("amyfx:professional-bot-ready", { detail: { version: VERSION, mode: "full-bot" } }));
     return true;
   }
 
@@ -533,6 +947,32 @@
     document.querySelectorAll(".amy-os-message--amy > div").forEach(node => {
       if (/Kamu bisa langsung menulis seperti sedang chat dengan customer service/i.test(node.textContent || "") && node.textContent !== expected) node.textContent = expected;
     });
+  }
+
+  function repairBotUi() {
+    const root = document.querySelector(".amy-os-root");
+    if (!root) return;
+    root.dataset.amyBotMode = "full";
+    const title = root.querySelector(".amy-os-panel__header strong");
+    if (title) title.textContent = "Amy Assistant";
+    const subtitle = root.querySelector(".amy-os-panel__header small");
+    if (subtitle) subtitle.textContent = "Full bot • semua modul";
+    const fab = root.querySelector(".amy-os-fab small");
+    if (fab) fab.textContent = "Bot";
+    const settingsButton = root.querySelector("[data-amy-settings]");
+    if (settingsButton) settingsButton.hidden = true;
+    const settingsPanel = root.querySelector("[data-amy-settings-panel]");
+    if (settingsPanel) settingsPanel.hidden = true;
+    const input = root.querySelector("[data-amy-input]");
+    if (input) input.placeholder = "Tanya seluruh data Amy FX";
+    const contexts = root.querySelector("[data-amy-contexts]");
+    if (contexts && !contexts.querySelector("[data-amy-full-bot]")) {
+      const chip = document.createElement("span");
+      chip.className = "amy-os-chip";
+      chip.dataset.amyFullBot = "1";
+      chip.textContent = "FULL BOT";
+      contexts.appendChild(chip);
+    }
   }
 
   function isProfileVisible() {
@@ -581,11 +1021,6 @@
     return { total: list.length, winRate: completed ? Math.round((win / completed) * 1000) / 10 : null };
   }
 
-  function keyCount() {
-    const settings = window.AmyFXOS?.getGlobalSettings?.() || readJson("amyfx.globalAiSettings.v1", {});
-    return Array.isArray(settings?.key_refs) ? settings.key_refs.filter(row => row?.status !== "disabled").length : 0;
-  }
-
   async function repairCommandCenter() {
     const section = document.querySelector("[data-amy-command-center]");
     if (!section) return;
@@ -615,13 +1050,12 @@
     const journalNode = section.querySelector("[data-cc-journal]");
     if (journalNode) journalNode.textContent = journal.total ? `${journal.total} trade${journal.winRate == null ? "" : ` • ${journal.winRate}% WR`}` : "Belum ada jurnal";
 
-    const keys = keyCount();
     const mentor = section.querySelector("[data-cc-mentor]");
-    if (mentor) mentor.textContent = keys ? `${keys} key siap` : "Belum ada key";
+    if (mentor) mentor.textContent = "Bot lokal aktif";
     const migrationLabel = section.querySelector("[data-cc-migration]")?.previousElementSibling;
-    if (migrationLabel) migrationLabel.textContent = "Status sistem";
+    if (migrationLabel) migrationLabel.textContent = "Mode asisten";
     const migration = section.querySelector("[data-cc-migration]");
-    if (migration) migration.textContent = keys ? "API siap digunakan" : "Periksa pengaturan API";
+    if (migration) migration.textContent = "FULL BOT • TANPA API";
   }
 
   function repairHealth() {
@@ -630,8 +1064,8 @@
     if (!health) return;
     const module = currentModule().toUpperCase();
     const hasMapping = Boolean(snapshot?.structuralValid || snapshot?.levels?.some?.(row => row.active));
-    const next = hasMapping ? `${module} • DATA MAPPING TERSEDIA` : `${module} • BELUM ADA DATA MARKET`;
-    if (/EXPIRED|BELUM ADA DATA LIVE|HOME •/i.test(health.textContent || "")) health.textContent = next;
+    const dataState = hasMapping ? "DATA MAPPING TERSEDIA" : "BELUM ADA DATA MARKET";
+    health.textContent = `${module} • ${dataState} • FULL BOT`;
   }
 
   let scheduled = false;
@@ -641,6 +1075,7 @@
     const run = () => {
       scheduled = false;
       repairWelcome();
+      repairBotUi();
       repairHealth();
       repairCommandCenter();
       if (currentModule() === "mapping") mappingSnapshot(null, { persist: true });
@@ -659,7 +1094,7 @@
       if (ready || attempts >= 240) window.clearInterval(timer);
     }, 50);
     if (timer) window.setTimeout(() => window.clearInterval(timer), 15_000);
-    window.addEventListener("amyfx:safe-rule-chat-ready", install, { once: true });
+    ["amyfx:safe-rule-chat-ready", "amyfx:universal-access-ready"].forEach(name => window.addEventListener(name, install, { once: true }));
     ["amyfx:mapping-state-change", "amyfx:market-update", "amyfx:home-stats-change", "amyfx:open-mentor", "focus"]
       .forEach(name => window.addEventListener(name, scheduleUiRepair));
     window.addEventListener("amyfx:journal-state-change", () => {
@@ -672,7 +1107,8 @@
     window.setInterval(() => { if (!document.hidden) scheduleUiRepair(); }, 30_000);
   }
 
-  window.AmyFXMappingIntentHotfix = Object.freeze({ version: VERSION, answer, snapshot: mappingSnapshot, install, greeting, scheduleUiRepair });
+  window.AmyFXMappingIntentHotfix = Object.freeze({ version: VERSION, answer, snapshot: mappingSnapshot, install, greeting, scheduleUiRepair, classify });
+  window.AmyFXProfessionalBot = window.AmyFXMappingIntentHotfix;
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
   else boot();
 })();
