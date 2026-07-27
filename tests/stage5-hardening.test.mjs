@@ -57,12 +57,15 @@ test('client no longer persists TwelveData credentials', () => {
 
 test('market proxy accepts only validated server-side requests', () => {
   const api = read('api/twelvedata.js');
+  const store = read('lib/market-candle-store.mjs');
   assert.match(api, /process\.env\.TWELVEDATA_API_KEY/);
   assert.doesNotMatch(api, /req\.query[^\n]*apikey/);
   assert.match(api, /req\.method !== 'GET'/);
   assert.match(api, /ALLOWED_INTERVALS\.has\(interval\)/);
-  assert.match(api, /new AbortController\(\)/);
-  assert.match(api, /Market service timeout/);
+  assert.match(store, /new AbortController\(\)/);
+  assert.match(store, /PROVIDER_TIMEOUT_MS/);
+  assert.match(store, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.doesNotMatch(store, /req\.query[^\n]*apikey/);
 });
 
 test('native notifications only open trusted local routes', () => {
