@@ -1,0 +1,146 @@
+Amy FX Private Preview regression failure
+Run: 30283013862
+Commit: 4132582f493caca57deb6c3065288316f97899c7
+
+===== amy-mentor-conversation.test.mjs =====
+===== api-polling-coordinator.test.mjs =====
+===== asia-range-ui-freeze-regression.test.mjs =====
+===== asia-range.test.mjs =====
+===== background-video-playback-regression.test.mjs =====
+===== blueprint-preview-stabilization.test.mjs =====
+===== blueprint-preview-v1.test.mjs =====
+===== bos-mss.test.mjs =====
+===== bsl-ssl.test.mjs =====
+===== concept-engine.integration.test.mjs =====
+===== dashboard-analyze-separation.test.mjs =====
+===== deepseek-provider-detection.test.mjs =====
+===== dynamic-heatmap-ui-regression.test.mjs =====
+not ok 4 - heatmap API uses dynamic lifecycle engine and short CDN cache
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+  operator: 'match'
+Regression failed: dynamic-heatmap-ui-regression.test.mjs
+
+--- final log lines ---
+        res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+        res.setHeader('X-AmyFX-Market-Source', marketData?.source || 'unknown');
+        return res.status(200).json({
+          symbol,
+          interval,
+          currentPrice: result.currentPrice,
+          updated: new Date().toISOString(),
+          sourceCandleTime: result.meta?.sourceCandleTime || candles.at(-1)?.time || null,
+          zones: result.zones,
+          summary,
+          meta: {
+            ...result.meta,
+            dataSource: marketData?.source || 'unknown',
+            cacheState: marketData?.amyfxCacheState || 'UNKNOWN',
+            accuracyProfile: 'BACKTEST_2022_2026',
+            nearestDrawRole: 'LIQUIDITY_TARGET_ONLY',
+            primaryDistanceAtr: 1.5,
+            secondaryDistanceAtr: 3
+          }
+        });
+      } catch (error) {
+        console.error('heatmap provider failed', error);
+        return res.status(502).json({
+          currentPrice: null,
+          updated: new Date().toISOString(),
+          zones: [],
+          summary: emptySummary(),
+          error: 'provider_failed',
+          message: error?.message || 'Market data unavailable'
+        });
+      }
+    }
+    
+    function normalizeCandles(values) {
+      return [...(Array.isArray(values) ? values : [])]
+        .reverse()
+        .map(candle => ({
+          time: candle.datetime,
+          open: Number(candle.open),
+          high: Number(candle.high),
+          low: Number(candle.low),
+          close: Number(candle.close)
+        }))
+        .filter(candle => [candle.open, candle.high, candle.low, candle.close].every(Number.isFinite));
+    }
+    
+    function emptySummary() {
+      return {
+        pressure: 'WAITING DATA',
+        liquidityConcentration: 'WAITING DATA',
+        directionalSignal: 'NEUTRAL',
+        directionalUse: false,
+        nearestDraw: null,
+        activeZones: 0,
+        transitionZones: 0,
+        interpretation: 'Heatmap belum memiliki data yang cukup.'
+      };
+    }
+    
+    function classifyDraw(draw, currentPrice, atr) {
+      if (!draw || !Number.isFinite(Number(draw.price))) return null;
+      const absoluteDistance = Math.abs(Number(draw.price) - Number(currentPrice));
+      const distanceAtr = atr > 0 ? absoluteDistance / atr : null;
+      const targetClass = distanceAtr === null
+        ? 'CONTEXT_ONLY'
+        : distanceAtr <= 1.5 ? 'PRIMARY' : distanceAtr <= 3 ? 'SECONDARY' : 'CONTEXT_ONLY';
+      return {
+        ...draw,
+        absoluteDistance,
+        distanceAtr,
+        targetClass,
+        actionableAsDirection: false,
+        useAsLiquidityTarget: targetClass !== 'CONTEXT_ONLY'
+      };
+    }
+    
+    function precisionSummary(result) {
+      const base = result?.summary || {};
+      const currentPrice = Number(result?.currentPrice || 0);
+      const atr = Number(result?.meta?.atr || 0);
+      const concentration = base.pressure || 'BALANCED';
+      return {
+        ...base,
+        pressure: concentration,
+        liquidityConcentration: concentration,
+        directionalSignal: 'NEUTRAL',
+        directionalUse: false,
+        nearestDraw: classifyDraw(base.nearestDraw, currentPrice, atr),
+        nearestBsl: classifyDraw(base.nearestBsl, currentPrice, atr),
+        nearestSsl: classifyDraw(base.nearestSsl, currentPrice, atr),
+        interpretation: 'Pressure menunjukkan konsentrasi likuiditas, bukan prediksi arah market.'
+      };
+    }
+    
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/dynamic-heatmap-ui-regression.test.mjs:47:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: shared briefing uses canonical quote and Intel-only BSL SSL while heatmap keeps source candle time
+ok 5 - shared briefing uses canonical quote and Intel-only BSL SSL while heatmap keeps source candle time
+  ---
+  duration_ms: 0.447104
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 4
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 139.902244
+Regression failed: dynamic-heatmap-ui-regression.test.mjs
