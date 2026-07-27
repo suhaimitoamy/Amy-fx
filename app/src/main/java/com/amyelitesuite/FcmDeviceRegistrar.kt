@@ -52,15 +52,19 @@ object FcmDeviceRegistrar {
 
         Thread {
             try {
-                val deviceId = Settings.Secure.getString(
+                val androidId = Settings.Secure.getString(
                     appContext.contentResolver,
                     Settings.Secure.ANDROID_ID
                 ) ?: return@Thread
 
+                // Package menjadi bagian identitas agar Amy FX publik dan Preview
+                // tidak saling menimpa token FCM pada perangkat yang sama.
+                val deviceId = "${BuildConfig.APPLICATION_ID}:$androidId"
                 val payload = JSONObject().apply {
                     put("deviceId", deviceId)
                     put("fcmToken", token)
                     put("appVersion", currentVersion)
+                    put("appPackage", BuildConfig.APPLICATION_ID)
                     put("enabled", true)
                 }
 
