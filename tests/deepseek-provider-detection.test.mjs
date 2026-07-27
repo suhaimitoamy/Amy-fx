@@ -53,7 +53,8 @@ test('provider repair bridge and detector are installed in every Preview module'
 
 test('DeepSeek remains explicit about paid fallback usage', async () => {
   const source = await read('app/src/main/assets/apps/shared/amyfx-provider-detection-v1.js');
-  assert.match(source, /DeepSeek sudah dikenali, tetapi belum digunakan/);
+  assert.match(source, /DeepSeek (?:sudah )?dikenali, tetapi belum (?:digunakan|dipakai)/);
+  assert.match(source, /fallback berbayar/);
   assert.match(source, /paid_fallback/);
   assert.doesNotMatch(source, /paid_fallback:\s*true/);
 });
