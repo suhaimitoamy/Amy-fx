@@ -69,7 +69,7 @@
     const candidates = domain === "heatmap"
       ? [payload.sourceCandleTime, payload.sourceCandleAt, payload.capturedAt, payload.captured_at]
       : domain === "mapping"
-        ? [payload.sourceCandleAt, payload.capturedAt, payload.captured_at, payload.analyzedAt]
+        ? [payload.sourceCandleTime, payload.sourceCandleAt, payload.capturedAt, payload.captured_at]
         : domain === "quote"
           ? [payload.providerCapturedAt, payload.capturedAt, payload.captured_at]
           : [payload.capturedAt, payload.captured_at, payload.updated, payload.generatedAt];
@@ -159,8 +159,7 @@
       : 0;
     return timestamp(payload?.sourceCandleAt)
       || timestamp(payload?.sourceCandleTime)
-      || normalizedCandleTime
-      || timestamp(localStorage.getItem("last_candle_update_at"));
+      || normalizedCandleTime;
   }
 
   function mappingFingerprint(payload) {
@@ -222,7 +221,8 @@
         ...(previous || {}), ...payload,
         capturedAt: capturedAt ? new Date(capturedAt).toISOString() : null,
         receivedAt: new Date(now).toISOString(), storedAt: now,
-        source: payload?.source || "M1_QUOTE", schemaVersion: SCHEMA_VERSION
+        source: payload?.source || "M1_QUOTE", schemaVersion: SCHEMA_VERSION,
+        dataStale: !capturedAt || Boolean(payload?.dataStale)
       };
     }
 
@@ -235,7 +235,7 @@
         || (candleTime && candleTime > previousTime);
       const candidateTime = candleTime || sourceTime(domain, payload);
       const capturedAt = changed
-        ? (candidateTime || previousTime || now)
+        ? (candidateTime || previousTime || 0)
         : (previousTime || candidateTime || 0);
       const next = {
         ...(previous || {}), ...payload,
@@ -243,7 +243,8 @@
         analyzedAt: capturedAt ? new Date(capturedAt).toISOString() : null,
         computedAt: changed ? new Date(now).toISOString() : (previous?.computedAt || null),
         receivedAt: new Date(now).toISOString(), storedAt: now,
-        structuralFingerprint, schemaVersion: SCHEMA_VERSION
+        structuralFingerprint, schemaVersion: SCHEMA_VERSION,
+        dataStale: !capturedAt || Boolean(payload?.dataStale)
       };
       delete next.updated;
       return next;
@@ -256,7 +257,8 @@
       capturedAt: capturedAt ? new Date(capturedAt).toISOString() : null,
       computedAt: new Date(computedAt).toISOString(),
       receivedAt: new Date(now).toISOString(), storedAt: now,
-      schemaVersion: SCHEMA_VERSION
+      schemaVersion: SCHEMA_VERSION,
+      dataStale: !capturedAt || Boolean(payload?.dataStale)
     };
   }
 
