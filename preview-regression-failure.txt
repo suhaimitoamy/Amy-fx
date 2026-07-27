@@ -1,6 +1,6 @@
 Amy FX Private Preview regression failure
-Run: 30282552179
-Commit: 6dab489ba9f1b0dbe60e11f295ac1ef78de377a3
+Run: 30282605615
+Commit: bbef6b2e28b6333bf4aa1299d8d27cac13aa3198
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -133,5 +133,5 @@ Regression failed: asia-range.test.mjs
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 134.554835
+# duration_ms 81.287466
 Regression failed: asia-range.test.mjs
