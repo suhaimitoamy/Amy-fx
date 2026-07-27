@@ -1,27 +1,29 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 930052,
-  "latest_version_name": "2.0.0-preview.52",
-  "versionCode": 930052,
-  "version": "2.0.0-preview.52",
+  "latest_version_code": 930087,
+  "latest_version_name": "2.0.0-preview.87",
+  "versionCode": 930087,
+  "version": "2.0.0-preview.87",
   "releaseDate": "2026-07-27",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.52/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.52/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.87/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.87/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Pertanyaan market Amy Bot dijawab langsung tanpa menunggu proses konteks hingga 45 detik.",
-    "FVG dan Order Block aktif sekarang dibaca dari output terbaru Mapping Concept Engine.",
-    "BSL dan SSL resmi mengikuti Intel Liquidity nearest draw agar sama pada Amy Bot, hero Mapping, dan hero Intel.",
-    "Snapshot zona Mapping disimpan agar FVG dan Order Block tetap dapat dibaca dari Beranda.",
-    "Sumber dan waktu data tetap ditampilkan, sementara angka kosong tidak akan ditebak."
+    "Asisten AI tidak lagi terkunci dan memiliki batas waktu total 45 detik.",
+    "Asisten Jurnal tetap memakai API key yang sudah dipindahkan ke secure vault.",
+    "Journal v2 hanya tampil pada halaman Jurnal dan tidak merusak navigasi modul lain.",
+    "Status data market tidak lagi menyatakan fresh ketika data live belum tersedia.",
+    "Panel Amy, status module, dan navigasi bawah tidak lagi saling menutupi.",
+    "Markup Amy FX Academy yang rusak telah diperbaiki."
   ],
   "changelog": [
-    "Fast local market-answer path",
-    "Mapping Concept Engine FVG and Order Block bridge",
-    "Canonical Intel Liquidity BSL and SSL priority",
-    "Cross-module Mapping zone snapshot",
-    "Amy Bot timeout regression coverage"
+    "Assistant timeout and stuck-state recovery",
+    "Secure-vault compatibility for legacy Journal assistant",
+    "Journal v2 placement and layout stabilization",
+    "Missing-data freshness correction",
+    "Academy markup repair",
+    "Expanded Preview regression gates"
   ]
 }
