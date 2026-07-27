@@ -1,29 +1,29 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 930043,
-  "latest_version_name": "2.0.0-preview.43",
-  "versionCode": 930043,
-  "version": "2.0.0-preview.43",
+  "latest_version_code": 930046,
+  "latest_version_name": "2.0.0-preview.46",
+  "versionCode": 930046,
+  "version": "2.0.0-preview.46",
   "releaseDate": "2026-07-27",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.43/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.43/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.46/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.46/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Memperbaiki freeze berat yang muncul setelah pemasangan Amy customer-service chat.",
-    "Runtime Amy lama yang saling memicu MutationObserver pada seluruh halaman tidak lagi dimuat.",
-    "Amy Assistant sekarang memakai satu rule-chat ringan dengan inisialisasi terbatas dan tanpa repaint UI permanen.",
-    "Tombol Amy dipulihkan otomatis ketika panel tertutup agar Assistant tetap dapat dibuka.",
-    "Akses read-only ke seluruh modul dan secure AI vault tetap dipertahankan.",
-    "Seluruh regression JavaScript, Android unit test, lint, signed APK, package, version, dan signer berhasil diverifikasi."
+    "Asisten AI tidak lagi terkunci dan memiliki batas waktu total 45 detik.",
+    "Asisten Jurnal tetap memakai API key yang sudah dipindahkan ke secure vault.",
+    "Journal v2 hanya tampil pada halaman Jurnal dan tidak merusak navigasi modul lain.",
+    "Status data market tidak lagi menyatakan fresh ketika data live belum tersedia.",
+    "Panel Amy, status module, dan navigasi bawah tidak lagi saling menutupi.",
+    "Markup Amy FX Academy yang rusak telah diperbaiki."
   ],
   "changelog": [
-    "Removed freeze-prone mentor observer chain",
-    "Safe lightweight rule-chat runtime v3",
-    "Bounded initialization without permanent polling",
-    "Idempotent customer-service UI updates",
-    "Amy launcher visibility recovery",
-    "Freeze regression protection"
+    "Assistant timeout and stuck-state recovery",
+    "Secure-vault compatibility for legacy Journal assistant",
+    "Journal v2 placement and layout stabilization",
+    "Missing-data freshness correction",
+    "Academy markup repair",
+    "Expanded Preview regression gates"
   ]
 }
