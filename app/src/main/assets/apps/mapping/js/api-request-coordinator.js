@@ -80,6 +80,20 @@
     ].includes(String(name).toLowerCase()));
   }
 
+  function normalizeClosedSeries(body) {
+    try {
+      const data = JSON.parse(body);
+      if (data?.closedOnly !== true || !Array.isArray(data.values) || !data.values.length) return body;
+      return JSON.stringify({
+        ...data,
+        values: [{ ...data.values[0], amyfxSyntheticCurrent: true }, ...data.values],
+        clientCompatibility: 'CLOSED_SERIES_SENTINEL_V1'
+      });
+    } catch (_) {
+      return body;
+    }
+  }
+
   function cloneStored(stored) {
     return new Response(stored.body, {
       status: stored.status,
@@ -165,7 +179,7 @@
         ? new Request(info.fetchUrl, input)
         : info.fetchUrl;
       const response = await nativeFetch(canonicalInput, init);
-      const body = await response.clone().text();
+      const body = normalizeClosedSeries(await response.clone().text());
       const storedAt = Date.now();
       const stored = {
         body,
