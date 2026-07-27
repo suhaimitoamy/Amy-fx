@@ -25,6 +25,14 @@ const hotfixSource = readFileSync(sourcePath(
   'app/src/main/assets/apps/shared/amyfx-blueprint-hotfix-v1.js',
   'amyfx-blueprint-hotfix-v1.js'
 ), 'utf8');
+const mappingIndexSource = readFileSync(sourcePath(
+  'app/src/main/assets/apps/mapping/index.html',
+  'mapping-index.html'
+), 'utf8');
+const intelIndexSource = readFileSync(sourcePath(
+  'app/src/main/assets/apps/market-intel/index.html',
+  'market-intel-index.html'
+), 'utf8');
 
 function storage(seed = {}) {
   const rows = new Map(Object.entries(seed).map(([key, value]) => [key, String(value)]));
@@ -43,7 +51,7 @@ function createRuntime({ candleAt = Date.now() - 60_000 } = {}) {
   const window = {
     state: {
       tf: 'M15',
-      candles: { M15: [{ time: candleAt / 1000 }] },
+      candles: { M15: candleAt ? [{ time: candleAt / 1000 }] : [] },
       result: null,
       price: 0,
       conn: 'Connected'
@@ -119,6 +127,21 @@ test('Mapping payload cannot invent an official quote without an M1 provider tim
     direction: 'BUY'
   });
   assert.equal(runtime.window.AmyFXIntel.read().quote, undefined);
+});
+
+test('local analyzedAt cannot make Mapping fresh without a source candle', () => {
+  const runtime = createRuntime({ candleAt: 0 });
+  runtime.window.AmyFXIntel.write('mapping', {
+    price: 4091,
+    analyzedAt: new Date().toISOString(),
+    timeframe: 'M15',
+    bias: 'BUY',
+    direction: 'BUY'
+  });
+  const mapping = runtime.window.AmyFXIntel.read().mapping;
+  assert.equal(mapping.capturedAt, null);
+  assert.equal(mapping.dataStale, true);
+  assert.equal(runtime.window.AmyFXMarketContract.assess('mapping', mapping).state, 'EXPIRED');
 });
 
 test('storedAt cannot make an expired quote fresh or LIVE', () => {
@@ -230,6 +253,14 @@ test('Blueprint duplicate market listeners are registered only once', async () =
   window.addEventListener('amyfx:market-update', listener);
   assert.equal(registrations.filter(row => row.name === 'amyfx:market-update').length, 1);
   await new Promise(resolve => setTimeout(resolve, 5));
+});
+
+test('Blueprint listener guard loads before Blueprint runtime on market pages', () => {
+  for (const html of [mappingIndexSource, intelIndexSource]) {
+    assert.ok(html.indexOf('amyfx-blueprint-hotfix-v1.js') >= 0);
+    assert.ok(html.indexOf('amyfx-blueprint-v1.js') >= 0);
+    assert.ok(html.indexOf('amyfx-blueprint-hotfix-v1.js') < html.indexOf('amyfx-blueprint-v1.js'));
+  }
 });
 
 test('Blueprint context exposes separate market timestamps and canonical conflicts', async () => {
