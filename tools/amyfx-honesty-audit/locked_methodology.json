@@ -1,0 +1,53 @@
+{
+  "study": "Amy FX application honesty replay",
+  "version": "1.0.0",
+  "locked_before_new_replay": true,
+  "instrument": "XAUUSD",
+  "accepted_years": [2020, 2021, 2022, 2023, 2024, 2025],
+  "rejected_years": [2026],
+  "split": {
+    "development": "2020-01-01 through 2023-12-31",
+    "diagnostic_only": "2024-01-01 through 2024-12-31",
+    "locked_validation": "2025-01-01 through 2025-12-31"
+  },
+  "timeframes": ["M1", "M5", "M15", "H1", "H4", "D1"],
+  "causality": {
+    "decision_data": "completed candle at t and earlier only",
+    "future_data": "outcome scoring only",
+    "same_bar_ambiguity": "adverse-first when M1 cannot resolve order"
+  },
+  "claims": {
+    "observations_only": [
+      "raw_bias",
+      "raw_structure",
+      "raw_fvg",
+      "raw_order_block",
+      "raw_bsl_ssl",
+      "premium_discount",
+      "engine_score"
+    ],
+    "may_be_actionable_only_when_explicitly_active": [
+      "validated_direction_forecast",
+      "validated_market_context_claim",
+      "setup_execution"
+    ]
+  },
+  "hard_invariants": [
+    "stale_data_must_force_wait",
+    "inactive_or_terminal_forecast_must_not_have_active_setup",
+    "terminal_setup_must_not_be_active",
+    "entry_stop_target_geometry_must_be_valid",
+    "source_candle_must_not_be_in_the_future",
+    "observation_must_not_be_described_as_validated",
+    "score_must_not_be_described_as_probability",
+    "2026_data_must_not_enter_results"
+  ],
+  "repair_policy": {
+    "stop_on_first_anomaly": true,
+    "save_reproduction_window": true,
+    "rerun_full_regression_after_fix": true,
+    "preserve_before_after_results": true,
+    "working_branch": "personal/amyfx-private",
+    "forbidden_branch": "main"
+  }
+}
