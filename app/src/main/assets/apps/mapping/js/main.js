@@ -1,5 +1,6 @@
 import "./bridge/sync-fix.js";
 import "./bridge/notify-guard.js";
+import "./audit/honesty-audit-export.js";
 import {
   runAnalysis,
   connect,
@@ -189,7 +190,6 @@ function syncAutomaticScannerUi() {
 
   const settings = document.querySelector('.settings');
   if (!settings) return;
-
   const helpText =
     'Harga live, snapshot Mapping, scanner, dan notifikasi memakai kontrak setupExecution yang sama.';
   const help = settings.querySelector('p.muted');
