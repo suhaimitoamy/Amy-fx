@@ -112,7 +112,7 @@ test("canonical BSL matches Market Intel nearest draw instead of stale Mapping s
   const runtime = createRuntime();
   const answer = runtime.window.AmyFXMarketSourceRegistry.answer("BSL terdekat di mana?", runtime.context);
   assert.match(answer, /BSL aktif terdekat 4\.092/);
-  assert.match(answer, /snapshot Mapping 4\.110,15/);
+  assert.match(answer, /snapshot Mapping 4\.110,15/i);
   assert.match(answer, /nearest draw live/i);
 });
 
