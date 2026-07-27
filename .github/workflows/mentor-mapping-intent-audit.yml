@@ -1,0 +1,37 @@
+name: Amy FX Mentor Mapping Intent Audit
+
+on:
+  push:
+    branches:
+      - fix/preview-mentor-mapping-intent-final-20260727
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate mentor runtimes
+        run: |
+          set -euo pipefail
+          node --check app/src/main/assets/apps/shared/amyfx-provider-detection-v1.js
+          node --check app/src/main/assets/apps/shared/amyfx-mentor-mapping-intent-hotfix-v1.js
+          node --test --test-force-exit tests/mentor-mapping-intent-hotfix.test.mjs
+      - name: Run all JavaScript regression tests
+        run: npm test
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Android unit, lint, and release compile
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease --stacktrace --no-daemon --no-configuration-cache
