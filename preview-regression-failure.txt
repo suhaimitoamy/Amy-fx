@@ -1,6 +1,6 @@
 Amy FX Preview regression failure
-Run: 30268310585
-Commit: fd5ba0874dabe3688e27589e9367e2af30ce2fc8
+Run: 30268439008
+Commit: 17559ceeba4ef64d2b581437ac7cdb12aaddab28
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -65,137 +65,151 @@ Commit: fd5ba0874dabe3688e27589e9367e2af30ce2fc8
 ===== preview-integration-audit.test.mjs =====
 ===== preview-mapping-shared-connectivity.test.mjs =====
 ===== preview-post35-connectivity-regression.test.mjs =====
-not ok 2 - freshness never combines a new timestamp without price with an old market price
-  code: 'ERR_TEST_FAILURE'
-not ok 3 - explicit source timestamp wins over a newer storage write time
-  code: 'ERR_TEST_FAILURE'
-not ok 4 - one genuinely fresh price-bearing source is enough for a LIVE state
-  code: 'ERR_TEST_FAILURE'
-not ok 5 - syncGlobals clears a stale heatmap global when the persisted heatmap is removed
+===== preview-shared-market-intelligence.test.mjs =====
+not ok 2 - shared state survives localStorage read and write failures
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
-  expected: true
-  operator: '=='
-Regression failed: preview-post35-connectivity-regression.test.mjs
+  expected:
+  actual: |-
+  operator: 'match'
+not ok 3 - news or timestamp-only state cannot mark XAU USD market data as LIVE
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: ''
+  operator: 'match'
+not ok 4 - explicit source timestamp is preferred over storage time
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+  operator: 'match'
+not ok 5 - briefing and command strip use the same canonical market freshness and price
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+  operator: 'match'
+Regression failed: preview-shared-market-intelligence.test.mjs
 
 --- final log lines ---
-1..4
-# tests 4
-# suites 0
-# pass 4
-# fail 0
-# cancelled 0
-# skipped 0
-# todo 0
-# duration_ms 91.827037
-
-===== preview-post35-connectivity-regression.test.mjs =====
-TAP version 13
-# AmyFXMarketContract must load before market-intelligence.js
-# AmyFXMarketContract must load before market-intelligence.js
-# AmyFXMarketContract must load before market-intelligence.js
-# AmyFXMarketContract must load before market-intelligence.js
-# Subtest: updated post-35 integration runtimes are valid JavaScript
-ok 1 - updated post-35 integration runtimes are valid JavaScript
-  ---
-  duration_ms: 54.180155
-  type: 'test'
-  ...
-# Subtest: freshness never combines a new timestamp without price with an old market price
-not ok 2 - freshness never combines a new timestamp without price with an old market price
-  ---
-  duration_ms: 2.408399
-  type: 'test'
-  location: '/home/runner/work/Amy-fx/Amy-fx/tests/preview-post35-connectivity-regression.test.mjs:60:1'
-  failureType: 'testCodeFailure'
-  error: "Cannot read properties of undefined (reading 'freshness')"
-  code: 'ERR_TEST_FAILURE'
-  name: 'TypeError'
-  stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-post35-connectivity-regression.test.mjs:67:21)
-    Test.runInAsyncScope (node:async_hooks:214:14)
-    Test.run (node:internal/test_runner/test:1047:25)
-    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
-    Test.postRun (node:internal/test_runner/test:1173:19)
-    Test.run (node:internal/test_runner/test:1101:12)
-    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
-  ...
-# Subtest: explicit source timestamp wins over a newer storage write time
-not ok 3 - explicit source timestamp wins over a newer storage write time
-  ---
-  duration_ms: 1.039495
-  type: 'test'
-  location: '/home/runner/work/Amy-fx/Amy-fx/tests/preview-post35-connectivity-regression.test.mjs:72:1'
-  failureType: 'testCodeFailure'
-  error: "Cannot read properties of undefined (reading 'freshness')"
-  code: 'ERR_TEST_FAILURE'
-  name: 'TypeError'
-  stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-post35-connectivity-regression.test.mjs:81:20)
-    Test.runInAsyncScope (node:async_hooks:214:14)
-    Test.run (node:internal/test_runner/test:1047:25)
-    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
-    Test.postRun (node:internal/test_runner/test:1173:19)
-    Test.run (node:internal/test_runner/test:1101:12)
-    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
-  ...
-# Subtest: one genuinely fresh price-bearing source is enough for a LIVE state
-not ok 4 - one genuinely fresh price-bearing source is enough for a LIVE state
-  ---
-  duration_ms: 0.898245
-  type: 'test'
-  location: '/home/runner/work/Amy-fx/Amy-fx/tests/preview-post35-connectivity-regression.test.mjs:84:1'
-  failureType: 'testCodeFailure'
-  error: "Cannot read properties of undefined (reading 'freshness')"
-  code: 'ERR_TEST_FAILURE'
-  name: 'TypeError'
-  stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-post35-connectivity-regression.test.mjs:90:21)
-    Test.runInAsyncScope (node:async_hooks:214:14)
-    Test.run (node:internal/test_runner/test:1047:25)
-    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
-    Test.postRun (node:internal/test_runner/test:1173:19)
-    Test.run (node:internal/test_runner/test:1101:12)
-    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
-  ...
-# Subtest: syncGlobals clears a stale heatmap global when the persisted heatmap is removed
-not ok 5 - syncGlobals clears a stale heatmap global when the persisted heatmap is removed
-  ---
-  duration_ms: 28.885791
-  type: 'test'
-  location: '/home/runner/work/Amy-fx/Amy-fx/tests/preview-post35-connectivity-regression.test.mjs:96:1'
-  failureType: 'testCodeFailure'
-  error: |-
-    The expression evaluated to a falsy value:
+      function freshness(state = contract.read()) {
+        return contract.freshness(state);
+      }
     
-      assert.ok(window.AmyFXHeatmapState)
+      function briefing(state = contract.read()) {
+        const quoteFreshness = freshness(state);
+        const levels = contract.nearestLevels(state);
+        const mapping = state.mapping || {};
+        const conflicts = contract.conflicts(state);
     
-  code: 'ERR_ASSERTION'
-  name: 'AssertionError'
-  expected: true
-  operator: '=='
+        if (quoteFreshness.state !== 'LIVE') {
+          const lines = [`Quote XAU/USD ${quoteFreshness.label}.`];
+          if (levels.bsl || levels.ssl) lines.push(`Level Intel masih berstatus ${levels.freshness.state}.`);
+          if (conflicts.length) lines.push('Snapshot market memiliki perbedaan waktu atau sumber yang harus diperhatikan.');
+          return { tone: 'wait', title: `DATA ${quoteFreshness.label}`, lines };
+        }
+    
+        const bslDist = levels.bsl ? Math.abs(Number(levels.bsl.distance)) : Infinity;
+        const sslDist = levels.ssl ? Math.abs(Number(levels.ssl.distance)) : Infinity;
+        const pressure = bslDist < sslDist ? 'ABOVE PRICE' : sslDist < bslDist ? 'BELOW PRICE' : 'BALANCED';
+        const draw = bslDist < sslDist ? levels.bsl : sslDist < bslDist ? levels.ssl : (levels.bsl || levels.ssl);
+        const action = mapping.direction || mapping.status || 'WAIT';
+        return {
+          tone: String(action).includes('BUY') ? 'buy' : String(action).includes('SELL') ? 'sell' : 'wait',
+          title: 'RULE-BASED MARKET BRIEFING',
+          lines: [
+            `Liquidity pressure: ${pressure}`,
+            `Nearest draw: ${draw ? `${draw.type} ${priceText(draw.price)}` : 'WAITING INTEL LIQUIDITY'}`,
+            `Mapping: ${mapping.bias || 'WAIT'} · ${action}`,
+            `News risk: ${newsRisk(state)} · ${sessionInfo().label}`,
+            ...(conflicts.length ? ['Catatan: terdapat perbedaan sumber/timestamp; keputusan tetap WAIT sampai selaras.'] : [])
+          ]
+        };
+      }
+    
+      function mountStrip(target) {
+        if (!target || target._amyCanonicalStripMounted) return;
+        target._amyCanonicalStripMounted = true;
+    
+        const paint = () => {
+          const state = contract.read();
+          const quote = state.quote || {};
+          const quoteFreshness = contract.assess('quote', quote);
+          const levels = contract.nearestLevels(state);
+          const price = contract.bestCurrentPrice(state);
+          target.innerHTML = `<div class="amy-command-main"><span>XAU/USD</span><strong>${priceText(price)}</strong></div>`
+            + `<div class="amy-command-metric"><small>SESSION</small><b>${sessionInfo().id}</b></div>`
+            + `<div class="amy-command-metric"><small>BSL</small><b class="red" data-freshness="${levels.bsl?.freshness || 'UNAVAILABLE'}">${levelText(levels.bsl)}</b></div>`
+            + `<div class="amy-command-metric"><small>SSL</small><b class="green" data-freshness="${levels.ssl?.freshness || 'UNAVAILABLE'}">${levelText(levels.ssl)}</b></div>`
+            + `<div class="amy-command-metric"><small>NEWS</small><b>${newsRisk(state)}</b></div>`
+            + `<div class="amy-data-state ${quoteFreshness.className}" data-domain="quote" data-freshness="${quoteFreshness.state}"><i></i>${quoteFreshness.label}</div>`;
+        };
+    
+        paint();
+        window.addEventListener('amyfx:market-update', paint);
+        window.addEventListener('online', paint);
+        window.addEventListener('offline', paint);
+        window.addEventListener('storage', event => {
+          if (event.key === contract.storeKey) {
+            contract.syncGlobals();
+            paint();
+          }
+        });
+        target._amyPaint = paint;
+      }
+    
+      function mountBriefing(target) {
+        if (!target || target._amyCanonicalBriefingMounted) return;
+        target._amyCanonicalBriefingMounted = true;
+        const paint = () => {
+          const data = briefing();
+          target.className = `amy-briefing ${data.tone}`;
+          target.innerHTML = `<div class="amy-briefing-title">${data.title}</div>${data.lines.map(line => `<div>${line}</div>`).join('')}`;
+        };
+        paint();
+        window.addEventListener('amyfx:market-update', paint);
+        window.addEventListener('storage', event => {
+          if (event.key === contract.storeKey) paint();
+        });
+        target._amyPaint = paint;
+      }
+    
+      contract.syncGlobals();
+      window.AmyFXIntel = Object.freeze({
+        version: '2.0.0',
+        read: contract.read,
+        write: contract.write,
+        syncGlobals: contract.syncGlobals,
+        partTimestamp: contract.partTimestamp,
+        assessFreshness: contract.assess,
+        sessionInfo,
+        freshness,
+        nearestLevels: contract.nearestLevels,
+        bestCurrentPrice: contract.bestCurrentPrice,
+        conflicts: contract.conflicts,
+        snapshot: contract.snapshot,
+        newsRisk,
+        briefing,
+        mountStrip,
+        mountBriefing,
+        __amyCanonicalMarketContractV2: true
+      });
+    })();
+    
+  operator: 'match'
   stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-post35-connectivity-regression.test.mjs:101:10)
-    Test.runInAsyncScope (node:async_hooks:214:14)
-    Test.run (node:internal/test_runner/test:1047:25)
-    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
-    Test.postRun (node:internal/test_runner/test:1173:19)
-    Test.run (node:internal/test_runner/test:1101:12)
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-shared-market-intelligence.test.mjs:48:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
-# Subtest: Home publishes Journal, Library and Mapping counts even before Profile cards exist
-ok 6 - Home publishes Journal, Library and Mapping counts even before Profile cards exist
-  ---
-  duration_ms: 10.475179
-  type: 'test'
-  ...
-1..6
-# tests 6
+1..5
+# tests 5
 # suites 0
-# pass 2
+# pass 1
 # fail 4
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 156.208953
-Regression failed: preview-post35-connectivity-regression.test.mjs
+# duration_ms 99.828293
+Regression failed: preview-shared-market-intelligence.test.mjs
