@@ -4,133 +4,83 @@ import { state, nowTime } from "./main.js";
 import { runAnalysis, isCandleStale } from "./api/market-data.js";
 
 (function () {
-  if (window.__amyFxMappingLiveConsistencyV1) return;
-  window.__amyFxMappingLiveConsistencyV1 = true;
+  if (window.__amyFxMappingLiveConsistencyV2) return;
+  window.__amyFxMappingLiveConsistencyV2 = true;
 
-  const ANALYSIS_MAX_AGE_MS = 5 * 60 * 1000;
   const REFRESH_COOLDOWN_MS = 30 * 1000;
   let refreshInFlight = false;
   let lastRefreshAttemptAt = 0;
   let syncScheduled = false;
 
-  function clean(value) {
-    return String(value ?? "").trim();
+  function canonical() {
+    const contract = window.AmyFXMarketContract;
+    const intel = window.AmyFXIntel;
+    const shared = contract?.read?.() || intel?.read?.() || {};
+    const quote = shared.quote || {};
+    const mapping = shared.mapping || {};
+    const quoteFreshness = contract?.assess?.("quote", quote) || intel?.freshness?.(shared) || { state: "EXPIRED", label: "EXPIRED" };
+    const mappingFreshness = contract?.assess?.("mapping", mapping) || { state: mapping?.dataStale ? "EXPIRED" : "STALE" };
+    return { shared, quote, mapping, quoteFreshness, mappingFreshness };
   }
 
-  function timestamp(value) {
-    const numeric = Number(value);
-    const parsed = Number.isFinite(numeric) && numeric > 86_400_000
-      ? numeric
-      : new Date(value || 0).getTime();
-    return Number.isFinite(parsed) && parsed > 86_400_000 ? parsed : 0;
-  }
-
-  function mappingSnapshot() {
-    try {
-      return window.AmyFXIntel?.read?.()?.mapping || null;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  function mappingTimestamp(mapping = mappingSnapshot()) {
-    if (!mapping) return 0;
-    if (typeof window.AmyFXIntel?.partTimestamp === "function") {
-      return Number(window.AmyFXIntel.partTimestamp(mapping) || 0);
-    }
-    return Math.max(
-      timestamp(mapping.analyzedAt),
-      timestamp(mapping.capturedAt),
-      timestamp(mapping.captured_at),
-      timestamp(mapping.updated)
-    );
-  }
-
-  function mappingExplicitlyStale(mapping = mappingSnapshot()) {
-    const status = clean(mapping?.status || mapping?.statusText || mapping?.marketState).toUpperCase();
-    return Boolean(mapping?.dataStale) || /DATA USANG|EXPIRED|INVALID/.test(status);
-  }
-
-  function mappingIsFresh(mapping = mappingSnapshot()) {
-    const capturedAt = mappingTimestamp(mapping);
-    const sameTimeframe = !mapping?.timeframe || clean(mapping.timeframe).toUpperCase() === clean(state.tf).toUpperCase();
-    return Boolean(
-      mapping &&
-      sameTimeframe &&
-      capturedAt > 0 &&
-      Date.now() - capturedAt <= ANALYSIS_MAX_AGE_MS &&
-      !mappingExplicitlyStale(mapping)
-    );
+  function mappingIsFresh(mapping = canonical().mapping) {
+    const contract = window.AmyFXMarketContract;
+    const fresh = contract?.assess?.("mapping", mapping) || { state: "STALE" };
+    const sameTimeframe = !mapping?.timeframe || String(mapping.timeframe).toUpperCase() === String(state.tf).toUpperCase();
+    return Boolean(sameTimeframe && fresh.state === "FRESH" && !mapping?.dataStale);
   }
 
   function ensureStyles() {
-    if (document.getElementById("amy-mapping-live-consistency-style-v1")) return;
+    if (document.getElementById("amy-mapping-live-consistency-style-v2")) return;
     const style = document.createElement("style");
-    style.id = "amy-mapping-live-consistency-style-v1";
+    style.id = "amy-mapping-live-consistency-style-v2";
     style.textContent = `
-      #conn[data-analysis-freshness="expired"] { color:#fbbf24 !important; }
-      #conn[data-analysis-freshness="fresh"] { color:#4ade80 !important; }
-      #conn[data-analysis-freshness="loading"] { color:#e7c65a !important; }
+      #conn[data-quote-freshness="LIVE"][data-analysis-freshness="FRESH"] { color:#4ade80 !important; }
+      #conn[data-quote-freshness="LIVE"][data-analysis-freshness="STALE"],
+      #conn[data-quote-freshness="LIVE"][data-analysis-freshness="EXPIRED"] { color:#fbbf24 !important; }
+      #conn[data-quote-freshness="STALE"],
+      #conn[data-quote-freshness="EXPIRED"],
+      #conn[data-quote-freshness="OFFLINE"] { color:#fb7185 !important; }
+      #conn[data-analysis-freshness="LOADING"] { color:#e7c65a !important; }
     `;
     (document.head || document.documentElement).appendChild(style);
   }
 
   function syncConnectionLabel() {
     ensureStyles();
-    const mapping = mappingSnapshot();
-    const fresh = mappingIsFresh(mapping);
-    const connected = state.conn === "Connected";
+    const { quoteFreshness, mappingFreshness } = canonical();
     const conn = document.getElementById("conn");
+    const quoteState = quoteFreshness.state || quoteFreshness.label || "EXPIRED";
+    const mappingState = refreshInFlight ? "LOADING" : mappingFreshness.state || "EXPIRED";
+    const connected = state.conn === "Connected" && quoteState === "LIVE";
 
     if (conn) {
-      let text = state.conn || "Offline";
-      let freshness = "offline";
-      if (refreshInFlight) {
-        text = `● Connected · Memperbarui ${state.tf}`;
-        freshness = "loading";
-      } else if (connected && fresh) {
-        text = `● Connected · ${state.tf} Fresh`;
-        freshness = "fresh";
-      } else if (connected) {
-        text = `● Price Live · ${state.tf} Expired`;
-        freshness = "expired";
-      }
-      if (conn.textContent !== text) conn.textContent = text;
-      conn.dataset.analysisFreshness = freshness;
+      let label = `○ ${state.conn || "Offline"}`;
+      if (refreshInFlight && quoteState === "LIVE") label = `● Price LIVE · memperbarui Mapping ${state.tf}`;
+      else if (quoteState === "LIVE" && mappingState === "FRESH") label = `● Price LIVE · Mapping ${state.tf} FRESH`;
+      else if (quoteState === "LIVE") label = `● Price LIVE · Mapping ${state.tf} ${mappingState}`;
+      else label = `○ Price ${quoteState} · Mapping ${state.tf} ${mappingState}`;
+      if (conn.textContent !== label) conn.textContent = label;
+      conn.dataset.quoteFreshness = quoteState;
+      conn.dataset.analysisFreshness = mappingState;
       conn.className = connected ? "status on" : "status";
     }
 
-    const topTime = document.getElementById("top-wib");
+    const topTime = document.getElementById("top-wib") || document.getElementById("top-wita");
     if (topTime) {
-      const label = connected
-        ? fresh
-          ? `● Live Price • Mapping ${state.tf} fresh • WITA ${nowTime()}`
-          : `● Live Price • Mapping ${state.tf} kedaluwarsa • WITA ${nowTime()}`
-        : `○ ${state.conn || "Offline"} • WITA ${nowTime()}`;
-      if (topTime.textContent !== label) topTime.textContent = label;
       topTime.id = "top-wita";
-    }
-
-    const currentTopTime = document.getElementById("top-wita");
-    if (currentTopTime) {
-      const label = connected
-        ? fresh
-          ? `● Live Price • Mapping ${state.tf} fresh • WITA ${nowTime()}`
-          : `● Live Price • Mapping ${state.tf} kedaluwarsa • WITA ${nowTime()}`
-        : `○ ${state.conn || "Offline"} • WITA ${nowTime()}`;
-      if (currentTopTime.textContent !== label) currentTopTime.textContent = label;
+      const quoteLabel = quoteState === "LIVE" ? "Live Price" : `Price ${quoteState}`;
+      topTime.textContent = `${quoteLabel} • Mapping ${state.tf} ${mappingState.toLowerCase()} • WITA ${nowTime()}`;
     }
 
     const killzoneTime = document.getElementById("kz-wib") || document.getElementById("kz-wita");
     if (killzoneTime) {
       killzoneTime.id = "kz-wita";
-      const label = `WITA ${nowTime()}`;
-      if (killzoneTime.textContent !== label) killzoneTime.textContent = label;
+      killzoneTime.textContent = `WITA ${nowTime()}`;
     }
 
     document.querySelectorAll(".session-focus small").forEach(node => {
-      const value = clean(node.textContent).replace(/\bWIB\b/g, "WITA");
-      if (node.textContent !== value) node.textContent = value;
+      node.textContent = String(node.textContent || "").replace(/\bWIB\b/g, "WITA");
     });
   }
 
@@ -145,14 +95,13 @@ import { runAnalysis, isCandleStale } from "./api/market-data.js";
 
   function analysisNeedsRefresh() {
     if (document.hidden || state.conn !== "Connected") return false;
-    const mapping = mappingSnapshot();
-    return !mappingIsFresh(mapping) || isCandleStale(state.tf);
+    const { quoteFreshness, mappingFreshness } = canonical();
+    return quoteFreshness.state === "LIVE" && (mappingFreshness.state !== "FRESH" || isCandleStale(state.tf));
   }
 
   async function refreshExpiredAnalysis(reason = "mapping-expired") {
     if (!analysisNeedsRefresh() || refreshInFlight) return;
     if (Date.now() - lastRefreshAttemptAt < REFRESH_COOLDOWN_MS) return;
-
     lastRefreshAttemptAt = Date.now();
     refreshInFlight = true;
     scheduleSync();
@@ -161,8 +110,6 @@ import { runAnalysis, isCandleStale } from "./api/market-data.js";
       window.dispatchEvent(new CustomEvent("amyfx:mapping-consistency-refresh", {
         detail: { reason, timeframe: state.tf, refreshedAt: Date.now() }
       }));
-    } catch (_) {
-      // runAnalysis already records and renders the actionable error state.
     } finally {
       refreshInFlight = false;
       scheduleSync();
@@ -178,6 +125,7 @@ import { runAnalysis, isCandleStale } from "./api/market-data.js";
     reconcile("startup");
     window.addEventListener("amyfx:market-update", () => reconcile("market-update"));
     window.addEventListener("online", () => reconcile("online"));
+    window.addEventListener("offline", scheduleSync);
     window.addEventListener("focus", () => reconcile("focus"));
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) reconcile("visible");
@@ -189,7 +137,7 @@ import { runAnalysis, isCandleStale } from "./api/market-data.js";
   }
 
   window.AmyFXMappingConsistency = Object.freeze({
-    version: "1.0.0",
+    version: "2.0.0",
     mappingIsFresh,
     refresh: refreshExpiredAnalysis,
     sync: syncConnectionLabel
