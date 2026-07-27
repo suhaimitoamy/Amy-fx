@@ -1,6 +1,6 @@
 Amy FX Private Preview regression failure
-Run: 30282301028
-Commit: 06967009b83b85c5b5908758e92fbe8325114432
+Run: 30282414823
+Commit: f9f6586bea6e3a8151ba7fef97cdc3028495a66c
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -15,22 +15,21 @@ not ok 7 - TwelveData backend normalizes UTC timestamps for session boundaries
 Regression failed: asia-range.test.mjs
 
 --- final log lines ---
-    
-      if (memoryCache.size <= MEMORY_CACHE_LIMIT) return;
-      [...memoryCache.entries()]
-        .sort((a, b) => a[1].storedAt - b[1].storedAt)
-        .slice(0, memoryCache.size - 30)
-        .forEach(([entryKey]) => memoryCache.delete(entryKey));
-    }
-    
-    function setCacheHeaders(res, ttl, state = 'MISS', source = '') {
-      const staleSeconds = Math.max(ttl * 4, 300);
       const cacheControl = `public, s-maxage=${ttl}, stale-while-revalidate=${staleSeconds}, stale-if-error=${staleSeconds}`;
       res.setHeader('Cache-Control', cacheControl);
       res.setHeader('CDN-Cache-Control', cacheControl);
       res.setHeader('Vercel-CDN-Cache-Control', cacheControl);
       res.setHeader('X-AmyFX-Market-Cache', state);
       if (source) res.setHeader('X-AmyFX-Market-Source', source);
+    }
+    
+    function clientCompatibleData(data) {
+      if (!data?.closedOnly || !Array.isArray(data.values) || !data.values.length) return data;
+      return {
+        ...data,
+        values: [{ ...data.values[0], amyfxSyntheticCurrent: true }, ...data.values],
+        clientCompatibility: 'CLOSED_SERIES_SENTINEL_V1'
+      };
     }
     
     function canonicalM1Url(symbol) {
@@ -88,7 +87,8 @@ Regression failed: asia-range.test.mjs
       }
     
       try {
-        const data = await request;
+        const rawData = await request;
+        const data = clientCompatibleData(rawData);
         writeCache(key, data, ttl);
         const cacheState = data.amyfxCacheState || 'PROVIDER_MISS';
         const responseTtl = cacheState === 'SUPABASE_STALE_FALLBACK' ? Math.min(ttl, 60) : ttl;
@@ -133,5 +133,5 @@ Regression failed: asia-range.test.mjs
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 394.613619
+# duration_ms 145.228878
 Regression failed: asia-range.test.mjs
