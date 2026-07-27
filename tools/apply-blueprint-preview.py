@@ -17,6 +17,7 @@ PROVIDER_FIX_JS = ASSETS / "apps/shared/amyfx-provider-detection-v1.js"
 HOME_DATA_JS = ASSETS / "apps/shared/amyfx-home-data-integration-v1.js"
 MAPPING_BRIDGE_JS = ASSETS / "apps/mapping/js/blueprint-context-bridge.js"
 MAPPING_INDEX = ASSETS / "apps/mapping/index.html"
+MARKET_INTEL_INDEX = ASSETS / "apps/market-intel/index.html"
 JOURNAL_APP = ASSETS / "apps/journal/app.js"
 MARKET_INTEL_SHARED = ASSETS / "apps/shared/market-intelligence.js"
 MARKET_INTEL_APP = ASSETS / "apps/market-intel/app.js"
@@ -27,7 +28,7 @@ ACADEMY_INDEX = ASSETS / "apps/academy/index.html"
 MODULE_HTML = [
     ASSETS / "index.html",
     MAPPING_INDEX,
-    ASSETS / "apps/market-intel/index.html",
+    MARKET_INTEL_INDEX,
     ASSETS / "apps/journal/index.html",
     ACADEMY_INDEX,
 ]
@@ -117,7 +118,6 @@ def normalize_source_identity() -> list[Path]:
 def patch_blueprint_runtime() -> bool:
     raw = SHARED_JS.read_text(encoding="utf-8")
     updated = raw
-    changed = False
 
     replacements = [
         (
@@ -168,8 +168,7 @@ def patch_blueprint_runtime() -> bool:
     ]
 
     for old, new, label in replacements:
-        updated, did_change = replace_once(updated, old, new, label)
-        changed = changed or did_change
+        updated, _ = replace_once(updated, old, new, label)
 
     old_values = """      window.AmyFXHeatmapState?.updatedAt,
       window.AmyFXIntel?.updatedAt
@@ -181,20 +180,20 @@ def patch_blueprint_runtime() -> bool:
       window.AmyFXIntel?.read?.()?.liquidity?.updated,
       window.AmyFXIntel?.read?.()?.news?.updated
     ];"""
-    updated, did_change = replace_once(updated, old_values, new_values, "shared market timestamps")
-    changed = changed or did_change
+    updated, _ = replace_once(updated, old_values, new_values, "shared market timestamps")
 
     listener_anchor = """    document.addEventListener("visibilitychange", () => {
       if (!document.hidden) refreshMentorContext();
     });"""
-    listener_new = """    ["amyfx:journal-state-change", "amyfx:mapping-state-change", "amyfx:market-update", "amyfx:home-stats-change"]
-      .forEach(name => window.addEventListener(name, () => refreshMentorContext()));
-    document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) refreshMentorContext();
-    });"""
-    updated, did_change = replace_once(updated, listener_anchor, listener_new, "live context refresh events")
-    changed = changed or did_change
+    listener_block = """    ["amyfx:journal-state-change", "amyfx:mapping-state-change", "amyfx:market-update", "amyfx:home-stats-change"]
+      .forEach(name => window.addEventListener(name, () => refreshMentorContext()));"""
+    if listener_anchor not in updated:
+        raise RuntimeError("live context refresh visibility anchor is missing")
+    while listener_block in updated:
+        updated = updated.replace(listener_block + "\n", "", 1)
+    updated = updated.replace(listener_anchor, listener_block + "\n" + listener_anchor, 1)
 
+    changed = updated != raw
     if changed:
         SHARED_JS.write_text(updated, encoding="utf-8")
     return changed
@@ -258,15 +257,17 @@ def patch_market_intel_runtime() -> list[Path]:
 
     shared_raw = MARKET_INTEL_SHARED.read_text(encoding="utf-8")
     shared_updated = shared_raw.replace("timeZone: 'Asia/Jakarta'", "timeZone: 'Asia/Makassar'")
-    write_old = """    state[part] = { ...payload, storedAt: Date.now() };
+    canonical_contract = "__amyCanonicalMarketContractV2" in shared_updated or "AmyFXMarketContract" in shared_updated
+    if not canonical_contract:
+        write_old = """    state[part] = { ...payload, storedAt: Date.now() };
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
     window.dispatchEvent(new CustomEvent('amyfx:market-update', { detail: state }));"""
-    write_new = """    state[part] = { ...payload, storedAt: Date.now() };
+        write_new = """    state[part] = { ...payload, storedAt: Date.now() };
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
     window.AmyFXIntelState = { ...state, updatedAt: payload?.updated || new Date().toISOString() };
     if (part === 'heatmap') window.AmyFXHeatmapState = { ...state[part], sourceMethod: payload?.source || payload?.sourceMethod || 'OHLC-derived/modelled liquidity' };
     window.dispatchEvent(new CustomEvent('amyfx:market-update', { detail: state }));"""
-    shared_updated, _ = replace_once(shared_updated, write_old, write_new, "Market Intel global contract")
+        shared_updated, _ = replace_once(shared_updated, write_old, write_new, "Market Intel global contract")
     if shared_updated != shared_raw:
         MARKET_INTEL_SHARED.write_text(shared_updated, encoding="utf-8")
         changed.append(MARKET_INTEL_SHARED)
@@ -348,7 +349,18 @@ def inject_html(path: Path) -> bool:
     blueprint_index = updated.find(JS_MARKER)
     hotfix_index = updated.find(HOTFIX_MARKER)
     provider_fix_index = updated.find(PROVIDER_FIX_MARKER)
-    if blueprint_index < 0 or hotfix_index <= blueprint_index or provider_fix_index <= hotfix_index:
+    market_page = path in {MAPPING_INDEX, MARKET_INTEL_INDEX}
+    valid_order = (
+        hotfix_index >= 0
+        and blueprint_index >= 0
+        and provider_fix_index >= 0
+        and (
+            hotfix_index < blueprint_index < provider_fix_index
+            if market_page
+            else blueprint_index < hotfix_index < provider_fix_index
+        )
+    )
+    if not valid_order:
         raise RuntimeError(f"Blueprint stabilization order is invalid in {path}")
 
     if updated == raw:
