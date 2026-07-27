@@ -180,7 +180,15 @@
       regime: payload?.regime,
       strategy: payload?.strategy,
       shiftRisk: payload?.shiftRisk,
-      levels: payload?.levels,
+      levels: (Array.isArray(payload?.levels) ? payload.levels : []).map(item => ({
+        type: item?.type || item?.liquidityType || null,
+        level: Number(item?.price ?? item?.level) || null,
+        status: item?.status || null,
+        active: item?.active !== false,
+        strength: item?.strength ?? item?.score ?? null,
+        source: item?.source || null,
+        timeframe: item?.timeframe || item?.tf || null
+      })),
       bsl: payload?.bsl,
       ssl: payload?.ssl
     });
