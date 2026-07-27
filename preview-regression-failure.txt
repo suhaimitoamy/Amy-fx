@@ -1,6 +1,6 @@
 Amy FX Preview regression failure
-Run: 30228195619
-Commit: d5f25750f7e3f74b70f861968fc567fd6a14ab0f
+Run: 30228292041
+Commit: ef87c749e89e0a6b2ed4318419e4bf9e3d406829
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -50,33 +50,22 @@ Commit: d5f25750f7e3f74b70f861968fc567fd6a14ab0f
 ===== market-regime-engine-v2.test.mjs =====
 ===== mentor-customer-service.test.mjs =====
 ===== mentor-universal-access.test.mjs =====
-not ok 1 - universal Mentor runtime is valid JavaScript and loaded after the conversation runtime
+===== native-updater.test.mjs =====
+===== news-relevance-regression.test.mjs =====
+===== news-routing-regression.test.mjs =====
+===== notification-icon-regression.test.mjs =====
+===== notification-route-regression.test.mjs =====
+===== notification-route-sync.test.mjs =====
+===== preview-connectivity-audit-v2.test.mjs =====
+not ok 1 - final connectivity runtime exists, parses, and is loaded after universal Mentor access
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
   actual: |-
   operator: 'match'
-Regression failed: mentor-universal-access.test.mjs
+Regression failed: preview-connectivity-audit-v2.test.mjs
 
 --- final log lines ---
-        script.src = runtimeUrl(filename);
-        script.setAttribute(marker, "1");
-        script.async = false;
-        script.addEventListener("load", () => next?.(), { once: true });
-        script.addEventListener("error", () => next?.(), { once: true });
-        (document.head || document.documentElement).appendChild(script);
-      }
-    
-      function loadSafeRuleChatRuntime() {
-        loadScriptOnce("amyfx-mentor-rule-chat-safe-v3.js", "data-amyfx-rule-chat-safe", "__amyFxMentorRuleChatSafeV3");
-      }
-    
-      function loadUniversalAccessRuntime() {
-        loadScriptOnce("amyfx-mentor-universal-access-v1.js", "data-amyfx-mentor-universal", "__amyFxMentorUniversalAccessV1", loadSafeRuleChatRuntime);
-      }
-    
-      function loadCustomerServiceRuntime() { loadUniversalAccessRuntime(); }
-      function loadConnectivityRuntime() { loadSafeRuleChatRuntime(); }
       function loadFinalConnectivityRuntime() { loadSafeRuleChatRuntime(); }
       function loadRuleChatFinalRuntime() { loadSafeRuleChatRuntime(); }
     
@@ -135,47 +124,65 @@ Regression failed: mentor-universal-access.test.mjs
     
   operator: 'match'
   stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/mentor-universal-access.test.mjs:21:10)
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-connectivity-audit-v2.test.mjs:31:10)
     async Test.run (node:internal/test_runner/test:1054:7)
     async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
   ...
-# Subtest: Amy Mentor can retrieve every Amy FX workspace domain
-ok 2 - Amy Mentor can retrieve every Amy FX workspace domain
+# Subtest: all primary modules install the shared provider/bootstrap chain
+ok 2 - all primary modules install the shared provider/bootstrap chain
   ---
-  duration_ms: 2.729016
+  duration_ms: 3.483659
   type: 'test'
   ...
-# Subtest: universal context is query-aware, bounded and blocks raw credentials
-ok 3 - universal context is query-aware, bounded and blocks raw credentials
+# Subtest: bot data adapter matches customer-service contracts for version, providers and secure vault
+ok 3 - bot data adapter matches customer-service contracts for version, providers and secure vault
   ---
-  duration_ms: 1.302187
+  duration_ms: 1.221637
   type: 'test'
   ...
-# Subtest: universal context enriches the existing Context Envelope instead of bypassing safety rules
-ok 4 - universal context enriches the existing Context Envelope instead of bypassing safety rules
+# Subtest: IndexedDB reads never create an empty database, overwrite Journal schema, or leak late handles
+ok 4 - IndexedDB reads never create an empty database, overwrite Journal schema, or leak late handles
   ---
-  duration_ms: 1.598664
+  duration_ms: 1.643744
   type: 'test'
   ...
-# Subtest: Mentor UI always sends through universal access without duplicate legacy submission
-ok 5 - Mentor UI always sends through universal access without duplicate legacy submission
+# Subtest: market status requires a price and timestamp from the same fresh Mapping, Liquidity, Heatmap, or live-state candidate
+ok 5 - market status requires a price and timestamp from the same fresh Mapping, Liquidity, Heatmap, or live-state candidate
   ---
-  duration_ms: 1.089519
+  duration_ms: 1.018594
   type: 'test'
   ...
-# Subtest: workspace access includes full catalogs but only query-relevant heavy content
-ok 6 - workspace access includes full catalogs but only query-relevant heavy content
+# Subtest: 90 percent bot route stays local while AI escalation receives corrected full workspace freshness
+ok 6 - 90 percent bot route stays local while AI escalation receives corrected full workspace freshness
   ---
-  duration_ms: 1.137468
+  duration_ms: 0.946457
   type: 'test'
   ...
-1..6
-# tests 6
+# Subtest: customer-service numeric menu and module navigation are connected
+ok 7 - customer-service numeric menu and module navigation are connected
+  ---
+  duration_ms: 1.012101
+  type: 'test'
+  ...
+# Subtest: Journal deep links connect Library, Media, Journal, Notes, Assistant and Statistics views
+ok 8 - Journal deep links connect Library, Media, Journal, Notes, Assistant and Statistics views
+  ---
+  duration_ms: 1.212499
+  type: 'test'
+  ...
+# Subtest: bot workspace supports nested Journal v2 outcomes and accurate completed win rate
+ok 9 - bot workspace supports nested Journal v2 outcomes and accurate completed win rate
+  ---
+  duration_ms: 1.22884
+  type: 'test'
+  ...
+1..9
+# tests 9
 # suites 0
-# pass 5
+# pass 8
 # fail 1
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 122.86719
-Regression failed: mentor-universal-access.test.mjs
+# duration_ms 102.646548
+Regression failed: preview-connectivity-audit-v2.test.mjs
