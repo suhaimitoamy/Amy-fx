@@ -4,25 +4,23 @@
   if (window.__amyFxProfessionalMarketRepairV1) return;
   window.__amyFxProfessionalMarketRepairV1 = true;
 
-  const VERSION = "1.0.0";
+  const VERSION = "2.0.0";
   const ZONE_KEY = "amyfx.bot.mapping.zones.v1";
-  const INTEL_KEY = "amyfx.market.intel.v1";
-  const MAX_LIVE_AGE_MS = 5 * 60 * 1000;
   const INACTIVE = /(SWEPT|CONSUMED|TOUCHED|TAKEN|MITIGATED|FILLED|INVALID|BROKEN|EXPIRED|HISTORICAL|INACTIVE|REPLACED)/i;
 
   const clean = value => String(value ?? "").trim();
   const lower = value => clean(value).toLowerCase().replace(/[^a-z0-9À-ÿ%./+\-\s]/gi, " ").replace(/\s+/g, " ").trim();
 
   function safeParse(value, fallback = null) {
-    try { return JSON.parse(value); } catch { return fallback; }
+    try { return JSON.parse(value); } catch (_) { return fallback; }
   }
 
   function readJson(key, fallback) {
-    try { return safeParse(localStorage.getItem(key), fallback) ?? fallback; } catch { return fallback; }
+    try { return safeParse(localStorage.getItem(key), fallback) ?? fallback; } catch (_) { return fallback; }
   }
 
   function writeJson(key, value) {
-    try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; }
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (_) { return false; }
   }
 
   function number(value) {
@@ -37,13 +35,13 @@
 
   function validTime(value) {
     const numeric = Number(value);
-    const time = Number.isFinite(numeric) && numeric > 86_400_000 ? numeric : new Date(value || 0).getTime();
-    return Number.isFinite(time) && time > 86_400_000 ? time : 0;
+    const parsed = Number.isFinite(numeric) && numeric > 86_400_000 ? numeric : new Date(value || 0).getTime();
+    return Number.isFinite(parsed) && parsed > 86_400_000 ? parsed : 0;
   }
 
-  function latestTime(values) {
-    const rows = values.map(validTime).filter(Boolean);
-    return rows.length ? new Date(Math.max(...rows)).toISOString() : null;
+  function isoTime(value) {
+    const parsed = validTime(value);
+    return parsed ? new Date(parsed).toISOString() : null;
   }
 
   function priceText(value) {
@@ -52,65 +50,31 @@
   }
 
   function timeText(value) {
-    const time = validTime(value);
-    if (!time) return "waktu belum tersedia";
+    const parsed = validTime(value);
+    if (!parsed) return "waktu sumber belum tersedia";
     try {
       return new Intl.DateTimeFormat("id-ID", {
-        timeZone: "Asia/Makassar",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false
-      }).format(new Date(time)) + " WITA";
-    } catch {
-      return new Date(time).toISOString();
+        timeZone: "Asia/Makassar", hour: "2-digit", minute: "2-digit", hour12: false
+      }).format(new Date(parsed)) + " WITA";
+    } catch (_) {
+      return new Date(parsed).toISOString();
     }
   }
 
   function intelState() {
     try {
-      const state = window.AmyFXIntel?.read?.();
+      const state = window.AmyFXMarketContract?.read?.() || window.AmyFXIntel?.read?.();
       if (state && typeof state === "object") return state;
-    } catch {}
-    if (window.AmyFXIntelState && typeof window.AmyFXIntelState === "object") return window.AmyFXIntelState;
-    return readJson(INTEL_KEY, {});
-  }
-
-  function liveResult() {
-    return window.AmyFXMarketState?.result || window.state?.result || window.lastMappingResult || null;
-  }
-
-  function partTimestamp(part) {
-    const original = window.AmyFXIntel?.partTimestamp;
-    try {
-      const value = original?.(part);
-      if (validTime(value)) return validTime(value);
-    } catch {}
-    return Math.max(
-      validTime(part?.updated),
-      validTime(part?.capturedAt),
-      validTime(part?.captured_at),
-      validTime(part?.analyzedAt),
-      validTime(part?.storedAt)
-    );
-  }
-
-  function partFresh(part) {
-    const time = partTimestamp(part);
-    const status = clean(part?.status || part?.statusText).toUpperCase();
-    return Boolean(time && Date.now() - time <= MAX_LIVE_AGE_MS && !part?.dataStale && !/DATA USANG|STALE|EXPIRED|INVALID/.test(status));
+    } catch (_) {}
+    return window.AmyFXIntelState && typeof window.AmyFXIntelState === "object" ? window.AmyFXIntelState : {};
   }
 
   function currentPrice(state = intelState()) {
-    const values = [
-      state?.liquidity?.currentPrice,
-      state?.heatmap?.currentPrice,
-      state?.mapping?.price,
-      window.AmyFXMarketState?.price,
-      window.state?.price,
-      liveResult()?.price,
-      localStorage.getItem("last_price")
-    ].map(positiveNumber).filter(Boolean);
-    return values[0] || null;
+    try {
+      const price = positiveNumber(window.AmyFXMarketContract?.bestCurrentPrice?.(state) || window.AmyFXIntel?.bestCurrentPrice?.(state));
+      if (price) return price;
+    } catch (_) {}
+    return positiveNumber(state?.quote?.price);
   }
 
   function levelActive(item) {
@@ -131,47 +95,45 @@
       distance: number(item?.distance ?? item?.distanceFromPrice) ?? (price ? level - price : 0),
       active: true,
       status: clean(item?.status || "ACTIVE").toUpperCase(),
-      source: clean(item?.source || "Market Intel")
+      source: "Intel Liquidity nearest draw"
     };
-  }
-
-  function levelsFromPart(part, name, type, price) {
-    if (!part || !partFresh(part)) return null;
-    const rows = name === "heatmap"
-      ? (Array.isArray(part.zones) ? part.zones.map(zone => ({ ...zone, type: zone.type || zone.liquidityType })) : [])
-      : (Array.isArray(part.levels) ? part.levels : []);
-    const candidates = rows
-      .filter(item => clean(item?.type || item?.liquidityType).toUpperCase() === type)
-      .map(item => normalizeLevel(item, type, price))
-      .filter(Boolean)
-      .sort((left, right) => Math.abs(left.distance) - Math.abs(right.distance));
-    if (candidates[0]) return { ...candidates[0], sourceLabel: name === "liquidity" ? "Intel Liquidity nearest draw" : `${name} fallback` };
-    const direct = normalizeLevel({ type, price: part?.[type.toLowerCase()], source: name }, type, price);
-    return direct ? { ...direct, sourceLabel: `${name} fallback` } : null;
   }
 
   function canonicalNearestLevels(state = intelState()) {
-    const price = currentPrice(state);
-    const order = ["liquidity", "heatmap", "mapping"];
-    const select = type => {
-      for (const name of order) {
-        const level = levelsFromPart(state?.[name], name, type, price);
-        if (level) return level;
-      }
-      return null;
+    try {
+      const canonical = window.AmyFXMarketContract?.nearestLevels?.(state);
+      if (canonical) return canonical;
+    } catch (_) {}
+
+    const price = currentPrice(state) || positiveNumber(state?.liquidity?.currentPrice);
+    const liquidity = state?.liquidity || {};
+    const rows = Array.isArray(liquidity.levels) ? liquidity.levels : [];
+    const select = type => rows
+      .filter(item => clean(item?.type || item?.liquidityType).toUpperCase() === type)
+      .map(item => normalizeLevel(item, type, price))
+      .filter(Boolean)
+      .sort((left, right) => Math.abs(left.distance) - Math.abs(right.distance))[0] || null;
+    return {
+      bsl: select("BSL"),
+      ssl: select("SSL"),
+      source: "INTEL_LIQUIDITY_ONLY",
+      unavailable: !state?.liquidity
     };
-    return { bsl: select("BSL"), ssl: select("SSL"), source: "Intel Liquidity → Heatmap → Mapping fallback" };
   }
 
   function patchIntel() {
     const intel = window.AmyFXIntel;
-    if (!intel || intel.__amyCanonicalLiquidityRepairV1) return false;
-    window.AmyFXIntel = {
+    if (!intel || intel.__amyCanonicalLiquidityRepairV2) return Boolean(intel);
+    window.AmyFXIntel = Object.freeze({
       ...intel,
       nearestLevels: canonicalNearestLevels,
-      __amyCanonicalLiquidityRepairV1: true
-    };
+      __amyCanonicalLiquidityRepairV2: true
+    });
     return true;
+  }
+
+  function liveResult() {
+    return window.AmyFXMarketState?.result || window.state?.result || window.lastMappingResult || null;
   }
 
   function normalizeZone(item, kind) {
@@ -195,7 +157,7 @@
       timeframe: clean(item.timeframe || item.tf || "M15").toUpperCase(),
       status: status || "ACTIVE",
       source: clean(item.source || "Mapping engine"),
-      updatedAt: latestTime([item.updatedAt, item.updated, item.capturedAt, item.timestamp])
+      capturedAt: isoTime(item.capturedAt || item.updatedAt || item.updated || item.timestamp)
     };
   }
 
@@ -216,25 +178,13 @@
     const concepts = result?.marketConcepts || {};
     const mappingZones = result?.mappingZones || concepts?.mappingZones || {};
     const values = kind === "FVG" ? [
-      concepts.nearestFairValueGaps,
-      concepts.fairValueGaps,
-      mappingZones.nearestFairValueGaps,
-      mappingZones.allFairValueGaps,
-      result?.nearestFairValueGaps,
-      result?.fairValueGaps,
-      result?.fvgs,
-      result?.nearFvg,
-      result?.nearFVG
+      concepts.nearestFairValueGaps, concepts.fairValueGaps,
+      mappingZones.nearestFairValueGaps, mappingZones.allFairValueGaps,
+      result?.nearestFairValueGaps, result?.fairValueGaps, result?.fvgs, result?.nearFvg, result?.nearFVG
     ] : [
-      concepts.nearestOrderBlocks,
-      concepts.orderBlocks,
-      mappingZones.nearestOrderBlocks,
-      mappingZones.allOrderBlocks,
-      result?.nearestOrderBlocks,
-      result?.orderBlocks,
-      result?.obs,
-      result?.nearOb,
-      result?.nearOB
+      concepts.nearestOrderBlocks, concepts.orderBlocks,
+      mappingZones.nearestOrderBlocks, mappingZones.allOrderBlocks,
+      result?.nearestOrderBlocks, result?.orderBlocks, result?.obs, result?.nearOb, result?.nearOB
     ];
     return dedupeZones(flatten(values).map(item => normalizeZone(item, kind)));
   }
@@ -249,26 +199,29 @@
     return [...rows].sort((left, right) => distanceToZone(left, price) - distanceToZone(right, price))[0] || null;
   }
 
+  function mappingCapturedAt(result) {
+    const contractState = intelState();
+    return isoTime(
+      result?.capturedAt || result?.captured_at || result?.sourceCandleAt || result?.timestamp
+      || contractState?.mapping?.capturedAt
+    );
+  }
+
   function publishZones() {
     const result = liveResult();
     if (!result || typeof result !== "object") return readJson(ZONE_KEY, {});
+    const capturedAt = mappingCapturedAt(result);
+    if (!capturedAt) return readJson(ZONE_KEY, {});
     const price = currentPrice();
     const fvgRows = zonesFromResult(result, "FVG");
     const obRows = zonesFromResult(result, "OB");
     if (!fvgRows.length && !obRows.length) return readJson(ZONE_KEY, {});
-    const capturedAt = latestTime([
-      result.capturedAt,
-      result.captured_at,
-      result.updatedAt,
-      result.timestamp,
-      window.AmyFXMarketState?.capturedAt,
-      Date.now()
-    ]);
     const snapshot = {
-      schema: "AmyFXBotMappingZonesV1",
-      schemaVersion: 1,
+      schema: "AmyFXBotMappingZonesV2",
+      schemaVersion: 2,
       capturedAt,
       storedAt: new Date().toISOString(),
+      freshness: window.AmyFXMarketContract?.assess?.("mapping", { capturedAt, timeframe: result?.tf || result?.timeframe })?.state || "STRUCTURAL",
       price,
       fvg: nearestZone(fvgRows, price),
       ob: nearestZone(obRows, price),
@@ -281,17 +234,17 @@
 
   function zoneSnapshot() {
     const live = publishZones();
-    if (live?.schema) return live;
-    return readJson(ZONE_KEY, {});
+    return live?.schema ? live : readJson(ZONE_KEY, {});
   }
 
   function zoneAnswer(kind) {
     const snapshot = zoneSnapshot();
     const zone = kind === "FVG" ? snapshot?.fvg : snapshot?.ob;
     const label = kind === "FVG" ? "FVG" : "Order Block";
-    if (!zone) return `${label} aktif belum ditemukan pada output Mapping engine terbaru. Sumber: Mapping engine • ${timeText(snapshot?.capturedAt)}.`;
+    if (!zone) return `${label} aktif belum ditemukan pada output Mapping engine terbaru.`;
+    const freshness = snapshot?.freshness && snapshot.freshness !== "FRESH" ? ` Status ${snapshot.freshness}.` : "";
     const direction = zone.direction && !/NEUTRAL|WAIT/.test(zone.direction) ? ` ${zone.direction}` : "";
-    return `${label} aktif terdekat berada di area ${priceText(zone.low)}–${priceText(zone.high)}${direction}. Sumber: Mapping engine · ${zone.source || kind} • ${timeText(snapshot.capturedAt)}.`;
+    return `${label} aktif terdekat berada di area ${priceText(zone.low)}–${priceText(zone.high)}${direction}. Sumber: Mapping engine · ${zone.source || kind} • ${timeText(snapshot.capturedAt)}.${freshness}`;
   }
 
   function classify(question) {
@@ -307,44 +260,18 @@
   }
 
   function syncCommandStrips() {
-    patchIntel();
-    const levels = canonicalNearestLevels();
-    document.querySelectorAll?.(".amy-command-strip").forEach(strip => {
-      strip.querySelectorAll?.(".amy-command-metric").forEach(metric => {
-        const label = clean(metric.querySelector?.("small")?.textContent).toUpperCase();
-        const value = metric.querySelector?.("b");
-        if (!value) return;
-        if (label === "BSL") value.textContent = levels.bsl ? Number(levels.bsl.price).toFixed(2) : "--";
-        if (label === "SSL") value.textContent = levels.ssl ? Number(levels.ssl.price).toFixed(2) : "--";
-      });
-    });
+    return false;
   }
 
   function boot() {
     patchIntel();
     publishZones();
-    syncCommandStrips();
     ["amyfx:mapping-state-change", "amyfx:market-update", "amyfx:candles-updated", "focus"].forEach(name => {
-      window.addEventListener(name, () => {
-        patchIntel();
-        publishZones();
-        syncCommandStrips();
-      });
+      window.addEventListener(name, () => publishZones());
     });
     document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) {
-        patchIntel();
-        publishZones();
-        syncCommandStrips();
-      }
+      if (!document.hidden) publishZones();
     });
-    window.setInterval(() => {
-      if (!document.hidden) {
-        patchIntel();
-        publishZones();
-        syncCommandStrips();
-      }
-    }, 1_500);
   }
 
   window.AmyFXProfessionalMarketRepair = Object.freeze({
