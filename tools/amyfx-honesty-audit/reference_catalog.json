@@ -1,0 +1,53 @@
+{
+  "catalog_version": "1.0.0",
+  "source_archive": {
+    "name": "Indikator-trading-view-main (1).zip",
+    "sha256": "0bfb2aa8f59e5c67df357628cc32001af30495eb1182f2cdf9df936f09b63b9f",
+    "role": "reference library, not unquestioned ground truth"
+  },
+  "references": [
+    {
+      "path": "AMY_Market_Context_V4.pine",
+      "sha256": "db84989aae64fbe756e3820117611b7c2646379ac6e3cd1ab3437ba5e9395bda",
+      "role": "validated market context and claim-state reference",
+      "priority": 100
+    },
+    {
+      "path": "AMY_Market_Context_Final.pine",
+      "sha256": "bc202b138939e807c1c3001cfa242c138e9675566d451998017dec71a9775c40",
+      "role": "production-oriented context reference",
+      "priority": 95
+    },
+    {
+      "path": "ICT_Validated_SMC_v1_clean.pine",
+      "sha256": "a71a220a1084dbc096e84c25e1171ac676031ffcdfad0c68cab88804ade60e5d",
+      "role": "SMC structure reference",
+      "priority": 85
+    },
+    {
+      "path": "AMY_ICT_NextGen.pine",
+      "sha256": "5dedc7f954b90d667f7c1ceffebfc384280215b48a9805b3fd88b3d4b4458ca8",
+      "role": "ICT concept reference",
+      "priority": 80
+    },
+    {
+      "path": "AMY_Ultimate_Professional_Suite.pine",
+      "sha256": "492108c7efd4fbf6b86cf035a30114b9474c10a484d80b08b0395fe82eff58c7",
+      "role": "broad feature reference; requires component-by-component verification",
+      "priority": 70
+    },
+    {
+      "path": "GCX-Matrix-V12.pine",
+      "sha256": "2d67008b1a65e6c472e13bb1fe8ed4d0279ff4d6af26e1891d0251a272a7397d",
+      "role": "matrix/context cross-check",
+      "priority": 60
+    },
+    {
+      "path": "GCX-Entry-Only-V1.pine",
+      "sha256": "c516e196903c078831f4f8d8aebcbf25e9477511ff98a7bb40c983e8281029f6",
+      "role": "entry-only cross-check",
+      "priority": 55
+    }
+  ],
+  "resolution_rule": "A reference disagreement is an investigation trigger. It is not automatically an Amy FX defect. Causality, locked definitions, and price-path evidence decide the fix."
+}
