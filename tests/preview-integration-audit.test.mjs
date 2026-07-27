@@ -146,9 +146,9 @@ test('Market Intel publishes news, liquidity and heatmap through canonical WITA 
   assert.match(source, /window\.AmyFXIntel/);
   assert.match(source, /window\.AmyFXIntelState/);
   assert.match(source, /window\.AmyFXHeatmapState/);
-  assert.match(source, /AmyFXIntel\?\.write\?\.\('news'/);
-  assert.match(source, /AmyFXIntel\?\.write\?\.\('liquidity'/);
-  assert.match(source, /AmyFXIntel\?\.write\?\.\('heatmap'/);
+  assert.match(source, /AmyFXIntel\?\.write\('news'/);
+  assert.match(source, /AmyFXIntel\?\.write\('liquidity'/);
+  assert.match(source, /AmyFXIntel\?\.write\('heatmap'/);
   assert.match(source, /sourceCandleTime/);
   assert.match(source, /Asia\/Makassar/);
   assert.doesNotMatch(source, /Asia\/Jakarta/);
