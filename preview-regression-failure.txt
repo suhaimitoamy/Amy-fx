@@ -1,0 +1,208 @@
+Amy FX Private Preview regression failure
+Run: 30283119785
+Commit: d8f66d3472ca219231c633503c5e9ca1de2e22c5
+
+===== amy-mentor-conversation.test.mjs =====
+===== api-polling-coordinator.test.mjs =====
+===== asia-range-ui-freeze-regression.test.mjs =====
+===== asia-range.test.mjs =====
+===== background-video-playback-regression.test.mjs =====
+===== blueprint-preview-stabilization.test.mjs =====
+===== blueprint-preview-v1.test.mjs =====
+===== bos-mss.test.mjs =====
+===== bsl-ssl.test.mjs =====
+===== concept-engine.integration.test.mjs =====
+===== dashboard-analyze-separation.test.mjs =====
+===== deepseek-provider-detection.test.mjs =====
+===== dynamic-heatmap-ui-regression.test.mjs =====
+===== dynamic-heatmap.test.mjs =====
+===== entry-sl-tp.test.mjs =====
+===== entry-watch-engine.test.mjs =====
+===== entry-watch-hardening.test.mjs =====
+===== equal-high-low.test.mjs =====
+===== final-integration.test.mjs =====
+===== five-issues-regression.test.mjs =====
+===== fvg-ob.test.mjs =====
+===== ict-core-regression.test.mjs =====
+===== journal-ai-rotation-v158.test.mjs =====
+===== journal-metadata-storage-regression.test.mjs =====
+===== journal-upgrade-regression.test.mjs =====
+===== learning-live-engine.test.mjs =====
+===== liquidity-draw-context.test.mjs =====
+===== m5-context-filter-experiment.test.mjs =====
+===== m5-min10-duration-2025.test.mjs =====
+===== m5-session-2025-validation.test.mjs =====
+===== mapping-candle-stale-ttl.test.mjs =====
+===== mapping-claim-accuracy.test.mjs =====
+===== mapping-clock-zone-alignment.test.mjs =====
+===== mapping-command-strip-integrity.test.mjs =====
+===== mapping-context-safety.test.mjs =====
+===== mapping-live-consistency-regression.test.mjs =====
+===== mapping-logic-v2.test.mjs =====
+===== mapping-market-integrity-regression.test.mjs =====
+===== mapping-navigation-regression.test.mjs =====
+===== mapping-structure-hierarchy.test.mjs =====
+===== mapping-webview-startup.test.mjs =====
+===== market-candle-store.test.mjs =====
+===== market-intelligence-strip.test.mjs =====
+===== market-intent-engine-v3.test.mjs =====
+===== market-learning-live-examples.test.mjs =====
+===== market-outlook-ui-regression.test.mjs =====
+===== market-outlook.test.mjs =====
+===== market-regime-engine-v2.test.mjs =====
+===== market-state-contract.test.mjs =====
+===== mentor-customer-service.test.mjs =====
+===== mentor-mapping-intent-hotfix.test.mjs =====
+===== mentor-universal-access.test.mjs =====
+===== native-updater.test.mjs =====
+===== news-relevance-regression.test.mjs =====
+===== news-routing-regression.test.mjs =====
+===== notification-icon-regression.test.mjs =====
+===== notification-route-regression.test.mjs =====
+===== notification-route-sync.test.mjs =====
+===== preview-connectivity-audit-v2.test.mjs =====
+===== preview-connectivity-final-v3.test.mjs =====
+===== preview-home-journal-connection.test.mjs =====
+===== preview-integration-audit.test.mjs =====
+===== preview-mapping-shared-connectivity.test.mjs =====
+===== preview-post35-connectivity-regression.test.mjs =====
+===== preview-shared-market-intelligence.test.mjs =====
+===== preview-updater-config.test.mjs =====
+===== previous-period-levels.test.mjs =====
+===== production-copy-polish.test.mjs =====
+===== production-release-identity.test.mjs =====
+===== professional-bot-handler-lock.test.mjs =====
+===== professional-market-repair.test.mjs =====
+===== professional-market-source-registry.test.mjs =====
+===== profile-version-update-regression.test.mjs =====
+===== regime-strategy-router-v3.test.mjs =====
+===== stage5-hardening.test.mjs =====
+not ok 4 - market proxy accepts only validated server-side requests
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+  operator: 'match'
+Regression failed: stage5-hardening.test.mjs
+
+--- final log lines ---
+      const params = new URLSearchParams({
+        symbol,
+        interval: '1min',
+        outputsize: String(SHARED_M1_OUTPUT_SIZE)
+      });
+      return `/api/twelvedata?${params.toString()}`;
+    }
+    
+    export default async function handler(req, res) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Accept, Content-Type');
+      res.setHeader('Vary', 'Origin');
+    
+      if (req.method === 'OPTIONS') return res.status(204).end();
+      if (req.method !== 'GET') {
+        res.setHeader('Allow', 'GET, OPTIONS');
+        return res.status(405).json({ status: 'error', message: 'Method not allowed' });
+      }
+    
+      const { symbol = 'XAU/USD', interval, outputsize = '300' } = req.query;
+      if (symbol !== 'XAU/USD') {
+        return res.status(403).json({ status: 'error', message: 'Hanya XAU/USD yang diizinkan' });
+      }
+      if (!ALLOWED_INTERVALS.has(interval)) {
+        return res.status(400).json({ status: 'error', message: 'Interval tidak didukung' });
+      }
+    
+      const requestedOutputSize = parseOutputSize(outputsize);
+      if (interval === '1min' && requestedOutputSize < SHARED_M1_OUTPUT_SIZE) {
+        res.setHeader('Cache-Control', 'public, s-maxage=86400');
+        return res.redirect(307, canonicalM1Url(symbol));
+      }
+    
+      const ttl = ttlSeconds(interval);
+      const key = cacheKey(symbol, interval, requestedOutputSize);
+      const fresh = readCache(key);
+      if (fresh) {
+        setCacheHeaders(res, ttl, 'MEMORY_HIT', fresh.source || 'memory');
+        return res.status(200).json(fresh);
+      }
+    
+      let request = inFlight.get(key);
+      if (!request) {
+        request = getCandles({
+          symbol,
+          interval,
+          outputsize: requestedOutputSize,
+          apiKey: process.env.TWELVEDATA_API_KEY
+        });
+        inFlight.set(key, request);
+      }
+    
+      try {
+        const rawData = await request;
+        const data = clientCompatibleData(rawData);
+        writeCache(key, data, ttl);
+        const cacheState = data.amyfxCacheState || 'PROVIDER_MISS';
+        const responseTtl = cacheState === 'SUPABASE_STALE_FALLBACK' ? Math.min(ttl, 60) : ttl;
+        setCacheHeaders(res, responseTtl, cacheState, data.source || 'unknown');
+        return res.status(200).json(data);
+      } catch (error) {
+        const stale = readCache(key, { allowStale: true });
+        if (stale) {
+          setCacheHeaders(res, Math.min(ttl, 60), 'STALE_FALLBACK', stale.source || 'memory-stale');
+          return res.status(200).json({
+            ...stale,
+            amyfxCacheState: 'STALE_FALLBACK'
+          });
+        }
+    
+        if (error?.providerData) return res.status(502).json(error.providerData);
+        return res.status(error?.name === 'AbortError' ? 504 : 502).json({
+          status: 'error',
+          message: error?.message || 'Market service unavailable',
+          store: marketStoreInfo()
+        });
+      } finally {
+        if (inFlight.get(key) === request) inFlight.delete(key);
+      }
+    }
+    
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/stage5-hardening.test.mjs:64:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: native notifications only open trusted local routes
+ok 5 - native notifications only open trusted local routes
+  ---
+  duration_ms: 0.392514
+  type: 'test'
+  ...
+# Subtest: release workflows pin the certificate and inspect v1 plus v2 structures
+ok 6 - release workflows pin the certificate and inspect v1 plus v2 structures
+  ---
+  duration_ms: 0.569967
+  type: 'test'
+  ...
+# Subtest: Firebase Android client remains bound to the release applicationId
+ok 7 - Firebase Android client remains bound to the release applicationId
+  ---
+  duration_ms: 0.216615
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 6
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 65.299917
+Regression failed: stage5-hardening.test.mjs
