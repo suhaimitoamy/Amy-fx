@@ -84,7 +84,7 @@ test('M1 quote tick updates quote without laundering Mapping capturedAt', () => 
     direction: 'BUY',
     bsl: 4110,
     ssl: 4080,
-    levels: [{ type: 'BSL', price: 4110 }, { type: 'SSL', price: 4080 }]
+    levels: [{ type: 'BSL', price: 4110, distance: 19 }, { type: 'SSL', price: 4080, distance: -11 }]
   });
   const mappingCapturedAt = runtime.window.AmyFXIntel.read().mapping.capturedAt;
 
@@ -96,7 +96,7 @@ test('M1 quote tick updates quote without laundering Mapping capturedAt', () => 
     direction: 'BUY',
     bsl: 4110,
     ssl: 4080,
-    levels: [{ type: 'BSL', price: 4110 }, { type: 'SSL', price: 4080 }]
+    levels: [{ type: 'BSL', price: 4110, distance: 18 }, { type: 'SSL', price: 4080, distance: -12 }]
   });
 
   const state = runtime.window.AmyFXIntel.read();
