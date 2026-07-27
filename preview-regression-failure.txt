@@ -1,0 +1,146 @@
+Amy FX Preview regression failure
+Run: 30266896659
+Commit: 48f2ac90dfcb17e6065ae71582bea1a5720337d8
+
+===== amy-mentor-conversation.test.mjs =====
+===== api-polling-coordinator.test.mjs =====
+===== asia-range-ui-freeze-regression.test.mjs =====
+===== asia-range.test.mjs =====
+===== background-video-playback-regression.test.mjs =====
+===== blueprint-preview-stabilization.test.mjs =====
+===== blueprint-preview-v1.test.mjs =====
+===== bos-mss.test.mjs =====
+===== bsl-ssl.test.mjs =====
+===== concept-engine.integration.test.mjs =====
+===== dashboard-analyze-separation.test.mjs =====
+===== deepseek-provider-detection.test.mjs =====
+===== dynamic-heatmap-ui-regression.test.mjs =====
+not ok 5 - shared briefing accepts heatmap BSL SSL and freshest price
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+  operator: 'match'
+Regression failed: dynamic-heatmap-ui-regression.test.mjs
+
+--- final log lines ---
+      function briefing(state = contract.read()) {
+        const quoteFreshness = freshness(state);
+        const levels = contract.nearestLevels(state);
+        const mapping = state.mapping || {};
+        const conflicts = contract.conflicts(state);
+    
+        if (quoteFreshness.state !== 'LIVE') {
+          const lines = [`Quote XAU/USD ${quoteFreshness.label}.`];
+          if (levels.bsl || levels.ssl) lines.push(`Level Intel masih berstatus ${levels.freshness.state}.`);
+          if (conflicts.length) lines.push('Snapshot market memiliki perbedaan waktu atau sumber yang harus diperhatikan.');
+          return { tone: 'wait', title: `DATA ${quoteFreshness.label}`, lines };
+        }
+    
+        const bslDist = levels.bsl ? Math.abs(Number(levels.bsl.distance)) : Infinity;
+        const sslDist = levels.ssl ? Math.abs(Number(levels.ssl.distance)) : Infinity;
+        const pressure = bslDist < sslDist ? 'ABOVE PRICE' : sslDist < bslDist ? 'BELOW PRICE' : 'BALANCED';
+        const draw = bslDist < sslDist ? levels.bsl : sslDist < bslDist ? levels.ssl : (levels.bsl || levels.ssl);
+        const action = mapping.direction || mapping.status || 'WAIT';
+        return {
+          tone: String(action).includes('BUY') ? 'buy' : String(action).includes('SELL') ? 'sell' : 'wait',
+          title: 'RULE-BASED MARKET BRIEFING',
+          lines: [
+            `Liquidity pressure: ${pressure}`,
+            `Nearest draw: ${draw ? `${draw.type} ${priceText(draw.price)}` : 'WAITING INTEL LIQUIDITY'}`,
+            `Mapping: ${mapping.bias || 'WAIT'} · ${action}`,
+            `News risk: ${newsRisk(state)} · ${sessionInfo().label}`,
+            ...(conflicts.length ? ['Catatan: terdapat perbedaan sumber/timestamp; keputusan tetap WAIT sampai selaras.'] : [])
+          ]
+        };
+      }
+    
+      function mountStrip(target) {
+        if (!target || target._amyCanonicalStripMounted) return;
+        target._amyCanonicalStripMounted = true;
+    
+        const paint = () => {
+          const state = contract.read();
+          const quote = state.quote || {};
+          const quoteFreshness = contract.assess('quote', quote);
+          const levels = contract.nearestLevels(state);
+          const price = contract.bestCurrentPrice(state);
+          target.innerHTML = `<div class="amy-command-main"><span>XAU/USD</span><strong>${priceText(price)}</strong></div>`
+            + `<div class="amy-command-metric"><small>SESSION</small><b>${sessionInfo().id}</b></div>`
+            + `<div class="amy-command-metric"><small>BSL</small><b class="red" data-freshness="${levels.bsl?.freshness || 'UNAVAILABLE'}">${levelText(levels.bsl)}</b></div>`
+            + `<div class="amy-command-metric"><small>SSL</small><b class="green" data-freshness="${levels.ssl?.freshness || 'UNAVAILABLE'}">${levelText(levels.ssl)}</b></div>`
+            + `<div class="amy-command-metric"><small>NEWS</small><b>${newsRisk(state)}</b></div>`
+            + `<div class="amy-data-state ${quoteFreshness.className}" data-domain="quote" data-freshness="${quoteFreshness.state}"><i></i>${quoteFreshness.label}</div>`;
+        };
+    
+        paint();
+        window.addEventListener('amyfx:market-update', paint);
+        window.addEventListener('online', paint);
+        window.addEventListener('offline', paint);
+        window.addEventListener('storage', event => {
+          if (event.key === contract.storeKey) {
+            contract.syncGlobals();
+            paint();
+          }
+        });
+        target._amyPaint = paint;
+      }
+    
+      function mountBriefing(target) {
+        if (!target || target._amyCanonicalBriefingMounted) return;
+        target._amyCanonicalBriefingMounted = true;
+        const paint = () => {
+          const data = briefing();
+          target.className = `amy-briefing ${data.tone}`;
+          target.innerHTML = `<div class="amy-briefing-title">${data.title}</div>${data.lines.map(line => `<div>${line}</div>`).join('')}`;
+        };
+        paint();
+        window.addEventListener('amyfx:market-update', paint);
+        window.addEventListener('storage', event => {
+          if (event.key === contract.storeKey) paint();
+        });
+        target._amyPaint = paint;
+      }
+    
+      contract.syncGlobals();
+      window.AmyFXIntel = Object.freeze({
+        version: '2.0.0',
+        read: contract.read,
+        write: contract.write,
+        syncGlobals: contract.syncGlobals,
+        partTimestamp: contract.partTimestamp,
+        assessFreshness: contract.assess,
+        sessionInfo,
+        freshness,
+        nearestLevels: contract.nearestLevels,
+        bestCurrentPrice: contract.bestCurrentPrice,
+        conflicts: contract.conflicts,
+        snapshot: contract.snapshot,
+        newsRisk,
+        briefing,
+        mountStrip,
+        mountBriefing,
+        __amyCanonicalMarketContractV2: true
+      });
+    })();
+    
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/dynamic-heatmap-ui-regression.test.mjs:50:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 4
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 109.763633
+Regression failed: dynamic-heatmap-ui-regression.test.mjs
