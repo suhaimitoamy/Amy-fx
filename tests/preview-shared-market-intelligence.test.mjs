@@ -6,47 +6,54 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const relative = 'app/src/main/assets/apps/shared/market-intelligence.js';
-const absolute = path.join(root, relative);
-const read = () => readFile(absolute, 'utf8');
+const sharedRelative = 'app/src/main/assets/apps/shared/market-intelligence.js';
+const contractRelative = 'app/src/main/assets/apps/shared/amyfx-market-state-contract-v1.js';
+const sharedAbsolute = path.join(root, sharedRelative);
+const contractAbsolute = path.join(root, contractRelative);
+const readShared = () => readFile(sharedAbsolute, 'utf8');
+const readContract = () => readFile(contractAbsolute, 'utf8');
 
-test('shared Market Intelligence JavaScript is syntactically valid', () => {
-  const result = spawnSync(process.execPath, ['--check', absolute], { encoding: 'utf8' });
-  assert.equal(result.status, 0, result.stderr || result.stdout);
+test('shared Market Intelligence and canonical contract JavaScript are syntactically valid', () => {
+  for (const file of [sharedAbsolute, contractAbsolute]) {
+    const result = spawnSync(process.execPath, ['--check', file], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+  }
 });
 
-test('shared state survives localStorage read and write failures', async () => {
-  const source = await read();
-  assert.match(source, /let memoryState = \{\}/);
+test('canonical shared state survives localStorage read and write failures', async () => {
+  const source = await readContract();
+  assert.match(source, /let memoryState = \{ schemaVersion: SCHEMA_VERSION \}/);
   assert.match(source, /catch \(_\) \{\s*return memoryState/);
   assert.match(source, /memoryState = state/);
   assert.match(source, /try \{ localStorage\.setItem\(STORE_KEY, JSON\.stringify\(state\)\); \} catch \(_\) \{\}/);
 });
 
-test('news or timestamp-only state cannot mark XAU USD market data as LIVE', async () => {
-  const source = await read();
-  const candidatesBlock = source.slice(source.indexOf('function marketPriceCandidates'), source.indexOf('function bestCurrentPrice'));
-  const freshnessBlock = source.slice(source.indexOf('function freshness'), source.indexOf('function normalizeLevel'));
-  assert.match(candidatesBlock, /priceCandidate\(state\.mapping, state\.mapping\?\.price, 'mapping'\)/);
-  assert.match(candidatesBlock, /priceCandidate\(state\.liquidity, state\.liquidity\?\.currentPrice, 'liquidity'\)/);
-  assert.match(candidatesBlock, /priceCandidate\(state\.heatmap, state\.heatmap\?\.currentPrice, 'heatmap'\)/);
-  assert.doesNotMatch(candidatesBlock, /state\.news/);
-  assert.match(freshnessBlock, /const candidates = marketPriceCandidates\(state\)/);
-  assert.match(freshnessBlock, /if \(!candidates\.length\) return \{ label: 'WAITING'/);
-  assert.match(freshnessBlock, /if \(!latest\.fresh\) return \{ label: 'STALE'/);
-  assert.match(source, /function bestCurrentPrice\(state = read\(\)\)/);
+test('news, Mapping, Liquidity or Heatmap cannot become the official XAU USD quote', async () => {
+  const source = await readContract();
+  const priceBlock = source.slice(source.indexOf('function bestCurrentPrice'), source.indexOf('function nearestLevels'));
+  const freshnessBlock = source.slice(source.indexOf('function freshness'), source.indexOf('function purgeLegacyMarketCaches'));
+  assert.match(priceBlock, /const price = Number\(state\?\.quote\?\.price\)/);
+  assert.doesNotMatch(priceBlock, /mapping|liquidity|heatmap|news/);
+  assert.match(freshnessBlock, /assess\("quote", state\?\.quote \|\| null\)/);
+  assert.match(freshnessBlock, /source: state\?\.quote\?\.source \|\| null/);
 });
 
-test('explicit source timestamp is preferred over storage time', async () => {
-  const source = await read();
-  assert.match(source, /function explicitPartTimestamp\(part\)/);
-  assert.match(source, /return explicitPartTimestamp\(part\) \|\| timestamp\(part\?\.storedAt\)/);
+test('source capturedAt is preferred and storedAt never participates in freshness', async () => {
+  const source = await readContract();
+  const sourceTimeBlock = source.slice(source.indexOf('function sourceTime'), source.indexOf('function policy'));
+  const assessBlock = source.slice(source.indexOf('function assess'), source.indexOf('function normalizeLegacyPart'));
+  assert.match(sourceTimeBlock, /payload\.capturedAt/);
+  assert.match(sourceTimeBlock, /payload\.sourceCandleTime/);
+  assert.doesNotMatch(sourceTimeBlock, /storedAt/);
+  assert.match(assessBlock, /value\?\.capturedAt/);
+  assert.doesNotMatch(assessBlock, /storedAt/);
 });
 
-test('briefing and command strip use the same canonical market freshness and price', async () => {
-  const source = await read();
-  assert.match(source, /function briefing\(state = read\(\)\)/);
-  assert.match(source, /const fresh = freshness\(state\)/);
-  assert.match(source, /price = bestCurrentPrice\(state\)/);
-  assert.match(source, /if \(fresh\.className !== 'live'\)/);
+test('briefing and command strip use the same canonical quote freshness and price', async () => {
+  const source = await readShared();
+  assert.match(source, /function freshness\(state = contract\.read\(\)\)/);
+  assert.match(source, /const quoteFreshness = freshness\(state\)/);
+  assert.match(source, /if \(quoteFreshness\.state !== 'LIVE'\)/);
+  assert.match(source, /const quoteFreshness = contract\.assess\('quote', quote\)/);
+  assert.match(source, /const price = contract\.bestCurrentPrice\(state\)/);
 });
