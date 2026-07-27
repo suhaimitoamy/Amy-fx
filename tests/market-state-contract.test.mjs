@@ -109,6 +109,18 @@ test('M1 quote tick updates quote without laundering Mapping capturedAt', () => 
   assert.equal(new Date(state.quote.capturedAt).getTime(), now + 20_000);
 });
 
+test('Mapping payload cannot invent an official quote without an M1 provider timestamp', () => {
+  const runtime = createRuntime();
+  runtime.window.AmyFXIntel.write('mapping', {
+    price: 4091,
+    updated: new Date().toISOString(),
+    timeframe: 'M15',
+    bias: 'BUY',
+    direction: 'BUY'
+  });
+  assert.equal(runtime.window.AmyFXIntel.read().quote, undefined);
+});
+
 test('storedAt cannot make an expired quote fresh or LIVE', () => {
   const runtime = createRuntime();
   const old = new Date(Date.now() - 10 * 60_000).toISOString();
