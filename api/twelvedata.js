@@ -81,6 +81,15 @@ function setCacheHeaders(res, ttl, state = 'MISS', source = '') {
   if (source) res.setHeader('X-AmyFX-Market-Source', source);
 }
 
+function clientCompatibleData(data) {
+  if (!data?.closedOnly || !Array.isArray(data.values) || !data.values.length) return data;
+  return {
+    ...data,
+    values: [{ ...data.values[0], amyfxSyntheticCurrent: true }, ...data.values],
+    clientCompatibility: 'CLOSED_SERIES_SENTINEL_V1'
+  };
+}
+
 function canonicalM1Url(symbol) {
   const params = new URLSearchParams({
     symbol,
@@ -136,7 +145,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const data = await request;
+    const rawData = await request;
+    const data = clientCompatibleData(rawData);
     writeCache(key, data, ttl);
     const cacheState = data.amyfxCacheState || 'PROVIDER_MISS';
     const responseTtl = cacheState === 'SUPABASE_STALE_FALLBACK' ? Math.min(ttl, 60) : ttl;
