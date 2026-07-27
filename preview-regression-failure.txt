@@ -1,6 +1,6 @@
 Amy FX Preview regression failure
-Run: 30267333224
-Commit: aaba5f3abba6751eb0a16cf33102eda4509f9518
+Run: 30267427655
+Commit: ff81ad9ce13c1bc858aab1f560235f5a0c92ed2e
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -44,128 +44,149 @@ Commit: aaba5f3abba6751eb0a16cf33102eda4509f9518
 ===== mapping-structure-hierarchy.test.mjs =====
 ===== mapping-webview-startup.test.mjs =====
 ===== market-intelligence-strip.test.mjs =====
-not ok 1 - command strip shows latest mapping BSL and SSL prices
-  code: 'ERR_TEST_FAILURE'
-Regression failed: market-intelligence-strip.test.mjs
+===== market-intent-engine-v3.test.mjs =====
+===== market-learning-live-examples.test.mjs =====
+===== market-outlook-ui-regression.test.mjs =====
+===== market-outlook.test.mjs =====
+===== market-regime-engine-v2.test.mjs =====
+===== market-state-contract.test.mjs =====
+===== mentor-customer-service.test.mjs =====
+===== mentor-mapping-intent-hotfix.test.mjs =====
+===== mentor-universal-access.test.mjs =====
+===== native-updater.test.mjs =====
+===== news-relevance-regression.test.mjs =====
+===== news-routing-regression.test.mjs =====
+===== notification-icon-regression.test.mjs =====
+===== notification-route-regression.test.mjs =====
+===== notification-route-sync.test.mjs =====
+===== preview-connectivity-audit-v2.test.mjs =====
+===== preview-connectivity-final-v3.test.mjs =====
+not ok 5 - Market Intel normalizes timestamps and propagates stale state
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+  operator: 'match'
+Regression failed: preview-connectivity-final-v3.test.mjs
 
 --- final log lines ---
-  type: 'test'
-  ...
-1..2
-# tests 2
-# suites 0
-# pass 2
-# fail 0
-# cancelled 0
-# skipped 0
-# todo 0
-# duration_ms 47.858296
-
-===== mapping-structure-hierarchy.test.mjs =====
-TAP version 13
-# Subtest: first opposite valid break is internal transition and does not flip confirmed trend
-ok 1 - first opposite valid break is internal transition and does not flip confirmed trend
-  ---
-  duration_ms: 1.560617
-  type: 'test'
-  ...
-# Subtest: second higher opposite break confirms reversal and flips protected trend
-ok 2 - second higher opposite break confirms reversal and flips protected trend
-  ---
-  duration_ms: 0.291785
-  type: 'test'
-  ...
-# Subtest: ordinary setup is blocked while CHOCH is still internal
-ok 3 - ordinary setup is blocked while CHOCH is still internal
-  ---
-  duration_ms: 0.382133
-  type: 'test'
-  ...
-# Subtest: complete Sweep MSS FVG model may continue through internal MSS validation
-ok 4 - complete Sweep MSS FVG model may continue through internal MSS validation
-  ---
-  duration_ms: 0.103145
-  type: 'test'
-  ...
-# Subtest: live price returning through break level blocks every setup as AT RISK
-ok 5 - live price returning through break level blocks every setup as AT RISK
-  ---
-  duration_ms: 0.168014
-  type: 'test'
-  ...
-# Subtest: mapping UI exposes internal trend, confirmed trend, next level, and AT RISK status
-ok 6 - mapping UI exposes internal trend, confirmed trend, next level, and AT RISK status
-  ---
-  duration_ms: 0.426438
-  type: 'test'
-  ...
-1..6
-# tests 6
-# suites 0
-# pass 6
-# fail 0
-# cancelled 0
-# skipped 0
-# todo 0
-# duration_ms 52.080182
-
-===== mapping-webview-startup.test.mjs =====
-TAP version 13
-# Subtest: Mapping provides an ICU-safe fallback for Asia/Makassar
-ok 1 - Mapping provides an ICU-safe fallback for Asia/Makassar
-  ---
-  duration_ms: 0.636521
-  type: 'test'
-  ...
-# Subtest: Mapping never leaves an empty screen when startup rendering throws
-ok 2 - Mapping never leaves an empty screen when startup rendering throws
-  ---
-  duration_ms: 0.117596
-  type: 'test'
-  ...
-# Subtest: Entry Map UI follows the 1.4.7 lightweight render model without a global mutation loop
-ok 3 - Entry Map UI follows the 1.4.7 lightweight render model without a global mutation loop
-  ---
-  duration_ms: 0.161086
-  type: 'test'
-  ...
-1..3
-# tests 3
-# suites 0
-# pass 3
-# fail 0
-# cancelled 0
-# skipped 0
-# todo 0
-# duration_ms 46.178636
-
-===== market-intelligence-strip.test.mjs =====
-TAP version 13
-# AmyFXMarketContract must load before market-intelligence.js
-# Subtest: command strip shows latest mapping BSL and SSL prices
-not ok 1 - command strip shows latest mapping BSL and SSL prices
-  ---
-  duration_ms: 1.799229
-  type: 'test'
-  location: '/home/runner/work/Amy-fx/Amy-fx/tests/market-intelligence-strip.test.mjs:47:1'
-  failureType: 'testCodeFailure'
-  error: "Cannot read properties of undefined (reading 'mountStrip')"
-  code: 'ERR_TEST_FAILURE'
-  name: 'TypeError'
+        const sslDist = levels.ssl ? Math.abs(Number(levels.ssl.distance)) : Infinity;
+        const pressure = bslDist < sslDist ? 'ABOVE PRICE' : sslDist < bslDist ? 'BELOW PRICE' : 'BALANCED';
+        const draw = bslDist < sslDist ? levels.bsl : sslDist < bslDist ? levels.ssl : (levels.bsl || levels.ssl);
+        const action = mapping.direction || mapping.status || 'WAIT';
+        return {
+          tone: String(action).includes('BUY') ? 'buy' : String(action).includes('SELL') ? 'sell' : 'wait',
+          title: 'RULE-BASED MARKET BRIEFING',
+          lines: [
+            `Liquidity pressure: ${pressure}`,
+            `Nearest draw: ${draw ? `${draw.type} ${priceText(draw.price)}` : 'WAITING INTEL LIQUIDITY'}`,
+            `Mapping: ${mapping.bias || 'WAIT'} · ${action}`,
+            `News risk: ${newsRisk(state)} · ${sessionInfo().label}`,
+            ...(conflicts.length ? ['Catatan: terdapat perbedaan sumber/timestamp; keputusan tetap WAIT sampai selaras.'] : [])
+          ]
+        };
+      }
+    
+      function mountStrip(target) {
+        if (!target || target._amyCanonicalStripMounted) return;
+        target._amyCanonicalStripMounted = true;
+    
+        const paint = () => {
+          const state = contract.read();
+          const quote = state.quote || {};
+          const quoteFreshness = contract.assess('quote', quote);
+          const levels = contract.nearestLevels(state);
+          const price = contract.bestCurrentPrice(state);
+          target.innerHTML = `<div class="amy-command-main"><span>XAU/USD</span><strong>${priceText(price)}</strong></div>`
+            + `<div class="amy-command-metric"><small>SESSION</small><b>${sessionInfo().id}</b></div>`
+            + `<div class="amy-command-metric"><small>BSL</small><b class="red" data-freshness="${levels.bsl?.freshness || 'UNAVAILABLE'}">${levelText(levels.bsl)}</b></div>`
+            + `<div class="amy-command-metric"><small>SSL</small><b class="green" data-freshness="${levels.ssl?.freshness || 'UNAVAILABLE'}">${levelText(levels.ssl)}</b></div>`
+            + `<div class="amy-command-metric"><small>NEWS</small><b>${newsRisk(state)}</b></div>`
+            + `<div class="amy-data-state ${quoteFreshness.className}" data-domain="quote" data-freshness="${quoteFreshness.state}"><i></i>${quoteFreshness.label}</div>`;
+        };
+    
+        paint();
+        window.addEventListener('amyfx:market-update', paint);
+        window.addEventListener('online', paint);
+        window.addEventListener('offline', paint);
+        window.addEventListener('storage', event => {
+          if (event.key === contract.storeKey) {
+            contract.syncGlobals();
+            paint();
+          }
+        });
+        target._amyPaint = paint;
+      }
+    
+      function mountBriefing(target) {
+        if (!target || target._amyCanonicalBriefingMounted) return;
+        target._amyCanonicalBriefingMounted = true;
+        const paint = () => {
+          const data = briefing();
+          target.className = `amy-briefing ${data.tone}`;
+          target.innerHTML = `<div class="amy-briefing-title">${data.title}</div>${data.lines.map(line => `<div>${line}</div>`).join('')}`;
+        };
+        paint();
+        window.addEventListener('amyfx:market-update', paint);
+        window.addEventListener('storage', event => {
+          if (event.key === contract.storeKey) paint();
+        });
+        target._amyPaint = paint;
+      }
+    
+      contract.syncGlobals();
+      window.AmyFXIntel = Object.freeze({
+        version: '2.0.0',
+        read: contract.read,
+        write: contract.write,
+        syncGlobals: contract.syncGlobals,
+        partTimestamp: contract.partTimestamp,
+        assessFreshness: contract.assess,
+        sessionInfo,
+        freshness,
+        nearestLevels: contract.nearestLevels,
+        bestCurrentPrice: contract.bestCurrentPrice,
+        conflicts: contract.conflicts,
+        snapshot: contract.snapshot,
+        newsRisk,
+        briefing,
+        mountStrip,
+        mountBriefing,
+        __amyCanonicalMarketContractV2: true
+      });
+    })();
+    
+  operator: 'match'
   stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/market-intelligence-strip.test.mjs:71:21)
-    Test.runInAsyncScope (node:async_hooks:214:14)
-    Test.run (node:internal/test_runner/test:1047:25)
-    Test.start (node:internal/test_runner/test:944:17)
-    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-connectivity-final-v3.test.mjs:67:98)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
-1..1
-# tests 1
+# Subtest: Home update and cache actions use real services and preserve primary data
+ok 6 - Home update and cache actions use real services and preserve primary data
+  ---
+  duration_ms: 2.082276
+  type: 'test'
+  ...
+# Subtest: Journal and Mapping publish events consumed across modules
+ok 7 - Journal and Mapping publish events consumed across modules
+  ---
+  duration_ms: 2.510718
+  type: 'test'
+  ...
+# Subtest: deprecated final router remains internally guarded
+ok 8 - deprecated final router remains internally guarded
+  ---
+  duration_ms: 0.888021
+  type: 'test'
+  ...
+1..8
+# tests 8
 # suites 0
-# pass 0
+# pass 7
 # fail 1
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 48.571522
-Regression failed: market-intelligence-strip.test.mjs
+# duration_ms 301.786303
+Regression failed: preview-connectivity-final-v3.test.mjs
