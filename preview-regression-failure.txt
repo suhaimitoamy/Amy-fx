@@ -1,6 +1,6 @@
 Amy FX Preview regression failure
-Run: 30268007184
-Commit: 41a6c8b41a4c92bd35e6da419b4dea86fa959df3
+Run: 30268124153
+Commit: 38e4bae11e294005dba9c0a76fdd64835d720e20
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -64,19 +64,7 @@ Commit: 41a6c8b41a4c92bd35e6da419b4dea86fa959df3
 ===== preview-home-journal-connection.test.mjs =====
 ===== preview-integration-audit.test.mjs =====
 ===== preview-mapping-shared-connectivity.test.mjs =====
-not ok 2 - Mapping publishes a canonical snapshot into shared Market Intelligence
-  code: 'ERR_ASSERTION'
-  name: 'AssertionError'
-  expected:
-  actual: |-
-  operator: 'match'
-not ok 3 - Mapping never invents a current timestamp for missing or stale market data
-  code: 'ERR_ASSERTION'
-  name: 'AssertionError'
-  expected:
-  actual: |-
-  operator: 'match'
-not ok 4 - shared Mapping publication is deduplicated and guarded against market-update loops
+not ok 2 - Mapping engine publishes canonical state once and bridge consumes that shared snapshot
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
@@ -85,123 +73,123 @@ not ok 4 - shared Mapping publication is deduplicated and guarded against market
 Regression failed: preview-mapping-shared-connectivity.test.mjs
 
 --- final log lines ---
+        for (const currentTf of group.filter(item => item !== tf)) {
+          const candles = state.candles[currentTf];
+          if (candles?.length > 30) {
+            const contextResult = analyze(candles, currentTf, {}, state.price);
+            htfBiases[currentTf] = contextResult?.st?.trend || 'NEUTRAL';
+          }
+        }
     
-      function canonicalState() {
-        const contract = window.AmyFXMarketContract;
-        const state = contract?.read?.() || window.AmyFXIntel?.read?.() || {};
-        const snapshot = contract?.snapshot?.(state) || window.AmyFXIntel?.snapshot?.(state) || null;
-        return { contract, state, snapshot };
+        const htfContext = { H4: state.candles.H4, D1: state.candles.D1, W1: state.candles.W1 };
+        let result = analyze(state.candles[tf], tf, htfBiases, state.price, htfContext);
+        if (!result?.st) throw new Error('Hasil analisis tidak valid');
+        result = applyRegimeRouter(result, htfBiases);
+    
+        state.result = result;
+        state.setups = [...(result.setups || []), ...state.setups].slice(0, 50);
+        state.analyses = [{ id: Date.now(), ...result }, ...state.analyses].slice(0, 80);
+        save();
+        publishMappingSnapshot(result);
+        const validatedText = result.validatedDirectionForecast?.active
+          ? `${result.validatedDirectionForecast.direction} · validated ${result.validatedDirectionForecast.confidence}%`
+          : result.validatedMarketState?.state;
+        log(`${tf} selesai: ${validatedText || result.strategyRouter?.decision || `${result.signal} score ${result.score}/100`}`);
+        sendTargetsToNative();
+        notifyImportant(result);
+      } catch (error) {
+        log(`Error ${tf}: ${error.message}`);
       }
+      render();
+    }
     
-      function publish(force = false) {
-        const mappingRuntime = window.state;
-        if (!mappingRuntime || typeof mappingRuntime !== "object" || !("tf" in mappingRuntime)) return false;
+    function scheduleAnalysisRefresh() {
+      if (scanTimer) return;
+      scanTimer = setTimeout(() => {
+        scanTimer = null;
+        if (!document.hidden) runAnalysis(state.tf);
+      }, analysisRefreshDelay(state.tf));
+    }
     
-        const result = mappingRuntime.result || null;
-        const { contract, state, snapshot } = canonicalState();
-        const mapping = state.mapping || {};
-        const quote = state.quote || {};
-        const liquidity = state.liquidity || {};
-        const heatmap = state.heatmap || {};
-        const mappingFreshness = contract?.assess?.("mapping", mapping) || { state: mapping?.dataStale ? "EXPIRED" : "STALE" };
-        const quoteFreshness = contract?.assess?.("quote", quote) || { state: "EXPIRED" };
-        const setup = setupFrom(result) || mapping.setupExecution || null;
-        const direction = result?.directionDecision || mapping.directionDecision || null;
-        const price = Number(quote.price || snapshot?.currentPrice || 0);
-        const timeframe = text(result?.tf || mapping.timeframe || mappingRuntime.tf || "M15").toUpperCase();
-    
-        const fingerprint = JSON.stringify([
-          timeframe,
-          price,
-          quote.capturedAt || null,
-          mapping.capturedAt || null,
-          liquidity.capturedAt || null,
-          heatmap.capturedAt || null,
-          mappingFreshness.state,
-          setup?.setupId || setup?.id || setup?.status || setup?.state || "",
-          direction?.bias || direction?.signal || "",
-          mappingRuntime.conn || ""
-        ]);
-        if (!force && fingerprint === lastFingerprint) return true;
-        lastFingerprint = fingerprint;
-    
-        const marketState = {
-          pair: "XAU/USD",
-          symbol: "XAU/USD",
-          timeframe,
-          capturedAt: mapping.capturedAt || null,
-          updatedAt: mapping.computedAt || mapping.capturedAt || null,
-          quoteCapturedAt: quote.capturedAt || null,
-          mappingCapturedAt: mapping.capturedAt || null,
-          liquidityCapturedAt: liquidity.capturedAt || null,
-          heatmapCapturedAt: heatmap.capturedAt || null,
-          price: Number.isFinite(price) && price > 0 ? price : null,
-          connection: text(mappingRuntime.conn || "Offline"),
-          quoteFreshness: quoteFreshness.state,
-          mappingFreshness: mappingFreshness.state,
-          facts: result?.facts || result?.validatedMarketContext?.facts || {},
-          hypothesis: result?.hypothesis || result?.validatedMarketContext?.directionForecast || null,
-          setup,
-          bestSetup: setup,
-          evidence: result?.evidence || [],
-          conflicts: snapshot?.conflicts || [],
-          directionDecision: direction,
-          dataStale: mappingFreshness.state === "STALE" || mappingFreshness.state === "EXPIRED",
-          result
-        };
-    
-        window.AmyFXMarketState = marketState;
-        window.lastMappingResult = {
-          ...(result || {}),
-          symbol: "XAU/USD",
-          pair: "XAU/USD",
-          timeframe,
-          tf: timeframe,
-          capturedAt: marketState.mappingCapturedAt,
-          timestamp: marketState.mappingCapturedAt,
-          quoteCapturedAt: marketState.quoteCapturedAt,
-          price: marketState.price,
-          setup,
-          bestSetup: setup,
-          dataStale: marketState.dataStale,
-          conflicts: marketState.conflicts
-        };
-        window.dispatchEvent(new CustomEvent("amyfx:mapping-state-change", { detail: marketState }));
-        return true;
+    async function pollLivePrice() {
+      if (document.hidden || pollInFlight) return;
+      pollInFlight = true;
+      try {
+        const response = await fetch(`${PROXY_URL}?symbol=XAU/USD&interval=1min&outputsize=1&_=${Math.floor(Date.now() / LIVE_POLL_MS)}`, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        const price = +(data.values?.[0]?.close || 0);
+        if (data.status !== 'ok' || !Number.isFinite(price) || price <= 0) throw new Error(data.message || 'Harga live tidak valid');
+        lastWsTickAt = Date.now();
+        localStorage.setItem('last_ws_tick_at', String(lastWsTickAt));
+        localStorage.setItem('last_price', String(price));
+        state.price = price;
+        state.conn = 'Connected';
+        if (state.result) {
+          state.result.setupExecution = buildSetupExecution(state.result);
+          state.result.mappingExplanation = buildMappingExplanation(state.result);
+        }
+        publishMappingSnapshot();
+        sendTargetsToNative();
+        notifyImportant(state.result);
+        renderAnalyzeLive();
+        renderSoft();
+        scheduleAnalysisRefresh();
+      } catch (error) {
+        state.conn = 'Offline';
+        renderSoft();
+        if (Date.now() - lastErrorLogAt > 60000) {
+          lastErrorLogAt = Date.now();
+          log(`Live price mencoba tersambung kembali: ${error.message}`);
+        }
+      } finally {
+        pollInFlight = false;
       }
+    }
     
-      function boot() {
-        publish(true);
-        clearInterval(timer);
-        timer = window.setInterval(() => {
-          if (!document.hidden) publish();
-        }, 5_000);
-        window.addEventListener("amyfx:market-update", () => publish(true));
-        window.addEventListener("focus", () => publish(true));
-        document.addEventListener("visibilitychange", () => {
-          if (!document.hidden) publish(true);
-        });
-      }
+    export function connect() {
+      if (liveTimer) clearInterval(liveTimer);
+      state.conn = 'Connecting';
+      renderSoft();
+      pollLivePrice();
+      liveTimer = setInterval(pollLivePrice, LIVE_POLL_MS);
+      if (!state.candles[state.tf]?.length) runAnalysis(state.tf);
+    }
     
-      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
-      else boot();
+    export function isLivePriceRunning() { return liveTimer !== null; }
     
-      window.AmyFXMappingContextBridge = Object.freeze({ version: "2.0.0", publish });
-    })();
+    export function stopLivePrice() {
+      if (liveTimer) { clearInterval(liveTimer); liveTimer = null; }
+      if (scanTimer) { clearTimeout(scanTimer); scanTimer = null; }
+      state.conn = 'Offline';
+      renderSoft();
+    }
     
   operator: 'match'
   stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-mapping-shared-connectivity.test.mjs:40:10)
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-mapping-shared-connectivity.test.mjs:23:10)
     async Test.run (node:internal/test_runner/test:1054:7)
     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: Mapping bridge never invents a current source timestamp
+ok 3 - Mapping bridge never invents a current source timestamp
+  ---
+  duration_ms: 3.345037
+  type: 'test'
+  ...
+# Subtest: shared Mapping publication is deduplicated without a market-update write loop
+ok 4 - shared Mapping publication is deduplicated without a market-update write loop
+  ---
+  duration_ms: 0.908927
+  type: 'test'
   ...
 1..4
 # tests 4
 # suites 0
-# pass 1
-# fail 3
+# pass 3
+# fail 1
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 93.941355
+# duration_ms 80.130941
 Regression failed: preview-mapping-shared-connectivity.test.mjs
