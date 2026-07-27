@@ -18,8 +18,10 @@ test('universal Mentor runtime is valid JavaScript and loaded after the conversa
   const provider = await read(providerPath);
   assert.match(provider, /amyfx-mentor-conversation-v1\.js/);
   assert.match(provider, /amyfx-mentor-universal-access-v1\.js/);
-  assert.match(provider, /script\.addEventListener\("load", loadUniversalAccessRuntime/);
-  assert.match(provider, /data-amyfx-mentor-universal|amyfxMentorUniversal/);
+  assert.match(provider, /loadScriptOnce\("amyfx-mentor-conversation-v1\.js"[\s\S]*loadCustomerServiceRuntime/);
+  assert.match(provider, /function loadCustomerServiceRuntime\(\) \{ loadUniversalAccessRuntime\(\); \}/);
+  assert.match(provider, /loadScriptOnce\("amyfx-mentor-universal-access-v1\.js"[\s\S]*loadSafeRuleChatRuntime/);
+  assert.match(provider, /data-amyfx-mentor-universal/);
 });
 
 test('Amy Mentor can retrieve every Amy FX workspace domain', async () => {
