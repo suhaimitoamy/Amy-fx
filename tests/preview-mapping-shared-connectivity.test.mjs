@@ -6,40 +6,46 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const relative = 'app/src/main/assets/apps/mapping/js/blueprint-context-bridge.js';
-const absolute = path.join(root, relative);
-const read = () => readFile(absolute, 'utf8');
+const bridgeRelative = 'app/src/main/assets/apps/mapping/js/blueprint-context-bridge.js';
+const marketDataRelative = 'app/src/main/assets/apps/mapping/js/api/market-data.js';
+const bridgeAbsolute = path.join(root, bridgeRelative);
+const readBridge = () => readFile(bridgeAbsolute, 'utf8');
+const readMarketData = () => readFile(path.join(root, marketDataRelative), 'utf8');
 
 test('Mapping bridge JavaScript is syntactically valid', () => {
-  const result = spawnSync(process.execPath, ['--check', absolute], { encoding: 'utf8' });
+  const result = spawnSync(process.execPath, ['--check', bridgeAbsolute], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr || result.stdout);
 });
 
-test('Mapping publishes a canonical snapshot into shared Market Intelligence', async () => {
-  const source = await read();
-  assert.match(source, /window\.AmyFXIntel\.write\("mapping", payload\)/);
-  assert.match(source, /source:\s*"mapping-context-bridge-v2"/);
-  assert.match(source, /pair:\s*marketState\.pair/);
-  assert.match(source, /timeframe:\s*marketState\.timeframe/);
-  assert.match(source, /price:\s*marketState\.price/);
-  assert.match(source, /levels,/);
-  assert.match(source, /bsl:\s*nearest\("BSL"\)/);
-  assert.match(source, /ssl:\s*nearest\("SSL"\)/);
+test('Mapping engine publishes canonical state once and bridge consumes that shared snapshot', async () => {
+  const bridge = await readBridge();
+  const marketData = await readMarketData();
+  assert.match(marketData, /intel\.write\('mapping', snapshot\)/);
+  assert.match(bridge, /const contract = window\.AmyFXMarketContract/);
+  assert.match(bridge, /contract\?\.read\?\.\(\)/);
+  assert.match(bridge, /contract\?\.snapshot\?\.\(state\)/);
+  assert.match(bridge, /quoteCapturedAt:/);
+  assert.match(bridge, /mappingCapturedAt:/);
+  assert.match(bridge, /liquidityCapturedAt:/);
+  assert.match(bridge, /heatmapCapturedAt:/);
+  assert.doesNotMatch(bridge, /AmyFXIntel\.write\(["']mapping["']/);
 });
 
-test('Mapping never invents a current timestamp for missing or stale market data', async () => {
-  const source = await read();
-  assert.doesNotMatch(source, /new Date\(\)\.toISOString\(\)\s*:\s*null/);
-  assert.match(source, /if \(!valid\.length\) return null/);
-  assert.match(source, /dataStale = Boolean\(result\?\.dataStale \|\| !capturedAt/);
-  assert.match(source, /if \(!marketState\.capturedAt \|\| !marketState\.price \|\| marketState\.dataStale\) return false/);
+test('Mapping bridge never invents a current source timestamp', async () => {
+  const source = await readBridge();
+  assert.match(source, /capturedAt:\s*mapping\.capturedAt \|\| null/);
+  assert.match(source, /updatedAt:\s*mapping\.computedAt \|\| mapping\.capturedAt \|\| null/);
+  assert.match(source, /quoteCapturedAt:\s*quote\.capturedAt \|\| null/);
+  assert.match(source, /mappingCapturedAt:\s*mapping\.capturedAt \|\| null/);
+  assert.match(source, /dataStale:\s*mappingFreshness\.state === "STALE" \|\| mappingFreshness\.state === "EXPIRED"/);
+  assert.doesNotMatch(source, /Date\.now\(\).*capturedAt|new Date\(\)\.toISOString\(\).*capturedAt/);
 });
 
-test('shared Mapping publication is deduplicated and guarded against market-update loops', async () => {
-  const source = await read();
-  assert.match(source, /let lastSharedFingerprint = ""/);
-  assert.match(source, /let writingShared = false/);
-  assert.match(source, /if \(fingerprint === lastSharedFingerprint\) return true/);
-  assert.match(source, /if \(!writingShared\) publish\(true\)/);
-  assert.match(source, /finally \{\s*writingShared = false/);
+test('shared Mapping publication is deduplicated without a market-update write loop', async () => {
+  const source = await readBridge();
+  assert.match(source, /let lastFingerprint = ""/);
+  assert.match(source, /if \(!force && fingerprint === lastFingerprint\) return true/);
+  assert.match(source, /lastFingerprint = fingerprint/);
+  assert.match(source, /window\.addEventListener\("amyfx:market-update", \(\) => publish\(true\)\)/);
+  assert.doesNotMatch(source, /writingShared|AmyFXIntel\.write|MarketContract\?\.write/);
 });
