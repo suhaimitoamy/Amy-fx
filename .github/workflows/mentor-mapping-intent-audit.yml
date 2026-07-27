@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 jobs:
   audit:
@@ -15,6 +16,15 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - name: Mark audit pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='pending' \
+            -f context='Amy FX Mentor Mapping Intent Audit' \
+            -f description='Running full Preview regression and Android checks' \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -35,3 +45,23 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease --stacktrace --no-daemon --no-configuration-cache
+      - name: Mark audit success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='success' \
+            -f context='Amy FX Mentor Mapping Intent Audit' \
+            -f description='JavaScript and Android audit passed' \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+      - name: Mark audit failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='failure' \
+            -f context='Amy FX Mentor Mapping Intent Audit' \
+            -f description='Audit failed; inspect workflow logs' \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
