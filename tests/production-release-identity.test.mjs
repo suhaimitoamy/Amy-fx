@@ -8,16 +8,20 @@ const root = new URL('../', import.meta.url);
 const path = relative => new URL(relative, root);
 const source = relative => readFileSync(path(relative), 'utf8');
 
-test('Amy FX 1.5.9 keeps the production Android identity and updater channel', () => {
+test('personal source stays Preview while the public release workflow keeps production identity', () => {
   const gradle = source('app/build.gradle.kts');
   const version = source('app/src/main/assets/app-version.js');
   const workflow = source('.github/workflows/build-apk.yml');
 
-  assert.match(gradle, /com\.amyelitesuite/);
-  assert.match(gradle, /main\/update\.json/);
-  assert.match(gradle, /\?: 50\)/);
-  assert.match(gradle, /\?: "1\.5\.9"/);
-  assert.match(version, /name: '1\.5\.9', code: 50/);
+  assert.match(gradle, /com\.amyelitesuite\.learningpreview/);
+  assert.match(gradle, /Amy FX Preview/);
+  assert.match(gradle, /amyfxpreview/);
+  assert.match(gradle, /personal\/amyfx-private\/preview-update\.json/);
+  assert.match(gradle, /\?: 940173\)/);
+  assert.match(gradle, /\?: "2\.0\.0-preview\.173"/);
+  assert.match(version, /name: '2\.0\.0-preview\.173', code: 940173/);
+  assert.match(version, /personal\/amyfx-private\/preview-update\.json/);
+
   assert.match(workflow, /AMYFX_APPLICATION_ID: com\.amyelitesuite/);
   assert.match(workflow, /AMYFX_APP_LABEL: Amy FX/);
   assert.match(workflow, /AMYFX_URI_SCHEME: amyfx/);
@@ -29,7 +33,7 @@ test('Amy FX 1.5.9 keeps the production Android identity and updater channel', (
   assert.match(workflow, /Verify public update manifest source/);
 });
 
-test('Mapping presents Amy FX without visible Preview branding', () => {
+test('Mapping presents a clean product interface without duplicate Preview badges', () => {
   const html = source('app/src/main/assets/apps/mapping/index.html');
   const main = source('app/src/main/assets/apps/mapping/js/main.js');
   const branding = source('app/src/main/assets/apps/mapping/js/production-branding.js');
