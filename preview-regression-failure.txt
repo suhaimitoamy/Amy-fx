@@ -1,6 +1,6 @@
 Amy FX Private Preview regression failure
-Run: 30316741143
-Commit: fcf23aa34c486e25012dd3fec9b7840d2674a965
+Run: 30316948830
+Commit: 94edddc3ba9d42730e5fbb989f33108d8b06bc79
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -79,13 +79,13 @@ Regression failed: preview-integration-audit.test.mjs
 # Subtest: Home keeps legacy fallback, closes late database handles and supports older WebViews
 ok 3 - Home keeps legacy fallback, closes late database handles and supports older WebViews
   ---
-  duration_ms: 1.811581
+  duration_ms: 0.982019
   type: 'test'
   ...
 # Subtest: Profile counters publish one shared Home stats event
 ok 4 - Profile counters publish one shared Home stats event
   ---
-  duration_ms: 0.940701
+  duration_ms: 1.723627
   type: 'test'
   ...
 1..4
@@ -96,62 +96,62 @@ ok 4 - Profile counters publish one shared Home stats event
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 89.729134
+# duration_ms 86.855929
 
 ===== preview-integration-audit.test.mjs =====
 TAP version 13
 # Subtest: all Preview module documents are standards-mode and their local assets exist
 ok 1 - all Preview module documents are standards-mode and their local assets exist
   ---
-  duration_ms: 16.797056
+  duration_ms: 18.072383
   type: 'test'
   ...
 # Subtest: Blueprint runtime is installed exactly once with canonical guard order on market modules
 ok 2 - Blueprint runtime is installed exactly once with canonical guard order on market modules
   ---
-  duration_ms: 2.883117
+  duration_ms: 3.189583
   type: 'test'
   ...
 # Subtest: home project routing points only to real local modules
 ok 3 - home project routing points only to real local modules
   ---
-  duration_ms: 1.416872
+  duration_ms: 1.395924
   type: 'test'
   ...
 # Subtest: Journal navigation, storage and Blueprint context share one authoritative state
 ok 4 - Journal navigation, storage and Blueprint context share one authoritative state
   ---
-  duration_ms: 2.901201
+  duration_ms: 3.182569
   type: 'test'
   ...
 # Subtest: home profile reads actual Mapping and IndexedDB Journal counts
 ok 5 - home profile reads actual Mapping and IndexedDB Journal counts
   ---
-  duration_ms: 2.382901
+  duration_ms: 4.42693
   type: 'test'
   ...
 # Subtest: Mapping publishes a live context contract consumed by Amy Mentor
 ok 6 - Mapping publishes a live context contract consumed by Amy Mentor
   ---
-  duration_ms: 22.451271
+  duration_ms: 32.125699
   type: 'test'
   ...
 # Subtest: Market Intel publishes news, liquidity and heatmap through canonical WITA contracts
 ok 7 - Market Intel publishes news, liquidity and heatmap through canonical WITA contracts
   ---
-  duration_ms: 2.177246
+  duration_ms: 5.007967
   type: 'test'
   ...
 # Subtest: AI secure vault, provider repair and concise conversation runtime are connected end-to-end
 ok 8 - AI secure vault, provider repair and concise conversation runtime are connected end-to-end
   ---
-  duration_ms: 3.419672
+  duration_ms: 1.733295
   type: 'test'
   ...
 # Subtest: only one Preview release workflow owns the permanent private branch and update channel
 not ok 9 - only one Preview release workflow owns the permanent private branch and update channel
   ---
-  duration_ms: 8.306991
+  duration_ms: 9.806444
   type: 'test'
   location: '/home/runner/work/Amy-fx/Amy-fx/tests/preview-integration-audit.test.mjs:179:1'
   failureType: 'testCodeFailure'
@@ -182,7 +182,7 @@ not ok 9 - only one Preview release workflow owns the permanent private branch a
 # Subtest: Preview update manifest is active and points to an immutable Preview APK
 ok 10 - Preview update manifest is active and points to an immutable Preview APK
   ---
-  duration_ms: 1.898214
+  duration_ms: 1.978465
   type: 'test'
   ...
 1..10
@@ -193,5 +193,5 @@ ok 10 - Preview update manifest is active and points to an immutable Preview APK
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 123.970285
+# duration_ms 139.042465
 Regression failed: preview-integration-audit.test.mjs
