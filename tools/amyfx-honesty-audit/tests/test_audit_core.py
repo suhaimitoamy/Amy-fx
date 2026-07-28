@@ -8,6 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from audit_core import audit_snapshot, compare_snapshots, validate_setup_geometry
+from run_audit import _audit_with_source_policy
 
 
 class HonestyInvariantTests(unittest.TestCase):
@@ -97,6 +98,19 @@ class HonestyInvariantTests(unittest.TestCase):
             "singleTarget": False,
         }
         self.assertEqual([], validate_setup_geometry(valid))
+
+    def test_live_2026_snapshot_is_not_treated_as_rejected_historical_archive(self) -> None:
+        snapshot = {
+            "timeframe": "M15",
+            "sourceMode": "LIVE_RUNTIME",
+            "historicalReplay": False,
+            "sourceCandleTime": "2026-07-28T00:15:00Z",
+            "directionDecision": {"signal": "WAIT"},
+            "directionForecast": {"active": False},
+            "setupExecution": {"active": False, "terminal": True},
+        }
+        codes = {issue.code for issue in _audit_with_source_policy(snapshot)}
+        self.assertNotIn("REJECTED_YEAR_DATA", codes)
 
     def test_reference_difference_is_reported(self) -> None:
         app = {
