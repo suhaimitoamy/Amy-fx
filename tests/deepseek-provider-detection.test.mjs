@@ -41,7 +41,7 @@ test('native provider repair never exposes secret values to WebView', async () =
 });
 
 test('provider repair bridge and detector are installed in every Preview module', async () => {
-  const installer = await read('tools/apply-blueprint-preview.py');
+  const installer = await read('tools/apply-blueprint-preview-core.py');
   assert.match(installer, /AmyFxAiProviderRepairBridge\(this\)/);
   assert.match(installer, /"AmyNativeAIRepair"/);
   assert.match(installer, /data-amyfx-provider-detection/);
