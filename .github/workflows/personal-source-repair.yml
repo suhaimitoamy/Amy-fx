@@ -105,7 +105,7 @@ jobs:
         run: |
           set -euo pipefail
           git restore .github/workflows/personal-source-repair.yml
-          rm -f tools/apply-personal-debug-fixes.mjs preview-regression-failure.txt personal-source-repair-failure.txt
+          rm -f tools/apply-personal-debug-fixes.mjs personal-source-repair-failure.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
@@ -114,4 +114,4 @@ jobs:
           git rebase origin/personal/amyfx-private
           git push origin HEAD:personal/amyfx-private
 
-# Final retry: workflow deletion is handled separately after the verified source commit.
+# Final retry: keep Preview failure metadata out of the source repair commit.
