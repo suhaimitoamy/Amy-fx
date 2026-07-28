@@ -1,25 +1,25 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 940154,
-  "latest_version_name": "2.0.0-preview.154",
-  "versionCode": 940154,
-  "version": "2.0.0-preview.154",
+  "latest_version_code": 940173,
+  "latest_version_name": "2.0.0-preview.173",
+  "versionCode": 940173,
+  "version": "2.0.0-preview.173",
   "releaseDate": "2026-07-28",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.154/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.154/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.173/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.173/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Amy FX Preview tetap menggunakan versi stabil 2.0.0-preview.154.",
+    "Amy FX Preview sekarang menggunakan branch pribadi permanen personal/amyfx-private.",
     "Package, data aplikasi, URI scheme, dan sertifikat signing Preview tetap dipertahankan.",
-    "Versi Preview setelah 154 tidak digunakan sebagai channel aktif.",
+    "Update berikutnya akan dibaca langsung dari channel branch pribadi.",
     "Amy FX publik pada branch main tidak diubah."
   ],
   "changelog": [
-    "Pinned stable Preview 154",
+    "Permanent private development branch",
+    "Private update manifest migration",
     "Preview package and signer continuity",
-    "Post-154 update channel disabled",
     "Public main isolation guard"
   ]
 }
