@@ -1,0 +1,1537 @@
+
+> test
+> node tools/run-tests-sequential.mjs
+
+
+===== amy-mentor-conversation.test.mjs =====
+TAP version 13
+# Subtest: concise mentor runtime is valid JavaScript and loaded by the installed provider runtime
+ok 1 - concise mentor runtime is valid JavaScript and loaded by the installed provider runtime
+  ---
+  duration_ms: 6.404963
+  type: 'test'
+  ...
+# Subtest: simple home action question is answered locally without a trading lecture
+ok 2 - simple home action question is answered locally without a trading lecture
+  ---
+  duration_ms: 1.248969
+  type: 'test'
+  ...
+# Subtest: provider prompt forbids audit-style headings and internal metadata leakage
+ok 3 - provider prompt forbids audit-style headings and internal metadata leakage
+  ---
+  duration_ms: 1.713265
+  type: 'test'
+  ...
+# Subtest: epoch timestamp is replaced with Belum ada data
+ok 4 - epoch timestamp is replaced with Belum ada data
+  ---
+  duration_ms: 0.936887
+  type: 'test'
+  ...
+# Subtest: mentor shows and clears an accessible animated loading state while waiting for provider
+ok 5 - mentor shows and clears an accessible animated loading state while waiting for provider
+  ---
+  duration_ms: 0.882946
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 63.497673
+
+===== api-polling-coordinator.test.mjs =====
+TAP version 13
+# Subtest: new Mapping and backend runtime files remain syntactically valid
+ok 1 - new Mapping and backend runtime files remain syntactically valid
+  ---
+  duration_ms: 135.181298
+  type: 'test'
+  ...
+# Subtest: request and candle coordinators load before Entry Watch
+ok 2 - request and candle coordinators load before Entry Watch
+  ---
+  duration_ms: 0.207887
+  type: 'test'
+  ...
+# Subtest: Entry Watch consumes shared Mapping candles without a second API fetcher
+ok 3 - Entry Watch consumes shared Mapping candles without a second API fetcher
+  ---
+  duration_ms: 0.342439
+  type: 'test'
+  ...
+# Subtest: shared candle coordinator refreshes only closed watch timeframes
+ok 4 - shared candle coordinator refreshes only closed watch timeframes
+  ---
+  duration_ms: 0.160058
+  type: 'test'
+  ...
+# Subtest: native scanner is background-only and rate limited
+ok 5 - native scanner is background-only and rate limited
+  ---
+  duration_ms: 0.242142
+  type: 'test'
+  ...
+# Subtest: analysis view has scroll stability protection
+ok 6 - analysis view has scroll stability protection
+  ---
+  duration_ms: 0.135834
+  type: 'test'
+  ...
+# Subtest: client Twelve Data requests are canonicalized, deduplicated and cached
+ok 7 - client Twelve Data requests are canonicalized, deduplicated and cached
+  ---
+  duration_ms: 0.18766
+  type: 'test'
+  ...
+# Subtest: backend shares provider responses and serves stale cache during provider failure
+ok 8 - backend shares provider responses and serves stale cache during provider failure
+  ---
+  duration_ms: 0.142356
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 199.800777
+
+===== asia-range-ui-freeze-regression.test.mjs =====
+TAP version 13
+# Subtest: Asia range UI module remains syntactically valid
+ok 1 - Asia range UI module remains syntactically valid
+  ---
+  duration_ms: 24.923595
+  type: 'test'
+  ...
+# Subtest: MutationObserver does not call the renderer directly
+ok 2 - MutationObserver does not call the renderer directly
+  ---
+  duration_ms: 0.31124
+  type: 'test'
+  ...
+# Subtest: Asia range markup is only written when content changes
+ok 3 - Asia range markup is only written when content changes
+  ---
+  duration_ms: 0.221423
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 81.720518
+
+===== asia-range.test.mjs =====
+TAP version 13
+# Subtest: Asia Range uses 06:00-14:00 Asia/Makassar and reports wick sweep
+ok 1 - Asia Range uses 06:00-14:00 Asia/Makassar and reports wick sweep
+  ---
+  duration_ms: 49.60086
+  type: 'test'
+  ...
+# Subtest: closed candle beyond Asia High has priority over wick sweep
+ok 2 - closed candle beyond Asia High has priority over wick sweep
+  ---
+  duration_ms: 5.420407
+  type: 'test'
+  ...
+# Subtest: active Asia session remains developing
+ok 3 - active Asia session remains developing
+  ---
+  duration_ms: 5.478095
+  type: 'test'
+  ...
+# Subtest: first closed M15 candle starts the active Asia Range instead of falling back to yesterday
+ok 4 - first closed M15 candle starts the active Asia Range instead of falling back to yesterday
+  ---
+  duration_ms: 5.798092
+  type: 'test'
+  ...
+# Subtest: before 06:00 WITA the latest completed Asia Range remains selected
+ok 5 - before 06:00 WITA the latest completed Asia Range remains selected
+  ---
+  duration_ms: 5.168117
+  type: 'test'
+  ...
+# Subtest: session windows use exact Makassar boundaries
+ok 6 - session windows use exact Makassar boundaries
+  ---
+  duration_ms: 1.085654
+  type: 'test'
+  ...
+# Subtest: shared candle store requests UTC and normalizes provider timestamps
+ok 7 - shared candle store requests UTC and normalizes provider timestamps
+  ---
+  duration_ms: 0.530299
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 131.461935
+
+===== background-video-playback-regression.test.mjs =====
+TAP version 13
+# Subtest: Android Media3 service is declared as media playback foreground service
+ok 1 - Android Media3 service is declared as media playback foreground service
+  ---
+  duration_ms: 0.877085
+  type: 'test'
+  ...
+# Subtest: native player handles loop, audio focus, noisy audio and persistent state
+ok 2 - native player handles loop, audio focus, noisy audio and persistent state
+  ---
+  duration_ms: 0.223597
+  type: 'test'
+  ...
+# Subtest: IndexedDB video transfer is chunked, ordered and size validated
+ok 3 - IndexedDB video transfer is chunked, ordered and size validated
+  ---
+  duration_ms: 0.217125
+  type: 'test'
+  ...
+# Subtest: web player autoplays, loops, hands off on lifecycle and prevents dual playback
+ok 4 - web player autoplays, loops, hands off on lifecycle and prevents dual playback
+  ---
+  duration_ms: 0.204802
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 66.197001
+
+===== blueprint-preview-stabilization.test.mjs =====
+TAP version 13
+# Subtest: market pages load the listener guard before Blueprint while other modules retain legacy-safe order
+ok 1 - market pages load the listener guard before Blueprint while other modules retain legacy-safe order
+  ---
+  duration_ms: 6.704822
+  type: 'test'
+  ...
+# Subtest: stabilization fixes assistant recovery, secure-vault compatibility and total timeout
+ok 2 - stabilization fixes assistant recovery, secure-vault compatibility and total timeout
+  ---
+  duration_ms: 2.15039
+  type: 'test'
+  ...
+# Subtest: journal review belongs to Journal and market freshness comes from canonical source timestamps
+ok 3 - journal review belongs to Journal and market freshness comes from canonical source timestamps
+  ---
+  duration_ms: 1.865599
+  type: 'test'
+  ...
+# Subtest: academy principal page has valid section boundary and complete final foundation link
+ok 4 - academy principal page has valid section boundary and complete final foundation link
+  ---
+  duration_ms: 1.044567
+  type: 'test'
+  ...
+# Subtest: release workflow validates stabilization without touching production main
+ok 5 - release workflow validates stabilization without touching production main
+  ---
+  duration_ms: 0.91702
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 67.037623
+
+===== blueprint-preview-v1.test.mjs =====
+TAP version 13
+# Subtest: blueprint runtime defines canonical contracts and lifecycle
+ok 1 - blueprint runtime defines canonical contracts and lifecycle
+  ---
+  duration_ms: 5.696723
+  type: 'test'
+  ...
+# Subtest: global mentor is installed in every principal module
+ok 2 - global mentor is installed in every principal module
+  ---
+  duration_ms: 3.309401
+  type: 'test'
+  ...
+# Subtest: native secret vault never exposes a secret getter to WebView
+ok 3 - native secret vault never exposes a secret getter to WebView
+  ---
+  duration_ms: 1.482625
+  type: 'test'
+  ...
+# Subtest: private Preview release remains isolated from production main
+ok 4 - private Preview release remains isolated from production main
+  ---
+  duration_ms: 1.125469
+  type: 'test'
+  ...
+# Subtest: blueprint assets are non-empty and syntax checked by release gate
+ok 5 - blueprint assets are non-empty and syntax checked by release gate
+  ---
+  duration_ms: 1.232508
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 66.334999
+
+===== bos-mss.test.mjs =====
+TAP version 13
+# Subtest: structure uses the same four-bar pivot length as the reference
+ok 1 - structure uses the same four-bar pivot length as the reference
+  ---
+  duration_ms: 1.519463
+  type: 'test'
+  ...
+# Subtest: Drive candle close above confirmed swing creates MSS even without displacement
+ok 2 - Drive candle close above confirmed swing creates MSS even without displacement
+  ---
+  duration_ms: 1.383861
+  type: 'test'
+  ...
+# Subtest: first directional close-cross is MSS and the next same-direction close-cross is BOS
+ok 3 - first directional close-cross is MSS and the next same-direction close-cross is BOS
+  ---
+  duration_ms: 0.946765
+  type: 'test'
+  ...
+# Subtest: one confirmed swing can emit only one sweep before it is replaced
+ok 4 - one confirmed swing can emit only one sweep before it is replaced
+  ---
+  duration_ms: 0.255185
+  type: 'test'
+  ...
+# Subtest: break lifecycle marks a close back inside as failed
+ok 5 - break lifecycle marks a close back inside as failed
+  ---
+  duration_ms: 0.276917
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 63.750074
+
+===== bsl-ssl.test.mjs =====
+TAP version 13
+# Subtest: BSL requires four candles on the right, matching the reference swing length
+ok 1 - BSL requires four candles on the right, matching the reference swing length
+  ---
+  duration_ms: 2.548322
+  type: 'test'
+  ...
+# Subtest: confirmed BSL is published after four right-side candles
+ok 2 - confirmed BSL is published after four right-side candles
+  ---
+  duration_ms: 0.372405
+  type: 'test'
+  ...
+# Subtest: confirmed SSL is published after four right-side candles
+ok 3 - confirmed SSL is published after four right-side candles
+  ---
+  duration_ms: 0.379217
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 61.091216
+
+===== concept-engine.integration.test.mjs =====
+TAP version 13
+# Subtest: production thresholds use the validated Mapping reference profile
+ok 1 - production thresholds use the validated Mapping reference profile
+  ---
+  duration_ms: 1.334418
+  type: 'test'
+  ...
+# Subtest: FVG converts to IFVG and confirms only the inverse rejection
+ok 2 - FVG converts to IFVG and confirms only the inverse rejection
+  ---
+  duration_ms: 0.563681
+  type: 'test'
+  ...
+# Subtest: liquidity and structure confirmations enforce ATR thresholds
+ok 3 - liquidity and structure confirmations enforce ATR thresholds
+  ---
+  duration_ms: 0.998162
+  type: 'test'
+  ...
+# Subtest: liquidity hierarchy is nearest-target context, never directional pressure
+ok 4 - liquidity hierarchy is nearest-target context, never directional pressure
+  ---
+  duration_ms: 0.484945
+  type: 'test'
+  ...
+# Subtest: single market concept engine returns compatible production fields
+ok 5 - single market concept engine returns compatible production fields
+  ---
+  duration_ms: 5.031832
+  type: 'test'
+  ...
+# Subtest: legacy diagnostic timers and Pine zone source are no longer wired to Mapping
+ok 6 - legacy diagnostic timers and Pine zone source are no longer wired to Mapping
+  ---
+  duration_ms: 0.425222
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 75.657928
+
+===== dashboard-analyze-separation.test.mjs =====
+TAP version 13
+# Subtest: Dashboard and Analyze use separate render functions
+ok 1 - Dashboard and Analyze use separate render functions
+  ---
+  duration_ms: 0.927329
+  type: 'test'
+  ...
+# Subtest: Dashboard contains only the three primary market outputs
+ok 2 - Dashboard contains only the three primary market outputs
+  ---
+  duration_ms: 0.310218
+  type: 'test'
+  ...
+# Subtest: Analyze presents performance and advanced context in compact disclosures
+ok 3 - Analyze presents performance and advanced context in compact disclosures
+  ---
+  duration_ms: 0.185045
+  type: 'test'
+  ...
+# Subtest: Legacy focus mode no longer hides the rest of Dashboard
+ok 4 - Legacy focus mode no longer hides the rest of Dashboard
+  ---
+  duration_ms: 0.146514
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 59.003473
+
+===== deepseek-provider-detection.test.mjs =====
+TAP version 13
+# Subtest: provider detection recognizes Gemini, OpenRouter and DeepSeek key prefixes
+ok 1 - provider detection recognizes Gemini, OpenRouter and DeepSeek key prefixes
+  ---
+  duration_ms: 5.297098
+  type: 'test'
+  ...
+# Subtest: plain DeepSeek key is normalized before the original save handler runs
+ok 2 - plain DeepSeek key is normalized before the original save handler runs
+  ---
+  duration_ms: 1.393058
+  type: 'test'
+  ...
+# Subtest: native provider repair never exposes secret values to WebView
+ok 3 - native provider repair never exposes secret values to WebView
+  ---
+  duration_ms: 0.8902
+  type: 'test'
+  ...
+# Subtest: provider repair bridge and detector are installed in every Preview module
+ok 4 - provider repair bridge and detector are installed in every Preview module
+  ---
+  duration_ms: 3.06768
+  type: 'test'
+  ...
+# Subtest: DeepSeek remains explicit about paid fallback usage
+ok 5 - DeepSeek remains explicit about paid fallback usage
+  ---
+  duration_ms: 0.955382
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 64.010399
+
+===== dynamic-heatmap-ui-regression.test.mjs =====
+TAP version 13
+# Subtest: browser heatmap scripts remain syntactically valid
+ok 1 - browser heatmap scripts remain syntactically valid
+  ---
+  duration_ms: 69.493133
+  type: 'test'
+  ...
+# Subtest: market intel page loads canonical contract before dynamic heatmap consumers
+ok 2 - market intel page loads canonical contract before dynamic heatmap consumers
+  ---
+  duration_ms: 0.489192
+  type: 'test'
+  ...
+# Subtest: dynamic heatmap refreshes independently and tracks strength changes
+ok 3 - dynamic heatmap refreshes independently and tracks strength changes
+  ---
+  duration_ms: 0.293347
+  type: 'test'
+  ...
+# Subtest: heatmap API uses dynamic lifecycle engine and shared candle cache
+ok 4 - heatmap API uses dynamic lifecycle engine and shared candle cache
+  ---
+  duration_ms: 0.246379
+  type: 'test'
+  ...
+# Subtest: shared briefing uses canonical quote and Intel-only BSL SSL while heatmap keeps source candle time
+ok 5 - shared briefing uses canonical quote and Intel-only BSL SSL while heatmap keeps source candle time
+  ---
+  duration_ms: 0.489523
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 128.881423
+
+===== dynamic-heatmap.test.mjs =====
+TAP version 13
+# Subtest: dynamic heatmap always inserts a current-price row
+ok 1 - dynamic heatmap always inserts a current-price row
+  ---
+  duration_ms: 3.084552
+  type: 'test'
+  ...
+# Subtest: a support level above current price is not kept as active support after a close break
+ok 2 - a support level above current price is not kept as active support after a close break
+  ---
+  duration_ms: 0.465809
+  type: 'test'
+  ...
+# Subtest: polarity retest converts broken support into resistance / BSL context
+ok 3 - polarity retest converts broken support into resistance / BSL context
+  ---
+  duration_ms: 0.320909
+  type: 'test'
+  ...
+# Subtest: intensity uses bounded logarithmic normalization so one outlier cannot flatten every row
+ok 4 - intensity uses bounded logarithmic normalization so one outlier cannot flatten every row
+  ---
+  duration_ms: 1.467476
+  type: 'test'
+  ...
+# Subtest: summary exposes active pressure and nearest draw from usable zones
+ok 5 - summary exposes active pressure and nearest draw from usable zones
+  ---
+  duration_ms: 0.609307
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 67.413816
+
+===== entry-sl-tp.test.mjs =====
+TAP version 13
+# Subtest: M15 Entry Map uses MSS close, 0.10 ATR stop buffer, 0.35R TP1 and 1.75R TP2
+ok 1 - M15 Entry Map uses MSS close, 0.10 ATR stop buffer, 0.35R TP1 and 1.75R TP2
+  ---
+  duration_ms: 1.861962
+  type: 'test'
+  ...
+# Subtest: setup candle itself cannot hit SL or target
+ok 2 - setup candle itself cannot hit SL or target
+  ---
+  duration_ms: 0.28935
+  type: 'test'
+  ...
+# Subtest: before TP1, SL has priority when one candle spans SL and targets
+ok 3 - before TP1, SL has priority when one candle spans SL and targets
+  ---
+  duration_ms: 0.223998
+  type: 'test'
+  ...
+# Subtest: TP1 moves stop to break-even and a later return closes the runner
+ok 4 - TP1 moves stop to break-even and a later return closes the runner
+  ---
+  duration_ms: 0.191076
+  type: 'test'
+  ...
+# Subtest: after TP1, TP2 has priority over break-even on the same candle
+ok 5 - after TP1, TP2 has priority over break-even on the same candle
+  ---
+  duration_ms: 0.249655
+  type: 'test'
+  ...
+# Subtest: live setup expires after exactly 36 M15 candles
+ok 6 - live setup expires after exactly 36 M15 candles
+  ---
+  duration_ms: 0.205183
+  type: 'test'
+  ...
+# Subtest: UI status reads the candle lifecycle instead of wall-clock expiry
+ok 7 - UI status reads the candle lifecycle instead of wall-clock expiry
+  ---
+  duration_ms: 0.430543
+  type: 'test'
+  ...
+# Subtest: closed Entry Map outcome is marked terminal in the UI
+ok 8 - closed Entry Map outcome is marked terminal in the UI
+  ---
+  duration_ms: 0.205443
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 63.042995
+
+===== entry-watch-engine.test.mjs =====
+TAP version 13
+# Subtest: config locks causal multi-timeframe rules
+ok 1 - config locks causal multi-timeframe rules
+  ---
+  duration_ms: 2.167442
+  type: 'test'
+  ...
+# Subtest: candidate builder derives availability from confirmed source candle close
+ok 2 - candidate builder derives availability from confirmed source candle close
+  ---
+  duration_ms: 1.385013
+  type: 'test'
+  ...
+# Subtest: new level is armed first and cannot enter on its first evaluation
+ok 3 - new level is armed first and cannot enter on its first evaluation
+  ---
+  duration_ms: 0.576626
+  type: 'test'
+  ...
+# Subtest: H1 level enters only on a later M5 candle after arming
+ok 4 - H1 level enters only on a later M5 candle after arming
+  ---
+  duration_ms: 0.730832
+  type: 'test'
+  ...
+# Subtest: source timeframe close break cancels entry and converts FVG to iFVG
+ok 5 - source timeframe close break cancels entry and converts FVG to iFVG
+  ---
+  duration_ms: 1.1636
+  type: 'test'
+  ...
+# Subtest: hidden source break is reconciled while forecast is paused
+ok 6 - hidden source break is reconciled while forecast is paused
+  ---
+  duration_ms: 0.545417
+  type: 'test'
+  ...
+# Subtest: pause advances trigger cursor so sweep during inactive forecast cannot enter later
+ok 7 - pause advances trigger cursor so sweep during inactive forecast cannot enter later
+  ---
+  duration_ms: 0.944481
+  type: 'test'
+  ...
+# Subtest: level removed from detector becomes terminal instead of orphan entry
+ok 8 - level removed from detector becomes terminal instead of orphan entry
+  ---
+  duration_ms: 0.307864
+  type: 'test'
+  ...
+# Subtest: one entry becomes ENTRY_SPENT on the next trigger candle
+ok 9 - one entry becomes ENTRY_SPENT on the next trigger candle
+  ---
+  duration_ms: 0.577607
+  type: 'test'
+  ...
+# Subtest: expired converted level cannot stay alive forever
+ok 10 - expired converted level cannot stay alive forever
+  ---
+  duration_ms: 0.596793
+  type: 'test'
+  ...
+# Subtest: forecast change closes old level instead of resurrecting it
+ok 11 - forecast change closes old level instead of resurrecting it
+  ---
+  duration_ms: 0.325638
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 69.320069
+
+===== entry-watch-hardening.test.mjs =====
+TAP version 13
+# Subtest: entry timestamp is moved from trigger open to confirmed close
+ok 1 - entry timestamp is moved from trigger open to confirmed close
+  ---
+  duration_ms: 1.922575
+  type: 'test'
+  ...
+# Subtest: execution geometry is frozen from entry close and does not depend on later live price
+ok 2 - execution geometry is frozen from entry close and does not depend on later live price
+  ---
+  duration_ms: 0.486858
+  type: 'test'
+  ...
+# Subtest: WAIT forecast forcibly disables an already-triggered BUY/SELL state
+ok 3 - WAIT forecast forcibly disables an already-triggered BUY/SELL state
+  ---
+  duration_ms: 0.197689
+  type: 'test'
+  ...
+# Subtest: source removed by detector retires the level before entry is accepted
+ok 4 - source removed by detector retires the level before entry is accepted
+  ---
+  duration_ms: 0.208489
+  type: 'test'
+  ...
+# Subtest: active detector source remains eligible and creates one locked setup
+ok 5 - active detector source remains eligible and creates one locked setup
+  ---
+  duration_ms: 0.317412
+  type: 'test'
+  ...
+# Subtest: H1 bearish forecast uses the mirrored bullish conditions
+ok 6 - H1 bearish forecast uses the mirrored bullish conditions
+  ---
+  duration_ms: 0.201786
+  type: 'test'
+  ...
+# Subtest: H1 overextended bearish momentum is rejected symmetrically
+ok 7 - H1 overextended bearish momentum is rejected symmetrically
+  ---
+  duration_ms: 0.134561
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 63.84967
+
+===== equal-high-low.test.mjs =====
+TAP version 13
+# Subtest: two confirmed swing highs inside 0.03 ATR form one active Equal High
+ok 1 - two confirmed swing highs inside 0.03 ATR form one active Equal High
+  ---
+  duration_ms: 2.893025
+  type: 'test'
+  ...
+# Subtest: a second swing outside 0.03 ATR is not classified as Equal High
+ok 2 - a second swing outside 0.03 ATR is not classified as Equal High
+  ---
+  duration_ms: 0.445701
+  type: 'test'
+  ...
+# Subtest: Equal High is unavailable before four right-side confirmation candles close
+ok 3 - Equal High is unavailable before four right-side confirmation candles close
+  ---
+  duration_ms: 0.308956
+  type: 'test'
+  ...
+# Subtest: wick beyond Equal High consumes the pool and records confirmed reaction
+ok 4 - wick beyond Equal High consumes the pool and records confirmed reaction
+  ---
+  duration_ms: 0.538925
+  type: 'test'
+  ...
+# Subtest: three connected equal highs collapse into one renewed pool without duplicates
+ok 5 - three connected equal highs collapse into one renewed pool without duplicates
+  ---
+  duration_ms: 0.470387
+  type: 'test'
+  ...
+# Subtest: two confirmed swing lows inside tolerance form one active Equal Low
+ok 6 - two confirmed swing lows inside tolerance form one active Equal Low
+  ---
+  duration_ms: 0.456191
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 63.952481
+
+===== final-integration.test.mjs =====
+TAP version 13
+# Subtest: all critical Mapping modules pass JavaScript syntax validation
+ok 1 - all critical Mapping modules pass JavaScript syntax validation
+  ---
+  duration_ms: 313.928424
+  type: 'test'
+  ...
+# Subtest: M15 Entry Map is audit-only and Multi-Timeframe Entry Watch owns execution
+ok 2 - M15 Entry Map is audit-only and Multi-Timeframe Entry Watch owns execution
+  ---
+  duration_ms: 0.402821
+  type: 'test'
+  ...
+# Subtest: Mapping UI loads hardened Entry Watch while retaining Entry Map audit sync and WITA labels
+ok 3 - Mapping UI loads hardened Entry Watch while retaining Entry Map audit sync and WITA labels
+  ---
+  duration_ms: 0.376011
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 371.060612
+
+===== five-issues-regression.test.mjs =====
+TAP version 13
+# Subtest: Mapping UI hardening files remain syntactically valid
+ok 1 - Mapping UI hardening files remain syntactically valid
+  ---
+  duration_ms: 46.841782
+  type: 'test'
+  ...
+# Subtest: README retains the private Preview identity and APK route
+ok 2 - README retains the private Preview identity and APK route
+  ---
+  duration_ms: 0.304207
+  type: 'test'
+  ...
+# Subtest: Mapping loads the five-issue UI hardening after existing styles and modules
+ok 3 - Mapping loads the five-issue UI hardening after existing styles and modules
+  ---
+  duration_ms: 0.199572
+  type: 'test'
+  ...
+# Subtest: dashboard duplicate Preview and price cards are removed without changing data services
+ok 4 - dashboard duplicate Preview and price cards are removed without changing data services
+  ---
+  duration_ms: 0.194072
+  type: 'test'
+  ...
+# Subtest: stale M15 never keeps a LIVE analysis badge
+ok 5 - stale M15 never keeps a LIVE analysis badge
+  ---
+  duration_ms: 0.279782
+  type: 'test'
+  ...
+# Subtest: historical reliability is a muted closed disclosure rather than a live signal block
+ok 6 - historical reliability is a muted closed disclosure rather than a live signal block
+  ---
+  duration_ms: 0.153115
+  type: 'test'
+  ...
+# Subtest: Analyze view uses stable keyed accordions and anchor-based scroll restoration
+ok 7 - Analyze view uses stable keyed accordions and anchor-based scroll restoration
+  ---
+  duration_ms: 1.070786
+  type: 'test'
+  ...
+# Subtest: final issue-5 audit separates tracker success from close-direction accuracy
+ok 8 - final issue-5 audit separates tracker success from close-direction accuracy
+  ---
+  duration_ms: 0.169756
+  type: 'test'
+  ...
+# Subtest: source version and updater stay on the private Preview channel
+ok 9 - source version and updater stay on the private Preview channel
+  ---
+  duration_ms: 0.458245
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 114.147979
+
+===== fvg-ob.test.mjs =====
+TAP version 13
+# Subtest: small valid three-candle FVG is kept without a 0.7 ATR width filter
+ok 1 - small valid three-candle FVG is kept without a 0.7 ATR width filter
+  ---
+  duration_ms: 1.514684
+  type: 'test'
+  ...
+# Subtest: FVG is removed on a full wick fill and is not converted to IFVG
+ok 2 - FVG is removed on a full wick fill and is not converted to IFVG
+  ---
+  duration_ms: 0.382163
+  type: 'test'
+  ...
+# Subtest: Order Block uses candle body and is available on the break candle without HTF or FVG gating
+ok 3 - Order Block uses candle body and is available on the break candle without HTF or FVG gating
+  ---
+  duration_ms: 0.612803
+  type: 'test'
+  ...
+# Subtest: invalid Order Block is deleted instead of converted into a breaker
+ok 4 - invalid Order Block is deleted instead of converted into a breaker
+  ---
+  duration_ms: 0.354681
+  type: 'test'
+  ...
+# Subtest: OB imbalance metadata never reads candles after the structure break
+ok 5 - OB imbalance metadata never reads candles after the structure break
+  ---
+  duration_ms: 0.202227
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 64.864309
+
+===== honesty-audit-runtime.test.mjs =====
+TAP version 13
+# Subtest: runtime replaces forecast percentage with an honest score label
+ok 1 - runtime replaces forecast percentage with an honest score label
+  ---
+  duration_ms: 7.640768
+  type: 'test'
+  ...
+# Amy FX honesty anomaly [
+#   {
+#     schema: 'amyfx.honesty.anomaly.v1',
+#     code: 'STALE_DATA_DIRECTION',
+#     severity: 'critical',
+#     message: 'Data usang menghasilkan arah selain WAIT.',
+#     timestamp: '2020-01-01T00:15:00.000Z',
+#     timeframe: 'M15',
+#     details: { signal: 'SELL' }
+#   },
+#   {
+#     schema: 'amyfx.honesty.anomaly.v1',
+#     code: 'STALE_DATA_ACTIVE_SETUP',
+#     severity: 'critical',
+#     message: 'Data usang masih meninggalkan setup aktif.',
+#     timestamp: '2020-01-01T00:15:00.000Z',
+#     timeframe: 'M15',
+#     details: null
+#   },
+#   {
+#     schema: 'amyfx.honesty.anomaly.v1',
+#     code: 'INACTIVE_FORECAST_ACTIVE_SETUP',
+#     severity: 'critical',
+#     message: 'Forecast tidak aktif atau terminal tetapi setup masih aktif.',
+#     timestamp: '2020-01-01T00:15:00.000Z',
+#     timeframe: 'M15',
+#     details: null
+#   }
+# ] {
+#   schema: 'amyfx.honesty.snapshot.v1',
+#   branch: 'personal/amyfx-private',
+#   sourceMode: 'LIVE_RUNTIME',
+#   historicalReplay: false,
+#   reason: 'startup',
+#   capturedAt: '2026-07-28T09:02:23.426Z',
+#   timeframe: 'M15',
+#   sourceCandleTime: '2020-01-01T00:15:00.000Z',
+#   sourceCandles: { M15: '2020-01-01T00:15:00.000Z' },
+#   dataStale: true,
+#   directionDecision: {
+#     bias: '',
+#     signal: 'SELL',
+#     source: 'VALIDATED_DIRECTION_FORECAST',
+#     status: 'BULLISH · VALIDATED FORECAST · SCORE 60/100',
+#     invalidated: false,
+#     invalidationReason: ''
+#   },
+#   directionForecast: {
+#     active: false,
+#     invalidated: false,
+#     expired: false,
+#     direction: 'BULLISH',
+#     directionValue: 1,
+#     confidenceScore: 60,
+#     startTime: null,
+#     expiryTime: null,
+#     confidenceMeaning: 'DISPLAY_CONFIDENCE_FROM_VALIDATED_BACKTEST_NOT_LIVE_WIN_PROBABILITY'
+#   },
+#   setupExecution: {
+#     active: true,
+#     terminal: false,
+#     setupId: '',
+#     direction: 'SELL',
+#     status: '',
+#     lifecycleStage: '',
+#     entryLow: 1518,
+#     entryHigh: 1519,
+#     stopLoss: 1521,
+#     target1: 1514,
+#     target2: null,
+#     singleTarget: true,
+#     invalidated: false,
+#     invalidationReason: ''
+#   },
+#   fingerprint: '901cca9e'
+# }
+# Amy FX honesty anomaly [
+#   {
+#     schema: 'amyfx.honesty.anomaly.v1',
+#     code: 'STALE_DATA_DIRECTION',
+#     severity: 'critical',
+#     message: 'Data usang menghasilkan arah selain WAIT.',
+#     timestamp: '2020-01-01T00:15:00.000Z',
+#     timeframe: 'M15',
+#     details: { signal: 'SELL' }
+#   },
+#   {
+#     schema: 'amyfx.honesty.anomaly.v1',
+#     code: 'STALE_DATA_ACTIVE_SETUP',
+#     severity: 'critical',
+#     message: 'Data usang masih meninggalkan setup aktif.',
+#     timestamp: '2020-01-01T00:15:00.000Z',
+#     timeframe: 'M15',
+#     details: null
+#   },
+#   {
+#     schema: 'amyfx.honesty.anomaly.v1',
+#     code: 'INACTIVE_FORECAST_ACTIVE_SETUP',
+#     severity: 'critical',
+#     message: 'Forecast tidak aktif atau terminal tetapi setup masih aktif.',
+#     timestamp: '2020-01-01T00:15:00.000Z',
+#     timeframe: 'M15',
+#     details: null
+#   }
+# ] {
+#   schema: 'amyfx.honesty.snapshot.v1',
+#   branch: 'personal/amyfx-private',
+#   sourceMode: 'LIVE_RUNTIME',
+#   historicalReplay: false,
+#   reason: 'manual',
+#   capturedAt: '2026-07-28T09:02:23.427Z',
+#   timeframe: 'M15',
+#   sourceCandleTime: '2020-01-01T00:15:00.000Z',
+#   sourceCandles: { M15: '2020-01-01T00:15:00.000Z' },
+#   dataStale: true,
+#   directionDecision: {
+#     bias: '',
+#     signal: 'SELL',
+#     source: 'VALIDATED_DIRECTION_FORECAST',
+#     status: 'BULLISH · VALIDATED FORECAST · SCORE 60/100',
+#     invalidated: false,
+#     invalidationReason: ''
+#   },
+#   directionForecast: {
+#     active: false,
+#     invalidated: false,
+#     expired: false,
+#     direction: 'BULLISH',
+#     directionValue: 1,
+#     confidenceScore: 60,
+#     startTime: null,
+#     expiryTime: null,
+#     confidenceMeaning: 'DISPLAY_CONFIDENCE_FROM_VALIDATED_BACKTEST_NOT_LIVE_WIN_PROBABILITY'
+#   },
+#   setupExecution: {
+#     active: true,
+#     terminal: false,
+#     setupId: '',
+#     direction: 'SELL',
+#     status: '',
+#     lifecycleStage: '',
+#     entryLow: 1518,
+#     entryHigh: 1519,
+#     stopLoss: 1521,
+#     target1: 1514,
+#     target2: null,
+#     singleTarget: true,
+#     invalidated: false,
+#     invalidationReason: ''
+#   },
+#   fingerprint: '901cca9e'
+# }
+# Subtest: runtime records stale-data and inactive-forecast setup contradictions
+ok 2 - runtime records stale-data and inactive-forecast setup contradictions
+  ---
+  duration_ms: 3.870787
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 70.829975
+
+===== honesty-validated-series.test.mjs =====
+TAP version 13
+# Subtest: validated M15 series is prefix-invariant and does not read future H4 candles
+ok 1 - validated M15 series is prefix-invariant and does not read future H4 candles
+  ---
+  duration_ms: 35.734073
+  type: 'test'
+  ...
+# Subtest: forecast lifecycle never points beyond the decision candle
+ok 2 - forecast lifecycle never points beyond the decision candle
+  ---
+  duration_ms: 6.853059
+  type: 'test'
+  ...
+# Subtest: display confidence explicitly states that it is not live win probability
+ok 3 - display confidence explicitly states that it is not live win probability
+  ---
+  duration_ms: 10.187767
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 125.298168
+
+===== ict-core-regression.test.mjs =====
+TAP version 13
+# Subtest: liquidity yang pernah disapu tidak aktif kembali setelah harga berbalik
+ok 1 - liquidity yang pernah disapu tidak aktif kembali setelah harga berbalik
+  ---
+  duration_ms: 1.545011
+  type: 'test'
+  ...
+# Subtest: break historis memakai ATR lokal sebelum candle breakout
+ok 2 - break historis memakai ATR lokal sebelum candle breakout
+  ---
+  duration_ms: 1.129085
+  type: 'test'
+  ...
+# Subtest: sweep wajib menutup kembali di dalam level
+ok 3 - sweep wajib menutup kembali di dalam level
+  ---
+  duration_ms: 0.16645
+  type: 'test'
+  ...
+# Subtest: setup RR di bawah 1:2 ditolak sebagai konflik fatal
+ok 4 - setup RR di bawah 1:2 ditolak sebagai konflik fatal
+  ---
+  duration_ms: 0.782659
+  type: 'test'
+  ...
+# Subtest: setup RR tepat 1:2 tidak terkena konflik RR
+ok 5 - setup RR tepat 1:2 tidak terkena konflik RR
+  ---
+  duration_ms: 0.235348
+  type: 'test'
+  ...
+# Subtest: M15 precision menghasilkan TP1 1R dan runner TP2 minimal 2R
+ok 6 - M15 precision menghasilkan TP1 1R dan runner TP2 minimal 2R
+  ---
+  duration_ms: 0.697471
+  type: 'test'
+  ...
+# Subtest: timeframe selain M15 tetap menjadi konteks dan tidak actionable
+ok 7 - timeframe selain M15 tetap menjadi konteks dan tidak actionable
+  ---
+  duration_ms: 0.250777
+  type: 'test'
+  ...
+# Subtest: struktur HTF lebih dominan daripada lokasi discount/premium
+ok 8 - struktur HTF lebih dominan daripada lokasi discount/premium
+  ---
+  duration_ms: 0.180316
+  type: 'test'
+  ...
+# Subtest: Silver Bullet aktif pada pukul 10:30 New York
+ok 9 - Silver Bullet aktif pada pukul 10:30 New York
+  ---
+  duration_ms: 15.080621
+  type: 'test'
+  ...
+# Subtest: FVG historis memakai ATR lokal saat imbalance terbentuk
+ok 10 - FVG historis memakai ATR lokal saat imbalance terbentuk
+  ---
+  duration_ms: 0.832612
+  type: 'test'
+  ...
+# Subtest: Order Block ditolak jika tidak berasal dari valid break dengan displacement
+ok 11 - Order Block ditolak jika tidak berasal dari valid break dengan displacement
+  ---
+  duration_ms: 0.356314
+  type: 'test'
+  ...
+# Subtest: BOS atau displacement tunggal hanya menjadi konteks, bukan trigger entry
+ok 12 - BOS atau displacement tunggal hanya menjadi konteks, bukan trigger entry
+  ---
+  duration_ms: 0.178423
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 96.487588
+
+===== journal-ai-rotation-v158.test.mjs =====
+TAP version 13
+# Subtest: journal runtime files remain syntactically valid and load in order
+ok 1 - journal runtime files remain syntactically valid and load in order
+  ---
+  duration_ms: 73.865235
+  type: 'test'
+  ...
+# Subtest: journal history bridge persists the IndexedDB state used by the core app
+ok 2 - journal history bridge persists the IndexedDB state used by the core app
+  ---
+  duration_ms: 0.277477
+  type: 'test'
+  ...
+# Subtest: journal calendar displays green wins and red losses with signed amounts
+ok 3 - journal calendar displays green wins and red losses with signed amounts
+  ---
+  duration_ms: 0.316891
+  type: 'test'
+  ...
+# Subtest: assistant rotates free Gemini and OpenRouter keys with bounded retries
+ok 4 - assistant rotates free Gemini and OpenRouter keys with bounded retries
+  ---
+  duration_ms: 1.013319
+  type: 'test'
+  ...
+# Subtest: journal runtime cannot create the global MutationObserver feedback loop that freezes navigation
+ok 5 - journal runtime cannot create the global MutationObserver feedback loop that freezes navigation
+  ---
+  duration_ms: 0.345545
+  type: 'test'
+  ...
+# Subtest: Amy FX source identity is 1.5.9 code 50
+not ok 6 - Amy FX source identity is 1.5.9 code 50
+  ---
+  duration_ms: 2.328572
+  type: 'test'
+  location: '/home/runner/work/Amy-fx/Amy-fx/tests/journal-ai-rotation-v158.test.mjs:64:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /\?: 50\)/. Input:
+    
+    'plugins {\n' +
+      '    id("com.android.application")\n' +
+      '    id("org.jetbrains.kotlin.android")\n' +
+      '    id("com.google.gms.google-services")\n' +
+      '}\n' +
+      '\n' +
+      'val hasReleaseSigning = listOf(\n' +
+      '    "AMYFX_KEYSTORE_PATH",\n' +
+      '    "AMYFX_KEYSTORE_PASSWORD",\n' +
+      '    "AMYFX_KEY_ALIAS",\n' +
+      '    "AMYFX_KEY_PASSWORD"\n' +
+      ').all { !System.getenv(it).isNullOrBlank() }\n' +
+      '\n' +
+      'fun buildConfigString(value: String): String =\n' +
+      '    "\\"${value.replace("\\\\", "\\\\\\\\").replace("\\"", "\\\\\\"")}\\""\n' +
+      '\n' +
+      'val configuredApplicationId = System.getenv("AMYFX_APPLICATION_ID") ?: "com.amyelitesuite.learningpreview"\n' +
+      'val configuredAppLabel = System.getenv("AMYFX_APP_LABEL") ?: "Amy FX Preview"\n' +
+      'val configuredUriScheme = System.getenv("AMYFX_URI_SCHEME") ?: "amyfxpreview"\n' +
+      'val configuredUpdateManifestUrl = System.getenv("AMYFX_UPDATE_MANIFEST_URL")\n' +
+      '    ?: "https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json"\n' +
+      '\n' +
+      'android {\n' +
+      '    namespace = "com.amyelitesuite"\n' +
+      '    compileSdk = 35\n' +
+      '\n' +
+      '    defaultConfig {\n' +
+      '        applicationId = configuredApplicationId\n' +
+      '        minSdk = 26\n' +
+      '        targetSdk = 35\n' +
+      '        versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 940173)\n' +
+      '        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "2.0.0-preview.173"\n' +
+      '        manifestPlaceholders["appLabel"] = configuredAppLabel\n' +
+      '        manifestPlaceholders["amyFxScheme"] = configuredUriScheme\n' +
+      '        buildConfigField("String", "UPDATE_MANIFEST_URL", buildConfigString(configuredUpdateManifestUrl))\n' +
+      '\n' +
+      '        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"\n' +
+      '    }\n' +
+      '\n' +
+      '    buildFeatures {\n' +
+      '        buildConfig = true\n' +
+      '    }\n' +
+      '\n' +
+      '    signingConfigs {\n' +
+      '        create("release") {\n' +
+      '            // Amy FX Preview personal releases use the permanent Preview signing certificate.\n' +
+      '            // Keep both schemes enabled for broad Android and OEM compatibility.\n' +
+      '            enableV1Signing = true\n' +
+      '            enableV2Signing = true\n' +
+      '            if (hasReleaseSigning) {\n' +
+      '                storeFile = file(System.getenv("AMYFX_KEYSTORE_PATH"))\n' +
+      '                storePassword = System.getenv("AMYFX_KEYSTORE_PASSWORD")\n' +
+      '                keyAlias = System.getenv("AMYFX_KEY_ALIAS")\n' +
+      '                keyPassword = System.getenv("AMYFX_KEY_PASSWORD")\n' +
+      '            }\n' +
+      '        }\n' +
+      '    }\n' +
+      '\n' +
+      '    buildTypes {\n' +
+      '        debug {\n' +
+      '            isMinifyEnabled = false\n' +
+      '            versionNameSuffix = "-debug"\n' +
+      '        }\n' +
+      '        release {\n' +
+      '            isMinifyEnabled = true\n' +
+      '            isShrinkResources = true\n' +
+      '            if (hasReleaseSigning) {\n' +
+      '                signingConfig = signingConfigs.getByName("release")\n' +
+      '            }\n' +
+      '            proguardFiles(\n' +
+      '                getDefaultProguardFile("proguard-android-optimize.txt"),\n' +
+      '                "proguard-rules.pro"\n' +
+      '            )\n' +
+      '        }\n' +
+      '    }\n' +
+      '\n' +
+      '    compileOptions {\n' +
+      '        sourceCompatibility = JavaVersion.VERSION_17\n' +
+      '        targetCompatibility = JavaVersion.VERSION_17\n' +
+      '    }\n' +
+      '    kotlinOptions {\n' +
+      '        jvmTarget = "17"\n' +
+      '    }\n' +
+      '}\n' +
+      '\n' +
+      'dependencies {\n' +
+      '    implementation("androidx.core:core-ktx:1.13.1")\n' +
+      '    implementation("androidx.appcompat:appcompat:1.7.0")\n' +
+      '    implementation("com.google.android.material:material:1.12.0")\n' +
+      '    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")\n' +
+      '    implementation("androidx.webkit:webkit:1.12.1")\n' +
+      '    implementation("androidx.security:security-crypto:1.1.0-alpha06")\n' +
+      '    implementation("androidx.work:work-runtime-ktx:2.9.1")\n' +
+      '    implementation("androidx.media3:media3-exoplayer:1.4.1")\n' +
+      '    implementation("androidx.media3:media3-session:1.4.1")\n' +
+      '    implementation("com.squareup.okhttp3:okhttp:4.12.0")\n' +
+      '    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")\n' +
+      '\n' +
+      '    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))\n' +
+      '    implementation("com.google.firebase:firebase-messaging")\n' +
+      '\n' +
+      '    testImplementation("junit:junit:4.13.2")\n' +
+      '    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")\n' +
+      '}\n'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    plugins {
+        id("com.android.application")
+        id("org.jetbrains.kotlin.android")
+        id("com.google.gms.google-services")
+    }
+    
+    val hasReleaseSigning = listOf(
+        "AMYFX_KEYSTORE_PATH",
+        "AMYFX_KEYSTORE_PASSWORD",
+        "AMYFX_KEY_ALIAS",
+        "AMYFX_KEY_PASSWORD"
+    ).all { !System.getenv(it).isNullOrBlank() }
+    
+    fun buildConfigString(value: String): String =
+        "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+    
+    val configuredApplicationId = System.getenv("AMYFX_APPLICATION_ID") ?: "com.amyelitesuite.learningpreview"
+    val configuredAppLabel = System.getenv("AMYFX_APP_LABEL") ?: "Amy FX Preview"
+    val configuredUriScheme = System.getenv("AMYFX_URI_SCHEME") ?: "amyfxpreview"
+    val configuredUpdateManifestUrl = System.getenv("AMYFX_UPDATE_MANIFEST_URL")
+        ?: "https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json"
+    
+    android {
+        namespace = "com.amyelitesuite"
+        compileSdk = 35
+    
+        defaultConfig {
+            applicationId = configuredApplicationId
+            minSdk = 26
+            targetSdk = 35
+            versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 940173)
+            versionName = System.getenv("AMYFX_VERSION_NAME") ?: "2.0.0-preview.173"
+            manifestPlaceholders["appLabel"] = configuredAppLabel
+            manifestPlaceholders["amyFxScheme"] = configuredUriScheme
+            buildConfigField("String", "UPDATE_MANIFEST_URL", buildConfigString(configuredUpdateManifestUrl))
+    
+            testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        }
+    
+        buildFeatures {
+            buildConfig = true
+        }
+    
+        signingConfigs {
+            create("release") {
+                // Amy FX Preview personal releases use the permanent Preview signing certificate.
+                // Keep both schemes enabled for broad Android and OEM compatibility.
+                enableV1Signing = true
+                enableV2Signing = true
+                if (hasReleaseSigning) {
+                    storeFile = file(System.getenv("AMYFX_KEYSTORE_PATH"))
+                    storePassword = System.getenv("AMYFX_KEYSTORE_PASSWORD")
+                    keyAlias = System.getenv("AMYFX_KEY_ALIAS")
+                    keyPassword = System.getenv("AMYFX_KEY_PASSWORD")
+                }
+            }
+        }
+    
+        buildTypes {
+            debug {
+                isMinifyEnabled = false
+                versionNameSuffix = "-debug"
+            }
+            release {
+                isMinifyEnabled = true
+                isShrinkResources = true
+                if (hasReleaseSigning) {
+                    signingConfig = signingConfigs.getByName("release")
+                }
+                proguardFiles(
+                    getDefaultProguardFile("proguard-android-optimize.txt"),
+                    "proguard-rules.pro"
+                )
+            }
+        }
+    
+        compileOptions {
+            sourceCompatibility = JavaVersion.VERSION_17
+            targetCompatibility = JavaVersion.VERSION_17
+        }
+        kotlinOptions {
+            jvmTarget = "17"
+        }
+    }
+    
+    dependencies {
+        implementation("androidx.core:core-ktx:1.13.1")
+        implementation("androidx.appcompat:appcompat:1.7.0")
+        implementation("com.google.android.material:material:1.12.0")
+        implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+        implementation("androidx.webkit:webkit:1.12.1")
+        implementation("androidx.security:security-crypto:1.1.0-alpha06")
+        implementation("androidx.work:work-runtime-ktx:2.9.1")
+        implementation("androidx.media3:media3-exoplayer:1.4.1")
+        implementation("androidx.media3:media3-session:1.4.1")
+        implementation("com.squareup.okhttp3:okhttp:4.12.0")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    
+        implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+        implementation("com.google.firebase:firebase-messaging")
+    
+        testImplementation("junit:junit:4.13.2")
+        testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    }
+    
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/journal-ai-rotation-v158.test.mjs:65:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 5
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 140.785658
+Regression failed: journal-ai-rotation-v158.test.mjs
