@@ -1,0 +1,153 @@
+Amy FX Private Preview regression failure
+Run: 30341995236
+Commit: 40baba0f123c4008e167a8887034ea821c995666
+
+===== amy-mentor-conversation.test.mjs =====
+===== api-polling-coordinator.test.mjs =====
+===== asia-range-ui-freeze-regression.test.mjs =====
+===== asia-range.test.mjs =====
+===== background-video-playback-regression.test.mjs =====
+===== blueprint-preview-stabilization.test.mjs =====
+===== blueprint-preview-v1.test.mjs =====
+===== bos-mss.test.mjs =====
+===== bsl-ssl.test.mjs =====
+===== concept-engine.integration.test.mjs =====
+===== dashboard-analyze-separation.test.mjs =====
+===== deepseek-provider-detection.test.mjs =====
+===== dynamic-heatmap-ui-regression.test.mjs =====
+===== dynamic-heatmap.test.mjs =====
+===== entry-sl-tp.test.mjs =====
+===== entry-watch-engine.test.mjs =====
+===== entry-watch-hardening.test.mjs =====
+===== equal-high-low.test.mjs =====
+===== final-integration.test.mjs =====
+===== five-issues-regression.test.mjs =====
+not ok 2 - README retains the production identity and official APK route
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+  operator: 'match'
+Regression failed: five-issues-regression.test.mjs
+
+--- final log lines ---
+    - **Application ID:** `com.amyelitesuite.learningpreview`
+    - **URI scheme:** `amyfxpreview`
+    - **Versi aktif:** `2.0.0-preview.173`
+    - **Version code:** `940173`
+    - **Minimum Android:** Android 8.0 / API 26
+    - **Target SDK:** Android SDK 35
+    - **Update manifest:** `personal/amyfx-private/preview-update.json`
+    
+    [Download Amy FX Preview](https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.173/AmyFX-Preview-latest.apk)
+    
+    ## Alur Build Preview
+    
+    Workflow Preview berada di:
+    
+    ```text
+    .github/workflows/amyfx-blueprint-preview-release.yml
+    ```
+    
+    Workflow tersebut hanya berjalan untuk branch `personal/amyfx-private` dan melakukan:
+    
+    1. validasi identitas branch personal;
+    2. stabilisasi source Preview;
+    3. regression test JavaScript;
+    4. Android unit test dan lint;
+    5. build APK release bertanda tangan;
+    6. verifikasi package, label, versi, dan sertifikat signer;
+    7. publikasi release Amy FX Preview;
+    8. pembaruan `preview-update.json` pada branch personal.
+    
+    Proses build Preview tidak menggunakan dan tidak mengubah branch `main`.
+    
+    ## Struktur Utama
+    
+    ```text
+    app/src/main/assets/                    WebView assets
+    app/src/main/assets/apps/mapping        Mapping dan Market Intelligence
+    app/src/main/assets/apps/market-intel   News, heatmap, dan liquidity
+    app/src/main/assets/apps/journal        Jurnal Trading
+    app/src/main/assets/apps/academy        Materi belajar
+    app/src/main/java/                      Android native Kotlin
+    api/                                    Vercel serverless functions
+    lib/                                    Shared backend logic
+    tests/                                  JavaScript regression tests
+    .github/workflows/                      CI dan build APK
+    ```
+    
+    ## Aturan Pengembangan
+    
+    - Fokus pekerjaan berada di `personal/amyfx-private`.
+    - Jangan menyentuh atau merge ke `main` tanpa instruksi khusus.
+    - Kondisi aplikasi harus dinilai dari kode dan file yang benar-benar dimuat pada branch personal.
+    - Build, release, dan update Amy FX Preview harus tetap memakai identitas package, URI scheme, data aplikasi, dan signing certificate Preview.
+    - Amy FX Preview ditujukan untuk penggunaan pribadi, sedangkan Amy FX pada `main` ditujukan untuk penggunaan publik.
+    
+    ## Disclaimer
+    
+    Amy FX Preview bukan robot trading, Expert Advisor, atau penasihat keuangan. Aplikasi tidak membuka atau menutup order secara otomatis dan tidak menjamin hasil tertentu. Seluruh informasi yang ditampilkan merupakan alat bantu analisis; keputusan dan risiko tetap berada pada pengguna.
+    
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/five-issues-regression.test.mjs:35:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: Mapping loads the five-issue UI hardening after existing styles and modules
+ok 3 - Mapping loads the five-issue UI hardening after existing styles and modules
+  ---
+  duration_ms: 0.193718
+  type: 'test'
+  ...
+# Subtest: dashboard duplicate Preview and price cards are removed without changing data services
+ok 4 - dashboard duplicate Preview and price cards are removed without changing data services
+  ---
+  duration_ms: 0.939538
+  type: 'test'
+  ...
+# Subtest: stale M15 never keeps a LIVE analysis badge
+ok 5 - stale M15 never keeps a LIVE analysis badge
+  ---
+  duration_ms: 0.159968
+  type: 'test'
+  ...
+# Subtest: historical reliability is a muted closed disclosure rather than a live signal block
+ok 6 - historical reliability is a muted closed disclosure rather than a live signal block
+  ---
+  duration_ms: 0.144505
+  type: 'test'
+  ...
+# Subtest: Analyze view uses stable keyed accordions and anchor-based scroll restoration
+ok 7 - Analyze view uses stable keyed accordions and anchor-based scroll restoration
+  ---
+  duration_ms: 0.28221
+  type: 'test'
+  ...
+# Subtest: final issue-5 audit separates tracker success from close-direction accuracy
+ok 8 - final issue-5 audit separates tracker success from close-direction accuracy
+  ---
+  duration_ms: 0.151205
+  type: 'test'
+  ...
+# Subtest: source version is 1.5.9 while publication stays safe during release
+ok 9 - source version is 1.5.9 while publication stays safe during release
+  ---
+  duration_ms: 0.314317
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 8
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 116.293237
+Regression failed: five-issues-regression.test.mjs
