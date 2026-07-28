@@ -158,6 +158,8 @@ function buildSnapshot(reason = 'automatic') {
     engine: 'Amy FX Mapping',
     branch: 'personal/amyfx-private',
     reason,
+    sourceMode: 'LIVE_RUNTIME',
+    historicalReplay: false,
     capturedAt,
     analyzedAt: isoFromValue(result.analyzedAt) || capturedAt,
     timeframe: tf,
@@ -270,8 +272,8 @@ function auditSnapshot(snapshot) {
     if (Number.isFinite(timestamp) && timestamp > now + 1000) {
       add('FUTURE_SOURCE_CANDLE', 'critical', 'Snapshot memakai candle dari masa depan.', { sourceTf, value });
     }
-    if (Number.isFinite(timestamp) && new Date(timestamp).getUTCFullYear() === 2026) {
-      add('REJECTED_YEAR_DATA', 'critical', 'Data candle 2026 yang ditolak masuk ke snapshot.', { sourceTf, value });
+    if (snapshot.historicalReplay && Number.isFinite(timestamp) && new Date(timestamp).getUTCFullYear() === 2026) {
+      add('REJECTED_YEAR_DATA', 'critical', 'Arsip historis 2026 yang ditolak masuk ke replay.', { sourceTf, value });
     }
   }
 
@@ -375,7 +377,7 @@ async function capture(reason = 'manual') {
   const snapshot = buildSnapshot(reason);
   if (!snapshot) return null;
   const currentFingerprint = fingerprint(snapshot);
-  if (reason === 'automatic' && currentFingerprint === lastFingerprint) return snapshot;
+  if (reason !== 'manual' && currentFingerprint === lastFingerprint) return snapshot;
   lastFingerprint = currentFingerprint;
   snapshot.fingerprint = currentFingerprint;
   const anomalies = auditSnapshot(snapshot);
