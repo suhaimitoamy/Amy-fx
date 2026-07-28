@@ -4,17 +4,20 @@ import { readFileSync } from 'node:fs';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
-test('Amy FX 1.5.9 uses versionCode 50 without changing the production applicationId', () => {
+test('Amy FX personal source uses the permanent Preview Android identity', () => {
   const gradle = read('app/build.gradle.kts');
   const version = read('app/src/main/assets/app-version.js');
-  assert.match(gradle, /val configuredApplicationId = System\.getenv\("AMYFX_APPLICATION_ID"\) \?: "com\.amyelitesuite"/);
+  assert.match(gradle, /val configuredApplicationId = System\.getenv\("AMYFX_APPLICATION_ID"\) \?: "com\.amyelitesuite\.learningpreview"/);
+  assert.match(gradle, /val configuredAppLabel = System\.getenv\("AMYFX_APP_LABEL"\) \?: "Amy FX Preview"/);
+  assert.match(gradle, /val configuredUriScheme = System\.getenv\("AMYFX_URI_SCHEME"\) \?: "amyfxpreview"/);
+  assert.match(gradle, /personal\/amyfx-private\/preview-update\.json/);
   assert.match(gradle, /applicationId = configuredApplicationId/);
-  assert.match(gradle, /versionCode[^\n]*50/);
-  assert.match(gradle, /versionName[^\n]*"1\.5\.9"/);
-  assert.match(version, /name: '1\.5\.9', code: 50/);
+  assert.match(gradle, /versionCode[^\n]*940173/);
+  assert.match(gradle, /versionName[^\n]*"2\.0\.0-preview\.173"/);
+  assert.match(version, /name: '2\.0\.0-preview\.173', code: 940173/);
 });
 
-test('published metadata is never ahead of the APK source version', () => {
+test('published public metadata is never ahead of the public APK source version', () => {
   const metadata = JSON.parse(read('update.json'));
   assert.ok([40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50].includes(metadata.latest_version_code));
   const expected = metadata.latest_version_code === 50
@@ -104,7 +107,7 @@ test('release workflows pin the certificate and inspect v1 plus v2 structures', 
   assert.match(candidate, /AMYFX_VERSION_CODE/);
 });
 
-test('Firebase Android client remains bound to the release applicationId', () => {
+test('public Firebase Android client remains bound to the public release applicationId', () => {
   const firebase = JSON.parse(read('app/google-services.json'));
   assert.equal(firebase.client[0].client_info.android_client_info.package_name, 'com.amyelitesuite');
   assert.equal('private_key' in firebase, false);
