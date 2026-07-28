@@ -9,11 +9,10 @@ from audit_core import (
     audit_snapshot,
     canonical_json,
     compare_snapshots,
-    ingest_archives,
     iter_jsonl,
-    validate_database,
     write_jsonl,
 )
+from data_store import ingest_archives, validate_database
 
 
 def _is_historical_replay(snapshot: dict) -> bool:
