@@ -1,5 +1,57 @@
 # Bug History
 
+## Fixed Mapping Accuracy V3 Defects — 2026-07-28
+
+### Multiple Mapping State Writers
+- **Severity:** Critical
+- **Cause:** Entry Watch, integrity, and runtime repair layers could clear or replace `bestSetup`, `setups`, and result state after the concept engine finished.
+- **Fix:** One causal engine owns the result and frozen Mapping snapshot; Entry Watch and repair layers are read-only/UI-only consumers.
+
+### Mirrored H1 Bearish Forecast
+- **Severity:** High
+- **Cause:** A balanced compatibility fork re-enabled H1 bearish behavior that the trusted reference deliberately suppresses.
+- **Fix:** The compatibility module delegates to the canonical forecast; H1 bearish always returns `NO CLEAR DIRECTION`.
+
+### Weak Close-Cross Changed Structure
+- **Severity:** High
+- **Cause:** Any close beyond a swing could be treated as BOS/MSS and flip the structure.
+- **Fix:** Weak events remain `BREAK_CANDIDATE`; trend changes require 0.10 ATR penetration, 0.30 ATR body, and 0.45 body/range.
+
+### Liquidity Self-Cancel and Reactivation
+- **Severity:** High
+- **Cause:** One interaction could be interpreted as both sweep and invalidation, and current-price evaluation could later reactivate it.
+- **Fix:** First interaction is irreversible and classified as `CLOSED_THROUGH`, `SWEPT_UNCONFIRMED`, or `CONFIRMED_REACTION`.
+
+### Premature Zone Inversion
+- **Severity:** High
+- **Cause:** Wick mitigation or a single close could create IFVG/Breaker state.
+- **Fix:** Conversion requires three outside closes, 0.30 ATR continuation, a later retest, and inverse rejection.
+
+### Future Previous-Period Liquidity
+- **Severity:** Critical
+- **Cause:** Latest PDH/PDL/PWH/PWL used `availableIndex: 0`, allowing a historical trigger to see a level before its source period closed.
+- **Fix:** Availability is the first candle at or after the source-period close.
+
+### Entry Trigger Missed Trusted Trend Gates
+- **Severity:** Critical
+- **Cause:** The rebuilt sequence initially relied on Direction Forecast plus local structure without independently checking the trusted entry-time H4 bias, EMA21/34/90 stack, or H1 EMA-distance limit.
+- **Fix:** Entry now requires point-in-time context close/EMA20 slope alignment, a directional local EMA stack, and the reference H1 maximum distance of 2.00 ATR. Context candles closing after the trigger are excluded.
+
+### W1 Thursday Epoch Drift
+- **Severity:** High
+- **Cause:** Generic Unix interval flooring anchored weekly closure to Thursday, which could lag or repeatedly refetch weekly candles.
+- **Fix:** Server and client W1 closure boundaries use Monday 00:00 UTC.
+
+### Terminal Entry Watch Kept Direction
+- **Severity:** High
+- **Cause:** A terminal scenario could keep a BUY/SELL watch action visible.
+- **Fix:** SL hit, TP2 hit, TP1/BE, and expiry always render action `WAIT`.
+
+### Stale WITA Soft-Render Selectors
+- **Severity:** Medium
+- **Cause:** Soft live rendering still queried old `top-wib`/`kz-wib` IDs.
+- **Fix:** It now updates `top-wita` and `kz-wita` consistently.
+
 ## Fixed Market Context & Notification Defects — 2026-07-11
 
 ### Historical FVG ATR Contamination

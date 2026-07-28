@@ -19,23 +19,25 @@ test('Mapping repairs freshness from the latest actually closed candle', () => {
 
   assertSyntax(path);
   assert.match(index, /mapping-runtime-repair-v3\.js/);
-  assert.match(runtime, /function candleClosed/);
-  assert.match(runtime, /explicitLive/);
+  assert.match(runtime, /state\.result\?\.mappingSnapshot/);
+  assert.match(runtime, /latestClosedCandleClose/);
   assert.match(runtime, /sourceCandleTime/);
-  assert.match(runtime, /LATEST_CLOSED_CANDLE/);
+  assert.match(runtime, /snapshot\?\.data\?\.stale/);
+  assert.match(runtime, /AMY_MAPPING_SINGLE_AUTHORITY_V3/);
   assert.match(runtime, /await runAnalysis\(state\.tf\)/);
   assert.match(runtime, /amyfx:candles-updated/);
 });
 
 test('Paused or terminal Entry Watch cannot keep an old BUY or SELL card visible', () => {
-  const runtime = read('app/src/main/assets/apps/mapping/js/mapping-runtime-repair-v3.js');
-  assert.match(runtime, /ACTIONABLE_WATCH_STAGES/);
-  assert.match(runtime, /WATCHING_LEVEL/);
-  assert.match(runtime, /LEVEL_TESTING/);
-  assert.match(runtime, /ENTRY_TRIGGERED/);
+  const runtime = read('app/src/main/assets/apps/mapping/js/entry-watch-runtime-v2.js');
+  const analyze = read('app/src/main/assets/apps/mapping/js/engine/concept-analyze.js');
+  assert.match(runtime, /function isTerminalScenario/);
+  assert.match(runtime, /\['SL HIT', 'TP2 HIT', 'TP1 \/ BE', 'EXPIRED'\]/);
+  assert.match(runtime, /if \(isTerminalScenario\(canonical\)\) return 'WAIT'/);
   assert.match(runtime, /amy-entry-watch-card/);
-  assert.match(runtime, /\.remove\(\)/);
-  assert.match(runtime, /state\.result\.bestSetup = null/);
+  assert.match(analyze, /lifecycleStage: activeSetup/);
+  assert.match(analyze, /terminal: terminalSetup/);
+  assert.doesNotMatch(runtime, /result\.bestSetup\s*=/);
 });
 
 test('Android news notifications use a durable high-priority system channel', () => {

@@ -1,5 +1,23 @@
 # Technical Decisions
 
+## 2026-07-28
+
+### Mapping Accuracy V3
+- This section supersedes the 2026-07-11 decision that restricted actionable entries to M15.
+- Causal Entry Map is supported on M1, M5, M15, M30, H1, H4, D1, and W1. Source and trigger are the selected timeframe; each profile has an explicit context, session, sweep-memory, and bar-expiry contract.
+- The required causal order is active Direction Forecast → point-in-time context alignment → local EMA21/34/90 stack → opposing confirmed liquidity sweep → later displaced MSS → location/session filters → first still-available structural target at 2R–8R.
+- M5 entry context follows the trusted indicator's default H4 bias. Every context gate uses only the latest context candle closed by the trigger close; later HTF candles cannot validate an earlier trigger.
+- H1 entry close must remain within 2.00 ATR of EMA21.
+- Entry is the closed MSS candle close, SL is beyond the protected swing plus 0.50 ATR, TP1 is 1R, and the runner moves to break-even toward the first structural target.
+- H1 bearish forecast remains suppressed and must return `NO CLEAR DIRECTION`, matching the trusted reference.
+- M1, M30, H4, D1, and W1 profiles are rule-based/manual-validation profiles and may not display a win-probability claim.
+- `AMY_MAPPING_SINGLE_AUTHORITY_V3` is the read-only UI contract. Live price is provisional and cannot rewrite closed-candle facts or lifecycle.
+- Weak structure close-crosses are candidates only. Confirmed breaks require ATR penetration, minimum body, and body/range quality.
+- Liquidity first interaction is irreversible and distinguishes closed-through, unconfirmed sweep, and confirmed reaction.
+- FVG/OB inversion requires accepted break (three closes plus continuation), retest, and inverse rejection.
+- Previous-period liquidity is unavailable until its source period closes. W1 candle closure is anchored to Monday UTC.
+- Validation for this change is regression/syntax/build plus user-performed manual chart validation; no backtest is run.
+
 ## 2026-07-11
 
 ### Mapping Production Logic

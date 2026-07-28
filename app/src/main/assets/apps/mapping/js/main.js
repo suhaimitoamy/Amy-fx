@@ -181,7 +181,7 @@ function livePriceWatchdog() {
 
 function syncAutomaticScannerUi() {
   const button = document.querySelector('[data-scanner-status]');
-  const buttonText = '📡 Scanner mengikuti setup tervalidasi';
+  const buttonText = '📡 Scanner mengikuti setup causal';
   if (button) {
     if (button.textContent !== buttonText) button.textContent = buttonText;
     if (!button.classList.contains('action')) button.className = 'action';
@@ -195,7 +195,7 @@ function syncAutomaticScannerUi() {
   if (help && help.textContent !== helpText) help.textContent = helpText;
 
   const warningHtml =
-    '<b>Monitor Tervalidasi</b><br>Scanner hanya aktif ketika setupExecution M15 masih aktif, searah forecast, dan belum terminal.';
+    '<b>Monitor Causal</b><br>Scanner hanya aktif ketika setup causal timeframe terpilih masih aktif, searah forecast, dan belum terminal.';
   const warning = settings.querySelector('.warn');
   if (warning && warning.innerHTML !== warningHtml) warning.innerHTML = warningHtml;
 }

@@ -1,6 +1,7 @@
 import { state, save, setupText } from '../main.js';
 import { connect } from '../api/market-data.js';
 import { render } from '../ui/ui-render.js';
+import { isSupportedMappingTimeframe } from '../engine/mapping-timeframes.js';
 
 let lastNativeTargetKey = null;
 
@@ -104,7 +105,7 @@ export function sendTargetsToNative() {
   const execution = contract.setupExecution;
   const validSetup = Boolean(
     contract.active &&
-    state.tf === 'M15' &&
+    isSupportedMappingTimeframe(contract.result?.tf || state.tf) &&
     execution?.setupId &&
     Number.isFinite(Number(execution.entryLow)) &&
     Number.isFinite(Number(execution.entryHigh))

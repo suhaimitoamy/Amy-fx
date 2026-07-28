@@ -18,6 +18,7 @@ const files = [
   'app/src/main/assets/apps/market-intel/private-market-api-router.js',
   'app/src/main/assets/apps/shared/market-intelligence.js'
 ];
+const { expectedClosedOpenTime } = await import('../lib/market-candle-store.mjs');
 
 test('Supabase-first market gateway files are valid JavaScript', () => {
   for (const relative of files) {
@@ -38,6 +39,18 @@ test('all server market features use one candle store', async () => {
   assert.match(liquidity, /import \{ getCandles \}/);
   assert.doesNotMatch(heatmap, /api\.twelvedata\.com/);
   assert.doesNotMatch(liquidity, /api\.twelvedata\.com/);
+});
+
+test('weekly candle closure is anchored to Monday UTC instead of the Unix Thursday epoch', () => {
+  const tuesday = Date.parse('2026-07-28T12:00:00Z');
+  assert.equal(
+    expectedClosedOpenTime('1week', tuesday),
+    Date.parse('2026-07-20T00:00:00Z') / 1000
+  );
+  assert.equal(
+    expectedClosedOpenTime('1day', tuesday),
+    Date.parse('2026-07-27T00:00:00Z') / 1000
+  );
 });
 
 test('private clients route market reads through active Supabase Edge gateways', async () => {

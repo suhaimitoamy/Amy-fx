@@ -25,7 +25,7 @@ class BootReceiver : BroadcastReceiver() {
 
         if (!enabled || expired || (upper <= 0.0 && lower <= 0.0)) {
             prefs.edit().putBoolean(KEY_SCANNER_ENABLED, false).apply()
-            Log.d("AmyFX", "BootReceiver skipped: no active M15 target")
+            Log.d("AmyFX", "BootReceiver skipped: no active Mapping target")
             return
         }
 
@@ -40,9 +40,9 @@ class BootReceiver : BroadcastReceiver() {
             } else {
                 context.startService(serviceIntent)
             }
-            Log.d("AmyFX", "Active M15 scanner restarted after boot/update")
+            Log.d("AmyFX", "Active Mapping scanner restarted after boot/update")
         } catch (error: Exception) {
-            Log.e("AmyFX", "Unable to restart M15 scanner", error)
+            Log.e("AmyFX", "Unable to restart Mapping scanner", error)
         }
     }
 

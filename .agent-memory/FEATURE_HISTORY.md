@@ -1,5 +1,12 @@
 # Feature History
 
+## Mapping Accuracy V3 — All-Timeframe Causal Entry
+- **Date:** 2026-07-28
+- **Status:** ✅ Implemented; manual chart validation pending
+- **Description:** Rebuilt Mapping around one closed-candle authority, strict structure/liquidity/zone lifecycle, point-in-time HTF and EMA entry gates, a causal entry sequence, and timeframe profiles for M1 through W1. Scanner and Entry Watch consume the same setup contract. H1 bearish remains suppressed; extrapolated profiles are labeled rule-based without probability claims.
+- **Reference:** `docs/MAPPING_ACCURACY_V3_MANUAL_VALIDATION.md`
+- **Backtest:** Not run by user request.
+
 ## Context-Aware Mapping & Deep-Link News
 - **Date:** 2026-07-11
 - **Status:** ✅ Implemented

@@ -1,5 +1,11 @@
 # Memory Changelog
 
+## 2026-07-28
+- Recorded Mapping Accuracy V3 as the successor to M15-only execution.
+- Added all-timeframe causal-entry, single-authority, H1 suppression, zone lifecycle, previous-period causality, and Monday-anchored W1 decisions.
+- Locked M5 entry context to H4 and added point-in-time HTF/EMA-stack plus H1 EMA-distance entry gates.
+- Added the fixed defect history and manual validation follow-up.
+
 ## 2026-07-10
 - Created project memory structure (`.agent-memory/` folder).
 - Added `README.md` — explains memory system, read order, update rules, security restrictions.

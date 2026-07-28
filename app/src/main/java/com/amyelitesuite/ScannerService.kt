@@ -30,7 +30,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Scanner ringan yang hanya hidup saat Mapping menghasilkan area M15 valid.
+ * Scanner ringan yang hanya hidup saat Mapping menghasilkan area causal valid.
  * News tidak dipolling di sini; notifikasi news diterima melalui Firebase Messaging.
  */
 class ScannerService : Service() {
@@ -237,7 +237,7 @@ class ScannerService : Service() {
         )
 
         val notification = Notification.Builder(this, CHANNEL_SCANNER_FOREGROUND)
-            .setContentTitle("Amy FX — Pemantau area M15")
+            .setContentTitle("Amy FX — Pemantau area Mapping")
             .setContentText(targetText())
             .setStyle(Notification.BigTextStyle().bigText(
                 "Scanner hemat data aktif untuk ${targetText()} dan memeriksa harga setiap 5 menit saat aplikasi berada di latar belakang. News diterima terpisah melalui push notification."
@@ -264,10 +264,10 @@ class ScannerService : Service() {
 
         val serviceChannel = NotificationChannel(
             CHANNEL_SCANNER_FOREGROUND,
-            "Amy FX Pemantau Area M15",
+            "Amy FX Pemantau Area Mapping",
             NotificationManager.IMPORTANCE_LOW
         ).apply {
-            description = "Aktif hanya saat ada area Mapping M15 yang perlu dipantau"
+            description = "Aktif hanya saat ada area causal Mapping yang perlu dipantau"
             setSound(null, null)
             enableVibration(false)
         }
@@ -308,7 +308,7 @@ class ScannerService : Service() {
                 "area SELL ${fmt(setupUpper)} dan BUY ${fmt(setupLower)}"
             setupUpper > 0.0 -> "area SELL ${fmt(setupUpper)}"
             setupLower > 0.0 -> "area BUY ${fmt(setupLower)}"
-            else -> "area M15 aktif"
+            else -> "area Mapping aktif"
         }
     }
 

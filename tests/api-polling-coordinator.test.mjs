@@ -7,6 +7,7 @@ const indexPath = 'app/src/main/assets/apps/mapping/index.html';
 const runtimePath = 'app/src/main/assets/apps/mapping/js/entry-watch-runtime-v2.js';
 const coordinatorPath = 'app/src/main/assets/apps/mapping/js/api-request-coordinator.js';
 const candleCoordinatorPath = 'app/src/main/assets/apps/mapping/js/candle-refresh-coordinator.js';
+const timeframePath = 'app/src/main/assets/apps/mapping/js/engine/mapping-timeframes.js';
 const scannerGatePath = 'app/src/main/assets/apps/mapping/js/scanner-visibility-gate.js';
 const stabilityPath = 'app/src/main/assets/apps/mapping/js/view-stability.js';
 const backendPath = 'api/twelvedata.js';
@@ -16,13 +17,14 @@ const index = fs.readFileSync(indexPath, 'utf8');
 const runtime = fs.readFileSync(runtimePath, 'utf8');
 const coordinator = fs.readFileSync(coordinatorPath, 'utf8');
 const candleCoordinator = fs.readFileSync(candleCoordinatorPath, 'utf8');
+const timeframe = fs.readFileSync(timeframePath, 'utf8');
 const scannerGate = fs.readFileSync(scannerGatePath, 'utf8');
 const stability = fs.readFileSync(stabilityPath, 'utf8');
 const backend = fs.readFileSync(backendPath, 'utf8');
 const scannerService = fs.readFileSync(scannerServicePath, 'utf8');
 
 test('new Mapping and backend runtime files remain syntactically valid', () => {
-  for (const path of [runtimePath, coordinatorPath, candleCoordinatorPath, scannerGatePath, stabilityPath, backendPath]) {
+  for (const path of [runtimePath, coordinatorPath, candleCoordinatorPath, timeframePath, scannerGatePath, stabilityPath, backendPath]) {
     execFileSync(process.execPath, ['--check', path], { stdio: 'pipe' });
   }
 });
@@ -43,7 +45,10 @@ test('Entry Watch consumes shared Mapping candles without a second API fetcher',
   assert.equal(runtime.includes('PROXY_URL'), false);
   assert.equal(runtime.includes('CANDLE_REFRESH_MS'), false);
   assert.equal(runtime.includes('fetch('), false);
-  assert.match(runtime, /candlesByTf:\s*state\.candles/);
+  assert.match(runtime, /result\.mappingSnapshot/);
+  assert.match(runtime, /snapshot\?\.scenario/);
+  assert.doesNotMatch(runtime, /result\.bestSetup\s*=/);
+  assert.doesNotMatch(runtime, /result\.setups\s*=/);
 });
 
 test('shared candle coordinator refreshes only closed watch timeframes', () => {
@@ -53,7 +58,10 @@ test('shared candle coordinator refreshes only closed watch timeframes', () => {
   assert.match(candleCoordinator, /watch\.triggerTf/);
   assert.match(candleCoordinator, /watch\.sourceTf/);
   assert.match(candleCoordinator, /expectedClosedOpenTime/);
+  assert.match(candleCoordinator, /expectedClosedCandleOpenTime/);
   assert.match(candleCoordinator, /amyfx:candles-updated/);
+  assert.match(timeframe, /W1:\s*7 \* 24 \* 60 \* 60/);
+  assert.match(timeframe, /mondayUtcAnchorSeconds/);
 });
 
 test('native scanner is background-only and rate limited', () => {

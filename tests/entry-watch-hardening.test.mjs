@@ -88,19 +88,19 @@ test('active detector source remains eligible and creates one locked setup', () 
   assert.equal(setup.entry, 2301);
 });
 
-test('H1 bearish forecast uses the mirrored bullish conditions', () => {
+test('H1 bearish forecast remains suppressed by the trusted reference', () => {
   const bearish = balancedH1ForecastCandidate({
     rawBreakBear: true,
     htfBearConfirmed: true,
     priceBear: true,
     momentum3Atr: -1.2
   });
-  assert.equal(bearish.directionValue, -1);
-  assert.equal(bearish.direction, 'BEARISH');
-  assert.equal(bearish.bearishTrigger, true);
+  assert.equal(bearish.directionValue, 0);
+  assert.equal(bearish.direction, 'NO CLEAR DIRECTION');
+  assert.equal(bearish.bearishTrigger, false);
 });
 
-test('H1 overextended bearish momentum is rejected symmetrically', () => {
+test('H1 overextended bearish input also remains NO CLEAR DIRECTION', () => {
   const bearish = balancedH1ForecastCandidate({
     rawBreakBear: true,
     htfBearConfirmed: true,

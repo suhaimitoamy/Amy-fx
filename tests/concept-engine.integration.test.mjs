@@ -17,47 +17,56 @@ const candle = (open, high, low, close, time) => ({ open, high, low, close, time
 test('production thresholds use the validated Mapping reference profile', () => {
   assert.deepEqual({
     fvgMinWidthAtr: CONCEPT_THRESHOLDS.fvgMinWidthAtr,
+    fvgMaxWidthAtr: CONCEPT_THRESHOLDS.fvgMaxWidthAtr,
     fvgBodyLength: CONCEPT_THRESHOLDS.fvgBodyLength,
-    fvgBodyRatio: CONCEPT_THRESHOLDS.fvgBodyRatio,
-    fvgWickBodyRatio: CONCEPT_THRESHOLDS.fvgWickBodyRatio,
+    fvgBodyMeanMultiplier: CONCEPT_THRESHOLDS.fvgBodyMeanMultiplier,
+    obImpulseBodyMeanMultiplier: CONCEPT_THRESHOLDS.obImpulseBodyMeanMultiplier,
+    acceptedBreakCloses: CONCEPT_THRESHOLDS.acceptedBreakCloses,
+    acceptedBreakContinuationAtr: CONCEPT_THRESHOLDS.acceptedBreakContinuationAtr,
     reclaim: CONCEPT_THRESHOLDS.liquidityReclaimAtr,
-    penetration: CONCEPT_THRESHOLDS.structurePenetrationAtr
+    penetration: CONCEPT_THRESHOLDS.structurePenetrationAtr,
+    displacementBodyAtr: CONCEPT_THRESHOLDS.displacementBodyAtr
   }, {
-    fvgMinWidthAtr: 0,
-    fvgBodyLength: 4,
-    fvgBodyRatio: 0.45,
-    fvgWickBodyRatio: 0.36,
-    reclaim: 0.4,
-    penetration: 0.2
+    fvgMinWidthAtr: 0.15,
+    fvgMaxWidthAtr: 0.75,
+    fvgBodyLength: 20,
+    fvgBodyMeanMultiplier: 1.2,
+    obImpulseBodyMeanMultiplier: 2,
+    acceptedBreakCloses: 3,
+    acceptedBreakContinuationAtr: 0.3,
+    reclaim: 0.05,
+    penetration: 0.1,
+    displacementBodyAtr: 0.3
   });
 });
 
 test('FVG converts to IFVG and confirms only the inverse rejection', () => {
   const candles = [
-    candle(102, 102.4, 101.5, 101.8, 0),
-    candle(101.8, 101.9, 99.7, 100.2, 1),
-    candle(100.2, 100.8, 99.4, 99.6, 2),
-    candle(99.6, 100.0, 98.9, 99.2, 3)
+    candle(101, 101.2, 100.5, 100.8, 0),
+    candle(100.2, 100.4, 99.6, 99.8, 1),
+    candle(99.9, 100.1, 99.4, 99.7, 2),
+    candle(99.7, 99.9, 99, 99.2, 3),
+    candle(99.4, 100.5, 99.2, 99.6, 4)
   ];
   const result = evaluateZoneLifecycle(candles, {
-    kind: 'FVG', direction: 'BULLISH', bottom: 100, top: 101, availableIndex: 0
-  }, { breakMode: 'WICK', convertedKind: 'IFVG' });
+    kind: 'FVG', direction: 'BULLISH', bottom: 100, top: 101, availableIndex: 0, localAtr: 1
+  }, { convertedKind: 'IFVG' });
   assert.equal(result.kind, 'IFVG');
   assert.equal(result.direction, 'BEARISH');
   assert.equal(result.status, 'IFVG_CONFIRMED_REACTION');
-  assert.equal(result.inverseConfirmedIndex, 2);
+  assert.equal(result.inverseConfirmedIndex, 4);
 });
 
 test('liquidity and structure confirmations enforce ATR thresholds', () => {
-  assert.equal(evaluateLiquidityReclaim('BSL', 100, 99.61, 1).confirmed, false);
-  assert.equal(evaluateLiquidityReclaim('BSL', 100, 99.60, 1).confirmed, true);
-  const weak = structureDisplacementMetrics(candle(100, 101.2, 99.8, 100.19, 0), 1, 100, 'BULLISH');
-  const valid = structureDisplacementMetrics(candle(99.2, 100.3, 99.1, 100.20, 0), 1, 100, 'BULLISH');
+  assert.equal(evaluateLiquidityReclaim('BSL', 100, 99.96, 1).confirmed, false);
+  assert.equal(evaluateLiquidityReclaim('BSL', 100, 99.949, 1).confirmed, true);
+  const weak = structureDisplacementMetrics(candle(100, 100.2, 99.9, 100.11, 0), 1, 100, 'BULLISH');
+  const valid = structureDisplacementMetrics(candle(99.7, 100.3, 99.6, 100.20, 0), 1, 100, 'BULLISH');
   assert.equal(weak.valid, false);
   assert.equal(valid.valid, true);
 });
 
-test('liquidity hierarchy is nearest-target context, never directional pressure', () => {
+test('liquidity hierarchy uses explicit tier priority and never directional pressure', () => {
   const hierarchy = buildConceptLiquidityHierarchy([
     { id: 'b', type: 'BSL', subtype: 'SWING', level: 105, status: 'DETECTED', active: true },
     { id: 's', type: 'SSL', subtype: 'EQUAL', level: 98, status: 'DETECTED', active: true },
@@ -83,11 +92,11 @@ test('single market concept engine returns compatible production fields', () => 
     price = close;
   }
   const result = detectMarketConcepts(candles, { tf: 'M15', currentPrice: price });
-  assert.equal(result.source, 'AMY_CONCEPT_ENGINE_V2');
+  assert.equal(result.source, 'AMY_CONCEPT_ENGINE_V3');
   assert.ok(Array.isArray(result.mappingZones.nearestFairValueGaps));
   assert.ok(Array.isArray(result.mappingZones.nearestOrderBlocks));
   assert.ok(Array.isArray(result.liquidityHierarchy.activeTargets));
-  assert.equal(result.structure.source, 'AMY_CONCEPT_ENGINE_V2');
+  assert.equal(result.structure.source, 'AMY_CONCEPT_ENGINE_V3');
 });
 
 test('legacy diagnostic timers and Pine zone source are no longer wired to Mapping', () => {
@@ -99,5 +108,5 @@ test('legacy diagnostic timers and Pine zone source are no longer wired to Mappi
     assert.equal(html.includes(name), false);
   }
   assert.equal(sync.includes("./zones/indicator-zones.js"), false);
-  assert.equal(sync.includes('AMY_CONCEPT_ENGINE_V2'), true);
+  assert.equal(sync.includes('AMY_CONCEPT_ENGINE_V3'), true);
 });

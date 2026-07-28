@@ -1,3 +1,8 @@
+import {
+  SUPPORTED_MAPPING_TIMEFRAMES,
+  timeframeDurationMs
+} from '../engine/mapping-timeframes.js';
+
 const TF_INTERVAL_MS = {
   '1min': 60_000,
   '5min': 5 * 60_000,
@@ -35,7 +40,8 @@ const ACTIONABLE_EXECUTION_MODES = new Set([
   '',
   'M15_PRECISION',
   'M15_ENTRY_MAP',
-  'REGIME_ROUTED_M15'
+  'REGIME_ROUTED_M15',
+  'CAUSAL_ENTRY_MAP_ALL_TF'
 ]);
 
 function number(value) {
@@ -190,17 +196,29 @@ function setupRr(setup) {
 }
 
 export function isActionableSetup(setup, now = Date.now(), livePrice = 0) {
-  if (!setup || setup.tf !== 'M15' || !ACTIONABLE_TYPES.has(String(setup.type || '').toUpperCase())) return false;
+  const tf = String(setup?.tf || '').toUpperCase();
+  const type = String(setup?.type || '').toUpperCase();
+  const causalType = type.endsWith('CAUSAL ENTRY MAP');
+  if (!setup
+    || !SUPPORTED_MAPPING_TIMEFRAMES.includes(tf)
+    || (!ACTIONABLE_TYPES.has(type) && !causalType)) return false;
   const status = String(setup.lifecycle?.status || setup.status || '').toUpperCase();
   if (!/(READY|WATCH|PANTAU|VALID|ACTIVE)/.test(status) || /(WAIT|INVALID|BROKEN|EXPIRED|SL HIT|TP2 HIT|TP1 \/ BE)/.test(status)) return false;
   const executionMode = String(setup.executionMode || '').toUpperCase();
   if (!ACTIONABLE_EXECUTION_MODES.has(executionMode)) return false;
+  if (['M15_PRECISION', 'M15_ENTRY_MAP', 'REGIME_ROUTED_M15'].includes(executionMode)
+    && tf !== 'M15') return false;
   const conflict = String(setup.conflictCheck?.conflictLevel || 'NONE').toUpperCase();
   if (conflict === 'FATAL' || conflict === 'HIGH') return false;
-  const minimumRr = executionMode === 'M15_PRECISION' ? 2 : 1.5;
+  const minimumRr = executionMode === 'CAUSAL_ENTRY_MAP_ALL_TF'
+    || executionMode === 'M15_PRECISION'
+    ? 2
+    : 1.5;
   if (setupRr(setup) + 1e-9 < minimumRr) return false;
   const timestamp = parseTime(setup.timestamp || setup.startTime || setup.lifecycle?.startTime);
-  if (timestamp && now - timestamp > 24 * 60 * 60 * 1000) return false;
+  const expiryBars = Math.max(1, number(setup.expiryBars ?? setup.tradeManagement?.expiryBars) || 1);
+  const expiryMs = timeframeDurationMs(tf) * expiryBars;
+  if (timestamp && expiryMs > 0 && now - timestamp > expiryMs) return false;
   const price = number(livePrice);
   const sl = number(setup.sl);
   if (Number.isFinite(price) && price > 0 && Number.isFinite(sl)) {
@@ -282,10 +300,10 @@ export function zoneLiveStatus(zone, livePrice) {
 }
 
 export function executionGuidance(htfBias, zone, hasActionableSetup = false) {
-  if (hasActionableSetup) return 'Ada setup M15 dari strategy engine aktif. Tunggu harga masuk area; jangan mengejar.';
+  if (hasActionableSetup) return 'Ada setup causal dari timeframe aktif. Tunggu harga masuk area; jangan mengejar.';
   if (htfBias === 'BEARISH' && zone === 'DISCOUNT') return 'HTF masih bearish, tetapi harga sudah di discount. Jangan mengejar SELL.';
   if (htfBias === 'BULLISH' && zone === 'PREMIUM') return 'HTF masih bullish, tetapi harga sudah di premium. Jangan mengejar BUY.';
-  if (zone === 'EQUILIBRIUM') return 'Harga berada dekat equilibrium. Tunggu strategy engine aktif memberi konfirmasi M15.';
+  if (zone === 'EQUILIBRIUM') return 'Harga berada dekat equilibrium. Tunggu sequence causal timeframe aktif menjadi lengkap.';
   return 'Bias dan liquidity hanya konteks. Entry harus berasal dari strategy engine yang dipilih Market Regime.';
 }
 
@@ -302,7 +320,7 @@ export function candleFreshness(meta, tf, now = Date.now()) {
 }
 
 export function timeframeRole(tf) {
-  if (tf === 'M15') return 'EXECUTION';
-  if (tf === 'M1' || tf === 'M5') return 'KONFIRMASI';
-  return 'KONTEKS';
+  return SUPPORTED_MAPPING_TIMEFRAMES.includes(String(tf || '').toUpperCase())
+    ? 'EXECUTION'
+    : 'TIDAK DIDUKUNG';
 }

@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 const zonesUrl = new URL('../app/src/main/assets/apps/mapping/js/zones/indicator-zones.js', import.meta.url);
 const zoneUiUrl = new URL('../app/src/main/assets/apps/mapping/js/mapping-zone-sync.js', import.meta.url);
 const clockUrl = new URL('../app/src/main/assets/apps/mapping/js/clock-sync.js', import.meta.url);
+const renderUrl = new URL('../app/src/main/assets/apps/mapping/js/ui/ui-render.js', import.meta.url);
 const indexUrl = new URL('../app/src/main/assets/apps/mapping/index.html', import.meta.url);
 
 const source = readFileSync(zonesUrl, 'utf8');
@@ -33,12 +34,16 @@ test('new mapping modules are syntactically valid and loaded by the page', () =>
 
 test('WITA clock paints dashboard and session from one timestamp without observer loop', () => {
   const clock = readFileSync(clockUrl, 'utf8');
+  const render = readFileSync(renderUrl, 'utf8');
   assert.match(clock, /Asia\/Makassar/);
   assert.match(clock, /const time = witaClockText\(timestamp\)/);
   assert.match(clock, /setText\(top, `\$\{connection\} • WITA \$\{time\}`\)/);
   assert.match(clock, /setText\(document\.getElementById\('kz-wita'\), `WITA \$\{time\}`\)/);
   assert.match(clock, /element\.textContent !== text/);
   assert.doesNotMatch(clock, /witaClockText\(Date\.now\(\)\).*witaClockText\(Date\.now\(\)\)/s);
+  assert.match(render, /getElementById\('top-wita'\)/);
+  assert.match(render, /getElementById\('kz-wita'\)/);
+  assert.doesNotMatch(render, /top-wib|kz-wib|'WIB '/);
 });
 
 test('Pine-aligned FVG remains visible while price has not retested it', () => {
@@ -93,6 +98,6 @@ test('zone UI uses nearest active zones instead of requiring live price inside z
   assert.match(ui, /nearestOrderBlocks/);
   assert.match(ui, /nearestFairValueGaps/);
   assert.match(ui, /Belum ada zona yang lolos filter konfirmasi Amy Concept Engine/);
-  assert.match(ui, /AMY_CONCEPT_ENGINE_V2/);
+  assert.match(ui, /AMY_CONCEPT_ENGINE_V3/);
   assert.doesNotMatch(ui, /price\s*>=\s*[^\n]+bottom\s*&&\s*price\s*<=\s*[^\n]+top/);
 });

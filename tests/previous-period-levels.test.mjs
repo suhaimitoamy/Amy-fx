@@ -52,6 +52,22 @@ test('previous trading day skips Saturday when the new session starts Sunday', (
   assert.equal(snapshot.pdl, 2636.62);
 });
 
+test('previous-period liquidity is unavailable until its source period has closed', () => {
+  const daily = rows([
+    ['2024-12-31T00:00:00Z', 100, 110, 90, 101],
+    ['2025-01-01T00:00:00Z', 101, 120, 95, 115]
+  ]);
+  const intraday = rows([
+    ['2025-01-01T12:00:00Z', 105, 108, 102, 107],
+    ['2025-01-02T00:00:00Z', 115, 116, 112, 114],
+    ['2025-01-02T00:15:00Z', 114, 117, 113, 116]
+  ]);
+  const levels = byLabel(detectPreviousPeriodLevels(intraday, daily));
+  assert.equal(levels.PDH.level, 120);
+  assert.equal(levels.PDH.availableIndex, 1);
+  assert.equal(levels.PDL.availableIndex, 1);
+});
+
 test('PWH and PWL use the completed Sunday-start trading week', () => {
   const daily = rows([
     ['2025-01-05T00:00:00Z', 2639.30, 2647.28, 2634.18, 2635.30],
@@ -69,7 +85,7 @@ test('PWH and PWL use the completed Sunday-start trading week', () => {
   assert.equal(snapshot.pwl, 2614.36);
 });
 
-test('old weekly touch found through closed D1 fallback remains consumed', () => {
+test('old weekly wick sweep found through closed D1 fallback remains consumed but unconfirmed', () => {
   const daily = rows([
     ['2025-01-05T00:00:00Z', 100, 110, 90, 100],
     ['2025-01-06T00:00:00Z', 100, 108, 92, 101],
@@ -85,7 +101,7 @@ test('old weekly touch found through closed D1 fallback remains consumed', () =>
   const levels = byLabel(detectPreviousPeriodLevels(intraday, daily));
   assert.equal(levels.PWH.level, 110);
   assert.equal(levels.PWH.active, false);
-  assert.equal(levels.PWH.status, 'REACHED');
+  assert.equal(levels.PWH.status, 'SWEPT_UNCONFIRMED');
   assert.equal(levels.PWH.interactionPrecision, 'DAILY_FALLBACK');
 });
 

@@ -39,7 +39,12 @@ globalThis.document = {
   removeEventListener: () => {}
 };
 
-const { isCandleStale, setCandleFetchedAt } = await import('../app/src/main/assets/apps/mapping/js/api/market-data.js');
+const {
+  buildSetupExecution,
+  buildSetupId,
+  isCandleStale,
+  setCandleFetchedAt
+} = await import('../app/src/main/assets/apps/mapping/js/api/market-data.js');
 const { entryMapDisplayState } = await import('../app/src/main/assets/apps/mapping/js/ui/entry-map-status.js');
 
 test('isCandleStale returns false for valid cache within TTL thresholds', () => {
@@ -96,4 +101,56 @@ test('entryMapDisplayState returns DATA USANG when no setup is available and sta
   assert.equal(state.status, 'DATA USANG');
   assert.equal(state.terminal, true);
   assert.equal(state.dataStale, true);
+});
+
+test('causal runner keeps closed-candle break-even geometry despite stale live lifecycle storage', () => {
+  const forecast = {
+    active: true,
+    invalidated: false,
+    expired: false,
+    direction: 'BULLISH',
+    directionValue: 1,
+    startTime: 1_700_000_000
+  };
+  const bestSetup = {
+    executionMode: 'CAUSAL_ENTRY_MAP_ALL_TF',
+    live: true,
+    tf: 'H4',
+    dir: 'BUY',
+    direction: 'BULLISH',
+    entryLow: 100,
+    entryHigh: 100,
+    initialSl: 95,
+    sl: 100,
+    tp1: 105,
+    tp2: 112,
+    tp1Hit: true,
+    tp1Time: 1_700_014_400_000,
+    timestamp: 1_700_000_000_000,
+    targetType: 'BSL',
+    singleTarget: false
+  };
+  const setupId = buildSetupId(bestSetup, forecast, 'H4');
+  localStorage.setItem('amy_mapping_lifecycle_v4', JSON.stringify({
+    [setupId]: {
+      setupId,
+      terminal: true,
+      lifecycleStage: 'STOPPED',
+      status: 'SL HIT'
+    }
+  }));
+
+  const execution = buildSetupExecution({
+    tf: 'H4',
+    price: 104,
+    validatedMarketContext: { directionForecast: forecast },
+    bestSetup
+  }, { persist: false });
+
+  assert.equal(execution.active, true);
+  assert.equal(execution.terminal, false);
+  assert.equal(execution.lifecycleStage, 'RUNNER_ACTIVE');
+  assert.equal(execution.initialStopLoss, 95);
+  assert.equal(execution.stopLoss, 100);
+  assert.equal(execution.authority, 'CLOSED_CANDLE_CAUSAL_ENGINE');
 });
