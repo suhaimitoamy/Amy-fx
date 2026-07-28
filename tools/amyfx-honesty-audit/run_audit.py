@@ -16,6 +16,23 @@ from audit_core import (
 )
 
 
+def _is_historical_replay(snapshot: dict) -> bool:
+    source_mode = str(snapshot.get("sourceMode") or snapshot.get("datasetSource") or "").strip().lower()
+    return bool(snapshot.get("historicalReplay")) or source_mode in {
+        "historical_replay",
+        "historical-replay",
+        "supplied-historical-archives",
+        "historical-archive",
+    }
+
+
+def _audit_with_source_policy(snapshot: dict):
+    issues = audit_snapshot(snapshot)
+    if _is_historical_replay(snapshot):
+        return issues
+    return [issue for issue in issues if issue.code != "REJECTED_YEAR_DATA"]
+
+
 def command_ingest(args: argparse.Namespace) -> int:
     result = ingest_archives(Path(args.data_dir), Path(args.db))
     print(json.dumps(result, ensure_ascii=False, indent=2))
@@ -36,7 +53,7 @@ def command_audit_snapshots(args: argparse.Namespace) -> int:
     scanned = 0
     for snapshot in iter_jsonl(Path(args.input)):
         scanned += 1
-        issues = audit_snapshot(snapshot)
+        issues = _audit_with_source_policy(snapshot)
         rows.extend(issue.to_dict() for issue in issues)
         if issues and args.stop_on_first:
             break
