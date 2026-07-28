@@ -1,0 +1,163 @@
+Amy FX Private Preview regression failure
+Run: 30371307534
+Commit: 938b63e8110534922e20b1522ccc04c9f10a9c0c
+
+===== amy-mentor-conversation.test.mjs =====
+===== api-polling-coordinator.test.mjs =====
+===== asia-range-ui-freeze-regression.test.mjs =====
+===== asia-range.test.mjs =====
+===== background-video-playback-regression.test.mjs =====
+===== blueprint-preview-stabilization.test.mjs =====
+===== blueprint-preview-v1.test.mjs =====
+===== bos-mss.test.mjs =====
+===== bsl-ssl.test.mjs =====
+===== concept-engine.integration.test.mjs =====
+===== dashboard-analyze-separation.test.mjs =====
+===== deepseek-provider-detection.test.mjs =====
+===== dynamic-heatmap-ui-regression.test.mjs =====
+===== dynamic-heatmap.test.mjs =====
+===== entry-sl-tp.test.mjs =====
+===== entry-watch-engine.test.mjs =====
+===== entry-watch-hardening.test.mjs =====
+===== equal-high-low.test.mjs =====
+===== final-integration.test.mjs =====
+===== five-issues-regression.test.mjs =====
+===== fvg-ob.test.mjs =====
+===== honesty-audit-runtime.test.mjs =====
+===== honesty-validated-series.test.mjs =====
+===== ict-core-regression.test.mjs =====
+===== journal-ai-rotation-v158.test.mjs =====
+===== journal-metadata-storage-regression.test.mjs =====
+===== journal-upgrade-regression.test.mjs =====
+===== learning-live-engine.test.mjs =====
+===== liquidity-draw-context.test.mjs =====
+===== m5-context-filter-experiment.test.mjs =====
+===== m5-min10-duration-2025.test.mjs =====
+===== m5-session-2025-validation.test.mjs =====
+===== mapping-accuracy-v3.test.mjs =====
+===== mapping-candle-stale-ttl.test.mjs =====
+not ok 1 - /home/runner/work/Amy-fx/Amy-fx/tests/mapping-candle-stale-ttl.test.mjs
+  code: 'ERR_TEST_FAILURE'
+Regression failed: mapping-candle-stale-ttl.test.mjs
+
+--- final log lines ---
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 57.998936
+
+===== mapping-accuracy-v3.test.mjs =====
+TAP version 13
+# Subtest: Mapping V3 supports every Amy FX timeframe with an explicit context and profile
+ok 1 - Mapping V3 supports every Amy FX timeframe with an explicit context and profile
+  ---
+  duration_ms: 1.655518
+  type: 'test'
+  ...
+# Subtest: client W1 refresh boundary uses the latest completed Monday-anchored candle
+ok 2 - client W1 refresh boundary uses the latest completed Monday-anchored candle
+  ---
+  duration_ms: 0.289903
+  type: 'test'
+  ...
+# Subtest: H1 bearish remains suppressed exactly as the trusted reference specifies
+ok 3 - H1 bearish remains suppressed exactly as the trusted reference specifies
+  ---
+  duration_ms: 0.296061
+  type: 'test'
+  ...
+# Subtest: structure break needs the reference close buffer and displacement quality
+ok 4 - structure break needs the reference close buffer and displacement quality
+  ---
+  duration_ms: 0.216813
+  type: 'test'
+  ...
+# Subtest: zone acceptance needs three closed candles plus continuation before inverse conversion
+ok 5 - zone acceptance needs three closed candles plus continuation before inverse conversion
+  ---
+  duration_ms: 0.756888
+  type: 'test'
+  ...
+# Subtest: causal entry plan is available on all timeframes and always uses a structural target of at least 2R
+ok 6 - causal entry plan is available on all timeframes and always uses a structural target of at least 2R
+  ---
+  duration_ms: 6.98261
+  type: 'test'
+  ...
+# Subtest: entry trend gates use only HTF candles that were closed by the trigger close
+ok 7 - entry trend gates use only HTF candles that were closed by the trigger close
+  ---
+  duration_ms: 1.186158
+  type: 'test'
+  ...
+# Subtest: opposing HTF bias blocks an otherwise complete M5 entry sequence
+ok 8 - opposing HTF bias blocks an otherwise complete M5 entry sequence
+  ---
+  duration_ms: 0.591251
+  type: 'test'
+  ...
+# Subtest: H1 rejects a trigger farther than two ATR from EMA21
+ok 9 - H1 rejects a trigger farther than two ATR from EMA21
+  ---
+  duration_ms: 0.66411
+  type: 'test'
+  ...
+# Subtest: entry lifecycle is closed-candle causal and moves the stop to break-even only after TP1
+ok 10 - entry lifecycle is closed-candle causal and moves the stop to break-even only after TP1
+  ---
+  duration_ms: 0.486815
+  type: 'test'
+  ...
+# Subtest: single Mapping snapshot is deeply frozen and separates live overlay from closed facts
+ok 11 - single Mapping snapshot is deeply frozen and separates live overlay from closed facts
+  ---
+  duration_ms: 0.898209
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 79.384933
+
+===== mapping-candle-stale-ttl.test.mjs =====
+TAP version 13
+# file:///home/runner/work/Amy-fx/Amy-fx/app/src/main/assets/apps/mapping/js/ui/dom-stable-render.js:1
+# const nativeInnerHtml = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+#                                                         ^
+# ReferenceError: Element is not defined
+#     at file:///home/runner/work/Amy-fx/Amy-fx/app/src/main/assets/apps/mapping/js/ui/dom-stable-render.js:1:57
+#     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+#     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+#     at async file:///home/runner/work/Amy-fx/Amy-fx/tests/mapping-candle-stale-ttl.test.mjs:47:5
+# Node.js v22.23.1
+# Subtest: /home/runner/work/Amy-fx/Amy-fx/tests/mapping-candle-stale-ttl.test.mjs
+not ok 1 - /home/runner/work/Amy-fx/Amy-fx/tests/mapping-candle-stale-ttl.test.mjs
+  ---
+  duration_ms: 64.181078
+  type: 'test'
+  location: '/home/runner/work/Amy-fx/Amy-fx/tests/mapping-candle-stale-ttl.test.mjs:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 72.234303
+Regression failed: mapping-candle-stale-ttl.test.mjs
