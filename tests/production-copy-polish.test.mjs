@@ -28,16 +28,17 @@ test('user-facing Preview copy does not expose internal audit wording', () => {
   }
 });
 
-test('Preview uses a consistent product-facing navigation and header', () => {
+test('Preview uses the approved simplified Mapping navigation and header', () => {
   assert.match(html, /Market Intelligence/);
   assert.match(html, /Struktur • Arah • Likuiditas/);
+  assert.match(html, />Dashboard</);
   assert.match(html, />Analisis</);
-  assert.match(html, />Skenario</);
-  assert.match(html, />Riwayat</);
-  assert.match(html, />Pengaturan</);
+  assert.doesNotMatch(html, />Skenario</);
+  assert.doesNotMatch(html, />Riwayat</);
+  assert.doesNotMatch(html, />Pengaturan</);
 });
 
-test('long historical and advanced sections are collapsed by default', () => {
+test('long advanced sections remain collapsed by default in source markup', () => {
   assert.match(ui, /<details class="professional-disclosure">/);
   assert.doesNotMatch(ui, /<details class="professional-disclosure" open>/);
   assert.match(ui, /Performa Historis Model/);
