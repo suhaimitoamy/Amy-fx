@@ -22,11 +22,14 @@ if (!window.__amyFxDomStableRenderV5Installed && nativeInnerHtml?.get && nativeI
     if (node.id) return `id:${node.id}`;
     if (node.dataset?.stabilityKey) return `stability:${node.dataset.stabilityKey}`;
     if (node.matches('details')) {
-      return `details:${textKey(node.querySelector(':scope > summary')?.textContent)}:${index}`;
+      return `details:${textKey(node.querySelector(':scope > summary')?.textContent)}`;
     }
     const heading = node.querySelector(':scope > h1, :scope > h2, :scope > .kicker');
     const className = [...node.classList].sort().join('.');
-    return `${node.tagName}:${className}:${textKey(heading?.textContent)}:${index}`;
+    const headingText = textKey(heading?.textContent);
+    return headingText
+      ? `${node.tagName}:${className}:${headingText}`
+      : `${node.tagName}:${className}:${index}`;
   }
 
   function compatible(current, next) {
@@ -131,19 +134,16 @@ if (!window.__amyFxDomStableRenderV5Installed && nativeInnerHtml?.get && nativeI
 
     nextChildren.forEach((nextNode, index) => {
       const key = elementKey(nextNode, index);
-      let current = currentByKey.get(key);
-      if (!current) {
-        current = currentChildren[index];
-        if (!compatible(current, nextNode)) current = null;
-      }
+      const current = currentByKey.get(key) || null;
       if (current) {
         patchNode(current, nextNode);
-      } else {
-        const nextExisting = nextChildren.slice(index + 1)
-          .map((candidate, candidateIndex) => currentByKey.get(elementKey(candidate, index + candidateIndex + 1)))
-          .find(Boolean);
-        app.insertBefore(nextNode.cloneNode(true), nextExisting || null);
+        return;
       }
+
+      const nextExisting = nextChildren.slice(index + 1)
+        .map((candidate, candidateIndex) => currentByKey.get(elementKey(candidate, index + candidateIndex + 1)))
+        .find(Boolean);
+      app.insertBefore(nextNode.cloneNode(true), nextExisting || null);
     });
 
     patchedAppRenders += 1;
@@ -191,7 +191,7 @@ if (!window.__amyFxDomStableRenderV5Installed && nativeInnerHtml?.get && nativeI
   });
 
   window.AmyFXDomStableRender = Object.freeze({
-    version: '5.0.0',
+    version: '5.0.1',
     stats: () => ({ patchedAppRenders, patchedCardRenders, view: lastAppView })
   });
 }
