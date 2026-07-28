@@ -15,12 +15,16 @@ The harness is intentionally separate from the Android runtime. It does not trad
 - Future candles may only be used to score the already-locked snapshot.
 - Raw FVG, OB, BSL/SSL, bias, structure, and score are observations unless an explicitly named validated claim is active.
 - A score such as 97/100 is not a 97% probability.
+- A timezone-naive historical source must have a checked-in provenance manifest before ingestion.
+- The source manifest must distinguish externally verified years from inferred years.
+- Exact duplicates may be removed only when the manifest explicitly permits deterministic dedupe and every non-monotonic row is an exact duplicate. Unique or conflicting out-of-order rows remain fatal.
 
 ## Commands
 
 ```bash
 python tools/amyfx-honesty-audit/run_audit.py ingest \
   --data-dir /path/to/Data-backtest \
+  --source-manifest tools/amyfx-honesty-audit/source-manifests/histdata-xauusd-2020-2025.json \
   --db .audit/amyfx-candles.sqlite
 
 python tools/amyfx-honesty-audit/run_audit.py validate-data \
@@ -36,6 +40,16 @@ python tools/amyfx-honesty-audit/run_audit.py compare \
   --app .audit/app-snapshots.jsonl \
   --reference .audit/reference-snapshots.jsonl \
   --output .audit/differences.jsonl
+```
+
+Verify supplied monthly M1 archives against independently obtained annual HistData archives:
+
+```bash
+python tools/amyfx-honesty-audit/verify_histdata_source.py \
+  --data-dir /path/to/Data-backtest \
+  --official-dir /path/to/annual-histdata-archives \
+  --years 2020 2021 2022 2023 2024 \
+  --output .audit/histdata-source-comparison.json
 ```
 
 Run tests:
