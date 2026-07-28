@@ -71,7 +71,7 @@ export async function configurePreviewWebVersion({
   updateChecker = replaceExactly(
     updateChecker,
     /const UPDATE_URL = (?:window\.AmyFXUpdateManifestUrl\s*\n\s*\|\|\s*)?'[^']+';/g,
-    `const UPDATE_URL = window.AmyFXUpdateManifestUrl\n    || 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json';`,
+    `const UPDATE_URL = window.AmyFXUpdateManifestUrl\n    || 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json';`,
     'update manifest URL'
   );
 

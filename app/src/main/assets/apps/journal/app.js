@@ -6093,7 +6093,7 @@ async function processAssistantInput(question, surface = "assistant") {
     const safeText = text || "Tidak ada jawaban.";
     state.aiPopupLastQuestion = question;
     state.aiPopupLastAnswer = safeText;
-    if (isAssistantSurface && pendingId) updateAssistantChatMessage(pendingId, safeText, extra);
+    if (isAssistantSurface && loadingId) updateAssistantChatMessage(loadingId, safeText, extra);
     if (!isAssistantSurface) renderAiPopupText(safeText);
     return safeText;
   };
@@ -6120,6 +6120,8 @@ async function processAssistantInput(question, surface = "assistant") {
     const message = `Asisten berhenti karena error: ${error.message || "proses gagal"}`;
     if (!isAssistantSurface && dom.saveAiPopupMaterialBtn) dom.saveAiPopupMaterialBtn.disabled = true;
     return finish(message);
+  } finally {
+    if (isAssistantSurface) state.isAiProcessing = false;
   }
 }
 

@@ -13,7 +13,7 @@ const fixCssPath = 'app/src/main/assets/apps/mapping/css/five-issues-fix.css';
 const reportPath = 'docs/backtests/AMY_FX_MARKET_OUTLOOK_MAPPING_2022_2025.md';
 const dataPath = 'docs/backtests/amy-fx-market-outlook-mapping-2022-2025.json';
 const appVersionPath = 'app/src/main/assets/app-version.js';
-const updatePath = 'update.json';
+const updatePath = 'preview-update.json';
 
 const readme = read(readmePath);
 const index = read(indexPath);
@@ -31,11 +31,11 @@ test('Mapping UI hardening files remain syntactically valid', () => {
   }
 });
 
-test('README retains the production identity and official APK route', () => {
-  assert.match(readme, /\*\*Versi:\*\* `/);
-  assert.match(readme, /\*\*Version code:\*\* `/);
-  assert.match(readme, /com\.amyelitesuite/);
-  assert.match(readme, /releases\/download\/amyfx-latest\/AmyFX-latest\.apk/);
+test('README retains the private Preview identity and APK route', () => {
+  assert.match(readme, /personal\/amyfx-private/);
+  assert.match(readme, /Amy FX Preview/);
+  assert.match(readme, /com\.amyelitesuite\.learningpreview/);
+  assert.match(readme, /AmyFX-Preview-latest\.apk/);
 });
 
 test('Mapping loads the five-issue UI hardening after existing styles and modules', () => {
@@ -94,25 +94,10 @@ test('final issue-5 audit separates tracker success from close-direction accurac
   assert.match(fixes, /Skor skenario bukan probabilitas kemenangan/);
 });
 
-test('source version is 1.5.9 while publication stays safe during release', () => {
-  assert.match(appVersion, /name: '1\.5\.9', code: 50/);
-  assert.ok([42, 43, 44, 45, 46, 47, 48, 49, 50].includes(update.latest_version_code));
-  const expected = update.latest_version_code === 50
-    ? '1.5.9'
-    : update.latest_version_code === 49
-      ? '1.5.8'
-      : update.latest_version_code === 48
-        ? '1.5.7'
-        : update.latest_version_code === 47
-          ? '1.5.6'
-          : update.latest_version_code === 46
-            ? '1.5.5'
-            : update.latest_version_code === 45
-              ? '1.5.4'
-              : update.latest_version_code === 44
-                ? '1.5.3'
-                : update.latest_version_code === 43
-                  ? '1.5.2'
-                  : '1.5.1';
-  assert.equal(update.latest_version_name, expected);
+test('source version and updater stay on the private Preview channel', () => {
+  assert.match(appVersion, /name: '2\.0\.0-preview\.173', code: 940173/);
+  assert.match(appVersion, /personal\/amyfx-private\/preview-update\.json/);
+  assert.ok(update.latest_version_code >= 940000);
+  assert.match(update.latest_version_name, /^2\.0\.0-preview\.\d+$/);
+  assert.match(update.apk_url || update.downloadUrl || '', /AmyFX-Preview-latest\.apk/);
 });

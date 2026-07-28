@@ -1,5 +1,6 @@
 const ACADEMY_ACCESS_KEY='amy_academy_access_hash';
 const ACADEMY_SESSION_KEY='amy_academy_session';
+const ACADEMY_ACCESS_MODE='PERSONAL_PREVIEW';
 
 async function sha256Hex(message){
     const value=String(message||'');
@@ -22,7 +23,12 @@ async function validateCode(code){
     return stored===hash?{ok:true,label:'Akses diterima.'}:{ok:false,label:'Kode akses salah.'};
 }
 
-async function requireLogin(){sessionStorage.setItem(ACADEMY_SESSION_KEY,'true');document.documentElement.classList.add('is-authed');return true}
+async function requireLogin(){
+    sessionStorage.setItem(ACADEMY_SESSION_KEY,ACADEMY_ACCESS_MODE);
+    document.documentElement.classList.add('is-authed');
+    window.AmyAcademyAccess=Object.freeze({mode:ACADEMY_ACCESS_MODE,personal:true});
+    return true;
+}
 function logout(){sessionStorage.removeItem(ACADEMY_SESSION_KEY);location.href=typeof ROOT_PATH!=='undefined'?ROOT_PATH+'index.html':'index.html'}
 
 (function(){

@@ -45,6 +45,20 @@ function shouldRefresh(panel, maxAge = 30000) {
   return !panelLoadedAt[panel] || Date.now() - panelLoadedAt[panel] > maxAge;
 }
 
+function clearHeatmapState() {
+  const canvas = document.getElementById('heatmap-canvas');
+  if (canvas) canvas.replaceChildren();
+  const price = document.getElementById('heatmap-price');
+  if (price) price.textContent = '--';
+  hideLoading();
+}
+
+function payloadIsFresh(updated, maxAgeMs = 10 * 60 * 1000) {
+  if (!updated) return true;
+  const timestamp = new Date(updated).getTime();
+  return !Number.isFinite(timestamp) || Date.now() - timestamp <= maxAgeMs;
+}
+
 // ─── Init ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   pendingNewsId = readNewsRoute();
@@ -179,7 +193,7 @@ async function loadNews(silent = false) {
 
     status.textContent = `📰 ${data.news.length} berita relevan • ${formatTime(data.updated)}`;
     panelLoadedAt.news = Date.now();
-    window.AmyFXIntel?.write('news', { updated: data.updated, items: sortedNews.slice(0, 10) });
+    window.AmyFXIntel?.write('news', { updated: data.updated, capturedAt: data.updated, source: 'VERCEL_NEWS', items: sortedNews.slice(0, 10) });
     renderNews(sortedNews);
     if (pendingNewsId) {
       activateTab('news');
@@ -225,17 +239,20 @@ async function loadHeatmap(silent = false) {
 
     if (!data.zones || data.zones.length === 0) {
       status.textContent = '⚠️ Data belum cukup untuk heatmap';
+      clearHeatmapState();
       return;
     }
+    if (!payloadIsFresh(data.updated)) throw new Error('Heatmap yang diterima sudah usang');
 
     document.getElementById('heatmap-price').textContent =
       `💰 XAU/USD ${data.currentPrice?.toFixed(2) || '--'}`;
     status.textContent = `🔥 ${data.zones.length} zona likuiditas • ${formatTime(data.updated)}`;
     panelLoadedAt.heatmap = Date.now();
-    window.AmyFXIntel?.write('heatmap', { updated: data.updated, currentPrice: data.currentPrice, zones: data.zones });
+    window.AmyFXIntel?.write('heatmap', { updated: data.updated, capturedAt: data.updated, source: 'SUPABASE_EDGE', currentPrice: data.currentPrice, zones: data.zones });
     renderHeatmap(data.zones, data.currentPrice);
   } catch (e) {
     if (e.name === 'AbortError') return;
+    clearHeatmapState();
     status.textContent = '⚠️ Gagal memuat heatmap';
   }
 }
@@ -307,7 +324,8 @@ async function loadLiquidity(silent = false) {
     const priceStr = data.currentPrice ? data.currentPrice.toFixed(2) : '--';
     status.textContent = `💧 ${data.levels.length} level aktif • XAU/USD ${priceStr} • ${formatTime(data.updated)}`;
     panelLoadedAt.liquidity = Date.now();
-    window.AmyFXIntel?.write('liquidity', { updated: data.updated, currentPrice: data.currentPrice, levels: data.levels });
+    if (!payloadIsFresh(data.updated)) throw new Error('Liquidity yang diterima sudah usang');
+    window.AmyFXIntel?.write('liquidity', { updated: data.updated, capturedAt: data.updated, source: 'SUPABASE_EDGE', currentPrice: data.currentPrice, levels: data.levels });
     renderLiquidity(data.levels, data.currentPrice);
   } catch (e) {
     if (e.name === 'AbortError') return;
@@ -397,7 +415,7 @@ function truncate(text, max) {
 }
 
 function escapeHtml(str) {
-  return str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+  return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 }
 
 function openLink(url) {

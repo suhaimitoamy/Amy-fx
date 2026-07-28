@@ -14,11 +14,11 @@ val hasReleaseSigning = listOf(
 fun buildConfigString(value: String): String =
     "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
-val configuredApplicationId = System.getenv("AMYFX_APPLICATION_ID") ?: "com.amyelitesuite"
-val configuredAppLabel = System.getenv("AMYFX_APP_LABEL") ?: "Amy FX"
-val configuredUriScheme = System.getenv("AMYFX_URI_SCHEME") ?: "amyfx"
+val configuredApplicationId = System.getenv("AMYFX_APPLICATION_ID") ?: "com.amyelitesuite.learningpreview"
+val configuredAppLabel = System.getenv("AMYFX_APP_LABEL") ?: "Amy FX Preview"
+val configuredUriScheme = System.getenv("AMYFX_URI_SCHEME") ?: "amyfxpreview"
 val configuredUpdateManifestUrl = System.getenv("AMYFX_UPDATE_MANIFEST_URL")
-    ?: "https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json"
+    ?: "https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json"
 
 android {
     namespace = "com.amyelitesuite"
@@ -28,8 +28,8 @@ android {
         applicationId = configuredApplicationId
         minSdk = 26
         targetSdk = 35
-        versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 50)
-        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "1.5.9"
+        versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 940173)
+        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "2.0.0-preview.173"
         manifestPlaceholders["appLabel"] = configuredAppLabel
         manifestPlaceholders["amyFxScheme"] = configuredUriScheme
         buildConfigField("String", "UPDATE_MANIFEST_URL", buildConfigString(configuredUpdateManifestUrl))
@@ -43,7 +43,7 @@ android {
 
     signingConfigs {
         create("release") {
-            // Official Amy FX releases use the permanent signing certificate.
+            // Amy FX Preview personal releases use the permanent Preview signing certificate.
             // Keep both schemes enabled for broad Android and OEM compatibility.
             enableV1Signing = true
             enableV2Signing = true

@@ -755,20 +755,21 @@ export async function runAnalysis(tf = state.tf) {
     log(`Memindai ${tf}...`);
     const group = tfGroup(tf);
     const scanGroup = [...new Set([...group, 'M1', 'M5', 'M15', 'M30', 'H1', 'H4'])];
-    let staleFetchFailed = false;
+    const refreshFailures = new Set();
 
     await Promise.all(scanGroup.map(async currentTf => {
       const isStale = isCandleStale(currentTf);
       if (!state.candles[currentTf]?.length || isStale) {
-        try { await fetchTf(currentTf); } catch (_) {
+        try { await fetchTf(currentTf); } catch (error) {
           log(`Candle ${currentTf} belum diperbarui, memakai cache.`);
-          if (isStale || !state.candles[currentTf]?.length) staleFetchFailed = true;
+          if (isStale || !state.candles[currentTf]?.length) refreshFailures.add(currentTf);
         }
       }
       return state.candles[currentTf] || [];
     }));
 
-    if (staleFetchFailed) {
+    const currentDataUnavailable = !state.candles[tf]?.length || (refreshFailures.has(tf) && isCandleStale(tf));
+    if (currentDataUnavailable) {
       log(`DATA USANG: Cache ${tf} kedaluwarsa & API gagal diperbarui.`);
       const result = {
         tf,
@@ -811,6 +812,14 @@ export async function runAnalysis(tf = state.tf) {
     let result = analyze(state.candles[tf], tf, htfBiases, state.price, htfContext);
     if (!result?.st) throw new Error('Hasil analisis tidak valid');
     result = applyRegimeRouter(result, htfBiases);
+    result.dataDegraded = refreshFailures.size > 0;
+    result.dataWarnings = [...refreshFailures].filter(item => item !== tf);
+    if (result.dataDegraded) {
+      result.dataStatus = 'PARTIAL';
+      result.dataStatusText = result.dataWarnings.length
+        ? `Sebagian timeframe belum diperbarui: ${result.dataWarnings.join(', ')}. Analisis utama ${tf} tetap memakai data valid terakhir.`
+        : 'Timeframe utama tersedia; pembaruan tambahan sedang dicoba ulang.';
+    }
 
     state.result = result;
     state.setups = [...(result.setups || []), ...state.setups].slice(0, 50);
