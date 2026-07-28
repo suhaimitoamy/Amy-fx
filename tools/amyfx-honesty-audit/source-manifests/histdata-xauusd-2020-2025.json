@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "provider": "HistData.com",
+  "instrument": "XAUUSD",
+  "format": "Generic ASCII M1 Bid OHLC; derived higher timeframes",
+  "quote_basis": "bid",
+  "source_timezone": "UTC-05:00",
+  "timezone_verified": true,
+  "dst_policy": "fixed_offset_no_dst",
+  "allow_exact_duplicate_dedupe": true,
+  "provenance_status": "PARTIAL_VERIFIED",
+  "verified_years": [2020, 2021, 2022, 2023, 2024],
+  "inferred_years": [2025],
+  "verification": {
+    "method": "Exact row-for-row comparison of monthly M1 concatenation against annual HistData archives",
+    "higher_timeframes": "M5, M15, H1, H4 and D1 reproduce from M1 OHLC within 0.011 price tolerance",
+    "years": {
+      "2020": {
+        "status": "EXACT_MATCH",
+        "raw_rows": 354351,
+        "raw_canonical_sha256": "43ec1c55a21ce36c0cad8462d0384c773487c9f1fad37dfd36a1dad5fc43d181",
+        "official_archive_sha256": "4942ba4cc97b85b8fa3ec62a6a35925632722910eeb5478b1a87d728d62a3d11"
+      },
+      "2021": {
+        "status": "EXACT_MATCH",
+        "raw_rows": 353446,
+        "raw_canonical_sha256": "8c74fb8a526ab90cf094e7125baa2987c8fb6d0c0e47a46804ad4e53ba24d0a3",
+        "official_archive_sha256": "312229c9db5b39138c41b1e488d00ed32e158a0d1fc3f23a225b223c3271c0a4"
+      },
+      "2022": {
+        "status": "EXACT_MATCH",
+        "raw_rows": 354628,
+        "raw_canonical_sha256": "b7cce50a540e932f49ec232b5517c4d5641d6676300ecac80221123a1fe115fb",
+        "official_archive_sha256": "e752b9d83a14b934099de372c1419ab476278e7cd949c313c3af06207960b1d8"
+      },
+      "2023": {
+        "status": "EXACT_MATCH_WITH_SOURCE_GAPS",
+        "raw_rows": 308812,
+        "raw_canonical_sha256": "384d2f9b7fc358acf7709da667e5e42745b150ad3b91f4806ea22bdc6b31f65f",
+        "official_archive_sha256": "89a4f3f7ec2a52b29fbce8d4ca2ab650971817ae371b332f5fe471a488bcffc2"
+      },
+      "2024": {
+        "status": "EXACT_MATCH",
+        "raw_rows": 355652,
+        "raw_canonical_sha256": "6f036e8493f045dc075af36392f43ccfe5544b256362e0e4feded6e775bd2db3",
+        "official_archive_sha256": "6d47f5cb269e0c4f35c63c7532713aae7dcf98901f605458b00dd6a69e7105de"
+      },
+      "2025": {
+        "status": "INFERRED_SAME_PROVIDER_NOT_EXTERNALLY_EXACT_MATCHED",
+        "raw_rows": 354011,
+        "raw_canonical_sha256": "fea6f4d4407ea80c0b5a4556288c0d156d7ed17da98e81991779f8ba53cf45c4"
+      }
+    }
+  }
+}
