@@ -9,6 +9,7 @@ if (hasDom && !window.__amyFxDomStableRenderV5Installed && nativeInnerHtml?.get 
   let lastAppView = '';
   let patchedAppRenders = 0;
   let patchedCardRenders = 0;
+  let removedDuplicateNodes = 0;
 
   function currentView() {
     return String(window.state?.tab || localStorage.getItem('amy_mapping_tab') || 'Dashboard');
@@ -130,21 +131,39 @@ if (hasDom && !window.__amyFxDomStableRenderV5Installed && nativeInnerHtml?.get 
 
   function patchSameViewApp(app, fragment) {
     const currentChildren = [...app.children];
-    const currentByKey = new Map(currentChildren.map((node, index) => [elementKey(node, index), node]));
     const nextChildren = [...fragment.children];
+    const pools = new Map();
+    const used = new Set();
 
+    currentChildren.forEach((node, index) => {
+      const key = elementKey(node, index);
+      const pool = pools.get(key) || [];
+      pool.push(node);
+      pools.set(key, pool);
+    });
+
+    let cursor = app.firstElementChild;
     nextChildren.forEach((nextNode, index) => {
       const key = elementKey(nextNode, index);
-      const current = currentByKey.get(key) || null;
+      const pool = pools.get(key) || [];
+      let current = pool.find(node => !used.has(node) && compatible(node, nextNode)) || null;
+
       if (current) {
+        used.add(current);
         patchNode(current, nextNode);
-        return;
+      } else {
+        current = nextNode.cloneNode(true);
       }
 
-      const nextExisting = nextChildren.slice(index + 1)
-        .map((candidate, candidateIndex) => currentByKey.get(elementKey(candidate, index + candidateIndex + 1)))
-        .find(Boolean);
-      app.insertBefore(nextNode.cloneNode(true), nextExisting || null);
+      if (current !== cursor) app.insertBefore(current, cursor);
+      cursor = current.nextElementSibling;
+    });
+
+    currentChildren.forEach(node => {
+      if (!used.has(node) && node.parentNode === app) {
+        node.remove();
+        removedDuplicateNodes += 1;
+      }
     });
 
     patchedAppRenders += 1;
@@ -192,7 +211,7 @@ if (hasDom && !window.__amyFxDomStableRenderV5Installed && nativeInnerHtml?.get 
   });
 
   window.AmyFXDomStableRender = Object.freeze({
-    version: '5.0.2',
-    stats: () => ({ patchedAppRenders, patchedCardRenders, view: lastAppView })
+    version: '5.1.0',
+    stats: () => ({ patchedAppRenders, patchedCardRenders, removedDuplicateNodes, view: lastAppView })
   });
 }
