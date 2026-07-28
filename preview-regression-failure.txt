@@ -1,6 +1,6 @@
 Amy FX Private Preview regression failure
-Run: 30345251118
-Commit: 60e3b9ff6f9fdb95bb4444aa266bdeeec1ff0119
+Run: 30345461117
+Commit: 0bc1df87778903317a1d784f6827304099fdc985
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -102,43 +102,43 @@ Regression failed: five-issues-regression.test.mjs
 # Subtest: Mapping loads the five-issue UI hardening after existing styles and modules
 ok 3 - Mapping loads the five-issue UI hardening after existing styles and modules
   ---
-  duration_ms: 0.203309
+  duration_ms: 0.212397
   type: 'test'
   ...
 # Subtest: dashboard duplicate Preview and price cards are removed without changing data services
 ok 4 - dashboard duplicate Preview and price cards are removed without changing data services
   ---
-  duration_ms: 0.939914
+  duration_ms: 0.936557
   type: 'test'
   ...
 # Subtest: stale M15 never keeps a LIVE analysis badge
 ok 5 - stale M15 never keeps a LIVE analysis badge
   ---
-  duration_ms: 0.162764
+  duration_ms: 0.164357
   type: 'test'
   ...
 # Subtest: historical reliability is a muted closed disclosure rather than a live signal block
 ok 6 - historical reliability is a muted closed disclosure rather than a live signal block
   ---
-  duration_ms: 0.161582
+  duration_ms: 0.165178
   type: 'test'
   ...
 # Subtest: Analyze view uses stable keyed accordions and anchor-based scroll restoration
 ok 7 - Analyze view uses stable keyed accordions and anchor-based scroll restoration
   ---
-  duration_ms: 0.228827
+  duration_ms: 0.230961
   type: 'test'
   ...
 # Subtest: final issue-5 audit separates tracker success from close-direction accuracy
 ok 8 - final issue-5 audit separates tracker success from close-direction accuracy
   ---
-  duration_ms: 0.159508
+  duration_ms: 0.167693
   type: 'test'
   ...
 # Subtest: source version is 1.5.9 while publication stays safe during release
 ok 9 - source version is 1.5.9 while publication stays safe during release
   ---
-  duration_ms: 0.394166
+  duration_ms: 0.382904
   type: 'test'
   ...
 1..9
@@ -149,5 +149,5 @@ ok 9 - source version is 1.5.9 while publication stays safe during release
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 118.970141
+# duration_ms 117.82532
 Regression failed: five-issues-regression.test.mjs
