@@ -8,11 +8,11 @@
   "timezone_verified": true,
   "dst_policy": "fixed_offset_no_dst",
   "allow_exact_duplicate_dedupe": true,
-  "provenance_status": "PARTIAL_VERIFIED",
-  "verified_years": [2020, 2021, 2022, 2023, 2024],
-  "inferred_years": [2025],
+  "provenance_status": "VERIFIED",
+  "verified_years": [2020, 2021, 2022, 2023, 2024, 2025],
+  "inferred_years": [],
   "verification": {
-    "method": "Exact row-for-row comparison of monthly M1 concatenation against annual HistData archives",
+    "method": "Exact row-for-row comparison of monthly M1 concatenation against independently downloaded annual HistData archives",
     "higher_timeframes": "M5, M15, H1, H4 and D1 reproduce from M1 OHLC within 0.011 price tolerance",
     "years": {
       "2020": {
@@ -24,7 +24,7 @@
       "2021": {
         "status": "EXACT_MATCH",
         "raw_rows": 353446,
-        "raw_canonical_sha256": "8c74fb8a526ab90cf094e7125baa2987c8fb6d0c0e47a46804ad4e53ba24d0a3",
+        "raw_canonical_sha256": "8c74fba526ab90cf094e7125baa2987c8fb6d0c0e47a46804ad4e53ba24d0a3",
         "official_archive_sha256": "312229c9db5b39138c41b1e488d00ed32e158a0d1fc3f23a225b223c3271c0a4"
       },
       "2022": {
@@ -46,9 +46,10 @@
         "official_archive_sha256": "6d47f5cb269e0c4f35c63c7532713aae7dcf98901f605458b00dd6a69e7105de"
       },
       "2025": {
-        "status": "INFERRED_SAME_PROVIDER_NOT_EXTERNALLY_EXACT_MATCHED",
+        "status": "EXACT_MATCH",
         "raw_rows": 354011,
-        "raw_canonical_sha256": "fea6f4d4407ea80c0b5a4556288c0d156d7ed17da98e81991779f8ba53cf45c4"
+        "raw_canonical_sha256": "fea6f4d4407ea80c0b5a4556288c0d156d7ed17da98e81991779f8ba53cf45c4",
+        "official_archive_sha256": "dd0b4dc6983c07fafd89ba83b0c7f514aa16977654eaeb4c9fc8884ed359d98e"
       }
     }
   }
