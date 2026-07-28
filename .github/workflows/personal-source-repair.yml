@@ -113,4 +113,4 @@ jobs:
           git rebase origin/personal/amyfx-private
           git push origin HEAD:personal/amyfx-private
 
-# Retry after aligning all branch identity contracts.
+# Retry after aligning profile updater identity with Preview.
