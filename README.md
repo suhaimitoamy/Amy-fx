@@ -1,258 +1,71 @@
-# Amy FX
+# Amy FX Preview — Personal Build
 
-Amy FX adalah aplikasi Android hybrid untuk pemetaan dan pemantauan market **XAU/USD**. Antarmuka utama berjalan melalui WebView lokal, sedangkan notifikasi, background scanner, penyimpanan, Firebase Messaging, download, dan pembaruan aplikasi ditangani oleh Kotlin native.
+Amy FX adalah aplikasi Android hybrid untuk pemetaan dan pemantauan market **XAU/USD**. Antarmuka utama berjalan melalui WebView lokal, sedangkan layanan native seperti notifikasi, background scanner, penyimpanan, download, Firebase Messaging, dan pembaruan aplikasi ditangani oleh Kotlin.
 
-> **Versi:** `1.5.6`
->
-> **Version code:** `47`
-> **Minimum Android:** Android 8.0 / API 26  
-> **Target SDK:** Android SDK 35  
-> **Application ID:** `com.amyelitesuite`
+## Fungsi Branch
 
-[Download APK resmi Amy FX](https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk)
+Repository ini memiliki dua branch permanen dengan tujuan yang berbeda:
 
-## Disclaimer
-
-Amy FX bukan robot trading, Expert Advisor, atau penasihat keuangan. Aplikasi tidak membuka atau menutup order otomatis dan tidak menjamin profit. Seluruh hasil Mapping, Market Outlook, berita, liquidity, heatmap, dan setup merupakan alat bantu analisis. Keputusan serta risiko tetap berada pada pengguna.
-
-## Modul Utama
-
-| Modul | Fungsi |
+| Branch | Fungsi |
 |---|---|
-| **Mapping** | Struktur market, HTF bias, BSL/SSL, OB, FVG, premium/discount, valid break, setup, dan Market Outlook |
-| **Berita** | Berita relevan XAU/USD, risiko berita, Dynamic Heatmap, liquidity, dan market briefing |
-| **Jurnal Trading** | Catatan trade, statistik performa, trade plan, evaluasi, filter, autosave, dan export |
-| **Tutorial Trading** | Materi belajar trading terstruktur di dalam aplikasi |
-| **Indikator TradingView** | Library indikator dan file Pine Script |
-| **Dashboard** | Akses cepat ke seluruh modul Amy FX |
+| **`personal/amyfx-private`** | Sumber pengembangan dan build **Amy FX Preview** untuk penggunaan pribadi. |
+| **`main`** | Sumber aplikasi **Amy FX** untuk penggunaan publik. |
 
-## Update v1.5.6 — Perbaikan Restore Kuota Metadata
+### Fokus Pengembangan Saat Ini
 
-- Metadata Library dan Jurnal dipindahkan dari `localStorage` berkuota kecil ke IndexedDB.
-- Data lama dimigrasikan otomatis setelah penyimpanan baru berhasil, tanpa menghapus lampiran.
-- Restore menunggu metadata benar-benar tersimpan sebelum menampilkan status selesai.
-- Cache thumbnail video tidak lagi menulis langsung ke `localStorage`.
-- Error `tradingLibraryManager.items.v1 exceeded the quota` diperbaiki.
-- Package, signing key permanen, data aplikasi, dan kanal update tetap dipertahankan.
-
-## Update v1.5.5 — Restore Backup Besar
-
-- Versi aplikasi dinaikkan menjadi **1.5.5** dengan **versionCode 46**.
-- Restore backup jurnal dan library berukuran besar diproses bertahap untuk mengurangi beban memori WebView.
-- Progress restore dan detail error ditampilkan agar kegagalan dapat diketahui dengan jelas.
-- File yang gagal tidak menghentikan pemulihan file lainnya.
-- Backup ZIP disimpan dengan nama, ekstensi, dan MIME yang benar melalui penyimpanan native bertahap.
-- APK signed dipublikasikan terlebih dahulu sebelum `update.json` diaktifkan.
-- Package, sertifikat signing permanen, data lokal, dan update channel tetap dipertahankan.
-
-## Update v1.5.2 — AMY Market Context Final
-
-- Market Outlook memakai **AMY Market Context Final** dengan struktur M15 dan trigger M5.
-- Outlook hanya menampilkan BUY atau SELL ketika terdapat event yang memenuhi threshold terkunci; tanpa event valid hasil tetap **WAIT**.
-- Event aktif mencakup **FVG Revisit, Order Block Revisit, Draw on Liquidity**, dan **Asia Entry**.
-- Event yang saling bertentangan ditahan sebagai **KONFLIK · WAIT**.
-- Data M5 atau M15 yang usang menahan seluruh outlook live sampai candle kembali valid.
-- Konteks EMA 5/15 M5, M15, H1, H4, dan D1 tetap tersedia sebagai informasi multi-timeframe.
-- Angka serta periode validasi historis dihapus dari kartu live dan hasil **Salin outlook**.
-- Package, signing key, data aplikasi, dan update channel produksi tetap dipertahankan.
-
-## Update v1.5.1 — Stabilitas Mapping dan Efisiensi Data
-
-- Entry Watch memakai candle bersama dari Mapping tanpa jalur API kedua.
-- Permintaan Twelve Data yang sama digabung dan di-cache sesuai timeframe.
-- Scanner native memantau target aktif setiap lima menit ketika aplikasi berada di latar belakang.
-- Posisi baca tab Analisis dipertahankan ketika komponen diperbarui.
-- Bagian Analisis memakai accordion dengan status buka/tutup yang tersimpan.
-- Badge status membedakan **M15 LIVE** dan **M15 STALE** agar data usang tidak terlihat aktif.
-- Reliabilitas historis ditampilkan secara ringkas dan tertutup agar tidak dibaca sebagai akurasi sinyal saat ini.
-- Branding Preview dan kartu Dashboard yang berulang telah dibersihkan.
-- Package, signing key, data aplikasi, dan update channel produksi tetap dipertahankan.
-
-## Update v1.4.0 — Dynamic Liquidity Heatmap
-
-- Heatmap diperbarui aktif setiap **20 detik** ketika tab Heatmap terbuka.
-- Harga berjalan selalu memiliki baris sendiri dan berpindah mengikuti harga terbaru.
-- Zona lama yang sudah ditembus tidak lagi terus dianggap sebagai support atau resistance aktif.
-- Mesin membedakan **active zone, sweep + reclaim, close break, polarity flip, broken**, dan historical zone.
-- Kekuatan zona memakai bobot usia sehingga swing terbaru lebih berpengaruh daripada level lama.
-- Lebar bucket harga menyesuaikan volatilitas **ATR**, bukan selalu dipaksa ke bucket tetap `$2`.
-- Normalisasi logaritmik mencegah satu zona ekstrem membuat semua zona lain terlihat sama kecil.
-- Perubahan antar-refresh ditandai sebagai **baru, menguat, melemah, berubah, ditembus**, atau stabil.
-- Dynamic Heatmap dapat membantu mengisi BSL, SSL, liquidity pressure, dan nearest draw pada Market Briefing.
-
-## Dynamic Liquidity Heatmap
-
-Heatmap dibangun dari candle XAU/USD M15 melalui alur berikut:
-
-1. membersihkan candle OHLC yang tidak valid;
-2. menghitung ATR dan menentukan ukuran bucket adaptif;
-3. mendeteksi swing high serta swing low;
-4. menilai usia swing dengan recency weighting;
-5. memeriksa wick sweep, candle close break, reclaim, dan polarity retest;
-6. menghitung sentuhan serta rejection terbaru;
-7. memilih zona aktif yang paling relevan di atas dan di bawah harga;
-8. menghitung liquidity pressure dan draw terdekat.
-
-### Status zona
-
-- `ACTIVE` — level masih aktif dan belum kehilangan perannya.
-- `PRICE_INSIDE` — harga berjalan sedang berada di dalam zona.
-- `SWEPT_RECLAIMED` — level disapu dengan wick lalu direbut kembali.
-- `POLARITY_FLIP` — support yang ditembus berubah menjadi resistance, atau sebaliknya.
-- `BROKEN` — level telah ditembus dan tidak lagi dipakai sebagai liquidity aktif.
-- `HISTORICAL` — level dipertahankan hanya sebagai memori market dengan tampilan redup.
-
-### File utama
+Pengembangan aktif saat ini berfokus pada branch:
 
 ```text
-lib/heatmap-core.mjs
-api/heatmap.js
-app/src/main/assets/apps/market-intel/heatmap-v2.js
-app/src/main/assets/apps/market-intel/heatmap-v2.css
+personal/amyfx-private
 ```
 
-## Update v1.3.9 — Sinkronisasi Jam dan Zona Mapping
+Branch personal menjadi tempat utama untuk audit, perbaikan bug, pengembangan fitur, pengujian, build APK Preview, dan pembaruan aplikasi pribadi.
 
-- Jam WIB pada **Dashboard** dan **Session Focus** menggunakan satu timestamp yang sama.
-- Seluruh jam diperbarui serentak sehingga tidak lagi berbeda beberapa detik antar-card.
-- Mapping menampilkan **Order Block dan Fair Value Gap terdekat**, walaupun harga belum berada di dalam zona.
-- Pesan lama “Tidak ada zona aktif di harga sekarang” diganti dengan status zona yang lebih informatif.
-- Zona diberi status: **belum retest, sedang diuji, termitigasi, breaker, dilewati live, atau invalid**.
-- Deteksi zona tampilan diselaraskan dengan Pine Script **ICT Concepts [amygmgo]** milik pengguna.
-- Logika entry lama tidak dihapus. Zona Pine-aligned dipakai sebagai informasi Mapping dan konteks market.
+Perubahan pada branch personal **tidak boleh otomatis digabungkan, disalin, atau dipindahkan ke `main`**. Branch `main` hanya boleh diubah ketika ada keputusan khusus untuk memperbarui aplikasi publik.
 
-## Mapping XAU/USD
+## Identitas Amy FX Preview
 
-Mapping Amy FX menggunakan rules engine, bukan AI generatif yang menebak harga. Mesin membaca candle closed dan harga live untuk menghasilkan:
+- **Branch:** `personal/amyfx-private`
+- **Nama aplikasi:** `Amy FX Preview`
+- **Application ID:** `com.amyelitesuite.learningpreview`
+- **URI scheme:** `amyfxpreview`
+- **Versi aktif:** `2.0.0-preview.173`
+- **Version code:** `940173`
+- **Minimum Android:** Android 8.0 / API 26
+- **Target SDK:** Android SDK 35
+- **Update manifest:** `personal/amyfx-private/preview-update.json`
 
-1. struktur lokal tiap timeframe;
-2. HTF Narrative dari H4, D1, dan W1;
-3. valid BOS/CHOCH dan liquidity sweep;
-4. hierarchy BSL/SSL;
-5. dealing range, premium, discount, dan equilibrium;
-6. Order Block dan Fair Value Gap;
-7. Market Outlook berbasis event AMY Market Context Final;
-8. setup M15 yang lolos filter kualitas.
+[Download Amy FX Preview](https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.173/AmyFX-Preview-latest.apk)
 
-### Peran Timeframe
+## Alur Build Preview
 
-- **M1/M5:** microstructure dan konfirmasi.
-- **M15:** execution mapping.
-- **M30/H1/H4:** konteks struktur.
-- **D1/W1:** HTF Narrative.
-
-### Valid Break
-
-- Wick yang melewati level tetapi close kembali ke dalam struktur ditulis sebagai **liquidity sweep**, bukan BOS.
-- Displacement kuat tidak mengesahkan BOS tanpa body close yang valid.
-- Setup WAIT, INVALID, context-only, stale, konflik fatal, dan RR di bawah 1:2 tidak dihitung sebagai setup aktif.
-
-### BSL dan SSL
-
-- **BSL** hanya dianggap aktif apabila masih berada di atas harga.
-- **SSL** hanya dianggap aktif apabila masih berada di bawah harga.
-- Level yang sudah disentuh atau tersapu harga live dikeluarkan dari target aktif.
-
-## Order Block Pine-Aligned
-
-Deteksi OB tampilan mengikuti konfigurasi utama indikator `ICT Concepts [amygmgo]`:
-
-- swing lookback default `10`;
-- break dikonfirmasi menggunakan candle close;
-- batas zona memakai candle body karena `useBody = true`;
-- satu OB bullish dan satu OB bearish terbaru dipertahankan;
-- zona yang berubah polaritas ditandai **BREAKER**, bukan langsung disembunyikan;
-- OB di atas atau di bawah harga tetap ditampilkan sebagai zona yang belum retest.
-
-File utama:
+Workflow Preview berada di:
 
 ```text
-app/src/main/assets/apps/mapping/js/zones/indicator-zones.js
-app/src/main/assets/apps/mapping/js/mapping-zone-sync.js
+.github/workflows/amyfx-blueprint-preview-release.yml
 ```
 
-## Fair Value Gap Pine-Aligned
+Workflow tersebut hanya berjalan untuk branch `personal/amyfx-private` dan melakukan:
 
-FVG tampilan mengikuti aturan Pine Script pengguna:
+1. validasi identitas branch personal;
+2. stabilisasi source Preview;
+3. regression test JavaScript;
+4. Android unit test dan lint;
+5. build APK release bertanda tangan;
+6. verifikasi package, label, versi, dan sertifikat signer;
+7. publikasi release Amy FX Preview;
+8. pembaruan `preview-update.json` pada branch personal.
 
-- pola tiga candle;
-- body candle tengah lebih besar dari rata-rata body `5` candle;
-- wick atas dan bawah masing-masing kurang dari `36%` body;
-- bullish FVG ketika `low` candle ketiga berada di atas `high` candle pertama;
-- bearish FVG ketika `high` candle ketiga berada di bawah `low` candle pertama;
-- dua FVG terbaru per arah dapat dipertahankan;
-- zona tetap aktif sampai sisi terjauh ditembus wick.
+Proses build Preview tidak menggunakan dan tidak mengubah branch `main`.
 
-Status FVG:
-
-- `FRESH` — belum disentuh;
-- `TESTED` — baru disentuh tipis;
-- `MITIGATED` — sudah terisi melewati midpoint;
-- `BROKEN` — sisi terjauh telah ditembus.
-
-## Sinkronisasi Jam WIB
-
-Semua jam Mapping memakai formatter `Asia/Jakarta` dan satu timestamp per pembaruan. Modul sinkronisasi memperbarui jam Dashboard serta Session Focus secara bersamaan.
-
-```text
-app/src/main/assets/apps/mapping/js/clock-sync.js
-```
-
-## Amy Market Outlook
-
-Market Outlook aktif memakai **AMY Market Context Final**. Mesin membaca struktur M15 dan trigger M5 untuk mencari event berikut:
-
-- **FVG Revisit** — fresh FVG M15 yang searah struktur dan masih berada dalam batas jarak ATR;
-- **Order Block Revisit** — fresh OB M15 yang searah struktur dan masih belum tersentuh;
-- **Draw on Liquidity** — liquidity sweep berkualitas dengan target BSL/SSL yang memenuhi jarak maksimum;
-- **Asia Entry** — target range Asia berdasarkan M1 dan event M5 pukul 00:00 New York.
-
-Outlook menampilkan arah, status, timeframe, harga acuan, zona konteks bila tersedia, target, invalidasi, masa berlaku, dan alasan. Mesin tetap **WAIT** ketika:
-
-- tidak ada qualified context event;
-- arah event aktif saling bertentangan;
-- data M5 atau M15 berstatus stale;
-- jumlah candle belum cukup menjalankan engine.
-
-EMA 5/15 pada M5, M15, H1, H4, dan D1 ditampilkan sebagai konteks, bukan sebagai probabilitas kemenangan. Hasil backtest dan eksperimen lama tetap disimpan di `docs/backtests/` untuk audit, tetapi tidak ditampilkan sebagai akurasi live pada kartu Outlook.
-
-File utama:
-
-```text
-app/src/main/assets/apps/mapping/js/market-outlook.js
-app/src/main/assets/apps/mapping/js/outlook/amy-market-context-final-core.js
-```
-
-## Berita dan Notifikasi
-
-Sumber utama berita berasal dari Supabase dengan Telegram sebagai fallback. Filter relevansi mencakup:
-
-- gold, XAU/USD, USD, DXY, Fed, FOMC, CPI, PCE, NFP, dan yield;
-- perang, konflik, serangan, rudal, drone, invasi, nuklir, serta sanksi;
-- Iran, Amerika Serikat, Israel, Gaza, Rusia, Ukraina, China, Taiwan, NATO, dan Middle East;
-- perdamaian, ceasefire, diplomasi, negosiasi, mediasi, dan normalisasi;
-- minyak, OPEC, Red Sea, Hormuz, resesi, default, banking crisis, dan safe haven.
-
-Google Gemini tidak digunakan untuk memuat halaman News.
-
-## Jurnal Trading
-
-Jurnal Trading menyediakan:
-
-- tambah, edit, hapus, buka, dan salin jurnal;
-- statistik win rate, net P/L, profit factor, streak, dan drawdown;
-- trade plan: arah, sesi, timeframe, risk, entry, SL, TP, dan RR;
-- pencarian, filter, pengurutan, autosave, dan pemulihan draft;
-- export CSV serta JSON.
-
-## Struktur Repository
+## Struktur Utama
 
 ```text
 app/src/main/assets/                    WebView assets
-app/src/main/assets/apps/mapping        Mapping dan Market Outlook
-app/src/main/assets/apps/market-intel   News, Dynamic Heatmap, dan liquidity
+app/src/main/assets/apps/mapping        Mapping dan Market Intelligence
+app/src/main/assets/apps/market-intel   News, heatmap, dan liquidity
 app/src/main/assets/apps/journal        Jurnal Trading
-app/src/main/assets/apps/academy        Tutorial Trading
+app/src/main/assets/apps/academy        Materi belajar
 app/src/main/java/                      Android native Kotlin
 api/                                    Vercel serverless functions
 lib/                                    Shared backend logic
@@ -260,44 +73,14 @@ tests/                                  JavaScript regression tests
 .github/workflows/                      CI dan build APK
 ```
 
-## Backend
+## Aturan Pengembangan
 
-Endpoint utama:
+- Fokus pekerjaan berada di `personal/amyfx-private`.
+- Jangan menyentuh atau merge ke `main` tanpa instruksi khusus.
+- Kondisi aplikasi harus dinilai dari kode dan file yang benar-benar dimuat pada branch personal.
+- Build, release, dan update Amy FX Preview harus tetap memakai identitas package, URI scheme, data aplikasi, dan signing certificate Preview.
+- Amy FX Preview ditujukan untuk penggunaan pribadi, sedangkan Amy FX pada `main` ditujukan untuk penggunaan publik.
 
-```text
-/api/twelvedata  Harga dan candle XAU/USD
-/api/news        News Supabase dengan Telegram fallback
-/api/heatmap     Dynamic Liquidity Heatmap
-/api/liquidity   Active BSL/SSL swing tracker
-```
+## Disclaimer
 
-Environment variable utama:
-
-```text
-TWELVEDATA_API_KEY
-```
-
-Secret backend dan credential Firebase tidak disimpan di repository.
-
-## Build dan Pengujian
-
-Prasyarat:
-
-- JDK 17;
-- Android SDK 35;
-- Node.js 22.
-
-Perintah utama:
-
-```bash
-node --test tests/*.test.mjs
-./gradlew testReleaseUnitTest --no-configuration-cache
-./gradlew lintRelease --no-configuration-cache
-./gradlew assembleRelease --no-configuration-cache
-```
-
-GitHub Actions menjalankan regression test JavaScript, Android unit test, Android lint, debug validation, build APK release bertanda tangan, dan publikasi rolling update.
-
-## Pembaruan Tanpa Uninstall
-
-Aplikasi memeriksa `update.json`. Setelah APK baru selesai dibangun dan dipublikasikan, metadata update diaktifkan otomatis. Pengguna dapat memasang versi baru di atas versi lama tanpa menghapus jurnal, progres belajar, pengaturan, atau data lokal.
+Amy FX Preview bukan robot trading, Expert Advisor, atau penasihat keuangan. Aplikasi tidak membuka atau menutup order secara otomatis dan tidak menjamin hasil tertentu. Seluruh informasi yang ditampilkan merupakan alat bantu analisis; keputusan dan risiko tetap berada pada pengguna.
