@@ -1,3 +1,4 @@
+import "./ui/dom-stable-render.js";
 import "./bridge/sync-fix.js";
 import "./bridge/notify-guard.js";
 import {
