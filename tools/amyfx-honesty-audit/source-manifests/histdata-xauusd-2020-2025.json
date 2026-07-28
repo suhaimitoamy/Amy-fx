@@ -24,7 +24,7 @@
       "2021": {
         "status": "EXACT_MATCH",
         "raw_rows": 353446,
-        "raw_canonical_sha256": "8c74fba526ab90cf094e7125baa2987c8fb6d0c0e47a46804ad4e53ba24d0a3",
+        "raw_canonical_sha256": "8c74fb8a526ab90cf094e7125baa2987c8fb6d0c0e47a46804ad4e53ba24d0a3",
         "official_archive_sha256": "312229c9db5b39138c41b1e488d00ed32e158a0d1fc3f23a225b223c3271c0a4"
       },
       "2022": {
