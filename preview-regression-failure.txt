@@ -1,6 +1,6 @@
 Amy FX Private Preview regression failure
-Run: 30347237139
-Commit: 38feb5afc54520abe6b3ed8416438e205bca3f1d
+Run: 30354532123
+Commit: e315ed145315e1a2e2211a68d59451818cda1833
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -22,7 +22,7 @@ Commit: 38feb5afc54520abe6b3ed8416438e205bca3f1d
 ===== equal-high-low.test.mjs =====
 ===== final-integration.test.mjs =====
 ===== five-issues-regression.test.mjs =====
-not ok 2 - README retains the production identity and official APK route
+not ok 9 - source version and updater stay on the private Preview channel
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
@@ -31,115 +31,115 @@ not ok 2 - README retains the production identity and official APK route
 Regression failed: five-issues-regression.test.mjs
 
 --- final log lines ---
-    - **Application ID:** `com.amyelitesuite.learningpreview`
-    - **URI scheme:** `amyfxpreview`
-    - **Versi aktif:** `2.0.0-preview.173`
-    - **Version code:** `940173`
-    - **Minimum Android:** Android 8.0 / API 26
-    - **Target SDK:** Android SDK 35
-    - **Update manifest:** `personal/amyfx-private/preview-update.json`
+      "    row.type = 'button';\n" +
+      "    row.dataset.profileAction = 'version';\n" +
+      "    row.setAttribute('aria-label', `Versi aplikasi ${VERSION.name}, periksa pembaruan`);\n" +
+      '    row.innerHTML = `\n' +
+      '      <span class="tool-icon">ⓘ</span>\n' +
+      '      <span>\n' +
+      '        <strong>Versi Aplikasi</strong>\n' +
+      '        <small>${versionText()}</small>\n' +
+      '      </span>\n' +
+      '      <span class="chevron">›</span>`;\n' +
+      '\n' +
+      `    const clearCache = list.querySelector('[data-profile-action="clear"]');\n` +
+      '    if (clearCache) list.insertBefore(row, clearCache);\n' +
+      '    else list.appendChild(row);\n' +
+      '  }\n' +
+      '\n' +
+      '  function requestUpdateCheck() {\n' +
+      '    if (window.AmyFXUpdate?.checkNow) {\n' +
+      '      window.AmyFXUpdate.checkNow({ announce: true });\n' +
+      '      return;\n' +
+      '    }\n' +
+      '    window.showToast?.(`Versi terpasang: Amy FX Preview v${VERSION.name} (${VERSION.code}). Pemeriksa update sedang dimuat.`);\n' +
+      '    setTimeout(() => window.AmyFXUpdate?.checkNow?.({ announce: true }), 800);\n' +
+      '  }\n' +
+      '\n' +
+      "  document.addEventListener('click', event => {\n" +
+      `    if (event.target.closest('[data-profile-action="version"]')) requestUpdateCheck();\n` +
+      '  });\n' +
+      '\n' +
+      "  const main = document.getElementById('main-content');\n" +
+      '  if (main) {\n' +
+      '    new MutationObserver(injectVersionRow).observe(main, { childList: true, subtree: true });\n' +
+      '  }\n' +
+      '\n' +
+      "  if (document.readyState === 'loading') {\n" +
+      "    document.addEventListener('DOMContentLoaded', injectVersionRow, { once: true });\n" +
+      '  } else {\n' +
+      '    injectVersionRow();\n' +
+      '  }\n' +
+      '})();\n'
     
-    [Download Amy FX Preview](https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.173/AmyFX-Preview-latest.apk)
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    // Amy FX Preview personal release identity.
+    (function () {
+      const VERSION = Object.freeze({ name: '1.5.9', code: 50 });
+      window.AmyFXAppVersion = VERSION;
+    function versionText() {
+        return `Amy FX Preview v${VERSION.name} • Version code ${VERSION.code}`;
+      }
     
-    ## Alur Build Preview
+      function injectVersionRow() {
+        const list = document.querySelector('#main-content .profile-list');
+        if (!list || list.querySelector('[data-profile-action="version"]')) return;
     
-    Workflow Preview berada di:
+        const row = document.createElement('button');
+        row.className = 'profile-row';
+        row.type = 'button';
+        row.dataset.profileAction = 'version';
+        row.setAttribute('aria-label', `Versi aplikasi ${VERSION.name}, periksa pembaruan`);
+        row.innerHTML = `
+          <span class="tool-icon">ⓘ</span>
+          <span>
+            <strong>Versi Aplikasi</strong>
+            <small>${versionText()}</small>
+          </span>
+          <span class="chevron">›</span>`;
     
-    ```text
-    .github/workflows/amyfx-blueprint-preview-release.yml
-    ```
+        const clearCache = list.querySelector('[data-profile-action="clear"]');
+        if (clearCache) list.insertBefore(row, clearCache);
+        else list.appendChild(row);
+      }
     
-    Workflow tersebut hanya berjalan untuk branch `personal/amyfx-private` dan melakukan:
+      function requestUpdateCheck() {
+        if (window.AmyFXUpdate?.checkNow) {
+          window.AmyFXUpdate.checkNow({ announce: true });
+          return;
+        }
+        window.showToast?.(`Versi terpasang: Amy FX Preview v${VERSION.name} (${VERSION.code}). Pemeriksa update sedang dimuat.`);
+        setTimeout(() => window.AmyFXUpdate?.checkNow?.({ announce: true }), 800);
+      }
     
-    1. validasi identitas branch personal;
-    2. stabilisasi source Preview;
-    3. regression test JavaScript;
-    4. Android unit test dan lint;
-    5. build APK release bertanda tangan;
-    6. verifikasi package, label, versi, dan sertifikat signer;
-    7. publikasi release Amy FX Preview;
-    8. pembaruan `preview-update.json` pada branch personal.
+      document.addEventListener('click', event => {
+        if (event.target.closest('[data-profile-action="version"]')) requestUpdateCheck();
+      });
     
-    Proses build Preview tidak menggunakan dan tidak mengubah branch `main`.
+      const main = document.getElementById('main-content');
+      if (main) {
+        new MutationObserver(injectVersionRow).observe(main, { childList: true, subtree: true });
+      }
     
-    ## Struktur Utama
-    
-    ```text
-    app/src/main/assets/                    WebView assets
-    app/src/main/assets/apps/mapping        Mapping dan Market Intelligence
-    app/src/main/assets/apps/market-intel   News, heatmap, dan liquidity
-    app/src/main/assets/apps/journal        Jurnal Trading
-    app/src/main/assets/apps/academy        Materi belajar
-    app/src/main/java/                      Android native Kotlin
-    api/                                    Vercel serverless functions
-    lib/                                    Shared backend logic
-    tests/                                  JavaScript regression tests
-    .github/workflows/                      CI dan build APK
-    ```
-    
-    ## Aturan Pengembangan
-    
-    - Fokus pekerjaan berada di `personal/amyfx-private`.
-    - Jangan menyentuh atau merge ke `main` tanpa instruksi khusus.
-    - Kondisi aplikasi harus dinilai dari kode dan file yang benar-benar dimuat pada branch personal.
-    - Build, release, dan update Amy FX Preview harus tetap memakai identitas package, URI scheme, data aplikasi, dan signing certificate Preview.
-    - Amy FX Preview ditujukan untuk penggunaan pribadi, sedangkan Amy FX pada `main` ditujukan untuk penggunaan publik.
-    
-    ## Disclaimer
-    
-    Amy FX Preview bukan robot trading, Expert Advisor, atau penasihat keuangan. Aplikasi tidak membuka atau menutup order secara otomatis dan tidak menjamin hasil tertentu. Seluruh informasi yang ditampilkan merupakan alat bantu analisis; keputusan dan risiko tetap berada pada pengguna.
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', injectVersionRow, { once: true });
+      } else {
+        injectVersionRow();
+      }
+    })();
     
   operator: 'match'
   stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/five-issues-regression.test.mjs:35:10)
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/five-issues-regression.test.mjs:98:10)
     Test.runInAsyncScope (node:async_hooks:214:14)
     Test.run (node:internal/test_runner/test:1047:25)
     Test.processPendingSubtests (node:internal/test_runner/test:744:18)
     Test.postRun (node:internal/test_runner/test:1173:19)
     Test.run (node:internal/test_runner/test:1101:12)
-    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
-  ...
-# Subtest: Mapping loads the five-issue UI hardening after existing styles and modules
-ok 3 - Mapping loads the five-issue UI hardening after existing styles and modules
-  ---
-  duration_ms: 0.211175
-  type: 'test'
-  ...
-# Subtest: dashboard duplicate Preview and price cards are removed without changing data services
-ok 4 - dashboard duplicate Preview and price cards are removed without changing data services
-  ---
-  duration_ms: 0.862023
-  type: 'test'
-  ...
-# Subtest: stale M15 never keeps a LIVE analysis badge
-ok 5 - stale M15 never keeps a LIVE analysis badge
-  ---
-  duration_ms: 0.162554
-  type: 'test'
-  ...
-# Subtest: historical reliability is a muted closed disclosure rather than a live signal block
-ok 6 - historical reliability is a muted closed disclosure rather than a live signal block
-  ---
-  duration_ms: 0.166932
-  type: 'test'
-  ...
-# Subtest: Analyze view uses stable keyed accordions and anchor-based scroll restoration
-ok 7 - Analyze view uses stable keyed accordions and anchor-based scroll restoration
-  ---
-  duration_ms: 0.227316
-  type: 'test'
-  ...
-# Subtest: final issue-5 audit separates tracker success from close-direction accuracy
-ok 8 - final issue-5 audit separates tracker success from close-direction accuracy
-  ---
-  duration_ms: 0.156023
-  type: 'test'
-  ...
-# Subtest: source version is 1.5.9 while publication stays safe during release
-ok 9 - source version is 1.5.9 while publication stays safe during release
-  ---
-  duration_ms: 0.391572
-  type: 'test'
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
 1..9
 # tests 9
@@ -149,5 +149,5 @@ ok 9 - source version is 1.5.9 while publication stays safe during release
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 118.639675
+# duration_ms 119.310133
 Regression failed: five-issues-regression.test.mjs
