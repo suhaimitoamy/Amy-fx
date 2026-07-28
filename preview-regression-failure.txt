@@ -1,6 +1,6 @@
 Amy FX Private Preview regression failure
-Run: 30367027847
-Commit: 46693bed3c1032c882b68e996b8cdfb7f04c256a
+Run: 30367122496
+Commit: f9c9a43d1a661aafa2356a677af249467a26362d
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -16,31 +16,31 @@ Regression failed: api-polling-coordinator.test.mjs
 # Subtest: concise mentor runtime is valid JavaScript and loaded by the installed provider runtime
 ok 1 - concise mentor runtime is valid JavaScript and loaded by the installed provider runtime
   ---
-  duration_ms: 6.995337
+  duration_ms: 5.617726
   type: 'test'
   ...
 # Subtest: simple home action question is answered locally without a trading lecture
 ok 2 - simple home action question is answered locally without a trading lecture
   ---
-  duration_ms: 1.483985
+  duration_ms: 1.007604
   type: 'test'
   ...
 # Subtest: provider prompt forbids audit-style headings and internal metadata leakage
 ok 3 - provider prompt forbids audit-style headings and internal metadata leakage
   ---
-  duration_ms: 1.242358
+  duration_ms: 0.749347
   type: 'test'
   ...
 # Subtest: epoch timestamp is replaced with Belum ada data
 ok 4 - epoch timestamp is replaced with Belum ada data
   ---
-  duration_ms: 2.084123
+  duration_ms: 1.650787
   type: 'test'
   ...
 # Subtest: mentor shows and clears an accessible animated loading state while waiting for provider
 ok 5 - mentor shows and clears an accessible animated loading state while waiting for provider
   ---
-  duration_ms: 1.105675
+  duration_ms: 0.7854
   type: 'test'
   ...
 1..5
@@ -51,44 +51,44 @@ ok 5 - mentor shows and clears an accessible animated loading state while waitin
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 70.42469
+# duration_ms 57.209672
 
 ===== api-polling-coordinator.test.mjs =====
 TAP version 13
 # Subtest: new Mapping and backend runtime files remain syntactically valid
 ok 1 - new Mapping and backend runtime files remain syntactically valid
   ---
-  duration_ms: 183.26547
+  duration_ms: 174.114892
   type: 'test'
   ...
 # Subtest: request and candle coordinators load before Entry Watch
 ok 2 - request and candle coordinators load before Entry Watch
   ---
-  duration_ms: 0.232574
+  duration_ms: 0.195984
   type: 'test'
   ...
 # Subtest: Entry Watch consumes shared Mapping candles without a second API fetcher
 ok 3 - Entry Watch consumes shared Mapping candles without a second API fetcher
   ---
-  duration_ms: 0.334776
+  duration_ms: 0.339137
   type: 'test'
   ...
 # Subtest: shared candle coordinator refreshes only closed watch timeframes
 ok 4 - shared candle coordinator refreshes only closed watch timeframes
   ---
-  duration_ms: 0.259364
+  duration_ms: 0.221831
   type: 'test'
   ...
 # Subtest: native scanner is background-only and rate limited
 ok 5 - native scanner is background-only and rate limited
   ---
-  duration_ms: 0.157252
+  duration_ms: 0.131287
   type: 'test'
   ...
 # Subtest: analysis view has scroll stability protection
 not ok 6 - analysis view has scroll stability protection
   ---
-  duration_ms: 5.649096
+  duration_ms: 32.777418
   type: 'test'
   location: '/home/runner/work/Amy-fx/Amy-fx/tests/api-polling-coordinator.test.mjs:77:1'
   failureType: 'testCodeFailure'
@@ -114,13 +114,13 @@ not ok 6 - analysis view has scroll stability protection
 # Subtest: client Twelve Data requests are canonicalized, deduplicated and cached
 ok 7 - client Twelve Data requests are canonicalized, deduplicated and cached
   ---
-  duration_ms: 0.208598
+  duration_ms: 0.226547
   type: 'test'
   ...
 # Subtest: backend shares provider responses and serves stale cache during provider failure
 ok 8 - backend shares provider responses and serves stale cache during provider failure
   ---
-  duration_ms: 0.17561
+  duration_ms: 0.641911
   type: 'test'
   ...
 1..8
@@ -131,5 +131,5 @@ ok 8 - backend shares provider responses and serves stale cache during provider 
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 249.836149
+# duration_ms 263.817379
 Regression failed: api-polling-coordinator.test.mjs
