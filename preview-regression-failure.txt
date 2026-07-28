@@ -1,0 +1,197 @@
+Amy FX Private Preview regression failure
+Run: 30315931479
+Commit: ae8dbcd9c6f8b4481cc7faf108160d0fad5f397a
+
+===== amy-mentor-conversation.test.mjs =====
+===== api-polling-coordinator.test.mjs =====
+===== asia-range-ui-freeze-regression.test.mjs =====
+===== asia-range.test.mjs =====
+===== background-video-playback-regression.test.mjs =====
+===== blueprint-preview-stabilization.test.mjs =====
+===== blueprint-preview-v1.test.mjs =====
+===== bos-mss.test.mjs =====
+===== bsl-ssl.test.mjs =====
+===== concept-engine.integration.test.mjs =====
+===== dashboard-analyze-separation.test.mjs =====
+===== deepseek-provider-detection.test.mjs =====
+===== dynamic-heatmap-ui-regression.test.mjs =====
+===== dynamic-heatmap.test.mjs =====
+===== entry-sl-tp.test.mjs =====
+===== entry-watch-engine.test.mjs =====
+===== entry-watch-hardening.test.mjs =====
+===== equal-high-low.test.mjs =====
+===== final-integration.test.mjs =====
+===== five-issues-regression.test.mjs =====
+===== fvg-ob.test.mjs =====
+===== ict-core-regression.test.mjs =====
+===== journal-ai-rotation-v158.test.mjs =====
+===== journal-metadata-storage-regression.test.mjs =====
+===== journal-upgrade-regression.test.mjs =====
+===== learning-live-engine.test.mjs =====
+===== liquidity-draw-context.test.mjs =====
+===== m5-context-filter-experiment.test.mjs =====
+===== m5-min10-duration-2025.test.mjs =====
+===== m5-session-2025-validation.test.mjs =====
+===== mapping-candle-stale-ttl.test.mjs =====
+===== mapping-claim-accuracy.test.mjs =====
+===== mapping-clock-zone-alignment.test.mjs =====
+===== mapping-command-strip-integrity.test.mjs =====
+===== mapping-context-safety.test.mjs =====
+===== mapping-live-consistency-regression.test.mjs =====
+===== mapping-logic-v2.test.mjs =====
+===== mapping-market-integrity-regression.test.mjs =====
+===== mapping-navigation-regression.test.mjs =====
+===== mapping-news-background-repair.test.mjs =====
+===== mapping-structure-hierarchy.test.mjs =====
+===== mapping-webview-startup.test.mjs =====
+===== market-candle-store.test.mjs =====
+===== market-intelligence-strip.test.mjs =====
+===== market-intent-engine-v3.test.mjs =====
+===== market-learning-live-examples.test.mjs =====
+===== market-outlook-ui-regression.test.mjs =====
+===== market-outlook.test.mjs =====
+===== market-regime-engine-v2.test.mjs =====
+===== market-state-contract.test.mjs =====
+===== mentor-customer-service.test.mjs =====
+===== mentor-mapping-intent-hotfix.test.mjs =====
+===== mentor-universal-access.test.mjs =====
+===== native-updater.test.mjs =====
+===== news-relevance-regression.test.mjs =====
+===== news-routing-regression.test.mjs =====
+===== notification-icon-regression.test.mjs =====
+===== notification-route-regression.test.mjs =====
+===== notification-route-sync.test.mjs =====
+===== preview-connectivity-audit-v2.test.mjs =====
+===== preview-connectivity-final-v3.test.mjs =====
+===== preview-home-journal-connection.test.mjs =====
+===== preview-integration-audit.test.mjs =====
+not ok 9 - only one Preview release workflow owns the permanent private branch and update channel
+    Expected values to be strictly deep-equal:
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  operator: 'deepStrictEqual'
+Regression failed: preview-integration-audit.test.mjs
+
+--- final log lines ---
+  duration_ms: 4.703828
+  type: 'test'
+  ...
+# Subtest: Home keeps legacy fallback, closes late database handles and supports older WebViews
+ok 3 - Home keeps legacy fallback, closes late database handles and supports older WebViews
+  ---
+  duration_ms: 1.742429
+  type: 'test'
+  ...
+# Subtest: Profile counters publish one shared Home stats event
+ok 4 - Profile counters publish one shared Home stats event
+  ---
+  duration_ms: 0.959303
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 94.28879
+
+===== preview-integration-audit.test.mjs =====
+TAP version 13
+# Subtest: all Preview module documents are standards-mode and their local assets exist
+ok 1 - all Preview module documents are standards-mode and their local assets exist
+  ---
+  duration_ms: 19.199172
+  type: 'test'
+  ...
+# Subtest: Blueprint runtime is installed exactly once with canonical guard order on market modules
+ok 2 - Blueprint runtime is installed exactly once with canonical guard order on market modules
+  ---
+  duration_ms: 3.232495
+  type: 'test'
+  ...
+# Subtest: home project routing points only to real local modules
+ok 3 - home project routing points only to real local modules
+  ---
+  duration_ms: 1.407412
+  type: 'test'
+  ...
+# Subtest: Journal navigation, storage and Blueprint context share one authoritative state
+ok 4 - Journal navigation, storage and Blueprint context share one authoritative state
+  ---
+  duration_ms: 2.949696
+  type: 'test'
+  ...
+# Subtest: home profile reads actual Mapping and IndexedDB Journal counts
+ok 5 - home profile reads actual Mapping and IndexedDB Journal counts
+  ---
+  duration_ms: 2.464709
+  type: 'test'
+  ...
+# Subtest: Mapping publishes a live context contract consumed by Amy Mentor
+ok 6 - Mapping publishes a live context contract consumed by Amy Mentor
+  ---
+  duration_ms: 22.506777
+  type: 'test'
+  ...
+# Subtest: Market Intel publishes news, liquidity and heatmap through canonical WITA contracts
+ok 7 - Market Intel publishes news, liquidity and heatmap through canonical WITA contracts
+  ---
+  duration_ms: 4.125845
+  type: 'test'
+  ...
+# Subtest: AI secure vault, provider repair and concise conversation runtime are connected end-to-end
+ok 8 - AI secure vault, provider repair and concise conversation runtime are connected end-to-end
+  ---
+  duration_ms: 2.00556
+  type: 'test'
+  ...
+# Subtest: only one Preview release workflow owns the permanent private branch and update channel
+not ok 9 - only one Preview release workflow owns the permanent private branch and update channel
+  ---
+  duration_ms: 8.116889
+  type: 'test'
+  location: '/home/runner/work/Amy-fx/Amy-fx/tests/preview-integration-audit.test.mjs:179:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+        '.github/workflows/amyfx-blueprint-preview-release.yml',
+    +   '.github/workflows/honesty-audit-smoke.yml'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: '.github/workflows/amyfx-blueprint-preview-release.yml'
+  actual:
+    0: '.github/workflows/amyfx-blueprint-preview-release.yml'
+    1: '.github/workflows/honesty-audit-smoke.yml'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-integration-audit.test.mjs:186:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: Preview update manifest is active and points to an immutable Preview APK
+ok 10 - Preview update manifest is active and points to an immutable Preview APK
+  ---
+  duration_ms: 1.867021
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 9
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 127.57967
+Regression failed: preview-integration-audit.test.mjs
