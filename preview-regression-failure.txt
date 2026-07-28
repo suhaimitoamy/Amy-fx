@@ -1,6 +1,6 @@
 Amy FX Private Preview regression failure
-Run: 30357532307
-Commit: 8b173177f030d4d8cfff1e61aa1106c474167d62
+Run: 30357634622
+Commit: 274da60fef71ad6f81d6fecd882c9dff3374be11
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -14,132 +14,188 @@ Commit: 8b173177f030d4d8cfff1e61aa1106c474167d62
 ===== concept-engine.integration.test.mjs =====
 ===== dashboard-analyze-separation.test.mjs =====
 ===== deepseek-provider-detection.test.mjs =====
-not ok 4 - provider repair bridge and detector are installed in every Preview module
+===== dynamic-heatmap-ui-regression.test.mjs =====
+===== dynamic-heatmap.test.mjs =====
+===== entry-sl-tp.test.mjs =====
+===== entry-watch-engine.test.mjs =====
+===== entry-watch-hardening.test.mjs =====
+===== equal-high-low.test.mjs =====
+===== final-integration.test.mjs =====
+===== five-issues-regression.test.mjs =====
+===== fvg-ob.test.mjs =====
+===== honesty-audit-runtime.test.mjs =====
+===== honesty-validated-series.test.mjs =====
+===== ict-core-regression.test.mjs =====
+===== journal-ai-rotation-v158.test.mjs =====
+===== journal-metadata-storage-regression.test.mjs =====
+===== journal-upgrade-regression.test.mjs =====
+===== learning-live-engine.test.mjs =====
+===== liquidity-draw-context.test.mjs =====
+===== m5-context-filter-experiment.test.mjs =====
+===== m5-min10-duration-2025.test.mjs =====
+===== m5-session-2025-validation.test.mjs =====
+===== mapping-accuracy-v3.test.mjs =====
+===== mapping-candle-stale-ttl.test.mjs =====
+===== mapping-claim-accuracy.test.mjs =====
+===== mapping-clock-zone-alignment.test.mjs =====
+===== mapping-command-strip-integrity.test.mjs =====
+===== mapping-context-safety.test.mjs =====
+===== mapping-live-consistency-regression.test.mjs =====
+===== mapping-logic-v2.test.mjs =====
+===== mapping-market-integrity-regression.test.mjs =====
+===== mapping-navigation-regression.test.mjs =====
+===== mapping-news-background-repair.test.mjs =====
+===== mapping-structure-hierarchy.test.mjs =====
+===== mapping-webview-startup.test.mjs =====
+===== market-candle-store.test.mjs =====
+===== market-intelligence-strip.test.mjs =====
+===== market-intent-engine-v3.test.mjs =====
+===== market-learning-live-examples.test.mjs =====
+===== market-outlook-ui-regression.test.mjs =====
+===== market-outlook.test.mjs =====
+===== market-regime-engine-v2.test.mjs =====
+===== market-state-contract.test.mjs =====
+===== mentor-customer-service.test.mjs =====
+===== mentor-mapping-intent-hotfix.test.mjs =====
+===== mentor-universal-access.test.mjs =====
+===== native-updater.test.mjs =====
+===== news-relevance-regression.test.mjs =====
+===== news-routing-regression.test.mjs =====
+===== notification-icon-regression.test.mjs =====
+===== notification-route-regression.test.mjs =====
+===== notification-route-sync.test.mjs =====
+===== personal-source-debug.test.mjs =====
+===== preview-connectivity-audit-v2.test.mjs =====
+===== preview-connectivity-final-v3.test.mjs =====
+===== preview-home-journal-connection.test.mjs =====
+===== preview-integration-audit.test.mjs =====
+not ok 9 - only one Preview release workflow owns the permanent private branch and update channel
+    Expected values to be strictly deep-equal:
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
-  actual: |-
-  operator: 'match'
-Regression failed: deepseek-provider-detection.test.mjs
+  actual:
+  operator: 'deepStrictEqual'
+Regression failed: preview-integration-audit.test.mjs
 
 --- final log lines ---
-      'def preserve_private_preview_identity(installer) -> list[Path]:\n' +
-      '    """Validate the personal Preview identity and leave versioned source untouched."""\n' +
-      '    app_version = installer.APP_VERSION.read_text(encoding="utf-8")\n' +
-      '    update_checker = installer.UPDATE_CHECKER.read_text(encoding="utf-8")\n' +
-      '\n' +
-      '    version_match = re.search(\n' +
-      `        r"const VERSION = Object\\.freeze\\(\\{ name: '(2\\.0\\.0-preview\\.\\d+)', code: (94\\d{4}) \\}\\);",\n` +
-      '        app_version,\n' +
-      '    )\n' +
-      '    if version_match is None:\n' +
-      '        raise RuntimeError("Private Preview version identity is missing or invalid")\n' +
-      '\n' +
-      '    version_name, version_code = version_match.groups()\n' +
-      '    required_markers = (\n' +
-      '        PRIVATE_MANIFEST_URL,\n' +
-      `        f"name: '{version_name}', code: {version_code}",\n` +
-      '        f"Number(VERSION.code) || {version_code}",\n' +
-      `        f"String(VERSION.name || '{version_name}')",\n` +
-      '    )\n' +
-      '    missing = [marker for marker in required_markers if marker not in app_version and marker not in update_checker]\n' +
-      '    if missing:\n' +
-      `        raise RuntimeError(f"Private Preview updater identity is incomplete: {', '.join(missing)}")\n` +
-      '\n' +
-      '    return []\n' +
-      '\n' +
-      '\n' +
-      'def main() -> None:\n' +
-      '    installer = load_installer()\n' +
-      '    installer.normalize_source_identity = lambda: preserve_private_preview_identity(installer)\n' +
-      '    installer.main()\n' +
-      '\n' +
-      '\n' +
-      'if __name__ == "__main__":\n' +
-      '    main()\n'
+  duration_ms: 5.166306
+  type: 'test'
+  ...
+# Subtest: Home keeps legacy fallback, closes late database handles and supports older WebViews
+ok 3 - Home keeps legacy fallback, closes late database handles and supports older WebViews
+  ---
+  duration_ms: 1.71582
+  type: 'test'
+  ...
+# Subtest: Profile counters publish one shared Home stats event
+ok 4 - Profile counters publish one shared Home stats event
+  ---
+  duration_ms: 0.908735
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 93.35987
+
+===== preview-integration-audit.test.mjs =====
+TAP version 13
+# Subtest: all Preview module documents are standards-mode and their local assets exist
+ok 1 - all Preview module documents are standards-mode and their local assets exist
+  ---
+  duration_ms: 18.565287
+  type: 'test'
+  ...
+# Subtest: Blueprint runtime is installed exactly once with canonical guard order on market modules
+ok 2 - Blueprint runtime is installed exactly once with canonical guard order on market modules
+  ---
+  duration_ms: 2.966393
+  type: 'test'
+  ...
+# Subtest: home project routing points only to real local modules
+ok 3 - home project routing points only to real local modules
+  ---
+  duration_ms: 1.40973
+  type: 'test'
+  ...
+# Subtest: Journal navigation, storage and Blueprint context share one authoritative state
+ok 4 - Journal navigation, storage and Blueprint context share one authoritative state
+  ---
+  duration_ms: 2.885021
+  type: 'test'
+  ...
+# Subtest: home profile reads actual Mapping and IndexedDB Journal counts
+ok 5 - home profile reads actual Mapping and IndexedDB Journal counts
+  ---
+  duration_ms: 2.55176
+  type: 'test'
+  ...
+# Subtest: Mapping publishes a live context contract consumed by Amy Mentor
+ok 6 - Mapping publishes a live context contract consumed by Amy Mentor
+  ---
+  duration_ms: 24.169312
+  type: 'test'
+  ...
+# Subtest: Market Intel publishes news, liquidity and heatmap through canonical WITA contracts
+ok 7 - Market Intel publishes news, liquidity and heatmap through canonical WITA contracts
+  ---
+  duration_ms: 3.906416
+  type: 'test'
+  ...
+# Subtest: AI secure vault, provider repair and concise conversation runtime are connected end-to-end
+ok 8 - AI secure vault, provider repair and concise conversation runtime are connected end-to-end
+  ---
+  duration_ms: 1.891658
+  type: 'test'
+  ...
+# Subtest: only one Preview release workflow owns the permanent private branch and update channel
+not ok 9 - only one Preview release workflow owns the permanent private branch and update channel
+  ---
+  duration_ms: 8.732838
+  type: 'test'
+  location: '/home/runner/work/Amy-fx/Amy-fx/tests/preview-integration-audit.test.mjs:179:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+        '.github/workflows/amyfx-blueprint-preview-release.yml',
+    +   '.github/workflows/personal-source-repair.yml'
+      ]
     
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
-  actual: |-
-    #!/usr/bin/env python3
-    """Run Blueprint stabilization without replacing the private Preview version identity."""
-    from __future__ import annotations
-    
-    import importlib.util
-    import re
-    from pathlib import Path
-    
-    CORE_INSTALLER = Path(__file__).with_name("apply-blueprint-preview-core.py")
-    PRIVATE_MANIFEST_URL = (
-        "https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/"
-        "personal/amyfx-private/preview-update.json"
-    )
-    
-    
-    def load_installer():
-        spec = importlib.util.spec_from_file_location("amyfx_blueprint_core", CORE_INSTALLER)
-        if spec is None or spec.loader is None:
-            raise RuntimeError("Unable to load Blueprint stabilization core")
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return module
-    
-    
-    def preserve_private_preview_identity(installer) -> list[Path]:
-        """Validate the personal Preview identity and leave versioned source untouched."""
-        app_version = installer.APP_VERSION.read_text(encoding="utf-8")
-        update_checker = installer.UPDATE_CHECKER.read_text(encoding="utf-8")
-    
-        version_match = re.search(
-            r"const VERSION = Object\.freeze\(\{ name: '(2\.0\.0-preview\.\d+)', code: (94\d{4}) \}\);",
-            app_version,
-        )
-        if version_match is None:
-            raise RuntimeError("Private Preview version identity is missing or invalid")
-    
-        version_name, version_code = version_match.groups()
-        required_markers = (
-            PRIVATE_MANIFEST_URL,
-            f"name: '{version_name}', code: {version_code}",
-            f"Number(VERSION.code) || {version_code}",
-            f"String(VERSION.name || '{version_name}')",
-        )
-        missing = [marker for marker in required_markers if marker not in app_version and marker not in update_checker]
-        if missing:
-            raise RuntimeError(f"Private Preview updater identity is incomplete: {', '.join(missing)}")
-    
-        return []
-    
-    
-    def main() -> None:
-        installer = load_installer()
-        installer.normalize_source_identity = lambda: preserve_private_preview_identity(installer)
-        installer.main()
-    
-    
-    if __name__ == "__main__":
-        main()
-    
-  operator: 'match'
+    0: '.github/workflows/amyfx-blueprint-preview-release.yml'
+  actual:
+    0: '.github/workflows/amyfx-blueprint-preview-release.yml'
+    1: '.github/workflows/personal-source-repair.yml'
+  operator: 'deepStrictEqual'
   stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/deepseek-provider-detection.test.mjs:45:10)
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-integration-audit.test.mjs:186:10)
     async Test.run (node:internal/test_runner/test:1054:7)
     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
-# Subtest: DeepSeek remains explicit about paid fallback usage
-ok 5 - DeepSeek remains explicit about paid fallback usage
+# Subtest: Preview update manifest is active and points to an immutable Preview APK
+ok 10 - Preview update manifest is active and points to an immutable Preview APK
   ---
-  duration_ms: 1.629011
+  duration_ms: 1.772326
   type: 'test'
   ...
-1..5
-# tests 5
+1..10
+# tests 10
 # suites 0
-# pass 4
+# pass 9
 # fail 1
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 65.211792
-Regression failed: deepseek-provider-detection.test.mjs
+# duration_ms 125.458096
+Regression failed: preview-integration-audit.test.mjs
