@@ -1,135 +1,207 @@
 Amy FX Private Preview regression failure
-Run: 30367122496
-Commit: f9c9a43d1a661aafa2356a677af249467a26362d
+Run: 30367240979
+Commit: 9f0709220f7faec16eb19768e790819bb5300ab6
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
-not ok 6 - analysis view has scroll stability protection
+===== asia-range-ui-freeze-regression.test.mjs =====
+===== asia-range.test.mjs =====
+===== background-video-playback-regression.test.mjs =====
+===== blueprint-preview-stabilization.test.mjs =====
+===== blueprint-preview-v1.test.mjs =====
+===== bos-mss.test.mjs =====
+===== bsl-ssl.test.mjs =====
+===== concept-engine.integration.test.mjs =====
+===== dashboard-analyze-separation.test.mjs =====
+===== deepseek-provider-detection.test.mjs =====
+===== dynamic-heatmap-ui-regression.test.mjs =====
+===== dynamic-heatmap.test.mjs =====
+===== entry-sl-tp.test.mjs =====
+===== entry-watch-engine.test.mjs =====
+===== entry-watch-hardening.test.mjs =====
+===== equal-high-low.test.mjs =====
+===== final-integration.test.mjs =====
+===== five-issues-regression.test.mjs =====
+===== fvg-ob.test.mjs =====
+===== honesty-audit-runtime.test.mjs =====
+===== honesty-validated-series.test.mjs =====
+===== ict-core-regression.test.mjs =====
+===== journal-ai-rotation-v158.test.mjs =====
+===== journal-metadata-storage-regression.test.mjs =====
+===== journal-upgrade-regression.test.mjs =====
+===== learning-live-engine.test.mjs =====
+===== liquidity-draw-context.test.mjs =====
+===== m5-context-filter-experiment.test.mjs =====
+===== m5-min10-duration-2025.test.mjs =====
+===== m5-session-2025-validation.test.mjs =====
+===== mapping-accuracy-v3.test.mjs =====
+===== mapping-candle-stale-ttl.test.mjs =====
+===== mapping-claim-accuracy.test.mjs =====
+===== mapping-clock-zone-alignment.test.mjs =====
+===== mapping-command-strip-integrity.test.mjs =====
+===== mapping-context-safety.test.mjs =====
+===== mapping-live-consistency-regression.test.mjs =====
+===== mapping-logic-v2.test.mjs =====
+===== mapping-market-integrity-regression.test.mjs =====
+===== mapping-navigation-regression.test.mjs =====
+===== mapping-news-background-repair.test.mjs =====
+===== mapping-structure-hierarchy.test.mjs =====
+===== mapping-ui-simplification-v1.test.mjs =====
+===== mapping-webview-startup.test.mjs =====
+===== market-candle-store.test.mjs =====
+===== market-intelligence-strip.test.mjs =====
+===== market-intent-engine-v3.test.mjs =====
+===== market-learning-live-examples.test.mjs =====
+===== market-outlook-ui-regression.test.mjs =====
+===== market-outlook.test.mjs =====
+===== market-regime-engine-v2.test.mjs =====
+===== market-state-contract.test.mjs =====
+===== mentor-customer-service.test.mjs =====
+===== mentor-mapping-intent-hotfix.test.mjs =====
+===== mentor-universal-access.test.mjs =====
+===== native-updater.test.mjs =====
+===== news-relevance-regression.test.mjs =====
+===== news-routing-regression.test.mjs =====
+===== notification-icon-regression.test.mjs =====
+===== notification-route-regression.test.mjs =====
+===== notification-route-sync.test.mjs =====
+===== personal-source-debug.test.mjs =====
+===== preview-connectivity-audit-v2.test.mjs =====
+===== preview-connectivity-final-v3.test.mjs =====
+===== preview-home-journal-connection.test.mjs =====
+===== preview-integration-audit.test.mjs =====
+===== preview-mapping-shared-connectivity.test.mjs =====
+===== preview-post35-connectivity-regression.test.mjs =====
+===== preview-shared-market-intelligence.test.mjs =====
+===== preview-updater-config.test.mjs =====
+===== previous-period-levels.test.mjs =====
+===== production-copy-polish.test.mjs =====
+not ok 2 - Preview uses a consistent product-facing navigation and header
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
-  expected: true
-  actual: false
-  operator: '=='
-Regression failed: api-polling-coordinator.test.mjs
+  expected:
+  actual: |-
+  operator: 'match'
+Regression failed: production-copy-polish.test.mjs
 
 --- final log lines ---
-# Subtest: concise mentor runtime is valid JavaScript and loaded by the installed provider runtime
-ok 1 - concise mentor runtime is valid JavaScript and loaded by the installed provider runtime
-  ---
-  duration_ms: 5.617726
-  type: 'test'
-  ...
-# Subtest: simple home action question is answered locally without a trading lecture
-ok 2 - simple home action question is answered locally without a trading lecture
-  ---
-  duration_ms: 1.007604
-  type: 'test'
-  ...
-# Subtest: provider prompt forbids audit-style headings and internal metadata leakage
-ok 3 - provider prompt forbids audit-style headings and internal metadata leakage
-  ---
-  duration_ms: 0.749347
-  type: 'test'
-  ...
-# Subtest: epoch timestamp is replaced with Belum ada data
-ok 4 - epoch timestamp is replaced with Belum ada data
-  ---
-  duration_ms: 1.650787
-  type: 'test'
-  ...
-# Subtest: mentor shows and clears an accessible animated loading state while waiting for provider
-ok 5 - mentor shows and clears an accessible animated loading state while waiting for provider
-  ---
-  duration_ms: 0.7854
-  type: 'test'
-  ...
-1..5
-# tests 5
-# suites 0
-# pass 5
-# fail 0
-# cancelled 0
-# skipped 0
-# todo 0
-# duration_ms 57.209672
-
-===== api-polling-coordinator.test.mjs =====
-TAP version 13
-# Subtest: new Mapping and backend runtime files remain syntactically valid
-ok 1 - new Mapping and backend runtime files remain syntactically valid
-  ---
-  duration_ms: 174.114892
-  type: 'test'
-  ...
-# Subtest: request and candle coordinators load before Entry Watch
-ok 2 - request and candle coordinators load before Entry Watch
-  ---
-  duration_ms: 0.195984
-  type: 'test'
-  ...
-# Subtest: Entry Watch consumes shared Mapping candles without a second API fetcher
-ok 3 - Entry Watch consumes shared Mapping candles without a second API fetcher
-  ---
-  duration_ms: 0.339137
-  type: 'test'
-  ...
-# Subtest: shared candle coordinator refreshes only closed watch timeframes
-ok 4 - shared candle coordinator refreshes only closed watch timeframes
-  ---
-  duration_ms: 0.221831
-  type: 'test'
-  ...
-# Subtest: native scanner is background-only and rate limited
-ok 5 - native scanner is background-only and rate limited
-  ---
-  duration_ms: 0.131287
-  type: 'test'
-  ...
-# Subtest: analysis view has scroll stability protection
-not ok 6 - analysis view has scroll stability protection
-  ---
-  duration_ms: 32.777418
-  type: 'test'
-  location: '/home/runner/work/Amy-fx/Amy-fx/tests/api-polling-coordinator.test.mjs:77:1'
-  failureType: 'testCodeFailure'
-  error: |-
-    The expression evaluated to a falsy value:
-    
-      assert.ok(index.includes('js/view-stability.js'))
+      '<script src="../shared/amyfx-blueprint-v1.js" data-amyfx-blueprint-js="v1"></script>\n' +
+      '<script src="../shared/amyfx-provider-detection-v1.js" data-amyfx-provider-detection="v1"></script>\n' +
+      '</body>\n' +
+      '</html>\n'
     
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
-  expected: true
-  actual: false
-  operator: '=='
+  expected:
+  actual: |-
+    <!doctype html>
+    <html lang="id">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="theme-color" content="#050505">
+    <title>Amy FX · Market Intelligence</title>
+    <link rel="stylesheet" href="../shared/market-intelligence.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/asia-range.css">
+    <link rel="stylesheet" href="css/mapping-integrity.css">
+    <link rel="stylesheet" href="css/market-outlook.css">
+    <link rel="stylesheet" href="css/mapping-zones.css">
+    <link rel="stylesheet" href="css/liquidity-draw.css">
+    <link rel="stylesheet" href="css/entry-watch.css">
+    <link rel="stylesheet" href="css/mapping-v2.css">
+    <link rel="stylesheet" href="css/analysis-compact.css">
+    <link rel="stylesheet" href="css/five-issues-fix.css">
+    <link rel="stylesheet" href="../shared/amyfx-blueprint-v1.css" data-amyfx-blueprint-css="v1">
+    <script>
+    (function () {
+      var NativeDateTimeFormat = Intl.DateTimeFormat;
+      function AmyDateTimeFormat(locales, options) {
+        try {
+          return new NativeDateTimeFormat(locales, options);
+        } catch (error) {
+          if (options && options.timeZone === 'Asia/Makassar') {
+            var fallback = {};
+            Object.keys(options).forEach(function (key) { fallback[key] = options[key]; });
+            fallback.timeZone = 'Asia/Singapore';
+            return new NativeDateTimeFormat(locales, fallback);
+          }
+          throw error;
+        }
+      }
+      AmyDateTimeFormat.prototype = NativeDateTimeFormat.prototype;
+      AmyDateTimeFormat.supportedLocalesOf = NativeDateTimeFormat.supportedLocalesOf.bind(NativeDateTimeFormat);
+      Intl.DateTimeFormat = AmyDateTimeFormat;
+    
+      window.addEventListener('error', function (event) {
+        window.__amyMappingStartupError = event && (event.message || event.error && event.error.message) || 'JavaScript startup error';
+      });
+    
+      setTimeout(function () {
+        var app = document.getElementById('app');
+        if (!app || app.children.length || app.textContent.trim()) return;
+        var message = window.__amyMappingStartupError || 'Analisis market belum berhasil dimuat.';
+        app.innerHTML = '<section class="card"><div class="kicker">PEMULIHAN DATA</div><h2>Memuat ulang analisis</h2><p class="muted">' + String(message).replace(/[&<>"']/g, function (char) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char]; }) + '</p><button class="action" style="width:100%" onclick="location.reload()">Muat Ulang</button></section>';
+      }, 3500);
+    })();
+    </script>
+    </head>
+    <body>
+    <div id="sticky-bar" class="amy-sticky-bar" aria-hidden="true"><div class="sticky-brand">XAU/USD <span class="sticky-price">$0.00</span></div><div class="sticky-bias neutral">WAIT</div></div>
+    <header class="topbar preview-topbar"><div class="brand">XAU</div><div><div class="brand-title">Amy FX</div><div class="brand-sub">Struktur • Arah • Likuiditas</div></div><div id="conn" class="status">Offline</div></header>
+    <section id="mapping-command-strip" class="amy-command-strip mapping-command-strip" aria-label="Ringkasan market"></section>
+    <main class="content" id="app"></main>
+    <nav class="nav"><button data-tab="Dashboard" class="active">▥<span>Dashboard</span></button><button data-tab="Analyze">〽<span>Analisis</span></button></nav>
+    <script src="js/api-request-coordinator.js"></script>
+    <script src="../shared/amyfx-market-state-contract-v1.js" data-amyfx-market-contract="v2"></script>
+    <script src="../shared/market-intelligence.js"></script>
+    <script src="js/notification-route-sync.js"></script>
+    <script src="js/production-branding.js"></script>
+    <script src="js/scanner-visibility-gate.js"></script>
+    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/candle-refresh-coordinator.js"></script>
+    <script type="module" src="js/entry-watch-runtime-v2.js"></script>
+    <script type="module" src="js/mentor-market-context-sync.js"></script>
+    <script type="module" src="js/session/asia-range-ui.js"></script>
+    <script type="module" src="js/mapping-integrity.js"></script>
+    <script type="module" src="js/market-outlook.js"></script>
+    <script type="module" src="js/mapping-zone-sync.js"></script>
+    <script type="module" src="js/clock-sync.js"></script>
+    <script type="module" src="js/mapping-v2.js"></script>
+    <script type="module" src="js/mapping-live-consistency-v1.js"></script>
+    <script type="module" src="js/mapping-runtime-repair-v3.js"></script>
+    <script src="js/honesty-audit-runtime-v1.js"></script>
+    <script src="js/analysis-ui-stability-v4.js"></script>
+    <script src="js/blueprint-context-bridge.js"></script>
+    <script src="../shared/amyfx-blueprint-hotfix-v1.js" data-amyfx-blueprint-hotfix="v1"></script>
+    <script src="../shared/amyfx-blueprint-v1.js" data-amyfx-blueprint-js="v1"></script>
+    <script src="../shared/amyfx-provider-detection-v1.js" data-amyfx-provider-detection="v1"></script>
+    </body>
+    </html>
+    
+  operator: 'match'
   stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/api-polling-coordinator.test.mjs:78:10)
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/production-copy-polish.test.mjs:35:10)
     Test.runInAsyncScope (node:async_hooks:214:14)
     Test.run (node:internal/test_runner/test:1047:25)
     Test.processPendingSubtests (node:internal/test_runner/test:744:18)
     Test.postRun (node:internal/test_runner/test:1173:19)
     Test.run (node:internal/test_runner/test:1101:12)
-    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
   ...
-# Subtest: client Twelve Data requests are canonicalized, deduplicated and cached
-ok 7 - client Twelve Data requests are canonicalized, deduplicated and cached
+# Subtest: long historical and advanced sections are collapsed by default
+ok 3 - long historical and advanced sections are collapsed by default
   ---
-  duration_ms: 0.226547
+  duration_ms: 0.131593
   type: 'test'
   ...
-# Subtest: backend shares provider responses and serves stale cache during provider failure
-ok 8 - backend shares provider responses and serves stale cache during provider failure
-  ---
-  duration_ms: 0.641911
-  type: 'test'
-  ...
-1..8
-# tests 8
+1..3
+# tests 3
 # suites 0
-# pass 7
+# pass 2
 # fail 1
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 263.817379
-Regression failed: api-polling-coordinator.test.mjs
+# duration_ms 48.341362
+Regression failed: production-copy-polish.test.mjs
