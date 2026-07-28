@@ -49,6 +49,7 @@ jobs:
           set -euo pipefail
           test "$GITHUB_REF_NAME" = "personal/amyfx-private"
           node tools/apply-personal-debug-fixes.mjs
+          rm -f .github/workflows/personal-source-repair.yml
 
       - name: Verify JavaScript syntax
         run: |
@@ -103,7 +104,7 @@ jobs:
       - name: Commit verified personal fixes
         run: |
           set -euo pipefail
-          rm -f .github/workflows/personal-source-repair.yml tools/apply-personal-debug-fixes.mjs preview-regression-failure.txt personal-source-repair-failure.txt
+          rm -f tools/apply-personal-debug-fixes.mjs preview-regression-failure.txt personal-source-repair-failure.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
@@ -111,5 +112,3 @@ jobs:
           git fetch origin personal/amyfx-private
           git rebase origin/personal/amyfx-private
           git push origin HEAD:personal/amyfx-private
-
-# Retry after aligning personal Preview identity and WITA clock tests.
