@@ -33,7 +33,8 @@ def _audit_with_source_policy(snapshot: dict):
 
 
 def command_ingest(args: argparse.Namespace) -> int:
-    result = ingest_archives(Path(args.data_dir), Path(args.db))
+    source_manifest = Path(args.source_manifest) if args.source_manifest else None
+    result = ingest_archives(Path(args.data_dir), Path(args.db), source_manifest)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 
@@ -107,6 +108,10 @@ def build_parser() -> argparse.ArgumentParser:
     ingest = sub.add_parser("ingest", help="Import 2020-2025 monthly candle ZIP archives into SQLite")
     ingest.add_argument("--data-dir", required=True)
     ingest.add_argument("--db", required=True)
+    ingest.add_argument(
+        "--source-manifest",
+        help="JSON provenance/timezone manifest. Required when source timestamps do not include an offset.",
+    )
     ingest.set_defaults(func=command_ingest)
 
     validate = sub.add_parser("validate-data", help="Validate the normalized candle database")
