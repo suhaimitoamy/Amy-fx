@@ -440,23 +440,27 @@ function boot() {
   scheduleRepairAndCapture('startup');
 }
 
-window.AmyFXHonestyAudit = Object.freeze({
-  version: '1.0.0',
-  branch: 'personal/amyfx-private',
-  snapshot: reason => capture(reason || 'manual'),
-  auditSnapshot,
-  buildSnapshot,
-  exportJsonl,
-  exportSnapshots: () => exportJsonl('snapshots'),
-  exportAnomalies: () => exportJsonl('anomalies'),
-  getSnapshots: () => readRows(SNAPSHOT_STORE),
-  getAnomalies: () => readRows(ANOMALY_STORE),
-  clear: clearRows,
-  repairResultLabels
-});
+if (typeof window !== 'undefined') {
+  window.AmyFXHonestyAudit = Object.freeze({
+    version: '1.0.0',
+    branch: 'personal/amyfx-private',
+    snapshot: reason => capture(reason || 'manual'),
+    auditSnapshot,
+    buildSnapshot,
+    exportJsonl,
+    exportSnapshots: () => exportJsonl('snapshots'),
+    exportAnomalies: () => exportJsonl('anomalies'),
+    getSnapshots: () => readRows(SNAPSHOT_STORE),
+    getAnomalies: () => readRows(ANOMALY_STORE),
+    clear: clearRows,
+    repairResultLabels
+  });
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', boot, { once: true });
-} else {
-  boot();
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot, { once: true });
+    } else {
+      boot();
+    }
+  }
 }
