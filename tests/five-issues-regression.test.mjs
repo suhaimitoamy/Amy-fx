@@ -7,8 +7,7 @@ const read = path => fs.readFileSync(path, 'utf8');
 
 const readmePath = 'README.md';
 const indexPath = 'app/src/main/assets/apps/mapping/index.html';
-const fixScriptPath = 'app/src/main/assets/apps/mapping/js/analysis-ui-fixes.js';
-const stabilityPath = 'app/src/main/assets/apps/mapping/js/view-stability.js';
+const fixScriptPath = 'app/src/main/assets/apps/mapping/js/analysis-ui-stability-v4.js';
 const fixCssPath = 'app/src/main/assets/apps/mapping/css/five-issues-fix.css';
 const reportPath = 'docs/backtests/AMY_FX_MARKET_OUTLOOK_MAPPING_2022_2025.md';
 const dataPath = 'docs/backtests/amy-fx-market-outlook-mapping-2022-2025.json';
@@ -18,17 +17,14 @@ const updatePath = 'preview-update.json';
 const readme = read(readmePath);
 const index = read(indexPath);
 const fixes = read(fixScriptPath);
-const stability = read(stabilityPath);
 const css = read(fixCssPath);
 const report = read(reportPath);
 const backtest = JSON.parse(read(dataPath));
 const appVersion = read(appVersionPath);
 const update = JSON.parse(read(updatePath));
 
-test('Mapping UI hardening files remain syntactically valid', () => {
-  for (const path of [fixScriptPath, stabilityPath]) {
-    execFileSync(process.execPath, ['--check', path], { stdio: 'pipe' });
-  }
+test('Mapping UI stability runtime remains syntactically valid', () => {
+  execFileSync(process.execPath, ['--check', fixScriptPath], { stdio: 'pipe' });
 });
 
 test('README retains the private Preview identity and APK route', () => {
@@ -38,11 +34,13 @@ test('README retains the private Preview identity and APK route', () => {
   assert.match(readme, /AmyFX-Preview-latest\.apk/);
 });
 
-test('Mapping loads the five-issue UI hardening after existing styles and modules', () => {
+test('Mapping loads stable UI coordination and no longer loads scroll restoration', () => {
   assert.ok(index.includes('css/five-issues-fix.css'));
-  assert.ok(index.includes('js/analysis-ui-fixes.js'));
+  assert.ok(index.includes('js/analysis-ui-stability-v4.js'));
+  assert.equal(index.includes('js/analysis-ui-fixes.js'), false);
+  assert.equal(index.includes('js/view-stability.js'), false);
   assert.ok(index.indexOf('css/five-issues-fix.css') > index.indexOf('css/analysis-compact.css'));
-  assert.ok(index.indexOf('js/analysis-ui-fixes.js') > index.indexOf('js/mapping-v2.js'));
+  assert.ok(index.indexOf('js/analysis-ui-stability-v4.js') > index.indexOf('js/mapping-v2.js'));
 });
 
 test('dashboard duplicate Preview and price cards are removed without changing data services', () => {
@@ -61,26 +59,25 @@ test('stale M15 never keeps a LIVE analysis badge', () => {
   assert.match(css, /\.regime-badge\.stale/);
 });
 
-test('historical reliability is a muted closed disclosure rather than a live signal block', () => {
-  assert.match(fixes, /amy-reliability-disclosure/);
-  assert.match(fixes, /Definisi fitur berbeda · bukan sinyal live/);
-  assert.match(fixes, /bindDisclosure\(details, false\)/);
-  assert.match(fixes, /tidak boleh dibaca sebagai akurasi sinyal saat ini/);
-  assert.match(css, /opacity:\.76/);
+test('historical reliability is removed from the live Mapping display', () => {
+  assert.match(fixes, /removeHistoricalReliability/);
+  assert.match(fixes, /RELIABILITAS HISTORIS/);
+  assert.match(fixes, /Performa Historis Model/);
+  assert.match(fixes, /amy-outlook-backtest-note/);
+  assert.match(fixes, /amy-outlook-historical-rate/);
 });
 
-test('Analyze view uses stable keyed accordions and anchor-based scroll restoration', () => {
-  for (const key of ['market-context', 'market-outlook', 'valid-break', 'mapping-m1-h4', 'mapping-explanation', 'active-setup']) {
+test('Analyze view keeps keyed accordions without forced scroll movement', () => {
+  for (const key of ['market-context', 'market-outlook', 'valid-break', 'mapping-all-timeframes', 'mapping-explanation', 'active-setup']) {
     assert.ok(fixes.includes(key));
   }
-  assert.match(stability, /anchorKey/);
-  assert.match(stability, /getBoundingClientRect/);
-  assert.match(stability, /MutationObserver/);
-  assert.match(stability, /window\.scrollTo/);
-  assert.match(stability, /window\.scrollBy/);
+  assert.match(fixes, /MutationObserver/);
+  assert.doesNotMatch(fixes, /window\.scrollTo/);
+  assert.doesNotMatch(fixes, /window\.scrollBy/);
+  assert.doesNotMatch(fixes, /anchorKey/);
 });
 
-test('final issue-5 audit separates tracker success from close-direction accuracy', () => {
+test('issue-5 audit remains available in documentation but not injected into live UI', () => {
   assert.equal(backtest.status, 'FINAL_AUDITED_BACKTEST_FOR_ISSUE_5');
   assert.equal(backtest.marketOutlook.overall.samples, 25223);
   assert.equal(backtest.marketOutlook.overall.trackerDefinedSuccess.accuracy, 42.78);
@@ -88,10 +85,8 @@ test('final issue-5 audit separates tracker success from close-direction accurac
   assert.equal(backtest.marketOutlook.outOfSample2025.closeAccuracy, 37.03);
   assert.match(report, /Akurasi arah murni pada close horizon/);
   assert.match(report, /2025 dipisahkan sebagai out-of-sample/);
-  assert.match(fixes, /Skor skenario rule-based/);
-  assert.match(fixes, /tracker success/);
-  assert.match(fixes, /Akurasi arah close historis/);
-  assert.match(fixes, /Skor skenario bukan probabilitas kemenangan/);
+  assert.doesNotMatch(fixes, /tracker success/);
+  assert.doesNotMatch(fixes, /Akurasi arah close historis/);
 });
 
 test('source version and updater stay on the private Preview channel', () => {
