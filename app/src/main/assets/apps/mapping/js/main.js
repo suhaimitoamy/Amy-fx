@@ -1,6 +1,5 @@
 import "./bridge/sync-fix.js";
 import "./bridge/notify-guard.js";
-import "./audit/honesty-audit-export.js";
 import {
   runAnalysis,
   connect,
