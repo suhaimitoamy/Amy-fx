@@ -93,3 +93,5 @@ jobs:
           git fetch origin personal/amyfx-private
           git rebase origin/personal/amyfx-private
           git push origin HEAD:personal/amyfx-private
+
+# One-shot trigger: workflow already exists on the personal branch.
