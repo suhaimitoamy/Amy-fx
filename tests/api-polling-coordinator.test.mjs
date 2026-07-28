@@ -9,7 +9,7 @@ const coordinatorPath = 'app/src/main/assets/apps/mapping/js/api-request-coordin
 const candleCoordinatorPath = 'app/src/main/assets/apps/mapping/js/candle-refresh-coordinator.js';
 const timeframePath = 'app/src/main/assets/apps/mapping/js/engine/mapping-timeframes.js';
 const scannerGatePath = 'app/src/main/assets/apps/mapping/js/scanner-visibility-gate.js';
-const stabilityPath = 'app/src/main/assets/apps/mapping/js/view-stability.js';
+const stabilityPath = 'app/src/main/assets/apps/mapping/js/analysis-ui-stability-v4.js';
 const backendPath = 'api/twelvedata.js';
 const scannerServicePath = 'app/src/main/java/com/amyelitesuite/ScannerService.kt';
 
@@ -74,10 +74,13 @@ test('native scanner is background-only and rate limited', () => {
   assert.match(scannerService, /memeriksa harga setiap 5 menit/);
 });
 
-test('analysis view has scroll stability protection', () => {
-  assert.ok(index.includes('js/view-stability.js'));
+test('analysis view preserves disclosure state without forced scroll movement', () => {
+  assert.ok(index.includes('js/analysis-ui-stability-v4.js'));
+  assert.equal(index.includes('js/view-stability.js'), false);
+  assert.match(stability, /DISCLOSURE_STATE_KEY/);
   assert.match(stability, /MutationObserver/);
-  assert.match(stability, /window\.scrollTo/);
+  assert.doesNotMatch(stability, /window\.scrollTo/);
+  assert.doesNotMatch(stability, /window\.scrollBy/);
 });
 
 test('client Twelve Data requests are canonicalized, deduplicated and cached', () => {
