@@ -64,7 +64,25 @@ jobs:
           node --check app/src/main/assets/apps/mapping/js/ui/ui-render.js
 
       - name: Run full JavaScript regression
-        run: npm test
+        run: |
+          set +e
+          npm test > /tmp/amyfx-personal-repair-regression.log 2>&1
+          status=$?
+          cat /tmp/amyfx-personal-repair-regression.log
+          if [ "$status" -ne 0 ]; then
+            cp /tmp/amyfx-personal-repair-regression.log /tmp/personal-source-repair-failure.txt
+            git reset --hard HEAD
+            cp /tmp/personal-source-repair-failure.txt personal-source-repair-failure.txt
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add personal-source-repair-failure.txt
+            git commit -m 'ci(private): capture source repair regression [skip ci]' || true
+            git fetch origin personal/amyfx-private
+            git rebase origin/personal/amyfx-private
+            git push origin HEAD:personal/amyfx-private
+            exit "$status"
+          fi
+          rm -f personal-source-repair-failure.txt
 
       - name: Run Android unit tests and lint
         run: |
@@ -85,7 +103,7 @@ jobs:
       - name: Commit verified personal fixes
         run: |
           set -euo pipefail
-          rm -f .github/workflows/personal-source-repair.yml tools/apply-personal-debug-fixes.mjs preview-regression-failure.txt
+          rm -f .github/workflows/personal-source-repair.yml tools/apply-personal-debug-fixes.mjs preview-regression-failure.txt personal-source-repair-failure.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
@@ -93,5 +111,3 @@ jobs:
           git fetch origin personal/amyfx-private
           git rebase origin/personal/amyfx-private
           git push origin HEAD:personal/amyfx-private
-
-# One-shot trigger: workflow already exists on the personal branch.
