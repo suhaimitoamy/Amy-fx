@@ -1,7 +1,8 @@
-const nativeInnerHtml = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
-const nativeOuterHtml = Object.getOwnPropertyDescriptor(Element.prototype, 'outerHTML');
+const hasDom = typeof window !== 'undefined' && typeof Element !== 'undefined';
+const nativeInnerHtml = hasDom ? Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML') : null;
+const nativeOuterHtml = hasDom ? Object.getOwnPropertyDescriptor(Element.prototype, 'outerHTML') : null;
 
-if (!window.__amyFxDomStableRenderV5Installed && nativeInnerHtml?.get && nativeInnerHtml?.set && nativeOuterHtml?.get && nativeOuterHtml?.set) {
+if (hasDom && !window.__amyFxDomStableRenderV5Installed && nativeInnerHtml?.get && nativeInnerHtml?.set && nativeOuterHtml?.get && nativeOuterHtml?.set) {
   window.__amyFxDomStableRenderV5Installed = true;
 
   const REGIME_CARD_ID = 'amy-regime-router-v3';
@@ -191,7 +192,7 @@ if (!window.__amyFxDomStableRenderV5Installed && nativeInnerHtml?.get && nativeI
   });
 
   window.AmyFXDomStableRender = Object.freeze({
-    version: '5.0.1',
+    version: '5.0.2',
     stats: () => ({ patchedAppRenders, patchedCardRenders, view: lastAppView })
   });
 }
