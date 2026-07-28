@@ -8,31 +8,31 @@ TAP version 13
 # Subtest: concise mentor runtime is valid JavaScript and loaded by the installed provider runtime
 ok 1 - concise mentor runtime is valid JavaScript and loaded by the installed provider runtime
   ---
-  duration_ms: 6.756615
+  duration_ms: 6.685861
   type: 'test'
   ...
 # Subtest: simple home action question is answered locally without a trading lecture
 ok 2 - simple home action question is answered locally without a trading lecture
   ---
-  duration_ms: 1.278202
+  duration_ms: 1.295601
   type: 'test'
   ...
 # Subtest: provider prompt forbids audit-style headings and internal metadata leakage
 ok 3 - provider prompt forbids audit-style headings and internal metadata leakage
   ---
-  duration_ms: 1.000292
+  duration_ms: 1.63201
   type: 'test'
   ...
 # Subtest: epoch timestamp is replaced with Belum ada data
 ok 4 - epoch timestamp is replaced with Belum ada data
   ---
-  duration_ms: 1.675776
+  duration_ms: 0.911563
   type: 'test'
   ...
 # Subtest: mentor shows and clears an accessible animated loading state while waiting for provider
 ok 5 - mentor shows and clears an accessible animated loading state while waiting for provider
   ---
-  duration_ms: 0.845783
+  duration_ms: 0.836613
   type: 'test'
   ...
 1..5
@@ -43,56 +43,56 @@ ok 5 - mentor shows and clears an accessible animated loading state while waitin
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 71.582036
+# duration_ms 67.223198
 
 ===== api-polling-coordinator.test.mjs =====
 TAP version 13
 # Subtest: new Mapping and backend runtime files remain syntactically valid
 ok 1 - new Mapping and backend runtime files remain syntactically valid
   ---
-  duration_ms: 160.263271
+  duration_ms: 150.520777
   type: 'test'
   ...
 # Subtest: request and candle coordinators load before Entry Watch
 ok 2 - request and candle coordinators load before Entry Watch
   ---
-  duration_ms: 0.233668
+  duration_ms: 0.210463
   type: 'test'
   ...
 # Subtest: Entry Watch consumes shared Mapping candles without a second API fetcher
 ok 3 - Entry Watch consumes shared Mapping candles without a second API fetcher
   ---
-  duration_ms: 0.376785
+  duration_ms: 0.313646
   type: 'test'
   ...
 # Subtest: shared candle coordinator refreshes only closed watch timeframes
 ok 4 - shared candle coordinator refreshes only closed watch timeframes
   ---
-  duration_ms: 0.167624
+  duration_ms: 0.158657
   type: 'test'
   ...
 # Subtest: native scanner is background-only and rate limited
 ok 5 - native scanner is background-only and rate limited
   ---
-  duration_ms: 0.241301
+  duration_ms: 0.260177
   type: 'test'
   ...
 # Subtest: analysis view has scroll stability protection
 ok 6 - analysis view has scroll stability protection
   ---
-  duration_ms: 0.145022
+  duration_ms: 0.138069
   type: 'test'
   ...
 # Subtest: client Twelve Data requests are canonicalized, deduplicated and cached
 ok 7 - client Twelve Data requests are canonicalized, deduplicated and cached
   ---
-  duration_ms: 0.208049
+  duration_ms: 0.152755
   type: 'test'
   ...
 # Subtest: backend shares provider responses and serves stale cache during provider failure
 ok 8 - backend shares provider responses and serves stale cache during provider failure
   ---
-  duration_ms: 0.148889
+  duration_ms: 0.13932
   type: 'test'
   ...
 1..8
@@ -103,26 +103,26 @@ ok 8 - backend shares provider responses and serves stale cache during provider 
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 224.827059
+# duration_ms 212.132154
 
 ===== asia-range-ui-freeze-regression.test.mjs =====
 TAP version 13
 # Subtest: Asia range UI module remains syntactically valid
 ok 1 - Asia range UI module remains syntactically valid
   ---
-  duration_ms: 29.773118
+  duration_ms: 27.139629
   type: 'test'
   ...
 # Subtest: MutationObserver does not call the renderer directly
 ok 2 - MutationObserver does not call the renderer directly
   ---
-  duration_ms: 0.355606
+  duration_ms: 0.36375
   type: 'test'
   ...
 # Subtest: Asia range markup is only written when content changes
 ok 3 - Asia range markup is only written when content changes
   ---
-  duration_ms: 0.302747
+  duration_ms: 0.224079
   type: 'test'
   ...
 1..3
@@ -133,50 +133,50 @@ ok 3 - Asia range markup is only written when content changes
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 95.006198
+# duration_ms 85.794447
 
 ===== asia-range.test.mjs =====
 TAP version 13
 # Subtest: Asia Range uses 06:00-14:00 Asia/Makassar and reports wick sweep
 ok 1 - Asia Range uses 06:00-14:00 Asia/Makassar and reports wick sweep
   ---
-  duration_ms: 342.304526
+  duration_ms: 42.324388
   type: 'test'
   ...
 # Subtest: closed candle beyond Asia High has priority over wick sweep
 ok 2 - closed candle beyond Asia High has priority over wick sweep
   ---
-  duration_ms: 5.905944
+  duration_ms: 5.641511
   type: 'test'
   ...
 # Subtest: active Asia session remains developing
 ok 3 - active Asia session remains developing
   ---
-  duration_ms: 6.098183
+  duration_ms: 5.633315
   type: 'test'
   ...
 # Subtest: first closed M15 candle starts the active Asia Range instead of falling back to yesterday
 ok 4 - first closed M15 candle starts the active Asia Range instead of falling back to yesterday
   ---
-  duration_ms: 6.133159
+  duration_ms: 5.964654
   type: 'test'
   ...
 # Subtest: before 06:00 WITA the latest completed Asia Range remains selected
 ok 5 - before 06:00 WITA the latest completed Asia Range remains selected
   ---
-  duration_ms: 5.254334
+  duration_ms: 5.479578
   type: 'test'
   ...
 # Subtest: session windows use exact Makassar boundaries
 ok 6 - session windows use exact Makassar boundaries
   ---
-  duration_ms: 1.166092
+  duration_ms: 1.130102
   type: 'test'
   ...
 # Subtest: shared candle store requests UTC and normalizes provider timestamps
 ok 7 - shared candle store requests UTC and normalizes provider timestamps
   ---
-  duration_ms: 0.552233
+  duration_ms: 0.609319
   type: 'test'
   ...
 1..7
@@ -187,32 +187,32 @@ ok 7 - shared candle store requests UTC and normalizes provider timestamps
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 434.571591
+# duration_ms 129.215803
 
 ===== background-video-playback-regression.test.mjs =====
 TAP version 13
 # Subtest: Android Media3 service is declared as media playback foreground service
 ok 1 - Android Media3 service is declared as media playback foreground service
   ---
-  duration_ms: 0.864168
+  duration_ms: 0.894351
   type: 'test'
   ...
 # Subtest: native player handles loop, audio focus, noisy audio and persistent state
 ok 2 - native player handles loop, audio focus, noisy audio and persistent state
   ---
-  duration_ms: 0.241552
+  duration_ms: 0.225011
   type: 'test'
   ...
 # Subtest: IndexedDB video transfer is chunked, ordered and size validated
 ok 3 - IndexedDB video transfer is chunked, ordered and size validated
   ---
-  duration_ms: 0.208911
+  duration_ms: 0.258283
   type: 'test'
   ...
 # Subtest: web player autoplays, loops, hands off on lifecycle and prevents dual playback
 ok 4 - web player autoplays, loops, hands off on lifecycle and prevents dual playback
   ---
-  duration_ms: 0.202319
+  duration_ms: 0.206926
   type: 'test'
   ...
 1..4
@@ -223,38 +223,38 @@ ok 4 - web player autoplays, loops, hands off on lifecycle and prevents dual pla
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 60.073857
+# duration_ms 61.697384
 
 ===== blueprint-preview-stabilization.test.mjs =====
 TAP version 13
 # Subtest: market pages load the listener guard before Blueprint while other modules retain legacy-safe order
 ok 1 - market pages load the listener guard before Blueprint while other modules retain legacy-safe order
   ---
-  duration_ms: 6.616814
+  duration_ms: 8.528284
   type: 'test'
   ...
 # Subtest: stabilization fixes assistant recovery, secure-vault compatibility and total timeout
 ok 2 - stabilization fixes assistant recovery, secure-vault compatibility and total timeout
   ---
-  duration_ms: 2.15348
+  duration_ms: 3.160014
   type: 'test'
   ...
 # Subtest: journal review belongs to Journal and market freshness comes from canonical source timestamps
 ok 3 - journal review belongs to Journal and market freshness comes from canonical source timestamps
   ---
-  duration_ms: 1.744235
+  duration_ms: 2.545385
   type: 'test'
   ...
 # Subtest: academy principal page has valid section boundary and complete final foundation link
 ok 4 - academy principal page has valid section boundary and complete final foundation link
   ---
-  duration_ms: 1.066075
+  duration_ms: 1.668478
   type: 'test'
   ...
 # Subtest: release workflow validates stabilization without touching production main
 ok 5 - release workflow validates stabilization without touching production main
   ---
-  duration_ms: 0.935291
+  duration_ms: 1.145992
   type: 'test'
   ...
 1..5
@@ -265,38 +265,38 @@ ok 5 - release workflow validates stabilization without touching production main
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 68.965148
+# duration_ms 71.828363
 
 ===== blueprint-preview-v1.test.mjs =====
 TAP version 13
 # Subtest: blueprint runtime defines canonical contracts and lifecycle
 ok 1 - blueprint runtime defines canonical contracts and lifecycle
   ---
-  duration_ms: 5.554586
+  duration_ms: 5.793495
   type: 'test'
   ...
 # Subtest: global mentor is installed in every principal module
 ok 2 - global mentor is installed in every principal module
   ---
-  duration_ms: 3.150155
+  duration_ms: 3.427493
   type: 'test'
   ...
 # Subtest: native secret vault never exposes a secret getter to WebView
 ok 3 - native secret vault never exposes a secret getter to WebView
   ---
-  duration_ms: 1.427602
+  duration_ms: 1.457694
   type: 'test'
   ...
 # Subtest: private Preview release remains isolated from production main
 ok 4 - private Preview release remains isolated from production main
   ---
-  duration_ms: 1.149592
+  duration_ms: 1.121596
   type: 'test'
   ...
 # Subtest: blueprint assets are non-empty and syntax checked by release gate
 ok 5 - blueprint assets are non-empty and syntax checked by release gate
   ---
-  duration_ms: 1.292028
+  duration_ms: 1.227002
   type: 'test'
   ...
 1..5
@@ -307,38 +307,38 @@ ok 5 - blueprint assets are non-empty and syntax checked by release gate
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 66.594647
+# duration_ms 65.343005
 
 ===== bos-mss.test.mjs =====
 TAP version 13
 # Subtest: structure uses the same four-bar pivot length as the reference
 ok 1 - structure uses the same four-bar pivot length as the reference
   ---
-  duration_ms: 1.620723
+  duration_ms: 1.565084
   type: 'test'
   ...
 # Subtest: Drive candle close above confirmed swing creates MSS even without displacement
 ok 2 - Drive candle close above confirmed swing creates MSS even without displacement
   ---
-  duration_ms: 1.395221
+  duration_ms: 1.407259
   type: 'test'
   ...
 # Subtest: first directional close-cross is MSS and the next same-direction close-cross is BOS
 ok 3 - first directional close-cross is MSS and the next same-direction close-cross is BOS
   ---
-  duration_ms: 0.974614
+  duration_ms: 0.952279
   type: 'test'
   ...
 # Subtest: one confirmed swing can emit only one sweep before it is replaced
 ok 4 - one confirmed swing can emit only one sweep before it is replaced
   ---
-  duration_ms: 0.249076
+  duration_ms: 0.252282
   type: 'test'
   ...
 # Subtest: break lifecycle marks a close back inside as failed
 ok 5 - break lifecycle marks a close back inside as failed
   ---
-  duration_ms: 0.240119
+  duration_ms: 0.241932
   type: 'test'
   ...
 1..5
@@ -349,26 +349,26 @@ ok 5 - break lifecycle marks a close back inside as failed
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 69.020313
+# duration_ms 63.166568
 
 ===== bsl-ssl.test.mjs =====
 TAP version 13
 # Subtest: BSL requires four candles on the right, matching the reference swing length
 ok 1 - BSL requires four candles on the right, matching the reference swing length
   ---
-  duration_ms: 2.766178
+  duration_ms: 3.296659
   type: 'test'
   ...
 # Subtest: confirmed BSL is published after four right-side candles
 ok 2 - confirmed BSL is published after four right-side candles
   ---
-  duration_ms: 0.399698
+  duration_ms: 0.377315
   type: 'test'
   ...
 # Subtest: confirmed SSL is published after four right-side candles
 ok 3 - confirmed SSL is published after four right-side candles
   ---
-  duration_ms: 0.388096
+  duration_ms: 0.386442
   type: 'test'
   ...
 1..3
@@ -379,44 +379,44 @@ ok 3 - confirmed SSL is published after four right-side candles
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 64.855123
+# duration_ms 66.28776
 
 ===== concept-engine.integration.test.mjs =====
 TAP version 13
 # Subtest: production thresholds use the validated Mapping reference profile
 ok 1 - production thresholds use the validated Mapping reference profile
   ---
-  duration_ms: 1.395391
+  duration_ms: 1.403502
   type: 'test'
   ...
 # Subtest: FVG converts to IFVG and confirms only the inverse rejection
 ok 2 - FVG converts to IFVG and confirms only the inverse rejection
   ---
-  duration_ms: 0.570989
+  duration_ms: 0.58381
   type: 'test'
   ...
 # Subtest: liquidity and structure confirmations enforce ATR thresholds
 ok 3 - liquidity and structure confirmations enforce ATR thresholds
   ---
-  duration_ms: 1.005753
+  duration_ms: 0.276607
   type: 'test'
   ...
 # Subtest: liquidity hierarchy is nearest-target context, never directional pressure
 ok 4 - liquidity hierarchy is nearest-target context, never directional pressure
   ---
-  duration_ms: 0.472986
+  duration_ms: 1.011771
   type: 'test'
   ...
 # Subtest: single market concept engine returns compatible production fields
 ok 5 - single market concept engine returns compatible production fields
   ---
-  duration_ms: 4.994227
+  duration_ms: 5.136877
   type: 'test'
   ...
 # Subtest: legacy diagnostic timers and Pine zone source are no longer wired to Mapping
 ok 6 - legacy diagnostic timers and Pine zone source are no longer wired to Mapping
   ---
-  duration_ms: 0.429644
+  duration_ms: 0.483433
   type: 'test'
   ...
 1..6
@@ -427,32 +427,32 @@ ok 6 - legacy diagnostic timers and Pine zone source are no longer wired to Mapp
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 77.856901
+# duration_ms 74.812257
 
 ===== dashboard-analyze-separation.test.mjs =====
 TAP version 13
 # Subtest: Dashboard and Analyze use separate render functions
 ok 1 - Dashboard and Analyze use separate render functions
   ---
-  duration_ms: 0.88681
+  duration_ms: 0.927143
   type: 'test'
   ...
 # Subtest: Dashboard contains only the three primary market outputs
 ok 2 - Dashboard contains only the three primary market outputs
   ---
-  duration_ms: 0.280405
+  duration_ms: 0.322322
   type: 'test'
   ...
 # Subtest: Analyze presents performance and advanced context in compact disclosures
 ok 3 - Analyze presents performance and advanced context in compact disclosures
   ---
-  duration_ms: 0.179336
+  duration_ms: 0.182972
   type: 'test'
   ...
 # Subtest: Legacy focus mode no longer hides the rest of Dashboard
 ok 4 - Legacy focus mode no longer hides the rest of Dashboard
   ---
-  duration_ms: 0.175659
+  duration_ms: 0.147986
   type: 'test'
   ...
 1..4
@@ -463,38 +463,38 @@ ok 4 - Legacy focus mode no longer hides the rest of Dashboard
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 58.503436
+# duration_ms 60.299522
 
 ===== deepseek-provider-detection.test.mjs =====
 TAP version 13
 # Subtest: provider detection recognizes Gemini, OpenRouter and DeepSeek key prefixes
 ok 1 - provider detection recognizes Gemini, OpenRouter and DeepSeek key prefixes
   ---
-  duration_ms: 5.176548
+  duration_ms: 5.220294
   type: 'test'
   ...
 # Subtest: plain DeepSeek key is normalized before the original save handler runs
 ok 2 - plain DeepSeek key is normalized before the original save handler runs
   ---
-  duration_ms: 1.419667
+  duration_ms: 1.358228
   type: 'test'
   ...
 # Subtest: native provider repair never exposes secret values to WebView
 ok 3 - native provider repair never exposes secret values to WebView
   ---
-  duration_ms: 0.974685
+  duration_ms: 0.88294
   type: 'test'
   ...
 # Subtest: provider repair bridge and detector are installed in every Preview module
 ok 4 - provider repair bridge and detector are installed in every Preview module
   ---
-  duration_ms: 3.410854
+  duration_ms: 3.048416
   type: 'test'
   ...
 # Subtest: DeepSeek remains explicit about paid fallback usage
 ok 5 - DeepSeek remains explicit about paid fallback usage
   ---
-  duration_ms: 0.960778
+  duration_ms: 0.902467
   type: 'test'
   ...
 1..5
@@ -505,38 +505,38 @@ ok 5 - DeepSeek remains explicit about paid fallback usage
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 65.603389
+# duration_ms 69.000957
 
 ===== dynamic-heatmap-ui-regression.test.mjs =====
 TAP version 13
 # Subtest: browser heatmap scripts remain syntactically valid
 ok 1 - browser heatmap scripts remain syntactically valid
   ---
-  duration_ms: 78.591163
+  duration_ms: 72.299805
   type: 'test'
   ...
 # Subtest: market intel page loads canonical contract before dynamic heatmap consumers
 ok 2 - market intel page loads canonical contract before dynamic heatmap consumers
   ---
-  duration_ms: 0.487392
+  duration_ms: 0.504182
   type: 'test'
   ...
 # Subtest: dynamic heatmap refreshes independently and tracks strength changes
 ok 3 - dynamic heatmap refreshes independently and tracks strength changes
   ---
-  duration_ms: 0.30939
+  duration_ms: 0.306864
   type: 'test'
   ...
 # Subtest: heatmap API uses dynamic lifecycle engine and shared candle cache
 ok 4 - heatmap API uses dynamic lifecycle engine and shared candle cache
   ---
-  duration_ms: 0.245299
+  duration_ms: 0.286105
   type: 'test'
   ...
 # Subtest: shared briefing uses canonical quote and Intel-only BSL SSL while heatmap keeps source candle time
 ok 5 - shared briefing uses canonical quote and Intel-only BSL SSL while heatmap keeps source candle time
   ---
-  duration_ms: 0.483655
+  duration_ms: 0.440313
   type: 'test'
   ...
 1..5
@@ -547,38 +547,38 @@ ok 5 - shared briefing uses canonical quote and Intel-only BSL SSL while heatmap
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 139.023559
+# duration_ms 134.048121
 
 ===== dynamic-heatmap.test.mjs =====
 TAP version 13
 # Subtest: dynamic heatmap always inserts a current-price row
 ok 1 - dynamic heatmap always inserts a current-price row
   ---
-  duration_ms: 3.163771
+  duration_ms: 3.093691
   type: 'test'
   ...
 # Subtest: a support level above current price is not kept as active support after a close break
 ok 2 - a support level above current price is not kept as active support after a close break
   ---
-  duration_ms: 0.468136
+  duration_ms: 0.437237
   type: 'test'
   ...
 # Subtest: polarity retest converts broken support into resistance / BSL context
 ok 3 - polarity retest converts broken support into resistance / BSL context
   ---
-  duration_ms: 0.326191
+  duration_ms: 0.328674
   type: 'test'
   ...
 # Subtest: intensity uses bounded logarithmic normalization so one outlier cannot flatten every row
 ok 4 - intensity uses bounded logarithmic normalization so one outlier cannot flatten every row
   ---
-  duration_ms: 1.525034
+  duration_ms: 1.645655
   type: 'test'
   ...
 # Subtest: summary exposes active pressure and nearest draw from usable zones
 ok 5 - summary exposes active pressure and nearest draw from usable zones
   ---
-  duration_ms: 0.893652
+  duration_ms: 0.62085
   type: 'test'
   ...
 1..5
@@ -589,56 +589,56 @@ ok 5 - summary exposes active pressure and nearest draw from usable zones
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 73.368935
+# duration_ms 69.545888
 
 ===== entry-sl-tp.test.mjs =====
 TAP version 13
 # Subtest: M15 Entry Map uses MSS close, 0.10 ATR stop buffer, 0.35R TP1 and 1.75R TP2
 ok 1 - M15 Entry Map uses MSS close, 0.10 ATR stop buffer, 0.35R TP1 and 1.75R TP2
   ---
-  duration_ms: 2.052411
+  duration_ms: 1.930638
   type: 'test'
   ...
 # Subtest: setup candle itself cannot hit SL or target
 ok 2 - setup candle itself cannot hit SL or target
   ---
-  duration_ms: 0.298829
+  duration_ms: 0.295682
   type: 'test'
   ...
 # Subtest: before TP1, SL has priority when one candle spans SL and targets
 ok 3 - before TP1, SL has priority when one candle spans SL and targets
   ---
-  duration_ms: 0.233597
+  duration_ms: 0.229118
   type: 'test'
   ...
 # Subtest: TP1 moves stop to break-even and a later return closes the runner
 ok 4 - TP1 moves stop to break-even and a later return closes the runner
   ---
-  duration_ms: 0.200706
+  duration_ms: 0.204983
   type: 'test'
   ...
 # Subtest: after TP1, TP2 has priority over break-even on the same candle
 ok 5 - after TP1, TP2 has priority over break-even on the same candle
   ---
-  duration_ms: 0.215052
+  duration_ms: 0.220041
   type: 'test'
   ...
 # Subtest: live setup expires after exactly 36 M15 candles
 ok 6 - live setup expires after exactly 36 M15 candles
   ---
-  duration_ms: 0.205555
+  duration_ms: 0.207318
   type: 'test'
   ...
 # Subtest: UI status reads the candle lifecycle instead of wall-clock expiry
 ok 7 - UI status reads the candle lifecycle instead of wall-clock expiry
   ---
-  duration_ms: 0.457487
+  duration_ms: 0.438299
   type: 'test'
   ...
 # Subtest: closed Entry Map outcome is marked terminal in the UI
 ok 8 - closed Entry Map outcome is marked terminal in the UI
   ---
-  duration_ms: 0.21392
+  duration_ms: 0.207408
   type: 'test'
   ...
 1..8
@@ -649,74 +649,74 @@ ok 8 - closed Entry Map outcome is marked terminal in the UI
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 68.078827
+# duration_ms 65.168078
 
 ===== entry-watch-engine.test.mjs =====
 TAP version 13
 # Subtest: config locks causal multi-timeframe rules
 ok 1 - config locks causal multi-timeframe rules
   ---
-  duration_ms: 2.235334
+  duration_ms: 2.281413
   type: 'test'
   ...
 # Subtest: candidate builder derives availability from confirmed source candle close
 ok 2 - candidate builder derives availability from confirmed source candle close
   ---
-  duration_ms: 1.387888
+  duration_ms: 1.418239
   type: 'test'
   ...
 # Subtest: new level is armed first and cannot enter on its first evaluation
 ok 3 - new level is armed first and cannot enter on its first evaluation
   ---
-  duration_ms: 0.599472
+  duration_ms: 0.617514
   type: 'test'
   ...
 # Subtest: H1 level enters only on a later M5 candle after arming
 ok 4 - H1 level enters only on a later M5 candle after arming
   ---
-  duration_ms: 0.703346
+  duration_ms: 0.742768
   type: 'test'
   ...
 # Subtest: source timeframe close break cancels entry and converts FVG to iFVG
 ok 5 - source timeframe close break cancels entry and converts FVG to iFVG
   ---
-  duration_ms: 1.225995
+  duration_ms: 1.104875
   type: 'test'
   ...
 # Subtest: hidden source break is reconciled while forecast is paused
 ok 6 - hidden source break is reconciled while forecast is paused
   ---
-  duration_ms: 0.505506
+  duration_ms: 0.554115
   type: 'test'
   ...
 # Subtest: pause advances trigger cursor so sweep during inactive forecast cannot enter later
 ok 7 - pause advances trigger cursor so sweep during inactive forecast cannot enter later
   ---
-  duration_ms: 0.950248
+  duration_ms: 0.999578
   type: 'test'
   ...
 # Subtest: level removed from detector becomes terminal instead of orphan entry
 ok 8 - level removed from detector becomes terminal instead of orphan entry
   ---
-  duration_ms: 0.360425
+  duration_ms: 0.657198
   type: 'test'
   ...
 # Subtest: one entry becomes ENTRY_SPENT on the next trigger candle
 ok 9 - one entry becomes ENTRY_SPENT on the next trigger candle
   ---
-  duration_ms: 0.53459
+  duration_ms: 0.64266
   type: 'test'
   ...
 # Subtest: expired converted level cannot stay alive forever
 ok 10 - expired converted level cannot stay alive forever
   ---
-  duration_ms: 0.609561
+  duration_ms: 0.623966
   type: 'test'
   ...
 # Subtest: forecast change closes old level instead of resurrecting it
 ok 11 - forecast change closes old level instead of resurrecting it
   ---
-  duration_ms: 0.777065
+  duration_ms: 0.322633
   type: 'test'
   ...
 1..11
@@ -727,50 +727,50 @@ ok 11 - forecast change closes old level instead of resurrecting it
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 74.551111
+# duration_ms 71.235114
 
 ===== entry-watch-hardening.test.mjs =====
 TAP version 13
 # Subtest: entry timestamp is moved from trigger open to confirmed close
 ok 1 - entry timestamp is moved from trigger open to confirmed close
   ---
-  duration_ms: 2.076297
+  duration_ms: 1.920558
   type: 'test'
   ...
 # Subtest: execution geometry is frozen from entry close and does not depend on later live price
 ok 2 - execution geometry is frozen from entry close and does not depend on later live price
   ---
-  duration_ms: 0.523129
+  duration_ms: 0.475147
   type: 'test'
   ...
 # Subtest: WAIT forecast forcibly disables an already-triggered BUY/SELL state
 ok 3 - WAIT forecast forcibly disables an already-triggered BUY/SELL state
   ---
-  duration_ms: 0.207498
+  duration_ms: 0.195806
   type: 'test'
   ...
 # Subtest: source removed by detector retires the level before entry is accepted
 ok 4 - source removed by detector retires the level before entry is accepted
   ---
-  duration_ms: 0.236062
+  duration_ms: 0.208479
   type: 'test'
   ...
 # Subtest: active detector source remains eligible and creates one locked setup
 ok 5 - active detector source remains eligible and creates one locked setup
   ---
-  duration_ms: 0.327913
+  duration_ms: 0.338182
   type: 'test'
   ...
 # Subtest: H1 bearish forecast uses the mirrored bullish conditions
 ok 6 - H1 bearish forecast uses the mirrored bullish conditions
   ---
-  duration_ms: 0.208339
+  duration_ms: 0.199794
   type: 'test'
   ...
 # Subtest: H1 overextended bearish momentum is rejected symmetrically
 ok 7 - H1 overextended bearish momentum is rejected symmetrically
   ---
-  duration_ms: 0.135043
+  duration_ms: 0.145662
   type: 'test'
   ...
 1..7
@@ -781,44 +781,44 @@ ok 7 - H1 overextended bearish momentum is rejected symmetrically
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 68.173164
+# duration_ms 63.973037
 
 ===== equal-high-low.test.mjs =====
 TAP version 13
 # Subtest: two confirmed swing highs inside 0.03 ATR form one active Equal High
 ok 1 - two confirmed swing highs inside 0.03 ATR form one active Equal High
   ---
-  duration_ms: 2.97601
+  duration_ms: 2.86354
   type: 'test'
   ...
 # Subtest: a second swing outside 0.03 ATR is not classified as Equal High
 ok 2 - a second swing outside 0.03 ATR is not classified as Equal High
   ---
-  duration_ms: 0.463097
+  duration_ms: 0.412521
   type: 'test'
   ...
 # Subtest: Equal High is unavailable before four right-side confirmation candles close
 ok 3 - Equal High is unavailable before four right-side confirmation candles close
   ---
-  duration_ms: 0.321141
+  duration_ms: 0.345986
   type: 'test'
   ...
 # Subtest: wick beyond Equal High consumes the pool and records confirmed reaction
 ok 4 - wick beyond Equal High consumes the pool and records confirmed reaction
   ---
-  duration_ms: 0.498713
+  duration_ms: 0.495676
   type: 'test'
   ...
 # Subtest: three connected equal highs collapse into one renewed pool without duplicates
 ok 5 - three connected equal highs collapse into one renewed pool without duplicates
   ---
-  duration_ms: 0.48595
+  duration_ms: 0.515173
   type: 'test'
   ...
 # Subtest: two confirmed swing lows inside tolerance form one active Equal Low
 ok 6 - two confirmed swing lows inside tolerance form one active Equal Low
   ---
-  duration_ms: 0.438501
+  duration_ms: 0.40678
   type: 'test'
   ...
 1..6
@@ -829,26 +829,26 @@ ok 6 - two confirmed swing lows inside tolerance form one active Equal Low
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 68.908325
+# duration_ms 64.788539
 
 ===== final-integration.test.mjs =====
 TAP version 13
 # Subtest: all critical Mapping modules pass JavaScript syntax validation
 ok 1 - all critical Mapping modules pass JavaScript syntax validation
   ---
-  duration_ms: 356.748575
+  duration_ms: 327.403069
   type: 'test'
   ...
 # Subtest: M15 Entry Map is audit-only and Multi-Timeframe Entry Watch owns execution
 ok 2 - M15 Entry Map is audit-only and Multi-Timeframe Entry Watch owns execution
   ---
-  duration_ms: 0.488865
+  duration_ms: 0.681293
   type: 'test'
   ...
 # Subtest: Mapping UI loads hardened Entry Watch while retaining Entry Map audit sync and WITA labels
 ok 3 - Mapping UI loads hardened Entry Watch while retaining Entry Map audit sync and WITA labels
   ---
-  duration_ms: 0.433892
+  duration_ms: 0.385009
   type: 'test'
   ...
 1..3
@@ -859,62 +859,62 @@ ok 3 - Mapping UI loads hardened Entry Watch while retaining Entry Map audit syn
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 419.27903
+# duration_ms 384.900578
 
 ===== five-issues-regression.test.mjs =====
 TAP version 13
 # Subtest: Mapping UI hardening files remain syntactically valid
 ok 1 - Mapping UI hardening files remain syntactically valid
   ---
-  duration_ms: 55.942192
+  duration_ms: 48.022151
   type: 'test'
   ...
 # Subtest: README retains the private Preview identity and APK route
 ok 2 - README retains the private Preview identity and APK route
   ---
-  duration_ms: 0.316111
+  duration_ms: 0.290423
   type: 'test'
   ...
 # Subtest: Mapping loads the five-issue UI hardening after existing styles and modules
 ok 3 - Mapping loads the five-issue UI hardening after existing styles and modules
   ---
-  duration_ms: 0.208922
+  duration_ms: 0.210634
   type: 'test'
   ...
 # Subtest: dashboard duplicate Preview and price cards are removed without changing data services
 ok 4 - dashboard duplicate Preview and price cards are removed without changing data services
   ---
-  duration_ms: 0.256259
+  duration_ms: 0.20374
   type: 'test'
   ...
 # Subtest: stale M15 never keeps a LIVE analysis badge
 ok 5 - stale M15 never keeps a LIVE analysis badge
   ---
-  duration_ms: 0.246502
+  duration_ms: 0.232915
   type: 'test'
   ...
 # Subtest: historical reliability is a muted closed disclosure rather than a live signal block
 ok 6 - historical reliability is a muted closed disclosure rather than a live signal block
   ---
-  duration_ms: 0.156994
+  duration_ms: 0.154228
   type: 'test'
   ...
 # Subtest: Analyze view uses stable keyed accordions and anchor-based scroll restoration
 ok 7 - Analyze view uses stable keyed accordions and anchor-based scroll restoration
   ---
-  duration_ms: 0.247192
+  duration_ms: 0.291264
   type: 'test'
   ...
 # Subtest: final issue-5 audit separates tracker success from close-direction accuracy
 ok 8 - final issue-5 audit separates tracker success from close-direction accuracy
   ---
-  duration_ms: 0.195425
+  duration_ms: 0.816555
   type: 'test'
   ...
 # Subtest: source version and updater stay on the private Preview channel
 ok 9 - source version and updater stay on the private Preview channel
   ---
-  duration_ms: 0.419816
+  duration_ms: 0.404946
   type: 'test'
   ...
 1..9
@@ -925,38 +925,38 @@ ok 9 - source version and updater stay on the private Preview channel
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 125.18974
+# duration_ms 111.385071
 
 ===== fvg-ob.test.mjs =====
 TAP version 13
 # Subtest: small valid three-candle FVG is kept without a 0.7 ATR width filter
 ok 1 - small valid three-candle FVG is kept without a 0.7 ATR width filter
   ---
-  duration_ms: 1.590677
+  duration_ms: 1.569723
   type: 'test'
   ...
 # Subtest: FVG is removed on a full wick fill and is not converted to IFVG
 ok 2 - FVG is removed on a full wick fill and is not converted to IFVG
   ---
-  duration_ms: 0.396853
+  duration_ms: 0.399706
   type: 'test'
   ...
 # Subtest: Order Block uses candle body and is available on the break candle without HTF or FVG gating
 ok 3 - Order Block uses candle body and is available on the break candle without HTF or FVG gating
   ---
-  duration_ms: 0.604461
+  duration_ms: 0.602475
   type: 'test'
   ...
 # Subtest: invalid Order Block is deleted instead of converted into a breaker
 ok 4 - invalid Order Block is deleted instead of converted into a breaker
   ---
-  duration_ms: 0.352159
+  duration_ms: 0.350355
   type: 'test'
   ...
 # Subtest: OB imbalance metadata never reads candles after the structure break
 ok 5 - OB imbalance metadata never reads candles after the structure break
   ---
-  duration_ms: 0.162905
+  duration_ms: 0.163435
   type: 'test'
   ...
 1..5
@@ -967,14 +967,14 @@ ok 5 - OB imbalance metadata never reads candles after the structure break
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 68.61971
+# duration_ms 65.194598
 
 ===== honesty-audit-runtime.test.mjs =====
 TAP version 13
 # Subtest: runtime replaces forecast percentage with an honest score label
 ok 1 - runtime replaces forecast percentage with an honest score label
   ---
-  duration_ms: 7.820427
+  duration_ms: 7.784625
   type: 'test'
   ...
 # Amy FX honesty anomaly [
@@ -1011,7 +1011,7 @@ ok 1 - runtime replaces forecast percentage with an honest score label
 #   sourceMode: 'LIVE_RUNTIME',
 #   historicalReplay: false,
 #   reason: 'startup',
-#   capturedAt: '2026-07-28T09:08:25.770Z',
+#   capturedAt: '2026-07-28T09:11:54.149Z',
 #   timeframe: 'M15',
 #   sourceCandleTime: '2020-01-01T00:15:00.000Z',
 #   sourceCandles: { M15: '2020-01-01T00:15:00.000Z' },
@@ -1087,7 +1087,7 @@ ok 1 - runtime replaces forecast percentage with an honest score label
 #   sourceMode: 'LIVE_RUNTIME',
 #   historicalReplay: false,
 #   reason: 'manual',
-#   capturedAt: '2026-07-28T09:08:25.771Z',
+#   capturedAt: '2026-07-28T09:11:54.150Z',
 #   timeframe: 'M15',
 #   sourceCandleTime: '2020-01-01T00:15:00.000Z',
 #   sourceCandles: { M15: '2020-01-01T00:15:00.000Z' },
@@ -1132,7 +1132,7 @@ ok 1 - runtime replaces forecast percentage with an honest score label
 # Subtest: runtime records stale-data and inactive-forecast setup contradictions
 ok 2 - runtime records stale-data and inactive-forecast setup contradictions
   ---
-  duration_ms: 4.014874
+  duration_ms: 3.868638
   type: 'test'
   ...
 1..2
@@ -1143,26 +1143,26 @@ ok 2 - runtime records stale-data and inactive-forecast setup contradictions
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 73.255065
+# duration_ms 71.261964
 
 ===== honesty-validated-series.test.mjs =====
 TAP version 13
 # Subtest: validated M15 series is prefix-invariant and does not read future H4 candles
 ok 1 - validated M15 series is prefix-invariant and does not read future H4 candles
   ---
-  duration_ms: 36.043055
+  duration_ms: 34.175241
   type: 'test'
   ...
 # Subtest: forecast lifecycle never points beyond the decision candle
 ok 2 - forecast lifecycle never points beyond the decision candle
   ---
-  duration_ms: 11.001817
+  duration_ms: 9.633033
   type: 'test'
   ...
 # Subtest: display confidence explicitly states that it is not live win probability
 ok 3 - display confidence explicitly states that it is not live win probability
   ---
-  duration_ms: 10.797088
+  duration_ms: 11.385245
   type: 'test'
   ...
 1..3
@@ -1173,80 +1173,80 @@ ok 3 - display confidence explicitly states that it is not live win probability
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 130.030036
+# duration_ms 127.142633
 
 ===== ict-core-regression.test.mjs =====
 TAP version 13
 # Subtest: liquidity yang pernah disapu tidak aktif kembali setelah harga berbalik
 ok 1 - liquidity yang pernah disapu tidak aktif kembali setelah harga berbalik
   ---
-  duration_ms: 1.59738
+  duration_ms: 1.592934
   type: 'test'
   ...
 # Subtest: break historis memakai ATR lokal sebelum candle breakout
 ok 2 - break historis memakai ATR lokal sebelum candle breakout
   ---
-  duration_ms: 1.119575
+  duration_ms: 1.124198
   type: 'test'
   ...
 # Subtest: sweep wajib menutup kembali di dalam level
 ok 3 - sweep wajib menutup kembali di dalam level
   ---
-  duration_ms: 0.168155
+  duration_ms: 0.167272
   type: 'test'
   ...
 # Subtest: setup RR di bawah 1:2 ditolak sebagai konflik fatal
 ok 4 - setup RR di bawah 1:2 ditolak sebagai konflik fatal
   ---
-  duration_ms: 0.806579
+  duration_ms: 0.7822
   type: 'test'
   ...
 # Subtest: setup RR tepat 1:2 tidak terkena konflik RR
 ok 5 - setup RR tepat 1:2 tidak terkena konflik RR
   ---
-  duration_ms: 0.238717
+  duration_ms: 0.244227
   type: 'test'
   ...
 # Subtest: M15 precision menghasilkan TP1 1R dan runner TP2 minimal 2R
 ok 6 - M15 precision menghasilkan TP1 1R dan runner TP2 minimal 2R
   ---
-  duration_ms: 0.72674
+  duration_ms: 0.720104
   type: 'test'
   ...
 # Subtest: timeframe selain M15 tetap menjadi konteks dan tidak actionable
 ok 7 - timeframe selain M15 tetap menjadi konteks dan tidak actionable
   ---
-  duration_ms: 0.250188
+  duration_ms: 0.250888
   type: 'test'
   ...
 # Subtest: struktur HTF lebih dominan daripada lokasi discount/premium
 ok 8 - struktur HTF lebih dominan daripada lokasi discount/premium
   ---
-  duration_ms: 0.190877
+  duration_ms: 0.176559
   type: 'test'
   ...
 # Subtest: Silver Bullet aktif pada pukul 10:30 New York
 ok 9 - Silver Bullet aktif pada pukul 10:30 New York
   ---
-  duration_ms: 15.146628
+  duration_ms: 15.009411
   type: 'test'
   ...
 # Subtest: FVG historis memakai ATR lokal saat imbalance terbentuk
 ok 10 - FVG historis memakai ATR lokal saat imbalance terbentuk
   ---
-  duration_ms: 0.877112
+  duration_ms: 0.842733
   type: 'test'
   ...
 # Subtest: Order Block ditolak jika tidak berasal dari valid break dengan displacement
 ok 11 - Order Block ditolak jika tidak berasal dari valid break dengan displacement
   ---
-  duration_ms: 0.366356
+  duration_ms: 0.36369
   type: 'test'
   ...
 # Subtest: BOS atau displacement tunggal hanya menjadi konteks, bukan trigger entry
 ok 12 - BOS atau displacement tunggal hanya menjadi konteks, bukan trigger entry
   ---
-  duration_ms: 0.821829
+  duration_ms: 0.179395
   type: 'test'
   ...
 1..12
@@ -1257,44 +1257,44 @@ ok 12 - BOS atau displacement tunggal hanya menjadi konteks, bukan trigger entry
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 100.866149
+# duration_ms 96.799434
 
 ===== journal-ai-rotation-v158.test.mjs =====
 TAP version 13
 # Subtest: journal runtime files remain syntactically valid and load in order
 ok 1 - journal runtime files remain syntactically valid and load in order
   ---
-  duration_ms: 76.842396
+  duration_ms: 73.472266
   type: 'test'
   ...
 # Subtest: journal history bridge persists the IndexedDB state used by the core app
 ok 2 - journal history bridge persists the IndexedDB state used by the core app
   ---
-  duration_ms: 0.289361
+  duration_ms: 0.277447
   type: 'test'
   ...
 # Subtest: journal calendar displays green wins and red losses with signed amounts
 ok 3 - journal calendar displays green wins and red losses with signed amounts
   ---
-  duration_ms: 0.361096
+  duration_ms: 0.324466
   type: 'test'
   ...
 # Subtest: assistant rotates free Gemini and OpenRouter keys with bounded retries
 ok 4 - assistant rotates free Gemini and OpenRouter keys with bounded retries
   ---
-  duration_ms: 0.968463
+  duration_ms: 0.923224
   type: 'test'
   ...
 # Subtest: journal runtime cannot create the global MutationObserver feedback loop that freezes navigation
 ok 5 - journal runtime cannot create the global MutationObserver feedback loop that freezes navigation
   ---
-  duration_ms: 0.306564
+  duration_ms: 0.317593
   type: 'test'
   ...
 # Subtest: Amy FX personal source identity is Preview 2.0.0 code 940173
 ok 6 - Amy FX personal source identity is Preview 2.0.0 code 940173
   ---
-  duration_ms: 0.220182
+  duration_ms: 0.226143
   type: 'test'
   ...
 1..6
@@ -1305,20 +1305,20 @@ ok 6 - Amy FX personal source identity is Preview 2.0.0 code 940173
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 139.366744
+# duration_ms 132.063718
 
 ===== journal-metadata-storage-regression.test.mjs =====
 TAP version 13
 # Subtest: library and journal metadata use IndexedDB instead of quota-limited localStorage
 ok 1 - library and journal metadata use IndexedDB instead of quota-limited localStorage
   ---
-  duration_ms: 1.038855
+  duration_ms: 0.993335
   type: 'test'
   ...
 # Subtest: restore waits for metadata persistence and surfaces failures
 ok 2 - restore waits for metadata persistence and surfaces failures
   ---
-  duration_ms: 0.311433
+  duration_ms: 0.304348
   type: 'test'
   ...
 1..2
@@ -1329,20 +1329,20 @@ ok 2 - restore waits for metadata persistence and surfaces failures
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 61.768307
+# duration_ms 57.581218
 
 ===== journal-upgrade-regression.test.mjs =====
 TAP version 13
 # Subtest: journal upgrade exposes stable statistics and filtering helpers
 ok 1 - journal upgrade exposes stable statistics and filtering helpers
   ---
-  duration_ms: 4.702091
+  duration_ms: 4.397049
   type: 'test'
   ...
 # Subtest: journal upgrade keeps reliability, draft, export, and trade-plan features
 ok 2 - journal upgrade keeps reliability, draft, export, and trade-plan features
   ---
-  duration_ms: 0.413264
+  duration_ms: 0.401459
   type: 'test'
   ...
 1..2
@@ -1353,44 +1353,44 @@ ok 2 - journal upgrade keeps reliability, draft, export, and trade-plan features
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 63.504867
+# duration_ms 59.782587
 
 ===== learning-live-engine.test.mjs =====
 TAP version 13
 # Subtest: topic normalization is deterministic and bounded
 ok 1 - topic normalization is deterministic and bounded
   ---
-  duration_ms: 2.036321
+  duration_ms: 1.907341
   type: 'test'
   ...
 # Subtest: specific topics route to different rule groups
 ok 2 - specific topics route to different rule groups
   ---
-  duration_ms: 1.744155
+  duration_ms: 1.768431
   type: 'test'
   ...
 # Subtest: specific concepts win over generic words inside the same slug
 ok 3 - specific concepts win over generic words inside the same slug
   ---
-  duration_ms: 0.206527
+  duration_ms: 0.208981
   type: 'test'
   ...
 # Subtest: same basics category produces topic-specific messages
 ok 4 - same basics category produces topic-specific messages
   ---
-  duration_ms: 16.472641
+  duration_ms: 16.218558
   type: 'test'
   ...
 # Subtest: structural messages use calculated FVG and sweep context
 ok 5 - structural messages use calculated FVG and sweep context
   ---
-  duration_ms: 0.747559
+  duration_ms: 0.719293
   type: 'test'
   ...
 # Subtest: payload remains rule-based educational context, not a signal
 ok 6 - payload remains rule-based educational context, not a signal
   ---
-  duration_ms: 1.393347
+  duration_ms: 1.286362
   type: 'test'
   ...
 1..6
@@ -1401,50 +1401,50 @@ ok 6 - payload remains rule-based educational context, not a signal
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 85.171637
+# duration_ms 79.809876
 
 ===== liquidity-draw-context.test.mjs =====
 TAP version 13
 # Subtest: Liquidity Draw config remains locked to threshold 97 and context-only
 ok 1 - Liquidity Draw config remains locked to threshold 97 and context-only
   ---
-  duration_ms: 1.367339
+  duration_ms: 1.31207
   type: 'test'
   ...
 # Subtest: unsupported timeframe abstains instead of forcing a destination
 ok 2 - unsupported timeframe abstains instead of forcing a destination
   ---
-  duration_ms: 1.739206
+  duration_ms: 1.659668
   type: 'test'
   ...
 # Subtest: insufficient data abstains
 ok 3 - insufficient data abstains
   ---
-  duration_ms: 0.264645
+  duration_ms: 0.21983
   type: 'test'
   ...
 # Subtest: neutral features stay below threshold
 ok 4 - neutral features stay below threshold
   ---
-  duration_ms: 0.266259
+  duration_ms: 0.253564
   type: 'test'
   ...
 # Subtest: strong upper context reaches fixed 97 threshold
 ok 5 - strong upper context reaches fixed 97 threshold
   ---
-  duration_ms: 0.227686
+  duration_ms: 0.266107
   type: 'test'
   ...
 # Subtest: rejection guard blocks a high-confidence destination
 ok 6 - rejection guard blocks a high-confidence destination
   ---
-  duration_ms: 0.210944
+  duration_ms: 0.169837
   type: 'test'
   ...
 # Subtest: Wilder ATR produces a finite value after 14 candles
 ok 7 - Wilder ATR produces a finite value after 14 candles
   ---
-  duration_ms: 0.361597
+  duration_ms: 0.361455
   type: 'test'
   ...
 1..7
@@ -1455,14 +1455,14 @@ ok 7 - Wilder ATR produces a finite value after 14 candles
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 82.777828
+# duration_ms 75.992439
 
 ===== m5-context-filter-experiment.test.mjs =====
 TAP version 13
 # Subtest: M5 context-filter audit records the 18:00–04:00 WITA candidate honestly
 ok 1 - M5 context-filter audit records the 18:00–04:00 WITA candidate honestly
   ---
-  duration_ms: 1.086704
+  duration_ms: 1.043598
   type: 'test'
   ...
 1..1
@@ -1473,14 +1473,14 @@ ok 1 - M5 context-filter audit records the 18:00–04:00 WITA candidate honestly
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 60.451181
+# duration_ms 56.230516
 
 ===== m5-min10-duration-2025.test.mjs =====
 TAP version 13
 # Subtest: 2025 min-10 point experiment records duration sensitivity honestly
 ok 1 - 2025 min-10 point experiment records duration sensitivity honestly
   ---
-  duration_ms: 1.186581
+  duration_ms: 1.177248
   type: 'test'
   ...
 1..1
@@ -1491,14 +1491,14 @@ ok 1 - 2025 min-10 point experiment records duration sensitivity honestly
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 58.97472
+# duration_ms 56.590279
 
 ===== m5-session-2025-validation.test.mjs =====
 TAP version 13
 # Subtest: 2025 validates the locked 18:00–04:00 WITA M5 session model
 ok 1 - 2025 validates the locked 18:00–04:00 WITA M5 session model
   ---
-  duration_ms: 1.220114
+  duration_ms: 1.157862
   type: 'test'
   ...
 1..1
@@ -1509,32 +1509,32 @@ ok 1 - 2025 validates the locked 18:00–04:00 WITA M5 session model
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 58.753494
+# duration_ms 55.960472
 
 ===== mapping-candle-stale-ttl.test.mjs =====
 TAP version 13
 # Subtest: isCandleStale returns false for valid cache within TTL thresholds
 ok 1 - isCandleStale returns false for valid cache within TTL thresholds
   ---
-  duration_ms: 1.006343
+  duration_ms: 0.945865
   type: 'test'
   ...
 # Subtest: isCandleStale returns true when cache exceeds TTL limits
 ok 2 - isCandleStale returns true when cache exceeds TTL limits
   ---
-  duration_ms: 0.237535
+  duration_ms: 0.220061
   type: 'test'
   ...
 # Subtest: entryMapDisplayState suppresses signals and returns DATA USANG when cache is stale or API fails
 ok 3 - entryMapDisplayState suppresses signals and returns DATA USANG when cache is stale or API fails
   ---
-  duration_ms: 0.347921
+  duration_ms: 0.343531
   type: 'test'
   ...
 # Subtest: entryMapDisplayState returns DATA USANG when no setup is available and stale flag is set
 ok 4 - entryMapDisplayState returns DATA USANG when no setup is available and stale flag is set
   ---
-  duration_ms: 0.151043
+  duration_ms: 0.156723
   type: 'test'
   ...
 1..4
@@ -1545,26 +1545,26 @@ ok 4 - entryMapDisplayState returns DATA USANG when no setup is available and st
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 105.453138
+# duration_ms 105.262202
 
 ===== mapping-claim-accuracy.test.mjs =====
 TAP version 13
 # Subtest: claim registry exposes the audited 2022-2025 app metrics
 ok 1 - claim registry exposes the audited 2022-2025 app metrics
   ---
-  duration_ms: 0.856613
+  duration_ms: 0.82484
   type: 'test'
   ...
 # Subtest: every metric states its own claim and authority
 ok 2 - every metric states its own claim and authority
   ---
-  duration_ms: 0.35248
+  duration_ms: 0.327882
   type: 'test'
   ...
 # Subtest: locked Pine references are preserved without retuning
 ok 3 - locked Pine references are preserved without retuning
   ---
-  duration_ms: 0.182482
+  duration_ms: 0.185506
   type: 'test'
   ...
 1..3
@@ -1575,199 +1575,1528 @@ ok 3 - locked Pine references are preserved without retuning
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 60.818399
+# duration_ms 58.848693
 
 ===== mapping-clock-zone-alignment.test.mjs =====
 TAP version 13
 # Subtest: new mapping modules are syntactically valid and loaded by the page
 ok 1 - new mapping modules are syntactically valid and loaded by the page
   ---
-  duration_ms: 79.875781
+  duration_ms: 68.393994
   type: 'test'
   ...
-# Subtest: WIB clock paints dashboard and session from one timestamp without observer loop
-not ok 2 - WIB clock paints dashboard and session from one timestamp without observer loop
+# Subtest: WITA clock paints dashboard and session from one timestamp without observer loop
+ok 2 - WITA clock paints dashboard and session from one timestamp without observer loop
   ---
-  duration_ms: 3.100105
+  duration_ms: 0.319326
   type: 'test'
-  location: '/home/runner/work/Amy-fx/Amy-fx/tests/mapping-clock-zone-alignment.test.mjs:34:1'
-  failureType: 'testCodeFailure'
-  error: |-
-    The input did not match the regular expression /const time = wibClockText\(timestamp\)/. Input:
-    
-    "import { state } from './main.js';\n" +
-      '\n' +
-      "const WITA_FORMATTER = new Intl.DateTimeFormat('en-GB', {\n" +
-      "  timeZone: 'Asia/Makassar',\n" +
-      "  hour: '2-digit',\n" +
-      "  minute: '2-digit',\n" +
-      "  second: '2-digit',\n" +
-      '  hour12: false\n' +
-      '});\n' +
-      '\n' +
-      'let timer = 0;\n' +
-      'let observer = null;\n' +
-      "let lastSecond = '';\n" +
-      '\n' +
-      'export function witaClockText(timestamp = Date.now()) {\n' +
-      '  return WITA_FORMATTER.format(new Date(timestamp));\n' +
-      '}\n' +
-      '\n' +
-      'function setText(element, text) {\n' +
-      '  if (element && element.textContent !== text) element.textContent = text;\n' +
-      '}\n' +
-      '\n' +
-      'function paint(timestamp = Date.now(), force = false) {\n' +
-      '  const time = witaClockText(timestamp);\n' +
-      '  if (!force && time === lastSecond) return;\n' +
-      '  lastSecond = time;\n' +
-      '\n' +
-      "  const top = document.getElementById('top-wita');\n" +
-      '  if (top) {\n' +
-      "    const connection = state.conn === 'Connected' ? '● Live Price' : `○ ${state.conn}`;\n" +
-      '    setText(top, `${connection} • WITA ${time}`);\n' +
-      '  }\n' +
-      '\n' +
-      "  setText(document.getElementById('kz-wita'), `WITA ${time}`);\n" +
-      "  document.querySelectorAll('[data-wita-clock]').forEach(element => {\n" +
-      '    setText(element, `WITA ${time}`);\n' +
-      '  });\n' +
-      '}\n' +
-      '\n' +
-      'function boot() {\n' +
-      '  paint(Date.now(), true);\n' +
-      '  clearInterval(timer);\n' +
-      '  timer = setInterval(() => paint(Date.now()), 250);\n' +
-      '\n' +
-      "  const app = document.getElementById('app');\n" +
-      '  if (app) {\n' +
-      '    observer?.disconnect();\n' +
-      '    observer = new MutationObserver(() => paint(Date.now(), true));\n' +
-      '    observer.observe(app, { childList: true, subtree: true });\n' +
-      '  }\n' +
-      '\n' +
-      "  document.addEventListener('visibilitychange', () => {\n" +
-      '    if (!document.hidden) paint(Date.now(), true);\n' +
-      '  });\n' +
-      '}\n' +
-      '\n' +
-      'window.AmyWibClock = {\n' +
-      '  now: witaClockText,\n' +
-      '  refresh: () => paint(Date.now(), true)\n' +
-      '};\n' +
-      '\n' +
-      "if (document.readyState === 'loading') {\n" +
-      "  document.addEventListener('DOMContentLoaded', boot, { once: true });\n" +
-      '} else {\n' +
-      '  boot();\n' +
-      '}\n'
-    
-  code: 'ERR_ASSERTION'
-  name: 'AssertionError'
-  expected:
-  actual: |-
-    import { state } from './main.js';
-    
-    const WITA_FORMATTER = new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'Asia/Makassar',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    });
-    
-    let timer = 0;
-    let observer = null;
-    let lastSecond = '';
-    
-    export function witaClockText(timestamp = Date.now()) {
-      return WITA_FORMATTER.format(new Date(timestamp));
-    }
-    
-    function setText(element, text) {
-      if (element && element.textContent !== text) element.textContent = text;
-    }
-    
-    function paint(timestamp = Date.now(), force = false) {
-      const time = witaClockText(timestamp);
-      if (!force && time === lastSecond) return;
-      lastSecond = time;
-    
-      const top = document.getElementById('top-wita');
-      if (top) {
-        const connection = state.conn === 'Connected' ? '● Live Price' : `○ ${state.conn}`;
-        setText(top, `${connection} • WITA ${time}`);
-      }
-    
-      setText(document.getElementById('kz-wita'), `WITA ${time}`);
-      document.querySelectorAll('[data-wita-clock]').forEach(element => {
-        setText(element, `WITA ${time}`);
-      });
-    }
-    
-    function boot() {
-      paint(Date.now(), true);
-      clearInterval(timer);
-      timer = setInterval(() => paint(Date.now()), 250);
-    
-      const app = document.getElementById('app');
-      if (app) {
-        observer?.disconnect();
-        observer = new MutationObserver(() => paint(Date.now(), true));
-        observer.observe(app, { childList: true, subtree: true });
-      }
-    
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) paint(Date.now(), true);
-      });
-    }
-    
-    window.AmyWibClock = {
-      now: witaClockText,
-      refresh: () => paint(Date.now(), true)
-    };
-    
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', boot, { once: true });
-    } else {
-      boot();
-    }
-    
-  operator: 'match'
-  stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/mapping-clock-zone-alignment.test.mjs:36:10)
-    Test.runInAsyncScope (node:async_hooks:214:14)
-    Test.run (node:internal/test_runner/test:1047:25)
-    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
-    Test.postRun (node:internal/test_runner/test:1173:19)
-    Test.run (node:internal/test_runner/test:1101:12)
-    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
   ...
 # Subtest: Pine-aligned FVG remains visible while price has not retested it
 ok 3 - Pine-aligned FVG remains visible while price has not retested it
   ---
-  duration_ms: 0.857484
+  duration_ms: 0.850829
   type: 'test'
   ...
 # Subtest: Order Block display adapter uses validated body zone and keeps it available above price
 ok 4 - Order Block display adapter uses validated body zone and keeps it available above price
   ---
-  duration_ms: 0.421379
+  duration_ms: 0.329605
   type: 'test'
   ...
 # Subtest: zone UI uses nearest active zones instead of requiring live price inside zone
 ok 5 - zone UI uses nearest active zones instead of requiring live price inside zone
   ---
-  duration_ms: 0.285324
+  duration_ms: 0.325808
   type: 'test'
   ...
 1..5
 # tests 5
 # suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 131.783726
+
+===== mapping-command-strip-integrity.test.mjs =====
+TAP version 13
+# Subtest: command strip hanya memilih BSL Intel di atas harga dan SSL Intel di bawah harga
+ok 1 - command strip hanya memilih BSL Intel di atas harga dan SSL Intel di bawah harga
+  ---
+  duration_ms: 5.600816
+  type: 'test'
+  ...
+# Subtest: command strip menolak level touched atau swept dan memberi label STRUCTURAL pada Intel yang stale
+ok 2 - command strip menolak level touched atau swept dan memberi label STRUCTURAL pada Intel yang stale
+  ---
+  duration_ms: 1.790874
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 61.658409
+
+===== mapping-context-safety.test.mjs =====
+TAP version 13
+# Subtest: Market Shift stays advisory and cannot become an automatic hard gate
+ok 1 - Market Shift stays advisory and cannot become an automatic hard gate
+  ---
+  duration_ms: 0.887277
+  type: 'test'
+  ...
+# Subtest: Strategy Router remains contextual and cannot create or replace a primary setup
+ok 2 - Strategy Router remains contextual and cannot create or replace a primary setup
+  ---
+  duration_ms: 0.261989
+  type: 'test'
+  ...
+# Subtest: Entry Map remains audit-only while hardened Entry Watch owns the primary setup
+ok 3 - Entry Map remains audit-only while hardened Entry Watch owns the primary setup
+  ---
+  duration_ms: 0.19791
+  type: 'test'
+  ...
+# Subtest: Validated Direction Forecast conflict protection remains active
+ok 4 - Validated Direction Forecast conflict protection remains active
+  ---
+  duration_ms: 0.206566
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
 # pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 59.419189
+
+===== mapping-live-consistency-regression.test.mjs =====
+TAP version 13
+# Subtest: mapping page loads live consistency runtime after core mapping modules
+ok 1 - mapping page loads live consistency runtime after core mapping modules
+  ---
+  duration_ms: 5.674173
+  type: 'test'
+  ...
+# Subtest: live consistency runtime is valid JavaScript without a DOM observer loop
+ok 2 - live consistency runtime is valid JavaScript without a DOM observer loop
+  ---
+  duration_ms: 23.155799
+  type: 'test'
+  ...
+# Subtest: fresh label requires same-timeframe canonical Mapping freshness
+ok 3 - fresh label requires same-timeframe canonical Mapping freshness
+  ---
+  duration_ms: 2.560881
+  type: 'test'
+  ...
+# Subtest: connected live price never claims Mapping FRESH while canonical Mapping is stale or expired
+ok 4 - connected live price never claims Mapping FRESH while canonical Mapping is stale or expired
+  ---
+  duration_ms: 0.860506
+  type: 'test'
+  ...
+# Subtest: expired Mapping triggers guarded candle analysis refresh so structure can repopulate
+ok 5 - expired Mapping triggers guarded candle analysis refresh so structure can repopulate
+  ---
+  duration_ms: 0.781058
+  type: 'test'
+  ...
+# Subtest: Mapping user-facing clocks are normalized to WITA
+ok 6 - Mapping user-facing clocks are normalized to WITA
+  ---
+  duration_ms: 0.740422
+  type: 'test'
+  ...
+# Subtest: command strip exposes BSL and SSL only from canonical Intel Liquidity with explicit freshness
+ok 7 - command strip exposes BSL and SSL only from canonical Intel Liquidity with explicit freshness
+  ---
+  duration_ms: 1.449036
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 88.76811
+
+===== mapping-logic-v2.test.mjs =====
+TAP version 13
+# Subtest: small body-ratio candle is not accepted as displacement without ATR size
+ok 1 - small body-ratio candle is not accepted as displacement without ATR size
+  ---
+  duration_ms: 1.829185
+  type: 'test'
+  ...
+# Subtest: valid break and later sweep remain separate states
+ok 2 - valid break and later sweep remain separate states
+  ---
+  duration_ms: 0.567068
+  type: 'test'
+  ...
+# Subtest: order block status is evaluated only after confirmation candle
+ok 3 - order block status is evaluated only after confirmation candle
+  ---
+  duration_ms: 0.43373
+  type: 'test'
+  ...
+# Subtest: Sweep MSS FVG requires FVG after MSS
+ok 4 - Sweep MSS FVG requires FVG after MSS
+  ---
+  duration_ms: 0.646547
+  type: 'test'
+  ...
+# Subtest: outlook no longer changes when active result timeframe changes
+ok 5 - outlook no longer changes when active result timeframe changes
+  ---
+  duration_ms: 18.802232
+  type: 'test'
+  ...
+# Subtest: daily target excludes M15 liquidity and uses horizon timeframe
+ok 6 - daily target excludes M15 liquidity and uses horizon timeframe
+  ---
+  duration_ms: 0.92649
+  type: 'test'
+  ...
+# Subtest: prediction invalidation requires candle close, not wick touch
+ok 7 - prediction invalidation requires candle close, not wick touch
+  ---
+  duration_ms: 0.54635
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 96.255678
+
+===== mapping-market-integrity-regression.test.mjs =====
+TAP version 13
+# Subtest: SWEEP ONLY tidak dilabeli sebagai BOS terkonfirmasi
+ok 1 - SWEEP ONLY tidak dilabeli sebagai BOS terkonfirmasi
+  ---
+  duration_ms: 1.031386
+  type: 'test'
+  ...
+# Subtest: hanya setup M15 precision yang valid dan RR minimal 2 dihitung aktif
+ok 2 - hanya setup M15 precision yang valid dan RR minimal 2 dihitung aktif
+  ---
+  duration_ms: 0.602095
+  type: 'test'
+  ...
+# Subtest: BSL yang sudah dilewati live dikeluarkan dan target berikutnya dipilih
+ok 3 - BSL yang sudah dilewati live dikeluarkan dan target berikutnya dipilih
+  ---
+  duration_ms: 0.525811
+  type: 'test'
+  ...
+# Subtest: bias lokal dipisahkan dari bias HTF dan composite
+ok 4 - bias lokal dipisahkan dari bias HTF dan composite
+  ---
+  duration_ms: 0.742937
+  type: 'test'
+  ...
+# Subtest: feed candle membuang duplikat, OHLC rusak, dan rangkaian harga beku
+ok 5 - feed candle membuang duplikat, OHLC rusak, dan rangkaian harga beku
+  ---
+  duration_ms: 15.201719
+  type: 'test'
+  ...
+# Subtest: status live OB dan arahan discount bearish tidak menyuruh mengejar SELL
+ok 6 - status live OB dan arahan discount bearish tidak menyuruh mengejar SELL
+  ---
+  duration_ms: 0.23578
+  type: 'test'
+  ...
+# Subtest: runtime dan halaman Mapping memuat lapisan integrity tanpa MutationObserver
+ok 7 - runtime dan halaman Mapping memuat lapisan integrity tanpa MutationObserver
+  ---
+  duration_ms: 0.577408
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 78.278597
+
+===== mapping-navigation-regression.test.mjs =====
+TAP version 13
+# Subtest: Mapping navigation does not install a self-triggering Settings observer
+ok 1 - Mapping navigation does not install a self-triggering Settings observer
+  ---
+  duration_ms: 0.855177
+  type: 'test'
+  ...
+# Subtest: Mapping keeps direct handlers for every bottom navigation button
+ok 2 - Mapping keeps direct handlers for every bottom navigation button
+  ---
+  duration_ms: 0.210734
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 61.997774
+
+===== mapping-news-background-repair.test.mjs =====
+TAP version 13
+# Subtest: Mapping repairs freshness from the latest actually closed candle
+ok 1 - Mapping repairs freshness from the latest actually closed candle
+  ---
+  duration_ms: 26.14604
+  type: 'test'
+  ...
+# Subtest: Paused or terminal Entry Watch cannot keep an old BUY or SELL card visible
+ok 2 - Paused or terminal Entry Watch cannot keep an old BUY or SELL card visible
+  ---
+  duration_ms: 0.220451
+  type: 'test'
+  ...
+# Subtest: Android news notifications use a durable high-priority system channel
+ok 3 - Android news notifications use a durable high-priority system channel
+  ---
+  duration_ms: 0.447807
+  type: 'test'
+  ...
+# Subtest: Supabase sends system notification plus data and scheduler invokes it
+ok 4 - Supabase sends system notification plus data and scheduler invokes it
+  ---
+  duration_ms: 0.31087
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 84.253784
+
+===== mapping-structure-hierarchy.test.mjs =====
+TAP version 13
+# Subtest: first opposite valid break is internal transition and does not flip confirmed trend
+ok 1 - first opposite valid break is internal transition and does not flip confirmed trend
+  ---
+  duration_ms: 1.866164
+  type: 'test'
+  ...
+# Subtest: second higher opposite break confirms reversal and flips protected trend
+ok 2 - second higher opposite break confirms reversal and flips protected trend
+  ---
+  duration_ms: 0.392743
+  type: 'test'
+  ...
+# Subtest: ordinary setup is blocked while CHOCH is still internal
+ok 3 - ordinary setup is blocked while CHOCH is still internal
+  ---
+  duration_ms: 0.453486
+  type: 'test'
+  ...
+# Subtest: complete Sweep MSS FVG model may continue through internal MSS validation
+ok 4 - complete Sweep MSS FVG model may continue through internal MSS validation
+  ---
+  duration_ms: 0.164377
+  type: 'test'
+  ...
+# Subtest: live price returning through break level blocks every setup as AT RISK
+ok 5 - live price returning through break level blocks every setup as AT RISK
+  ---
+  duration_ms: 0.31075
+  type: 'test'
+  ...
+# Subtest: mapping UI exposes internal trend, confirmed trend, next level, and AT RISK status
+ok 6 - mapping UI exposes internal trend, confirmed trend, next level, and AT RISK status
+  ---
+  duration_ms: 0.495465
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 65.312401
+
+===== mapping-webview-startup.test.mjs =====
+TAP version 13
+# Subtest: Mapping provides an ICU-safe fallback for Asia/Makassar
+ok 1 - Mapping provides an ICU-safe fallback for Asia/Makassar
+  ---
+  duration_ms: 0.886735
+  type: 'test'
+  ...
+# Subtest: Mapping never leaves an empty screen when startup rendering throws
+ok 2 - Mapping never leaves an empty screen when startup rendering throws
+  ---
+  duration_ms: 0.158035
+  type: 'test'
+  ...
+# Subtest: Entry Map UI follows the 1.4.7 lightweight render model without a global mutation loop
+ok 3 - Entry Map UI follows the 1.4.7 lightweight render model without a global mutation loop
+  ---
+  duration_ms: 0.23595
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 57.173436
+
+===== market-candle-store.test.mjs =====
+TAP version 13
+# Subtest: Supabase-first market gateway files are valid JavaScript
+ok 1 - Supabase-first market gateway files are valid JavaScript
+  ---
+  duration_ms: 183.148258
+  type: 'test'
+  ...
+# Subtest: all server market features use one candle store
+ok 2 - all server market features use one candle store
+  ---
+  duration_ms: 5.243539
+  type: 'test'
+  ...
+# Subtest: private clients route market reads through active Supabase Edge gateways
+ok 3 - private clients route market reads through active Supabase Edge gateways
+  ---
+  duration_ms: 1.465065
+  type: 'test'
+  ...
+# Subtest: Mapping shares Entry Watch zones with Amy Bot
+ok 4 - Mapping shares Entry Watch zones with Amy Bot
+  ---
+  duration_ms: 1.6607
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 246.208042
+
+===== market-intelligence-strip.test.mjs =====
+TAP version 13
+# Subtest: command strip shows official M1 quote and Intel Liquidity BSL SSL only
+ok 1 - command strip shows official M1 quote and Intel Liquidity BSL SSL only
+  ---
+  duration_ms: 19.149149
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 74.791788
+
+===== market-intent-engine-v3.test.mjs =====
+TAP version 13
+# Subtest: liquidity context separates nearest and HTF aligned target
+ok 1 - liquidity context separates nearest and HTF aligned target
+  ---
+  duration_ms: 2.456636
+  type: 'test'
+  ...
+# Subtest: liquidity context does not generate direction or trade decision
+ok 2 - liquidity context does not generate direction or trade decision
+  ---
+  duration_ms: 0.480878
+  type: 'test'
+  ...
+# Subtest: Preview UI presents a professional hierarchy with compact advanced detail
+ok 3 - Preview UI presents a professional hierarchy with compact advanced detail
+  ---
+  duration_ms: 0.539207
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 60.964884
+
+===== market-learning-live-examples.test.mjs =====
+TAP version 13
+# Subtest: registry v2 maps all 645 HTML lessons to explicit topics
+ok 1 - registry v2 maps all 645 HTML lessons to explicit topics
+  ---
+  duration_ms: 3.305451
+  type: 'test'
+  ...
+# Subtest: different pages inside the same category retain different topics
+ok 2 - different pages inside the same category retain different topics
+  ---
+  duration_ms: 0.705397
+  type: 'test'
+  ...
+# Subtest: bridge calls topic-aware backend without hardcoded protected preview URL
+ok 3 - bridge calls topic-aware backend without hardcoded protected preview URL
+  ---
+  duration_ms: 0.326529
+  type: 'test'
+  ...
+# Subtest: inline glass UI, pulse animation, and no-redirect contract remain present
+ok 4 - inline glass UI, pulse animation, and no-redirect contract remain present
+  ---
+  duration_ms: 0.346988
+  type: 'test'
+  ...
+# Subtest: academy chapter URL resolves to its exact registry key
+ok 5 - academy chapter URL resolves to its exact registry key
+  ---
+  duration_ms: 1.66603
+  type: 'test'
+  ...
+# Subtest: bridge forwards exact category and topic when API responds
+ok 6 - bridge forwards exact category and topic when API responds
+  ---
+  duration_ms: 1.304575
+  type: 'test'
+  ...
+# Subtest: production 404 returns a neutral topic-aware offline example
+ok 7 - production 404 returns a neutral topic-aware offline example
+  ---
+  duration_ms: 1.559862
+  type: 'test'
+  ...
+# Subtest: HTML login redirect from protected preview is treated as offline, not an error message
+ok 8 - HTML login redirect from protected preview is treated as offline, not an error message
+  ---
+  duration_ms: 1.959077
+  type: 'test'
+  ...
+# Subtest: offline fallback remains different for different lesson topics
+ok 9 - offline fallback remains different for different lesson topics
+  ---
+  duration_ms: 1.561876
+  type: 'test'
+  ...
+# Subtest: old red-style connection error copy is removed from bridge
+ok 10 - old red-style connection error copy is removed from bridge
+  ---
+  duration_ms: 0.428591
+  type: 'test'
+  ...
+# Subtest: API text is escaped before limited bold markup is rendered
+ok 11 - API text is escaped before limited bold markup is rendered
+  ---
+  duration_ms: 0.846901
+  type: 'test'
+  ...
+# Subtest: backend route validates topic and uses server-side market data
+ok 12 - backend route validates topic and uses server-side market data
+  ---
+  duration_ms: 0.18719
+  type: 'test'
+  ...
+# Subtest: injectChapterNavigation creates prev, catalog, and next chapter links
+ok 13 - injectChapterNavigation creates prev, catalog, and next chapter links
+  ---
+  duration_ms: 1.791695
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 76.009081
+
+===== market-outlook-ui-regression.test.mjs =====
+TAP version 13
+# Subtest: AMY Market Context Final JavaScript remains syntactically valid
+ok 1 - AMY Market Context Final JavaScript remains syntactically valid
+  ---
+  duration_ms: 93.848064
+  type: 'test'
+  ...
+# Subtest: Market Outlook UI exposes qualified context events rather than unrestricted prediction
+ok 2 - Market Outlook UI exposes qualified context events rather than unrestricted prediction
+  ---
+  duration_ms: 0.804922
+  type: 'test'
+  ...
+# Subtest: 2024 M5 backtest remains stored as archived validation evidence
+ok 3 - 2024 M5 backtest remains stored as archived validation evidence
+  ---
+  duration_ms: 1.161478
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 151.407902
+
+===== market-outlook.test.mjs =====
+TAP version 13
+# Subtest: Market Outlook Final JavaScript remains syntactically valid
+ok 1 - Market Outlook Final JavaScript remains syntactically valid
+  ---
+  duration_ms: 95.761736
+  type: 'test'
+  ...
+# Subtest: mapping keeps the existing Market Outlook asset entry points
+ok 2 - mapping keeps the existing Market Outlook asset entry points
+  ---
+  duration_ms: 0.291414
+  type: 'test'
+  ...
+# Subtest: Market Outlook uses AMY Market Context Final logic
+ok 3 - Market Outlook uses AMY Market Context Final logic
+  ---
+  duration_ms: 0.480447
+  type: 'test'
+  ...
+# Subtest: Market Context Final stays WAIT without a qualified event
+ok 4 - Market Context Final stays WAIT without a qualified event
+  ---
+  duration_ms: 23.37617
+  type: 'test'
+  ...
+# Subtest: 2024 M5 Reaction First result remains archived honestly
+ok 5 - 2024 M5 Reaction First result remains archived honestly
+  ---
+  duration_ms: 0.548263
+  type: 'test'
+  ...
+# Subtest: direct-entry experiment remains archived without overstating the speed hypothesis
+ok 6 - direct-entry experiment remains archived without overstating the speed hypothesis
+  ---
+  duration_ms: 0.411608
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 181.796191
+
+===== market-regime-engine-v2.test.mjs =====
+TAP version 13
+# Subtest: stable directional series is classified as trending
+ok 1 - stable directional series is classified as trending
+  ---
+  duration_ms: 5.375335
+  type: 'test'
+  ...
+# Subtest: alternating low-efficiency series routes to range
+ok 2 - alternating low-efficiency series routes to range
+  ---
+  duration_ms: 1.492707
+  type: 'test'
+  ...
+# Subtest: failed opposite transition becomes no-trade context
+ok 3 - failed opposite transition becomes no-trade context
+  ---
+  duration_ms: 1.492046
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 65.556347
+
+===== market-state-contract.test.mjs =====
+TAP version 13
+# Subtest: M1 quote tick updates quote without laundering Mapping capturedAt
+ok 1 - M1 quote tick updates quote without laundering Mapping capturedAt
+  ---
+  duration_ms: 5.27587
+  type: 'test'
+  ...
+# Subtest: Mapping payload cannot invent an official quote without an M1 provider timestamp
+ok 2 - Mapping payload cannot invent an official quote without an M1 provider timestamp
+  ---
+  duration_ms: 1.224186
+  type: 'test'
+  ...
+# Subtest: local analyzedAt cannot make Mapping fresh without a source candle
+ok 3 - local analyzedAt cannot make Mapping fresh without a source candle
+  ---
+  duration_ms: 1.845526
+  type: 'test'
+  ...
+# Subtest: storedAt cannot make an expired quote fresh or LIVE
+ok 4 - storedAt cannot make an expired quote fresh or LIVE
+  ---
+  duration_ms: 0.933813
+  type: 'test'
+  ...
+# Subtest: Heatmap freshness follows source candle, not recent compute time
+ok 5 - Heatmap freshness follows source candle, not recent compute time
+  ---
+  duration_ms: 1.231519
+  type: 'test'
+  ...
+# Subtest: official BSL and SSL come only from Intel Liquidity
+ok 6 - official BSL and SSL come only from Intel Liquidity
+  ---
+  duration_ms: 2.118936
+  type: 'test'
+  ...
+# Subtest: Amy Bot discloses quote versus Mapping timestamp skew and stays WAIT
+ok 7 - Amy Bot discloses quote versus Mapping timestamp skew and stays WAIT
+  ---
+  duration_ms: 18.657361
+  type: 'test'
+  ...
+# Subtest: Blueprint duplicate market listeners are registered only once
+ok 8 - Blueprint duplicate market listeners are registered only once
+  ---
+  duration_ms: 7.071411
+  type: 'test'
+  ...
+# Subtest: Blueprint listener guard loads before Blueprint runtime on market pages
+ok 9 - Blueprint listener guard loads before Blueprint runtime on market pages
+  ---
+  duration_ms: 0.518568
+  type: 'test'
+  ...
+# Subtest: Blueprint context exposes separate market timestamps and canonical conflicts
+ok 10 - Blueprint context exposes separate market timestamps and canonical conflicts
+  ---
+  duration_ms: 1.501773
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 96.354714
+
+===== mentor-customer-service.test.mjs =====
+TAP version 13
+# Subtest: provider loader skips freeze-prone mentor observer chain
+ok 1 - provider loader skips freeze-prone mentor observer chain
+  ---
+  duration_ms: 5.616757
+  type: 'test'
+  ...
+# Subtest: safe rule chat runtime is syntactically valid
+ok 2 - safe rule chat runtime is syntactically valid
+  ---
+  duration_ms: 26.519376
+  type: 'test'
+  ...
+# Subtest: safe rule chat has no unbounded DOM observer or recurring UI repaint loop
+ok 3 - safe rule chat has no unbounded DOM observer or recurring UI repaint loop
+  ---
+  duration_ms: 2.514624
+  type: 'test'
+  ...
+# Subtest: safe chat remains local-first and escalates only complex intents
+ok 4 - safe chat remains local-first and escalates only complex intents
+  ---
+  duration_ms: 0.921991
+  type: 'test'
+  ...
+# Subtest: safe chat supports natural issue clarification and major modules
+ok 5 - safe chat supports natural issue clarification and major modules
+  ---
+  duration_ms: 1.275792
+  type: 'test'
+  ...
+# Subtest: safe chat UI keeps Amy visible and hides technical metadata
+ok 6 - safe chat UI keeps Amy visible and hides technical metadata
+  ---
+  duration_ms: 1.170315
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 89.815185
+
+===== mentor-mapping-intent-hotfix.test.mjs =====
+TAP version 13
+# Subtest: provider loader keeps professional bot after universal and safe-rule runtimes
+ok 1 - provider loader keeps professional bot after universal and safe-rule runtimes
+  ---
+  duration_ms: 1.10336
+  type: 'test'
+  ...
+# Subtest: full bot never calls Gemini, OpenRouter, or DeepSeek
+ok 2 - full bot never calls Gemini, OpenRouter, or DeepSeek
+  ---
+  duration_ms: 7.744528
+  type: 'test'
+  ...
+# Subtest: consumed liquidity is ignored and Amy gives the next directional BSL and SSL
+ok 3 - consumed liquidity is ignored and Amy gives the next directional BSL and SSL
+  ---
+  duration_ms: 17.657625
+  type: 'test'
+  ...
+# Subtest: market direction includes real area, liquidity target, and invalidation
+ok 4 - market direction includes real area, liquidity target, and invalidation
+  ---
+  duration_ms: 3.046418
+  type: 'test'
+  ...
+# Subtest: Mapping levels survive quote TTL and only end through lifecycle events
+ok 5 - Mapping levels survive quote TTL and only end through lifecycle events
+  ---
+  duration_ms: 3.382886
+  type: 'test'
+  ...
+# Subtest: Amy understands OB, FVG, SND, structure, invalidation, targets, and typo variants
+ok 6 - Amy understands OB, FVG, SND, structure, invalidation, targets, and typo variants
+  ---
+  duration_ms: 8.291739
+  type: 'test'
+  ...
+# Subtest: Journal questions switch cleanly from Mapping and stay deterministic
+ok 7 - Journal questions switch cleanly from Mapping and stay deterministic
+  ---
+  duration_ms: 5.734395
+  type: 'test'
+  ...
+# Subtest: Academy, News, Library, Indicators, and System have direct bot answers
+ok 8 - Academy, News, Library, Indicators, and System have direct bot answers
+  ---
+  duration_ms: 7.213657
+  type: 'test'
+  ...
+# Subtest: persisted Mapping snapshot is readable from Home without reopening Mapping
+ok 9 - persisted Mapping snapshot is readable from Home without reopening Mapping
+  ---
+  duration_ms: 1.988492
+  type: 'test'
+  ...
+# Subtest: Amy greeting and user-facing UI identify full bot mode
+ok 10 - Amy greeting and user-facing UI identify full bot mode
+  ---
+  duration_ms: 6.129583
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 125.050896
+
+===== mentor-universal-access.test.mjs =====
+TAP version 13
+# Subtest: universal Mentor runtime is valid JavaScript and loaded after the conversation runtime
+ok 1 - universal Mentor runtime is valid JavaScript and loaded after the conversation runtime
+  ---
+  duration_ms: 52.919866
+  type: 'test'
+  ...
+# Subtest: Amy Mentor can retrieve every Amy FX workspace domain
+ok 2 - Amy Mentor can retrieve every Amy FX workspace domain
+  ---
+  duration_ms: 1.309294
+  type: 'test'
+  ...
+# Subtest: universal context is query-aware, bounded and blocks raw credentials
+ok 3 - universal context is query-aware, bounded and blocks raw credentials
+  ---
+  duration_ms: 1.290549
+  type: 'test'
+  ...
+# Subtest: universal context enriches the existing Context Envelope instead of bypassing safety rules
+ok 4 - universal context enriches the existing Context Envelope instead of bypassing safety rules
+  ---
+  duration_ms: 1.066189
+  type: 'test'
+  ...
+# Subtest: Mentor UI always sends through universal access without duplicate legacy submission
+ok 5 - Mentor UI always sends through universal access without duplicate legacy submission
+  ---
+  duration_ms: 1.095705
+  type: 'test'
+  ...
+# Subtest: workspace access includes full catalogs but only query-relevant heavy content
+ok 6 - workspace access includes full catalogs but only query-relevant heavy content
+  ---
+  duration_ms: 1.481797
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 112.705616
+
+===== native-updater.test.mjs =====
+TAP version 13
+# Subtest: MainActivity exposes native updater bridge and resumes pending installation
+ok 1 - MainActivity exposes native updater bridge and resumes pending installation
+  ---
+  duration_ms: 1.993221
+  type: 'test'
+  ...
+# Subtest: native updater downloads only HTTPS GitHub APKs into private cache
+ok 2 - native updater downloads only HTTPS GitHub APKs into private cache
+  ---
+  duration_ms: 0.332731
+  type: 'test'
+  ...
+# Subtest: downloaded APK must match package, exact version and active installed signer
+ok 3 - downloaded APK must match package, exact version and active installed signer
+  ---
+  duration_ms: 0.244467
+  type: 'test'
+  ...
+# Subtest: release signing keeps v1 compatibility and v2 integrity
+ok 4 - release signing keeps v1 compatibility and v2 integrity
+  ---
+  duration_ms: 0.220541
+  type: 'test'
+  ...
+# Subtest: installer uses FileProvider and requests per-app unknown-source permission
+ok 5 - installer uses FileProvider and requests per-app unknown-source permission
+  ---
+  duration_ms: 0.400368
+  type: 'test'
+  ...
+# Subtest: update popup displays native progress and keeps browser only as legacy fallback
+ok 6 - update popup displays native progress and keeps browser only as legacy fallback
+  ---
+  duration_ms: 0.223056
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 59.561886
+
+===== news-relevance-regression.test.mjs =====
+TAP version 13
+# Subtest: relevant: Iran and the United States resume peace negotiations after weeks of tension.
+ok 1 - relevant: Iran and the United States resume peace negotiations after weeks of tension.
+  ---
+  duration_ms: 3.754269
+  type: 'test'
+  ...
+# Subtest: relevant: Amerika Serikat dan Iran memulai perundingan damai baru.
+ok 2 - relevant: Amerika Serikat dan Iran memulai perundingan damai baru.
+  ---
+  duration_ms: 1.4786
+  type: 'test'
+  ...
+# Subtest: relevant: White House says a ceasefire agreement could be reached soon.
+ok 3 - relevant: White House says a ceasefire agreement could be reached soon.
+  ---
+  duration_ms: 1.755708
+  type: 'test'
+  ...
+# Subtest: relevant: Pentagon moves additional troops to the Middle East.
+ok 4 - relevant: Pentagon moves additional troops to the Middle East.
+  ---
+  duration_ms: 1.489501
+  type: 'test'
+  ...
+# Subtest: relevant: Missile attack escalates conflict between Israel and Iran.
+ok 5 - relevant: Missile attack escalates conflict between Israel and Iran.
+  ---
+  duration_ms: 1.646233
+  type: 'test'
+  ...
+# Subtest: relevant: Gencatan senjata dan perdamaian dibahas melalui mediasi internasional.
+ok 6 - relevant: Gencatan senjata dan perdamaian dibahas melalui mediasi internasional.
+  ---
+  duration_ms: 1.748835
+  type: 'test'
+  ...
+# Subtest: relevant: Russia and Ukraine agree to diplomatic talks.
+ok 7 - relevant: Russia and Ukraine agree to diplomatic talks.
+  ---
+  duration_ms: 1.636085
+  type: 'test'
+  ...
+# Subtest: relevant: China warns over Taiwan and the South China Sea.
+ok 8 - relevant: China warns over Taiwan and the South China Sea.
+  ---
+  duration_ms: 1.461468
+  type: 'test'
+  ...
+# Subtest: relevant: Oil prices jump after shipping disruption in the Strait of Hormuz.
+ok 9 - relevant: Oil prices jump after shipping disruption in the Strait of Hormuz.
+  ---
+  duration_ms: 2.361368
+  type: 'test'
+  ...
+# Subtest: relevant: Federal Reserve signals rate cut as CPI inflation cools.
+ok 10 - relevant: Federal Reserve signals rate cut as CPI inflation cools.
+  ---
+  duration_ms: 1.616918
+  type: 'test'
+  ...
+# Subtest: relevant: Gold rises as investors seek safe haven assets.
+ok 11 - relevant: Gold rises as investors seek safe haven assets.
+  ---
+  duration_ms: 1.099132
+  type: 'test'
+  ...
+# Subtest: relevant: Government shutdown and debt ceiling risks pressure the U.S. dollar.
+ok 12 - relevant: Government shutdown and debt ceiling risks pressure the U.S. dollar.
+  ---
+  duration_ms: 1.192547
+  type: 'test'
+  ...
+# Subtest: short keywords use word boundaries and do not match inside unrelated words
+ok 13 - short keywords use word boundaries and do not match inside unrelated words
+  ---
+  duration_ms: 1.836128
+  type: 'test'
+  ...
+# Subtest: generic diplomacy terms require geopolitical or conflict context
+ok 14 - generic diplomacy terms require geopolitical or conflict context
+  ---
+  duration_ms: 1.438215
+  type: 'test'
+  ...
+# Subtest: abbreviations and punctuation are normalized
+ok 15 - abbreviations and punctuation are normalized
+  ---
+  duration_ms: 0.527795
+  type: 'test'
+  ...
+# Subtest: major conflict, diplomacy, and macro events are high impact
+ok 16 - major conflict, diplomacy, and macro events are high impact
+  ---
+  duration_ms: 0.509241
+  type: 'test'
+  ...
+# Subtest: plural conflict wording and targeted military bases remain high impact
+ok 17 - plural conflict wording and targeted military bases remain high impact
+  ---
+  duration_ms: 2.815426
+  type: 'test'
+  ...
+# Subtest: filter version is explicit for deployment tracking
+ok 18 - filter version is explicit for deployment tracking
+  ---
+  duration_ms: 0.20361
+  type: 'test'
+  ...
+# Subtest: all SM News posts are kept while relevance only gates notifications
+ok 19 - all SM News posts are kept while relevance only gates notifications
+  ---
+  duration_ms: 11.27581
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 97.813085
+
+===== news-routing-regression.test.mjs =====
+TAP version 13
+# Subtest: news diurutkan berdasarkan ID Telegram terbaru
+ok 1 - news diurutkan berdasarkan ID Telegram terbaru
+  ---
+  duration_ms: 1.358356
+  type: 'test'
+  ...
+# Subtest: Vercel memuat modul filter ESM secara dinamis
+ok 2 - Vercel memuat modul filter ESM secara dinamis
+  ---
+  duration_ms: 0.362447
+  type: 'test'
+  ...
+# Subtest: market intel membawa ID berita pada deep-link notifikasi
+ok 3 - market intel membawa ID berita pada deep-link notifikasi
+  ---
+  duration_ms: 0.256809
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 59.724038
+
+===== notification-icon-regression.test.mjs =====
+TAP version 13
+# Subtest: Firebase and native notifications use the AMY status icon
+ok 1 - Firebase and native notifications use the AMY status icon
+  ---
+  duration_ms: 0.934474
+  type: 'test'
+  ...
+# Subtest: status icon is a monochrome AMY circle instead of the old chart arrow
+ok 2 - status icon is a monochrome AMY circle instead of the old chart arrow
+  ---
+  duration_ms: 0.227444
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 56.638357
+
+===== notification-route-regression.test.mjs =====
+TAP version 13
+# Subtest: native notification gate memiliki tujuan eksplisit untuk setiap modul utama
+ok 1 - native notification gate memiliki tujuan eksplisit untuk setiap modul utama
+  ---
+  duration_ms: 0.896493
+  type: 'test'
+  ...
+# Subtest: notifikasi tanpa URL memakai tujuan modul hasil routing
+ok 2 - notifikasi tanpa URL memakai tujuan modul hasil routing
+  ---
+  duration_ms: 0.252081
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 58.234698
+
+===== notification-route-sync.test.mjs =====
+TAP version 13
+# Subtest: notification route helper passes syntax validation and loads before Mapping modules
+ok 1 - notification route helper passes syntax validation and loads before Mapping modules
+  ---
+  duration_ms: 25.956416
+  type: 'test'
+  ...
+# Subtest: pending Android notification route survives until setTab is ready, then opens Analyze and focuses Entry Watch
+ok 2 - pending Android notification route survives until setTab is ready, then opens Analyze and focuses Entry Watch
+  ---
+  duration_ms: 2.429866
+  type: 'test'
+  ...
+# Subtest: consumed hash does not force Analyze again after the user manually changes tabs
+ok 3 - consumed hash does not force Analyze again after the user manually changes tabs
+  ---
+  duration_ms: 0.888118
+  type: 'test'
+  ...
+# Subtest: Android keeps the route in localStorage and retries it after page load
+ok 4 - Android keeps the route in localStorage and retries it after page load
+  ---
+  duration_ms: 0.474486
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 88.699383
+
+===== personal-source-debug.test.mjs =====
+TAP version 13
+# Subtest: personal source keeps immutable Preview identity
+ok 1 - personal source keeps immutable Preview identity
+  ---
+  duration_ms: 0.995268
+  type: 'test'
+  ...
+# Subtest: Mapping only blocks when its active timeframe is unavailable
+ok 2 - Mapping only blocks when its active timeframe is unavailable
+  ---
+  duration_ms: 1.115393
+  type: 'test'
+  ...
+# Subtest: Mapping clock and labels use WITA
+ok 3 - Mapping clock and labels use WITA
+  ---
+  duration_ms: 0.331289
+  type: 'test'
+  ...
+# Subtest: home storage and clear-data flow are hardened
+ok 4 - home storage and clear-data flow are hardened
+  ---
+  duration_ms: 0.258713
+  type: 'test'
+  ...
+# Subtest: Market Intel clears stale heatmap visuals and labels backend freshness
+ok 5 - Market Intel clears stale heatmap visuals and labels backend freshness
+  ---
+  duration_ms: 0.247502
+  type: 'test'
+  ...
+# Subtest: Journal assistant base runtime updates the correct loading message
+ok 6 - Journal assistant base runtime updates the correct loading message
+  ---
+  duration_ms: 1.587624
+  type: 'test'
+  ...
+# Subtest: Academy explicitly declares personal Preview access mode
+ok 7 - Academy explicitly declares personal Preview access mode
+  ---
+  duration_ms: 0.172291
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 61.301705
+
+===== preview-connectivity-audit-v2.test.mjs =====
+TAP version 13
+# Subtest: deprecated connectivity runtime remains available for reference but safe v3 is the loaded runtime
+ok 1 - deprecated connectivity runtime remains available for reference but safe v3 is the loaded runtime
+  ---
+  duration_ms: 55.325488
+  type: 'test'
+  ...
+# Subtest: all primary modules install the shared provider/bootstrap chain
+ok 2 - all primary modules install the shared provider/bootstrap chain
+  ---
+  duration_ms: 2.864642
+  type: 'test'
+  ...
+# Subtest: bot data adapter matches customer-service contracts for version, providers and secure vault
+ok 3 - bot data adapter matches customer-service contracts for version, providers and secure vault
+  ---
+  duration_ms: 1.546048
+  type: 'test'
+  ...
+# Subtest: IndexedDB reads never create an empty database, overwrite Journal schema, or leak late handles
+ok 4 - IndexedDB reads never create an empty database, overwrite Journal schema, or leak late handles
+  ---
+  duration_ms: 1.404323
+  type: 'test'
+  ...
+# Subtest: market status requires a price and timestamp from the same fresh Mapping, Liquidity, Heatmap, or live-state candidate
+ok 5 - market status requires a price and timestamp from the same fresh Mapping, Liquidity, Heatmap, or live-state candidate
+  ---
+  duration_ms: 2.10309
+  type: 'test'
+  ...
+# Subtest: 90 percent bot route stays local while AI escalation receives corrected full workspace freshness
+ok 6 - 90 percent bot route stays local while AI escalation receives corrected full workspace freshness
+  ---
+  duration_ms: 1.558191
+  type: 'test'
+  ...
+# Subtest: customer-service numeric menu and module navigation are connected
+ok 7 - customer-service numeric menu and module navigation are connected
+  ---
+  duration_ms: 1.307182
+  type: 'test'
+  ...
+# Subtest: Journal deep links connect Library, Media, Journal, Notes, Assistant and Statistics views
+ok 8 - Journal deep links connect Library, Media, Journal, Notes, Assistant and Statistics views
+  ---
+  duration_ms: 1.447374
+  type: 'test'
+  ...
+# Subtest: bot workspace supports nested Journal v2 outcomes and accurate completed win rate
+ok 9 - bot workspace supports nested Journal v2 outcomes and accurate completed win rate
+  ---
+  duration_ms: 1.956265
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 124.824192
+
+===== preview-connectivity-final-v3.test.mjs =====
+TAP version 13
+# Subtest: connectivity files exist and parse
+ok 1 - connectivity files exist and parse
+  ---
+  duration_ms: 216.627171
+  type: 'test'
+  ...
+# Subtest: provider loads safe rule chat after universal access and excludes deprecated coordinators
+ok 2 - provider loads safe rule chat after universal access and excludes deprecated coordinators
+  ---
+  duration_ms: 2.452431
+  type: 'test'
+  ...
+# Subtest: final coordinator routes exact views across five modules
+ok 3 - final coordinator routes exact views across five modules
+  ---
+  duration_ms: 1.08625
+  type: 'test'
+  ...
+# Subtest: nested Academy lessons load Amy shared runtime
+ok 4 - nested Academy lessons load Amy shared runtime
+  ---
+  duration_ms: 1.195513
+  type: 'test'
+  ...
+# Subtest: Market Intel delegates source timestamps and stale propagation to canonical market contract
+ok 5 - Market Intel delegates source timestamps and stale propagation to canonical market contract
+  ---
+  duration_ms: 1.223726
+  type: 'test'
+  ...
+# Subtest: Home update and cache actions use real services and preserve primary data
+ok 6 - Home update and cache actions use real services and preserve primary data
+  ---
+  duration_ms: 1.163113
+  type: 'test'
+  ...
+# Subtest: Journal and Mapping publish events consumed across modules
+ok 7 - Journal and Mapping publish events consumed across modules
+  ---
+  duration_ms: 3.23296
+  type: 'test'
+  ...
+# Subtest: deprecated final router remains internally guarded
+ok 8 - deprecated final router remains internally guarded
+  ---
+  duration_ms: 0.750692
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 283.296869
+
+===== preview-home-journal-connection.test.mjs =====
+TAP version 13
+# Subtest: Home Journal integration JavaScript is syntactically valid
+ok 1 - Home Journal integration JavaScript is syntactically valid
+  ---
+  duration_ms: 23.893621
+  type: 'test'
+  ...
+# Subtest: Home reads journals.v2 without creating or upgrading the Journal database
+ok 2 - Home reads journals.v2 without creating or upgrading the Journal database
+  ---
+  duration_ms: 4.595316
+  type: 'test'
+  ...
+# Subtest: Home keeps legacy fallback, closes late database handles and supports older WebViews
+ok 3 - Home keeps legacy fallback, closes late database handles and supports older WebViews
+  ---
+  duration_ms: 0.971035
+  type: 'test'
+  ...
+# Subtest: Profile counters publish one shared Home stats event
+ok 4 - Profile counters publish one shared Home stats event
+  ---
+  duration_ms: 1.676242
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 83.395141
+
+===== preview-integration-audit.test.mjs =====
+TAP version 13
+# Subtest: all Preview module documents are standards-mode and their local assets exist
+ok 1 - all Preview module documents are standards-mode and their local assets exist
+  ---
+  duration_ms: 17.432059
+  type: 'test'
+  ...
+# Subtest: Blueprint runtime is installed exactly once with canonical guard order on market modules
+ok 2 - Blueprint runtime is installed exactly once with canonical guard order on market modules
+  ---
+  duration_ms: 2.811522
+  type: 'test'
+  ...
+# Subtest: home project routing points only to real local modules
+ok 3 - home project routing points only to real local modules
+  ---
+  duration_ms: 1.464466
+  type: 'test'
+  ...
+# Subtest: Journal navigation, storage and Blueprint context share one authoritative state
+ok 4 - Journal navigation, storage and Blueprint context share one authoritative state
+  ---
+  duration_ms: 2.977332
+  type: 'test'
+  ...
+# Subtest: home profile reads actual Mapping and IndexedDB Journal counts
+ok 5 - home profile reads actual Mapping and IndexedDB Journal counts
+  ---
+  duration_ms: 2.266594
+  type: 'test'
+  ...
+# Subtest: Mapping publishes a live context contract consumed by Amy Mentor
+ok 6 - Mapping publishes a live context contract consumed by Amy Mentor
+  ---
+  duration_ms: 23.832557
+  type: 'test'
+  ...
+# Subtest: Market Intel publishes news, liquidity and heatmap through canonical WITA contracts
+ok 7 - Market Intel publishes news, liquidity and heatmap through canonical WITA contracts
+  ---
+  duration_ms: 2.549032
+  type: 'test'
+  ...
+# Subtest: AI secure vault, provider repair and concise conversation runtime are connected end-to-end
+ok 8 - AI secure vault, provider repair and concise conversation runtime are connected end-to-end
+  ---
+  duration_ms: 2.195011
+  type: 'test'
+  ...
+# Subtest: only one Preview release workflow owns the permanent private branch and update channel
+not ok 9 - only one Preview release workflow owns the permanent private branch and update channel
+  ---
+  duration_ms: 6.467543
+  type: 'test'
+  location: '/home/runner/work/Amy-fx/Amy-fx/tests/preview-integration-audit.test.mjs:179:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+        '.github/workflows/amyfx-blueprint-preview-release.yml',
+    +   '.github/workflows/personal-source-repair.yml'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: '.github/workflows/amyfx-blueprint-preview-release.yml'
+  actual:
+    0: '.github/workflows/amyfx-blueprint-preview-release.yml'
+    1: '.github/workflows/personal-source-repair.yml'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/preview-integration-audit.test.mjs:186:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: Preview update manifest is active and points to an immutable Preview APK
+ok 10 - Preview update manifest is active and points to an immutable Preview APK
+  ---
+  duration_ms: 1.743047
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 9
 # fail 1
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 146.862699
-Regression failed: mapping-clock-zone-alignment.test.mjs
+# duration_ms 119.223267
+Regression failed: preview-integration-audit.test.mjs
