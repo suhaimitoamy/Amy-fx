@@ -1,6 +1,6 @@
 Amy FX Private Preview regression failure
-Run: 30469243298
-Commit: 0ddcbb86d949fbe7fa504181ffb65f144b1a6d7a
+Run: 30469377108
+Commit: 0247a70b1c54dc47179114611d68edf57fc73456
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -49,132 +49,137 @@ Commit: 0ddcbb86d949fbe7fa504181ffb65f144b1a6d7a
 ===== mapping-market-integrity-regression.test.mjs =====
 ===== mapping-navigation-regression.test.mjs =====
 ===== mapping-news-background-repair.test.mjs =====
-not ok 2 - Paused or terminal Entry Watch cannot keep an old BUY or SELL card visible
+===== mapping-session-replay.test.mjs =====
+===== mapping-structure-hierarchy.test.mjs =====
+===== mapping-ui-simplification-v1.test.mjs =====
+===== mapping-webview-startup.test.mjs =====
+===== market-candle-store.test.mjs =====
+not ok 4 - private clients route market reads through active Supabase Edge gateways
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
   actual: |-
   operator: 'match'
-Regression failed: mapping-news-background-repair.test.mjs
+Regression failed: market-candle-store.test.mjs
 
 --- final log lines ---
-      '      readOnly: true\n' +
+      ' * not crash. Every start clears stale targets and terminates immediately.\n' +
+      ' */\n' +
+      'class ScannerService : Service() {\n' +
+      '    override fun onBind(intent: Intent?): IBinder? = null\n' +
+      '\n' +
+      '    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {\n' +
+      '        clearLegacyScannerState()\n' +
+      '        stopForeground(true)\n' +
+      '        stopSelfResult(startId)\n' +
+      '        return START_NOT_STICKY\n' +
       '    }\n' +
-      '  }));\n' +
-      '}\n' +
       '\n' +
-      'function start() {\n' +
-      '  syncEntryWatch();\n' +
-      '  setInterval(syncEntryWatch, SYNC_MS);\n' +
-      "  window.addEventListener('amyfx:candles-updated', syncEntryWatch);\n" +
-      "  window.addEventListener('amyfx:market-update', syncEntryWatch);\n" +
-      "  document.addEventListener('click', () => setTimeout(syncEntryWatch, 20), true);\n" +
-      "  document.addEventListener('visibilitychange', () => {\n" +
-      '    if (!document.hidden) syncEntryWatch();\n' +
-      '  });\n' +
-      '}\n' +
+      '    override fun onCreate() {\n' +
+      '        super.onCreate()\n' +
+      '        clearLegacyScannerState()\n' +
+      '    }\n' +
       '\n' +
-      "if (document.readyState === 'loading') {\n" +
-      "  document.addEventListener('DOMContentLoaded', start, { once: true });\n" +
-      '} else {\n' +
-      '  start();\n' +
+      '    private fun clearLegacyScannerState() {\n' +
+      '        getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)\n' +
+      '            .edit()\n' +
+      '            .remove(KEY_BSL_TARGET)\n' +
+      '            .remove(KEY_SSL_TARGET)\n' +
+      '            .remove(KEY_TARGET_UPDATED_AT)\n' +
+      '            .remove(KEY_UPPER_ARMED)\n' +
+      '            .remove(KEY_LOWER_ARMED)\n' +
+      '            .putBoolean(KEY_SCANNER_ENABLED, false)\n' +
+      '            .apply()\n' +
+      '    }\n' +
+      '\n' +
+      '    companion object {\n' +
+      '        const val ACTION_STOP_SCANNER = "com.amyelitesuite.action.STOP_SCANNER"\n' +
+      '\n' +
+      '        private const val KEY_SCANNER_ENABLED = "scanner_enabled"\n' +
+      '        private const val KEY_BSL_TARGET = "scanner_bsl_target"\n' +
+      '        private const val KEY_SSL_TARGET = "scanner_ssl_target"\n' +
+      '        private const val KEY_TARGET_UPDATED_AT = "scanner_target_updated_at"\n' +
+      '        private const val KEY_UPPER_ARMED = "scanner_upper_armed"\n' +
+      '        private const val KEY_LOWER_ARMED = "scanner_lower_armed"\n' +
+      '    }\n' +
       '}\n'
     
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
   actual: |-
-    const CARD_ID = 'amy-entry-watch-card';
-    const SYNC_MS = 1000;
+    package com.amyelitesuite
     
-    let lastSignature = '';
+    import android.app.Service
+    import android.content.Context
+    import android.content.Intent
+    import android.os.IBinder
     
-    function readCanonical() {
-      const state = window.state;
-      const result = state?.result;
-      if (!result) return null;
-      const snapshot = result.mappingSnapshot;
-      const scenario = snapshot?.scenario || result.entryMap?.scenario;
-      const execution = snapshot?.execution || result.setupExecution;
-      if (!scenario) return null;
-      return { state, result, snapshot, scenario, execution };
-    }
+    /**
+     * Legacy local Mapping scanner is retired.
+     * Backend push notifications are the only active notification source.
+     *
+     * The service remains as a safe compatibility stub so older WebView calls do
+     * not crash. Every start clears stale targets and terminates immediately.
+     */
+    class ScannerService : Service() {
+        override fun onBind(intent: Intent?): IBinder? = null
     
-    function syncEntryWatch() {
-      document.getElementById(CARD_ID)?.remove();
-    
-      const canonical = readCanonical();
-      if (!canonical) {
-        lastSignature = '';
-        return;
-      }
-    
-      const signature = JSON.stringify({
-        tf: canonical.scenario.tf,
-        direction: canonical.scenario.direction,
-        status: canonical.scenario.status,
-        missing: canonical.scenario.missing,
-        setupId: canonical.execution?.setupId,
-        stage: canonical.execution?.lifecycleStage
-      });
-      if (signature === lastSignature) return;
-      lastSignature = signature;
-    
-      window.dispatchEvent(new CustomEvent('amyfx:entry-watch-updated', {
-        detail: {
-          watch: canonical.result.entryWatch,
-          scenario: canonical.scenario,
-          readOnly: true
+        override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+            clearLegacyScannerState()
+            stopForeground(true)
+            stopSelfResult(startId)
+            return START_NOT_STICKY
         }
-      }));
-    }
     
-    function start() {
-      syncEntryWatch();
-      setInterval(syncEntryWatch, SYNC_MS);
-      window.addEventListener('amyfx:candles-updated', syncEntryWatch);
-      window.addEventListener('amyfx:market-update', syncEntryWatch);
-      document.addEventListener('click', () => setTimeout(syncEntryWatch, 20), true);
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) syncEntryWatch();
-      });
-    }
+        override fun onCreate() {
+            super.onCreate()
+            clearLegacyScannerState()
+        }
     
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', start, { once: true });
-    } else {
-      start();
+        private fun clearLegacyScannerState() {
+            getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
+                .edit()
+                .remove(KEY_BSL_TARGET)
+                .remove(KEY_SSL_TARGET)
+                .remove(KEY_TARGET_UPDATED_AT)
+                .remove(KEY_UPPER_ARMED)
+                .remove(KEY_LOWER_ARMED)
+                .putBoolean(KEY_SCANNER_ENABLED, false)
+                .apply()
+        }
+    
+        companion object {
+            const val ACTION_STOP_SCANNER = "com.amyelitesuite.action.STOP_SCANNER"
+    
+            private const val KEY_SCANNER_ENABLED = "scanner_enabled"
+            private const val KEY_BSL_TARGET = "scanner_bsl_target"
+            private const val KEY_SSL_TARGET = "scanner_ssl_target"
+            private const val KEY_TARGET_UPDATED_AT = "scanner_target_updated_at"
+            private const val KEY_UPPER_ARMED = "scanner_upper_armed"
+            private const val KEY_LOWER_ARMED = "scanner_lower_armed"
+        }
     }
     
   operator: 'match'
   stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/mapping-news-background-repair.test.mjs:34:10)
-    Test.runInAsyncScope (node:async_hooks:214:14)
-    Test.run (node:internal/test_runner/test:1047:25)
-    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
-    Test.postRun (node:internal/test_runner/test:1173:19)
-    Test.run (node:internal/test_runner/test:1101:12)
-    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/market-candle-store.test.mjs:65:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
-# Subtest: Android news notifications use a durable high-priority system channel
-ok 3 - Android news notifications use a durable high-priority system channel
+# Subtest: Mapping shares Entry Watch zones with Amy Bot
+ok 5 - Mapping shares Entry Watch zones with Amy Bot
   ---
-  duration_ms: 0.441116
+  duration_ms: 2.29792
   type: 'test'
   ...
-# Subtest: Supabase sends system notification plus data and scheduler invokes it
-ok 4 - Supabase sends system notification plus data and scheduler invokes it
-  ---
-  duration_ms: 0.253024
-  type: 'test'
-  ...
-1..4
-# tests 4
+1..5
+# tests 5
 # suites 0
-# pass 3
+# pass 4
 # fail 1
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 87.34062
-Regression failed: mapping-news-background-repair.test.mjs
+# duration_ms 271.144802
+Regression failed: market-candle-store.test.mjs
