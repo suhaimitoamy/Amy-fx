@@ -1,6 +1,6 @@
 Amy FX Private Preview regression failure
-Run: 30469458468
-Commit: a233ecfe69f5fa08b5b6ece327d0270aa7897a5b
+Run: 30469597226
+Commit: ab1cc15c39cd48e04049b046bfd9f2d1aabc1dac
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -54,17 +54,29 @@ Commit: a233ecfe69f5fa08b5b6ece327d0270aa7897a5b
 ===== mapping-ui-simplification-v1.test.mjs =====
 ===== mapping-webview-startup.test.mjs =====
 ===== market-candle-store.test.mjs =====
-not ok 4 - private clients route market reads through active Supabase Edge gateways
+===== market-intelligence-strip.test.mjs =====
+===== market-intent-engine-v3.test.mjs =====
+===== market-learning-live-examples.test.mjs =====
+===== market-outlook-ui-regression.test.mjs =====
+===== market-outlook.test.mjs =====
+===== market-regime-engine-v2.test.mjs =====
+===== market-state-contract.test.mjs =====
+===== mentor-customer-service.test.mjs =====
+===== mentor-mapping-intent-hotfix.test.mjs =====
+===== mentor-universal-access.test.mjs =====
+===== native-updater.test.mjs =====
+===== news-relevance-regression.test.mjs =====
+===== news-routing-regression.test.mjs =====
+===== notification-icon-regression.test.mjs =====
+not ok 1 - Firebase and native notifications use the AMY status icon
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
   actual: |-
   operator: 'match'
-Regression failed: market-candle-store.test.mjs
+Regression failed: notification-icon-regression.test.mjs
 
 --- final log lines ---
-      ' * not crash. Every start clears stale targets and terminates immediately.\n' +
-      ' */\n' +
       'class ScannerService : Service() {\n' +
       '    override fun onBind(intent: Intent?): IBinder? = null\n' +
       '\n' +
@@ -163,23 +175,25 @@ Regression failed: market-candle-store.test.mjs
     
   operator: 'match'
   stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/market-candle-store.test.mjs:65:10)
-    async Test.run (node:internal/test_runner/test:1054:7)
-    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/notification-icon-regression.test.mjs:28:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
   ...
-# Subtest: Mapping shares Entry Watch zones with Amy Bot
-ok 5 - Mapping shares Entry Watch zones with Amy Bot
+# Subtest: status icon is a monochrome AMY circle instead of the old chart arrow
+ok 2 - status icon is a monochrome AMY circle instead of the old chart arrow
   ---
-  duration_ms: 1.455738
+  duration_ms: 0.246487
   type: 'test'
   ...
-1..5
-# tests 5
+1..2
+# tests 2
 # suites 0
-# pass 4
+# pass 1
 # fail 1
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 201.088788
-Regression failed: market-candle-store.test.mjs
+# duration_ms 228.786464
+Regression failed: notification-icon-regression.test.mjs
