@@ -1,6 +1,6 @@
 Amy FX Private Preview regression failure
-Run: 30469597226
-Commit: ab1cc15c39cd48e04049b046bfd9f2d1aabc1dac
+Run: 30469691209
+Commit: 82902512b99697fd26eb31d210bb1c4d1df7e424
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -184,7 +184,7 @@ Regression failed: notification-icon-regression.test.mjs
 # Subtest: status icon is a monochrome AMY circle instead of the old chart arrow
 ok 2 - status icon is a monochrome AMY circle instead of the old chart arrow
   ---
-  duration_ms: 0.246487
+  duration_ms: 0.20807
   type: 'test'
   ...
 1..2
@@ -195,5 +195,5 @@ ok 2 - status icon is a monochrome AMY circle instead of the old chart arrow
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 228.786464
+# duration_ms 62.816472
 Regression failed: notification-icon-regression.test.mjs
