@@ -1,5 +1,13 @@
 # Feature History
 
+## Rencana Eksekusi
+- **Date:** 2026-07-29
+- **Status:** ✅ Implemented and regression/viewport validated
+- **Description:** Added a compact Dashboard card and full Analyze card that translate the authoritative Mapping result into BUY/SELL/WAIT, focus, watch/entry area, next gates, locked entry/SL/TP/RR, structural target, invalidation, freshness, and lifecycle status without creating a second decision engine.
+- **Authority:** `setupExecution` first, `entryMap.setup` second, then existing authoritative runtime contracts. Causal Entry Watch remains the only lifecycle owner.
+- **Amy Bot:** Contextual buttons send the exact card decision and official levels through a secret-free `execution_plan` Context Envelope; Amy uses a deterministic explanation path and cannot change the decision.
+- **Validation:** Feature regression matrix, full 87-file JavaScript suite, Mapping Accuracy V3 suite, and Android-size Chromium verification for duplicate cards, order, overflow, errors, navigation, accordion, and scroll stability.
+
 ## Causal Entry Watch 2021–2022 Correctness Hardening
 - **Date:** 2026-07-29
 - **Status:** ✅ Implemented and regression-validated

@@ -91,3 +91,39 @@ test("handler lock repairs AmyFXOS after a legacy runtime overwrites ask and cop
   assert.doesNotMatch(result.text, /belum menangkap/i);
   assert.equal(app.window.AmyFXProfessionalBotHandlerLock.isAuthoritative(), true);
 });
+
+test("execution-plan context keeps Amy on the exact Mapping decision and official levels", async () => {
+  const app = runtime();
+  const context = {
+    source_module: "mapping",
+    payload: {
+      feature: "execution_plan",
+      execution_plan: {
+        feature: "execution_plan",
+        decision: "BUY",
+        focusDirection: "BUY",
+        entry: 4029.2,
+        stopLoss: 4024.6,
+        tp1: 4038.4,
+        tp2: 4047.6,
+        rr: 4,
+        confirmations: ["SSL sudah disapu.", "MSS bullish M5 sudah terkonfirmasi."],
+        lifecycleLabel: "Entry sudah terkonfirmasi",
+        invalidation: "Stop Loss resmi 4024.60.",
+        mappingFreshness: "FRESH"
+      }
+    }
+  };
+  const result = await app.window.AmyFXOS.ask("Jelaskan entry ini", {
+    sourceModule: "mapping",
+    context
+  });
+  assert.match(result.text, /tetap BUY/);
+  assert.match(result.text, /Entry 4029\.20/);
+  assert.match(result.text, /Stop Loss 4024\.60/);
+  assert.match(result.text, /TP1 4038\.40/);
+  assert.match(result.text, /TP2 4047\.60/);
+  assert.doesNotMatch(result.text, /SELL/);
+  assert.equal(result.model, "mapping-execution-plan-read-only-v1");
+  assert.equal(app.legacyCalls(), 0);
+});

@@ -4,7 +4,7 @@
   if (window.__amyFxProfessionalBotHandlerLockV1) return;
   window.__amyFxProfessionalBotHandlerLockV1 = true;
 
-  const VERSION = "1.2.0";
+  const VERSION = "1.3.0";
   const ASK_MARKER = "__amyProfessionalBotHandlerLockV1";
   const BOT_SIGNATURE_MARKER = "__amyProfessionalBotRuntimeSignatureV1";
   const REGISTRY_FILE = "amyfx-professional-market-source-registry-v1.js";
@@ -48,6 +48,77 @@
     return null;
   }
 
+  function officialNumber(value) {
+    if (value == null || value === "") return null;
+    const number = Number(value);
+    return Number.isFinite(number) ? number.toFixed(2) : null;
+  }
+
+  function officialArea(area) {
+    const low = officialNumber(area?.low);
+    const high = officialNumber(area?.high);
+    if (low && high) return low === high ? low : `${low}–${high}`;
+    return low || high || clean(area?.label) || null;
+  }
+
+  function executionPlanAnswer(_question, context = null) {
+    const plan = context?.payload?.execution_plan;
+    if (
+      context?.source_module !== "mapping"
+      || context?.payload?.feature !== "execution_plan"
+      || !plan
+      || plan.feature !== "execution_plan"
+    ) return null;
+
+    const decision = ["BUY", "SELL"].includes(clean(plan.decision).toUpperCase())
+      ? clean(plan.decision).toUpperCase()
+      : "WAIT";
+    const focus = ["BUY", "SELL"].includes(clean(plan.focusDirection).toUpperCase())
+      ? clean(plan.focusDirection).toUpperCase()
+      : "";
+    const waiting = Array.isArray(plan.waitingFor) ? plan.waitingFor.filter(Boolean) : [];
+    const confirmations = Array.isArray(plan.confirmations) ? plan.confirmations.filter(Boolean) : [];
+    const freshness = clean(plan.mappingFreshness).toUpperCase() || "BELUM TERSEDIA";
+    const invalidation = clean(plan.invalidation);
+    const lifecycle = clean(plan.lifecycleLabel || plan.entryWatchStatus || plan.entryWatchStage);
+    const area = officialArea(decision === "WAIT" ? plan.watchArea : plan.entryArea);
+    const lines = [];
+
+    if (decision === "WAIT") {
+      lines.push(`Keputusan Rencana Eksekusi tetap WAIT${focus ? ` dengan fokus mencari ${focus}` : ""}.`);
+      if (plan.terminal) {
+        lines.push(`${lifecycle || "Setup sudah terminal"}. Setup ini tidak boleh digunakan untuk entry ulang; tunggu setup baru dari Mapping.`);
+      } else if (waiting.length) {
+        lines.push(`Syarat berikutnya: ${waiting.join(" ")}`);
+      } else {
+        lines.push("Setup resmi Mapping belum mengizinkan entry.");
+      }
+      if (area) lines.push(`Area pantauan resmi: ${area}.`);
+      if (invalidation) lines.push(`Invalidasi: ${invalidation}`);
+      if (["STALE", "EXPIRED", "OFFLINE"].includes(freshness)) {
+        lines.push(`Status data ${freshness}; lakukan analisis ulang dan jangan gunakan level lama.`);
+      }
+      lines.push("Saya tidak membuat level atau sinyal baru.");
+      return lines.join("\n");
+    }
+
+    lines.push(`Keputusan Rencana Eksekusi tetap ${decision}; Amy tidak mengubah arah Mapping.`);
+    const levels = [
+      ["Entry", officialNumber(plan.entry)],
+      ["Stop Loss", officialNumber(plan.stopLoss)],
+      ["TP1", officialNumber(plan.tp1)],
+      ["TP2", officialNumber(plan.tp2)]
+    ].filter(([, value]) => value);
+    if (levels.length) lines.push(levels.map(([label, value]) => `${label} ${value}`).join(" · "));
+    const rr = officialNumber(plan.rr);
+    if (rr) lines.push(`RR resmi 1 : ${rr}.`);
+    if (confirmations.length) lines.push(`Konfirmasi resmi: ${confirmations.join(" ")}`);
+    if (lifecycle) lines.push(`Lifecycle: ${lifecycle}.`);
+    if (invalidation) lines.push(`Invalidasi: ${invalidation}`);
+    lines.push("Gunakan hanya level yang telah dikunci oleh setup resmi Mapping.");
+    return lines.join("\n");
+  }
+
   async function buildContextSafely(buildContext, sourceModule, question) {
     if (!buildContext) return null;
     let timeoutId = 0;
@@ -82,10 +153,20 @@
       const sourceModule = options.sourceModule || currentModule();
       let context = options.context || null;
 
+      const immediateExecutionPlan = executionPlanAnswer(question, context);
+      if (immediateExecutionPlan) {
+        return response(immediateExecutionPlan, context, "mapping-execution-plan-read-only-v1");
+      }
+
       const immediate = fastMarketAnswer(question, context);
       if (immediate) return response(immediate, context, "professional-market-fast-path-v1");
 
       if (!context) context = await buildContextSafely(buildContext, sourceModule, question);
+
+      const groundedExecutionPlan = executionPlanAnswer(question, context);
+      if (groundedExecutionPlan) {
+        return response(groundedExecutionPlan, context, "mapping-execution-plan-read-only-v1");
+      }
 
       const grounded = fastMarketAnswer(question, context);
       if (grounded) return response(grounded, context, "professional-market-fast-path-v1");
@@ -215,7 +296,8 @@
     loadMarketSourceRegistryRuntime,
     loadMarketRepairRuntime,
     botSignature,
-    fastMarketAnswer
+    fastMarketAnswer,
+    executionPlanAnswer
   });
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
   else boot();

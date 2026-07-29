@@ -21,6 +21,8 @@ const criticalModules = [
   'app/src/main/assets/apps/mapping/js/engine/mapping-timeframes.js',
   'app/src/main/assets/apps/mapping/js/engine/mapping-snapshot.js',
   'app/src/main/assets/apps/mapping/js/engine/validated-market-context-balanced.js',
+  'app/src/main/assets/apps/mapping/js/execution-plan-core.js',
+  'app/src/main/assets/apps/mapping/js/execution-plan-ui.js',
   'app/src/main/assets/apps/mapping/js/entry-watch-runtime-v2.js',
   'app/src/main/assets/apps/mapping/js/integrity/mapping-integrity-core.js'
 ];

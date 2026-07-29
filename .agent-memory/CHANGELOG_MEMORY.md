@@ -1,6 +1,10 @@
 # Memory Changelog
 
 ## 2026-07-29
+- Added Rencana Eksekusi as a read-only Mapping consumer with strict fail-closed BUY/SELL/WAIT rules and `setupExecution` → `entryMap.setup` authority priority.
+- Recorded that stale, expired, post-TP1, and terminal setups expose WAIT and hide old executable levels.
+- Added one shared execution-plan Context Envelope and deterministic Amy Bot explanation path without secrets, new signals, market requests, or polling.
+- Recorded Dashboard/Analyze placement, dynamic Asia Liquidity anchor order, fingerprint rendering, and Android-size UI verification.
 - Recorded terminal lifecycle propagation, injectable replay session time, causal forecast/sweep/MSS ordering, structural-target diagnosis, and paired-leg Dealing Location decisions.
 - Added fixed defect history for terminal-state loss, replay wall-clock contamination, pre-forecast sweeps, unpaired dealing anchors, and hidden risk diagnosis.
 - Recorded the 2021–2022 validation result: Dealing Location is no longer the M5 blocker; SESSION is the next cumulative blocker and setup remains zero without threshold changes.

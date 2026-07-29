@@ -684,7 +684,7 @@
     }
   }
 
-  async function submitUniversal(questionOverride = "") {
+  async function submitUniversal(questionOverride = "", options = {}) {
     const input = document.querySelector("[data-amy-input]");
     const send = document.querySelector("[data-amy-send]");
     const panel = document.querySelector(".amy-os-panel");
@@ -700,7 +700,12 @@
     try {
       installOsWrapper();
       if (!window.AmyFXOS?.ask) throw new Error("Amy Mentor belum siap");
-      const result = await window.AmyFXOS.ask(question, { sourceModule: currentModule() });
+      const sourceModule = options.sourceModule || currentModule();
+      const result = await window.AmyFXOS.ask(question, {
+        ...options,
+        sourceModule,
+        context: options.context || undefined
+      });
       thinking?.remove();
       const meta = `${result?.source || "Dari seluruh Amy FX"} • ${result?.provider || "Amy"}`;
       appendMessage("amy", result?.text || "Saya belum mendapat jawaban.", meta);

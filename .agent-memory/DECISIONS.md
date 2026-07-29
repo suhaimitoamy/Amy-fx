@@ -12,6 +12,15 @@
 - Structural target diagnosis distinguishes no target, below 2R, above 8R, risk above 6 ATR, and valid 2R–8R without changing entry geometry or target thresholds.
 - The 2021–2022 final validation remains at zero M5/M15 setups because `SESSION` is the next cumulative blocker. Session rules must not be loosened from this result.
 
+### Rencana Eksekusi Read-Only Contract
+- Rencana Eksekusi is a presentation consumer, not a strategy or analysis engine. Its setup priority is `setupExecution` → `entryMap.setup` → another authoritative runtime output only when the higher-priority source lacks that field.
+- BUY/SELL is fail-closed and requires fresh Mapping data, an active aligned official direction, `entryWatch.entryAllowed === true`, a locked execution plan, the official closed-candle entry lifecycle (`ENTRY_ACTIVE` / `ENTRY CONFIRMED`, or the equivalent internal `ENTRY_TRIGGERED`), valid geometry, and official entry/SL/target levels.
+- WAIT is mandatory for incomplete gates, official context conflict, stale/expired data, post-TP1 management, or terminal lifecycle. Non-executable and old levels remain hidden.
+- Internal lifecycle names are never renamed or duplicated. UI labels only translate the existing Causal Entry Watch status.
+- The feature does not read forming candles, call a market API, create polling, calculate indicators, recalculate RR, or mutate Mapping/Entry Watch objects. It refreshes from existing Mapping, Entry Watch, candle, and market-state events with a content fingerprint.
+- Amy Bot receives the same structured `execution_plan` Context Envelope as the card and uses a deterministic read-only answer path before other market-answer paths. It may explain but cannot reverse the decision or create levels.
+- In Analyze, Rencana Eksekusi is immediately followed by Penjelasan Mapping; dynamic Asia Liquidity is anchored after Penjelasan Mapping. This is presentation-only and does not change Asia session calculation or WITA timing.
+
 ## 2026-07-28
 
 ### Mapping Accuracy V3
