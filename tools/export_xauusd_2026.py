@@ -22,6 +22,7 @@ START_DATE = date(2026, 1, 1)
 # Use the last fully completed UTC day at the time of this export.
 END_DATE = date(2026, 7, 28)
 PRICE_SCALE = 1000.0
+# Dukascopy candle record: millisecond offset from UTC midnight, OHLC integers, volume float.
 RECORD = struct.Struct(">5If")
 OUT_DIR = Path(os.environ.get("EXPORT_OUT_DIR", "artifacts/xauusd-2026"))
 URL_TEMPLATE = (
@@ -41,6 +42,7 @@ MONTH_NAMES = {
     5: "May", 6: "June", 7: "July", 8: "August",
     9: "September", 10: "October", 11: "November", 12: "December",
 }
+Candle = tuple[datetime, float, float, float, float, float]
 
 
 def sha256(path: Path) -> str:
@@ -51,7 +53,7 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def fetch_day(session: requests.Session, day: date) -> list[tuple[datetime, float, float, float, float]]:
+def fetch_day(session: requests.Session, day: date) -> list[Candle]:
     url = URL_TEMPLATE.format(
         symbol=SYMBOL,
         year=day.year,
@@ -81,33 +83,33 @@ def fetch_day(session: requests.Session, day: date) -> list[tuple[datetime, floa
         raise RuntimeError(f"Unexpected record size for {day}: {len(payload)} bytes")
 
     midnight = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
-    rows: list[tuple[datetime, float, float, float, float]] = []
+    rows: list[Candle] = []
     for offset in range(0, len(payload), RECORD.size):
-        seconds, raw_open, raw_high, raw_low, raw_close, _volume = RECORD.unpack_from(payload, offset)
-        timestamp = midnight + timedelta(seconds=int(seconds))
-        candle = (
+        milliseconds, raw_open, raw_high, raw_low, raw_close, volume = RECORD.unpack_from(payload, offset)
+        timestamp = midnight + timedelta(milliseconds=int(milliseconds))
+        rows.append((
             timestamp.replace(tzinfo=None),
             raw_open / PRICE_SCALE,
             raw_high / PRICE_SCALE,
             raw_low / PRICE_SCALE,
             raw_close / PRICE_SCALE,
-        )
-        rows.append(candle)
+            float(volume),
+        ))
     return rows
 
 
-def clean_frame(rows: list[tuple[datetime, float, float, float, float]]) -> pd.DataFrame:
-    frame = pd.DataFrame(rows, columns=["datetime", "open", "high", "low", "close"])
+def clean_frame(rows: list[Candle]) -> pd.DataFrame:
+    frame = pd.DataFrame(rows, columns=["datetime", "open", "high", "low", "close", "volume"])
     if frame.empty:
         return frame
     frame = frame.drop_duplicates(subset=["datetime"], keep="last").sort_values("datetime")
     valid = (
-        frame[["open", "high", "low", "close"]].notna().all(axis=1)
+        frame[["open", "high", "low", "close", "volume"]].notna().all(axis=1)
+        & (frame["volume"] > 0)
         & (frame["high"] >= frame[["open", "close", "low"]].max(axis=1))
         & (frame["low"] <= frame[["open", "close", "high"]].min(axis=1))
     )
-    frame = frame.loc[valid].reset_index(drop=True)
-    return frame
+    return frame.loc[valid].reset_index(drop=True)
 
 
 def resample(frame: pd.DataFrame, rule: str) -> pd.DataFrame:
@@ -117,12 +119,13 @@ def resample(frame: pd.DataFrame, rule: str) -> pd.DataFrame:
         high=("high", "max"),
         low=("low", "min"),
         close=("close", "last"),
+        volume=("volume", "sum"),
     )
-    return aggregated.dropna().reset_index()
+    return aggregated.dropna(subset=["open", "high", "low", "close"]).reset_index()
 
 
 def write_csv(frame: pd.DataFrame, path: Path) -> None:
-    frame.to_csv(
+    frame[["datetime", "open", "high", "low", "close"]].to_csv(
         path,
         index=False,
         date_format="%Y-%m-%d %H:%M:%S",
@@ -134,19 +137,21 @@ def write_csv(frame: pd.DataFrame, path: Path) -> None:
 def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     session = requests.Session()
-    session.headers.update({"User-Agent": "AmyFX-Backtest-Data-Exporter/1.0"})
+    session.headers.update({"User-Agent": "AmyFX-Backtest-Data-Exporter/1.1"})
 
-    monthly_rows: dict[int, list[tuple[datetime, float, float, float, float]]] = {
-        month: [] for month in range(1, 8)
-    }
+    monthly_rows: dict[int, list[Candle]] = {month: [] for month in range(1, 8)}
     current = START_DATE
-    downloaded_days = 0
+    downloaded_source_days = 0
     while current <= END_DATE:
         rows = fetch_day(session, current)
+        active_rows = sum(1 for row in rows if row[5] > 0)
         if rows:
             monthly_rows[current.month].extend(rows)
-            downloaded_days += 1
-        print(f"{current.isoformat()}: {len(rows)} M1 rows", flush=True)
+            downloaded_source_days += 1
+        print(
+            f"{current.isoformat()}: {len(rows)} source rows, {active_rows} active M1 rows",
+            flush=True,
+        )
         current += timedelta(days=1)
 
     manifest: dict[str, object] = {
@@ -154,10 +159,12 @@ def main() -> None:
         "source": "Dukascopy BID native M1 candle data",
         "source_url_template": URL_TEMPLATE,
         "price_scale": PRICE_SCALE,
+        "timestamp_unit": "milliseconds_from_utc_midnight",
+        "zero_volume_rows_removed": True,
         "period_start_utc": START_DATE.isoformat(),
         "period_end_utc": END_DATE.isoformat(),
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "downloaded_trading_days": downloaded_days,
+        "downloaded_source_days": downloaded_source_days,
         "timeframes": list(TIMEFRAMES),
         "months": {},
     }
@@ -166,7 +173,7 @@ def main() -> None:
         month_name = MONTH_NAMES[month]
         frame_m1 = clean_frame(monthly_rows[month])
         if frame_m1.empty:
-            raise RuntimeError(f"No M1 data for {YEAR}-{month:02d}")
+            raise RuntimeError(f"No active M1 data for {YEAR}-{month:02d}")
 
         month_dir = OUT_DIR / f"{YEAR}_{month:02d}_{month_name}"
         month_dir.mkdir(parents=True, exist_ok=True)
