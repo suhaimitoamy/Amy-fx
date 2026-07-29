@@ -1,6 +1,6 @@
 import { detectFvgZones, displacementQuality, h1OrderFlowAt, timestampSeconds } from './candles.mjs';
 
-export const ENGINE_VERSION = 'amyfx-preview-scalper-v1';
+export const ENGINE_VERSION = 'amyfx-preview-scalper-v1.1';
 
 function overlaps(candle, bottom, top) { return candle.high >= bottom && candle.low <= top; }
 function rejectionClose(candle, direction, bottom, top) { return direction === 'BUY' ? candle.close > top : candle.close < bottom; }
