@@ -35,13 +35,28 @@ import { runAnalysis, isCandleStale } from "./api/market-data.js";
     const style = document.createElement("style");
     style.id = "amy-mapping-live-consistency-style-v2";
     style.textContent = `
+      #conn {
+        display:inline-flex !important;
+        align-items:center;
+        justify-content:center;
+        width:18px;
+        min-width:18px;
+        height:18px;
+        padding:0 !important;
+        margin-left:auto;
+        overflow:hidden;
+        font-size:18px !important;
+        line-height:1 !important;
+        letter-spacing:0 !important;
+        white-space:nowrap;
+      }
       #conn[data-quote-freshness="LIVE"][data-analysis-freshness="FRESH"] { color:#4ade80 !important; }
       #conn[data-quote-freshness="LIVE"][data-analysis-freshness="STALE"],
-      #conn[data-quote-freshness="LIVE"][data-analysis-freshness="EXPIRED"] { color:#fbbf24 !important; }
+      #conn[data-quote-freshness="LIVE"][data-analysis-freshness="EXPIRED"],
+      #conn[data-analysis-freshness="LOADING"] { color:#fbbf24 !important; }
       #conn[data-quote-freshness="STALE"],
       #conn[data-quote-freshness="EXPIRED"],
       #conn[data-quote-freshness="OFFLINE"] { color:#fb7185 !important; }
-      #conn[data-analysis-freshness="LOADING"] { color:#e7c65a !important; }
     `;
     (document.head || document.documentElement).appendChild(style);
   }
@@ -55,15 +70,19 @@ import { runAnalysis, isCandleStale } from "./api/market-data.js";
     const connected = state.conn === "Connected" && quoteState === "LIVE";
 
     if (conn) {
-      let label = `○ ${state.conn || "Offline"}`;
-      if (refreshInFlight && quoteState === "LIVE") label = `● Price LIVE · memperbarui Mapping ${state.tf}`;
-      else if (quoteState === "LIVE" && mappingState === "FRESH") label = `● Price LIVE · Mapping ${state.tf} FRESH`;
-      else if (quoteState === "LIVE") label = `● Price LIVE · Mapping ${state.tf} ${mappingState}`;
-      else label = `○ Price ${quoteState} · Mapping ${state.tf} ${mappingState}`;
-      if (conn.textContent !== label) conn.textContent = label;
+      const accessibleStatus = refreshInFlight && quoteState === "LIVE"
+        ? `Harga live, Mapping ${state.tf} sedang diperbarui`
+        : quoteState === "LIVE" && mappingState === "FRESH"
+          ? `Harga dan Mapping ${state.tf} fresh`
+          : quoteState === "LIVE"
+            ? `Harga live, Mapping ${state.tf} ${mappingState}`
+            : `Harga ${quoteState}, Mapping ${state.tf} ${mappingState}`;
+      if (conn.textContent !== "●") conn.textContent = "●";
       conn.dataset.quoteFreshness = quoteState;
       conn.dataset.analysisFreshness = mappingState;
       conn.className = connected ? "status on" : "status";
+      conn.setAttribute("aria-label", accessibleStatus);
+      conn.title = accessibleStatus;
     }
 
     const topTime = document.getElementById("top-wib") || document.getElementById("top-wita");
