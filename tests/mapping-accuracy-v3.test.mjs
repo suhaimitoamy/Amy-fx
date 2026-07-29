@@ -11,8 +11,10 @@ import {
   advanceTimeframeEntryLifecycle,
   createTimeframeEntryPlan,
   detectTimeframeEntryMap,
-  entryTrendFiltersAt
+  entryTrendFiltersAt,
+  structuralTargetAssessment
 } from '../app/src/main/assets/apps/mapping/js/engine/concept-entry-map-v3.js';
+import { buildCausalEntryWatch } from '../app/src/main/assets/apps/mapping/js/engine/concept-analyze.js';
 import { buildMappingSnapshot } from '../app/src/main/assets/apps/mapping/js/engine/mapping-snapshot.js';
 import { structureDisplacementMetrics } from '../app/src/main/assets/apps/mapping/js/engine/concept-structure-metrics.js';
 import { evaluateZoneLifecycle } from '../app/src/main/assets/apps/mapping/js/engine/concept-zone-lifecycle.js';
@@ -237,6 +239,79 @@ test('causal entry plan is available on all timeframes and always uses a structu
     assert.equal(result.activeSetup.trendFilters.emaStack, true, tf);
     assert.equal(result.activeSetup.trendFilters.context.aligned, true, tf);
   }
+});
+
+test('Structural Target diagnosis distinguishes every existing hard-gate failure without changing thresholds', () => {
+  const profile = TIMEFRAME_ENTRY_PROFILES.M5;
+  const target = level => ({
+    type: 'BSL',
+    subtype: 'EXTERNAL_SWING',
+    tier: 'EXTERNAL_KEY',
+    level,
+    availableIndex: 10,
+    interactionIndex: -1
+  });
+  const assess = ({ levels, risk = 5, atr = 1 }) => structuralTargetAssessment({
+    marketConcepts: { liquidityLevels: levels },
+    direction: 'BULLISH',
+    entry: 100,
+    risk,
+    atr,
+    triggerIndex: 50,
+    profile
+  });
+
+  assert.equal(assess({ levels: [] }).code, 'NO TARGET');
+  assert.equal(assess({ levels: [target(109)] }).code, 'TARGET < 2R');
+  assert.equal(assess({ levels: [target(145)] }).code, 'TARGET > 8R');
+  assert.equal(assess({ levels: [target(114)], risk: 7 }).code, 'RISK > 6 ATR');
+
+  const valid = assess({ levels: [target(115)] });
+  assert.equal(valid.code, 'TARGET VALID 2R–8R');
+  assert.equal(valid.valid, true);
+  assert.equal(valid.target.level, 115);
+  assert.equal(profile.minimumTargetR, 2);
+  assert.equal(profile.maximumTargetR, 8);
+  assert.equal(profile.maximumRiskAtr, 6);
+});
+
+test('Entry Watch preserves a terminal Causal V3 outcome and locked geometry', () => {
+  const setup = {
+    executionMode: 'CAUSAL_ENTRY_MAP_ALL_TF',
+    live: false,
+    lifecycleStatus: 'TP1 / BE',
+    timestamp: 1_700_000_000_000,
+    entry: 100,
+    entryLow: 100,
+    entryHigh: 100,
+    initialSl: 95,
+    sl: 100,
+    tp1: 105,
+    tp2: 112,
+    tp1Hit: true,
+    endIndex: 120,
+    endTime: 1_700_007_200_000
+  };
+  const watch = buildCausalEntryWatch({
+    setup,
+    activeSetup: null,
+    scenario: {
+      direction: 'BUY',
+      status: 'TP1 / BE',
+      reason: 'Closed-candle lifecycle terminal.'
+    }
+  }, 'M5');
+
+  assert.equal(watch.status, 'TP1 / BE');
+  assert.equal(watch.lifecycleStage, 'STOPPED');
+  assert.equal(watch.active, false);
+  assert.equal(watch.entryAllowed, false);
+  assert.equal(watch.terminal, true);
+  assert.equal(watch.executionPlan.lifecycleStatus, 'TP1 / BE');
+  assert.equal(watch.executionPlan.initialSl, 95);
+  assert.equal(watch.executionPlan.sl, 100);
+  assert.equal(watch.executionPlan.endIndex, 120);
+  assert.equal(watch.executionPlan.endTime, 1_700_007_200_000);
 });
 
 test('entry trend gates use only HTF candles that were closed by the trigger close', () => {

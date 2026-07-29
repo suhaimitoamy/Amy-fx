@@ -35,8 +35,10 @@ test('Paused or terminal Entry Watch cannot keep an old BUY or SELL card visible
   assert.match(runtime, /\['SL HIT', 'TP2 HIT', 'TP1 \/ BE', 'EXPIRED'\]/);
   assert.match(runtime, /if \(isTerminalScenario\(canonical\)\) return 'WAIT'/);
   assert.match(runtime, /amy-entry-watch-card/);
-  assert.match(analyze, /lifecycleStage: activeSetup/);
-  assert.match(analyze, /terminal: terminalSetup/);
+  assert.match(analyze, /causalEntryLifecycleContract/);
+  assert.match(analyze, /!lifecycle\.terminal/);
+  assert.match(analyze, /entryAllowed: Boolean\(activeSetup\)/);
+  assert.match(analyze, /terminal: lifecycle\.terminal/);
   assert.doesNotMatch(runtime, /result\.bestSetup\s*=/);
 });
 

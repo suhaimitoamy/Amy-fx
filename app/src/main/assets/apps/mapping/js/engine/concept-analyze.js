@@ -1,6 +1,9 @@
 import { analyze as analyzeLegacy, tfGroup } from './core/analyze.js';
 import { detectMarketConcepts } from './concept-engine.js';
-import { detectTimeframeEntryMap } from './concept-entry-map-v3.js';
+import {
+  causalEntryLifecycleContract,
+  detectTimeframeEntryMap
+} from './concept-entry-map-v3.js';
 import { evaluateValidatedMarketContext } from './validated-market-context.js';
 
 export { tfGroup };
@@ -32,8 +35,66 @@ function entryMapRow(entryMap) {
   ];
 }
 
-export function analyze(candles, tf, htfBiases = {}, currentPrice = null, htfCandles = {}) {
-  const result = analyzeLegacy(candles, tf, htfBiases, currentPrice, htfCandles);
+export function buildCausalEntryWatch(entryMap, tf) {
+  const activeSetup = entryMap?.activeSetup || null;
+  const authoritativeSetup = entryMap?.setup || activeSetup;
+  const lifecycle = causalEntryLifecycleContract(authoritativeSetup);
+  return {
+    version: '3.0.0',
+    model: 'AMY_CAUSAL_ENTRY_MAP_MONITOR',
+    sourceTf: tf,
+    triggerTf: tf,
+    direction: entryMap?.scenario?.direction || 'WAIT',
+    status: authoritativeSetup
+      ? lifecycle.status
+      : entryMap?.scenario?.status || 'WAIT',
+    lifecycleStage: authoritativeSetup
+      ? lifecycle.lifecycleStage
+      : 'WAITING_CONFIRMATION',
+    active: Boolean(
+      !lifecycle.terminal
+      && entryMap?.scenario?.direction
+      && entryMap.scenario.direction !== 'WAIT'
+    ),
+    entryAllowed: Boolean(activeSetup),
+    terminal: lifecycle.terminal,
+    reason: entryMap?.scenario?.reason || 'Sequence causal belum lengkap.',
+    scenario: entryMap?.scenario,
+    executionPlan: authoritativeSetup ? {
+      locked: true,
+      lockedAt: authoritativeSetup.timestamp,
+      entry: authoritativeSetup.entry,
+      entryLow: authoritativeSetup.entryLow,
+      entryHigh: authoritativeSetup.entryHigh,
+      initialSl: authoritativeSetup.initialSl,
+      sl: authoritativeSetup.sl,
+      tp1: authoritativeSetup.tp1,
+      tp2: authoritativeSetup.tp2,
+      lifecycleStatus: lifecycle.status,
+      terminal: lifecycle.terminal,
+      tp1Hit: Boolean(authoritativeSetup.tp1Hit),
+      endIndex: authoritativeSetup.endIndex,
+      endTime: authoritativeSetup.endTime || null
+    } : null
+  };
+}
+
+export function analyze(
+  candles,
+  tf,
+  htfBiases = {},
+  currentPrice = null,
+  htfCandles = {},
+  analysisOptions = {}
+) {
+  const result = analyzeLegacy(
+    candles,
+    tf,
+    htfBiases,
+    currentPrice,
+    htfCandles,
+    analysisOptions
+  );
   if (!Array.isArray(candles) || candles.length < 30) return { ...result, htfBiases };
   const marketConcepts = detectMarketConcepts(candles, {
     tf,
@@ -53,7 +114,6 @@ export function analyze(candles, tf, htfBiases = {}, currentPrice = null, htfCan
     htfCandles
   });
   const activeSetup = entryMap.activeSetup || null;
-  const terminalSetup = Boolean(entryMap.setup && entryMap.setup.live === false);
   const replacementRows = [...marketConcepts.concepts, entryMapRow(entryMap)];
 
   return {
@@ -74,38 +134,7 @@ export function analyze(candles, tf, htfBiases = {}, currentPrice = null, htfCan
       ...entryMap,
       status: entryMap.status || 'AMY_CAUSAL_ENTRY_MAP_V3'
     },
-    entryWatch: {
-      version: '3.0.0',
-      model: 'AMY_CAUSAL_ENTRY_MAP_MONITOR',
-      sourceTf: tf,
-      triggerTf: tf,
-      direction: entryMap.scenario?.direction || 'WAIT',
-      status: entryMap.scenario?.status || 'WAIT',
-      lifecycleStage: activeSetup
-        ? 'ENTRY_CONFIRMED'
-        : terminalSetup
-          ? 'TERMINAL'
-          : 'WAITING_CONFIRMATION',
-      active: Boolean(
-        !terminalSetup
-        && entryMap.scenario?.direction
-        && entryMap.scenario.direction !== 'WAIT'
-      ),
-      entryAllowed: Boolean(activeSetup),
-      terminal: terminalSetup,
-      reason: entryMap.scenario?.reason || 'Sequence causal belum lengkap.',
-      scenario: entryMap.scenario,
-      executionPlan: activeSetup ? {
-        locked: true,
-        lockedAt: activeSetup.timestamp,
-        entry: activeSetup.entry,
-        entryLow: activeSetup.entryLow,
-        entryHigh: activeSetup.entryHigh,
-        sl: activeSetup.sl,
-        tp1: activeSetup.tp1,
-        tp2: activeSetup.tp2
-      } : null
-    },
+    entryWatch: buildCausalEntryWatch(entryMap, tf),
     validatedMarketContext,
     validatedMarketState: validatedMarketContext.marketState,
     validatedDirectionForecast: validatedMarketContext.directionForecast,

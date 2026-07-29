@@ -7,6 +7,7 @@ import {
   SUPPORTED_MAPPING_TIMEFRAMES,
   timeframeDurationMs
 } from '../engine/mapping-timeframes.js';
+import { causalEntryLifecycleContract } from '../engine/concept-entry-map-v3.js';
 import { buildMappingSnapshot } from '../engine/mapping-snapshot.js';
 import { render, renderSoft, renderAnalyzeLive } from '../ui/ui-render.js';
 import { sendTargetsToNative, notifyImportant } from '../bridge/android-bridge.js';
@@ -322,6 +323,81 @@ export function buildSetupExecution(result, { persist = true } = {}) {
     return { ...defaultExecution, status: 'DATA USANG', lifecycleStage: 'DATA_STALE', invalidated: true, invalidationReason: 'Data market usang.' };
   }
 
+  const causalSetup = result.entryMap?.setup;
+  const terminalCausalSetup = causalSetup?.executionMode === 'CAUSAL_ENTRY_MAP_ALL_TF'
+    && causalSetup.live === false;
+  if (terminalCausalSetup) {
+    const setupDirectionValue = setupDirection(causalSetup);
+    const direction = setupDirectionValue > 0 ? 'BUY' : setupDirectionValue < 0 ? 'SELL' : 'WAIT';
+    const geometrySetup = Number.isFinite(Number(causalSetup.initialSl))
+      ? { ...causalSetup, sl: Number(causalSetup.initialSl) }
+      : causalSetup;
+    const geom = validateSetupGeometry(geometrySetup, direction);
+    if (!geom.valid) {
+      return {
+        ...defaultExecution,
+        direction,
+        status: 'INVALID SETUP GEOMETRY',
+        lifecycleStage: 'INVALID_GEOMETRY',
+        alignedWithForecast: false,
+        geometryValid: false,
+        invalidated: true,
+        invalidationReason: geom.reason
+      };
+    }
+
+    const lifecycle = causalEntryLifecycleContract(causalSetup);
+    const setupId = buildSetupId(causalSetup, forecast, tf);
+    const lo = Math.min(Number(causalSetup.entryLow), Number(causalSetup.entryHigh));
+    const hi = Math.max(Number(causalSetup.entryLow), Number(causalSetup.entryHigh));
+    const tp2 = Number(causalSetup.tp2);
+    const target1Secured = Boolean(causalSetup.tp1Hit);
+    if (persist) {
+      persistTerminalSetup({
+        setupId,
+        lifecycleStage: lifecycle.lifecycleStage,
+        status: lifecycle.status,
+        invalidationReason: '',
+        entryTouched: true,
+        target1Secured,
+        entryAt: Number(causalSetup.timestamp || 0) || Date.now(),
+        target1At: target1Secured ? Number(causalSetup.tp1Time || 0) || null : null,
+        terminalAt: Number(causalSetup.endTime || 0) || Date.now()
+      });
+      deleteActivePointer(tf);
+    }
+
+    return {
+      active: false,
+      setupId,
+      direction,
+      status: lifecycle.status,
+      lifecycleStage: lifecycle.lifecycleStage,
+      outcome: lifecycle.status,
+      entryLow: lo,
+      entryHigh: hi,
+      stopLoss: Number(causalSetup.sl),
+      initialStopLoss: Number(causalSetup.initialSl),
+      target1: Number(causalSetup.tp1),
+      target2: Number.isFinite(tp2) ? tp2 : null,
+      singleTarget: Boolean(causalSetup.singleTarget),
+      entryTouched: true,
+      target1Secured,
+      terminal: true,
+      alignedWithForecast: direction !== 'WAIT',
+      geometryValid: true,
+      invalidated: false,
+      invalidationReason: '',
+      liquidityTarget: Number.isFinite(tp2)
+        ? { type: causalSetup.targetType || 'STRUCTURAL', level: tp2 }
+        : null,
+      endIndex: Number.isInteger(causalSetup.endIndex) ? causalSetup.endIndex : null,
+      endTime: Number(causalSetup.endTime || 0) || null,
+      lifecycle: causalSetup.lifecycle || null,
+      authority: 'CLOSED_CANDLE_CAUSAL_ENGINE'
+    };
+  }
+
   if (!forecastActive || dd.invalidated || dd.source !== 'VALIDATED_DIRECTION_FORECAST' || (dd.signal !== 'BUY' && dd.signal !== 'SELL')) {
     const reason = dd.invalidationReason || 'Direction Forecast tidak aktif atau ter-invalidasi.';
     if (persist) {
@@ -414,9 +490,10 @@ export function buildSetupExecution(result, { persist = true } = {}) {
 
   if (causalExecution) {
     const target1Secured = Boolean(bestSetup.tp1Hit);
-    const lifecycleStage = target1Secured ? 'RUNNER_ACTIVE' : 'ENTRY_ACTIVE';
+    const lifecycle = causalEntryLifecycleContract(bestSetup);
+    const lifecycleStage = lifecycle.lifecycleStage;
     const status = target1Secured
-      ? 'TP1 SECURED · RUNNER KE TARGET STRUKTURAL'
+      ? lifecycle.status
       : 'ENTRY CONFIRMED · CLOSED CANDLE';
     if (persist) {
       persistSetupLifecycle({

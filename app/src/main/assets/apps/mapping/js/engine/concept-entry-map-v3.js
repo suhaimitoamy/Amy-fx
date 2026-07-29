@@ -331,7 +331,15 @@ function targetAvailableAt(level, index) {
   return available <= index && (interaction < 0 || interaction > index);
 }
 
-function structuralTarget(marketConcepts, direction, entry, risk, triggerIndex, profile) {
+export function structuralTargetAssessment({
+  marketConcepts,
+  direction,
+  entry,
+  risk,
+  atr,
+  triggerIndex,
+  profile
+}) {
   const expected = targetType(direction);
   const candidates = (marketConcepts?.liquidityLevels || [])
     .filter(level =>
@@ -351,10 +359,38 @@ function structuralTarget(marketConcepts, direction, entry, risk, triggerIndex, 
     })
     .sort((a, b) => a.reward - b.reward);
   const firstObstacle = candidates[0] || null;
-  if (!firstObstacle) return null;
-  if (firstObstacle.rr < profile.minimumTargetR
-    || firstObstacle.rr > profile.maximumTargetR) return null;
-  return firstObstacle;
+  const riskAtr = Number.isFinite(atr) && atr > 0 ? risk / atr : null;
+
+  let code = 'NO TARGET';
+  if (Number.isFinite(riskAtr) && riskAtr > profile.maximumRiskAtr) {
+    code = 'RISK > 6 ATR';
+  } else if (firstObstacle?.rr < profile.minimumTargetR) {
+    code = 'TARGET < 2R';
+  } else if (firstObstacle?.rr > profile.maximumTargetR) {
+    code = 'TARGET > 8R';
+  } else if (firstObstacle) {
+    code = 'TARGET VALID 2R–8R';
+  }
+
+  const valid = code === 'TARGET VALID 2R–8R';
+  return {
+    code,
+    valid,
+    target: valid ? firstObstacle : null,
+    firstObstacle,
+    riskAtr
+  };
+}
+
+function targetAssessmentDetail(assessment) {
+  const obstacle = assessment?.firstObstacle;
+  const obstacleDetail = obstacle
+    ? `${obstacle.type} ${Number(obstacle.level).toFixed(2)} · ${Number(obstacle.rr).toFixed(2)}R`
+    : 'Tidak ada obstacle struktural aktif di sisi target';
+  if (assessment?.code === 'RISK > 6 ATR') {
+    return `${assessment.code} · ${Number(assessment.riskAtr).toFixed(2)} ATR · ${obstacleDetail}`;
+  }
+  return `${assessment?.code || 'NO TARGET'} · ${obstacleDetail}`;
 }
 
 export function createTimeframeEntryPlan({
@@ -414,6 +450,7 @@ export function createTimeframeEntryPlan({
     tp1Index: -1,
     tp1Time: null,
     endIndex: -1,
+    endTime: null,
     live: true,
     lifecycleStatus: bullish ? 'LONG ACTIVE' : 'SHORT ACTIVE',
     sweepType: sweep.type,
@@ -450,11 +487,13 @@ export function advanceTimeframeEntryLifecycle(plan, candle, index, profile = en
       plan.live = false;
       plan.lifecycleStatus = 'SL HIT';
       plan.endIndex = index;
+      plan.endTime = timestampMs(candle.time);
     } else if (tp2Hit) {
       plan.tp1Hit = true;
       plan.live = false;
       plan.lifecycleStatus = 'TP2 HIT';
       plan.endIndex = index;
+      plan.endTime = timestampMs(candle.time);
     } else if (tp1Hit) {
       plan.tp1Hit = true;
       plan.tp1Index = index;
@@ -466,18 +505,57 @@ export function advanceTimeframeEntryLifecycle(plan, candle, index, profile = en
     plan.live = false;
     plan.lifecycleStatus = 'TP2 HIT';
     plan.endIndex = index;
+    plan.endTime = timestampMs(candle.time);
   } else if (breakEvenHit) {
     plan.live = false;
     plan.lifecycleStatus = 'TP1 / BE';
     plan.endIndex = index;
+    plan.endTime = timestampMs(candle.time);
   }
 
   if (plan.live && index - plan.startIndex >= profile.expiryBars) {
     plan.live = false;
     plan.lifecycleStatus = 'EXPIRED';
     plan.endIndex = index;
+    plan.endTime = timestampMs(candle.time);
   }
   return plan;
+}
+
+export function causalEntryLifecycleContract(setup) {
+  if (!setup) {
+    return {
+      status: 'WAIT',
+      lifecycleStage: 'WAITING_CONFIRMATION',
+      active: false,
+      terminal: false
+    };
+  }
+
+  const terminal = setup.live === false;
+  const status = terminal
+    ? String(setup.lifecycleStatus || setup.status || 'TERMINAL')
+    : setup.tp1Hit
+      ? 'TP1 HIT / BE'
+      : 'ENTRY CONFIRMED';
+  const lifecycleStage = terminal
+    ? status === 'TP2 HIT'
+      ? 'TARGET_HIT'
+      : status === 'EXPIRED'
+        ? 'EXPIRED'
+        : status === 'SL HIT' || status === 'TP1 / BE'
+          ? 'STOPPED'
+          : 'TERMINAL'
+    : setup.tp1Hit
+      ? 'RUNNER_ACTIVE'
+      : 'ENTRY_ACTIVE';
+
+  return {
+    status,
+    lifecycleStage,
+    active: !terminal,
+    terminal
+  };
 }
 
 function setupView(plan, values) {
@@ -605,9 +683,24 @@ export function detectTimeframeEntryMap(candles, {
     ? Math.min(Number(triggerCandle?.low), protectedLevel) - atr * profile.slAtrPad
     : Math.max(Number(triggerCandle?.high), protectedLevel) + atr * profile.slAtrPad;
   const risk = direction === 'BULLISH' ? entry - provisionalStop : provisionalStop - entry;
-  const target = mss && risk > 0
-    ? structuralTarget(marketConcepts, direction, entry, risk, mss.index, profile)
-    : null;
+  const targetDiagnosis = mss && risk > 0
+    ? structuralTargetAssessment({
+        marketConcepts,
+        direction,
+        entry,
+        risk,
+        atr,
+        triggerIndex: mss.index,
+        profile
+      })
+    : {
+        code: 'NO TARGET',
+        valid: false,
+        target: null,
+        firstObstacle: null,
+        riskAtr: null
+      };
+  const target = targetDiagnosis.target;
 
   const requirements = [
     requirement('DATA', true, `${values.length} closed candles ${timeframe}`),
@@ -650,7 +743,11 @@ export function detectTimeframeEntryMap(candles, {
     ),
     requirement('DEALING LOCATION', Boolean(mss && locationOk), location.zone),
     requirement('CLOSE LOCATION', Boolean(mss && closeOk), closeOk ? 'Close mendukung arah' : 'Close belum kuat'),
-    requirement('STRUCTURAL TARGET ≥ 2R', Boolean(target), target ? `${target.type} ${Number(target.level).toFixed(2)} · ${target.rr.toFixed(2)}R` : 'Target pertama terlalu dekat atau belum tersedia')
+    requirement(
+      'STRUCTURAL TARGET ≥ 2R',
+      Boolean(target),
+      targetAssessmentDetail(targetDiagnosis)
+    )
   ];
   const hardRequirements = requirements.filter(item =>
     (item.label !== 'SESSION' || profile.sessionRequired)
@@ -733,6 +830,17 @@ export function detectTimeframeEntryMap(candles, {
         level: target.level,
         rr: target.rr
       } : null,
+      targetDiagnosis: {
+        code: targetDiagnosis.code,
+        riskAtr: targetDiagnosis.riskAtr,
+        firstObstacle: targetDiagnosis.firstObstacle ? {
+          type: targetDiagnosis.firstObstacle.type,
+          subtype: targetDiagnosis.firstObstacle.subtype,
+          tier: targetDiagnosis.firstObstacle.tier,
+          level: targetDiagnosis.firstObstacle.level,
+          rr: targetDiagnosis.firstObstacle.rr
+        } : null
+      },
       protectedLevel: Number.isFinite(protectedLevel) ? protectedLevel : null,
       reason: activeSetup
         ? `Sequence ${timeframe} lengkap: HTF + EMA → sweep → displaced MSS → target struktural.`
