@@ -64,14 +64,16 @@ test('shared candle coordinator refreshes only closed watch timeframes', () => {
   assert.match(timeframe, /mondayUtcAnchorSeconds/);
 });
 
-test('native scanner is background-only and rate limited', () => {
+test('legacy native Mapping scanner remains permanently disabled', () => {
   assert.ok(index.includes('js/scanner-visibility-gate.js'));
-  assert.match(scannerGate, /document\.hidden/);
   assert.match(scannerGate, /stopBackgroundScanner/);
-  assert.match(scannerGate, /startBackgroundScanner/);
+  assert.doesNotMatch(scannerGate, /startBackgroundScanner/);
   assert.match(scannerGate, /amyfx:entry-watch-updated/);
-  assert.match(scannerService, /MARKET_POLL_MS = 5L \* 60L \* 1000L/);
-  assert.match(scannerService, /memeriksa harga setiap 5 menit/);
+  assert.match(scannerGate, /only active notification source/);
+  assert.match(scannerService, /Legacy local Mapping scanner is retired/);
+  assert.match(scannerService, /putBoolean\(KEY_SCANNER_ENABLED, false\)/);
+  assert.match(scannerService, /return START_NOT_STICKY/);
+  assert.doesNotMatch(scannerService, /MARKET_POLL_MS/);
 });
 
 test('analysis view preserves disclosure state without forced scroll movement', () => {
