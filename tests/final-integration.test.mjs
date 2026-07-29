@@ -33,7 +33,7 @@ test('all critical Mapping modules pass JavaScript syntax validation', () => {
   }
 });
 
-test('causal all-timeframe Entry Map owns execution and the watch runtime is read-only', () => {
+test('causal all-timeframe Entry Map owns execution and hidden watch runtime stays read-only', () => {
   const analyze = source('app/src/main/assets/apps/mapping/js/engine/concept-analyze.js');
   const runtime = source('app/src/main/assets/apps/mapping/js/entry-watch-runtime-v2.js');
 
@@ -43,12 +43,14 @@ test('causal all-timeframe Entry Map owns execution and the watch runtime is rea
   assert.match(analyze, /AMY_CAUSAL_ENTRY_MAP_MONITOR/);
   assert.doesNotMatch(analyze, /legacyEntryMap/);
   assert.match(runtime, /result\.mappingSnapshot/);
-  assert.match(runtime, /READ ONLY/);
+  assert.match(runtime, /readOnly:\s*true/);
+  assert.match(runtime, /document\.getElementById\(CARD_ID\)\?\.remove\(\)/);
+  assert.doesNotMatch(runtime, /insertAdjacentHTML|outerHTML\s*=/);
   assert.doesNotMatch(runtime, /result\.bestSetup\s*=/);
   assert.doesNotMatch(runtime, /result\.setups\s*=/);
 });
 
-test('Mapping UI loads one read-only watch, all timeframe controls, and WITA labels', () => {
+test('Mapping UI loads hidden watch data, all timeframe controls, and WITA labels', () => {
   const html = source('app/src/main/assets/apps/mapping/index.html');
   const main = source('app/src/main/assets/apps/mapping/js/main.js');
   const ui = source('app/src/main/assets/apps/mapping/js/ui/ui-render.js');
