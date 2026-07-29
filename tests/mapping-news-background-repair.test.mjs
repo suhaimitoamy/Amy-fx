@@ -28,13 +28,14 @@ test('Mapping repairs freshness from the latest actually closed candle', () => {
   assert.match(runtime, /amyfx:candles-updated/);
 });
 
-test('Paused or terminal Entry Watch cannot keep an old BUY or SELL card visible', () => {
+test('Entry Watch card stays hidden while lifecycle data remains read-only', () => {
   const runtime = read('app/src/main/assets/apps/mapping/js/entry-watch-runtime-v2.js');
   const analyze = read('app/src/main/assets/apps/mapping/js/engine/concept-analyze.js');
-  assert.match(runtime, /function isTerminalScenario/);
-  assert.match(runtime, /\['SL HIT', 'TP2 HIT', 'TP1 \/ BE', 'EXPIRED'\]/);
-  assert.match(runtime, /if \(isTerminalScenario\(canonical\)\) return 'WAIT'/);
   assert.match(runtime, /amy-entry-watch-card/);
+  assert.match(runtime, /document\.getElementById\(CARD_ID\)\?\.remove\(\)/);
+  assert.match(runtime, /readOnly:\s*true/);
+  assert.match(runtime, /canonical\.execution\?\.lifecycleStage/);
+  assert.doesNotMatch(runtime, /insertAdjacentHTML|outerHTML\s*=/);
   assert.match(analyze, /causalEntryLifecycleContract/);
   assert.match(analyze, /!lifecycle\.terminal/);
   assert.match(analyze, /entryAllowed: Boolean\(activeSetup\)/);
