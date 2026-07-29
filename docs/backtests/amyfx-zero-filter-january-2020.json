@@ -1,0 +1,146 @@
+{
+  "experiment": "Amy FX zero-filter baseline",
+  "period": "January 2020",
+  "symbol": "XAUUSD",
+  "timeframes": [
+    "M5",
+    "M15"
+  ],
+  "definition": {
+    "selectionFiltersRemoved": [
+      "Direction Forecast",
+      "Opposing liquidity sweep",
+      "Displaced MSS sequence",
+      "HTF alignment",
+      "EMA stack",
+      "EMA distance",
+      "Session",
+      "Dealing location",
+      "Close location",
+      "Structural target filter",
+      "Expiry filter"
+    ],
+    "minimalTriggerRetained": "Raw close break of last causally confirmed 4-bar fractal swing",
+    "entry": "Next candle open",
+    "risk": "1.0 ATR(14) from entry",
+    "management": "TP1 at 1R then stop to break-even; TP2 at 2R",
+    "positionLimit": "One active trade per timeframe",
+    "ambiguousBarPolicy": "Conservative: SL/BE before target when both are touched in one candle",
+    "futureLeak": false
+  },
+  "results": [
+    {
+      "timeframe": "M5",
+      "candles": 6024,
+      "firstCandle": "2020-01-01 18:00:00",
+      "lastCandle": "2020-01-31 16:55:00",
+      "rawBreakSignals": 325,
+      "signalsSkippedWhileTradeActive": 14,
+      "trades": 311,
+      "outcomes": {
+        "SL HIT": 160,
+        "TP2 HIT": 79,
+        "TP1 / BE": 72
+      },
+      "tp2WinRatePct": 25.4,
+      "tp1OrBetterRatePct": 48.55,
+      "lossRatePct": 51.45,
+      "fullRunnerNetR": -2,
+      "halfAtTp1NetR": -5.5,
+      "averageBarsHeld": 4.28
+    },
+    {
+      "timeframe": "M15",
+      "candles": 2008,
+      "firstCandle": "2020-01-01 18:00:00",
+      "lastCandle": "2020-01-31 16:45:00",
+      "rawBreakSignals": 105,
+      "signalsSkippedWhileTradeActive": 4,
+      "trades": 101,
+      "outcomes": {
+        "TP2 HIT": 26,
+        "SL HIT": 52,
+        "TP1 / BE": 23
+      },
+      "tp2WinRatePct": 25.74,
+      "tp1OrBetterRatePct": 48.51,
+      "lossRatePct": 51.49,
+      "fullRunnerNetR": 0,
+      "halfAtTp1NetR": -1.5,
+      "averageBarsHeld": 3.88
+    }
+  ],
+  "combined": {
+    "rawBreakSignals": 430,
+    "signalsSkippedWhileTradeActive": 18,
+    "trades": 412,
+    "outcomes": {
+      "SL HIT": 212,
+      "TP2 HIT": 105,
+      "TP1 / BE": 95
+    },
+    "tp2WinRatePct": 25.49,
+    "tp1OrBetterRatePct": 48.54,
+    "lossRatePct": 51.46,
+    "fullRunnerNetR": -2,
+    "halfAtTp1NetR": -7.0
+  },
+  "performanceAccounting": {
+    "fullRunner": "Full position remains open after TP1; TP1 only moves SL to break-even. TP2=+2R, TP1/BE=0R, SL=-1R.",
+    "halfAtTp1": "50% position closed at TP1 and 50% runs to TP2. TP2 outcome=+1.5R, TP1/BE=+0.5R, SL=-1R."
+  },
+  "directionBreakdown": {
+    "M15": {
+      "BUY": {
+        "trades": 53,
+        "outcomes": {
+          "SL HIT": 25,
+          "TP2 HIT": 17,
+          "TP1 / BE": 11
+        },
+        "tp2WinRatePct": 32.08,
+        "tp1OrBetterRatePct": 52.83,
+        "fullRunnerNetR": 9,
+        "halfAtTp1NetR": 6.0
+      },
+      "SELL": {
+        "trades": 48,
+        "outcomes": {
+          "SL HIT": 27,
+          "TP1 / BE": 12,
+          "TP2 HIT": 9
+        },
+        "tp2WinRatePct": 18.75,
+        "tp1OrBetterRatePct": 43.75,
+        "fullRunnerNetR": -9,
+        "halfAtTp1NetR": -7.5
+      }
+    },
+    "M5": {
+      "BUY": {
+        "trades": 171,
+        "outcomes": {
+          "SL HIT": 84,
+          "TP2 HIT": 44,
+          "TP1 / BE": 43
+        },
+        "tp2WinRatePct": 25.73,
+        "tp1OrBetterRatePct": 50.88,
+        "fullRunnerNetR": 4,
+        "halfAtTp1NetR": 3.5
+      },
+      "SELL": {
+        "trades": 140,
+        "outcomes": {
+          "SL HIT": 76,
+          "TP2 HIT": 35,
+          "TP1 / BE": 29
+        },
+        "tp2WinRatePct": 25.0,
+        "tp1OrBetterRatePct": 45.71,
+        "fullRunnerNetR": -6,
+        "halfAtTp1NetR": -9.0
+      }
+    }
+  }
+}
