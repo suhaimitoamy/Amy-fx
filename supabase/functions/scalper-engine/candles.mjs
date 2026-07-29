@@ -125,7 +125,7 @@ export function detectFvgZones(m15Rows) {
     const top = bullish ? third.low : first.low;
     if (!(top > bottom)) continue;
     zones.push({
-      id: `FVG:${direction}:${index}:${bottom.toFixed(5)}:${top.toFixed(5)}`,
+      id: `FVG:${direction}:${third.open_time}:${bottom.toFixed(5)}:${top.toFixed(5)}`,
       direction, bottom, top, mid: (bottom + top) / 2,
       origin_index: index - 2, displacement_index: index - 1,
       confirmation_index: index, available_index: index,
