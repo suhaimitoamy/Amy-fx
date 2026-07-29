@@ -1,67 +1,32 @@
 (function () {
   'use strict';
 
-  const STORAGE_KEY = 'amy_entry_watch_state_v3';
-  let desiredWatch = null;
-  let lastAppliedKey = '';
+  if (window.__amyFxLegacyScannerDisabled) return;
+  window.__amyFxLegacyScannerDisabled = true;
 
-  function readStoredWatch() {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-    } catch (_) {
-      return null;
-    }
-  }
+  let stopped = false;
 
-  function price(value) {
-    const number = Number(value);
-    return Number.isFinite(number) ? number.toFixed(2) : '0';
-  }
-
-  function shouldScan(watch) {
-    return Boolean(
-      watch?.active
-      && !watch?.terminal
-      && !watch?.entryAllowed
-      && ['WATCHING_LEVEL', 'LEVEL_TESTING'].includes(String(watch?.lifecycleStage || ''))
-      && Number(watch?.level) > 0
-    );
-  }
-
-  function stopScanner() {
-    if (lastAppliedKey === 'STOPPED') return;
-    lastAppliedKey = 'STOPPED';
+  function stopLegacyScanner() {
+    if (stopped) return;
+    stopped = true;
     window.Android?.stopBackgroundScanner?.();
   }
 
-  function applyScannerState() {
-    const watch = desiredWatch || readStoredWatch();
-    if (!document.hidden || !shouldScan(watch)) {
-      stopScanner();
-      return;
-    }
+  // The local Mapping scanner is retired. Backend push notifications are the
+  // only active notification source, so no lifecycle event may start it again.
+  [
+    'amyfx:entry-watch-updated',
+    'amyfx:mapping-state-change',
+    'amyfx:market-update',
+    'pageshow',
+    'pagehide'
+  ].forEach(name => window.addEventListener(name, stopLegacyScanner));
 
-    const upper = watch.direction === 'SELL' ? Number(watch.level) : 0;
-    const lower = watch.direction === 'BUY' ? Number(watch.level) : 0;
-    const key = `${watch.id || 'WATCH'}:${watch.direction}:${price(watch.level)}`;
-    if (key === lastAppliedKey) return;
-
-    lastAppliedKey = key;
-    window.Android?.startBackgroundScanner?.('amyfx-proxy', String(upper), String(lower));
-  }
-
-  window.addEventListener('amyfx:entry-watch-updated', event => {
-    desiredWatch = event.detail?.watch || null;
-    applyScannerState();
-  });
-
-  document.addEventListener('visibilitychange', applyScannerState);
-  window.addEventListener('pageshow', applyScannerState);
-  window.addEventListener('pagehide', applyScannerState);
+  document.addEventListener('visibilitychange', stopLegacyScanner);
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', applyScannerState, { once: true });
+    document.addEventListener('DOMContentLoaded', stopLegacyScanner, { once: true });
   } else {
-    applyScannerState();
+    stopLegacyScanner();
   }
 })();
