@@ -4,11 +4,10 @@
   if (window.__amyFxDashboardOnlyPanelsV1Installed) return;
   window.__amyFxDashboardOnlyPanelsV1Installed = true;
 
-  const PANEL_IDS = Object.freeze([
-    'amy-regime-router-v3',
-    'amy-entry-watch-card',
-    'amy-scalper-entry-watch'
+  const LEGACY_PANEL_IDS = Object.freeze([
+    'amy-entry-watch-card'
   ]);
+
   const DASHBOARD_ORDER = Object.freeze([
     '.tf-card',
     '.session-card',
@@ -17,70 +16,109 @@
     '#amy-scalper-entry-watch',
     '[data-execution-plan-card="compact"]'
   ]);
+
+  const ANALYZE_ORDER = Object.freeze([
+    { id: 'amy-regime-router-v3' },
+    { summary: 'Valid Break' },
+    { summary: 'Mapping Semua Timeframe' },
+    { summary: 'Penjelasan Mapping' },
+    { summary: 'Setup Aktif' },
+    { selector: '[data-execution-plan-card="detail"]' },
+    { id: 'amy-scalper-entry-watch' }
+  ]);
+
   const nativeInsertAdjacentHTML = Element.prototype.insertAdjacentHTML;
   let cleanupScheduled = false;
   let blockedInsertions = 0;
-  let removedFromAnalyze = 0;
+  let removedLegacyPanels = 0;
   let reorderedDashboard = 0;
+  let reorderedAnalyze = 0;
 
   function currentView() {
     return String(window.state?.tab || localStorage.getItem('amy_mapping_tab') || 'Dashboard');
   }
 
-  function isDashboardOnlyMarkup(markup) {
+  function isLegacyMarkup(markup) {
     const html = String(markup || '');
-    return PANEL_IDS.some(id => html.includes(`id="${id}"`) || html.includes(`id='${id}'`));
+    return LEGACY_PANEL_IDS.some(id => html.includes(`id="${id}"`) || html.includes(`id='${id}'`));
   }
 
-  function removePanel(node) {
-    if (!node) return;
-    const wrapper = node.closest('details.amy-analysis-section');
-    if (wrapper && wrapper.contains(node)) wrapper.remove();
-    else node.remove();
-    removedFromAnalyze += 1;
-  }
-
-  function reorderDashboardPanels() {
-    const app = document.getElementById('app');
-    if (!app) return;
-
-    const ordered = DASHBOARD_ORDER
-      .map(selector => app.querySelector(`:scope > ${selector}`))
-      .filter(Boolean);
-    if (ordered.length < 2) return;
-
-    const currentSelected = [...app.children].filter(node => ordered.includes(node));
-    if (currentSelected.length === ordered.length && currentSelected.every((node, index) => node === ordered[index])) {
-      return;
+  function topLevelNode(node, app) {
+    let current = node;
+    while (current && current.parentElement && current.parentElement !== app) {
+      current = current.parentElement;
     }
+    return current?.parentElement === app ? current : null;
+  }
+
+  function disclosureBySummary(app, label) {
+    const details = [...app.querySelectorAll('details.disclosure, details.amy-analysis-section')]
+      .find(node => String(node.querySelector(':scope > summary')?.textContent || '').trim().startsWith(label));
+    return topLevelNode(details, app);
+  }
+
+  function resolveAnalyzeNode(app, descriptor) {
+    if (descriptor.id) return topLevelNode(document.getElementById(descriptor.id), app);
+    if (descriptor.summary) return disclosureBySummary(app, descriptor.summary);
+    if (descriptor.selector) return topLevelNode(app.querySelector(descriptor.selector), app);
+    return null;
+  }
+
+  function reorderSelected(app, orderedNodes) {
+    const ordered = [...new Set(orderedNodes.filter(Boolean))];
+    if (ordered.length < 2) return false;
 
     const selected = new Set(ordered);
     const children = [...app.children];
-    const firstIndex = Math.min(...ordered.map(node => children.indexOf(node)).filter(index => index >= 0));
+    const currentSelected = children.filter(node => selected.has(node));
+    if (currentSelected.length === ordered.length && currentSelected.every((node, index) => node === ordered[index])) {
+      return false;
+    }
+
+    const positions = ordered.map(node => children.indexOf(node)).filter(index => index >= 0);
+    if (!positions.length) return false;
+    const firstIndex = Math.min(...positions);
     const anchor = children.slice(firstIndex).find(node => !selected.has(node)) || null;
     const fragment = document.createDocumentFragment();
     ordered.forEach(node => fragment.appendChild(node));
     app.insertBefore(fragment, anchor);
-    reorderedDashboard += 1;
+    return true;
+  }
+
+  function removeLegacyPanel(node) {
+    if (!node) return;
+    const wrapper = node.closest('details.amy-analysis-section');
+    if (wrapper && wrapper.contains(node)) wrapper.remove();
+    else node.remove();
+    removedLegacyPanels += 1;
+  }
+
+  function reorderDashboardPanels(app) {
+    const ordered = DASHBOARD_ORDER
+      .map(selector => topLevelNode(app.querySelector(`:scope > ${selector}`) || app.querySelector(selector), app));
+    if (reorderSelected(app, ordered)) reorderedDashboard += 1;
+  }
+
+  function reorderAnalyzePanels(app) {
+    const ordered = ANALYZE_ORDER.map(descriptor => resolveAnalyzeNode(app, descriptor));
+    if (reorderSelected(app, ordered)) reorderedAnalyze += 1;
   }
 
   function syncCurrentView() {
     cleanupScheduled = false;
+    const app = document.getElementById('app');
+    if (!app) return;
+
+    LEGACY_PANEL_IDS.forEach(id => removeLegacyPanel(document.getElementById(id)));
+
     if (currentView() === 'Dashboard') {
-      reorderDashboardPanels();
+      reorderDashboardPanels(app);
       return;
     }
 
-    PANEL_IDS.forEach(id => removePanel(document.getElementById(id)));
-
-    document.querySelectorAll('#app > details.amy-analysis-section').forEach(wrapper => {
-      const key = wrapper.dataset.stabilityKey || '';
-      const summary = wrapper.querySelector(':scope > summary')?.textContent || '';
-      if (key === 'market-context' || summary.includes('Ringkasan Market')) {
-        wrapper.remove();
-        removedFromAnalyze += 1;
-      }
-    });
+    if (currentView() === 'Analyze') {
+      reorderAnalyzePanels(app);
+    }
   }
 
   function scheduleCleanup() {
@@ -90,7 +128,7 @@
   }
 
   Element.prototype.insertAdjacentHTML = function (position, markup) {
-    if (currentView() !== 'Dashboard' && isDashboardOnlyMarkup(markup)) {
+    if (isLegacyMarkup(markup)) {
       blockedInsertions += 1;
       scheduleCleanup();
       return;
@@ -121,11 +159,12 @@
   }
 
   window.AmyFXDashboardOnlyPanels = Object.freeze({
-    version: '1.1.0',
+    version: '1.2.0',
     stats: () => ({
       blockedInsertions,
-      removedFromAnalyze,
+      removedLegacyPanels,
       reorderedDashboard,
+      reorderedAnalyze,
       view: currentView()
     })
   });
