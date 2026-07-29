@@ -2,6 +2,7 @@ package com.amyelitesuite
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.graphics.Color
 import android.os.Build
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -14,20 +15,21 @@ class AmyFxApplication : android.app.Application() {
     override fun onCreate() {
         super.onCreate()
 
-        createNewsNotificationChannel()
+        createNotificationChannels()
 
-        // FCM adalah jalur utama untuk news push ketika aplikasi ditutup.
+        // FCM adalah jalur utama untuk news dan sinyal shadow ketika aplikasi ditutup.
         // Registrasi otomatis diulang ketika versi aplikasi berubah.
         FcmDeviceRegistrar.registerCurrentToken(this)
 
-        // WorkManager tetap menjadi fallback ringan jika push tertunda oleh perangkat.
+        // WorkManager tetap khusus fallback news yang sudah ada. Scalper engine berjalan di backend.
         scheduleNewsFallback()
     }
 
-    private fun createNewsNotificationChannel() {
+    private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = getSystemService(NotificationManager::class.java)
-        val channel = NotificationChannel(
+
+        val newsChannel = NotificationChannel(
             NEWS_CHANNEL_ID,
             "Amy FX Breaking News",
             NotificationManager.IMPORTANCE_HIGH
@@ -37,7 +39,20 @@ class AmyFxApplication : android.app.Application() {
             enableLights(true)
             setShowBadge(true)
         }
-        manager.createNotificationChannel(channel)
+        manager.createNotificationChannel(newsChannel)
+
+        val scalperChannel = NotificationChannel(
+            SCALPER_CHANNEL_ID,
+            "Amy FX Scalper Signals",
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = "Sinyal simulasi IFVG dan FVG High Quality dari Amy FX Preview"
+            enableVibration(true)
+            enableLights(true)
+            lightColor = Color.rgb(212, 175, 55)
+            setShowBadge(true)
+        }
+        manager.createNotificationChannel(scalperChannel)
     }
 
     private fun scheduleNewsFallback() {
@@ -59,5 +74,6 @@ class AmyFxApplication : android.app.Application() {
 
     companion object {
         const val NEWS_CHANNEL_ID = "amy_news_v2"
+        const val SCALPER_CHANNEL_ID = "amy_scalper_v1"
     }
 }
