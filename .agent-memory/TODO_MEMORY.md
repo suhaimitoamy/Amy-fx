@@ -2,6 +2,7 @@
 
 ## Pending Tasks
 
+- [ ] Validate the real Causal V3 lifecycle against a naturally occurring setup when one eventually passes every unchanged gate; do not manufacture a setup or tune thresholds for this task.
 - [ ] Manually validate Mapping Accuracy V3 on current/forward closed candles for M1, M5, M15, M30, H1, H4, D1, and W1 using `docs/MAPPING_ACCURACY_V3_MANUAL_VALIDATION.md`.
 - [ ] Record repeatable reference mismatches with timeframe, candle open time, expected event, actual event, and screenshot before changing any Mapping V3 threshold.
 - [ ] Add real passcode gate for Academy admin (`auth.js` is still a stub).
@@ -12,6 +13,8 @@
 
 ## Notes
 
+- XAU/USD 2021–2022 M5/M15 replay still produces zero locked setups after causal-order and paired-leg fixes. The next cumulative blocker is the unchanged SESSION gate.
+- Rolling 300 and 800 produce identical gate decisions, paired-anchor times/prices, and setup counts; only negligible EMA seed drift remains.
 - Mapping V3 manual profiles (M1, M30, H4, D1, W1) have no win-probability claim and must not be tuned from isolated live outcomes.
 - H1 bearish suppression is intentional reference parity, not a pending defect.
 - Auth fix needs user decision: what passcode to use.

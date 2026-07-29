@@ -1,5 +1,32 @@
 # Bug History
 
+## Fixed Causal Entry Watch Replay Defects — 2026-07-29
+
+### Terminal Setup State Was Dropped
+- **Severity:** High
+- **Cause:** Consumers projected only `activeSetup`, so a terminal authoritative `entryMap.setup` disappeared before setup execution, Entry Watch, scanner, and notification handling.
+- **Fix:** Added a shared lifecycle contract and preserved the authoritative setup through every consumer without changing lifecycle formulas or evaluation order.
+
+### Replay Session Used Wall Clock
+- **Severity:** High
+- **Cause:** Core Mapping analysis called `Date.now()` directly, so historical replay could display current session context. This affected Mapping Engine replay, not only the external audit harness.
+- **Fix:** Live mode still uses the wall clock; replay accepts an explicit timestamp or the last closed candle timestamp and ignores an open future candle.
+
+### Pre-Forecast Sweep Entered Causal Sequence
+- **Severity:** Critical
+- **Cause:** Sweep memory did not require the selected sweep to occur after Direction Forecast activation.
+- **Fix:** Eligible sweep index must be at least forecast start; displaced MSS must remain later than the sweep and no later than the latest closed candle.
+
+### Dealing Location Mixed Unpaired Swings and Breakout Close
+- **Severity:** Critical
+- **Cause:** The latest slow high and slow low could come from different legs, while MSS breakout close was used as the sole dealing-location reference. This made M5 fail every historical Dealing Location evaluation.
+- **Fix:** Build a confirmed paired zigzag leg and gate on sweep position while recording POI, entry, and MSS close strength separately. Thresholds remain unchanged.
+
+### Structural Target Diagnosis Hid Risk Rejection
+- **Severity:** Medium
+- **Cause:** A geometrically valid target could be labeled target-pass even when risk exceeded the unchanged 6 ATR cap.
+- **Fix:** Diagnosis now reports `RISK > 6 ATR` separately from the four target-location outcomes.
+
 ## Fixed Mapping Accuracy V3 Defects — 2026-07-28
 
 ### Multiple Mapping State Writers

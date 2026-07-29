@@ -1,5 +1,17 @@
 # Technical Decisions
 
+## 2026-07-29
+
+### Causal Entry Watch 2021–2022 Correctness Contract
+- An eligible opposing sweep must be confirmed on a closed candle at or after Direction Forecast start; an MSS must be a later displaced closed-candle break.
+- Dealing Location uses a confirmed paired structural leg built from consecutive opposite slow pivots. Consecutive same-kind pivots compress to the more structural extreme.
+- Dealing Location's hard-gate reference is the sweep level. POI location, MSS-entry location, and MSS close strength remain separate diagnostics.
+- BUY remains valid only at sweep position `<= 0.60`; SELL remains valid only at `>= 0.40`. These thresholds may not be tuned to create setups.
+- Live analysis time defaults to the current clock. Replay time must be explicit or derive from the last closed candle; an open future candle cannot provide replay time.
+- `entryMap.setup` is authoritative for terminal lifecycle state even when `activeSetup` is null. Terminal states must remain `SL HIT`, `TP1 HIT / BE`, `TP2 HIT`, `TP1 / BE`, or `EXPIRED`.
+- Structural target diagnosis distinguishes no target, below 2R, above 8R, risk above 6 ATR, and valid 2R–8R without changing entry geometry or target thresholds.
+- The 2021–2022 final validation remains at zero M5/M15 setups because `SESSION` is the next cumulative blocker. Session rules must not be loosened from this result.
+
 ## 2026-07-28
 
 ### Mapping Accuracy V3
