@@ -1,5 +1,13 @@
 # Feature History
 
+## Causal Entry Watch 2021–2022 Correctness Hardening
+- **Date:** 2026-07-29
+- **Status:** ✅ Implemented and regression-validated
+- **Description:** Preserved terminal lifecycle state across Mapping consumers, made replay session time injectable, separated structural-target diagnostics, enforced forecast-before-sweep-before-MSS ordering, and replaced unpaired Dealing Location anchors with a causal paired structural leg.
+- **Validation:** XAU/USD 2021–2022 M5/M15 closed-candle replay, rolling 300 and 800 parity, priority-window audit, and full regression suite.
+- **Result:** Dealing Location passes 2/2 M5 and 33/38 M15 displaced-MSS candidates. Final setup remains zero because SESSION is the next cumulative blocker; no threshold was changed.
+- **Reference:** `docs/backtests/AMYFX_CAUSAL_ENTRY_WATCH_2021_2022_FINAL_VALIDATION.md`
+
 ## Mapping Accuracy V3 — All-Timeframe Causal Entry
 - **Date:** 2026-07-28
 - **Status:** ✅ Implemented; manual chart validation pending

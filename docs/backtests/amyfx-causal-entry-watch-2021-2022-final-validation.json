@@ -1,0 +1,692 @@
+{
+  "report": "Amy FX Causal Entry Watch V3 final validation 2021-2022",
+  "generatedDate": "2026-07-29",
+  "branch": "personal/amyfx-private",
+  "baselineCommit": "c5866a7a6f131099de86514c5ecb6c340ee39f44",
+  "stageCommits": {
+    "stage1": "8ab9ed640de9c3edad7f5e274698b2e9bc48b828",
+    "stage2": "c409cbd26334a21d8089007ca3802b6f254e57f8",
+    "stage3": "073ff7076f6fce41071cb239912a1377f132c3e5",
+    "stage4": null,
+    "stage4Resolution": "The commit containing this report; exact SHA is reported in the final handoff because a commit cannot embed its own SHA."
+  },
+  "scope": {
+    "symbol": "XAU/USD",
+    "period": "2021-01-01 through 2022-12-31",
+    "timeframes": [
+      "M5",
+      "M15"
+    ],
+    "closedCandlesOnly": true,
+    "futureCandlesUsedForSetupGeneration": false,
+    "performanceBacktestRun": false,
+    "note": "Historical replay was used only for causal gate validation. No setup was locked, so no future candle was read to assign an outcome."
+  },
+  "aggregate": {
+    "rolling300": {
+      "M5": {
+        "candles": 141614,
+        "forecastEvents": 61,
+        "activeForecastBars": 2634,
+        "individualGatePass": {
+          "DATA": 2634,
+          "DIRECTION": 2634,
+          "OPPOSING LIQUIDITY SWEEP": 528,
+          "DISPLACED MSS": 2,
+          "HTF ALIGNMENT": 2,
+          "EMA STACK": 2,
+          "EMA DISTANCE": 2,
+          "SESSION": 0,
+          "DEALING LOCATION": 2,
+          "CLOSE LOCATION": 2,
+          "STRUCTURAL TARGET >= 2R": 2
+        },
+        "cumulativeGatePass": {
+          "DATA": 2634,
+          "DIRECTION": 2634,
+          "OPPOSING LIQUIDITY SWEEP": 528,
+          "DISPLACED MSS": 2,
+          "HTF ALIGNMENT": 2,
+          "EMA STACK": 2,
+          "EMA DISTANCE": 2,
+          "SESSION": 0,
+          "DEALING LOCATION": 0,
+          "CLOSE LOCATION": 0,
+          "STRUCTURAL TARGET >= 2R": 0,
+          "SETUP": 0
+        },
+        "targetDiagnosisAtMss": {
+          "NO TARGET": 0,
+          "TARGET < 2R": 0,
+          "TARGET > 8R": 0,
+          "RISK > 6 ATR": 0,
+          "TARGET VALID 2R-8R": 2
+        },
+        "dealingLocationAtMss": {
+          "evaluated": 2,
+          "passed": 2,
+          "failed": 0,
+          "noPairedLeg": 0,
+          "upLeg": 2,
+          "downLeg": 0
+        },
+        "setupCount": 0,
+        "futureLeakViolations": 0
+      },
+      "M15": {
+        "candles": 47205,
+        "forecastEvents": 85,
+        "activeForecastBars": 2845,
+        "individualGatePass": {
+          "DATA": 2845,
+          "DIRECTION": 2845,
+          "OPPOSING LIQUIDITY SWEEP": 292,
+          "DISPLACED MSS": 38,
+          "HTF ALIGNMENT": 38,
+          "EMA STACK": 17,
+          "EMA DISTANCE": 38,
+          "SESSION": 12,
+          "DEALING LOCATION": 33,
+          "CLOSE LOCATION": 27,
+          "STRUCTURAL TARGET >= 2R": 5
+        },
+        "cumulativeGatePass": {
+          "DATA": 2845,
+          "DIRECTION": 2845,
+          "OPPOSING LIQUIDITY SWEEP": 292,
+          "DISPLACED MSS": 38,
+          "HTF ALIGNMENT": 38,
+          "EMA STACK": 17,
+          "EMA DISTANCE": 17,
+          "SESSION": 0,
+          "DEALING LOCATION": 0,
+          "CLOSE LOCATION": 0,
+          "STRUCTURAL TARGET >= 2R": 0,
+          "SETUP": 0
+        },
+        "targetDiagnosisAtMss": {
+          "NO TARGET": 0,
+          "TARGET < 2R": 33,
+          "TARGET > 8R": 0,
+          "RISK > 6 ATR": 0,
+          "TARGET VALID 2R-8R": 5
+        },
+        "dealingLocationAtMss": {
+          "evaluated": 38,
+          "passed": 33,
+          "failed": 5,
+          "noPairedLeg": 0,
+          "upLeg": 4,
+          "downLeg": 34
+        },
+        "setupCount": 0,
+        "futureLeakViolations": 0
+      }
+    },
+    "rolling800": {
+      "identicalGateCountsToRolling300": true,
+      "identicalSelectedCasesToRolling300": true,
+      "identicalDealingAnchorTimesAndPrices": true,
+      "identicalSetupCounts": true,
+      "maximumAbsoluteInformationalEmaDifference": 0.01681,
+      "explanation": "Only negligible EMA seed drift is present. Local indices differ by 500 because the rolling array origin differs; global candle times, prices, causal decisions, gate results, and setup counts are unchanged."
+    }
+  },
+  "beforeAfter": {
+    "M5": {
+      "baseline": {
+        "activeForecastBars": 2634,
+        "sweep": 1465,
+        "mss": 379,
+        "htf": 245,
+        "ema": 364,
+        "session": 247,
+        "dealing": 0,
+        "close": 307,
+        "target": 11,
+        "setup": 0
+      },
+      "afterStage1": {
+        "activeForecastBars": 2634,
+        "sweep": 1465,
+        "mss": 379,
+        "htf": 245,
+        "ema": 364,
+        "session": 247,
+        "dealing": 0,
+        "close": 307,
+        "target": 5,
+        "setup": 0,
+        "note": "Six cases formerly counted as target-pass are now diagnosed RISK > 6 ATR; target threshold and setup generation did not change."
+      },
+      "afterStage2": {
+        "activeForecastBars": 2634,
+        "sweep": 528,
+        "mss": 2,
+        "htf": 2,
+        "ema": 2,
+        "session": 0,
+        "dealing": 0,
+        "close": 2,
+        "target": 2,
+        "setup": 0
+      },
+      "afterStage3": {
+        "activeForecastBars": 2634,
+        "sweep": 528,
+        "mss": 2,
+        "htf": 2,
+        "ema": 2,
+        "session": 0,
+        "dealing": 2,
+        "close": 2,
+        "target": 2,
+        "setup": 0
+      }
+    },
+    "M15": {
+      "baseline": {
+        "activeForecastBars": 2845,
+        "sweep": 526,
+        "mss": 151,
+        "htf": 151,
+        "ema": 19,
+        "session": 51,
+        "dealing": 23,
+        "close": 135,
+        "target": 5,
+        "setup": 0
+      },
+      "afterStage1": {
+        "activeForecastBars": 2845,
+        "sweep": 526,
+        "mss": 151,
+        "htf": 151,
+        "ema": 19,
+        "session": 51,
+        "dealing": 23,
+        "close": 135,
+        "target": 5,
+        "setup": 0
+      },
+      "afterStage2": {
+        "activeForecastBars": 2845,
+        "sweep": 292,
+        "mss": 38,
+        "htf": 38,
+        "ema": 17,
+        "session": 12,
+        "dealing": 0,
+        "close": 27,
+        "target": 5,
+        "setup": 0
+      },
+      "afterStage3": {
+        "activeForecastBars": 2845,
+        "sweep": 292,
+        "mss": 38,
+        "htf": 38,
+        "ema": 17,
+        "session": 12,
+        "dealing": 33,
+        "close": 27,
+        "target": 5,
+        "setup": 0
+      }
+    },
+    "removedPreForecastSweepUsage": {
+      "M5": {
+        "activeBars": 937,
+        "activeBarsAlsoShowingMss": 377,
+        "uniqueForecastSweepCases": 82,
+        "uniqueCasesAlsoShowingMss": 42
+      },
+      "M15": {
+        "activeBars": 234,
+        "activeBarsAlsoShowingMss": 113,
+        "uniqueForecastSweepCases": 63,
+        "uniqueCasesAlsoShowingMss": 31
+      }
+    }
+  },
+  "lifecycleOutcomes": {
+    "SL HIT": 0,
+    "TP1 HIT / BE": 0,
+    "TP2 HIT": 0,
+    "TP1 / BE": 0,
+    "EXPIRED": 0,
+    "MISSED_ENTRY": "N/A for Causal V3",
+    "reason": "No historical setup was locked after all causal gates."
+  },
+  "priorityCases": [
+    {
+      "id": "M5_2021-03-19_1155_1330",
+      "timeframe": "M5",
+      "selectedObservedCandle": "2021-03-19T11:55:00.000Z",
+      "activeForecastBarsInWindow": 20,
+      "maximumRequirementsPassed": 2,
+      "forecast": {
+        "direction": "BULLISH",
+        "startIndex": 15034,
+        "startTime": "2021-03-19T11:50:00.000Z"
+      },
+      "eligibleSweep": null,
+      "rejectedPreForecastSweeps": [
+        {
+          "index": 15032,
+          "time": "2021-03-19T11:40:00.000Z",
+          "type": "SSL",
+          "level": 1738.61
+        },
+        {
+          "index": 15014,
+          "time": "2021-03-19T10:10:00.000Z",
+          "type": "SSL",
+          "level": 1734.35
+        }
+      ],
+      "mss": null,
+      "latestClosedHtfCandle": {
+        "timeframe": "H4",
+        "openTime": "2021-03-19T08:00:00.000Z",
+        "closeTime": "2021-03-19T12:00:00.000Z",
+        "open": 1739.06,
+        "high": 1742.28,
+        "low": 1733.16,
+        "close": 1742.24
+      },
+      "emaAtObservedCloseRolling300": {
+        "ema21": 1739.1663495570735,
+        "ema34": 1738.5320556451372,
+        "ema90": 1738.0155747245192
+      },
+      "sessionFromHistoricalTimestamp": {
+        "mappingContext": "LONDON",
+        "entryClock": "19:55 WITA",
+        "entryWindowWouldPass": true,
+        "entryGateEvaluated": false
+      },
+      "dealingAnchors": null,
+      "rawDealingPosition": null,
+      "protectedSwing": null,
+      "atrAtObservedClose": 1.2678571428572079,
+      "entry": null,
+      "sl": null,
+      "tp1": null,
+      "tp2": null,
+      "firstObstacle": null,
+      "rr": null,
+      "terminalOutcome": "N/A — NO SETUP LOCKED",
+      "firstCausalBlocker": "OPPOSING LIQUIDITY SWEEP"
+    },
+    {
+      "id": "M15_2021-04-09_0700_0715",
+      "timeframe": "M15",
+      "selectedObservedCandle": "2021-04-09T07:00:00.000Z",
+      "activeForecastBarsInWindow": 2,
+      "maximumRequirementsPassed": 2,
+      "forecast": {
+        "direction": "BULLISH",
+        "startIndex": 6272,
+        "startTime": "2021-04-09T07:00:00.000Z"
+      },
+      "eligibleSweep": null,
+      "rejectedPreForecastSweeps": [
+        {
+          "index": 6268,
+          "time": "2021-04-09T06:00:00.000Z",
+          "type": "SSL",
+          "level": 1743.91
+        }
+      ],
+      "mss": null,
+      "latestClosedHtfCandle": {
+        "timeframe": "H4",
+        "openTime": "2021-04-09T00:00:00.000Z",
+        "closeTime": "2021-04-09T04:00:00.000Z",
+        "open": 1753.07,
+        "high": 1753.49,
+        "low": 1743.95,
+        "close": 1747.39
+      },
+      "emaAtObservedCloseRolling300": {
+        "ema21": 1747.0013758718305,
+        "ema34": 1748.1913310243317,
+        "ema90": 1749.309455440785
+      },
+      "sessionFromHistoricalTimestamp": {
+        "mappingContext": "LONDON",
+        "entryClock": "15:00 WITA",
+        "entryWindowWouldPass": true,
+        "entryGateEvaluated": false
+      },
+      "dealingAnchors": null,
+      "rawDealingPosition": null,
+      "protectedSwing": null,
+      "atrAtObservedClose": 1.8542857142856681,
+      "entry": null,
+      "sl": null,
+      "tp1": null,
+      "tp2": null,
+      "firstObstacle": null,
+      "rr": null,
+      "terminalOutcome": "N/A — NO SETUP LOCKED",
+      "firstCausalBlocker": "OPPOSING LIQUIDITY SWEEP"
+    },
+    {
+      "id": "M15_2021-10-24_2330_2021-10-25_0030",
+      "timeframe": "M15",
+      "selectedObservedCandle": "2021-10-24T23:30:00.000Z",
+      "activeForecastBarsInWindow": 5,
+      "maximumRequirementsPassed": 10,
+      "forecast": {
+        "direction": "BULLISH",
+        "startIndex": 19094,
+        "startTime": "2021-10-24T20:30:00.000Z"
+      },
+      "eligibleSweep": {
+        "index": 19098,
+        "time": "2021-10-24T21:30:00.000Z",
+        "type": "SSL",
+        "level": 1792.33
+      },
+      "rejectedPreForecastSweeps": [],
+      "mss": {
+        "index": 19106,
+        "time": "2021-10-24T23:30:00.000Z",
+        "scope": "MAJOR",
+        "level": 1797.81,
+        "displaced": true
+      },
+      "latestClosedHtfCandle": {
+        "timeframe": "H4",
+        "openTime": "2021-10-24T16:00:00.000Z",
+        "closeTime": "2021-10-24T20:00:00.000Z",
+        "open": 1792.47,
+        "high": 1794.36,
+        "low": 1792.17,
+        "close": 1794.31,
+        "closedByMss": true
+      },
+      "emaAtMssRolling300": {
+        "ema21": 1794.991273304161,
+        "ema34": 1794.8073053236624,
+        "ema90": 1793.3653335273373,
+        "stackPassed": true
+      },
+      "sessionFromHistoricalTimestamp": {
+        "mappingContext": "OFF_SESSION",
+        "entryClock": "07:30 WITA",
+        "entryWindowPassed": false
+      },
+      "dealingAnchors": {
+        "legType": "DOWN_LEG",
+        "high": {
+          "time": "2021-10-22T11:00:00.000Z",
+          "price": 1813.75
+        },
+        "low": {
+          "time": "2021-10-22T11:30:00.000Z",
+          "price": 1782.79
+        }
+      },
+      "rawDealingPosition": 0.30813953488371937,
+      "clampedDealingPosition": 0.30813953488371937,
+      "sweepLocation": {
+        "price": 1792.33,
+        "zone": "DISCOUNT",
+        "extremePrice": 1792.28,
+        "extremeRawPosition": 0.3065245478036175
+      },
+      "poiLocation": {
+        "kind": "FVG",
+        "bottom": 1793.97,
+        "top": 1794.9,
+        "midpoint": 1794.435,
+        "rawPosition": 0.3761304909560713
+      },
+      "mssLocation": {
+        "close": 1798.46,
+        "rawPosition": 0.5061369509043945,
+        "clampedPosition": 0.5061369509043945,
+        "closeStrengthPassed": true
+      },
+      "protectedSwing": 1792.16,
+      "atrAtMss": 1.9328571428571226,
+      "provisionalOnlyNotLocked": {
+        "entry": 1798.46,
+        "sl": 1791.1935714285714,
+        "tp1": 1805.7264285714286,
+        "tp2": 1813.75,
+        "risk": 7.266428571428605,
+        "riskAtr": 3.759423503325999
+      },
+      "firstObstacle": {
+        "type": "BSL",
+        "subtype": "SWING",
+        "level": 1813.75
+      },
+      "rr": 2.104197385235412,
+      "targetDiagnosis": "TARGET VALID 2R-8R",
+      "terminalOutcome": "N/A — NO SETUP LOCKED",
+      "firstCausalBlocker": "SESSION"
+    },
+    {
+      "id": "M15_2022-04-28",
+      "timeframe": "M15",
+      "selectedObservedCandle": "2022-04-28T08:30:00.000Z",
+      "activeForecastBarsInWindow": 28,
+      "maximumRequirementsPassed": 3,
+      "forecast": {
+        "direction": "BEARISH",
+        "startIndex": 31132,
+        "startTime": "2022-04-28T08:00:00.000Z"
+      },
+      "eligibleSweep": {
+        "index": 31134,
+        "time": "2022-04-28T08:30:00.000Z",
+        "type": "BSL",
+        "level": 1891.66
+      },
+      "rejectedPreForecastSweeps": [
+        {
+          "index": 31123,
+          "time": "2022-04-28T05:45:00.000Z",
+          "type": "BSL",
+          "level": 1891.44
+        }
+      ],
+      "mss": null,
+      "latestClosedHtfCandle": {
+        "timeframe": "H4",
+        "openTime": "2022-04-28T04:00:00.000Z",
+        "closeTime": "2022-04-28T08:00:00.000Z",
+        "open": 1884.89,
+        "high": 1891.66,
+        "low": 1879.86,
+        "close": 1886.1
+      },
+      "emaAtObservedCloseRolling300": {
+        "ema21": 1886.4817533077407,
+        "ema34": 1885.5376641360695,
+        "ema90": 1886.6179147281805
+      },
+      "sessionFromHistoricalTimestamp": {
+        "mappingContext": "LONDON",
+        "entryClock": "16:30 WITA",
+        "entryWindowWouldPass": true,
+        "entryGateEvaluated": false
+      },
+      "dealingAnchorsAvailableAtSweep": {
+        "legType": "UP_LEG",
+        "high": {
+          "time": "2022-04-28T05:45:00.000Z",
+          "price": 1891.66
+        },
+        "low": {
+          "time": "2022-04-28T01:30:00.000Z",
+          "price": 1871.94
+        }
+      },
+      "rawSweepPosition": 1,
+      "clampedSweepPosition": 1,
+      "protectedSwing": null,
+      "atrAtObservedClose": 3.5928571428571723,
+      "entry": null,
+      "sl": null,
+      "tp1": null,
+      "tp2": null,
+      "firstObstacle": null,
+      "rr": null,
+      "terminalOutcome": "N/A — NO SETUP LOCKED",
+      "firstCausalBlocker": "DISPLACED MSS"
+    },
+    {
+      "id": "M15_2022-06-07",
+      "timeframe": "M15",
+      "selectedObservedCandle": "2022-06-07T09:45:00.000Z",
+      "activeForecastBarsInWindow": 9,
+      "maximumRequirementsPassed": 3,
+      "forecast": {
+        "direction": "BEARISH",
+        "startIndex": 33699,
+        "startTime": "2022-06-07T08:15:00.000Z"
+      },
+      "eligibleSweep": {
+        "index": 33705,
+        "time": "2022-06-07T09:45:00.000Z",
+        "type": "BSL",
+        "level": 1851.84
+      },
+      "rejectedPreForecastSweeps": [
+        {
+          "index": 33696,
+          "time": "2022-06-07T07:30:00.000Z",
+          "type": "BSL",
+          "level": 1848.81
+        }
+      ],
+      "mss": null,
+      "latestClosedHtfCandle": {
+        "timeframe": "H4",
+        "openTime": "2022-06-07T04:00:00.000Z",
+        "closeTime": "2022-06-07T08:00:00.000Z",
+        "open": 1842.03,
+        "high": 1851.84,
+        "low": 1842.01,
+        "close": 1847.28
+      },
+      "emaAtObservedCloseRolling300": {
+        "ema21": 1846.5643209344776,
+        "ema34": 1845.8258423216732,
+        "ema90": 1845.5149648473562
+      },
+      "sessionFromHistoricalTimestamp": {
+        "mappingContext": "LONDON",
+        "entryClock": "17:45 WITA",
+        "entryWindowWouldPass": true,
+        "entryGateEvaluated": false
+      },
+      "dealingAnchorsAvailableAtSweep": {
+        "legType": "UP_LEG",
+        "high": {
+          "time": "2022-06-07T06:45:00.000Z",
+          "price": 1851.84
+        },
+        "low": {
+          "time": "2022-06-07T02:00:00.000Z",
+          "price": 1838.4
+        }
+      },
+      "rawSweepPosition": 1,
+      "clampedSweepPosition": 1,
+      "protectedSwing": null,
+      "atrAtObservedClose": 2.8192857142857,
+      "entry": null,
+      "sl": null,
+      "tp1": null,
+      "tp2": null,
+      "firstObstacle": null,
+      "rr": null,
+      "terminalOutcome": "N/A — NO SETUP LOCKED",
+      "firstCausalBlocker": "DISPLACED MSS"
+    },
+    {
+      "id": "M15_2022-10-03",
+      "timeframe": "M15",
+      "selectedObservedCandle": "2022-10-03T07:45:00.000Z",
+      "activeForecastBarsInWindow": 49,
+      "maximumRequirementsPassed": 2,
+      "forecast": {
+        "direction": "BULLISH",
+        "startIndex": 41395,
+        "startTime": "2022-10-03T07:45:00.000Z"
+      },
+      "eligibleSweep": null,
+      "rejectedPreForecastSweeps": [
+        {
+          "index": 41386,
+          "time": "2022-10-03T05:30:00.000Z",
+          "type": "SSL",
+          "subtype": "SWING",
+          "level": 1659.97
+        },
+        {
+          "index": 41386,
+          "time": "2022-10-03T05:30:00.000Z",
+          "type": "SSL",
+          "subtype": "PDL",
+          "level": 1660.12
+        },
+        {
+          "index": 41385,
+          "time": "2022-10-03T05:15:00.000Z",
+          "type": "SSL",
+          "subtype": "INTERNAL_SWING",
+          "level": 1661.04
+        }
+      ],
+      "mss": null,
+      "latestClosedHtfCandle": {
+        "timeframe": "H4",
+        "openTime": "2022-10-03T04:00:00.000Z",
+        "closeTime": "2022-10-03T08:00:00.000Z",
+        "open": 1663.66,
+        "high": 1666.8,
+        "low": 1659.6,
+        "close": 1666.12
+      },
+      "emaAtObservedCloseRolling300": {
+        "ema21": 1664.0480329608986,
+        "ema34": 1664.007590769771,
+        "ema90": 1664.0405770640518
+      },
+      "sessionFromHistoricalTimestamp": {
+        "mappingContext": "LONDON",
+        "entryClock": "15:45 WITA",
+        "entryWindowWouldPass": true,
+        "entryGateEvaluated": false
+      },
+      "dealingAnchors": null,
+      "rawDealingPosition": null,
+      "protectedSwing": null,
+      "atrAtObservedClose": 2.1814285714286012,
+      "entry": null,
+      "sl": null,
+      "tp1": null,
+      "tp2": null,
+      "firstObstacle": null,
+      "rr": null,
+      "terminalOutcome": "N/A — NO SETUP LOCKED",
+      "firstCausalBlocker": "OPPOSING LIQUIDITY SWEEP"
+    }
+  ],
+  "regression": {
+    "targetedStage1": "24/24 passed",
+    "targetedStage2": "37/37 passed",
+    "targetedStage3": "40/40 passed",
+    "finalFullSuite": "86/86 Amy FX regression files passed",
+    "unexpectedSetupGenerationChange": false,
+    "mainBranchTouched": false
+  }
+}
