@@ -91,7 +91,6 @@
         + `<div class="amy-command-metric"><small>SESSION</small><b>${sessionInfo().id}</b></div>`
         + `<div class="amy-command-metric"><small>BSL</small><b class="red" title="${levels.bsl?.freshness || 'UNAVAILABLE'}" data-freshness="${levels.bsl?.freshness || 'UNAVAILABLE'}">${levelText(levels.bsl)}</b></div>`
         + `<div class="amy-command-metric"><small>SSL</small><b class="green" title="${levels.ssl?.freshness || 'UNAVAILABLE'}" data-freshness="${levels.ssl?.freshness || 'UNAVAILABLE'}">${levelText(levels.ssl)}</b></div>`
-        + `<div class="amy-command-metric"><small>NEWS</small><b>${newsRisk(state)}</b></div>`
         + `<div class="amy-data-state ${quoteFreshness.className}" data-domain="quote" data-freshness="${quoteFreshness.state}"><i></i>${quoteFreshness.label}</div>`;
     };
 
