@@ -1,0 +1,138 @@
+{
+  "experiment": "M15 FVG/IFVG no entry filters with structural volatility-buffered SL",
+  "month": "2020-03",
+  "symbol": "XAUUSD",
+  "data_source": "XAUUSD_2020_03_March.zip from Google Drive",
+  "timeframe": "M15",
+  "method": {
+    "FVG": "three-candle imbalance; later overlap and directional close beyond the far edge",
+    "IFVG": "FVG invalidated by close through opposite edge; later confirmed retest",
+    "entry": "next M15 candle open",
+    "quality_filters": [],
+    "BUY_SL": "below the lower of zone low or latest causally confirmed fractal-4 swing low",
+    "SELL_SL": "above the higher of zone high or latest causally confirmed fractal-4 swing high",
+    "buffer": "0.10 ATR(14)",
+    "tp1": "1R then stop to break-even",
+    "tp2": "2R",
+    "max_positions": "one active M15 position",
+    "same_candle_ambiguity": "adverse outcome first",
+    "future_leak": false
+  },
+  "result": {
+    "stop_mode": "LAST_CONFIRMED_SWING",
+    "candles": 2044,
+    "start": "2020-03-01 18:00:00",
+    "end": "2020-03-31 23:45:00",
+    "created_zones": {
+      "FVG": 345,
+      "IFVG": 314
+    },
+    "confirmed_reactions": {
+      "FVG": 167,
+      "IFVG": 157
+    },
+    "skipped_active_trade": {
+      "FVG": 108,
+      "IFVG": 141
+    },
+    "signals": 269,
+    "trades": 20,
+    "resolved_trades": 19,
+    "outcomes": {
+      "SL": 11,
+      "TP1_BE": 1,
+      "TP2": 7,
+      "OPEN_AT_END": 1
+    },
+    "tp2_win_rate": 0.3684210526315789,
+    "tp1_plus_rate": 0.42105263157894735,
+    "full_runner_r": 3.0,
+    "half_tp1_runner_r": 0.0,
+    "risk_dollars": {
+      "mean": 26.308317852654795,
+      "median": 19.45865127193815,
+      "min": 4.958084912536378,
+      "max": 84.83872849995896,
+      "p25": 12.385590726212342,
+      "p75": 33.83938413571667
+    },
+    "swing_used_count": 19,
+    "by_trigger": {
+      "FVG": {
+        "trades": 9,
+        "SL": 4,
+        "TP1_BE": 1,
+        "TP2": 4,
+        "full_runner_r": 4.0,
+        "tp2_win_rate": 0.4444444444444444,
+        "tp1_plus_rate": 0.5555555555555556,
+        "average_risk_dollars": 25.16116992459686
+      },
+      "IFVG": {
+        "trades": 10,
+        "SL": 7,
+        "TP1_BE": 0,
+        "TP2": 3,
+        "full_runner_r": -1.0,
+        "tp2_win_rate": 0.3,
+        "tp1_plus_rate": 0.3,
+        "average_risk_dollars": 26.441975445554068
+      }
+    },
+    "by_direction": {
+      "BUY": {
+        "trades": 12,
+        "SL": 6,
+        "TP1_BE": 1,
+        "TP2": 5,
+        "full_runner_r": 4.0,
+        "tp2_win_rate": 0.4166666666666667,
+        "tp1_plus_rate": 0.5,
+        "average_risk_dollars": 25.895674649486068
+      },
+      "SELL": {
+        "trades": 7,
+        "SL": 5,
+        "TP1_BE": 0,
+        "TP2": 2,
+        "full_runner_r": -1.0,
+        "tp2_win_rate": 0.2857142857142857,
+        "tp1_plus_rate": 0.2857142857142857,
+        "average_risk_dollars": 25.73174114043994
+      }
+    }
+  },
+  "risk_metrics": {
+    "mean": 26.308317852654795,
+    "median": 19.45865127193815,
+    "min": 4.958084912536378,
+    "max": 84.83872849995896,
+    "p25": 12.385590726212342,
+    "p75": 33.83938413571667,
+    "tp1_mean_dollars": 26.308317852654795,
+    "tp1_median_dollars": 19.45865127193815,
+    "tp2_mean_dollars": 52.61663570530959,
+    "tp2_median_dollars": 38.9173025438763,
+    "median_holding_hours": 14.0,
+    "mean_holding_hours": 32.01315789473684,
+    "max_holding_hours": 185.5,
+    "max_drawdown_r": 4.0,
+    "max_consecutive_sl": 4
+  },
+  "same_month_control_1atr": {
+    "trades": 194,
+    "resolved_trades": 194,
+    "outcomes": {
+      "TP2": 39,
+      "SL": 105,
+      "TP1_BE": 50
+    },
+    "full_runner_r": -27.0,
+    "half_tp1_runner_r": -21.5,
+    "tp2_win_rate": 0.20103092783505155,
+    "tp1_plus_rate": 0.4587628865979381,
+    "mean_risk_dollars": 5.7829483503730925,
+    "median_risk_dollars": 5.460722392945678
+  },
+  "application_code_changed": false
+}
