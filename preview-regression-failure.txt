@@ -1,6 +1,6 @@
 Amy FX Private Preview regression failure
-Run: 30468384092
-Commit: b8b10542c9d79b5dadd8391fcaba7e6ac92cfea5
+Run: 30468567622
+Commit: 6ac80fad53dedbd5f71502daa09011b664afccc6
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -13,91 +13,91 @@ not ok 5 - native scanner is background-only and rate limited
 Regression failed: api-polling-coordinator.test.mjs
 
 --- final log lines ---
+  type: 'test'
+  ...
+# Subtest: native scanner is background-only and rate limited
+not ok 5 - native scanner is background-only and rate limited
+  ---
+  duration_ms: 0.896958
+  type: 'test'
+  location: '/home/runner/work/Amy-fx/Amy-fx/tests/api-polling-coordinator.test.mjs:67:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /document\.hidden/. Input:
+    
+    '(function () {\n' +
+      "  'use strict';\n" +
       '\n' +
-      '    private fun clearLegacyScannerState() {\n' +
-      '        getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)\n' +
-      '            .edit()\n' +
-      '            .remove(KEY_BSL_TARGET)\n' +
-      '            .remove(KEY_SSL_TARGET)\n' +
-      '            .remove(KEY_TARGET_UPDATED_AT)\n' +
-      '            .remove(KEY_UPPER_ARMED)\n' +
-      '            .remove(KEY_LOWER_ARMED)\n' +
-      '            .putBoolean(KEY_SCANNER_ENABLED, false)\n' +
-      '            .apply()\n' +
-      '    }\n' +
+      '  if (window.__amyFxLegacyScannerDisabled) return;\n' +
+      '  window.__amyFxLegacyScannerDisabled = true;\n' +
       '\n' +
-      '    companion object {\n' +
-      '        const val ACTION_STOP_SCANNER = "com.amyelitesuite.action.STOP_SCANNER"\n' +
+      '  let stopped = false;\n' +
       '\n' +
-      '        private const val KEY_SCANNER_ENABLED = "scanner_enabled"\n' +
-      '        private const val KEY_BSL_TARGET = "scanner_bsl_target"\n' +
-      '        private const val KEY_SSL_TARGET = "scanner_ssl_target"\n' +
-      '        private const val KEY_TARGET_UPDATED_AT = "scanner_target_updated_at"\n' +
-      '        private const val KEY_UPPER_ARMED = "scanner_upper_armed"\n' +
-      '        private const val KEY_LOWER_ARMED = "scanner_lower_armed"\n' +
-      '    }\n' +
-      '}\n'
+      '  function stopLegacyScanner() {\n' +
+      '    if (stopped) return;\n' +
+      '    stopped = true;\n' +
+      '    window.Android?.stopBackgroundScanner?.();\n' +
+      '  }\n' +
+      '\n' +
+      '  // The local Mapping scanner is retired. Backend push notifications are the\n' +
+      '  // only active notification source, so no lifecycle event may start it again.\n' +
+      '  [\n' +
+      "    'amyfx:entry-watch-updated',\n" +
+      "    'amyfx:mapping-state-change',\n" +
+      "    'amyfx:market-update',\n" +
+      "    'pageshow',\n" +
+      "    'pagehide'\n" +
+      '  ].forEach(name => window.addEventListener(name, stopLegacyScanner));\n' +
+      '\n' +
+      "  document.addEventListener('visibilitychange', stopLegacyScanner);\n" +
+      '\n' +
+      "  if (document.readyState === 'loading') {\n" +
+      "    document.addEventListener('DOMContentLoaded', stopLegacyScanner, { once: true });\n" +
+      '  } else {\n' +
+      '    stopLegacyScanner();\n' +
+      '  }\n' +
+      '})();\n'
     
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
   actual: |-
-    package com.amyelitesuite
+    (function () {
+      'use strict';
     
-    import android.app.Service
-    import android.content.Context
-    import android.content.Intent
-    import android.os.IBinder
+      if (window.__amyFxLegacyScannerDisabled) return;
+      window.__amyFxLegacyScannerDisabled = true;
     
-    /**
-     * Legacy local Mapping scanner is retired.
-     * Backend push notifications are the only active notification source.
-     *
-     * The service remains as a safe compatibility stub so older WebView calls do
-     * not crash. Every start clears stale targets and terminates immediately.
-     */
-    class ScannerService : Service() {
-        override fun onBind(intent: Intent?): IBinder? = null
+      let stopped = false;
     
-        override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-            clearLegacyScannerState()
-            stopForeground(true)
-            stopSelfResult(startId)
-            return START_NOT_STICKY
-        }
+      function stopLegacyScanner() {
+        if (stopped) return;
+        stopped = true;
+        window.Android?.stopBackgroundScanner?.();
+      }
     
-        override fun onCreate() {
-            super.onCreate()
-            clearLegacyScannerState()
-        }
+      // The local Mapping scanner is retired. Backend push notifications are the
+      // only active notification source, so no lifecycle event may start it again.
+      [
+        'amyfx:entry-watch-updated',
+        'amyfx:mapping-state-change',
+        'amyfx:market-update',
+        'pageshow',
+        'pagehide'
+      ].forEach(name => window.addEventListener(name, stopLegacyScanner));
     
-        private fun clearLegacyScannerState() {
-            getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
-                .edit()
-                .remove(KEY_BSL_TARGET)
-                .remove(KEY_SSL_TARGET)
-                .remove(KEY_TARGET_UPDATED_AT)
-                .remove(KEY_UPPER_ARMED)
-                .remove(KEY_LOWER_ARMED)
-                .putBoolean(KEY_SCANNER_ENABLED, false)
-                .apply()
-        }
+      document.addEventListener('visibilitychange', stopLegacyScanner);
     
-        companion object {
-            const val ACTION_STOP_SCANNER = "com.amyelitesuite.action.STOP_SCANNER"
-    
-            private const val KEY_SCANNER_ENABLED = "scanner_enabled"
-            private const val KEY_BSL_TARGET = "scanner_bsl_target"
-            private const val KEY_SSL_TARGET = "scanner_ssl_target"
-            private const val KEY_TARGET_UPDATED_AT = "scanner_target_updated_at"
-            private const val KEY_UPPER_ARMED = "scanner_upper_armed"
-            private const val KEY_LOWER_ARMED = "scanner_lower_armed"
-        }
-    }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', stopLegacyScanner, { once: true });
+      } else {
+        stopLegacyScanner();
+      }
+    })();
     
   operator: 'match'
   stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/api-polling-coordinator.test.mjs:73:10)
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/api-polling-coordinator.test.mjs:69:10)
     Test.runInAsyncScope (node:async_hooks:214:14)
     Test.run (node:internal/test_runner/test:1047:25)
     Test.processPendingSubtests (node:internal/test_runner/test:744:18)
@@ -108,19 +108,19 @@ Regression failed: api-polling-coordinator.test.mjs
 # Subtest: analysis view preserves disclosure state without forced scroll movement
 ok 6 - analysis view preserves disclosure state without forced scroll movement
   ---
-  duration_ms: 0.159288
+  duration_ms: 0.120491
   type: 'test'
   ...
 # Subtest: client Twelve Data requests are canonicalized, deduplicated and cached
 ok 7 - client Twelve Data requests are canonicalized, deduplicated and cached
   ---
-  duration_ms: 0.266648
+  duration_ms: 0.152
   type: 'test'
   ...
 # Subtest: backend shares provider responses and serves stale cache during provider failure
 ok 8 - backend shares provider responses and serves stale cache during provider failure
   ---
-  duration_ms: 0.151513
+  duration_ms: 0.110027
   type: 'test'
   ...
 1..8
@@ -131,5 +131,5 @@ ok 8 - backend shares provider responses and serves stale cache during provider 
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 242.31628
+# duration_ms 199.564501
 Regression failed: api-polling-coordinator.test.mjs
