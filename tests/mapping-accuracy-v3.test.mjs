@@ -314,6 +314,107 @@ test('Entry Watch preserves a terminal Causal V3 outcome and locked geometry', (
   assert.equal(watch.executionPlan.endTime, 1_700_007_200_000);
 });
 
+test('opposing sweep before Direction Forecast is rejected from the causal sequence', () => {
+  const fixture = entryFixture('M5');
+  const sweep = fixture.marketConcepts.liquidityLevels[0];
+  sweep.interactionIndex = 89;
+  sweep.interactionTime = fixture.candles[89].time;
+
+  const result = detectTimeframeEntryMap(fixture.candles, {
+    tf: 'M5',
+    marketConcepts: fixture.marketConcepts,
+    validatedContext: fixture.validatedContext,
+    htfCandles: fixture.htfCandles
+  });
+
+  assert.equal(result.scenario.sweep, null);
+  assert.equal(result.scenario.mss, null);
+  assert.ok(result.scenario.missing.includes('OPPOSING LIQUIDITY SWEEP'));
+  assert.equal(result.scenario.causalOrdering.forecastStartIndex, 90);
+  assert.equal(result.scenario.causalOrdering.rejectedBeforeForecast.length, 1);
+  assert.equal(result.scenario.causalOrdering.rejectedBeforeForecast[0].index, 89);
+  assert.equal(result.scenario.causalOrdering.valid, true);
+});
+
+test('eligible post-forecast sweep replaces a newer-looking pre-forecast sweep', () => {
+  const fixture = entryFixture('M5');
+  const preForecastSweep = fixture.marketConcepts.liquidityLevels[0];
+  preForecastSweep.interactionIndex = 89;
+  preForecastSweep.interactionTime = fixture.candles[89].time;
+  fixture.marketConcepts.structureSnapshot.sweepEvents.push({
+    id: 'post-forecast-sweep',
+    concept: 'SSL',
+    direction: 'BULLISH',
+    scope: 'INTERNAL',
+    level: 97,
+    index: 92,
+    time: fixture.candles[92].time,
+    valid: true
+  });
+
+  const result = detectTimeframeEntryMap(fixture.candles, {
+    tf: 'M5',
+    marketConcepts: fixture.marketConcepts,
+    validatedContext: fixture.validatedContext,
+    htfCandles: fixture.htfCandles
+  });
+
+  assert.equal(result.scenario.sweep.index, 92);
+  assert.equal(result.scenario.mss.index, 96);
+  assert.ok(result.scenario.sweep.index >= result.scenario.causalOrdering.forecastStartIndex);
+  assert.ok(result.scenario.mss.index > result.scenario.sweep.index);
+  assert.equal(result.scenario.causalOrdering.rejectedBeforeForecast[0].index, 89);
+  assert.equal(result.scenario.causalOrdering.valid, true);
+});
+
+test('MSS must be strictly after the eligible sweep', () => {
+  const fixture = entryFixture('M5');
+  fixture.marketConcepts.liquidityLevels[0].interactionIndex = 96;
+  fixture.marketConcepts.liquidityLevels[0].interactionTime = fixture.candles[96].time;
+
+  const result = detectTimeframeEntryMap(fixture.candles, {
+    tf: 'M5',
+    marketConcepts: fixture.marketConcepts,
+    validatedContext: fixture.validatedContext,
+    htfCandles: fixture.htfCandles
+  });
+
+  assert.equal(result.scenario.sweep.index, 96);
+  assert.equal(result.scenario.mss, null);
+  assert.ok(result.scenario.missing.includes('DISPLACED MSS'));
+  assert.equal(result.scenario.causalOrdering.valid, true);
+});
+
+test('an open future candle cannot alter a locked closed-candle setup or lifecycle', () => {
+  const fixture = entryFixture('M5');
+  fixture.candles.forEach(candle => { candle.isClosed = true; });
+  fixture.candles.push({
+    time: fixture.candles.at(-1).time + timeframeDurationMs('M5') / 1000,
+    open: 100,
+    high: 120,
+    low: 80,
+    close: 100,
+    isClosed: false
+  });
+
+  const result = detectTimeframeEntryMap(fixture.candles, {
+    tf: 'M5',
+    marketConcepts: fixture.marketConcepts,
+    validatedContext: fixture.validatedContext,
+    htfCandles: fixture.htfCandles
+  });
+
+  assert.ok(result.activeSetup, JSON.stringify({
+    status: result.status,
+    setupStatus: result.setup?.lifecycleStatus,
+    scenario: result.scenario
+  }));
+  assert.equal(result.setup.live, true);
+  assert.equal(result.scenario.causalOrdering.latestClosedIndex, 99);
+  assert.equal(result.scenario.causalOrdering.valid, true);
+  assert.match(result.scenario.requirements[0].detail, /^100 closed candles/);
+});
+
 test('entry trend gates use only HTF candles that were closed by the trigger close', () => {
   const fixture = entryFixture('M5');
   const futureStart = fixture.candles[96].time + timeframeDurationMs('M5') / 1000;

@@ -125,7 +125,8 @@ export function entryTrendFiltersAt(candles, {
   profile = entryProfileFor(tf)
 } = {}) {
   const timeframe = normalizeMappingTimeframe(tf);
-  const values = cleanConceptCandles(candles);
+  const values = cleanConceptCandles(candles)
+    .filter(candle => candle.isClosed !== false);
   const trigger = values[index];
   const normalized = normalizedDirection(direction);
   if (!profile || !trigger || normalized === 'NEUTRAL') {
@@ -615,7 +616,8 @@ export function detectTimeframeEntryMap(candles, {
   profile = entryProfileFor(tf)
 } = {}) {
   const timeframe = normalizeMappingTimeframe(tf);
-  const values = cleanConceptCandles(candles);
+  const values = cleanConceptCandles(candles)
+    .filter(candle => candle.isClosed !== false);
   if (!profile || values.length < (profile?.minimumCandles || 100)) {
     return {
       supported: Boolean(profile),
@@ -644,10 +646,19 @@ export function detectTimeframeEntryMap(candles, {
     : 0;
   const latestIndex = values.length - 1;
   const sweeps = direction === 'NEUTRAL' ? [] : confirmedSweeps(marketConcepts, direction);
-  const sweep = sweeps.find(item => latestIndex - item.index <= profile.sweepMemoryBars) || null;
+  const sweepsInMemory = sweeps.filter(item =>
+    item.index <= latestIndex
+    && latestIndex - item.index <= profile.sweepMemoryBars
+  );
+  const rejectedPreForecastSweeps = sweepsInMemory
+    .filter(item => item.index < forecastStartIndex);
+  const eligibleSweeps = sweepsInMemory
+    .filter(item => item.index >= forecastStartIndex);
+  const sweep = eligibleSweeps[0] || null;
   const mss = sweep
     ? validMssEvents(marketConcepts, direction, sweep.index, forecastStartIndex).find(event =>
-        event.index - sweep.index <= profile.sweepMemoryBars
+        event.index <= latestIndex
+        && event.index - sweep.index <= profile.sweepMemoryBars
       ) || null
     : null;
   const triggerCandle = mss ? values[mss.index] : null;
@@ -821,6 +832,29 @@ export function detectTimeframeEntryMap(candles, {
       missing,
       sweep,
       mss,
+      causalOrdering: {
+        forecastStartIndex,
+        latestClosedIndex: latestIndex,
+        sweepMemoryBars: profile.sweepMemoryBars,
+        sweepsInMemory: sweepsInMemory.length,
+        eligibleSweeps: eligibleSweeps.length,
+        rejectedBeforeForecast: rejectedPreForecastSweeps.map(item => ({
+          id: item.id,
+          index: item.index,
+          time: item.time,
+          type: item.type,
+          subtype: item.subtype,
+          source: item.source
+        })),
+        valid: Boolean(
+          !sweep
+          || (
+            sweep.index >= forecastStartIndex
+            && (!mss || mss.index > sweep.index)
+            && (!mss || mss.index <= latestIndex)
+          )
+        )
+      },
       poi,
       trendFilters,
       location,
