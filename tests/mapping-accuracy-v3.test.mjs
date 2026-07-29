@@ -10,8 +10,10 @@ import {
 import {
   advanceTimeframeEntryLifecycle,
   createTimeframeEntryPlan,
+  dealingLocationAssessment,
   detectTimeframeEntryMap,
   entryTrendFiltersAt,
+  pairedStructuralLeg,
   structuralTargetAssessment
 } from '../app/src/main/assets/apps/mapping/js/engine/concept-entry-map-v3.js';
 import { buildCausalEntryWatch } from '../app/src/main/assets/apps/mapping/js/engine/concept-analyze.js';
@@ -413,6 +415,123 @@ test('an open future candle cannot alter a locked closed-candle setup or lifecyc
   assert.equal(result.scenario.causalOrdering.latestClosedIndex, 99);
   assert.equal(result.scenario.causalOrdering.valid, true);
   assert.match(result.scenario.requirements[0].detail, /^100 closed candles/);
+});
+
+test('Dealing Location pairs one causal zigzag leg instead of independent latest slow swings', () => {
+  const fixture = entryFixture('M5');
+  fixture.marketConcepts.structureSnapshot.slowSwings = {
+    highs: [{ index: 70, high: 120 }],
+    lows: [
+      { index: 80, low: 90 },
+      { index: 88, low: 95 }
+    ]
+  };
+
+  const leg = pairedStructuralLeg(
+    fixture.marketConcepts,
+    fixture.candles,
+    { availableAtIndex: 94, confirmationBars: 6 }
+  );
+
+  assert.equal(leg.type, 'DOWN_LEG');
+  assert.equal(leg.highAnchor.index, 70);
+  assert.equal(leg.lowAnchor.index, 80);
+  assert.equal(leg.low, 90);
+  assert.notEqual(leg.lowAnchor.index, 88);
+});
+
+test('Dealing Location cannot use an anchor that was unconfirmed when the sweep closed', () => {
+  const fixture = entryFixture('M5');
+  fixture.marketConcepts.structureSnapshot.slowSwings = {
+    highs: [{ index: 70, high: 120 }],
+    lows: [{ index: 90, low: 90 }]
+  };
+
+  const result = detectTimeframeEntryMap(fixture.candles, {
+    tf: 'M5',
+    marketConcepts: fixture.marketConcepts,
+    validatedContext: fixture.validatedContext,
+    htfCandles: fixture.htfCandles
+  });
+
+  assert.equal(result.scenario.location.structuralLeg, null);
+  assert.equal(result.scenario.location.passed, false);
+  assert.match(result.scenario.location.reason, /NO PAIRED CAUSAL STRUCTURAL LEG/);
+  assert.ok(result.scenario.missing.includes('DEALING LOCATION'));
+});
+
+test('Dealing Location gates the sweep while recording breakout entry and MSS strength separately', () => {
+  const fixture = entryFixture('M5');
+  fixture.candles[96] = {
+    ...fixture.candles[96],
+    open: 99,
+    high: 122,
+    low: 97.5,
+    close: 121
+  };
+
+  const location = dealingLocationAssessment({
+    marketConcepts: fixture.marketConcepts,
+    values: fixture.candles,
+    sweep: {
+      index: 94,
+      time: fixture.candles[94].time,
+      level: 97
+    },
+    mss: { index: 96 },
+    poi: null,
+    direction: 'BULLISH',
+    confirmationBars: 6
+  });
+
+  assert.equal(location.referenceType, 'SWEEP_LEVEL');
+  assert.equal(location.passed, true);
+  assert.ok(location.sweepLocation.position <= 0.60);
+  assert.ok(location.entryLocation.rawPosition > 1);
+  assert.equal(location.entryLocation.position, 1);
+  assert.equal(location.mssLocation.closeStrengthPassed, true);
+  assert.equal(location.anchors.high.index, 70);
+  assert.equal(location.anchors.low.index, 80);
+  assert.equal(location.structuralLeg.type, 'DOWN_LEG');
+  assert.match(location.reason, /^PASS BUY/);
+});
+
+test('Dealing Location preserves BUY 0.60 and SELL 0.40 thresholds on the sweep reference', () => {
+  const fixture = entryFixture('M5');
+  const bullish = dealingLocationAssessment({
+    marketConcepts: fixture.marketConcepts,
+    values: fixture.candles,
+    sweep: { index: 94, level: 108 },
+    mss: { index: 96 },
+    poi: null,
+    direction: 'BULLISH',
+    confirmationBars: 6
+  });
+  const bearishPass = dealingLocationAssessment({
+    marketConcepts: fixture.marketConcepts,
+    values: fixture.candles,
+    sweep: { index: 94, level: 102 },
+    mss: { index: 96 },
+    poi: null,
+    direction: 'BEARISH',
+    confirmationBars: 6
+  });
+  const bearishFail = dealingLocationAssessment({
+    marketConcepts: fixture.marketConcepts,
+    values: fixture.candles,
+    sweep: { index: 94, level: 101.9 },
+    mss: { index: 96 },
+    poi: null,
+    direction: 'BEARISH',
+    confirmationBars: 6
+  });
+
+  assert.equal(bullish.sweepLocation.position, 0.6);
+  assert.equal(bullish.passed, true);
+  assert.equal(bearishPass.sweepLocation.position, 0.4);
+  assert.equal(bearishPass.passed, true);
+  assert.ok(bearishFail.sweepLocation.position < 0.4);
+  assert.equal(bearishFail.passed, false);
 });
 
 test('entry trend gates use only HTF candles that were closed by the trigger close', () => {

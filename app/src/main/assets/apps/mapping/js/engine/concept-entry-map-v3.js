@@ -251,22 +251,207 @@ function validMssEvents(marketConcepts, direction, afterIndex, forecastStartInde
     });
 }
 
-function dealingLocation(marketConcepts, values, index) {
-  const slow = marketConcepts?.structureSnapshot?.slowSwings || { highs: [], lows: [] };
-  const highs = (slow.highs || []).filter(item => item.index + 6 <= index);
-  const lows = (slow.lows || []).filter(item => item.index + 6 <= index);
-  const high = highs.at(-1)?.high;
-  const low = lows.at(-1)?.low;
-  const close = values[index]?.close;
-  if (![high, low, close].every(Number.isFinite) || high <= low) {
-    return { zone: 'UNKNOWN', position: 0.5, high: null, low: null };
+function dealingPosition(price, low, high) {
+  if (![price, low, high].every(Number.isFinite) || high <= low) {
+    return {
+      price: Number.isFinite(price) ? price : null,
+      rawPosition: null,
+      position: null,
+      zone: 'UNKNOWN'
+    };
   }
-  const position = Math.max(0, Math.min(1, (close - low) / (high - low)));
+  const rawPosition = (price - low) / (high - low);
+  const position = Math.max(0, Math.min(1, rawPosition));
   return {
-    zone: position < 0.45 ? 'DISCOUNT' : position > 0.55 ? 'PREMIUM' : 'EQUILIBRIUM',
+    price,
+    rawPosition,
     position,
-    high,
-    low
+    zone: position < 0.45
+      ? 'DISCOUNT'
+      : position > 0.55
+        ? 'PREMIUM'
+        : 'EQUILIBRIUM'
+  };
+}
+
+export function pairedStructuralLeg(marketConcepts, values, {
+  availableAtIndex,
+  confirmationBars = 6
+} = {}) {
+  const slow = marketConcepts?.structureSnapshot?.slowSwings || { highs: [], lows: [] };
+  const confirmedAt = Number.isInteger(availableAtIndex)
+    ? availableAtIndex
+    : values.length - 1;
+  const pivots = [
+    ...(slow.highs || []).map(item => ({
+      kind: 'HIGH',
+      index: Number(item.index),
+      time: item.time ?? values[item.index]?.time ?? null,
+      price: Number(item.high),
+      availableIndex: Number(item.index) + confirmationBars
+    })),
+    ...(slow.lows || []).map(item => ({
+      kind: 'LOW',
+      index: Number(item.index),
+      time: item.time ?? values[item.index]?.time ?? null,
+      price: Number(item.low),
+      availableIndex: Number(item.index) + confirmationBars
+    }))
+  ]
+    .filter(item =>
+      Number.isInteger(item.index)
+      && Number.isFinite(item.price)
+      && item.availableIndex <= confirmedAt
+    )
+    .sort((a, b) => a.index - b.index || a.kind.localeCompare(b.kind));
+
+  const zigzag = [];
+  for (const pivot of pivots) {
+    const previous = zigzag.at(-1);
+    if (!previous) {
+      zigzag.push(pivot);
+      continue;
+    }
+    if (previous.kind === pivot.kind) {
+      const moreExtreme = pivot.kind === 'HIGH'
+        ? pivot.price >= previous.price
+        : pivot.price <= previous.price;
+      if (moreExtreme) zigzag[zigzag.length - 1] = pivot;
+      continue;
+    }
+    if (pivot.index > previous.index) zigzag.push(pivot);
+  }
+
+  if (zigzag.length < 2) return null;
+  const start = zigzag.at(-2);
+  const end = zigzag.at(-1);
+  const highAnchor = start.kind === 'HIGH' ? start : end;
+  const lowAnchor = start.kind === 'LOW' ? start : end;
+  if (!(highAnchor.price > lowAnchor.price)) return null;
+
+  return {
+    type: start.kind === 'LOW' ? 'UP_LEG' : 'DOWN_LEG',
+    start,
+    end,
+    highAnchor,
+    lowAnchor,
+    high: highAnchor.price,
+    low: lowAnchor.price,
+    availableIndex: Math.max(start.availableIndex, end.availableIndex)
+  };
+}
+
+export function dealingLocationAssessment({
+  marketConcepts,
+  values,
+  sweep,
+  mss,
+  poi,
+  direction,
+  confirmationBars = 6
+}) {
+  const leg = pairedStructuralLeg(marketConcepts, values, {
+    availableAtIndex: sweep?.index,
+    confirmationBars
+  });
+  if (!leg || !sweep || !mss) {
+    return {
+      zone: 'UNKNOWN',
+      rawPosition: null,
+      position: null,
+      high: null,
+      low: null,
+      referenceType: 'SWEEP_LEVEL',
+      structuralLeg: null,
+      anchors: { high: null, low: null },
+      sweepLocation: null,
+      poiLocation: null,
+      entryLocation: null,
+      mssLocation: null,
+      passed: false,
+      reason: 'FAIL · NO PAIRED CAUSAL STRUCTURAL LEG AVAILABLE BY SWEEP'
+    };
+  }
+
+  const sweepCandle = values[sweep.index];
+  const mssCandle = values[mss.index];
+  const sweepLocation = {
+    ...dealingPosition(Number(sweep.level), leg.low, leg.high),
+    candleIndex: sweep.index,
+    candleTime: sweep.time ?? sweepCandle?.time ?? null,
+    extreme: dealingPosition(
+      direction === 'BULLISH'
+        ? Number(sweepCandle?.low)
+        : Number(sweepCandle?.high),
+      leg.low,
+      leg.high
+    )
+  };
+  const poiPrice = [Number(poi?.bottom), Number(poi?.top)].every(Number.isFinite)
+    ? (Number(poi.bottom) + Number(poi.top)) / 2
+    : NaN;
+  const poiLocation = poi
+    ? {
+        ...dealingPosition(poiPrice, leg.low, leg.high),
+        id: poi.id || null,
+        kind: poi.kind || null,
+        bottom: Number(poi.bottom),
+        top: Number(poi.top)
+      }
+    : null;
+  const entryLocation = {
+    ...dealingPosition(Number(mssCandle?.close), leg.low, leg.high),
+    candleIndex: mss.index,
+    candleTime: mssCandle?.time ?? null
+  };
+  const bullish = direction === 'BULLISH';
+  const passed = Number.isFinite(sweepLocation.position) && (
+    bullish
+      ? sweepLocation.position <= 0.60
+      : sweepLocation.position >= 0.40
+  );
+  const comparison = bullish ? '≤ 0.60' : '≥ 0.40';
+  const reason = `${passed ? 'PASS' : 'FAIL'} ${bullish ? 'BUY' : 'SELL'} · `
+    + `SWEEP ${Number(sweepLocation.position).toFixed(4)} ${comparison} · ${leg.type}`;
+
+  return {
+    zone: sweepLocation.zone,
+    rawPosition: sweepLocation.rawPosition,
+    position: sweepLocation.position,
+    high: leg.high,
+    low: leg.low,
+    referenceType: 'SWEEP_LEVEL',
+    structuralLeg: {
+      type: leg.type,
+      startIndex: leg.start.index,
+      startTime: leg.start.time,
+      endIndex: leg.end.index,
+      endTime: leg.end.time,
+      availableIndex: leg.availableIndex
+    },
+    anchors: {
+      high: {
+        index: leg.highAnchor.index,
+        time: leg.highAnchor.time,
+        price: leg.highAnchor.price,
+        availableIndex: leg.highAnchor.availableIndex
+      },
+      low: {
+        index: leg.lowAnchor.index,
+        time: leg.lowAnchor.time,
+        price: leg.lowAnchor.price,
+        availableIndex: leg.lowAnchor.availableIndex
+      }
+    },
+    sweepLocation,
+    poiLocation,
+    entryLocation,
+    mssLocation: {
+      ...entryLocation,
+      closeStrengthPassed: closeLocationValid(mssCandle, direction)
+    },
+    passed,
+    reason
   };
 }
 
@@ -279,6 +464,7 @@ function closeLocationValid(candle, direction) {
 }
 
 function locationValid(location, direction) {
+  if (typeof location?.passed === 'boolean') return location.passed;
   if (location.zone === 'UNKNOWN') return false;
   return direction === 'BULLISH'
     ? location.position <= 0.60
@@ -662,12 +848,28 @@ export function detectTimeframeEntryMap(candles, {
       ) || null
     : null;
   const triggerCandle = mss ? values[mss.index] : null;
-  const location = mss
-    ? dealingLocation(marketConcepts, values, mss.index)
-    : { zone: 'UNKNOWN', position: 0.5 };
   const poi = sweep && mss
     ? pointOfInterest(marketConcepts, values, sweep, mss, direction)
     : null;
+  const location = sweep && mss
+    ? dealingLocationAssessment({
+        marketConcepts,
+        values,
+        sweep,
+        mss,
+        poi,
+        direction,
+        confirmationBars: profile.slowSwingLength
+      })
+    : dealingLocationAssessment({
+        marketConcepts,
+        values,
+        sweep: null,
+        mss: null,
+        poi: null,
+        direction,
+        confirmationBars: profile.slowSwingLength
+      });
   const sessionOk = mss
     ? validExecutionSession(triggerCandle, profile.sessionMode)
     : false;
@@ -752,7 +954,7 @@ export function detectTimeframeEntryMap(candles, {
           ? 'London 14:00–18:00 / New York 19:30–04:00 WITA'
           : 'Tidak menjadi hard gate'
     ),
-    requirement('DEALING LOCATION', Boolean(mss && locationOk), location.zone),
+    requirement('DEALING LOCATION', Boolean(mss && locationOk), location.reason),
     requirement('CLOSE LOCATION', Boolean(mss && closeOk), closeOk ? 'Close mendukung arah' : 'Close belum kuat'),
     requirement(
       'STRUCTURAL TARGET ≥ 2R',
