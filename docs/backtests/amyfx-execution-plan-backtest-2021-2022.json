@@ -1,0 +1,112 @@
+{
+  "report": "Amy FX Preview Rencana Eksekusi historical translation backtest",
+  "generatedDate": "2026-07-29",
+  "repository": "suhaimitoamy/Amy-fx",
+  "branch": "personal/amyfx-private",
+  "appIdentityObserved": {
+    "name": "Amy FX Preview",
+    "versionName": "2.0.0-preview.173",
+    "versionCode": 940173,
+    "package": "com.amyelitesuite.learningpreview"
+  },
+  "scope": {
+    "symbol": "XAUUSD",
+    "period": "2021-01-01 through 2022-12-31",
+    "panel": "Rencana Eksekusi only",
+    "historicalDecisionTimeframes": ["M5", "M15"],
+    "dataValidationTimeframes": ["M1", "M5", "M15", "H1", "H4", "D1"],
+    "closedCandlesOnly": true,
+    "futureCandlesUsedByPanel": false,
+    "appLogicModified": false
+  },
+  "dataIntegrity": {
+    "zipFiles": 24,
+    "csvFiles": 144,
+    "rawRowsAllTimeframes": 912537,
+    "uniqueCandlesAllTimeframes": 912385,
+    "duplicatesRemovedAcrossMonthlyFiles": 152,
+    "nullCells": 0,
+    "invalidHighRows": 0,
+    "invalidLowRows": 0,
+    "aggregationParity": {
+      "M1_to_M5": {"matchedBars": 141614, "mismatchedBars": 0, "maximumAbsoluteDifference": 0.005000000000109139},
+      "M5_to_M15": {"matchedBars": 47205, "mismatchedBars": 0, "maximumAbsoluteDifference": 0.0},
+      "M15_to_H1": {"matchedBars": 11805, "mismatchedBars": 0, "maximumAbsoluteDifference": 0.0},
+      "H1_to_H4": {"matchedBars": 3187, "mismatchedBars": 0, "maximumAbsoluteDifference": 0.0},
+      "H4_to_D1": {"matchedBars": 620, "mismatchedBars": 0, "maximumAbsoluteDifference": 0.0}
+    }
+  },
+  "dataset": {
+    "M1": {"rawRows": 708074, "uniqueCandles": 707954, "duplicatesRemoved": 120, "firstCandle": "2021-01-03T18:00:00", "lastCandle": "2022-12-30T16:57:00", "minLow": 1614.71, "maxHigh": 2070.358},
+    "M5": {"rawRows": 141638, "uniqueCandles": 141614, "duplicatesRemoved": 24, "firstCandle": "2021-01-03T18:00:00", "lastCandle": "2022-12-30T16:55:00", "minLow": 1614.71, "maxHigh": 2070.36},
+    "M15": {"rawRows": 47213, "uniqueCandles": 47205, "duplicatesRemoved": 8, "firstCandle": "2021-01-03T18:00:00", "lastCandle": "2022-12-30T16:45:00", "minLow": 1614.71, "maxHigh": 2070.36},
+    "H1": {"rawRows": 11805, "uniqueCandles": 11805, "duplicatesRemoved": 0, "firstCandle": "2021-01-03T18:00:00", "lastCandle": "2022-12-30T16:00:00", "minLow": 1614.71, "maxHigh": 2070.36},
+    "H4": {"rawRows": 3187, "uniqueCandles": 3187, "duplicatesRemoved": 0, "firstCandle": "2021-01-03T16:00:00", "lastCandle": "2022-12-30T16:00:00", "minLow": 1614.71, "maxHigh": 2070.36},
+    "D1": {"rawRows": 620, "uniqueCandles": 620, "duplicatesRemoved": 0, "firstCandle": "2021-01-03T00:00:00", "lastCandle": "2022-12-30T00:00:00", "minLow": 1614.71, "maxHigh": 2070.36}
+  },
+  "authoritativeMappingReplay": {
+    "M5": {
+      "uniqueCandles": 141614,
+      "forecastEvents": 61,
+      "activeForecastBars": 2634,
+      "setupCount": 0,
+      "futureLeakViolations": 0,
+      "cumulativeGatePass": {"DATA": 2634, "DIRECTION": 2634, "OPPOSING LIQUIDITY SWEEP": 528, "DISPLACED MSS": 2, "HTF ALIGNMENT": 2, "EMA STACK": 2, "EMA DISTANCE": 2, "SESSION": 0, "DEALING LOCATION": 0, "CLOSE LOCATION": 0, "STRUCTURAL TARGET >= 2R": 0, "SETUP": 0}
+    },
+    "M15": {
+      "uniqueCandles": 47205,
+      "forecastEvents": 85,
+      "activeForecastBars": 2845,
+      "setupCount": 0,
+      "futureLeakViolations": 0,
+      "cumulativeGatePass": {"DATA": 2845, "DIRECTION": 2845, "OPPOSING LIQUIDITY SWEEP": 292, "DISPLACED MSS": 38, "HTF ALIGNMENT": 38, "EMA STACK": 17, "EMA DISTANCE": 17, "SESSION": 0, "DEALING LOCATION": 0, "CLOSE LOCATION": 0, "STRUCTURAL TARGET >= 2R": 0, "SETUP": 0}
+    }
+  },
+  "executionPlanBacktest": {
+    "M5": {
+      "candlesEvaluated": 141614,
+      "decisions": {"BUY": 0, "SELL": 0, "WAIT": 141614},
+      "activeForecastBarsEvaluated": 2634,
+      "activeForecastDecisions": {"BUY": 0, "SELL": 0, "WAIT": 2634},
+      "falseExecutableLevelLeaks": {"entry": 0, "stopLoss": 0, "tp1": 0, "tp2": 0, "rr": 0},
+      "historicalFreshnessState": "CLOSED_CANDLE",
+      "staleFalsePositives": 0,
+      "futureCandleReadsForPanel": 0
+    },
+    "M15": {
+      "candlesEvaluated": 47205,
+      "decisions": {"BUY": 0, "SELL": 0, "WAIT": 47205},
+      "activeForecastBarsEvaluated": 2845,
+      "activeForecastDecisions": {"BUY": 0, "SELL": 0, "WAIT": 2845},
+      "falseExecutableLevelLeaks": {"entry": 0, "stopLoss": 0, "tp1": 0, "tp2": 0, "rr": 0},
+      "historicalFreshnessState": "CLOSED_CANDLE",
+      "staleFalsePositives": 0,
+      "futureCandleReadsForPanel": 0
+    }
+  },
+  "totals": {
+    "candlesEvaluated": 188819,
+    "BUY": 0,
+    "SELL": 0,
+    "WAIT": 188819,
+    "activeForecastBars": 5479,
+    "activeForecastWAIT": 5479,
+    "falseExecutableLevelLeaks": 0,
+    "staleFalsePositives": 0,
+    "futureLeakViolations": 0
+  },
+  "verdict": {
+    "status": "PASS_WITH_ENGINE_BLOCKER",
+    "panelTranslation": "PASS",
+    "falseBuySellSignals": 0,
+    "falseLevels": 0,
+    "staleReplayMisclassification": 0,
+    "performanceEvaluationAvailable": false,
+    "reason": "The Mapping engine locked no M5 or M15 setup in 2021-2022 because the cumulative funnel reached zero at SESSION. The panel therefore correctly remained WAIT and did not expose Entry, SL, TP1, TP2, or RR."
+  },
+  "limitations": [
+    "This validates the Rencana Eksekusi translation layer against the authoritative historical Mapping replay already present on the branch.",
+    "Because the engine produced zero locked setups, historical win rate, profit factor, SL/TP distribution, and RR realization cannot be calculated.",
+    "Lifecycle rendering for SL HIT, TP1 HIT / BE, TP2 HIT, TP1 / BE, and EXPIRED remains regression-test coverage rather than an observed historical outcome in this period."
+  ]
+}
