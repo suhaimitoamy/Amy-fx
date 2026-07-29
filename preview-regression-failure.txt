@@ -1,0 +1,154 @@
+Amy FX Private Preview regression failure
+Run: 30463223595
+Commit: 20cf0618b91f7455b2327aa7357733177de3d02c
+
+===== amy-mentor-conversation.test.mjs =====
+===== api-polling-coordinator.test.mjs =====
+===== asia-range-ui-freeze-regression.test.mjs =====
+===== asia-range.test.mjs =====
+===== background-video-playback-regression.test.mjs =====
+===== blueprint-preview-stabilization.test.mjs =====
+===== blueprint-preview-v1.test.mjs =====
+===== bos-mss.test.mjs =====
+===== bsl-ssl.test.mjs =====
+===== concept-engine.integration.test.mjs =====
+===== dashboard-analyze-separation.test.mjs =====
+===== dashboard-only-panels-v1.test.mjs =====
+===== deepseek-provider-detection.test.mjs =====
+===== dynamic-heatmap-ui-regression.test.mjs =====
+===== dynamic-heatmap.test.mjs =====
+===== entry-sl-tp.test.mjs =====
+===== entry-watch-engine.test.mjs =====
+===== entry-watch-hardening.test.mjs =====
+===== equal-high-low.test.mjs =====
+===== execution-plan.test.mjs =====
+===== final-integration.test.mjs =====
+not ok 2 - causal all-timeframe Entry Map owns execution and the watch runtime is read-only
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+  operator: 'match'
+Regression failed: final-integration.test.mjs
+
+--- final log lines ---
+      '  lastSignature = signature;\n' +
+      '\n' +
+      "  window.dispatchEvent(new CustomEvent('amyfx:entry-watch-updated', {\n" +
+      '    detail: {\n' +
+      '      watch: canonical.result.entryWatch,\n' +
+      '      scenario: canonical.scenario,\n' +
+      '      readOnly: true\n' +
+      '    }\n' +
+      '  }));\n' +
+      '}\n' +
+      '\n' +
+      'function start() {\n' +
+      '  syncEntryWatch();\n' +
+      '  setInterval(syncEntryWatch, SYNC_MS);\n' +
+      "  window.addEventListener('amyfx:candles-updated', syncEntryWatch);\n" +
+      "  window.addEventListener('amyfx:market-update', syncEntryWatch);\n" +
+      "  document.addEventListener('click', () => setTimeout(syncEntryWatch, 20), true);\n" +
+      "  document.addEventListener('visibilitychange', () => {\n" +
+      '    if (!document.hidden) syncEntryWatch();\n' +
+      '  });\n' +
+      '}\n' +
+      '\n' +
+      "if (document.readyState === 'loading') {\n" +
+      "  document.addEventListener('DOMContentLoaded', start, { once: true });\n" +
+      '} else {\n' +
+      '  start();\n' +
+      '}\n'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    const CARD_ID = 'amy-entry-watch-card';
+    const SYNC_MS = 1000;
+    
+    let lastSignature = '';
+    
+    function readCanonical() {
+      const state = window.state;
+      const result = state?.result;
+      if (!result) return null;
+      const snapshot = result.mappingSnapshot;
+      const scenario = snapshot?.scenario || result.entryMap?.scenario;
+      const execution = snapshot?.execution || result.setupExecution;
+      if (!scenario) return null;
+      return { state, result, snapshot, scenario, execution };
+    }
+    
+    function syncEntryWatch() {
+      document.getElementById(CARD_ID)?.remove();
+    
+      const canonical = readCanonical();
+      if (!canonical) {
+        lastSignature = '';
+        return;
+      }
+    
+      const signature = JSON.stringify({
+        tf: canonical.scenario.tf,
+        direction: canonical.scenario.direction,
+        status: canonical.scenario.status,
+        missing: canonical.scenario.missing,
+        setupId: canonical.execution?.setupId,
+        stage: canonical.execution?.lifecycleStage
+      });
+      if (signature === lastSignature) return;
+      lastSignature = signature;
+    
+      window.dispatchEvent(new CustomEvent('amyfx:entry-watch-updated', {
+        detail: {
+          watch: canonical.result.entryWatch,
+          scenario: canonical.scenario,
+          readOnly: true
+        }
+      }));
+    }
+    
+    function start() {
+      syncEntryWatch();
+      setInterval(syncEntryWatch, SYNC_MS);
+      window.addEventListener('amyfx:candles-updated', syncEntryWatch);
+      window.addEventListener('amyfx:market-update', syncEntryWatch);
+      document.addEventListener('click', () => setTimeout(syncEntryWatch, 20), true);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) syncEntryWatch();
+      });
+    }
+    
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', start, { once: true });
+    } else {
+      start();
+    }
+    
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/final-integration.test.mjs:46:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: Mapping UI loads one read-only watch, all timeframe controls, and WITA labels
+ok 3 - Mapping UI loads one read-only watch, all timeframe controls, and WITA labels
+  ---
+  duration_ms: 0.494001
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 2
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 499.756287
+Regression failed: final-integration.test.mjs
