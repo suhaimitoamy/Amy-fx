@@ -1,6 +1,6 @@
 Amy FX Private Preview regression failure
-Run: 30468987674
-Commit: 4cbe15f0014c9e48643bcc24bea62b947c958f2d
+Run: 30469127219
+Commit: 9f67c8e0c4a49828b7c774be3d2f2df58012b12a
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -45,132 +45,136 @@ Commit: 4cbe15f0014c9e48643bcc24bea62b947c958f2d
 ===== mapping-context-safety.test.mjs =====
 ===== mapping-dom-stability-v5.test.mjs =====
 ===== mapping-live-consistency-regression.test.mjs =====
-not ok 4 - connected live price never claims Mapping FRESH while canonical Mapping is stale or expired
+===== mapping-logic-v2.test.mjs =====
+===== mapping-market-integrity-regression.test.mjs =====
+===== mapping-navigation-regression.test.mjs =====
+===== mapping-news-background-repair.test.mjs =====
+not ok 2 - Paused or terminal Entry Watch cannot keep an old BUY or SELL card visible
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
   actual: |-
   operator: 'match'
-Regression failed: mapping-live-consistency-regression.test.mjs
+Regression failed: mapping-news-background-repair.test.mjs
 
 --- final log lines ---
-          conn.dataset.analysisFreshness = mappingState;
-          conn.className = connected ? "status on" : "status";
-          conn.setAttribute("aria-label", accessibleStatus);
-          conn.title = accessibleStatus;
-        }
+      '      readOnly: true\n' +
+      '    }\n' +
+      '  }));\n' +
+      '}\n' +
+      '\n' +
+      'function start() {\n' +
+      '  syncEntryWatch();\n' +
+      '  setInterval(syncEntryWatch, SYNC_MS);\n' +
+      "  window.addEventListener('amyfx:candles-updated', syncEntryWatch);\n" +
+      "  window.addEventListener('amyfx:market-update', syncEntryWatch);\n" +
+      "  document.addEventListener('click', () => setTimeout(syncEntryWatch, 20), true);\n" +
+      "  document.addEventListener('visibilitychange', () => {\n" +
+      '    if (!document.hidden) syncEntryWatch();\n' +
+      '  });\n' +
+      '}\n' +
+      '\n' +
+      "if (document.readyState === 'loading') {\n" +
+      "  document.addEventListener('DOMContentLoaded', start, { once: true });\n" +
+      '} else {\n' +
+      '  start();\n' +
+      '}\n'
     
-        const topTime = document.getElementById("top-wib") || document.getElementById("top-wita");
-        if (topTime) {
-          topTime.id = "top-wita";
-          const quoteLabel = quoteState === "LIVE" ? "Live Price" : `Price ${quoteState}`;
-          topTime.textContent = `${quoteLabel} • Mapping ${state.tf} ${mappingState.toLowerCase()} • WITA ${nowTime()}`;
-        }
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    const CARD_ID = 'amy-entry-watch-card';
+    const SYNC_MS = 1000;
     
-        const killzoneTime = document.getElementById("kz-wib") || document.getElementById("kz-wita");
-        if (killzoneTime) {
-          killzoneTime.id = "kz-wita";
-          killzoneTime.textContent = `WITA ${nowTime()}`;
-        }
+    let lastSignature = '';
     
-        document.querySelectorAll(".session-focus small").forEach(node => {
-          node.textContent = String(node.textContent || "").replace(/\bWIB\b/g, "WITA");
-        });
+    function readCanonical() {
+      const state = window.state;
+      const result = state?.result;
+      if (!result) return null;
+      const snapshot = result.mappingSnapshot;
+      const scenario = snapshot?.scenario || result.entryMap?.scenario;
+      const execution = snapshot?.execution || result.setupExecution;
+      if (!scenario) return null;
+      return { state, result, snapshot, scenario, execution };
+    }
+    
+    function syncEntryWatch() {
+      document.getElementById(CARD_ID)?.remove();
+    
+      const canonical = readCanonical();
+      if (!canonical) {
+        lastSignature = '';
+        return;
       }
     
-      function scheduleSync() {
-        if (syncScheduled) return;
-        syncScheduled = true;
-        window.setTimeout(() => {
-          syncScheduled = false;
-          syncConnectionLabel();
-        }, 0);
-      }
-    
-      function analysisNeedsRefresh() {
-        if (document.hidden || state.conn !== "Connected") return false;
-        const { quoteFreshness, mappingFreshness } = canonical();
-        return quoteFreshness.state === "LIVE" && (mappingFreshness.state !== "FRESH" || isCandleStale(state.tf));
-      }
-    
-      async function refreshExpiredAnalysis(reason = "mapping-expired") {
-        if (!analysisNeedsRefresh() || refreshInFlight) return;
-        if (Date.now() - lastRefreshAttemptAt < REFRESH_COOLDOWN_MS) return;
-        lastRefreshAttemptAt = Date.now();
-        refreshInFlight = true;
-        scheduleSync();
-        try {
-          await runAnalysis(state.tf);
-          window.dispatchEvent(new CustomEvent("amyfx:mapping-consistency-refresh", {
-            detail: { reason, timeframe: state.tf, refreshedAt: Date.now() }
-          }));
-        } finally {
-          refreshInFlight = false;
-          scheduleSync();
-        }
-      }
-    
-      function reconcile(reason) {
-        scheduleSync();
-        window.setTimeout(() => refreshExpiredAnalysis(reason), 50);
-      }
-    
-      function boot() {
-        reconcile("startup");
-        window.addEventListener("amyfx:market-update", () => reconcile("market-update"));
-        window.addEventListener("online", () => reconcile("online"));
-        window.addEventListener("offline", scheduleSync);
-        window.addEventListener("focus", () => reconcile("focus"));
-        document.addEventListener("visibilitychange", () => {
-          if (!document.hidden) reconcile("visible");
-        });
-        document.querySelector(".nav")?.addEventListener("click", scheduleSync);
-        window.setInterval(() => {
-          if (!document.hidden) reconcile("periodic-check");
-        }, 60_000);
-      }
-    
-      window.AmyFXMappingConsistency = Object.freeze({
-        version: "2.0.0",
-        mappingIsFresh,
-        refresh: refreshExpiredAnalysis,
-        sync: syncConnectionLabel
+      const signature = JSON.stringify({
+        tf: canonical.scenario.tf,
+        direction: canonical.scenario.direction,
+        status: canonical.scenario.status,
+        missing: canonical.scenario.missing,
+        setupId: canonical.execution?.setupId,
+        stage: canonical.execution?.lifecycleStage
       });
+      if (signature === lastSignature) return;
+      lastSignature = signature;
     
-      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
-      else boot();
-    })();
+      window.dispatchEvent(new CustomEvent('amyfx:entry-watch-updated', {
+        detail: {
+          watch: canonical.result.entryWatch,
+          scenario: canonical.scenario,
+          readOnly: true
+        }
+      }));
+    }
+    
+    function start() {
+      syncEntryWatch();
+      setInterval(syncEntryWatch, SYNC_MS);
+      window.addEventListener('amyfx:candles-updated', syncEntryWatch);
+      window.addEventListener('amyfx:market-update', syncEntryWatch);
+      document.addEventListener('click', () => setTimeout(syncEntryWatch, 20), true);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) syncEntryWatch();
+      });
+    }
+    
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', start, { once: true });
+    } else {
+      start();
+    }
+    
   operator: 'match'
   stack: |-
-    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/mapping-live-consistency-regression.test.mjs:39:10)
-    async Test.run (node:internal/test_runner/test:1054:7)
-    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+    TestContext.<anonymous> (file:///home/runner/work/Amy-fx/Amy-fx/tests/mapping-news-background-repair.test.mjs:34:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
   ...
-# Subtest: expired Mapping triggers guarded candle analysis refresh so structure can repopulate
-ok 5 - expired Mapping triggers guarded candle analysis refresh so structure can repopulate
+# Subtest: Android news notifications use a durable high-priority system channel
+ok 3 - Android news notifications use a durable high-priority system channel
   ---
-  duration_ms: 2.535168
+  duration_ms: 0.42081
   type: 'test'
   ...
-# Subtest: Mapping user-facing clocks are normalized to WITA
-ok 6 - Mapping user-facing clocks are normalized to WITA
+# Subtest: Supabase sends system notification plus data and scheduler invokes it
+ok 4 - Supabase sends system notification plus data and scheduler invokes it
   ---
-  duration_ms: 1.144289
+  duration_ms: 0.246213
   type: 'test'
   ...
-# Subtest: command strip exposes BSL and SSL only from canonical Intel Liquidity with explicit freshness
-ok 7 - command strip exposes BSL and SSL only from canonical Intel Liquidity with explicit freshness
-  ---
-  duration_ms: 1.620295
-  type: 'test'
-  ...
-1..7
-# tests 7
+1..4
+# tests 4
 # suites 0
-# pass 6
+# pass 3
 # fail 1
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 102.061394
-Regression failed: mapping-live-consistency-regression.test.mjs
+# duration_ms 91.532493
+Regression failed: mapping-news-background-repair.test.mjs
