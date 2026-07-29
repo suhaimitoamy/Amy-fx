@@ -25,7 +25,7 @@ test('live consistency runtime is valid JavaScript without a DOM observer loop',
   assert.equal(result.status, 0, result.stderr || result.stdout);
 });
 
-test('fresh label requires same-timeframe canonical Mapping freshness', async () => {
+test('fresh status requires same-timeframe canonical Mapping freshness', async () => {
   const source = await read(runtimePath);
   assert.match(source, /contract\?\.assess\?\.\("mapping", mapping\)/);
   assert.match(source, /sameTimeframe/);
@@ -34,13 +34,16 @@ test('fresh label requires same-timeframe canonical Mapping freshness', async ()
   assert.doesNotMatch(source, /storedAt.*FRESH|Date\.now\(\).*storedAt/);
 });
 
-test('connected live price never claims Mapping FRESH while canonical Mapping is stale or expired', async () => {
+test('status dot never marks stale or expired Mapping as fresh', async () => {
   const source = await read(runtimePath);
-  assert.match(source, /Price LIVE · Mapping \$\{state\.tf\} FRESH/);
-  assert.match(source, /Price LIVE · Mapping \$\{state\.tf\} \$\{mappingState\}/);
-  assert.match(source, /Price \$\{quoteState\} · Mapping \$\{state\.tf\} \$\{mappingState\}/);
-  assert.match(source, /data-analysis-freshness/);
-  assert.match(source, /data-quote-freshness/);
+  assert.match(source, /conn\.textContent !== "●"/);
+  assert.match(source, /conn\.dataset\.quoteFreshness = quoteState/);
+  assert.match(source, /conn\.dataset\.analysisFreshness = mappingState/);
+  assert.match(source, /data-quote-freshness="LIVE"\]\[data-analysis-freshness="FRESH"/);
+  assert.match(source, /data-analysis-freshness="STALE"/);
+  assert.match(source, /data-analysis-freshness="EXPIRED"/);
+  assert.match(source, /aria-label/);
+  assert.doesNotMatch(source, /conn\.textContent\s*=\s*`Price|conn\.textContent\s*=\s*`Connected/);
 });
 
 test('expired Mapping triggers guarded candle analysis refresh so structure can repopulate', async () => {
