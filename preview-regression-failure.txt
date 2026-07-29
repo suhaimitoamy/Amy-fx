@@ -1,6 +1,6 @@
 Amy FX Private Preview regression failure
-Run: 30468900615
-Commit: b72676196ed89b449bc21612889323289b267429
+Run: 30468987674
+Commit: 4cbe15f0014c9e48643bcc24bea62b947c958f2d
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -149,19 +149,19 @@ Regression failed: mapping-live-consistency-regression.test.mjs
 # Subtest: expired Mapping triggers guarded candle analysis refresh so structure can repopulate
 ok 5 - expired Mapping triggers guarded candle analysis refresh so structure can repopulate
   ---
-  duration_ms: 2.079075
+  duration_ms: 2.535168
   type: 'test'
   ...
 # Subtest: Mapping user-facing clocks are normalized to WITA
 ok 6 - Mapping user-facing clocks are normalized to WITA
   ---
-  duration_ms: 1.085975
+  duration_ms: 1.144289
   type: 'test'
   ...
 # Subtest: command strip exposes BSL and SSL only from canonical Intel Liquidity with explicit freshness
 ok 7 - command strip exposes BSL and SSL only from canonical Intel Liquidity with explicit freshness
   ---
-  duration_ms: 1.356537
+  duration_ms: 1.620295
   type: 'test'
   ...
 1..7
@@ -172,5 +172,5 @@ ok 7 - command strip exposes BSL and SSL only from canonical Intel Liquidity wit
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 100.374668
+# duration_ms 102.061394
 Regression failed: mapping-live-consistency-regression.test.mjs
