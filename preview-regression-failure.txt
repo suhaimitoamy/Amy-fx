@@ -1,6 +1,6 @@
 Amy FX Private Preview regression failure
-Run: 30468617746
-Commit: 605841a662ab7965249608f6304aa895b1085cf1
+Run: 30468747677
+Commit: d3f62f313d2f31bfa7b7a915d4c318f79b80dd02
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -139,7 +139,7 @@ Regression failed: final-integration.test.mjs
 # Subtest: Mapping UI loads one read-only watch, all timeframe controls, and WITA labels
 ok 3 - Mapping UI loads one read-only watch, all timeframe controls, and WITA labels
   ---
-  duration_ms: 0.530219
+  duration_ms: 0.375195
   type: 'test'
   ...
 1..3
@@ -150,5 +150,5 @@ ok 3 - Mapping UI loads one read-only watch, all timeframe controls, and WITA la
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 467.48148
+# duration_ms 365.694528
 Regression failed: final-integration.test.mjs
