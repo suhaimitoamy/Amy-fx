@@ -1,0 +1,2 @@
+create index if not exists amyfx_preview_scalper_notification_logs_device_idx
+  on public.amyfx_preview_scalper_notification_logs (device_token_id);
