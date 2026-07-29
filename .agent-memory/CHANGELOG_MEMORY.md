@@ -5,6 +5,7 @@
 - Added fixed defect history for terminal-state loss, replay wall-clock contamination, pre-forecast sweeps, unpaired dealing anchors, and hidden risk diagnosis.
 - Recorded the 2021–2022 validation result: Dealing Location is no longer the M5 blocker; SESSION is the next cumulative blocker and setup remains zero without threshold changes.
 - Added follow-up to validate lifecycle only when an unchanged-gate setup occurs naturally.
+- Requested a new private Preview release so installed version `2.0.0-preview.215` receives an in-app update notification for the validated Causal Entry Watch hardening.
 
 ## 2026-07-28
 - Recorded Mapping Accuracy V3 as the successor to M15-only execution.
