@@ -1,7 +1,6 @@
 import { state, save, setupText } from '../main.js';
 import { connect } from '../api/market-data.js';
 import { render } from '../ui/ui-render.js';
-import { isSupportedMappingTimeframe } from '../engine/mapping-timeframes.js';
 
 let lastNativeTargetKey = null;
 
@@ -99,54 +98,9 @@ export function notifyImportant(result = state.result) {
 }
 
 export function sendTargetsToNative() {
-  if (!window.Android?.startBackgroundScanner) return;
-
-  const contract = validatedContract();
-  const execution = contract.setupExecution;
-  const validSetup = Boolean(
-    contract.active &&
-    isSupportedMappingTimeframe(contract.result?.tf || state.tf) &&
-    execution?.setupId &&
-    Number.isFinite(Number(execution.entryLow)) &&
-    Number.isFinite(Number(execution.entryHigh))
-  );
-
-  if (!validSetup) {
-    stopNativeMonitorOnce();
-    return;
-  }
-
-  const lo = Math.min(Number(execution.entryLow), Number(execution.entryHigh));
-  const hi = Math.max(Number(execution.entryLow), Number(execution.entryHigh));
-  let upper = 0;
-  let lower = 0;
-
-  if (execution.direction === 'SELL') {
-    upper = lo;
-  } else if (execution.direction === 'BUY') {
-    lower = hi;
-  }
-
-  if (upper <= 0 && lower <= 0) {
-    stopNativeMonitorOnce();
-    return;
-  }
-
-  const targetKey = [
-    execution.setupId,
-    execution.lifecycleStage,
-    execution.direction,
-    upper.toFixed(2),
-    lower.toFixed(2)
-  ].join('|');
-  if (targetKey === lastNativeTargetKey) return;
-  lastNativeTargetKey = targetKey;
-
-  window.Android.startBackgroundScanner(
-    'amyfx-proxy',
-    String(upper),
-    String(lower)
-  );
+  // Scanner area Mapping lokal sudah dinonaktifkan. Backend menjadi satu-satunya
+  // sumber notifikasi setup/scalper agar tidak terjadi alert ganda atau stale.
+  stopNativeMonitorOnce();
 }
 
 export function saveConnect() {
@@ -155,16 +109,16 @@ export function saveConnect() {
   const input = document.getElementById('apiKey');
   if (input) input.value = '';
 
-  state.bg = true;
-  save();
+  state.bg = false;
+  try { localStorage.setItem('bg_scanner', 'false'); } catch (_) {}
   connect();
   sendTargetsToNative();
   render();
 }
 
 export function toggleBg() {
-  state.bg = true;
-  save();
+  state.bg = false;
+  try { localStorage.setItem('bg_scanner', 'false'); } catch (_) {}
   sendTargetsToNative();
   render();
 }
