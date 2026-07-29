@@ -264,7 +264,7 @@ Deno.serve(async (request) => {
       }
 
       if (setup.status === "ACTIVE" || setup.status === "BE_ACTIVE") {
-        const advanced = advanceSetupLifecycle(setup, m15);
+        const advanced = advanceSetupLifecycle(setup, m1, { evaluationSeconds: 60 });
         setup = advanced.setup;
         if (advanced.events.length || setup.last_evaluated_open_time !== current.last_evaluated_open_time) {
           await updateSetup(setup);
