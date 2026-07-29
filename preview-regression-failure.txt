@@ -1,6 +1,6 @@
 Amy FX Private Preview regression failure
-Run: 30466008317
-Commit: 2a4b5e5d68530aba7f66a3d420beb3cd73353b39
+Run: 30466312198
+Commit: b2a6473f8a0961b10cc0726cb2c2526ed14378b5
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -108,19 +108,19 @@ Regression failed: api-polling-coordinator.test.mjs
 # Subtest: analysis view preserves disclosure state without forced scroll movement
 ok 6 - analysis view preserves disclosure state without forced scroll movement
   ---
-  duration_ms: 0.218216
+  duration_ms: 0.236443
   type: 'test'
   ...
 # Subtest: client Twelve Data requests are canonicalized, deduplicated and cached
 ok 7 - client Twelve Data requests are canonicalized, deduplicated and cached
   ---
-  duration_ms: 0.315927
+  duration_ms: 0.222187
   type: 'test'
   ...
 # Subtest: backend shares provider responses and serves stale cache during provider failure
 ok 8 - backend shares provider responses and serves stale cache during provider failure
   ---
-  duration_ms: 0.207415
+  duration_ms: 0.143158
   type: 'test'
   ...
 1..8
@@ -131,5 +131,5 @@ ok 8 - backend shares provider responses and serves stale cache during provider 
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 239.250689
+# duration_ms 232.812228
 Regression failed: api-polling-coordinator.test.mjs
