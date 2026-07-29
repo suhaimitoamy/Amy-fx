@@ -41,6 +41,8 @@ import { runAnalysis, isCandleStale } from "./api/market-data.js";
         justify-content:center;
         width:18px;
         min-width:18px;
+        max-width:18px;
+        flex:0 0 18px;
         height:18px;
         padding:0 !important;
         margin-left:auto;
@@ -50,11 +52,15 @@ import { runAnalysis, isCandleStale } from "./api/market-data.js";
         letter-spacing:0 !important;
         white-space:nowrap;
       }
+      #top-wib,
+      #top-wita {
+        display:none !important;
+      }
       #conn[data-quote-freshness="LIVE"][data-analysis-freshness="FRESH"] { color:#4ade80 !important; }
-      #conn[data-quote-freshness="LIVE"][data-analysis-freshness="STALE"],
-      #conn[data-quote-freshness="LIVE"][data-analysis-freshness="EXPIRED"],
-      #conn[data-analysis-freshness="LOADING"] { color:#fbbf24 !important; }
-      #conn[data-quote-freshness="STALE"],
+      #conn[data-analysis-freshness="LOADING"],
+      #conn[data-analysis-freshness="STALE"],
+      #conn[data-quote-freshness="STALE"] { color:#fbbf24 !important; }
+      #conn[data-analysis-freshness="EXPIRED"],
       #conn[data-quote-freshness="EXPIRED"],
       #conn[data-quote-freshness="OFFLINE"] { color:#fb7185 !important; }
     `;
@@ -77,7 +83,7 @@ import { runAnalysis, isCandleStale } from "./api/market-data.js";
           : quoteState === "LIVE"
             ? `Harga live, Mapping ${state.tf} ${mappingState}`
             : `Harga ${quoteState}, Mapping ${state.tf} ${mappingState}`;
-      if (conn.textContent !== "●") conn.textContent = "●";
+      conn.textContent = "●";
       conn.dataset.quoteFreshness = quoteState;
       conn.dataset.analysisFreshness = mappingState;
       conn.className = connected ? "status on" : "status";
@@ -87,9 +93,9 @@ import { runAnalysis, isCandleStale } from "./api/market-data.js";
 
     const topTime = document.getElementById("top-wib") || document.getElementById("top-wita");
     if (topTime) {
-      topTime.id = "top-wita";
-      const quoteLabel = quoteState === "LIVE" ? "Live Price" : `Price ${quoteState}`;
-      topTime.textContent = `${quoteLabel} • Mapping ${state.tf} ${mappingState.toLowerCase()} • WITA ${nowTime()}`;
+      topTime.textContent = "";
+      topTime.style.display = "none";
+      topTime.setAttribute("aria-hidden", "true");
     }
 
     const killzoneTime = document.getElementById("kz-wib") || document.getElementById("kz-wita");

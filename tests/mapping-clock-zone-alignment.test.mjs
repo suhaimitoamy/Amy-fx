@@ -32,14 +32,17 @@ test('new mapping modules are syntactically valid and loaded by the page', () =>
   assert.match(html, /js\/clock-sync\.js/);
 });
 
-test('WITA clock paints dashboard and session from one timestamp without observer loop', () => {
+test('WITA clock keeps the retired dashboard status hidden while session time remains live', () => {
   const clock = readFileSync(clockUrl, 'utf8');
   const render = readFileSync(renderUrl, 'utf8');
   assert.match(clock, /Asia\/Makassar/);
   assert.match(clock, /const time = witaClockText\(timestamp\)/);
-  assert.match(clock, /setText\(top, `\$\{connection\} • WITA \$\{time\}`\)/);
+  assert.match(clock, /hideLegacyTopStatus\(\)/);
+  assert.match(clock, /setText\(top, ''\)/);
+  assert.match(clock, /top\.style\.display = 'none'/);
   assert.match(clock, /setText\(document\.getElementById\('kz-wita'\), `WITA \$\{time\}`\)/);
   assert.match(clock, /element\.textContent !== text/);
+  assert.doesNotMatch(clock, /Live Price|state\.conn|\$\{connection\}/);
   assert.doesNotMatch(clock, /witaClockText\(Date\.now\(\)\).*witaClockText\(Date\.now\(\)\)/s);
   assert.match(render, /getElementById\('top-wita'\)/);
   assert.match(render, /getElementById\('kz-wita'\)/);
