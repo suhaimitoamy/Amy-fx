@@ -1,0 +1,5 @@
+file,trade_start,trade_end,rows,sha256,size
+amyfx-fvg-ifvg-concurrent-time-exit-january-2026-trades-001-070.csv,1,70,70,5c2c876e916070578e1e0d6d49f2d52e2eb27ceb582acd9d28897b22f56a6536,16864
+amyfx-fvg-ifvg-concurrent-time-exit-january-2026-trades-071-140.csv,71,140,70,b25b13c85d5937ce8b8f2a398ed09897873c90646292ab391cffe1c57b7a433f,16997
+amyfx-fvg-ifvg-concurrent-time-exit-january-2026-trades-141-210.csv,141,210,70,21503814f5ee24066c4d1331e93358387d81a069c35d3136f330304af7c9d16b,17014
+amyfx-fvg-ifvg-concurrent-time-exit-january-2026-trades-211-274.csv,211,274,64,a9d93f5f5b3a5eb7cf1f203ee5f2b57fb58532d8ce4962d91d818746a3035fdf,15498
