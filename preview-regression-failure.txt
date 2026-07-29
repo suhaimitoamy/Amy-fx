@@ -1,6 +1,6 @@
 Amy FX Private Preview regression failure
-Run: 30469127219
-Commit: 9f67c8e0c4a49828b7c774be3d2f2df58012b12a
+Run: 30469243298
+Commit: 0ddcbb86d949fbe7fa504181ffb65f144b1a6d7a
 
 ===== amy-mentor-conversation.test.mjs =====
 ===== api-polling-coordinator.test.mjs =====
@@ -159,13 +159,13 @@ Regression failed: mapping-news-background-repair.test.mjs
 # Subtest: Android news notifications use a durable high-priority system channel
 ok 3 - Android news notifications use a durable high-priority system channel
   ---
-  duration_ms: 0.42081
+  duration_ms: 0.441116
   type: 'test'
   ...
 # Subtest: Supabase sends system notification plus data and scheduler invokes it
 ok 4 - Supabase sends system notification plus data and scheduler invokes it
   ---
-  duration_ms: 0.246213
+  duration_ms: 0.253024
   type: 'test'
   ...
 1..4
@@ -176,5 +176,5 @@ ok 4 - Supabase sends system notification plus data and scheduler invokes it
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 91.532493
+# duration_ms 87.34062
 Regression failed: mapping-news-background-repair.test.mjs
