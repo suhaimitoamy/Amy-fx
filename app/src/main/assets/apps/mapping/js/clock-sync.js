@@ -1,5 +1,3 @@
-import { state } from './main.js';
-
 const WITA_FORMATTER = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'Asia/Makassar',
   hour: '2-digit',
@@ -20,17 +18,20 @@ function setText(element, text) {
   if (element && element.textContent !== text) element.textContent = text;
 }
 
+function hideLegacyTopStatus() {
+  const top = document.getElementById('top-wib') || document.getElementById('top-wita');
+  if (!top) return;
+  setText(top, '');
+  top.style.display = 'none';
+  top.setAttribute('aria-hidden', 'true');
+}
+
 function paint(timestamp = Date.now(), force = false) {
   const time = witaClockText(timestamp);
   if (!force && time === lastSecond) return;
   lastSecond = time;
 
-  const top = document.getElementById('top-wita');
-  if (top) {
-    const connection = state.conn === 'Connected' ? '● Live Price' : `○ ${state.conn}`;
-    setText(top, `${connection} • WITA ${time}`);
-  }
-
+  hideLegacyTopStatus();
   setText(document.getElementById('kz-wita'), `WITA ${time}`);
   document.querySelectorAll('[data-wita-clock]').forEach(element => {
     setText(element, `WITA ${time}`);
