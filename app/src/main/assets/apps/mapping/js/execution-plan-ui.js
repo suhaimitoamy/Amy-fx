@@ -112,6 +112,129 @@ function renderList(items, emptyText, className = '') {
   return `<ul class="${escapeHtml(className)}">${rows.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
 }
 
+function directionFromText(value) {
+  const text = clean(value).toUpperCase();
+  if (text.includes('BULL')) return 'BUY';
+  if (text.includes('BEAR')) return 'SELL';
+  return null;
+}
+
+function numericLevel(...values) {
+  for (const value of values) {
+    const number = finite(value?.price ?? value?.level ?? value);
+    if (number != null && number > 0) return number;
+  }
+  return null;
+}
+
+function uniqueRows(values) {
+  return [...new Set((Array.isArray(values) ? values : []).map(clean).filter(Boolean))];
+}
+
+function refineExecutionViewModel(viewModel, input = {}) {
+  const vm = viewModel || {};
+  if (vm.decision !== 'WAIT' || vm.terminal || vm.targetOneSecured) return vm;
+  if (['EXPIRED', 'OFFLINE', 'STALE', 'STRUCTURAL', 'UNAVAILABLE'].includes(clean(vm.mappingFreshness).toUpperCase())) {
+    return vm;
+  }
+
+  const result = input?.result
+    || input?.marketState?.result
+    || (typeof window !== 'undefined' ? window.state?.result : null)
+    || null;
+  const snapshot = result?.mappingSnapshot || input?.mappingSnapshot || {};
+  const structure = snapshot?.facts?.structure || result?.st || {};
+  const scenario = result?.entryMap?.scenario || snapshot?.scenario || {};
+  const liquidity = snapshot?.facts?.liquidity || {};
+  const inferredFromStructure = directionFromText(vm.localStructure)
+    || directionFromText(structure?.localTrend)
+    || directionFromText(structure?.confirmedTrend)
+    || directionFromText(structure?.trend);
+  const focusDirection = vm.focusDirection
+    || inferredFromStructure
+    || directionFromText(vm.higherTimeframeBias);
+
+  if (!focusDirection) return vm;
+
+  const side = focusDirection === 'BUY' ? 'SSL' : 'BSL';
+  const structureWord = focusDirection === 'BUY' ? 'bullish' : 'bearish';
+  const protectedLevel = focusDirection === 'BUY'
+    ? numericLevel(
+        structure?.protectedLow,
+        result?.st?.protectedLow,
+        snapshot?.facts?.structure?.protectedLow,
+        scenario?.protectedLevel
+      )
+    : numericLevel(
+        structure?.protectedHigh,
+        result?.st?.protectedHigh,
+        snapshot?.facts?.structure?.protectedHigh,
+        scenario?.protectedLevel
+      );
+  const watchLevel = focusDirection === 'BUY'
+    ? numericLevel(result?.ssl, liquidity?.ssl, result?.levels?.ssl)
+    : numericLevel(result?.bsl, liquidity?.bsl, result?.levels?.bsl);
+
+  const existingWaiting = uniqueRows(vm.waitingFor).filter(item =>
+    !/direction forecast|forecast tidak aktif|menetapkan arah/i.test(item)
+  );
+  if (!existingWaiting.some(item => /sweep|disapu|liquidity/i.test(item))) {
+    existingWaiting.unshift(`Menunggu ${side} disapu dan reaksi sweep dikonfirmasi Mapping.`);
+  }
+  if (!existingWaiting.some(item => /MSS/i.test(item))) {
+    const sweepIndex = existingWaiting.findIndex(item => /sweep|disapu|liquidity/i.test(item));
+    existingWaiting.splice(
+      sweepIndex >= 0 ? sweepIndex + 1 : 0,
+      0,
+      `Menunggu displaced MSS ${structureWord} ${clean(vm.timeframe) || 'timeframe aktif'} dari candle yang sudah close.`
+    );
+  }
+  existingWaiting.push('Direction Forecast belum aktif; arah ini hanya fokus pantauan dan belum menjadi izin entry.');
+
+  const hasWatchArea = numericLevel(vm.area?.low, vm.area?.high, vm.area?.level) != null;
+  const area = hasWatchArea || watchLevel == null
+    ? vm.area
+    : {
+        kind: 'WATCH',
+        low: watchLevel,
+        high: watchLevel,
+        level: watchLevel,
+        source: 'OFFICIAL_LIQUIDITY_LEVEL',
+        label: `${side} aktif`
+      };
+
+  const invalidation = protectedLevel != null
+    ? `Fokus ${focusDirection} batal jika candle ${clean(vm.timeframe) || 'aktif'} close ${focusDirection === 'BUY' ? 'di bawah' : 'di atas'} protected ${focusDirection === 'BUY' ? 'low' : 'high'} ${price(protectedLevel)}. Setup juga batal jika struktur berbalik valid atau data kedaluwarsa.`
+    : `Fokus ${focusDirection} batal jika struktur ${clean(vm.timeframe) || 'aktif'} berubah ${focusDirection === 'BUY' ? 'bearish' : 'bullish'} melalui break valid, atau data Mapping kedaluwarsa.`;
+
+  const reasons = uniqueRows([
+    inferredFromStructure
+      ? `Struktur lokal memberi fokus pantauan ${focusDirection}; ini belum menjadi sinyal entry.`
+      : `Mapping memberi fokus pantauan ${focusDirection}; ini belum menjadi sinyal entry.`,
+    ...uniqueRows(vm.reasons).filter(item =>
+      !/direction forecast resmi|forecast tidak aktif|belum ada arah valid/i.test(item)
+    ),
+    'Entry, Stop Loss, dan target tetap menunggu setup resmi terkunci.'
+  ]);
+
+  const refined = {
+    ...vm,
+    headline: `WAIT — PANTAU ${focusDirection}`,
+    focusDirection,
+    focusLabel: `Cari peluang ${focusDirection}`,
+    area,
+    waitingFor: uniqueRows(existingWaiting),
+    reasons,
+    invalidation,
+    lifecycleLabel: /forecast/i.test(clean(vm.lifecycleLabel))
+      ? `Pantau ${focusDirection} · entry belum valid`
+      : vm.lifecycleLabel,
+    conclusion: `Fokus ${focusDirection}, tetapi belum entry. ${existingWaiting[0] || 'Tunggu trigger resmi Mapping.'}`
+  };
+  refined.fingerprint = executionPlanFingerprint(refined);
+  return Object.freeze(refined);
+}
+
 function inputFromBrowser(result, runtimeState) {
   const contract = typeof window !== 'undefined' ? window.AmyFXMarketContract : null;
   const contractState = contract?.read?.() || window.AmyFXIntel?.read?.() || {};
@@ -145,9 +268,10 @@ export function executionPlanRuntimeInput(result = null, runtimeState = null) {
 }
 
 function asViewModel(input) {
-  return input?.source === 'AMY_MAPPING_EXECUTION_PLAN_READ_ONLY' && input?.fingerprint
+  const vm = input?.source === 'AMY_MAPPING_EXECUTION_PLAN_READ_ONLY' && input?.fingerprint
     ? input
     : buildExecutionPlanViewModel(input || {});
+  return refineExecutionViewModel(vm, input || {});
 }
 
 export function renderExecutionPlanCompact(input = {}) {
@@ -271,7 +395,7 @@ export function buildExecutionContextEnvelope(viewModel) {
 }
 
 function currentViewModel() {
-  return buildExecutionPlanViewModel(executionPlanRuntimeInput(
+  return asViewModel(executionPlanRuntimeInput(
     window.state?.result || null,
     window.state || null
   ));
