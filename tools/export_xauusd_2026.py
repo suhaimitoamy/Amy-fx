@@ -22,7 +22,7 @@ START_DATE = date(2026, 1, 1)
 # Use the last fully completed UTC day at the time of this export.
 END_DATE = date(2026, 7, 28)
 PRICE_SCALE = 1000.0
-# Dukascopy candle record: millisecond offset from UTC midnight, OHLC integers, volume float.
+# Native candle record: seconds from UTC midnight, open, close, low, high, volume.
 RECORD = struct.Struct(">5If")
 OUT_DIR = Path(os.environ.get("EXPORT_OUT_DIR", "artifacts/xauusd-2026"))
 URL_TEMPLATE = (
@@ -85,8 +85,8 @@ def fetch_day(session: requests.Session, day: date) -> list[Candle]:
     midnight = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
     rows: list[Candle] = []
     for offset in range(0, len(payload), RECORD.size):
-        milliseconds, raw_open, raw_high, raw_low, raw_close, volume = RECORD.unpack_from(payload, offset)
-        timestamp = midnight + timedelta(milliseconds=int(milliseconds))
+        seconds, raw_open, raw_close, raw_low, raw_high, volume = RECORD.unpack_from(payload, offset)
+        timestamp = midnight + timedelta(seconds=int(seconds))
         rows.append((
             timestamp.replace(tzinfo=None),
             raw_open / PRICE_SCALE,
@@ -137,7 +137,7 @@ def write_csv(frame: pd.DataFrame, path: Path) -> None:
 def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     session = requests.Session()
-    session.headers.update({"User-Agent": "AmyFX-Backtest-Data-Exporter/1.1"})
+    session.headers.update({"User-Agent": "AmyFX-Backtest-Data-Exporter/1.2"})
 
     monthly_rows: dict[int, list[Candle]] = {month: [] for month in range(1, 8)}
     current = START_DATE
@@ -159,7 +159,7 @@ def main() -> None:
         "source": "Dukascopy BID native M1 candle data",
         "source_url_template": URL_TEMPLATE,
         "price_scale": PRICE_SCALE,
-        "timestamp_unit": "milliseconds_from_utc_midnight",
+        "native_record_fields": ["seconds_from_utc_midnight", "open", "close", "low", "high", "volume"],
         "zero_volume_rows_removed": True,
         "period_start_utc": START_DATE.isoformat(),
         "period_end_utc": END_DATE.isoformat(),
