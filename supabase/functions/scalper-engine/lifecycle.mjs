@@ -39,11 +39,15 @@ function realizedR(setup, exitPrice) {
   return setup.direction === 'BUY' ? (exit - entry) / risk : (entry - exit) / risk;
 }
 
-export function advanceSetupLifecycle(inputSetup, m15Rows) {
+export function advanceSetupLifecycle(inputSetup, rows, options = {}) {
   let setup = { ...inputSetup, quality: { ...(inputSetup?.quality || {}) } };
   if (!NON_TERMINAL_STATUSES.includes(setup.status) || !Number.isFinite(Number(setup.entry_candle_open_time))) return { setup, events: [] };
-  const values = normalizeCandles(m15Rows, 900)
-    .filter(candle => candle.open_time >= Number(setup.entry_candle_open_time))
+  const evaluationSeconds = Math.max(60, Number(options.evaluationSeconds || 900));
+  const entryOpenTime = Number(setup.entry_candle_open_time);
+  const maxBars = Number(setup.max_bars || 4);
+  const timeExitAt = entryOpenTime + maxBars * 900;
+  const values = normalizeCandles(rows, evaluationSeconds)
+    .filter(candle => candle.open_time >= entryOpenTime)
     .filter(candle => !setup.last_evaluated_open_time || candle.open_time > Number(setup.last_evaluated_open_time));
   const events = [];
   for (const candle of values) {
@@ -52,7 +56,7 @@ export function advanceSetupLifecycle(inputSetup, m15Rows) {
     const stopHit = setup.direction === 'BUY' ? candle.low <= currentStop : candle.high >= currentStop;
     const targetHit = setup.direction === 'BUY' ? candle.high >= Number(setup.target_price) : candle.low <= Number(setup.target_price);
     const oneRHit = setup.direction === 'BUY' ? candle.high >= Number(setup.break_even_trigger) : candle.low <= Number(setup.break_even_trigger);
-    setup.bars_elapsed = Number(setup.bars_elapsed || 0) + 1;
+    setup.bars_elapsed = Math.min(maxBars, Math.max(Number(setup.bars_elapsed || 0), Math.floor((candle.close_time - entryOpenTime) / 900)));
     setup.last_evaluated_open_time = candle.open_time;
     if (stopHit) {
       const be = setup.status === 'BE_ACTIVE' || setup.be_armed;
@@ -65,8 +69,8 @@ export function advanceSetupLifecycle(inputSetup, m15Rows) {
       events.push({ status: 'TP_HIT', price: setup.exit_price, candle_time: candle.open_time, result_r: 2 });
       break;
     }
-    if (setup.bars_elapsed >= Number(setup.max_bars || 4)) {
-      setup = { ...setup, status: 'TIME_EXIT', exit_price: candle.close, exit_time: candle.close_time, result_r: realizedR(setup, candle.close), recommendation_status: 'CLOSED' };
+    if (candle.close_time >= timeExitAt) {
+      setup = { ...setup, bars_elapsed: maxBars, status: 'TIME_EXIT', exit_price: candle.close, exit_time: candle.close_time, result_r: realizedR(setup, candle.close), recommendation_status: 'CLOSED' };
       events.push({ status: 'TIME_EXIT', price: candle.close, candle_time: candle.open_time, result_r: setup.result_r });
       break;
     }
