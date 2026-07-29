@@ -6,12 +6,22 @@
 
   const PANEL_IDS = Object.freeze([
     'amy-regime-router-v3',
-    'amy-entry-watch-card'
+    'amy-entry-watch-card',
+    'amy-scalper-entry-watch'
+  ]);
+  const DASHBOARD_ORDER = Object.freeze([
+    '.tf-card',
+    '.session-card',
+    '#amy-regime-router-v3',
+    '.setup-focus',
+    '#amy-scalper-entry-watch',
+    '[data-execution-plan-card="compact"]'
   ]);
   const nativeInsertAdjacentHTML = Element.prototype.insertAdjacentHTML;
   let cleanupScheduled = false;
   let blockedInsertions = 0;
   let removedFromAnalyze = 0;
+  let reorderedDashboard = 0;
 
   function currentView() {
     return String(window.state?.tab || localStorage.getItem('amy_mapping_tab') || 'Dashboard');
@@ -30,9 +40,36 @@
     removedFromAnalyze += 1;
   }
 
-  function cleanupAnalyzeView() {
+  function reorderDashboardPanels() {
+    const app = document.getElementById('app');
+    if (!app) return;
+
+    const ordered = DASHBOARD_ORDER
+      .map(selector => app.querySelector(`:scope > ${selector}`))
+      .filter(Boolean);
+    if (ordered.length < 2) return;
+
+    const currentSelected = [...app.children].filter(node => ordered.includes(node));
+    if (currentSelected.length === ordered.length && currentSelected.every((node, index) => node === ordered[index])) {
+      return;
+    }
+
+    const selected = new Set(ordered);
+    const children = [...app.children];
+    const firstIndex = Math.min(...ordered.map(node => children.indexOf(node)).filter(index => index >= 0));
+    const anchor = children.slice(firstIndex).find(node => !selected.has(node)) || null;
+    const fragment = document.createDocumentFragment();
+    ordered.forEach(node => fragment.appendChild(node));
+    app.insertBefore(fragment, anchor);
+    reorderedDashboard += 1;
+  }
+
+  function syncCurrentView() {
     cleanupScheduled = false;
-    if (currentView() === 'Dashboard') return;
+    if (currentView() === 'Dashboard') {
+      reorderDashboardPanels();
+      return;
+    }
 
     PANEL_IDS.forEach(id => removePanel(document.getElementById(id)));
 
@@ -49,7 +86,7 @@
   function scheduleCleanup() {
     if (cleanupScheduled) return;
     cleanupScheduled = true;
-    requestAnimationFrame(cleanupAnalyzeView);
+    requestAnimationFrame(syncCurrentView);
   }
 
   Element.prototype.insertAdjacentHTML = function (position, markup) {
@@ -58,7 +95,9 @@
       scheduleCleanup();
       return;
     }
-    return nativeInsertAdjacentHTML.call(this, position, markup);
+    const result = nativeInsertAdjacentHTML.call(this, position, markup);
+    scheduleCleanup();
+    return result;
   };
 
   function start() {
@@ -76,14 +115,17 @@
     });
     window.addEventListener('amyfx:market-update', scheduleCleanup);
     window.addEventListener('amyfx:entry-watch-updated', scheduleCleanup);
+    window.addEventListener('amyfx:scalper-state-change', scheduleCleanup);
+    window.addEventListener('amyfx:mapping-state-change', scheduleCleanup);
     scheduleCleanup();
   }
 
   window.AmyFXDashboardOnlyPanels = Object.freeze({
-    version: '1.0.0',
+    version: '1.1.0',
     stats: () => ({
       blockedInsertions,
       removedFromAnalyze,
+      reorderedDashboard,
       view: currentView()
     })
   });
