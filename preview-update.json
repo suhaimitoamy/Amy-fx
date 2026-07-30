@@ -1,27 +1,26 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 940294,
-  "latest_version_name": "2.0.0-preview.294",
-  "versionCode": 940294,
-  "version": "2.0.0-preview.294",
+  "latest_version_code": 940295,
+  "latest_version_name": "2.0.0-preview.295",
+  "versionCode": 940295,
+  "version": "2.0.0-preview.295",
   "releaseDate": "2026-07-30",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.294/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.294/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.295/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.295/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Scalper Engine kini menjalankan sembilan driver resmi dalam satu engine.",
-    "Semua setup aktif tetap dipantau dan dapat dipilih dari panel Setup Aktif Lainnya.",
-    "Lifecycle multi-setup diperkuat dengan dedupe, revision guard, stale rejection, dan terminal lock.",
-    "IFVG tidak membuat setup baru; history lama tetap kompatibel.",
+    "Harga XAU/USD kembali memakai WebSocket Twelve Data langsung dari aplikasi.",
+    "Reconnect otomatis aktif saat jaringan kembali, aplikasi dibuka lagi, atau tick berhenti.",
+    "API key WebSocket disimpan terenkripsi oleh Android dan tidak masuk localStorage.",
+    "Candle serta analisis Mapping tetap memakai jalur REST yang sudah ada.",
     "Amy FX publik pada branch main tidak diubah."
   ],
   "changelog": [
-    "Nine-driver Scalper Engine",
-    "Independent multi-setup lifecycle",
-    "Selectable active setups",
-    "Stale-response and terminal guards",
-    "Legacy IFVG read compatibility"
+    "Native Twelve Data WebSocket live price",
+    "Automatic live-price reconnect watchdog",
+    "Encrypted WebSocket credential storage",
+    "REST Mapping pipeline preserved"
   ]
 }
