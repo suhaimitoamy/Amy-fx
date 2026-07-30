@@ -57,6 +57,8 @@ test('private Preview release remains isolated from production main', async () =
   assert.match(workflow, /AMYFX_VERSION_NAME: 2\.0\.0-preview\.292/);
   assert.match(workflow, /AMYFX_VERSION_CODE: "940292"/);
   assert.match(workflow, /test "\$version_code" -gt "\$published_code"/);
+  assert.match(workflow, /PYTHONDONTWRITEBYTECODE: "1"/);
+  assert.doesNotMatch(workflow, /python3 -m py_compile/);
   assert.match(workflow, /preview-update\.json/);
   assert.doesNotMatch(workflow, /git push origin (?:HEAD:)?main/);
   assert.doesNotMatch(workflow, /refs\/heads\/main/);

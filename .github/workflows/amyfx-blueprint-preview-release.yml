@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  PYTHONDONTWRITEBYTECODE: "1"
   AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
   AMYFX_APP_LABEL: Amy FX Preview
   AMYFX_URI_SCHEME: amyfxpreview
@@ -89,7 +90,7 @@ jobs:
           node --check app/src/main/assets/apps/shared/amyfx-blueprint-hotfix-v1.js
           node --check app/src/main/assets/app-version.js
           node --check app/src/main/assets/update-checker.js
-          python3 -m py_compile tools/apply-blueprint-preview.py
+          python3 -c "import ast, pathlib; ast.parse(pathlib.Path('tools/apply-blueprint-preview.py').read_text())"
           node --test --test-force-exit tests/blueprint-preview-v1.test.mjs tests/blueprint-preview-stabilization.test.mjs
 
       - name: Run full JavaScript regression against production baseline
