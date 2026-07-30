@@ -22,8 +22,8 @@ env:
   AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
   AMYFX_APP_LABEL: Amy FX Preview
   AMYFX_URI_SCHEME: amyfxpreview
-  AMYFX_VERSION_NAME: 2.0.0-preview.293
-  AMYFX_VERSION_CODE: "940293"
+  AMYFX_VERSION_NAME: 2.0.0-preview.294
+  AMYFX_VERSION_CODE: "940294"
   AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json
   AMYFX_KEYSTORE_PATH: /tmp/amy-fx-preview-signing.keystore
   AMYFX_KEYSTORE_PASSWORD: android
@@ -80,11 +80,18 @@ jobs:
           node --check app/src/main/assets/apps/shared/amyfx-blueprint-hotfix-v1.js
           node --check app/src/main/assets/app-version.js
           node --check app/src/main/assets/update-checker.js
+          node --check app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          node --check app/src/main/assets/apps/mapping/js/scalper-shadow-state.js
+          node --check supabase/functions/scalper-engine/candles.mjs
+          node --check supabase/functions/scalper-engine/drivers.mjs
+          node --check supabase/functions/scalper-engine/signals.mjs
+          node --check supabase/functions/scalper-engine/lifecycle.mjs
+          node --check supabase/functions/scalper-engine/engine.mjs
           python3 -c "import ast, pathlib; ast.parse(pathlib.Path('tools/apply-blueprint-preview.py').read_text())"
           node --test --test-force-exit tests/blueprint-preview-v1.test.mjs tests/blueprint-preview-stabilization.test.mjs
 
       - name: Run full JavaScript regression
-        run: timeout 20m npm test
+        run: timeout 25m npm test
 
       - name: Commit stabilized private Preview source checkpoint
         run: |
@@ -173,15 +180,14 @@ jobs:
             exit 1
           fi
           cat > /tmp/amyfx-preview-release-notes.md <<NOTES
-          Amy FX Preview $AMYFX_VERSION_NAME — Private branch release.
+          Amy FX Preview $AMYFX_VERSION_NAME — Scalper Engine Multi-Driver.
 
-          - Tetap memakai satu jalur backend market; tidak menambahkan provider atau API kedua.
-          - Interval polling harga tetap 20 detik.
-          - Fallback market usang tidak lagi dapat tampil sebagai LIVE.
-          - Timestamp asli provider menentukan freshness harga.
-          - Candle duplikat dibuang sebelum upsert Supabase.
-          - Seluruh regression test, Android unit test, lint, build, identitas APK, dan signer diverifikasi.
-          - Amy FX publik pada branch main tidak diubah oleh rilis Preview ini.
+          - Satu Scalper Engine menjalankan sembilan driver resmi pada timeframe yang dikunci.
+          - Setup utama hanya menentukan tampilan; seluruh setup aktif lain tetap dipantau dan dapat dipilih.
+          - Lifecycle setiap setup independen dengan dedupe, revision guard, stale-response rejection, dan terminal lock.
+          - IFVG tidak lagi menghasilkan setup baru; history terminal lama tetap kompatibel.
+          - Shadow Mode tetap simulasi dan tidak mengeksekusi order broker otomatis.
+          - Mapping, Rencana Eksekusi, Entry Watch, Market Intelligence, Journal, Academy, identitas Preview, dan branch main tidak diubah.
           NOTES
           gh release create "$AMYFX_RELEASE_TAG" \
             "AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
@@ -189,7 +195,7 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$AMYFX_SOURCE_SHA" \
             --prerelease \
-            --title "Amy FX Preview $AMYFX_VERSION_NAME — Private Branch" \
+            --title "Amy FX Preview $AMYFX_VERSION_NAME — Multi-Driver" \
             --notes-file /tmp/amyfx-preview-release-notes.md
           gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
 
@@ -215,18 +221,18 @@ jobs:
               'mandatory': False,
               'enabled': True,
               'release_notes': [
-                  'Tetap memakai satu jalur backend market dan interval polling 20 detik.',
-                  'Fallback market usang tidak lagi ditampilkan sebagai LIVE.',
-                  'Timestamp provider menentukan freshness harga.',
-                  'Candle duplikat dibuang sebelum upsert Supabase.',
+                  'Scalper Engine kini menjalankan sembilan driver resmi dalam satu engine.',
+                  'Semua setup aktif tetap dipantau dan dapat dipilih dari panel Setup Aktif Lainnya.',
+                  'Lifecycle multi-setup diperkuat dengan dedupe, revision guard, stale rejection, dan terminal lock.',
+                  'IFVG tidak membuat setup baru; history lama tetap kompatibel.',
                   'Amy FX publik pada branch main tidak diubah.'
               ],
               'changelog': [
-                  'Single backend market path',
-                  'Provider timestamp freshness gate',
-                  'Stale fallback rejection',
-                  'Supabase candle deduplication',
-                  'Public main isolation guard'
+                  'Nine-driver Scalper Engine',
+                  'Independent multi-setup lifecycle',
+                  'Selectable active setups',
+                  'Stale-response and terminal guards',
+                  'Legacy IFVG read compatibility'
               ]
           }
           with open('preview-update.json', 'w', encoding='utf-8') as handle:
