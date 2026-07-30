@@ -33,7 +33,6 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import subprocess
-          import textwrap
           workflow = subprocess.check_output(['git','show','origin/main:.github/workflows/apply-market-pipeline-fix.yml'], text=True)
           marker = "          python3 - <<'PY'\n"
           start = workflow.find(marker)
@@ -41,7 +40,9 @@ jobs:
           start += len(marker)
           end = workflow.find("\n          PY\n", start)
           if end < 0: raise SystemExit('Canonical patch end marker missing')
-          Path('/tmp/apply-single-api-fix.py').write_text(textwrap.dedent(workflow[start:end]), encoding='utf-8')
+          raw = workflow[start:end]
+          lines = [line[10:] if line.startswith('          ') else line for line in raw.splitlines()]
+          Path('/tmp/apply-single-api-fix.py').write_text('\n'.join(lines) + '\n', encoding='utf-8')
           PY
           python3 /tmp/apply-single-api-fix.py
           rm -f .github/workflows/run-single-api-repair-pr.yml .single-api-fix-trigger
