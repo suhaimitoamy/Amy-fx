@@ -58,7 +58,7 @@ test('shared briefing uses canonical quote and Intel-only BSL SSL while heatmap 
   assert.match(shared, /contract\.bestCurrentPrice/);
   assert.match(shared, /contract\.nearestLevels/);
   assert.match(contract, /source: "INTEL_LIQUIDITY_ONLY"/);
-  assert.match(contract, /source: "M1_QUOTE"/);
+  assert.match(contract, /source: "(?:TWELVEDATA_WEBSOCKET|MAPPING_REST_FALLBACK)"/);
   assert.doesNotMatch(contract, /heatmapBsl|heatmapSsl|normalizedHeatmapLevels/);
   assert.match(ui, /sourceCandleTime/);
   assert.match(ui, /canonicalQuote/);

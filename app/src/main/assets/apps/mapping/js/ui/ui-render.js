@@ -13,6 +13,24 @@ import {
 let lastRenderSignature = '';
 let lastMarketSnapshotSignature = '';
 
+const LIVE_QUOTE_HARD_TTL_MS = 120_000;
+
+function liveDisplayPrice() {
+  let quote = window.AmyFXLiveQuote || null;
+  if (!quote) {
+    try { quote = JSON.parse(localStorage.getItem('amyfx_live_quote') || 'null'); } catch (_) {}
+  }
+  const price = Number(quote?.price);
+  const rawTime = Number(quote?.capturedAt || 0);
+  const capturedAt = rawTime > 0
+    ? (rawTime > 10_000_000_000 ? rawTime : rawTime * 1000)
+    : Date.parse(String(quote?.providerCapturedAt || ''));
+  if (Number.isFinite(price) && price > 0 && Number.isFinite(capturedAt) && Date.now() - capturedAt <= LIVE_QUOTE_HARD_TTL_MS) {
+    return price;
+  }
+  return Number(state.price || localStorage.getItem('last_mapping_price') || 0);
+}
+
 function statusDot() {
   const connection = document.getElementById('conn');
   if (!connection) return;
@@ -135,7 +153,7 @@ export function setupCard(s, se, i = 0, mode = 'ACTIVE') {
       <span class="badge ${se.direction === 'BUY' ? 'buy' : 'sell'}">FOKUS ${se.direction}</span>
     </div>
     <div class="num-grid">
-      <div class="num"><small>Harga Live</small><strong>$${p2(state.price)}</strong></div>
+      <div class="num"><small>Harga Live</small><strong data-live-price>$${p2(liveDisplayPrice())}</strong></div>
       <div class="num"><small>Entry Area</small><strong>${p2(se.entryLow)} - ${p2(se.entryHigh)}</strong></div>
       <div class="num"><small>SL</small><strong>${p2(se.stopLoss)}</strong></div>
       ${tpHtml}
@@ -230,12 +248,12 @@ export function analyzeView(){
   const dec=decisionData();
   const activeSetupCard=se?.active&&r?.bestSetup?lifecycleSetupCard(r.bestSetup,0):`<p class="muted">${se?.invalidationReason||r?.entryMap?.scenario?.reason||'Belum ada setup aktif yang aman. Tunggu mapping baru.'}</p>`;
   const executionPlan=renderExecutionPlanDetail(executionPlanRuntimeInput(r,state));
-  const header=`<section class="hero card mapping-hero" data-stability-key="analysis-header"><div><div class="kicker">AMY FX MAPPING</div><h1>XAU/USD</h1></div><div style="text-align:right"><div class="muted">Gold Price</div><div class="price">$${p2(state.price)}</div><div class="${dec.bias==='BUY'?'green':dec.bias==='SELL'?'red':'muted'}">${dec.bias} ${dec.confidence?`• ${dec.confidence}%`:''}</div></div></section>`;
+  const header=`<section class="hero card mapping-hero" data-stability-key="analysis-header"><div><div class="kicker">AMY FX MAPPING</div><h1>XAU/USD</h1></div><div style="text-align:right"><div class="muted">Gold Price</div><div class="price" data-live-price>$${p2(liveDisplayPrice())}</div><div class="${dec.bias==='BUY'?'green':dec.bias==='SELL'?'red':'muted'}">${dec.bias} ${dec.confidence?`• ${dec.confidence}%`:''}</div></div></section>`;
   return`${header}${marketOutlookPlaceholder()}${marketContextPlaceholder()}${executionPlan}<details class="card disclosure" data-stability-key="mapping-explanation"><summary>Penjelasan Mapping</summary>${plainMappingExplanation()}</details>${asiaAnalyzePlaceholder()}<details class="card disclosure" data-stability-key="valid-break" open><summary>Valid Break</summary>${validBreakInfo()}</details><details class="card disclosure" data-stability-key="mapping-all-timeframes"><summary>Mapping Semua Timeframe</summary>${m1h4MappingTable()}</details><details class="card disclosure" data-stability-key="active-setup"><summary>Setup Aktif (${se?.active?1:0})</summary><section class="card"><h2>Setup Aktif</h2>${activeSetupCard}</section></details>${scalperShadowPlaceholder()}`;
 }
 export function setupsView(){let list=state.setups.slice(0,20);return`<section class="card"><h1>Riwayat Setup (HISTORY / TERMINAL)</h1>${list.map((s,i)=>historyCard(s,i)).join('')||'<p class="muted">Belum ada setup tersimpan.</p>'}</section>`}
 export function historyView(){return`<section class="card"><h1>Event Logs</h1><button class="action" onclick="window.downloadLogs()">⇩ Download TXT</button>${state.logs.map(x=>`<div class="log">${x}</div>`).join('')||'<p class="muted">Belum ada event.</p>'}</section>`}
-export function settingsView(){return`<section class="card settings"><h1>Settings & API</h1><label>Twelve Data API Key <span class="muted">(opsional untuk candle)</span></label><input id="apiKey" value="${state.key}" placeholder="Kosongkan jika key sudah di Vercel"><button class="action" onclick="window.saveConnect()" style="width:100%">🔑 Simpan & Hubungkan Live</button><p class="muted">Harga live, snapshot Mapping, scanner, dan notifikasi memakai kontrak setupExecution yang sama.</p><div class="warn"><b>Monitor Causal</b><br>Scanner hanya aktif ketika setup causal pada timeframe terpilih masih aktif dan belum terminal.</div><button data-scanner-status class="action" onclick="window.toggleBg()" style="width:100%;margin-top:14px">📡 Scanner mengikuti setup causal</button><button class="action" onclick="window.testNotif()" style="width:100%;margin-top:12px">🔔 Tes Notifikasi Setup</button><button class="action" onclick="window.AmyFXUpdate?.checkNow()" style="width:100%;margin-top:12px">🔄 Cek Pembaruan Versi</button></section>`}
+export function settingsView(){return`<section class="card settings"><h1>Settings & API</h1><label>Twelve Data API Key <span class="muted">(khusus harga live WebSocket)</span></label><input id="apiKey" value="${state.key}" placeholder="Kosongkan jika key sudah di Vercel"><button class="action" onclick="window.saveConnect()" style="width:100%">🔑 Simpan & Hubungkan Live</button><p class="muted">API key ini hanya membuka harga live WebSocket. Candle dan analisis Mapping tetap berasal dari backend Supabase.</p><div class="warn"><b>Monitor Causal</b><br>Scanner hanya aktif ketika setup causal pada timeframe terpilih masih aktif dan belum terminal.</div><button data-scanner-status class="action" onclick="window.toggleBg()" style="width:100%;margin-top:14px">📡 Scanner mengikuti setup causal</button><button class="action" onclick="window.testNotif()" style="width:100%;margin-top:12px">🔔 Tes Notifikasi Setup</button><button class="action" onclick="window.AmyFXUpdate?.checkNow()" style="width:100%;margin-top:12px">🔄 Cek Pembaruan Versi</button></section>`}
 
 export function mappingRenderSignature() {
   const result = state.result;
@@ -302,8 +320,9 @@ function syncMarketSnapshot(){
   return true;
 }
 
-export function syncStickyBar(){const bar=document.getElementById('sticky-bar');if(!bar)return;const shouldShow=['Dashboard','Analyze'].includes(state.tab)&&window.scrollY>110;bar.classList.toggle('visible',shouldShow);bar.setAttribute('aria-hidden',String(!shouldShow));if(shouldShow){const priceEl=bar.querySelector('.sticky-price'),biasEl=bar.querySelector('.sticky-bias');if(priceEl)priceEl.textContent=`$${p2(state.price)}`;if(biasEl){const b=(decisionData().bias||'WAIT').toUpperCase();biasEl.textContent=b;biasEl.className=`sticky-bias ${mapBiasClass(b)}`}}}
+export function syncStickyBar(){const bar=document.getElementById('sticky-bar');if(!bar)return;const shouldShow=['Dashboard','Analyze'].includes(state.tab)&&window.scrollY>110;bar.classList.toggle('visible',shouldShow);bar.setAttribute('aria-hidden',String(!shouldShow));if(shouldShow){const priceEl=bar.querySelector('.sticky-price'),biasEl=bar.querySelector('.sticky-bias');if(priceEl)priceEl.textContent=`$${p2(liveDisplayPrice())}`;if(biasEl){const b=(decisionData().bias||'WAIT').toUpperCase();biasEl.textContent=b;biasEl.className=`sticky-bias ${mapBiasClass(b)}`}}}
+if(typeof window!=='undefined')window.addEventListener('amyfx:live-quote',()=>renderSoft());
 if(typeof window!=='undefined')window.addEventListener('scroll',syncStickyBar,{passive:true});
 export function skeletonCardMarkup(){return`<section class="card skeleton-card"><div class="skeleton-line h-24 w-50"></div><div class="skeleton-line w-100"></div><div class="skeleton-line w-75"></div></section>`}
-export function renderSoft(){statusDot();let p=document.querySelector('.price');if(p)p.textContent='$'+p2(state.price);let tw=document.getElementById('top-wita');if(tw){tw.textContent='';tw.style.display='none';tw.setAttribute('aria-hidden','true')}let kw=document.getElementById('kz-wita');if(kw)kw.textContent='WITA '+nowTime();syncStickyBar()}
+export function renderSoft(){statusDot();const liveText='$'+p2(liveDisplayPrice());document.querySelectorAll('[data-live-price]').forEach(el=>{el.textContent=liveText});let p=document.querySelector('.price');if(p)p.textContent=liveText;let tw=document.getElementById('top-wita');if(tw){tw.textContent='';tw.style.display='none';tw.setAttribute('aria-hidden','true')}let kw=document.getElementById('kz-wita');if(kw)kw.textContent='WITA '+nowTime();syncStickyBar()}
 export function applyAmyFxRoute(){let route='';try{route=decodeURIComponent((location.hash||'').replace(/^#/,''))}catch(e){}try{route=route||new URLSearchParams(location.search||'').get('route')||''}catch(e){}try{route=route||localStorage.getItem('amyfx.notification.route')||''}catch(e){}if(!route)route=localStorage.getItem('amy_mapping_tab')||'';if(['Dashboard','Analyze','Setups','History','Settings'].includes(route)){state.tab=route;try{localStorage.removeItem('amyfx.notification.route')}catch(e){}}else state.tab='Dashboard'}
