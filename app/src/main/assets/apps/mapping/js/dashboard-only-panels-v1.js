@@ -18,12 +18,15 @@
   ]);
 
   const ANALYZE_ORDER = Object.freeze([
+    { selector: '.mapping-hero' },
+    { selector: '[data-stability-key="market-outlook"]' },
     { id: 'amy-regime-router-v3' },
+    { selector: '[data-execution-plan-card="detail"]' },
+    { summary: 'Penjelasan Mapping' },
+    { selector: '[data-asia-range-analyze]' },
     { summary: 'Valid Break' },
     { summary: 'Mapping Semua Timeframe' },
-    { summary: 'Penjelasan Mapping' },
     { summary: 'Setup Aktif' },
-    { selector: '[data-execution-plan-card="detail"]' },
     { id: 'amy-scalper-entry-watch' }
   ]);
 
@@ -33,6 +36,8 @@
   let removedLegacyPanels = 0;
   let reorderedDashboard = 0;
   let reorderedAnalyze = 0;
+  let observer = null;
+  let started = false;
 
   function currentView() {
     return String(window.state?.tab || localStorage.getItem('amy_mapping_tab') || 'Dashboard');
@@ -127,6 +132,18 @@
     requestAnimationFrame(syncCurrentView);
   }
 
+  function needsCleanup(records, app) {
+    return records.some(record => {
+      if (record.target === app) return true;
+      return [...record.addedNodes, ...record.removedNodes].some(node =>
+        node instanceof Element && (
+          node.parentElement === app
+          || node.matches?.('#amy-scalper-entry-watch, #amy-regime-router-v3, [data-execution-plan-card]')
+        )
+      );
+    });
+  }
+
   Element.prototype.insertAdjacentHTML = function (position, markup) {
     if (isLegacyMarkup(markup)) {
       blockedInsertions += 1;
@@ -139,9 +156,14 @@
   };
 
   function start() {
+    if (started) return;
+    started = true;
     const app = document.getElementById('app');
-    if (app) {
-      new MutationObserver(scheduleCleanup).observe(app, {
+    if (app && !observer) {
+      observer = new MutationObserver(records => {
+        if (needsCleanup(records, app)) scheduleCleanup();
+      });
+      observer.observe(app, {
         childList: true,
         subtree: true
       });

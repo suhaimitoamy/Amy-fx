@@ -247,18 +247,28 @@ function explanationMarkup(result) {
 function patchDisclosure(details, markup) {
   if (!details) return;
   const summary = details.querySelector(':scope > summary');
+  if (!summary) return;
+  const template = document.createElement('template');
+  template.innerHTML = String(markup || '').trim();
+  const next = template.content.firstElementChild;
+  if (!next) return;
   const existing = [...details.children].filter(child => child !== summary);
+  const current = existing.shift();
   existing.forEach(child => child.remove());
-  summary.insertAdjacentHTML('afterend', markup);
+  if (!current) {
+    summary.insertAdjacentElement('afterend', next);
+    return;
+  }
+  if (!window.AmyFXDomStableRender?.patch?.(current, next)) current.replaceWith(next);
 }
 
 function patchHeaderFreshness() {
   const connection = document.getElementById('conn');
   if (!connection) return;
   const freshness = candleFreshness(qualityByInterval[TF[state.tf]] || state.candleMeta?.[TF[state.tf]], state.tf);
-  const base = state.conn === 'Connected' ? 'Connected' : state.conn;
-  connection.textContent = state.conn === 'Connected' ? `${base} · ${freshness.state === 'STALE' ? `${state.tf} Stale` : `${state.tf} Fresh`}` : base;
+  connection.textContent = '●';
   connection.classList.toggle('stale', freshness.state === 'STALE');
+  connection.setAttribute('aria-label', `${state.conn} · Mapping ${state.tf} ${freshness.state}`);
 }
 
 function uiSignature() {
@@ -300,7 +310,7 @@ function boot() {
     reconcileResult();
     patchUi();
   }, 750);
-  document.addEventListener('click', () => setTimeout(() => patchUi(true), 20), true);
+  document.addEventListener('click', () => setTimeout(() => patchUi(), 20), true);
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       reconcileResult(true);

@@ -37,8 +37,8 @@ function intervalStale(key, aliases = []) {
 
 function isOutlookStale() {
   if (state?.result?.dataStale) return true;
-  const connection = String(document.getElementById('conn')?.textContent || '').toUpperCase();
-  if (connection.includes('STALE') || connection.includes('DATA USANG')) return true;
+  const freshness = String(document.getElementById('conn')?.dataset?.analysisFreshness || '').toUpperCase();
+  if (freshness === 'STALE' || freshness === 'EXPIRED') return true;
   return intervalStale('5min', ['M5', 'm5']) || intervalStale('15min', ['M15', 'm15']);
 }
 
@@ -273,7 +273,7 @@ function boot() {
   document.addEventListener('click', async event => {
     const button = event.target.closest('[data-copy-levels]');
     if (!button) {
-      setTimeout(() => refresh(true), 30);
+      setTimeout(() => refresh(), 30);
       return;
     }
     try {
@@ -283,8 +283,8 @@ function boot() {
       setTimeout(() => { button.innerHTML = original; }, 1200);
     } catch (_) {}
   }, true);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(true); });
-  window.addEventListener('amyfx:candles-updated', () => refresh(true));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+  window.addEventListener('amyfx:candles-updated', () => refresh());
 }
 
 window.AmyMarketOutlook = {
