@@ -22,9 +22,9 @@ test('Mapping listeners, timers, and observers are installed once and do not cal
   const panels = await read('app/src/main/assets/apps/mapping/js/dashboard-only-panels-v1.js');
   const analysis = await read('app/src/main/assets/apps/mapping/js/analysis-ui-stability-v4.js');
 
-  assert.match(scalper, /if \(started\) return/);
-  assert.equal((scalper.match(/setInterval\(sync, 30_000\)/g) || []).length, 1);
-  assert.equal((scalper.match(/addEventListener\('hashchange', focusHash\)/g) || []).length, 1);
+  assert.match(scalper, /if\s*\(\s*started\s*\)\s*return/);
+  assert.equal((scalper.match(/setInterval\s*\(\s*sync\s*,\s*30_000\s*\)/g) || []).length, 1);
+  assert.equal((scalper.match(/addEventListener\s*\(\s*'hashchange'\s*,\s*focusHash\s*\)/g) || []).length, 1);
   assert.doesNotMatch(scalper, /MutationObserver/);
 
   assert.match(panels, /if \(window\.__amyFxDashboardOnlyPanelsV1Installed\) return/);
@@ -46,7 +46,7 @@ test('ordinary Mapping refresh does not force scroll and accordion state uses st
 
   assert.doesNotMatch(ui, /scrollIntoView|window\.scrollTo|window\.scrollBy/);
   assert.doesNotMatch(renderBlock, /scrollIntoView|scrollTo|scrollBy/);
-  assert.match(scalper, /if \(!hash \|\| hash === lastFocusedHash\) return/);
+  assert.match(scalper, /if\s*\(\s*!hash\s*\|\|\s*hash\s*===\s*lastFocusedHash\s*\)\s*return/);
   assert.match(ui, /details\[data-stability-key\]/);
   assert.match(ui, /new Map\(/);
   assert.match(ui, /disclosureState\.get\(key\)/);
@@ -79,9 +79,10 @@ test('Scalper Shadow has one persistent shell and preserves valid data on refres
   assert.match(ui, /analyzeView[\s\S]*\$\{scalperShadowPlaceholder\(\)\}/);
 
   assert.match(scalper, /document\.getElementById\(CARD_ID\)/);
-  assert.match(scalper, /lastValidPayload = reconcileScalperPayload/);
-  assert.match(scalper, /render\(lastValidPayload, scalperFreshness\(lastValidPayload, message\), message\)/);
-  assert.match(scalper, /AmyFXDomStableRender\?\.patch\?\.\(existing, next\)/);
+  assert.match(scalper, /lastValidPayload\s*=\s*reconcileScalperPayload/);
+  assert.match(scalper, /render\(lastValidPayload,scalperFreshness\(lastValidPayload,message\),message\)/);
+  assert.match(scalper, /AmyFXDomStableRender\?\.patch/);
+  assert.match(scalper, /patch\(existing,next\)/);
   assert.doesNotMatch(scalper, /outerHTML|\.remove\(\)/);
 });
 
@@ -96,7 +97,7 @@ test('overlapping Mapping and Scalper requests abort stale work', async () => {
   assert.match(coordinator, /active\?\.signal\?\.aborted/);
   assert.match(coordinator, /if \(inFlight\.get\(info\.key\) === entry\) inFlight\.delete\(info\.key\)/);
   assert.match(scalper, /requestController\?\.abort\(\)/);
-  assert.match(scalper, /sequence !== requestSequence/);
+  assert.match(scalper, /sequence\s*!==\s*requestSequence/);
 });
 
 test('Mapping header is one fixed-size dot and legacy header fields stay hidden', async () => {
@@ -127,17 +128,20 @@ test('Mapping header is one fixed-size dot and legacy header fields stay hidden'
 test('Scalper backend persists entry before lifecycle evaluation and uses optimistic state writes', async () => {
   const engine = await read('supabase/functions/scalper-engine/index.ts');
   const signals = await read('supabase/functions/scalper-engine/signals.mjs');
+  const drivers = await read('supabase/functions/scalper-engine/drivers.mjs');
   const lifecycle = await read('supabase/functions/scalper-engine/lifecycle.mjs');
   const api = await read('supabase/functions/scalper-setups/index.ts');
 
-  assert.match(engine, /Entry must be durably locked before any M1 high\/low/);
-  assert.match(engine, /updated_at: `eq\.\$\{expected\.updated_at\}`/);
-  assert.match(engine, /status: `eq\.\$\{expected\.status\}`/);
-  assert.match(engine, /if \(!saved\) continue/);
-  assert.match(signals, /stop_basis_label: 'Structural Wick \+ ATR Buffer'/);
-  assert.match(signals, /bufferAtr: 0\.20/);
-  assert.match(lifecycle, /setup\.quality\.entry_locked !== true/);
-  assert.match(lifecycle, /\.filter\(candle => candle\.open_time >= entryOpenTime\)/);
+  assert.match(engine, /activateCandidate\(setup,nextOpen\)/);
+  assert.match(engine, /revision:\s*`eq\.\$\{expectedRevision\}`/);
+  assert.match(engine, /updated_at:\s*`eq\.\$\{expected\.updated_at\}`/);
+  assert.match(engine, /status:\s*`eq\.\$\{expected\.status\}`/);
+  assert.match(engine, /if\s*\(\s*!saved\s*\)\s*continue/);
+  assert.match(signals, /detectMultiDriverCandidates/);
+  assert.match(drivers, /stop_basis_label:'Structural Invalidation \+ ATR Buffer'/);
+  assert.match(drivers, /buffer_atr:0\.10/);
+  assert.match(lifecycle, /setup\.quality\.entry_locked\s*!==\s*true/);
+  assert.match(lifecycle, /\.filter\(c=>c\.open_time>=entryOpenTime\)/);
   assert.match(api, /lifecycleSequence/);
   assert.match(api, /sourceCandleTimestamp/);
   assert.match(api, /stopBasis/);
