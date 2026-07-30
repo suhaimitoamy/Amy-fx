@@ -28,11 +28,14 @@ const createDummyElement = () => ({
   querySelector: () => createDummyElement(),
   querySelectorAll: () => [createDummyElement()],
   addEventListener: () => {},
-  removeEventListener: () => {}
+  removeEventListener: () => {},
+  setAttribute: () => {},
+  getBoundingClientRect: () => ({ top: 0, left: 0 })
 });
 
 globalThis.document = {
   hidden: false,
+  body: { innerText: '' },
   querySelector: () => createDummyElement(),
   querySelectorAll: () => [createDummyElement()],
   getElementById: () => createDummyElement(),
@@ -101,10 +104,10 @@ function terminalCausalResult(lifecycleStatus, {
 
 test('isCandleStale returns false for valid cache within TTL thresholds', () => {
   const now = Date.now();
-  setCandleFetchedAt('M1', now - 1 * 60 * 1000); // 1 min ago (< 2 min)
-  setCandleFetchedAt('M15', now - 3 * 60 * 1000); // 3 min ago (< 5 min)
-  setCandleFetchedAt('H1', now - 10 * 60 * 1000); // 10 min ago (< 15 min)
-  setCandleFetchedAt('D1', now - 120 * 60 * 1000); // 2 hours ago (< 4 hours)
+  setCandleFetchedAt('M1', now - 1 * 60 * 1000);
+  setCandleFetchedAt('M15', now - 3 * 60 * 1000);
+  setCandleFetchedAt('H1', now - 10 * 60 * 1000);
+  setCandleFetchedAt('D1', now - 120 * 60 * 1000);
 
   assert.equal(isCandleStale('M1'), false);
   assert.equal(isCandleStale('1min'), false);
@@ -118,10 +121,10 @@ test('isCandleStale returns false for valid cache within TTL thresholds', () => 
 
 test('isCandleStale returns true when cache exceeds TTL limits', () => {
   const now = Date.now();
-  setCandleFetchedAt('M1', now - 3 * 60 * 1000); // 3 min ago (> 2 min)
-  setCandleFetchedAt('M15', now - 6 * 60 * 1000); // 6 min ago (> 5 min)
-  setCandleFetchedAt('H1', now - 16 * 60 * 1000); // 16 min ago (> 15 min)
-  setCandleFetchedAt('D1', now - 250 * 60 * 1000); // 250 min ago (> 240 min)
+  setCandleFetchedAt('M1', now - 3 * 60 * 1000);
+  setCandleFetchedAt('M15', now - 6 * 60 * 1000);
+  setCandleFetchedAt('H1', now - 16 * 60 * 1000);
+  setCandleFetchedAt('D1', now - 250 * 60 * 1000);
 
   assert.equal(isCandleStale('M1'), true);
   assert.equal(isCandleStale('1min'), true);

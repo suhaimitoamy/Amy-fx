@@ -3,69 +3,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-
-const versionUrl = new URL('../app/src/main/assets/app-version.js', import.meta.url);
-const checkerUrl = new URL('../app/src/main/assets/update-checker.js', import.meta.url);
-const indexUrl = new URL('../app/src/main/assets/index.html', import.meta.url);
-const mappingUiUrl = new URL('../app/src/main/assets/apps/mapping/js/ui/ui-render.js', import.meta.url);
-
-function source(url) {
-  return readFileSync(url, 'utf8');
-}
-
-function assertSyntax(url) {
-  const result = spawnSync(process.execPath, ['--check', fileURLToPath(url)], { encoding: 'utf8' });
-  assert.equal(result.status, 0, result.stderr || result.stdout);
-}
-
-test('version and update scripts remain syntactically valid', () => {
-  assertSyntax(versionUrl);
-  assertSyntax(checkerUrl);
-});
-
-test('profile displays the Amy FX public version and supports manual update checks', () => {
-  const version = source(versionUrl);
-  const index = source(indexUrl);
-  assert.match(version, /name: '2\.0\.0'/);
-  assert.match(version, /code: 51/);
-  assert.match(version, /Amy FX v\$\{VERSION\.name\}/);
-  assert.match(version, /main\/update\.json/);
-  assert.doesNotMatch(version, /Amy FX Preview|personal\/amyfx-private|preview-update\.json/);
-  assert.match(version, /Versi Aplikasi/);
-  assert.match(version, /data-profile-action=\\?"version/);
-  assert.match(version, /AmyFXUpdate\?\.checkNow/);
-  assert.match(index, /<script src="app-version\.js"><\/script>\s*<script src="app\.js"><\/script>\s*<script src="update-checker\.js"><\/script>/);
-  const mappingUi = source(mappingUiUrl);
-  assert.match(mappingUi, /window\.AmyFXUpdate\?\.checkNow\(\)/);
-  assert.doesNotMatch(mappingUi, /window\.AmyFXUpdater/);
-});
-
-test('update checks bypass caches and compare the published version code', () => {
-  const checker = source(checkerUrl);
-  assert.match(checker, /fetch\(`\$\{UPDATE_URL\}\?_\=\$\{now\}`/);
-  assert.match(checker, /cache: 'no-store'/);
-  assert.match(checker, /latestCode > CURRENT_VERSION_CODE/);
-  assert.match(checker, /showUpdatePopup\(data, latestCode, latestName\)/);
-  assert.match(checker, /DOMContentLoaded', scheduleCheck/);
-});
-
-test('native updater owns download progress while browser remains a legacy fallback', () => {
-  const checker = source(checkerUrl);
-  assert.match(checker, /window\.Android\.startAppUpdate/);
-  assert.match(checker, /window\.Android\.cancelAppUpdate/);
-  assert.match(checker, /window\.AmyFXUpdateNative/);
-  assert.match(checker, /onProgress\(percent, downloaded, total\)/);
-  assert.match(checker, /File tidak menumpuk di folder Download/);
-  assert.match(checker, /window\.location\.href = downloadUrl/);
-  assert.match(checker, /hasNativeUpdater\(\)/);
-});
-
-test('cancel never persists dismissal of a newer version', () => {
-  const checker = source(checkerUrl);
-  assert.doesNotMatch(checker, /localStorage\.setItem\(['"]amy_fx_update_dismissed_version/);
-  assert.doesNotMatch(checker, /localStorage\.setItem\(['"]amy_fx_update_last_check/);
-  assert.match(checker, /localStorage\.removeItem\('amy_fx_update_dismissed_version'\)/);
-  assert.match(checker, /visibilitychange/);
-  assert.match(checker, /checkUpdate\(\{ force: true \}\)/);
-  assert.match(checker, /window\.AmyFXUpdate/);
-});
+const versionUrl=new URL('../app/src/main/assets/app-version.js',import.meta.url),checkerUrl=new URL('../app/src/main/assets/update-checker.js',import.meta.url),indexUrl=new URL('../app/src/main/assets/index.html',import.meta.url),mappingUiUrl=new URL('../app/src/main/assets/apps/mapping/js/ui/ui-render.js',import.meta.url);
+const source=url=>readFileSync(url,'utf8'); const syntax=url=>{const r=spawnSync(process.execPath,['--check',fileURLToPath(url)],{encoding:'utf8'});assert.equal(r.status,0,r.stderr||r.stdout)};
+test('version and update scripts remain syntactically valid',()=>{syntax(versionUrl);syntax(checkerUrl)});
+test('profile displays Amy FX 2.0.1 and supports manual update checks',()=>{const v=source(versionUrl),i=source(indexUrl),m=source(mappingUiUrl);assert.match(v,/name: '2\.0\.1'/);assert.match(v,/code: 52/);assert.match(v,/Amy FX v\$\{VERSION\.name\}/);assert.match(v,/main\/update\.json/);assert.doesNotMatch(v,/Preview|personal\/amyfx-private/);assert.match(v,/Versi Aplikasi/);assert.match(v,/AmyFXUpdate\?\.checkNow/);assert.match(i,/<script src="app-version\.js"><\/script>\s*<script src="app\.js"><\/script>\s*<script src="update-checker\.js"><\/script>/);assert.match(m,/window\.AmyFXUpdate\?\.checkNow\(\)/)});
+test('update checks bypass caches and compare published version code',()=>{const c=source(checkerUrl);assert.match(c,/fetch\(`\$\{UPDATE_URL\}\?_\=\$\{now\}`/);assert.match(c,/cache: 'no-store'/);assert.match(c,/latestCode > CURRENT_VERSION_CODE/);assert.match(c,/showUpdatePopup\(data, latestCode, latestName\)/);assert.match(c,/DOMContentLoaded', scheduleCheck/);assert.doesNotMatch(c,/Amy FX Preview|preview-update\.json/)});
+test('native updater owns progress with browser fallback',()=>{const c=source(checkerUrl);assert.match(c,/window\.Android\.startAppUpdate/);assert.match(c,/window\.Android\.cancelAppUpdate/);assert.match(c,/window\.AmyFXUpdateNative/);assert.match(c,/onProgress\(percent, downloaded, total\)/);assert.match(c,/File tidak menumpuk di folder Download/);assert.match(c,/window\.location\.href = downloadUrl/);assert.match(c,/hasNativeUpdater\(\)/)});
+test('cancel never persists dismissal',()=>{const c=source(checkerUrl);assert.doesNotMatch(c,/localStorage\.setItem\(['"]amy_fx_update_dismissed_version/);assert.match(c,/localStorage\.removeItem\('amy_fx_update_dismissed_version'\)/);assert.match(c,/visibilitychange/);assert.match(c,/checkUpdate\(\{ force: true \}\)/);assert.match(c,/window\.AmyFXUpdate/)});

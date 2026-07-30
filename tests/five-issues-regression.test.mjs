@@ -4,7 +4,6 @@ import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 
 const read = path => fs.readFileSync(path, 'utf8');
-
 const readmePath = 'README.md';
 const indexPath = 'app/src/main/assets/apps/mapping/index.html';
 const fixScriptPath = 'app/src/main/assets/apps/mapping/js/analysis-ui-stability-v4.js';
@@ -29,7 +28,7 @@ test('Mapping UI stability runtime remains syntactically valid', () => {
 
 test('README documents the public Amy FX identity and keeps Preview separate', () => {
   assert.match(readme, /Amy FX/);
-  assert.match(readme, /Versi publik:\*\* `2\.0\.0`/);
+  assert.match(readme, /Versi publik:\*\* `2\.0\.1`/);
   assert.match(readme, /com\.amyelitesuite/);
   assert.match(readme, /main\/update\.json/);
   assert.match(readme, /personal\/amyfx-private/);
@@ -58,7 +57,9 @@ test('stale M15 never keeps a LIVE analysis badge', () => {
   assert.match(fixes, /M15 STALE/);
   assert.match(fixes, /M15 LIVE/);
   assert.match(fixes, /result\?\.dataStale/);
-  assert.match(fixes, /connection\.includes\('STALE'\)/);
+  assert.match(fixes, /analysisFreshness/);
+  assert.match(fixes, /freshness === 'STALE' \|\| freshness === 'EXPIRED'/);
+  assert.match(fixes, /status\.includes\('STALE'\)/);
   assert.match(css, /\.regime-badge\.stale/);
 });
 
@@ -92,12 +93,12 @@ test('issue-5 audit remains available in documentation but not injected into liv
   assert.doesNotMatch(fixes, /Akurasi arah close historis/);
 });
 
-test('source version uses public 2.0.0 while published metadata stays on the last available APK until release', () => {
-  assert.match(appVersion, /name: '2\.0\.0', code: 51/);
+test('source version uses public 2.0.1 while metadata stays on last published APK until release', () => {
+  assert.match(appVersion, /name: '2\.0\.1', code: 52/);
   assert.match(appVersion, /main\/update\.json/);
   assert.doesNotMatch(appVersion, /Preview|personal\/amyfx-private|preview-update\.json/);
-  assert.ok(update.latest_version_code <= 51);
-  assert.match(update.latest_version_name, /^(?:1\.\d+\.\d+|2\.0\.0)$/);
+  assert.ok(update.latest_version_code <= 52);
+  assert.match(update.latest_version_name, /^(?:1\.\d+\.\d+|2\.0\.[01])$/);
   assert.match(update.apk_url || update.downloadUrl || '', /AmyFX-latest\.apk/);
   assert.doesNotMatch(update.apk_url || update.downloadUrl || '', /AmyFX-Preview-latest\.apk/);
 });

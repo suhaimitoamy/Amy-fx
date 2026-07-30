@@ -27,12 +27,15 @@ test('Dashboard and Analyze panel order is kept by presentation runtime', async 
   }, -1);
 
   const analyzeOrder = [
+    "{ selector: '.mapping-hero' }",
+    "{ selector: '[data-stability-key=\"market-outlook\"]' }",
     "{ id: 'amy-regime-router-v3' }",
+    "{ selector: '[data-execution-plan-card=\"detail\"]' }",
+    "{ summary: 'Penjelasan Mapping' }",
+    "{ selector: '[data-asia-range-analyze]' }",
     "{ summary: 'Valid Break' }",
     "{ summary: 'Mapping Semua Timeframe' }",
-    "{ summary: 'Penjelasan Mapping' }",
     "{ summary: 'Setup Aktif' }",
-    "{ selector: '[data-execution-plan-card=\"detail\"]' }",
     "{ id: 'amy-scalper-entry-watch' }"
   ];
   analyzeOrder.reduce((lastIndex, token) => {
@@ -48,7 +51,6 @@ test('Dashboard and Analyze panel order is kept by presentation runtime', async 
 
 test('panel ordering changes presentation, not Mapping Engine or market requests', async () => {
   const gate = await read('app/src/main/assets/apps/mapping/js/dashboard-only-panels-v1.js');
-
   assert.doesNotMatch(gate, /fetch\(/);
   assert.doesNotMatch(gate, /Supabase|Vercel|TwelveData/);
   assert.doesNotMatch(gate, /mappingSnapshot\s*=/);

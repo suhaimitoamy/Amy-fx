@@ -20,6 +20,8 @@ let pollInFlight = false;
 let lastErrorLogAt = 0;
 let regimeRouterState = null;
 let analysisSequence = 0;
+let analysisController = null;
+let analysisInFlight = null;
 
 const PROXY_URL = 'https://amy-fx.vercel.app/api/twelvedata';
 const LIVE_POLL_MS = 20_000;
@@ -809,11 +811,20 @@ function publishMappingSnapshot(result = state.result) {
   });
 }
 
-export async function fetchTf(tf) {
+function throwIfAborted(signal) {
+  if (!signal?.aborted) return;
+  const error = new Error('Mapping analysis request superseded');
+  error.name = 'AbortError';
+  throw error;
+}
+
+export async function fetchTf(tf, { signal } = {}) {
+  throwIfAborted(signal);
   const params = new URLSearchParams({ symbol: 'XAU/USD', interval: TF[tf], outputsize: '300' });
-  const response = await fetch(`${PROXY_URL}?${params.toString()}`, { cache: 'no-store' });
+  const response = await fetch(`${PROXY_URL}?${params.toString()}`, { cache: 'no-store', signal });
   if (!response.ok) throw new Error(`Market HTTP ${response.status}`);
   const data = await response.json();
+  throwIfAborted(signal);
   if (data.status === 'error') throw new Error(data.message || 'Fetch gagal');
 
   const raw = (data.values || []).reverse();
@@ -841,6 +852,7 @@ export async function fetchTf(tf) {
   );
 
   if (!candles.length) throw new Error(`Candle ${tf} kosong`);
+  throwIfAborted(signal);
   state.candles[tf] = candles;
   setCandleFetchedAt(tf, Date.now());
   return candles;
@@ -927,10 +939,8 @@ function applyRegimeRouter(result, htfBiases) {
   return result;
 }
 
-export async function runAnalysis(tf = state.tf) {
-  if (document.hidden) return;
-  const requestId = ++analysisSequence;
-  const isCurrentRequest = () => requestId === analysisSequence && state.tf === tf;
+async function performAnalysis(tf, requestId, signal) {
+  const isCurrentRequest = () => !signal.aborted && requestId === analysisSequence && state.tf === tf;
   if (scanTimer) { clearTimeout(scanTimer); scanTimer = null; }
   state.tf = tf;
   render();
@@ -944,7 +954,8 @@ export async function runAnalysis(tf = state.tf) {
     await Promise.all(scanGroup.map(async currentTf => {
       const isStale = isCandleStale(currentTf);
       if (!state.candles[currentTf]?.length || isStale) {
-        try { await fetchTf(currentTf); } catch (error) {
+        try { await fetchTf(currentTf, { signal }); } catch (error) {
+          if (signal.aborted || error?.name === 'AbortError') throw error;
           log(`Candle ${currentTf} belum diperbarui, memakai cache.`);
           if (isStale || !state.candles[currentTf]?.length) refreshFailures.add(currentTf);
         }
@@ -1023,9 +1034,30 @@ export async function runAnalysis(tf = state.tf) {
     sendTargetsToNative();
     notifyImportant(result);
   } catch (error) {
+    if (signal.aborted || error?.name === 'AbortError') return false;
     if (isCurrentRequest()) log(`Error ${tf}: ${error.message}`);
   }
   if (isCurrentRequest()) render();
+  return isCurrentRequest();
+}
+
+export function runAnalysis(tf = state.tf) {
+  if (document.hidden) return Promise.resolve(false);
+  if (analysisInFlight?.tf === tf && !analysisInFlight.controller.signal.aborted) {
+    return analysisInFlight.promise;
+  }
+
+  analysisController?.abort();
+  const controller = new AbortController();
+  analysisController = controller;
+  const requestId = ++analysisSequence;
+  const operation = { tf, requestId, controller, promise: null };
+  operation.promise = performAnalysis(tf, requestId, controller.signal).finally(() => {
+    if (analysisInFlight === operation) analysisInFlight = null;
+    if (analysisController === controller) analysisController = null;
+  });
+  analysisInFlight = operation;
+  return operation.promise;
 }
 
 function scheduleAnalysisRefresh() {

@@ -21,7 +21,9 @@ test('same-view Mapping updates patch existing DOM instead of replacing the app 
   assert.match(runtime, /this\.id !== 'app'/);
   assert.match(runtime, /patchSameViewApp/);
   assert.match(runtime, /patchNode\(current, nextNode\)/);
-  assert.match(runtime, /lastAppView !== view/);
+  assert.match(runtime, /current\.hasAttribute\('data-dom-persistent'\)/);
+  assert.match(runtime, /next\.hasAttribute\('data-dom-persistent'\)/);
+  assert.doesNotMatch(runtime, /lastAppView !== view[\s\S]*nativeInnerHtml\.set/);
   assert.doesNotMatch(runtime, /window\.scrollTo|window\.scrollBy/);
 });
 

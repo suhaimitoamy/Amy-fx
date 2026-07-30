@@ -463,7 +463,7 @@ test('Analysis order keeps Rencana Eksekusi directly above Penjelasan Mapping', 
   const asiaUi = source('app/src/main/assets/apps/mapping/js/session/asia-range-ui.js');
   assert.match(
     ui,
-    /return`\$\{header\}\$\{executionPlan\}<details class="card disclosure"><summary>Penjelasan Mapping<\/summary>\$\{plainMappingExplanation\(\)\}/
+    /\$\{executionPlan\}<details class="card disclosure" data-stability-key="mapping-explanation"><summary>Penjelasan Mapping<\/summary>\$\{plainMappingExplanation\(\)\}/
   );
   assert.match(ui, /export function plainMappingExplanation/);
   assert.match(ui, /Apa yang Sedang Terjadi\?/);

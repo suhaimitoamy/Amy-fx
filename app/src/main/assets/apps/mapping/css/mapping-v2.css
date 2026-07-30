@@ -30,7 +30,7 @@
 .sticky-bias.neutral,.sticky-bias.wait{background:rgba(219,180,59,.15);color:#fbbf24;border-color:rgba(219,180,59,.3)}
 
 @keyframes liveDotPulse{0%{box-shadow:0 0 0 0 rgba(74,222,128,.6)}70%{box-shadow:0 0 0 6px rgba(74,222,128,0)}100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}}
-.status.on::before{content:'';display:inline-block;width:6px;height:6px;margin-right:6px;border-radius:50%;background:#4ade80;animation:liveDotPulse 2s infinite;vertical-align:middle}
+.status.on::before{content:none;display:none}
 
 @keyframes skeletonShimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
 .skeleton-card{padding:16px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:#0d0d0d;margin-bottom:12px}

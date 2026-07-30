@@ -169,8 +169,9 @@
     if (sharedSnapshot) return snapshotResponse(info, sharedSnapshot);
 
     const active = inFlight.get(info.key);
-    if (active) {
-      const stored = await active;
+    if (active?.signal?.aborted) inFlight.delete(info.key);
+    else if (active) {
+      const stored = await active.promise;
       return cloneStored(stored);
     }
 
@@ -196,12 +197,13 @@
       return stored;
     })();
 
-    inFlight.set(info.key, request);
+    const entry = { promise: request, signal: init?.signal || null };
+    inFlight.set(info.key, entry);
     try {
       const stored = await request;
       return cloneStored(stored);
     } finally {
-      inFlight.delete(info.key);
+      if (inFlight.get(info.key) === entry) inFlight.delete(info.key);
     }
   }
 

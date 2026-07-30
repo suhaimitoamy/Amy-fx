@@ -80,8 +80,12 @@ function cardMarkup(setup, display) {
 
 function patchClockLabels() {
   const current = nowTime();
-  const top = document.getElementById('top-wib');
-  setText(top, `${state.conn === 'Connected' ? '● Live Price' : `○ ${state.conn}`} • WITA ${current}`);
+  const top = document.getElementById('top-wib') || document.getElementById('top-wita');
+  if (top) {
+    setText(top, '');
+    top.style.display = 'none';
+    top.setAttribute('aria-hidden', 'true');
+  }
   setText(document.getElementById('kz-wib'), `WITA ${current}`);
 
   const focusSessions = sessions().filter(item =>
