@@ -88,7 +88,6 @@ function createRuntime({ candleAt = Date.now() - 60_000 } = {}) {
 test('M1 quote tick updates quote without laundering Mapping capturedAt', () => {
   const now = Date.now();
   const runtime = createRuntime({ candleAt: now - 60_000 });
-  runtime.localStorage.setItem('last_ws_tick_at', String(now));
   runtime.window.AmyFXIntel.write('mapping', {
     price: 4091,
     timeframe: 'M15',
@@ -100,7 +99,12 @@ test('M1 quote tick updates quote without laundering Mapping capturedAt', () => 
   });
   const mappingCapturedAt = runtime.window.AmyFXIntel.read().mapping.capturedAt;
 
-  runtime.localStorage.setItem('last_ws_tick_at', String(now + 20_000));
+  runtime.window.AmyFXIntel.write('quote', {
+    pair: 'XAU/USD',
+    price: 4091,
+    providerCapturedAt: new Date(now).toISOString(),
+    source: 'TWELVEDATA_WEBSOCKET'
+  });
   runtime.window.AmyFXIntel.write('mapping', {
     price: 4092,
     timeframe: 'M15',
@@ -110,11 +114,18 @@ test('M1 quote tick updates quote without laundering Mapping capturedAt', () => 
     ssl: 4080,
     levels: [{ type: 'BSL', price: 4110, distance: 18 }, { type: 'SSL', price: 4080, distance: -12 }]
   });
+  runtime.window.AmyFXIntel.write('quote', {
+    pair: 'XAU/USD',
+    price: 4092,
+    providerCapturedAt: new Date(now + 20_000).toISOString(),
+    source: 'TWELVEDATA_WEBSOCKET'
+  });
 
   const state = runtime.window.AmyFXIntel.read();
   assert.equal(state.mapping.capturedAt, mappingCapturedAt);
   assert.equal(state.quote.price, 4092);
   assert.equal(new Date(state.quote.capturedAt).getTime(), now + 20_000);
+  assert.equal(state.quote.source, 'TWELVEDATA_WEBSOCKET');
 });
 
 test('Mapping payload cannot invent an official quote without an M1 provider timestamp', () => {
