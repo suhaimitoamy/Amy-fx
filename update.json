@@ -1,26 +1,26 @@
 {
-  "latest_version_code": 52,
-  "latest_version_name": "2.0.1",
-  "versionCode": 52,
-  "version": "2.0.1",
+  "latest_version_code": 53,
+  "latest_version_name": "2.0.2",
+  "versionCode": 53,
+  "version": "2.0.2",
   "releaseDate": "2026-07-30",
   "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Mapping tidak lagi berkedip atau meloncat saat refresh biasa.",
-    "Panel Scalper Shadow tetap tersedia dan mempertahankan data valid terakhir.",
-    "Respons lama tidak dapat mengembalikan lifecycle terminal menjadi aktif.",
-    "Header Mapping hanya menampilkan bulatan status yang stabil.",
+    "Harga live mempertahankan interval polling yang sama dan memakai satu jalur backend market.",
+    "Fallback market usang tidak lagi dapat tampil sebagai LIVE.",
+    "Timestamp provider menentukan status freshness harga.",
+    "Candle duplikat dibuang sebelum upsert Supabase.",
     "Package, signing, data pengguna, URI amyfx, dan update channel publik tetap dipertahankan.",
     "Amy FX Preview pribadi tetap terpisah dan tidak diubah."
   ],
   "changelog": [
-    "Mapping tidak lagi berkedip atau meloncat saat refresh biasa.",
-    "Panel Scalper Shadow tetap tersedia dan mempertahankan data valid terakhir.",
-    "Respons lama tidak dapat mengembalikan lifecycle terminal menjadi aktif.",
-    "Header Mapping hanya menampilkan bulatan status yang stabil.",
+    "Harga live mempertahankan interval polling yang sama dan memakai satu jalur backend market.",
+    "Fallback market usang tidak lagi dapat tampil sebagai LIVE.",
+    "Timestamp provider menentukan status freshness harga.",
+    "Candle duplikat dibuang sebelum upsert Supabase.",
     "Package, signing, data pengguna, URI amyfx, dan update channel publik tetap dipertahankan.",
     "Amy FX Preview pribadi tetap terpisah dan tidak diubah."
   ]
