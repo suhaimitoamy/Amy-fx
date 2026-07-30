@@ -3,14 +3,21 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dedupeCandleRows } from '../lib/market-candle-store.mjs';
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
-test('live quote stays on one backend API and uses provider freshness', () => {
+test('live quote uses one native Twelve Data WebSocket while Mapping keeps REST freshness checks', () => {
   const source = read('app/src/main/assets/apps/mapping/js/api/market-data.js');
-  assert.match(source, /const LIVE_POLL_MS = 20_000/);
-  assert.match(source, /validateLiveMarketPayload\(data\)/);
-  assert.match(source, /data\?\.quoteCapturedAt/);
+  const bridge = read('app/src/main/java/com/amyelitesuite/TwelveDataPriceBridge.kt');
+  assert.match(source, /window\.AmyLivePrice/);
+  assert.match(source, /amyfx:twelvedata-price/);
+  assert.match(source, /amyfx:twelvedata-status/);
+  assert.match(source, /validateLiveTickPayload\(detail\)/);
   assert.match(source, /assertBackendPayloadFresh\(data, `Candle \${tf}`\)/);
-  assert.doesNotMatch(source, /lastWsTickAt = Date\.now\(\)/);
-  assert.doesNotMatch(source, /new WebSocket|twelve_api_key/);
+  assert.doesNotMatch(source, /LIVE_POLL_MS|outputsize=1/);
+  assert.doesNotMatch(source, /localStorage\.(?:getItem|setItem)\(['"]twelve_api_key/);
+  assert.match(bridge, /wss:\/\/ws\.twelvedata\.com\/v1\/quotes\/price/);
+  assert.match(bridge, /client\.newWebSocket/);
+  assert.match(bridge, /\.put\("action", "subscribe"\)/);
+  assert.match(bridge, /\.put\("symbols", SYMBOL\)/);
+  assert.match(bridge, /private const val SYMBOL = "XAU\/USD"/);
 });
 test('duplicate candle keys collapse before Supabase upsert', () => {
   const rows = dedupeCandleRows([

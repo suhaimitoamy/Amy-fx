@@ -19,6 +19,7 @@ val configuredAppLabel = System.getenv("AMYFX_APP_LABEL") ?: "Amy FX Preview"
 val configuredUriScheme = System.getenv("AMYFX_URI_SCHEME") ?: "amyfxpreview"
 val configuredUpdateManifestUrl = System.getenv("AMYFX_UPDATE_MANIFEST_URL")
     ?: "https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json"
+val configuredTwelveDataApiKey = System.getenv("TWELVEDATA_API_KEY").orEmpty()
 
 android {
     namespace = "com.amyelitesuite"
@@ -28,11 +29,12 @@ android {
         applicationId = configuredApplicationId
         minSdk = 26
         targetSdk = 35
-        versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 940294)
-        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "2.0.0-preview.294"
+        versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 940295)
+        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "2.0.0-preview.295"
         manifestPlaceholders["appLabel"] = configuredAppLabel
         manifestPlaceholders["amyFxScheme"] = configuredUriScheme
         buildConfigField("String", "UPDATE_MANIFEST_URL", buildConfigString(configuredUpdateManifestUrl))
+        buildConfigField("String", "TWELVE_DATA_API_KEY", buildConfigString(configuredTwelveDataApiKey))
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

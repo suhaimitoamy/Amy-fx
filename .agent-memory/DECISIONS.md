@@ -1,5 +1,14 @@
 # Technical Decisions
 
+## 2026-07-31
+
+### Private Preview Live-Price Ownership
+- These rules apply only to `personal/amyfx-private`; the public `main` release identity and pipeline remain unchanged.
+- XAU/USD display price is owned by one native Android Twelve Data WebSocket subscription. The WebView receives validated price/status events and never receives the API key.
+- The WebSocket key comes from encrypted native preferences, with an optional private CI build value for first connection. It is never stored in repository source or WebView `localStorage`.
+- Mapping candle history and analysis continue using the existing Vercel Twelve Data REST proxy. Live ticks may update price-facing UI/snapshots but do not replace closed-candle facts.
+- Provider timestamps determine live-tick freshness. Network return, foreground resume, socket closure, and a stalled tick stream trigger bounded reconnects without REST live-price fallback.
+
 ## 2026-07-30
 
 ### Preview Mapping Stable-DOM Contract

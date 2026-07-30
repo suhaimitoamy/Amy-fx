@@ -70,6 +70,7 @@ private data class BackgroundVideoTransferSession(
 class MainActivity : Activity() {
     private lateinit var webView: WebView
     private lateinit var nativeUpdater: NativeAppUpdater
+    private lateinit var twelveDataPriceBridge: TwelveDataPriceBridge
     private lateinit var assetLoader: WebViewAssetLoader
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var rootLayout: FrameLayout
@@ -102,6 +103,7 @@ class MainActivity : Activity() {
 
         webView = WebView(this)
         nativeUpdater = NativeAppUpdater(this, webView)
+        twelveDataPriceBridge = TwelveDataPriceBridge(this, webView)
         webView.layoutParams = matchParentParams
         swipeRefreshLayout.addView(webView)
         rootLayout.addView(swipeRefreshLayout)
@@ -133,6 +135,7 @@ class MainActivity : Activity() {
             .build()
 
         webView.addJavascriptInterface(WebAppInterface(this), "Android")
+        webView.addJavascriptInterface(twelveDataPriceBridge, "AmyLivePrice")
         webView.addJavascriptInterface(AmyFxAiProviderRepairBridge(this), "AmyNativeAIRepair")
         webView.addJavascriptInterface(AmyFxAiBridge(this, webView), "AmyNativeAI")
 
@@ -275,6 +278,12 @@ class MainActivity : Activity() {
         }
         if (::nativeUpdater.isInitialized) nativeUpdater.resumePendingInstall()
         updatePermissionGate()
+    }
+
+    override fun onDestroy() {
+        if (::twelveDataPriceBridge.isInitialized) twelveDataPriceBridge.close()
+        if (::webView.isInitialized) webView.removeJavascriptInterface("AmyLivePrice")
+        super.onDestroy()
     }
 
     override fun onTrimMemory(level: Int) {

@@ -17,9 +17,9 @@ test('personal source stays Preview while the public release workflow keeps prod
   assert.match(gradle, /Amy FX Preview/);
   assert.match(gradle, /amyfxpreview/);
   assert.match(gradle, /personal\/amyfx-private\/preview-update\.json/);
-  assert.match(gradle, /\?: 940294\)/);
-  assert.match(gradle, /\?: "2\.0\.0-preview\.294"/);
-  assert.match(version, /name: '2\.0\.0-preview\.294', code: 940294/);
+  assert.match(gradle, /\?: 940295\)/);
+  assert.match(gradle, /\?: "2\.0\.0-preview\.295"/);
+  assert.match(version, /name: '2\.0\.0-preview\.295', code: 940295/);
   assert.match(version, /personal\/amyfx-private\/preview-update\.json/);
 
   assert.match(workflow, /AMYFX_APPLICATION_ID: com\.amyelitesuite/);

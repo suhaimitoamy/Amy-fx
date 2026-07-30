@@ -91,7 +91,7 @@ test('issue-5 audit remains available in documentation but not injected into liv
 });
 
 test('source version and updater stay on the private Preview channel', () => {
-  assert.match(appVersion, /name: '2\.0\.0-preview\.294', code: 940294/);
+  assert.match(appVersion, /name: '2\.0\.0-preview\.295', code: 940295/);
   assert.match(appVersion, /personal\/amyfx-private\/preview-update\.json/);
   assert.ok(update.latest_version_code >= 940000);
   assert.match(update.latest_version_name, /^2\.0\.0-preview\.\d+$/);

@@ -12,9 +12,9 @@ test('Amy FX personal source uses the permanent Preview Android identity', () =>
   assert.match(gradle, /val configuredUriScheme = System\.getenv\("AMYFX_URI_SCHEME"\) \?: "amyfxpreview"/);
   assert.match(gradle, /personal\/amyfx-private\/preview-update\.json/);
   assert.match(gradle, /applicationId = configuredApplicationId/);
-  assert.match(gradle, /versionCode[^\n]*940294/);
-  assert.match(gradle, /versionName[^\n]*"2\.0\.0-preview\.294"/);
-  assert.match(version, /name: '2\.0\.0-preview\.294', code: 940294/);
+  assert.match(gradle, /versionCode[^\n]*940295/);
+  assert.match(gradle, /versionName[^\n]*"2\.0\.0-preview\.295"/);
+  assert.match(version, /name: '2\.0\.0-preview\.295', code: 940295/);
 });
 
 test('published public metadata is never ahead of the public APK source version', () => {
@@ -47,15 +47,21 @@ test('published public metadata is never ahead of the public APK source version'
   assert.ok(metadata.release_notes.length > 0);
 });
 
-test('client no longer persists TwelveData credentials', () => {
+test('Twelve Data WebSocket credentials stay out of source and WebView storage', () => {
   const main = read('app/src/main/assets/apps/mapping/js/main.js');
   const bridge = read('app/src/main/assets/apps/mapping/js/bridge/android-bridge.js');
   const native = read('app/src/main/java/com/amyelitesuite/MainActivity.kt');
+  const priceBridge = read('app/src/main/java/com/amyelitesuite/TwelveDataPriceBridge.kt');
   assert.doesNotMatch(main, /localStorage\.getItem\('twelve_api_key'\)/);
   assert.doesNotMatch(bridge, /localStorage\.setItem\('twelve_api_key'/);
   assert.doesNotMatch(native, /putString\("api_key"/);
   assert.doesNotMatch(native, /SecurePrefs\.putString\(mContext, "api_key"/);
   assert.match(native, /SecurePrefs\.remove\(mContext, "api_key"\)/);
+  assert.match(native, /addJavascriptInterface\(twelveDataPriceBridge, "AmyLivePrice"\)/);
+  assert.match(priceBridge, /SecurePrefs\.putString\(appContext, PREF_WEBSOCKET_API_KEY, apiKey\)/);
+  assert.match(priceBridge, /BuildConfig\.TWELVE_DATA_API_KEY/);
+  assert.match(priceBridge, /fun hasApiKey\(\): Boolean/);
+  assert.doesNotMatch(priceBridge, /fun (?:get|read|export)ApiKey\(/);
 });
 
 test('market proxy accepts only validated server-side requests', () => {

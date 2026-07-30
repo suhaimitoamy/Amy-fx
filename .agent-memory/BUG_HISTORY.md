@@ -1,5 +1,13 @@
 # Bug History
 
+## Fixed Private Preview Frozen Live Price — 2026-07-31
+
+### XAU/USD Price Stopped Refreshing Automatically
+- **Severity:** Critical
+- **Cause:** Preview 293/294 had replaced the intended Twelve Data WebSocket quote stream with a 20-second REST request to the shared Mapping proxy. The display therefore depended on REST freshness/cache and consumed daily API credits while the account showed no WebSocket connection.
+- **Fix:** Preview 295 restores one native Android WebSocket subscription for XAU/USD, validates provider timestamps, and reconnects after network, foreground, socket, or stalled-tick failures. The key remains outside WebView storage. Mapping candles retain their existing REST/Vercel path unchanged.
+- **Validation:** JavaScript syntax checks, focused live-price/security/Preview identity tests, and all 92 JavaScript regression files passed. Android compile, lint, signing, and APK identity remain mandatory release-workflow gates.
+
 ## Fixed Preview Mapping Stability and Scalper Shadow Defects — 2026-07-30
 
 ### Mapping Root Render Flicker and Scroll Jumps

@@ -11,7 +11,7 @@ test('personal source keeps immutable Preview identity', () => {
   assert.match(gradle, /com\.amyelitesuite\.learningpreview/);
   assert.match(gradle, /Amy FX Preview/);
   assert.match(gradle, /amyfxpreview/);
-  assert.match(version, /2\.0\.0-preview\.294/);
+  assert.match(version, /2\.0\.0-preview\.295/);
   assert.match(version, /personal\/amyfx-private\/preview-update\.json/);
   assert.match(updater, /personal\/amyfx-private\/preview-update\.json/);
 });

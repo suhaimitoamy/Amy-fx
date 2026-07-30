@@ -54,8 +54,8 @@ test('private Preview release remains isolated from production main', async () =
   assert.match(workflow, /com\.amyelitesuite\.learningpreview/);
   assert.match(workflow, /Amy FX Preview/);
   assert.match(workflow, /amyfxpreview/);
-  assert.match(workflow, /AMYFX_VERSION_NAME: 2\.0\.0-preview\.294/);
-  assert.match(workflow, /AMYFX_VERSION_CODE: "940294"/);
+  assert.match(workflow, /AMYFX_VERSION_NAME: 2\.0\.0-preview\.295/);
+  assert.match(workflow, /AMYFX_VERSION_CODE: "940295"/);
   assert.match(workflow, /test "\$version_code" -gt "\$published_code"/);
   assert.match(workflow, /PYTHONDONTWRITEBYTECODE: "1"/);
   assert.doesNotMatch(workflow, /python3 -m py_compile/);
