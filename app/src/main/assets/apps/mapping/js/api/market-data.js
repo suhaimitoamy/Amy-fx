@@ -25,6 +25,44 @@ let analysisInFlight = null;
 
 const PROXY_URL = 'https://amy-fx.vercel.app/api/twelvedata';
 const LIVE_POLL_MS = 20_000;
+const LIVE_QUOTE_HARD_TTL_MS = 180_000;
+
+function normalizedMarketTimestamp(value) {
+  const numeric = Number(value);
+  if (Number.isFinite(numeric) && numeric > 0) {
+    return numeric > 100_000_000_000 ? numeric : numeric * 1000;
+  }
+  const text = String(value || '').trim();
+  if (!text) return 0;
+  const normalized = /Z$|[+-]\d{2}:?\d{2}$/.test(text)
+    ? text
+    : `${text.replace(' ', 'T')}Z`;
+  const parsed = Date.parse(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function assertBackendPayloadFresh(data, label = 'Market') {
+  const source = String(data?.source || '');
+  const cacheState = String(data?.amyfxCacheState || '');
+  if (/stale/i.test(source) || /stale/i.test(cacheState)) {
+    throw new Error(`${label} memakai fallback data usang`);
+  }
+}
+
+function validateLiveMarketPayload(data) {
+  assertBackendPayloadFresh(data, 'Harga live');
+  const capturedAt = normalizedMarketTimestamp(
+    data?.quoteCapturedAt
+    || data?.values?.[0]?.datetime
+    || data?.latestOpenTime
+  );
+  const ageMs = capturedAt ? Date.now() - capturedAt : Number.POSITIVE_INFINITY;
+  if (!capturedAt || ageMs > LIVE_QUOTE_HARD_TTL_MS || ageMs < -60_000) {
+    throw new Error('Timestamp harga provider tidak lagi live');
+  }
+  return capturedAt;
+}
+
 export let candleFetchedAt = {};
 
 function normalizeTfKey(tf) {
@@ -826,6 +864,7 @@ export async function fetchTf(tf, { signal } = {}) {
   const data = await response.json();
   throwIfAborted(signal);
   if (data.status === 'error') throw new Error(data.message || 'Fetch gagal');
+  assertBackendPayloadFresh(data, `Candle ${tf}`);
 
   const raw = (data.values || []).reverse();
   const closeCutoff = Date.now() - 10_000;
@@ -1077,7 +1116,7 @@ async function pollLivePrice() {
     const data = await response.json();
     const price = +(data.values?.[0]?.close || 0);
     if (data.status !== 'ok' || !Number.isFinite(price) || price <= 0) throw new Error(data.message || 'Harga live tidak valid');
-    lastWsTickAt = Date.now();
+    lastWsTickAt = validateLiveMarketPayload(data);
     localStorage.setItem('last_ws_tick_at', String(lastWsTickAt));
     localStorage.setItem('last_price', String(price));
     state.price = price;
