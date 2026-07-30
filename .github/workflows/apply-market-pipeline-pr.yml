@@ -1,0 +1,90 @@
+name: Apply Market Pipeline Repair PR
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: market-pipeline-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  apply-and-test:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (github.event.pull_request.head.ref == 'fix/market-pipeline-live-price-20260730-definitive' ||
+       github.event.pull_request.head.ref == 'fix/preview-market-pipeline-live-price-20260730-definitive')
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Stop after generated commit
+        id: guard
+        shell: bash
+        run: |
+          if git log -1 --pretty=%B | grep -Fq '[market-pipeline-applied]'; then
+            echo 'skip=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'skip=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Restore deterministic patcher from trusted main
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/contents/.github/workflows/apply-market-pipeline-fix.yml?ref=main" --jq .content | base64 -d > /tmp/market-pipeline-workflow.yml
+          python3 - <<'PY'
+          import base64, gzip, re
+          from pathlib import Path
+          text=Path('/tmp/market-pipeline-workflow.yml').read_text()
+          match=re.search(r"printf '%s' '([^']+)'", text)
+          if not match:
+              raise SystemExit('Embedded market pipeline patcher not found')
+          Path('tools').mkdir(exist_ok=True)
+          Path('tools/apply-market-pipeline-fix.py').write_bytes(gzip.decompress(base64.b64decode(match.group(1))))
+          PY
+          python3 -m py_compile tools/apply-market-pipeline-fix.py
+      - name: Apply repair
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          rm -f .market-pipeline-trigger
+          python3 tools/apply-market-pipeline-fix.py
+      - uses: actions/setup-node@v4
+        if: steps.guard.outputs.skip != 'true'
+        with:
+          node-version: '22'
+      - name: Validate JavaScript syntax
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          node --check app/src/main/assets/apps/mapping/js/api/live-price-websocket.js
+          node --check app/src/main/assets/apps/mapping/js/api/market-data.js
+          node --check app/src/main/assets/apps/mapping/js/main.js
+          node --check app/src/main/assets/apps/mapping/js/bridge/android-bridge.js
+          node --check app/src/main/assets/apps/mapping/js/ui/ui-render.js
+          node --check app/src/main/assets/apps/shared/amyfx-market-state-contract-v1.js
+      - name: Run complete regression suite
+        if: steps.guard.outputs.skip != 'true'
+        run: timeout 18m npm test
+      - name: Commit tested repair to PR branch
+        if: steps.guard.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No generated changes.'
+            exit 0
+          fi
+          git commit -m 'fix: separate live WebSocket and deduplicate market candles [market-pipeline-applied]'
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
