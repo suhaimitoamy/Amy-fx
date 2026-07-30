@@ -17,19 +17,19 @@ test('personal source stays Preview while the public release workflow keeps prod
   assert.match(gradle, /Amy FX Preview/);
   assert.match(gradle, /amyfxpreview/);
   assert.match(gradle, /personal\/amyfx-private\/preview-update\.json/);
-  assert.match(gradle, /\?: 940292\)/);
-  assert.match(gradle, /\?: "2\.0\.0-preview\.292"/);
-  assert.match(version, /name: '2\.0\.0-preview\.292', code: 940292/);
+  assert.match(gradle, /\?: 940293\)/);
+  assert.match(gradle, /\?: "2\.0\.0-preview\.293"/);
+  assert.match(version, /name: '2\.0\.0-preview\.293', code: 940293/);
   assert.match(version, /personal\/amyfx-private\/preview-update\.json/);
 
   assert.match(workflow, /AMYFX_APPLICATION_ID: com\.amyelitesuite/);
   assert.match(workflow, /AMYFX_APP_LABEL: Amy FX/);
   assert.match(workflow, /AMYFX_URI_SCHEME: amyfx/);
-  assert.match(workflow, /AMYFX_VERSION_NAME: "1\.5\.9"/);
-  assert.match(workflow, /AMYFX_VERSION_CODE: "50"/);
+  assert.match(workflow, /AMYFX_VERSION_NAME: "2\.0\.1"/);
+  assert.match(workflow, /AMYFX_VERSION_CODE: "52"/);
   assert.match(workflow, /releases\/download\/amyfx-latest\/AmyFX-latest\.apk/);
-  assert.match(workflow, /latest_version_code': 50/);
-  assert.match(workflow, /latest_version_name': '1\.5\.9'/);
+  assert.match(workflow, /latest_version_code=52|latest_version_code': 52/);
+  assert.match(workflow, /latest_version_name='2\.0\.1'|latest_version_name': '2\.0\.1'/);
   assert.match(workflow, /Verify public update manifest source/);
 });
 
