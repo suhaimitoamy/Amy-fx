@@ -27,13 +27,13 @@ jobs:
       AMYFX_KEYSTORE_PASSWORD: android
       AMYFX_KEY_ALIAS: androiddebugkey
       AMYFX_KEY_PASSWORD: android
-      AMYFX_VERSION_NAME: "2.0.1"
-      AMYFX_VERSION_CODE: "52"
+      AMYFX_VERSION_NAME: "2.0.2"
+      AMYFX_VERSION_CODE: "53"
       AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
     steps:
       - name: Mark production release pending
         env: { GH_TOKEN: "${{ github.token }}" }
-        run: gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" -f state=pending -f context='Amy FX Production Release' -f description='Testing and building signed Amy FX 2.0.1' -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+        run: gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" -f state=pending -f context='Amy FX Production Release' -f description='Testing and building signed Amy FX 2.0.2' -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
       - uses: actions/setup-node@v4
@@ -45,9 +45,9 @@ jobs:
           node --check app/src/main/assets/update-checker.js
           node --check app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
           node --check app/src/main/assets/apps/mapping/js/scalper-shadow-state.js
-          grep -Fq "name: '2.0.1', code: 52" app/src/main/assets/app-version.js
-          grep -Fq '?: 52)' app/build.gradle.kts
-          grep -Fq '?: "2.0.1"' app/build.gradle.kts
+          grep -Fq "name: '2.0.2', code: 53" app/src/main/assets/app-version.js
+          grep -Fq '?: 53)' app/build.gradle.kts
+          grep -Fq '?: "2.0.2"' app/build.gradle.kts
           grep -Fq 'com.amyelitesuite' app/build.gradle.kts
           grep -Fq 'main/update.json' app/src/main/assets/app-version.js
           grep -Fq 'main/update.json' app/src/main/assets/update-checker.js
@@ -111,7 +111,7 @@ jobs:
           mkdir -p dist; cp "$apk" dist/AmyFX-latest.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Amy-FX-v2.0.1-signed-apk
+          name: Amy-FX-v2.0.2-signed-apk
           path: dist/AmyFX-latest.apk
           if-no-files-found: error
       - name: Publish rolling production APK
@@ -120,7 +120,7 @@ jobs:
           set -euo pipefail
           git config user.name github-actions[bot]; git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git tag -f amyfx-latest "$GITHUB_SHA"; git push origin refs/tags/amyfx-latest --force
-          notes='Amy FX 2.0.1 memperbaiki kedipan dan perpindahan layar Mapping, mempertahankan panel Scalper Shadow secara permanen, menolak respons lifecycle lama, serta membersihkan header status. Amy FX Preview pribadi tetap terpisah.'
+          notes='Amy FX 2.0.2 memulihkan harga live WebSocket khusus tampilan, memisahkan harga Mapping REST/Supabase, dan mencegah candle duplikat menggagalkan pembaruan data. Package, signing, data pengguna, URI amyfx, dan update channel publik tetap dipertahankan.'
           if gh release view amyfx-latest >/dev/null 2>&1; then gh release edit amyfx-latest --title "Amy FX Latest — v${AMYFX_VERSION_NAME}" --notes "$notes" --latest; else gh release create amyfx-latest --title "Amy FX Latest — v${AMYFX_VERSION_NAME}" --notes "$notes" --latest; fi
           gh release upload amyfx-latest dist/AmyFX-latest.apk --clobber
           gh release view amyfx-latest --json assets --jq '.assets[].name' | grep -Fx AmyFX-latest.apk
@@ -131,8 +131,8 @@ jobs:
           import json, os
           from pathlib import Path
           p=Path('update.json'); data=json.loads(p.read_text())
-          notes=['Mapping tidak lagi berkedip atau meloncat saat refresh biasa.','Panel Scalper Shadow tetap tersedia dan mempertahankan data valid terakhir.','Respons lama tidak dapat mengembalikan lifecycle terminal menjadi aktif.','Header Mapping hanya menampilkan bulatan status yang stabil.','Package, signing, data pengguna, URI amyfx, dan update channel publik tetap dipertahankan.','Amy FX Preview pribadi tetap terpisah dan tidak diubah.']
-          data.update(latest_version_code=52,latest_version_name='2.0.1',versionCode=52,version='2.0.1',releaseDate=os.environ['RELEASE_DATE'],apk_url='https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',downloadUrl='https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',force_update=False,mandatory=False,release_notes=notes,changelog=notes)
+          notes=['Harga live di layar kembali berasal dari Twelve Data WebSocket.','Candle dan analisis Mapping tetap berasal dari jalur REST melalui Vercel dan Supabase.','Candle duplikat dibersihkan sebelum upsert sehingga pembaruan Supabase tidak lagi ditolak.','Data lama tidak lagi dianggap sebagai tick WebSocket baru.','Package, signing, data pengguna, URI amyfx, dan update channel publik tetap dipertahankan.']
+          data.update(latest_version_code=53,latest_version_name='2.0.2',versionCode=53,version='2.0.2',releaseDate=os.environ['RELEASE_DATE'],apk_url='https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',downloadUrl='https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',force_update=False,mandatory=False,release_notes=notes,changelog=notes)
           p.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
           PY
           export RELEASE_DATE="$(date -u +%F)"
@@ -142,7 +142,7 @@ jobs:
             RELEASE_DATE="$RELEASE_DATE" python3 /tmp/update.py; python3 -m json.tool update.json >/dev/null
             git add update.json
             if git diff --cached --quiet; then exit 0; fi
-            git commit -m 'release: activate Amy FX 2.0.1 in-app update [skip ci]'
+            git commit -m 'release: activate Amy FX 2.0.2 in-app update [skip ci]'
             if git push origin HEAD:main; then exit 0; fi
             sleep 2
           done
@@ -151,8 +151,8 @@ jobs:
         run: |
           git fetch origin main
           manifest="$(git show origin/main:update.json)"
-          printf '%s\n' "$manifest" | grep -F '"latest_version_code": 52'
-          printf '%s\n' "$manifest" | grep -F '"latest_version_name": "2.0.1"'
+          printf '%s\n' "$manifest" | grep -F '"latest_version_code": 53'
+          printf '%s\n' "$manifest" | grep -F '"latest_version_name": "2.0.2"'
   report-status:
     if: always()
     needs: build
@@ -161,6 +161,6 @@ jobs:
       - name: Publish production release status
         env: { GH_TOKEN: "${{ github.token }}", BUILD_RESULT: "${{ needs.build.result }}" }
         run: |
-          state=success; description='Amy FX 2.0.1 published and update activated'
-          if [ "$BUILD_RESULT" != success ]; then state=failure; description="Amy FX 2.0.1 production release failed: $BUILD_RESULT"; fi
+          state=success; description='Amy FX 2.0.2 published and update activated'
+          if [ "$BUILD_RESULT" != success ]; then state=failure; description="Amy FX 2.0.2 production release failed: $BUILD_RESULT"; fi
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" -f state="$state" -f context='Amy FX Production Release' -f description="$description" -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
