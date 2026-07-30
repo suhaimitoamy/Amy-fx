@@ -1,5 +1,23 @@
 # Technical Decisions
 
+## 2026-07-30
+
+### Preview Mapping Stable-DOM Contract
+- `#app` renders are state-signature gated. Equal Mapping state must not rebuild or republish the root view.
+- Dashboard and Analyze use stable keys and canonical source order. Disclosure nodes retain their identity/open state, and presentation observers may not invent a different order.
+- Background analysis and Scalper requests are single-flight/cancellable. A superseded result cannot write state, and background refresh cannot show a full-page loading placeholder or force scroll.
+- Scalper Shadow owns exactly one permanent shell in each current Mapping view. No setup, stale data, or a transient backend error changes the shell’s existence or clears the last valid content.
+- The Mapping header has one textual value only: `●`. Fresh/loading/stale/offline state is color/attribute metadata; obsolete header clocks remain hidden while the in-card WITA session clock remains available.
+
+### Scalper Shadow Causal Stop and Lifecycle Contract
+- These rules apply only to Scalper Shadow and do not alter Mapping Accuracy V3, Rencana Eksekusi, Causal Entry Watch, or legacy Mapping SL/TP.
+- Signal structure and ATR are taken from fully closed setup-timeframe candles. The stop reference must already be below BUY entry or above SELL entry before an ATR buffer is applied.
+- FVG/IFVG stops use their recorded structural invalidation wick/zone with a 0.20 closed-M15 ATR buffer and preserve a 2R target. A wrong-side reference is `INVALIDATED`; the buffer must not manufacture valid risk.
+- “Next open” means the first live M1 open after database detection (with causal M15 fallback), never a historical open after the signal close.
+- Activation is saved with `entry_locked`, entry timestamp, source timestamp, and lifecycle sequence. SL/BE/TP evaluation begins in a later engine run and only considers closed candles at or after entry.
+- Setup ID is the identity boundary. Optimistic writes require the expected `updated_at` and status, and terminal states cannot regress because of a late API response.
+- Validation for this change is syntax, deterministic fixtures, regression, Android gates, and manual device review. Backtesting remains explicitly out of scope.
+
 ## 2026-07-29
 
 ### Causal Entry Watch 2021–2022 Correctness Contract

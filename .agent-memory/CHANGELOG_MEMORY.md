@@ -1,5 +1,9 @@
 # Memory Changelog
 
+## 2026-07-30
+- Documented the Preview Mapping stable-DOM, persistent Scalper Shadow, single-dot header, and causal structural-stop fixes.
+- Recorded that Scalper lifecycle validation is deterministic/regression based and explicitly excludes backtesting.
+
 ## 2026-07-29
 - Added Rencana Eksekusi as a read-only Mapping consumer with strict fail-closed BUY/SELL/WAIT rules and `setupExecution` → `entryMap.setup` authority priority.
 - Recorded that stale, expired, post-TP1, and terminal setups expose WAIT and hide old executable levels.

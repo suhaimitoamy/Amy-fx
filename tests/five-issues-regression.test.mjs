@@ -55,7 +55,8 @@ test('stale M15 never keeps a LIVE analysis badge', () => {
   assert.match(fixes, /M15 STALE/);
   assert.match(fixes, /M15 LIVE/);
   assert.match(fixes, /result\?\.dataStale/);
-  assert.match(fixes, /connection\.includes\('STALE'\)/);
+  assert.match(fixes, /connection\?\.dataset\?\.analysisFreshness/);
+  assert.match(fixes, /freshness === 'STALE' \|\| freshness === 'EXPIRED'/);
   assert.match(css, /\.regime-badge\.stale/);
 });
 
@@ -90,7 +91,7 @@ test('issue-5 audit remains available in documentation but not injected into liv
 });
 
 test('source version and updater stay on the private Preview channel', () => {
-  assert.match(appVersion, /name: '2\.0\.0-preview\.173', code: 940173/);
+  assert.match(appVersion, /name: '2\.0\.0-preview\.292', code: 940292/);
   assert.match(appVersion, /personal\/amyfx-private\/preview-update\.json/);
   assert.ok(update.latest_version_code >= 940000);
   assert.match(update.latest_version_name, /^2\.0\.0-preview\.\d+$/);

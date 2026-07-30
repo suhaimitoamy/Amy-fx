@@ -1,5 +1,28 @@
 # Bug History
 
+## Fixed Preview Mapping Stability and Scalper Shadow Defects — 2026-07-30
+
+### Mapping Root Render Flicker and Scroll Jumps
+- **Severity:** High
+- **Cause:** Ordinary refresh paths repeatedly assigned the complete `#app` markup, republished unchanged Mapping snapshots, and let presentation observers move panels after the canonical renderer had placed them.
+- **Fix:** Mapping now skips equal state signatures, patches keyed DOM nodes in place, preserves disclosure state by stable key, aborts superseded analysis requests, and keeps Dashboard/Analyze source order identical to observer order. Background refresh does not force scroll.
+
+### Scalper Shadow Panel Disappeared During Refresh
+- **Severity:** High
+- **Cause:** The panel was created only by the polling runtime, while a later Mapping root render removed it; each response then replaced the panel with `outerHTML`.
+- **Fix:** Dashboard and Analyze own one permanent keyed shell. Polling patches only its content, keeps the last valid payload through transient failures, and rejects late or lifecycle-regressive state for the same setup ID.
+
+### Mapping Header Leaked Status Text and a Second Dot
+- **Severity:** Medium
+- **Cause:** Connection, clock, consistency, and integrity runtimes all wrote different strings into `#conn`; the generic online pseudo-element rendered an additional dot.
+- **Fix:** Every Mapping header writer restores exactly `●`; freshness is represented by color/data attributes. The 18×18 container is fixed, pseudo-elements are disabled, and obsolete top-header time fields are empty and hidden.
+
+### Scalper Shadow Stop Evaluated Before a Causal Entry
+- **Severity:** Critical
+- **Cause:** A historical candle could be selected as “next open,” activation and stop evaluation could occur in one engine run, and an IFVG stop reference could sit on the wrong side of entry with only a minimal ATR buffer.
+- **Fix:** Entry starts at the first live open after detection, is persisted with an entry lock before lifecycle evaluation, and ignores closed-candle highs/lows before the entry timestamp. Stops use the setup candle’s closed M15 structural invalidation wick/zone plus a 0.20 ATR buffer; wrong-side structural references invalidate instead of being rescued by the buffer. Optimistic status/timestamp writes prevent late runs from reversing newer lifecycle state.
+- **Validation:** Deterministic fixtures and regression tests only; no backtest was run.
+
 ## Fixed Causal Entry Watch Replay Defects — 2026-07-29
 
 ### Terminal Setup State Was Dropped

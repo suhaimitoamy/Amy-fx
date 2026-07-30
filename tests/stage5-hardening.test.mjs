@@ -12,9 +12,9 @@ test('Amy FX personal source uses the permanent Preview Android identity', () =>
   assert.match(gradle, /val configuredUriScheme = System\.getenv\("AMYFX_URI_SCHEME"\) \?: "amyfxpreview"/);
   assert.match(gradle, /personal\/amyfx-private\/preview-update\.json/);
   assert.match(gradle, /applicationId = configuredApplicationId/);
-  assert.match(gradle, /versionCode[^\n]*940173/);
-  assert.match(gradle, /versionName[^\n]*"2\.0\.0-preview\.173"/);
-  assert.match(version, /name: '2\.0\.0-preview\.173', code: 940173/);
+  assert.match(gradle, /versionCode[^\n]*940292/);
+  assert.match(gradle, /versionName[^\n]*"2\.0\.0-preview\.292"/);
+  assert.match(version, /name: '2\.0\.0-preview\.292', code: 940292/);
 });
 
 test('published public metadata is never ahead of the public APK source version', () => {
