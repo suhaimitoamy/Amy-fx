@@ -2,6 +2,7 @@
 (function () {
   const VERSION = Object.freeze({ name: '2.0.0', code: 51 });
   window.AmyFXAppVersion = VERSION;
+  window.AmyFXUpdateManifestUrl = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json';
 
   function versionText() {
     return `Amy FX v${VERSION.name} • Version code ${VERSION.code}`;
