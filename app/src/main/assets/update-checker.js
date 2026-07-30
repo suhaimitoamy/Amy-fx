@@ -1,7 +1,7 @@
 (function () {
-  const VERSION = window.AmyFXAppVersion || { name: '2.0.1', code: 52 };
-  const CURRENT_VERSION_CODE = Number(VERSION.code) || 52;
-  const CURRENT_VERSION_NAME = String(VERSION.name || '2.0.1');
+  const VERSION = window.AmyFXAppVersion || { name: '2.0.2', code: 53 };
+  const CURRENT_VERSION_CODE = Number(VERSION.code) || 53;
+  const CURRENT_VERSION_NAME = String(VERSION.name || '2.0.2');
   const UPDATE_URL = window.AmyFXUpdateManifestUrl
     || 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json';
   const CHECK_INTERVAL_MS = 15 * 60 * 1000;

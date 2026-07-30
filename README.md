@@ -2,8 +2,8 @@
 
 Amy FX adalah aplikasi Android hybrid untuk pemetaan dan pemantauan market **XAU/USD**. Antarmuka berjalan melalui WebView lokal, sedangkan notifikasi, background scanner, penyimpanan, Firebase Messaging, unduhan, dan pembaruan aplikasi ditangani oleh Kotlin native.
 
-> **Versi publik:** `2.0.1`  
-> **Version code:** `52`
+> **Versi publik:** `2.0.2`  
+> **Version code:** `53`
 
 ## Pemisahan Produk
 
@@ -27,7 +27,7 @@ Promosi fitur Preview ke `main` tidak menghapus atau mengubah branch `personal/a
 - **APK rolling:** `AmyFX-latest.apk`
 - **Signing:** sertifikat produksi permanen yang kompatibel dengan instalasi Amy FX lama
 
-## Fitur Utama 2.0.1
+## Fitur Utama 2.0.2
 
 - Mapping market lintas timeframe dengan kontrak freshness yang konsisten.
 - Rencana Eksekusi: BUY, SELL, atau WAIT; area pantauan, entry, trigger, konfirmasi, SL, TP1, TP2, RR, target struktural, dan invalidasi.
