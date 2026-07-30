@@ -1,5 +1,0 @@
-Amy FX Private Preview final release trigger
-Date: 2026-07-29 WITA
-Target branch: personal/amyfx-private
-Purpose: build and publish a new signed Preview APK after Dashboard and Analyze panel ordering, Execution Plan refinements, header freshness simplification, and retirement of the legacy local Mapping scanner.
-Production main is not modified.

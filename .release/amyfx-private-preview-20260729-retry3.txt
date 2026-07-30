@@ -1,5 +1,0 @@
-Amy FX Private Preview release retry 3
-Date: 2026-07-29 WITA
-Includes status-dot freshness regression alignment.
-Target: personal/amyfx-private only.
-Production main remains untouched.

@@ -1,5 +1,0 @@
-Amy FX Private Preview release retry 4
-Date: 2026-07-29 WITA
-Includes hidden Entry Watch visibility regression alignment.
-Target: personal/amyfx-private only.
-Production main remains untouched.

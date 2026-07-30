@@ -1,5 +1,0 @@
-Amy FX Private Preview release retry
-Date: 2026-07-29 WITA
-Includes the retired local scanner contract fix and updated regression test.
-Target: personal/amyfx-private only.
-Production main remains untouched.

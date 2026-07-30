@@ -1,5 +1,0 @@
-Amy FX Private Preview release retry 2
-Date: 2026-07-29 WITA
-Includes updated hidden read-only Entry Watch regression contract.
-Target: personal/amyfx-private only.
-Production main remains untouched.

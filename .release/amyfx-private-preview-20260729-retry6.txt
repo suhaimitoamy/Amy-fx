@@ -1,5 +1,0 @@
-Amy FX Private Preview release retry 6
-Date: 2026-07-29 WITA
-Includes retired scanner exclusion from the active notification icon contract.
-Target: personal/amyfx-private only.
-Production main remains untouched.
