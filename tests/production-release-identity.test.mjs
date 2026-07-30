@@ -10,7 +10,7 @@ test('Amy FX 2.0.2 keeps the public Android identity and updater channel',()=>{
  assert.doesNotMatch(gradle,/learningpreview|Amy FX Preview|amyfxpreview|preview-update\.json/);
  assert.match(version,/name: '2\.0\.2', code: 53/); assert.match(version,/main\/update\.json/); assert.doesNotMatch(version,/Preview|personal\/amyfx-private/);
  assert.match(checker,/main\/update\.json/); assert.doesNotMatch(checker,/Amy FX Preview|personal\/amyfx-private|preview-update\.json/);
- assert.match(workflow,/AMYFX_VERSION_NAME: "2\.0\.2"/); assert.match(workflow,/AMYFX_VERSION_CODE: "52"/); assert.match(workflow,/latest_version_code=53/); assert.match(workflow,/Verify public update manifest source/);
+ assert.match(workflow,/AMYFX_VERSION_NAME: "2\.0\.2"/); assert.match(workflow,/AMYFX_VERSION_CODE: "53"/); assert.match(workflow,/latest_version_code=53/); assert.match(workflow,/Verify public update manifest source/);
  assert.equal(existsSync(path('preview-update.json')),false); assert.equal(existsSync(path('AmyFX-Preview-latest.apk')),false); assert.equal(existsSync(path('app/src/main/assets/apps/market-intel/private-market-api-router.js')),false);
 });
 test('Mapping presents a clean public interface without visible Preview badges',()=>{
