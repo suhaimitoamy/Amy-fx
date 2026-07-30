@@ -1,0 +1,85 @@
+name: Apply Market Pipeline Fix V5
+
+on:
+  push:
+    branches:
+      - fix/market-pipeline-live-price-20260730-definitive
+      - fix/preview-market-pipeline-live-price-20260730-definitive
+
+permissions:
+  contents: write
+
+concurrency:
+  group: market-pipeline-fix-v5-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apply-and-commit:
+    if: ${{ !contains(github.event.head_commit.message, '[market-pipeline-applied]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore deterministic patcher from main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/contents/.github/workflows/apply-market-pipeline-fix.yml?ref=main" --jq .content | base64 -d > /tmp/market-pipeline-workflow.yml
+          python3 - <<'PY'
+          import base64, gzip, re
+          from pathlib import Path
+          text=Path('/tmp/market-pipeline-workflow.yml').read_text()
+          match=re.search(r"printf '%s' '([^']+)'", text)
+          if not match:
+              raise SystemExit('Embedded market pipeline patcher not found')
+          Path('tools').mkdir(exist_ok=True)
+          Path('tools/apply-market-pipeline-fix.py').write_bytes(gzip.decompress(base64.b64decode(match.group(1))))
+          PY
+          python3 -m py_compile tools/apply-market-pipeline-fix.py
+      - name: Apply runtime repair
+        run: |
+          rm -f .market-pipeline-trigger .market-pipeline-trigger-2 .market-pipeline-trigger-v2 .market-pipeline-trigger-v3 .market-pipeline-trigger-v4 .market-pipeline-trigger-v5
+          python3 tools/apply-market-pipeline-fix.py
+          git checkout -- .github/workflows/build-apk.yml 2>/dev/null || true
+          git checkout -- .github/workflows/amyfx-blueprint-preview-release.yml 2>/dev/null || true
+          rm -rf tools/__pycache__
+          python3 - <<'PY'
+          from pathlib import Path
+          heat=Path('tests/dynamic-heatmap-ui-regression.test.mjs')
+          text=heat.read_text().replace('assert.match(contract, /source: "M1_QUOTE"/);','assert.match(contract, /source: "(?:TWELVEDATA_WEBSOCKET|MAPPING_REST_FALLBACK)"/);')
+          heat.write_text(text)
+          for p in Path('tests').glob('*.test.mjs'):
+              text=p.read_text()
+              text=text.replace(r'2\.0\.1', r'2\.0\.2')
+              text=text.replace('public 2.0.1', 'public 2.0.2')
+              text=text.replace('code 52', 'code 53')
+              text=text.replace(r'\?: 52\)', r'\?: 53\)')
+              text=text.replace('code: 52', 'code: 53')
+              text=text.replace('versionCode=52', 'versionCode=53')
+              text=text.replace('latest_version_code=52', 'latest_version_code=53')
+              p.write_text(text)
+          PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate changed JavaScript
+        run: |
+          node --check app/src/main/assets/apps/mapping/js/api/live-price-websocket.js
+          node --check app/src/main/assets/apps/mapping/js/api/market-data.js
+          node --check app/src/main/assets/apps/mapping/js/main.js
+          node --check app/src/main/assets/apps/mapping/js/bridge/android-bridge.js
+          node --check app/src/main/assets/apps/mapping/js/ui/ui-render.js
+          node --check app/src/main/assets/apps/shared/amyfx-market-state-contract-v1.js
+      - name: Commit runtime repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix: separate live WebSocket and deduplicate market candles [market-pipeline-applied]'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
