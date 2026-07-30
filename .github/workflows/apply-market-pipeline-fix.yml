@@ -1,0 +1,57 @@
+name: Apply Market Pipeline Fix
+
+on:
+  push:
+    branches:
+      - fix/market-pipeline-live-price-20260730-definitive
+      - fix/preview-market-pipeline-live-price-20260730-definitive
+
+permissions:
+  contents: write
+
+concurrency:
+  group: market-pipeline-fix-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apply-and-test:
+    if: ${{ !contains(github.event.head_commit.message, '[market-pipeline-applied]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Restore deterministic patcher
+        shell: bash
+        run: |
+          mkdir -p tools
+          printf '%s' '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' | base64 -d | gzip -d > tools/apply-market-pipeline-fix.py
+          python -m py_compile tools/apply-market-pipeline-fix.py
+      - name: Apply fix
+        run: python tools/apply-market-pipeline-fix.py
+      - name: Validate JavaScript syntax
+        run: |
+          node --check app/src/main/assets/apps/mapping/js/api/live-price-websocket.js
+          node --check app/src/main/assets/apps/mapping/js/api/market-data.js
+          node --check app/src/main/assets/apps/mapping/js/main.js
+          node --check app/src/main/assets/apps/mapping/js/bridge/android-bridge.js
+          node --check app/src/main/assets/apps/mapping/js/ui/ui-render.js
+          node --check app/src/main/assets/apps/shared/amyfx-market-state-contract-v1.js
+      - name: Run regression tests
+        run: timeout 18m npm test
+      - name: Commit generated fix
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No generated changes.'
+            exit 0
+          fi
+          git commit -m 'fix: separate live WebSocket and deduplicate market candles [market-pipeline-applied]'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
