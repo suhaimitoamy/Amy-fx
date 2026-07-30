@@ -50,7 +50,7 @@ jobs:
           script = script[:scanner_start] + scanner_stub + script[scanner_end:]
           Path('/tmp/apply-single-api-fix.py').write_text(script, encoding='utf-8')
           PY
-          python3 /tmp/apply-single-api-fix.py
+          GITHUB_REF_NAME="${{ github.event.pull_request.head.ref }}" python3 /tmp/apply-single-api-fix.py
           cat > tests/market-single-api-freshness.test.mjs <<'TEST'
           import test from 'node:test';
           import assert from 'node:assert/strict';
