@@ -51,6 +51,17 @@ jobs:
           Path('/tmp/apply-single-api-fix.py').write_text(script, encoding='utf-8')
           PY
           GITHUB_REF_NAME="${{ github.event.pull_request.head.ref }}" python3 /tmp/apply-single-api-fix.py
+          python3 - <<'PY'
+          from pathlib import Path
+          for path in Path('tests').glob('*.mjs'):
+              text = path.read_text(encoding='utf-8')
+              next_text = (text
+                  .replace(r'2\.0\.0-preview\.292', r'2\.0\.0-preview\.293')
+                  .replace('2.0.0-preview.292', '2.0.0-preview.293')
+                  .replace('940292', '940293'))
+              if next_text != text:
+                  path.write_text(next_text, encoding='utf-8')
+          PY
           cat > tests/market-single-api-freshness.test.mjs <<'TEST'
           import test from 'node:test';
           import assert from 'node:assert/strict';
