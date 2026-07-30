@@ -1,26 +1,32 @@
 name: Repair Market State Contract Test
 
 on:
-  push:
+  pull_request:
     branches:
-      - fix/market-pipeline-live-price-20260730-definitive
-      - fix/preview-market-pipeline-live-price-20260730-definitive
+      - main
+      - personal/amyfx-private
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
 
 concurrency:
-  group: repair-market-state-contract-${{ github.ref }}
+  group: repair-market-state-contract-${{ github.event.pull_request.head.ref }}
   cancel-in-progress: true
 
 jobs:
   repair-test:
-    if: ${{ !contains(github.event.head_commit.message, '[contract-test-updated]') }}
+    if: >-
+      ${{
+        github.event.pull_request.head.ref == 'fix/market-pipeline-live-price-20260730-definitive' ||
+        github.event.pull_request.head.ref == 'fix/preview-market-pipeline-live-price-20260730-definitive'
+      }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
@@ -83,6 +89,8 @@ jobs:
               re.S,
           )
           updated, count = pattern.subn(replacement, text, count=1)
+          if count == 0 and "source, 'TWELVEDATA_WEBSOCKET'" in text:
+              raise SystemExit(0)
           if count != 1:
               raise SystemExit(f'Expected one legacy test block, found {count}')
           path.write_text(updated, encoding='utf-8')
@@ -97,4 +105,4 @@ jobs:
           git add tests/market-state-contract.test.mjs
           if git diff --cached --quiet; then exit 0; fi
           git commit -m 'test: validate separated live WebSocket quote [contract-test-updated]'
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
