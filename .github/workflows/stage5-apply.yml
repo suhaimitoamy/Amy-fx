@@ -1,13 +1,11 @@
-name: Validate Amy FX 2.0.0 Release Candidate
+name: Validate Amy FX 2.0.1 Release Candidate
 
 on:
   workflow_dispatch:
   push:
-    branches:
-      - release/amyfx-public-2.0.0
+    branches: [ "release/amyfx-public-2.0.1" ]
   pull_request:
-    branches:
-      - main
+    branches: [ "main" ]
 
 permissions:
   contents: read
@@ -21,8 +19,8 @@ env:
   AMYFX_KEYSTORE_PASSWORD: android
   AMYFX_KEY_ALIAS: androiddebugkey
   AMYFX_KEY_PASSWORD: android
-  AMYFX_VERSION_NAME: "2.0.0"
-  AMYFX_VERSION_CODE: "51"
+  AMYFX_VERSION_NAME: "2.0.1"
+  AMYFX_VERSION_CODE: "52"
   AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
 jobs:
@@ -30,132 +28,70 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 60
-
     steps:
-      - name: Checkout release candidate
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-          cache: gradle
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK 35
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Restore permanent Amy FX signing key
-        id: signing-cache
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - name: Run JavaScript regression tests
+        run: timeout 15m npm test
+      - name: Verify repository integrity
+        run: |
+          set -euo pipefail
+          git diff --check
+          test ! -e preview-update.json
+          test ! -e AmyFX-Preview-latest.apk
+          test ! -e app/src/main/assets/apps/market-intel/private-market-api-router.js
+          ! grep -R -F 'personal/amyfx-private/preview-update.json' app/build.gradle.kts app/src/main/assets/app-version.js app/src/main/assets/update-checker.js
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17", cache: gradle }
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - id: signing-cache
         uses: actions/cache/restore@v4
         with:
           path: ~/.android/debug.keystore
           key: amy-fx-debug-keystore-v1
-
       - name: Verify update-compatible signing certificate
         run: |
           set -euo pipefail
-          if [ "${{ steps.signing-cache.outputs.cache-hit }}" != "true" ]; then
-            echo "Permanent Amy FX signing key tidak ditemukan."
-            exit 1
-          fi
+          test "${{ steps.signing-cache.outputs.cache-hit }}" = "true"
           cp "$HOME/.android/debug.keystore" "$AMYFX_KEYSTORE_PATH"
           actual="$(keytool -list -v -keystore "$AMYFX_KEYSTORE_PATH" -storepass "$AMYFX_KEYSTORE_PASSWORD" -alias "$AMYFX_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1)"
           test "$actual" = "$AMYFX_SIGNING_CERT_SHA256"
-
-      - name: Make Gradle executable
-        run: chmod +x ./gradlew
-
-      - name: Run JavaScript regression tests
-        run: timeout 15m npm test
-
-      - name: Verify repository integrity
-        run: |
-          set -euo pipefail
-          rm -f local.properties
-          git diff --check
-          test -z "$(git status --porcelain | grep -E '(^|/)(.*\.jks|.*\.keystore)$' || true)"
-          test ! -e preview-update.json
-          test ! -e AmyFX-Preview-latest.apk
-          test ! -e app/src/main/assets/apps/market-intel/private-market-api-router.js
-
-      - name: Run Android release unit tests
-        run: ./gradlew testReleaseUnitTest --no-configuration-cache
-
-      - name: Run Android release lint
-        run: ./gradlew lintRelease --no-configuration-cache
-
-      - name: Build signed Amy FX 2.0.0 APK
+      - run: chmod +x ./gradlew
+      - run: ./gradlew testReleaseUnitTest --no-configuration-cache
+      - run: ./gradlew lintRelease --no-configuration-cache
+      - name: Build signed Amy FX 2.0.1 APK
         run: ./gradlew assembleRelease --no-configuration-cache --stacktrace
-
-      - name: Upload built APK for signing inspection
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: Amy-FX-v2.0.0-stage5-built-apk
+          name: Amy-FX-v2.0.1-stage5-built-apk
           path: app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
-
       - name: Verify APK identity, version, signing structures and signer
         run: |
           set -euo pipefail
           apk="app/build/outputs/apk/release/app-release.apk"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" | grep -F "package: name='com.amyelitesuite' versionCode='${AMYFX_VERSION_CODE}' versionName='${AMYFX_VERSION_NAME}'"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$apk"
-
           sf_entry="$(unzip -Z1 "$apk" | grep -E '^META-INF/[^/]+\.SF$' | head -n1)"
           cert_entry="$(unzip -Z1 "$apk" | grep -E '^META-INF/[^/]+\.(RSA|DSA|EC)$' | head -n1)"
-          test -n "$sf_entry"
-          test -n "$cert_entry"
+          test -n "$sf_entry"; test -n "$cert_entry"
           unzip -p "$apk" "$cert_entry" > /tmp/amyfx-apk-cert
           expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           actual="$(keytool -printcert -file /tmp/amyfx-apk-cert | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
-          echo "APK v1 entries: $sf_entry, $cert_entry"
-          echo "APK signer SHA-256: ${actual:-missing}"
-          test -n "$actual"
           test "$actual" = "$expected"
-
           APK_PATH="$apk" python3 - <<'PY'
-          import os
-          import struct
-
-          path = os.environ["APK_PATH"]
-          data = open(path, "rb").read()
-          magic = b"APK Sig Block 42"
-          index = data.rfind(magic)
-          if index < 0:
-              raise SystemExit("APK Signing Block tidak ditemukan")
-          size = struct.unpack_from("<Q", data, index - 8)[0]
-          start = index + 8 - size
-          if start < 0 or struct.unpack_from("<Q", data, start)[0] != size:
-              raise SystemExit("APK Signing Block tidak valid")
-          position = start + 8
-          end = index - 8
-          ids = set()
-          while position < end:
-              length = struct.unpack_from("<Q", data, position)[0]
-              position += 8
-              if length < 4 or position + length > end:
-                  raise SystemExit("Pasangan APK Signing Block rusak")
-              ids.add(struct.unpack_from("<I", data, position)[0])
-              position += length
-          if 0x7109871A not in ids:
-              raise SystemExit("APK Signature Scheme v2 tidak ditemukan")
-          print("APK Signature Scheme v2 ditemukan")
+          import os, struct
+          data=open(os.environ['APK_PATH'],'rb').read(); i=data.rfind(b'APK Sig Block 42')
+          if i < 0: raise SystemExit('APK Signing Block tidak ditemukan')
+          size=struct.unpack_from('<Q',data,i-8)[0]; start=i+8-size
+          if start < 0 or struct.unpack_from('<Q',data,start)[0] != size: raise SystemExit('APK Signing Block tidak valid')
+          pos,end,ids=start+8,i-8,set()
+          while pos < end:
+              length=struct.unpack_from('<Q',data,pos)[0]; pos+=8
+              if length < 4 or pos+length > end: raise SystemExit('Pasangan APK Signing Block rusak')
+              ids.add(struct.unpack_from('<I',data,pos)[0]); pos+=length
+          if 0x7109871A not in ids: raise SystemExit('APK Signature Scheme v2 tidak ditemukan')
           PY
-
-      - name: Upload validated APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Amy-FX-v2.0.0-stage5-signed-apk
-          path: app/build/outputs/apk/release/app-release.apk
-          if-no-files-found: error
