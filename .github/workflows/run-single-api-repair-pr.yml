@@ -42,9 +42,30 @@ jobs:
           if end < 0: raise SystemExit('Canonical patch end marker missing')
           raw = workflow[start:end]
           lines = [line[10:] if line.startswith('          ') else line for line in raw.splitlines()]
-          Path('/tmp/apply-single-api-fix.py').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          script = '\n'.join(lines) + '\n'
+          scanner_start = script.find("scanner_path = Path('app/src/main/java/com/amyelitesuite/ScannerService.kt')")
+          scanner_end = script.find('if preview:', scanner_start)
+          if scanner_start < 0 or scanner_end < 0: raise SystemExit('Scanner patch boundaries missing')
+          scanner_stub = "scanner_path = Path('app/src/main/java/com/amyelitesuite/ScannerService.kt')\nscanner = read(scanner_path)\nif 'Legacy local Mapping scanner is retired.' not in scanner:\n    raise SystemExit('Expected retired native scanner compatibility stub')\n\n"
+          script = script[:scanner_start] + scanner_stub + script[scanner_end:]
+          Path('/tmp/apply-single-api-fix.py').write_text(script, encoding='utf-8')
           PY
           python3 /tmp/apply-single-api-fix.py
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tests/market-single-api-freshness.test.mjs')
+          text = path.read_text(encoding='utf-8')
+          start = text.find("test('native scanner rejects stale backend responses'")
+          end = text.find('\n          });', start)
+          if start < 0 or end < 0: raise SystemExit('Generated scanner test block missing')
+          end += len('\n          });')
+          replacement = """test('native scanner remains safely retired', () => {
+            const source = read('app/src/main/java/com/amyelitesuite/ScannerService.kt');
+            assert.match(source, /Legacy local Mapping scanner is retired/);
+            assert.doesNotMatch(source, /pollMarket\\(/);
+          });"""
+          path.write_text(text[:start] + replacement + text[end:], encoding='utf-8')
+          PY
           rm -f .github/workflows/run-single-api-repair-pr.yml .single-api-fix-trigger
           node --check app/src/main/assets/apps/mapping/js/api/market-data.js
           node --test tests/market-single-api-freshness.test.mjs
