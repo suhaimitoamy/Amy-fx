@@ -194,11 +194,15 @@
   }
 
   function quoteFromMapping(payload, previousQuote) {
+    const previousFreshness = previousQuote ? assess("quote", previousQuote) : null;
+    if (previousQuote?.source === "TWELVEDATA_WEBSOCKET" && previousFreshness?.state === "LIVE") {
+      return previousQuote;
+    }
     const price = Number(payload?.price || payload?.currentPrice || 0);
     if (!Number.isFinite(price) || price <= 0) return previousQuote || null;
     const tickAt = timestamp(payload?.quoteCapturedAt)
       || timestamp(payload?.providerCapturedAt)
-      || timestamp(localStorage.getItem("last_ws_tick_at"));
+      || timestamp(localStorage.getItem("last_mapping_quote_at"));
     if (!tickAt) return previousQuote || null;
     return {
       ...(previousQuote || {}),
@@ -207,8 +211,8 @@
       capturedAt: new Date(tickAt).toISOString(),
       receivedAt: new Date().toISOString(),
       storedAt: Date.now(),
-      connection: payload?.connection || "Connected",
-      source: "M1_QUOTE",
+      connection: payload?.connection || "Mapping REST",
+      source: "MAPPING_REST_FALLBACK",
       schemaVersion: SCHEMA_VERSION
     };
   }

@@ -1,5 +1,6 @@
 import { state, save, setupText } from '../main.js';
-import { connect } from '../api/market-data.js';
+import { connect as connectMappingQuote } from '../api/market-data.js';
+import { connectLivePrice } from '../api/live-price-websocket.js';
 import { render } from '../ui/ui-render.js';
 
 let lastNativeTargetKey = null;
@@ -104,18 +105,21 @@ export function sendTargetsToNative() {
 }
 
 export function saveConnect() {
-  state.key = '';
-  try { localStorage.removeItem('twelve_api_key'); } catch (_) {}
   const input = document.getElementById('apiKey');
-  if (input) input.value = '';
+  const key = String(input?.value || '').trim();
+  state.key = key;
+  try {
+    if (key) localStorage.setItem('twelve_api_key', key);
+    else localStorage.removeItem('twelve_api_key');
+  } catch (_) {}
 
   state.bg = false;
   try { localStorage.setItem('bg_scanner', 'false'); } catch (_) {}
-  connect();
+  connectMappingQuote();
+  connectLivePrice({ force: true });
   sendTargetsToNative();
   render();
 }
-
 export function toggleBg() {
   state.bg = false;
   try { localStorage.setItem('bg_scanner', 'false'); } catch (_) {}
