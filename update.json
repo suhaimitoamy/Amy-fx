@@ -1,29 +1,27 @@
 {
-  "latest_version_code": 51,
-  "latest_version_name": "2.0.0",
-  "versionCode": 51,
-  "version": "2.0.0",
+  "latest_version_code": 52,
+  "latest_version_name": "2.0.1",
+  "versionCode": 52,
+  "version": "2.0.1",
   "releaseDate": "2026-07-30",
   "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Mapping dan Market Intelligence generasi baru telah dipromosikan ke Amy FX publik.",
-    "Rencana Eksekusi menerjemahkan hasil Mapping menjadi BUY, SELL, atau WAIT beserta entry, SL, TP, RR, dan invalidasi.",
-    "Lifecycle setup, Entry Watch, scanner, dan notifikasi membaca kontrak market yang lebih konsisten.",
-    "Amy Mentor terintegrasi lintas Beranda, Mapping, Market Intelligence, Academy, dan Journal.",
-    "Stabilitas header, panel, navigasi, data candle, freshness, dan replay historis ditingkatkan.",
-    "Package com.amyelitesuite, signing produksi, data pengguna, URI amyfx, dan jalur update main tetap dipertahankan.",
-    "Amy FX Preview pribadi tetap berada pada branch terpisah dan tidak digantikan."
+    "Mapping tidak lagi berkedip atau meloncat saat refresh biasa.",
+    "Panel Scalper Shadow tetap tersedia dan mempertahankan data valid terakhir.",
+    "Respons lama tidak dapat mengembalikan lifecycle terminal menjadi aktif.",
+    "Header Mapping hanya menampilkan bulatan status yang stabil.",
+    "Package, signing, data pengguna, URI amyfx, dan update channel publik tetap dipertahankan.",
+    "Amy FX Preview pribadi tetap terpisah dan tidak diubah."
   ],
   "changelog": [
-    "Mapping dan Market Intelligence generasi baru telah dipromosikan ke Amy FX publik.",
-    "Rencana Eksekusi menerjemahkan hasil Mapping menjadi BUY, SELL, atau WAIT beserta entry, SL, TP, RR, dan invalidasi.",
-    "Lifecycle setup, Entry Watch, scanner, dan notifikasi membaca kontrak market yang lebih konsisten.",
-    "Amy Mentor terintegrasi lintas Beranda, Mapping, Market Intelligence, Academy, dan Journal.",
-    "Stabilitas header, panel, navigasi, data candle, freshness, dan replay historis ditingkatkan.",
-    "Package com.amyelitesuite, signing produksi, data pengguna, URI amyfx, dan jalur update main tetap dipertahankan.",
-    "Amy FX Preview pribadi tetap berada pada branch terpisah dan tidak digantikan."
+    "Mapping tidak lagi berkedip atau meloncat saat refresh biasa.",
+    "Panel Scalper Shadow tetap tersedia dan mempertahankan data valid terakhir.",
+    "Respons lama tidak dapat mengembalikan lifecycle terminal menjadi aktif.",
+    "Header Mapping hanya menampilkan bulatan status yang stabil.",
+    "Package, signing, data pengguna, URI amyfx, dan update channel publik tetap dipertahankan.",
+    "Amy FX Preview pribadi tetap terpisah dan tidak diubah."
   ]
 }
