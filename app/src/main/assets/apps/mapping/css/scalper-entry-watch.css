@@ -5,10 +5,12 @@
 .scalper-watch__badge{border:1px solid rgba(212,175,55,.65);border-radius:999px;padding:8px 12px;font-size:.72rem;font-weight:800;letter-spacing:.05em;white-space:nowrap}
 .scalper-watch--buy .scalper-watch__badge{border-color:rgba(52,211,153,.7);color:#55e6a5}.scalper-watch--sell .scalper-watch__badge{border-color:rgba(255,92,116,.75);color:#ff7189}
 .scalper-watch__notice{margin:14px 0;padding:9px 11px;border-radius:12px;background:rgba(212,175,55,.09);color:#e5c452;font-size:.74rem;font-weight:800}
+.scalper-watch__availability{margin:0 0 14px;padding:9px 11px;border:1px solid rgba(234,179,8,.3);border-radius:12px;background:rgba(234,179,8,.08);color:#f3d677;font-size:.76rem;line-height:1.45}
 .scalper-summary{display:grid;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden}
 .scalper-summary>div{display:grid;grid-template-columns:38% 1fr;gap:12px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.07)}.scalper-summary>div:last-child{border-bottom:0}
 .scalper-summary span,.scalper-level-grid small,.scalper-mini small{color:#909099;font-size:.72rem;font-weight:700;text-transform:uppercase}.scalper-summary strong{font-size:.88rem}
 .scalper-level-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}.scalper-level-grid>div{padding:12px;border-radius:14px;background:rgba(0,0,0,.34);border:1px solid rgba(255,255,255,.07)}.scalper-level-grid strong{display:block;margin-top:4px;font-size:1rem}
+.scalper-stop-basis{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px;padding:10px 12px;border:1px solid rgba(212,175,55,.2);border-radius:12px;background:rgba(212,175,55,.06)}.scalper-stop-basis small{color:#9d9da5;font-size:.7rem;font-weight:700;text-transform:uppercase}.scalper-stop-basis strong{color:#e8cf70;font-size:.78rem;text-align:right}
 .scalper-watch__instruction{margin:14px 0 0;color:#dedee2;line-height:1.55}
 .scalper-watch__section{margin-top:18px}.scalper-watch__section h3{margin:0 0 10px;font-size:.86rem;color:#d4af37;text-transform:uppercase;letter-spacing:.04em}
 .scalper-mini{margin-top:9px;padding:11px;border-radius:14px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.08)}.scalper-mini--buy{border-color:rgba(52,211,153,.25)}.scalper-mini--sell{border-color:rgba(255,92,116,.28)}
