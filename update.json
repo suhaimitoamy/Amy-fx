@@ -1,31 +1,29 @@
 {
-  "latest_version_code": 50,
-  "latest_version_name": "1.5.9",
-  "versionCode": 50,
-  "version": "1.5.9",
-  "releaseDate": "2026-07-25",
+  "latest_version_code": 51,
+  "latest_version_name": "2.0.0",
+  "versionCode": 51,
+  "version": "2.0.0",
+  "releaseDate": "2026-07-30",
   "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Freeze pada Trading Library dan Jurnal akibat loop pembaruan DOM telah dihentikan.",
-    "Menu samping serta navigasi Library, Media, Jurnal, dan Asisten kembali dapat diklik.",
-    "Jurnal hasil backup tetap dibaca dari IndexedDB.",
-    "Kalender tetap menampilkan nominal Win hijau dan Loss merah.",
-    "Rotasi otomatis API Gemini dan OpenRouter tetap tersedia dengan timeout dan cooldown.",
-    "DeepSeek tetap tersedia sebagai fallback berbayar opsional.",
-    "Package com.amyelitesuite, sertifikat permanen, data lokal, dan jalur update tetap dipertahankan.",
-    "Pembaruan dapat dipasang tanpa menghapus aplikasi."
+    "Mapping dan Market Intelligence generasi baru telah dipromosikan ke Amy FX publik.",
+    "Rencana Eksekusi menerjemahkan hasil Mapping menjadi BUY, SELL, atau WAIT beserta entry, SL, TP, RR, dan invalidasi.",
+    "Lifecycle setup, Entry Watch, scanner, dan notifikasi membaca kontrak market yang lebih konsisten.",
+    "Amy Mentor terintegrasi lintas Beranda, Mapping, Market Intelligence, Academy, dan Journal.",
+    "Stabilitas header, panel, navigasi, data candle, freshness, dan replay historis ditingkatkan.",
+    "Package com.amyelitesuite, signing produksi, data pengguna, URI amyfx, dan jalur update main tetap dipertahankan.",
+    "Amy FX Preview pribadi tetap berada pada branch terpisah dan tidak digantikan."
   ],
   "changelog": [
-    "Freeze pada Trading Library dan Jurnal akibat loop pembaruan DOM telah dihentikan.",
-    "Menu samping serta navigasi Library, Media, Jurnal, dan Asisten kembali dapat diklik.",
-    "Jurnal hasil backup tetap dibaca dari IndexedDB.",
-    "Kalender tetap menampilkan nominal Win hijau dan Loss merah.",
-    "Rotasi otomatis API Gemini dan OpenRouter tetap tersedia dengan timeout dan cooldown.",
-    "DeepSeek tetap tersedia sebagai fallback berbayar opsional.",
-    "Package com.amyelitesuite, sertifikat permanen, data lokal, dan jalur update tetap dipertahankan.",
-    "Pembaruan dapat dipasang tanpa menghapus aplikasi."
+    "Mapping dan Market Intelligence generasi baru telah dipromosikan ke Amy FX publik.",
+    "Rencana Eksekusi menerjemahkan hasil Mapping menjadi BUY, SELL, atau WAIT beserta entry, SL, TP, RR, dan invalidasi.",
+    "Lifecycle setup, Entry Watch, scanner, dan notifikasi membaca kontrak market yang lebih konsisten.",
+    "Amy Mentor terintegrasi lintas Beranda, Mapping, Market Intelligence, Academy, dan Journal.",
+    "Stabilitas header, panel, navigasi, data candle, freshness, dan replay historis ditingkatkan.",
+    "Package com.amyelitesuite, signing produksi, data pengguna, URI amyfx, dan jalur update main tetap dipertahankan.",
+    "Amy FX Preview pribadi tetap berada pada branch terpisah dan tidak digantikan."
   ]
 }
