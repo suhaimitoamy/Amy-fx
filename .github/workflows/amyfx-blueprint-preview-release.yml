@@ -22,8 +22,8 @@ env:
   AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
   AMYFX_APP_LABEL: Amy FX Preview
   AMYFX_URI_SCHEME: amyfxpreview
-  AMYFX_VERSION_NAME: 2.0.0-preview.292
-  AMYFX_VERSION_CODE: "940292"
+  AMYFX_VERSION_NAME: 2.0.0-preview.293
+  AMYFX_VERSION_CODE: "940293"
   AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json
   AMYFX_KEYSTORE_PATH: /tmp/amy-fx-preview-signing.keystore
   AMYFX_KEYSTORE_PASSWORD: android
@@ -54,14 +54,8 @@ jobs:
           grep -Fq "name: '$version_name', code: $version_code" app/src/main/assets/app-version.js
           published_code="$(python3 -c "import json; print(json.load(open('preview-update.json'))['latest_version_code'])")"
           test "$version_code" -gt "$published_code"
-          release_tag="amyfx-blueprint-preview-${version_name}"
-          artifact_name="AmyFX-Preview-${version_name}-signed"
-          {
-            echo "AMYFX_VERSION_CODE=$version_code"
-            echo "AMYFX_VERSION_NAME=$version_name"
-            echo "AMYFX_RELEASE_TAG=$release_tag"
-            echo "AMYFX_ARTIFACT_NAME=$artifact_name"
-          } >> "$GITHUB_ENV"
+          echo "AMYFX_RELEASE_TAG=amyfx-blueprint-preview-${version_name}" >> "$GITHUB_ENV"
+          echo "AMYFX_ARTIFACT_NAME=AmyFX-Preview-${version_name}-signed" >> "$GITHUB_ENV"
 
       - name: Mark private Preview release pending
         env:
@@ -82,10 +76,6 @@ jobs:
         run: |
           set -euo pipefail
           python3 tools/apply-blueprint-preview.py
-
-      - name: Validate Blueprint contracts, stabilization and JavaScript
-        run: |
-          set -euo pipefail
           node --check app/src/main/assets/apps/shared/amyfx-blueprint-v1.js
           node --check app/src/main/assets/apps/shared/amyfx-blueprint-hotfix-v1.js
           node --check app/src/main/assets/app-version.js
@@ -93,31 +83,8 @@ jobs:
           python3 -c "import ast, pathlib; ast.parse(pathlib.Path('tools/apply-blueprint-preview.py').read_text())"
           node --test --test-force-exit tests/blueprint-preview-v1.test.mjs tests/blueprint-preview-stabilization.test.mjs
 
-      - name: Run full JavaScript regression against production baseline
-        run: |
-          set +e
-          npm test > /tmp/amyfx-preview-regression.log 2>&1
-          status=$?
-          cat /tmp/amyfx-preview-regression.log
-          if [ "$status" -ne 0 ]; then
-            {
-              echo "Amy FX Private Preview regression failure"
-              echo "Run: $GITHUB_RUN_ID"
-              echo "Commit: $GITHUB_SHA"
-              echo
-              grep -E '=====|Regression failed:|not ok|AssertionError|ERR_|Expected|actual:|expected:|operator:' /tmp/amyfx-preview-regression.log | tail -n 160 || true
-              echo
-              echo "--- final log lines ---"
-              tail -n 120 /tmp/amyfx-preview-regression.log
-            } > preview-regression-failure.txt
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add preview-regression-failure.txt
-            git commit -m 'ci(private): capture Preview regression failure [skip ci]' || true
-            git push origin "HEAD:${GITHUB_REF_NAME}" || true
-            exit "$status"
-          fi
-          rm -f preview-regression-failure.txt
+      - name: Run full JavaScript regression
+        run: timeout 20m npm test
 
       - name: Commit stabilized private Preview source checkpoint
         run: |
@@ -131,7 +98,7 @@ jobs:
           fi
           echo "AMYFX_SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
-      - name: Configure Preview identity and private updater channel for APK only
+      - name: Configure Preview identity and updater channel
         run: |
           set -euo pipefail
           node tools/configure-preview-web-version.mjs "$AMYFX_VERSION_NAME" "$AMYFX_VERSION_CODE" "$AMYFX_UPDATE_MANIFEST_URL"
@@ -176,7 +143,7 @@ jobs:
           chmod +x gradlew
           ./gradlew :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease --stacktrace --no-daemon --no-configuration-cache
 
-      - name: Verify APK identity and signer
+      - name: Verify Preview package, version, label, and signer
         run: |
           set -euo pipefail
           APK='app/build/outputs/apk/release/app-release.apk'
@@ -208,13 +175,13 @@ jobs:
           cat > /tmp/amyfx-preview-release-notes.md <<NOTES
           Amy FX Preview $AMYFX_VERSION_NAME — Private branch release.
 
-          - Mapping tidak lagi berkedip saat data diperbarui.
-          - Posisi layar, scroll, dan accordion Analisis lebih stabil.
-          - Kartu Scalper Shadow selalu tampil dan mempertahankan data valid terakhir.
-          - Header status Mapping hanya menampilkan satu bulatan berwarna.
-          - Lifecycle entry dan Stop Loss struktural Scalper Shadow diperbaiki.
-          - Seluruh regression test JavaScript, Android unit test, lint, build, identitas APK, dan signer diverifikasi sebelum publikasi.
-          - Amy FX publik pada branch main tidak diubah.
+          - Tetap memakai satu jalur backend market; tidak menambahkan provider atau API kedua.
+          - Interval polling harga tetap 20 detik.
+          - Fallback market usang tidak lagi dapat tampil sebagai LIVE.
+          - Timestamp asli provider menentukan freshness harga.
+          - Candle duplikat dibuang sebelum upsert Supabase.
+          - Seluruh regression test, Android unit test, lint, build, identitas APK, dan signer diverifikasi.
+          - Amy FX publik pada branch main tidak diubah oleh rilis Preview ini.
           NOTES
           gh release create "$AMYFX_RELEASE_TAG" \
             "AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
@@ -226,7 +193,7 @@ jobs:
             --notes-file /tmp/amyfx-preview-release-notes.md
           gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
 
-      - name: Activate private Preview update notification channel
+      - name: Activate private Preview update channel
         run: |
           set -euo pipefail
           export RELEASE_DATE="$(date -u +%F)"
@@ -234,9 +201,7 @@ jobs:
           python3 - <<'PY'
           import json
           import os
-
           version_code = int(os.environ['AMYFX_VERSION_CODE'])
-          assert version_code > 930087, 'Private Preview versionCode must exceed installed Preview 930087'
           payload = {
               'channel': 'amyfx-preview-blueprint-v1',
               'latest_version_code': version_code,
@@ -250,18 +215,17 @@ jobs:
               'mandatory': False,
               'enabled': True,
               'release_notes': [
-                  'Mapping tidak lagi berkedip saat data diperbarui.',
-                  'Posisi layar, scroll, dan accordion Analisis lebih stabil.',
-                  'Kartu Scalper Shadow selalu tampil dan mempertahankan data valid terakhir.',
-                  'Header status Mapping hanya menampilkan satu bulatan berwarna.',
-                  'Lifecycle entry dan Stop Loss struktural Scalper Shadow diperbaiki.',
+                  'Tetap memakai satu jalur backend market dan interval polling 20 detik.',
+                  'Fallback market usang tidak lagi ditampilkan sebagai LIVE.',
+                  'Timestamp provider menentukan freshness harga.',
+                  'Candle duplikat dibuang sebelum upsert Supabase.',
                   'Amy FX publik pada branch main tidak diubah.'
               ],
               'changelog': [
-                  'Stable keyed Mapping DOM updates',
-                  'Persistent Scalper Shadow panel',
-                  'Causal entry lock and structural ATR-buffered stop',
-                  'Single Mapping status dot',
+                  'Single backend market path',
+                  'Provider timestamp freshness gate',
+                  'Stale fallback rejection',
+                  'Supabase candle deduplication',
                   'Public main isolation guard'
               ]
           }
@@ -270,6 +234,8 @@ jobs:
               handle.write('\n')
           PY
           python3 -m json.tool preview-update.json >/dev/null
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add preview-update.json
           git commit -m "release(preview): activate $AMYFX_VERSION_NAME update [skip ci]"
           git push origin "HEAD:${GITHUB_REF_NAME}"
