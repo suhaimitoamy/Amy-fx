@@ -126,12 +126,21 @@ async function insertSetup(candidate) {
   return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
 }
 
-async function updateSetup(setup) {
-  await rest(`amyfx_preview_scalper_setups?id=eq.${encodeURIComponent(setup.id)}`, {
+async function updateSetup(setup, expected) {
+  if (!expected?.updated_at || !expected?.status) {
+    throw new Error(`optimistic_update_missing_state:${setup?.id || "unknown"}`);
+  }
+  const params = new URLSearchParams({
+    id: `eq.${setup.id}`,
+    updated_at: `eq.${expected.updated_at}`,
+    status: `eq.${expected.status}`,
+  });
+  const rows = await rest(`amyfx_preview_scalper_setups?${params.toString()}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json", Prefer: "return=minimal" },
+    headers: { "Content-Type": "application/json", Prefer: "return=representation" },
     body: JSON.stringify({ ...setup, updated_at: new Date().toISOString() }),
   });
+  return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
 }
 
 async function loadActiveSetups() {
@@ -253,21 +262,41 @@ Deno.serve(async (request) => {
         const nextOpen = findNextOpen(setup, { m1, m15 });
         if (nextOpen) {
           const activatedResult = activateCandidate(setup, nextOpen);
-          setup = activatedResult.setup;
-          await updateSetup(setup);
+          const saved = await updateSetup(activatedResult.setup, setup);
+          if (!saved) continue;
+          setup = saved;
           if (activatedResult.event && await insertEvent(setup, activatedResult.event,
             setup.notification_enabled === true)) {
             lifecycleEvents += 1;
           }
           activated += setup.status === "ACTIVE" ? 1 : 0;
+          // Entry must be durably locked before any M1 high/low is allowed to
+          // advance this lifecycle. Evaluation starts on the next engine run.
+          continue;
         }
       }
 
       if (setup.status === "ACTIVE" || setup.status === "BE_ACTIVE") {
+        if (setup.quality?.entry_locked !== true) {
+          const locked = {
+            ...setup,
+            quality: {
+              ...(setup.quality || {}),
+              entry_locked: true,
+              entry_locked_at: setup.entry_candle_open_time,
+              entry_timestamp: setup.entry_candle_open_time,
+              lifecycle_sequence: Number(setup.quality?.lifecycle_sequence || 0),
+            },
+          };
+          await updateSetup(locked, setup);
+          continue;
+        }
         const advanced = advanceSetupLifecycle(setup, m1, { evaluationSeconds: 60 });
-        setup = advanced.setup;
-        if (advanced.events.length || setup.last_evaluated_open_time !== current.last_evaluated_open_time) {
-          await updateSetup(setup);
+        const nextSetup = advanced.setup;
+        if (advanced.events.length || nextSetup.last_evaluated_open_time !== current.last_evaluated_open_time) {
+          const saved = await updateSetup(nextSetup, setup);
+          if (!saved) continue;
+          setup = saved;
         }
         for (const event of advanced.events) {
           if (await insertEvent(setup, event, setup.notification_enabled === true)) lifecycleEvents += 1;
@@ -279,7 +308,9 @@ Deno.serve(async (request) => {
     const recommended = assignRecommendations(active, 2);
     for (const setup of recommended) {
       const previous = active.find(item => item.id === setup.id);
-      if (previous?.recommendation_status !== setup.recommendation_status) await updateSetup(setup);
+      if (previous?.recommendation_status !== setup.recommendation_status) {
+        await updateSetup(setup, previous);
+      }
     }
 
     const push = lifecycleEvents > 0 ? await invokePush() : { ok: true, skipped: true };

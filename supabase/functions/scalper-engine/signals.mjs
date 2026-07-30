@@ -1,12 +1,12 @@
 import { detectFvgZones, displacementQuality, h1OrderFlowAt, timestampSeconds } from './candles.mjs';
 
-export const ENGINE_VERSION = 'amyfx-preview-scalper-v1.1';
+export const ENGINE_VERSION = 'amyfx-preview-scalper-v1.2';
 
 function overlaps(candle, bottom, top) { return candle.high >= bottom && candle.low <= top; }
 function rejectionClose(candle, direction, bottom, top) { return direction === 'BUY' ? candle.close > top : candle.close < bottom; }
 function brokenByClose(candle, direction, bottom, top) { return direction === 'BUY' ? candle.close < bottom : candle.close > top; }
 
-function buildCandidate({ model, direction, signalCandle, zone, stopReference, bufferAtr, atrValue, h1, quality }) {
+function buildCandidate({ model, direction, signalCandle, zone, stopReference, stopReferenceType, bufferAtr, atrValue, h1, quality }) {
   if (!Number.isFinite(atrValue) || atrValue <= 0 || !Number.isFinite(stopReference)) return null;
   return {
     id: `${ENGINE_VERSION}:${model}:${direction}:${signalCandle.open_time}:${zone.id}`,
@@ -22,7 +22,14 @@ function buildCandidate({ model, direction, signalCandle, zone, stopReference, b
     zone_bottom: zone.bottom, zone_top: zone.top, source_fvg_id: zone.id,
     stop_reference: stopReference, atr_at_signal: atrValue, be_armed: false,
     result_r: null, exit_price: null, exit_time: null,
-    quality: quality || {}, priority: model === 'IFVG_SCALPER' ? 1 : 2
+    quality: {
+      ...(quality || {}),
+      source_candle_timestamp: signalCandle.close_time,
+      stop_basis: 'STRUCTURAL_WICK_ATR_BUFFER',
+      stop_basis_label: 'Structural Wick + ATR Buffer',
+      stop_reference_type: stopReferenceType || 'STRUCTURAL_WICK'
+    },
+    priority: model === 'IFVG_SCALPER' ? 1 : 2
   };
 }
 
@@ -46,7 +53,13 @@ export function detectScalperCandidates({ m15, h1, nowSeconds = Math.floor(Date.
       if (signalCandle.close_time >= minimumSignalTime && h1Context.bias === 'BULLISH' && quality.passed) {
         const candidate = buildCandidate({
           model: 'FVG_BUY_HIGH_QUALITY', direction: 'BUY', signalCandle, zone,
-          stopReference: values[zone.displacement_index].low, bufferAtr: 0.15,
+          stopReference: Math.min(
+            values[zone.displacement_index].low,
+            signalCandle.low,
+            zone.bottom
+          ),
+          stopReferenceType: 'FVG_STRUCTURAL_WICK',
+          bufferAtr: 0.20,
           atrValue: atr[reactionIndex], h1: h1Context, quality
         });
         if (candidate) candidates.push(candidate);
@@ -65,8 +78,12 @@ export function detectScalperCandidates({ m15, h1, nowSeconds = Math.floor(Date.
         const breakCandle = values[breakIndex];
         const candidate = buildCandidate({
           model: 'IFVG_SCALPER', direction: inverseDirection, signalCandle: candle, zone,
-          stopReference: inverseDirection === 'BUY' ? breakCandle.low : breakCandle.high,
-          bufferAtr: 0.10, atrValue: atr[index], h1: h1Context,
+          stopReference: inverseDirection === 'BUY'
+            ? Math.min(candle.low, zone.bottom)
+            : Math.max(candle.high, zone.top),
+          stopReferenceType: 'IFVG_INVALIDATION_WICK',
+          bufferAtr: 0.20,
+          atrValue: atr[index], h1: h1Context,
           quality: { original_direction: zone.direction, break_candle_open_time: breakCandle.open_time, break_candle_close_time: breakCandle.close_time, inverse_retest_index: index }
         });
         if (candidate) candidates.push(candidate);
