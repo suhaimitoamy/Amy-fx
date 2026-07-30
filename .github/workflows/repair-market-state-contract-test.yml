@@ -1,0 +1,108 @@
+name: Repair Market State Contract Test
+
+on:
+  pull_request:
+    branches:
+      - main
+      - personal/amyfx-private
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repair-market-state-contract-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repair-test:
+    if: >-
+      ${{
+        github.event.pull_request.head.ref == 'fix/market-pipeline-live-price-20260730-definitive' ||
+        github.event.pull_request.head.ref == 'fix/preview-market-pipeline-live-price-20260730-definitive'
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Update legacy quote test for separated WebSocket contract
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('tests/market-state-contract.test.mjs')
+          text = path.read_text(encoding='utf-8')
+          replacement = r'''test('M1 quote tick updates quote without laundering Mapping capturedAt', () => {
+            const now = Date.now();
+            const runtime = createRuntime({ candleAt: now - 60_000 });
+            runtime.window.AmyFXIntel.write('mapping', {
+              price: 4091,
+              timeframe: 'M15',
+              bias: 'BUY',
+              direction: 'BUY',
+              bsl: 4110,
+              ssl: 4080,
+              levels: [{ type: 'BSL', price: 4110, distance: 19 }, { type: 'SSL', price: 4080, distance: -11 }]
+            });
+            const mappingCapturedAt = runtime.window.AmyFXIntel.read().mapping.capturedAt;
+
+            runtime.window.AmyFXIntel.write('quote', {
+              pair: 'XAU/USD',
+              price: 4091,
+              providerCapturedAt: new Date(now).toISOString(),
+              source: 'TWELVEDATA_WEBSOCKET'
+            });
+            runtime.window.AmyFXIntel.write('mapping', {
+              price: 4092,
+              timeframe: 'M15',
+              bias: 'BUY',
+              direction: 'BUY',
+              bsl: 4110,
+              ssl: 4080,
+              levels: [{ type: 'BSL', price: 4110, distance: 18 }, { type: 'SSL', price: 4080, distance: -12 }]
+            });
+            runtime.window.AmyFXIntel.write('quote', {
+              pair: 'XAU/USD',
+              price: 4092,
+              providerCapturedAt: new Date(now + 20_000).toISOString(),
+              source: 'TWELVEDATA_WEBSOCKET'
+            });
+
+            const state = runtime.window.AmyFXIntel.read();
+            assert.equal(state.mapping.capturedAt, mappingCapturedAt);
+            assert.equal(state.quote.price, 4092);
+            assert.equal(new Date(state.quote.capturedAt).getTime(), now + 20_000);
+            assert.equal(state.quote.source, 'TWELVEDATA_WEBSOCKET');
+          });
+
+          test('Mapping payload cannot invent an official quote without an M1 provider timestamp' '''
+          pattern = re.compile(
+              r"test\('M1 quote tick updates quote without laundering Mapping capturedAt', \(\) => \{.*?\n\}\);\n\ntest\('Mapping payload cannot invent an official quote without an M1 provider timestamp' ",
+              re.S,
+          )
+          updated, count = pattern.subn(replacement, text, count=1)
+          if count == 0 and "source, 'TWELVEDATA_WEBSOCKET'" in text:
+              raise SystemExit(0)
+          if count != 1:
+              raise SystemExit(f'Expected one legacy test block, found {count}')
+          path.write_text(updated, encoding='utf-8')
+          PY
+          node --test tests/market-state-contract.test.mjs tests/market-pipeline-separation.test.mjs
+      - name: Commit repaired test
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/market-state-contract.test.mjs
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'test: validate separated live WebSocket quote [contract-test-updated]'
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
