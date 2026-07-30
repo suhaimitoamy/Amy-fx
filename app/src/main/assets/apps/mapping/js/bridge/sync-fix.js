@@ -155,9 +155,14 @@
   function syncHeader(){
     const status=computedStatus();
     const cls=status==='Connected'?'amyfx-status-connected':status==='Cache'?'amyfx-status-cache':'amyfx-status-offline';
+    const mappingDot=document.getElementById('conn');
+    if(mappingDot){
+      mappingDot.textContent='●';
+      mappingDot.setAttribute('aria-label',`Status Mapping ${status}`);
+    }
 
     let targets=Array.from(document.querySelectorAll('#conn,[data-connection-status],header .status,.topbar .status'))
-      .filter(el=>leaf(el)&&/^(Offline|Online|Connected|Cache)$/i.test(el.textContent.trim()));
+      .filter(el=>el!==mappingDot&&leaf(el)&&/^(Offline|Online|Connected|Cache)$/i.test(el.textContent.trim()));
 
     if(!targets.length){
       targets=Array.from(document.querySelectorAll('*')).filter(el=>{

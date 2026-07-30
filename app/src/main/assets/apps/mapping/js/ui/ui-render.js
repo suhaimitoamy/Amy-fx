@@ -10,6 +10,51 @@ import {
   renderExecutionPlanDetail
 } from '../execution-plan-ui.js';
 
+let lastRenderSignature = '';
+let lastMarketSnapshotSignature = '';
+
+function statusDot() {
+  const connection = document.getElementById('conn');
+  if (!connection) return;
+  connection.textContent = '●';
+  connection.className = state.conn === 'Connected' ? 'status on' : 'status';
+}
+
+function scalperShadowPlaceholder() {
+  return `<section id="amy-scalper-entry-watch" class="card scalper-watch scalper-watch--wait" data-scalper-mode="shadow" data-dom-persistent="true" data-stability-key="scalper-shadow">
+    <div class="scalper-watch__head"><div><div class="kicker">SCALPER ENGINE · SHADOW MODE</div><h2>MENUNGGU SETUP</h2></div><span class="scalper-watch__badge">MENUNGGU SETUP</span></div>
+    <div class="scalper-watch__notice">SIMULASI — belum mengeksekusi atau memindahkan order broker otomatis.</div>
+    <p class="scalper-watch__instruction">Engine memindai IFVG searah H1 dan FVG BUY High Quality dari candle yang sudah close.</p>
+    <div class="scalper-watch__foot"><span>Engine MENUNGGU DATA</span><span>Maksimum rekomendasi 2 setup · semua sinyal tetap dicatat</span></div>
+  </section>`;
+}
+
+function regimePlaceholder() {
+  return `<section id="amy-regime-router-v3" class="card regime-router-card" data-dom-persistent="true" data-stability-key="market-regime">
+    <div class="kicker">AMY FX · MARKET INTELLIGENCE</div><h2>Menunggu konteks market</h2><p class="muted">Analisis closed-candle sedang disiapkan.</p>
+  </section>`;
+}
+
+function marketContextPlaceholder() {
+  return `<details class="card amy-analysis-section" data-stability-key="market-context">
+    <summary><span>Ringkasan Market</span><small>Struktur, arah, dan skenario</small></summary>
+    ${regimePlaceholder()}
+  </details>`;
+}
+
+function marketOutlookPlaceholder() {
+  return `<details class="card disclosure outlook-disclosure" data-dom-persistent="true" data-stability-key="market-outlook">
+    <summary class="amy-level-summary"><span class="amy-level-summary-title"><i>◎</i><b>Market Outlook</b></span><span class="amy-level-summary-status">WAIT</span></summary>
+    <div class="amy-trade-scenario-panel" data-amy-level-panel="true"><p class="outlook-loading">Menunggu data Mapping closed-candle.</p></div>
+  </details>`;
+}
+
+function asiaAnalyzePlaceholder() {
+  return `<section class="card asia-liquidity-strip" data-asia-range-analyze data-dom-persistent="true" data-stability-key="asia-liquidity">
+    <div class="asia-strip-head"><span>ASIA LIQUIDITY</span><small>-</small></div><div class="asia-range-empty">Data Asia Range belum tersedia.</div>
+  </section>`;
+}
+
 function refreshResultContracts(result, { persist = true } = {}) {
   if (!result) return { directionDecision: null, setupExecution: null, mappingExplanation: null };
   const directionDecision = result.directionDecision || buildDirectionDecision(result);
@@ -36,7 +81,10 @@ function forecastConfidence(result, directionDecision, setupExecution) {
   return Math.max(0, Math.min(100, raw));
 }
 
-export function killzonePanel(){let list=sessions(),cur=curSession(),focus=list.filter(s=>s.name.includes('London Open')||s.name.includes('New York Open'));return`<section class="card session-card"><div class="section-row"><div><div class="kicker">SESI TRADING</div><h2>Session focus</h2></div><span class="muted" id="kz-wita">WITA ${nowTime()}</span></div><div class="session-pill ${cur.active?'active':''}">${cur.active?'Aktif: '+cur.name:'Off-Session'}</div><div class="session-grid">${focus.map(s=>`<div class="session-focus ${s.active?'active':''}"><b>${s.active?'● ':'○ '}${s.name.replace(' Kill Zone','')}</b><small>${s.wita} WITA</small><span>${s.active?'Aktif sekarang':'Menunggu sesi'}</span></div>`).join('')}</div></section>`}
+export function killzonePanel(){
+  const list=sessions(),cur=curSession(),focus=list.filter(s=>s.name.includes('London Open')||s.name.includes('New York Open'));
+  return`<section class="card session-card" data-stability-key="session-focus"><div class="section-row"><div><div class="kicker">SESI TRADING</div><h2>Session focus</h2></div><span class="muted" id="kz-wita">WITA ${nowTime()}</span></div><div class="session-pill ${cur.active?'active':''}">${cur.active?'Aktif: '+cur.name:'Off-Session'}</div><div class="asia-range-block" data-asia-range-dashboard data-dom-persistent="true"><div class="asia-range-head"><b>ASIA RANGE</b><small>-</small></div><div class="asia-range-empty">Data Asia Range belum tersedia.</div></div><div class="session-grid">${focus.map(s=>`<div class="session-focus ${s.active?'active':''}"><b>${s.active?'● ':'○ '}${s.name.replace(' Kill Zone','')}</b><small>${s.wita} WITA</small><span>${s.active?'Aktif sekarang':'Menunggu sesi'}</span></div>`).join('')}</div></section>`;
+}
 
 export function fmtDir(x,status='',cf=''){x=String(x||'');let d=x.includes('BUY')?'BUY':x.includes('SELL')?'SELL':'';if(!d)return 'TUNGGU';if(status.includes('SL HIT')||status.includes('TP HIT')||status.includes('EXPIRED'))return `ABAIKAN ${d}`;if(status==='INVALID'||status==='BROKEN'||status==='WAIT'||cf==='FATAL')return `WAIT ${d}`;if(cf==='HIGH'||cf==='MEDIUM')return `BIAS ${d}`;if(status==='WATCH SETUP'||status==='PANTAU SETUP')return `WATCH ${d}`;return `FOKUS ${d}`;}
 export function fmtStatus(x){x=String(x||'');return x.replace(/READY SETUP/g,'SETUP VALID').replace(/WATCH SETUP/g,'PANTAU SETUP').replace(/^WAIT$/g,'TUNGGU');}
@@ -126,9 +174,8 @@ export function dashboard() {
   let setupBody = se?.active
     ? `<div class="setup-summary"><div><small>Entry Area</small><strong>${p2(se.entryLow)} – ${p2(se.entryHigh)}</strong></div><div><small>Invalidasi</small><strong>${p2(se.stopLoss)}</strong></div><div><small>Target</small><strong>${p2(se.target1)}</strong></div><div><small>Status</small><strong>${se.status}</strong></div></div><p class="summary-note">${se.invalidationReason || setupAuthorityNote}</p>`
     : `<p class="muted">${se?.invalidationReason || 'Klik Analisis Setup untuk membuat mapping angka.'}</p>`;
-  const previewUpdate = `<section class="card" style="border-color:rgba(255,196,0,.35);padding:10px 14px"><div class="kicker">UPDATE</div><strong>AMY FX v1.5 PREVIEW AKTIF</strong><div class="muted" style="margin-top:4px">Mapping, scanner, notifikasi, dan lifecycle membaca satu kontrak causal closed-candle.</div></section>`;
   const executionPlan = renderExecutionPlanCompact(executionPlanRuntimeInput(r, state));
-  return `${previewUpdate}<section class="hero card mapping-hero"><div><div class="kicker">AMY FX MAPPING</div><h1>XAU/USD</h1><div class="muted" id="top-wita">${state.conn === 'Connected' ? '● Live Price' : '○ ' + state.conn} • WITA ${nowTime()}</div></div><div style="text-align:right"><div class="muted">Gold Price</div><div class="price">$${p2(state.price)}</div><div class="${dec.bias === 'BUY' ? 'green' : dec.bias === 'SELL' ? 'red' : 'muted'}">${dec.bias} ${dec.confidence ? `• ${dec.confidence}%` : ''}</div></div></section><section class="card tf-card"><div class="section-row"><div><div class="kicker">TIMEFRAME</div><h2>Pilih mapping</h2></div><span class="muted">${state.tf}</span></div><div class="tf-grid compact-tf">${tfList.map(x => `<button class="${state.tf === x ? 'active' : ''}" onclick="window.runAnalysis('${x}')">${x}</button>`).join('')}</div></section>${executionPlan}<section class="card setup-focus"><div class="section-row"><div><div class="kicker">SETUP UTAMA</div><h2>${setupTitle}</h2></div>${se?.active ? `<span class="badge ${se.direction === 'BUY' ? 'buy' : 'sell'}">${se.direction}</span>` : ''}</div>${setupBody}<button class="action" onclick="setTab('Analyze')" style="width:100%;margin-top:12px">⚡ Buka Analisis Lengkap</button></section>${killzonePanel()}`;
+  return `<section class="card tf-card" data-stability-key="timeframe"><div class="section-row"><div><div class="kicker">TIMEFRAME</div><h2>Pilih mapping</h2></div><span class="muted">${state.tf}</span></div><div class="tf-grid compact-tf">${tfList.map(x => `<button class="${state.tf === x ? 'active' : ''}" onclick="window.runAnalysis('${x}')">${x}</button>`).join('')}</div></section>${killzonePanel()}${regimePlaceholder()}<section class="card setup-focus" data-stability-key="setup-focus"><div class="section-row"><div><div class="kicker">SETUP UTAMA</div><h2>${setupTitle}</h2></div>${se?.active ? `<span class="badge ${se.direction === 'BUY' ? 'buy' : 'sell'}">${se.direction}</span>` : ''}</div>${setupBody}<button class="action" onclick="setTab('Analyze')" style="width:100%;margin-top:12px">⚡ Buka Analisis Lengkap</button></section>${scalperShadowPlaceholder()}${executionPlan}`;
 }
 
 export function lifecycleSetupCard(s, i = 0) {
@@ -178,17 +225,85 @@ function readableSetup(value){return({'ORDER BLOCK':'Order Block — zona asal d
 
 export function plainMappingExplanation(){const r=state.result,s=r?.bestSetup;const{directionDecision:dd,setupExecution:se}=refreshResultContracts(r);if(!r||!dd)return`<section class="card"><div class="kicker">PENJELASAN MAPPING</div><h2>Belum Ada Analisis</h2><div class="ai-map-note muted">Pilih timeframe untuk mulai membaca kondisi market.</div></section>`;const price=p2(analyzeLivePrice()||r.price),targetText=se?.liquidityTarget?`${se.liquidityTarget.type} pada ${p2(se.liquidityTarget.level)} menjadi target likuiditas utama.`:'Belum ada target likuiditas searah yang cukup jelas.';let plan='Belum ada setup aktif yang memenuhi seluruh syarat. Jangan mengejar harga.';if(se?.active)plan=`Amy membaca setup aktif <b>${readableSetup(s?.type||'Entry Map')}</b> pada ${r.tf}. Area entry ${p2(se.entryLow)}–${p2(se.entryHigh)}, SL ${p2(se.stopLoss)}, TP1 ${p2(se.target1)}${se.target2?`, TP2 ${p2(se.target2)}`:''}. Status: ${se.status}.`;return`<section class="card"><div class="kicker">PENJELASAN MAPPING</div><h2>Apa yang Sedang Terjadi?</h2><div class="ai-map-note"><p><b>1. Arah utama</b><br>Direction Decision membaca <b>${readableBias(dd.bias)}</b>. Harga ${price} berada di <b>${readableZone(r.premiumDiscountZone||r.zone)}</b>.</p><p><b>2. Target market</b><br>${targetText}</p><p><b>3. Rencana tindakan</b><br>${plan}</p><p><b>Kesimpulan</b><br>${se?.active?`<b>FOKUS ${se.direction}</b> — status: ${se.status}.`:`<b>TUNGGU</b> — ${se?.invalidationReason||'belum ada setup aktif.'}`}</p></div></section>`}
 
-export function analyzeView(){const r=state.result,se=refreshResultContracts(r).setupExecution;let dec=decisionData();const activeSetupCard=se?.active&&r?.bestSetup?lifecycleSetupCard(r.bestSetup,0):`<p class="muted">${se?.invalidationReason||r?.entryMap?.scenario?.reason||'Belum ada setup aktif yang aman. Tunggu mapping baru.'}</p>`;const executionPlan=renderExecutionPlanDetail(executionPlanRuntimeInput(r,state));let header=`<section class="hero card mapping-hero"><div><div class="kicker">AMY FX MAPPING</div><h1>XAU/USD</h1><div class="muted" id="top-wita">${state.conn==='Connected'?'● Live Price':'○ '+state.conn} • WITA ${nowTime()}</div></div><div style="text-align:right"><div class="muted">Gold Price</div><div class="price">$${p2(state.price)}</div><div class="${dec.bias==='BUY'?'green':dec.bias==='SELL'?'red':'muted'}">${dec.bias} ${dec.confidence?`• ${dec.confidence}%`:''}</div></div></section>`;return`${header}${executionPlan}<details class="card disclosure"><summary>Penjelasan Mapping</summary>${plainMappingExplanation()}</details><details class="card disclosure" open><summary>Valid Break</summary>${validBreakInfo()}</details><details class="card disclosure"><summary>Mapping Semua Timeframe</summary>${m1h4MappingTable()}</details><details class="card disclosure"><summary>Setup Aktif (${se?.active?1:0})</summary><section class="card"><h2>Setup Aktif</h2>${activeSetupCard}</section></details>`}
+export function analyzeView(){
+  const r=state.result,se=refreshResultContracts(r).setupExecution;
+  const dec=decisionData();
+  const activeSetupCard=se?.active&&r?.bestSetup?lifecycleSetupCard(r.bestSetup,0):`<p class="muted">${se?.invalidationReason||r?.entryMap?.scenario?.reason||'Belum ada setup aktif yang aman. Tunggu mapping baru.'}</p>`;
+  const executionPlan=renderExecutionPlanDetail(executionPlanRuntimeInput(r,state));
+  const header=`<section class="hero card mapping-hero" data-stability-key="analysis-header"><div><div class="kicker">AMY FX MAPPING</div><h1>XAU/USD</h1></div><div style="text-align:right"><div class="muted">Gold Price</div><div class="price">$${p2(state.price)}</div><div class="${dec.bias==='BUY'?'green':dec.bias==='SELL'?'red':'muted'}">${dec.bias} ${dec.confidence?`• ${dec.confidence}%`:''}</div></div></section>`;
+  return`${header}${marketOutlookPlaceholder()}${marketContextPlaceholder()}${executionPlan}<details class="card disclosure" data-stability-key="mapping-explanation"><summary>Penjelasan Mapping</summary>${plainMappingExplanation()}</details>${asiaAnalyzePlaceholder()}<details class="card disclosure" data-stability-key="valid-break" open><summary>Valid Break</summary>${validBreakInfo()}</details><details class="card disclosure" data-stability-key="mapping-all-timeframes"><summary>Mapping Semua Timeframe</summary>${m1h4MappingTable()}</details><details class="card disclosure" data-stability-key="active-setup"><summary>Setup Aktif (${se?.active?1:0})</summary><section class="card"><h2>Setup Aktif</h2>${activeSetupCard}</section></details>${scalperShadowPlaceholder()}`;
+}
 export function setupsView(){let list=state.setups.slice(0,20);return`<section class="card"><h1>Riwayat Setup (HISTORY / TERMINAL)</h1>${list.map((s,i)=>historyCard(s,i)).join('')||'<p class="muted">Belum ada setup tersimpan.</p>'}</section>`}
 export function historyView(){return`<section class="card"><h1>Event Logs</h1><button class="action" onclick="window.downloadLogs()">⇩ Download TXT</button>${state.logs.map(x=>`<div class="log">${x}</div>`).join('')||'<p class="muted">Belum ada event.</p>'}</section>`}
 export function settingsView(){return`<section class="card settings"><h1>Settings & API</h1><label>Twelve Data API Key <span class="muted">(opsional untuk candle)</span></label><input id="apiKey" value="${state.key}" placeholder="Kosongkan jika key sudah di Vercel"><button class="action" onclick="window.saveConnect()" style="width:100%">🔑 Simpan & Hubungkan Live</button><p class="muted">Harga live, snapshot Mapping, scanner, dan notifikasi memakai kontrak setupExecution yang sama.</p><div class="warn"><b>Monitor Causal</b><br>Scanner hanya aktif ketika setup causal pada timeframe terpilih masih aktif dan belum terminal.</div><button data-scanner-status class="action" onclick="window.toggleBg()" style="width:100%;margin-top:14px">📡 Scanner mengikuti setup causal</button><button class="action" onclick="window.testNotif()" style="width:100%;margin-top:12px">🔔 Tes Notifikasi Setup</button><button class="action" onclick="window.AmyFXUpdate?.checkNow()" style="width:100%;margin-top:12px">🔄 Cek Pembaruan Versi</button></section>`}
 
-export function render(){let opens=Array.from(document.querySelectorAll('.disclosure')).map(el=>el.open);document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===state.tab));const conn=document.getElementById('conn');if(conn){conn.textContent=state.conn;conn.className='status '+(state.conn==='Connected'?'on':'')}const app=document.getElementById('app');if(app)app.innerHTML=state.tab==='Dashboard'?dashboard():state.tab==='Analyze'?analyzeView():state.tab==='Setups'?setupsView():state.tab==='History'?historyView():settingsView();let newOpens=document.querySelectorAll('.disclosure');if(opens.length>0&&state.tab==='Analyze')opens.forEach((isOpen,i)=>{if(newOpens[i])newOpens[i].open=isOpen});syncMarketSnapshot()}
+export function mappingRenderSignature() {
+  const result = state.result;
+  const candleTimes = SUPPORTED_MAPPING_TIMEFRAMES.map(tf => {
+    const candle = state.candles?.[tf]?.at(-1);
+    return [tf, candle?.time || 0, candle?.open || 0, candle?.high || 0, candle?.low || 0, candle?.close || 0];
+  });
+  return JSON.stringify({
+    tab: state.tab,
+    tf: state.tf,
+    candleTimes,
+    dataStale: Boolean(result?.dataStale),
+    direction: result?.directionDecision || null,
+    execution: result?.setupExecution || null,
+    explanation: result?.mappingExplanation || null,
+    scenario: result?.entryMap?.scenario || null,
+    breakEvent: result?.st?.lastEvent || result?.st?.last || null,
+    bsl: result?.bsl || null,
+    ssl: result?.ssl || null
+  });
+}
 
-function syncMarketSnapshot(){if(!window.AmyFXIntel?.write)return;const r=state.result,previous=window.AmyFXIntel.read?.()?.mapping||{},contracts=refreshResultContracts(r),dd=contracts.directionDecision,se=contracts.setupExecution,exp=contracts.mappingExplanation,d=decisionData();window.AmyFXIntel.write('mapping',{...previous,price:analyzeLivePrice(),timeframe:r?.tf||state.tf,bias:dd?.bias||'WAIT',direction:dd?.signal||'WAIT',status:se?.active?se.status:(dd?.status||'WAIT'),confidence:d.confidence,directionDecision:dd,setupExecution:se,mappingExplanation:exp,mappingSnapshot:r?.mappingSnapshot||null,dataStatus:exp?.dataStatus||'BELUM TERSEDIA',analyzedAt:r?Date.now():(previous.analyzedAt||0)})}
+export function render(){
+  document.querySelectorAll('.nav button').forEach(button => button.classList.toggle('active',button.dataset.tab===state.tab));
+  statusDot();
+  const app=document.getElementById('app');
+  const signature=mappingRenderSignature();
+  if(app&&app.childElementCount&&signature===lastRenderSignature){
+    syncMarketSnapshot();
+    return false;
+  }
+  const disclosureState=new Map([...document.querySelectorAll('#app details[data-stability-key]')].map(details=>[details.dataset.stabilityKey,details.open]));
+  if(app)app.innerHTML=state.tab==='Dashboard'?dashboard():state.tab==='Analyze'?analyzeView():state.tab==='Setups'?setupsView():state.tab==='History'?historyView():settingsView();
+  document.querySelectorAll('#app details[data-stability-key]').forEach(details=>{
+    const key=details.dataset.stabilityKey;
+    if(disclosureState.has(key))details.open=disclosureState.get(key);
+  });
+  lastRenderSignature=signature;
+  syncMarketSnapshot();
+  return true;
+}
+
+function syncMarketSnapshot(){
+  if(!window.AmyFXIntel?.write)return false;
+  const r=state.result,previous=window.AmyFXIntel.read?.()?.mapping||{},contracts=refreshResultContracts(r),dd=contracts.directionDecision,se=contracts.setupExecution,exp=contracts.mappingExplanation,d=decisionData();
+  const timeframe=r?.tf||state.tf;
+  const candle=state.candles?.[timeframe]?.at(-1);
+  const sourceCandleTime=Number(candle?.time||0);
+  const nextSignature=JSON.stringify({
+    timeframe,
+    sourceCandleTime,
+    price:Number(analyzeLivePrice()||0).toFixed(2),
+    bias:dd?.bias||'WAIT',
+    direction:dd?.signal||'WAIT',
+    status:se?.active?se.status:(dd?.status||'WAIT'),
+    confidence:d.confidence,
+    execution:se,
+    explanation:exp,
+    dataStatus:exp?.dataStatus||'BELUM TERSEDIA'
+  });
+  if(nextSignature===lastMarketSnapshotSignature)return false;
+  lastMarketSnapshotSignature=nextSignature;
+  window.AmyFXIntel.write('mapping',{...previous,price:analyzeLivePrice(),timeframe,bias:dd?.bias||'WAIT',direction:dd?.signal||'WAIT',status:se?.active?se.status:(dd?.status||'WAIT'),confidence:d.confidence,directionDecision:dd,setupExecution:se,mappingExplanation:exp,mappingSnapshot:r?.mappingSnapshot||null,dataStatus:exp?.dataStatus||'BELUM TERSEDIA',sourceCandleTime,analyzedAt:sourceCandleTime||previous.analyzedAt||0});
+  return true;
+}
 
 export function syncStickyBar(){const bar=document.getElementById('sticky-bar');if(!bar)return;const shouldShow=['Dashboard','Analyze'].includes(state.tab)&&window.scrollY>110;bar.classList.toggle('visible',shouldShow);bar.setAttribute('aria-hidden',String(!shouldShow));if(shouldShow){const priceEl=bar.querySelector('.sticky-price'),biasEl=bar.querySelector('.sticky-bias');if(priceEl)priceEl.textContent=`$${p2(state.price)}`;if(biasEl){const b=(decisionData().bias||'WAIT').toUpperCase();biasEl.textContent=b;biasEl.className=`sticky-bias ${mapBiasClass(b)}`}}}
 if(typeof window!=='undefined')window.addEventListener('scroll',syncStickyBar,{passive:true});
 export function skeletonCardMarkup(){return`<section class="card skeleton-card"><div class="skeleton-line h-24 w-50"></div><div class="skeleton-line w-100"></div><div class="skeleton-line w-75"></div></section>`}
-export function renderSoft(){let c=document.getElementById('conn');if(c){c.textContent=state.conn;c.className=state.conn==='Connected'?'status on':'status'}let p=document.querySelector('.price');if(p)p.textContent='$'+p2(state.price);let tw=document.getElementById('top-wita');if(tw)tw.textContent=(state.conn==='Connected'?'● Live Price':'○ '+state.conn)+' • WITA '+nowTime();let kw=document.getElementById('kz-wita');if(kw)kw.textContent='WITA '+nowTime();syncStickyBar()}
+export function renderSoft(){statusDot();let p=document.querySelector('.price');if(p)p.textContent='$'+p2(state.price);let tw=document.getElementById('top-wita');if(tw){tw.textContent='';tw.style.display='none';tw.setAttribute('aria-hidden','true')}let kw=document.getElementById('kz-wita');if(kw)kw.textContent='WITA '+nowTime();syncStickyBar()}
 export function applyAmyFxRoute(){let route='';try{route=decodeURIComponent((location.hash||'').replace(/^#/,''))}catch(e){}try{route=route||new URLSearchParams(location.search||'').get('route')||''}catch(e){}try{route=route||localStorage.getItem('amyfx.notification.route')||''}catch(e){}if(!route)route=localStorage.getItem('amy_mapping_tab')||'';if(['Dashboard','Analyze','Setups','History','Settings'].includes(route)){state.tab=route;try{localStorage.removeItem('amyfx.notification.route')}catch(e){}}else state.tab='Dashboard'}

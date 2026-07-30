@@ -10,6 +10,7 @@ if (hasDom && !window.__amyFxDomStableRenderV5Installed && nativeInnerHtml?.get 
   let patchedAppRenders = 0;
   let patchedCardRenders = 0;
   let removedDuplicateNodes = 0;
+  let persistentNodesPreserved = 0;
 
   function currentView() {
     return String(window.state?.tab || localStorage.getItem('amy_mapping_tab') || 'Dashboard');
@@ -44,7 +45,9 @@ if (hasDom && !window.__amyFxDomStableRenderV5Installed && nativeInnerHtml?.get 
     return name === 'open'
       || name === 'data-bound'
       || name === 'data-amy-disclosure-bound'
-      || name === 'data-amy-bound';
+      || name === 'data-amy-bound'
+      || name === 'data-dom-persistent'
+      || name === 'data-stability-key';
   }
 
   function syncAttributes(current, next) {
@@ -111,6 +114,16 @@ if (hasDom && !window.__amyFxDomStableRenderV5Installed && nativeInnerHtml?.get 
     }
     if (current.nodeType === Node.TEXT_NODE || current.nodeType === Node.COMMENT_NODE) {
       if (current.nodeValue !== next.nodeValue) current.nodeValue = next.nodeValue;
+      return;
+    }
+
+    if (
+      current instanceof Element
+      && next instanceof Element
+      && current.hasAttribute('data-dom-persistent')
+      && next.hasAttribute('data-dom-persistent')
+    ) {
+      persistentNodesPreserved += 1;
       return;
     }
 
@@ -181,13 +194,8 @@ if (hasDom && !window.__amyFxDomStableRenderV5Installed && nativeInnerHtml?.get 
       }
 
       const view = currentView();
-      if (!lastAppView || lastAppView !== view) {
-        nativeInnerHtml.set.call(this, markup);
-        lastAppView = view;
-        return;
-      }
-
       patchSameViewApp(this, parseFragment(markup));
+      lastAppView = view;
     }
   });
 
@@ -211,7 +219,12 @@ if (hasDom && !window.__amyFxDomStableRenderV5Installed && nativeInnerHtml?.get 
   });
 
   window.AmyFXDomStableRender = Object.freeze({
-    version: '5.1.0',
-    stats: () => ({ patchedAppRenders, patchedCardRenders, removedDuplicateNodes, view: lastAppView })
+    version: '5.2.0',
+    patch(current, next) {
+      if (!(current instanceof Element) || !(next instanceof Element)) return false;
+      patchNode(current, next);
+      return true;
+    },
+    stats: () => ({ patchedAppRenders, patchedCardRenders, removedDuplicateNodes, persistentNodesPreserved, view: lastAppView })
   });
 }
