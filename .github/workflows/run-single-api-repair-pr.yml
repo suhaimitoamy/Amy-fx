@@ -51,6 +51,20 @@ jobs:
           Path('/tmp/apply-single-api-fix.py').write_text(script, encoding='utf-8')
           PY
           python3 /tmp/apply-single-api-fix.py
+          python3 - <<'PY'
+          from pathlib import Path
+          readme = Path('README.md')
+          readme.write_text(readme.read_text(encoding='utf-8').replace('Fitur Utama 2.0.1', 'Fitur Utama 2.0.2'), encoding='utf-8')
+          path = Path('tests/five-issues-regression.test.mjs')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace('2\\.0\\.1', '2\\.0\\.2')
+          text = text.replace('public 2.0.1', 'public 2.0.2')
+          text = text.replace('code: 52', 'code: 53')
+          text = text.replace('<= 52', '<= 53')
+          text = text.replace('2\\.0\\.\\[01\\]', '2\\.0\\.\\[012\\]')
+          text = text.replace('2\\.0\\.\[01\]', '2\\.0\\.\[012\]')
+          path.write_text(text, encoding='utf-8')
+          PY
           cat > tests/market-single-api-freshness.test.mjs <<'TEST'
           import test from 'node:test';
           import assert from 'node:assert/strict';
