@@ -51,21 +51,36 @@ jobs:
           Path('/tmp/apply-single-api-fix.py').write_text(script, encoding='utf-8')
           PY
           python3 /tmp/apply-single-api-fix.py
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path('tests/market-single-api-freshness.test.mjs')
-          text = path.read_text(encoding='utf-8')
-          start = text.find("test('native scanner rejects stale backend responses'")
-          end = text.find('\n          });', start)
-          if start < 0 or end < 0: raise SystemExit('Generated scanner test block missing')
-          end += len('\n          });')
-          replacement = """test('native scanner remains safely retired', () => {
+          cat > tests/market-single-api-freshness.test.mjs <<'TEST'
+          import test from 'node:test';
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          import { dedupeCandleRows } from '../lib/market-candle-store.mjs';
+          const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+          test('live quote stays on one backend API and uses provider freshness', () => {
+            const source = read('app/src/main/assets/apps/mapping/js/api/market-data.js');
+            assert.match(source, /const LIVE_POLL_MS = 20_000/);
+            assert.match(source, /validateLiveMarketPayload\(data\)/);
+            assert.match(source, /data\?\.quoteCapturedAt/);
+            assert.match(source, /assertBackendPayloadFresh\(data, `Candle \${tf}`\)/);
+            assert.doesNotMatch(source, /lastWsTickAt = Date\.now\(\)/);
+            assert.doesNotMatch(source, /new WebSocket|twelve_api_key/);
+          });
+          test('duplicate candle keys collapse before Supabase upsert', () => {
+            const rows = dedupeCandleRows([
+              { symbol: 'XAU/USD', timeframe: 'M1', open_time: 10, close: 1 },
+              { symbol: 'XAU/USD', timeframe: 'M1', open_time: 10, close: 2 },
+              { symbol: 'XAU/USD', timeframe: 'M1', open_time: 11, close: 3 }
+            ]);
+            assert.equal(rows.length, 2);
+            assert.equal(rows.find(row => row.open_time === 10).close, 2);
+          });
+          test('native Mapping scanner remains safely retired', () => {
             const source = read('app/src/main/java/com/amyelitesuite/ScannerService.kt');
             assert.match(source, /Legacy local Mapping scanner is retired/);
-            assert.doesNotMatch(source, /pollMarket\\(/);
-          });"""
-          path.write_text(text[:start] + replacement + text[end:], encoding='utf-8')
-          PY
+            assert.doesNotMatch(source, /pollMarket\(/);
+          });
+          TEST
           rm -f .github/workflows/run-single-api-repair-pr.yml .single-api-fix-trigger
           node --check app/src/main/assets/apps/mapping/js/api/market-data.js
           node --test tests/market-single-api-freshness.test.mjs
