@@ -1,0 +1,79 @@
+name: Run Market Pipeline Repair
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  repair:
+    if: github.event.issue.title == 'RUN MARKET PIPELINE REPAIR 20260730'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        branch:
+          - fix/market-pipeline-live-price-20260730-definitive
+          - fix/preview-market-pipeline-live-price-20260730-definitive
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branch }}
+          fetch-depth: 0
+      - name: Restore deterministic patcher from trusted main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/contents/.github/workflows/apply-market-pipeline-fix.yml?ref=main" --jq .content | base64 -d > /tmp/market-pipeline-workflow.yml
+          python3 - <<'PY'
+          import base64, gzip, re
+          from pathlib import Path
+          text=Path('/tmp/market-pipeline-workflow.yml').read_text()
+          match=re.search(r"printf '%s' '([^']+)'", text)
+          if not match:
+              raise SystemExit('Embedded market pipeline patcher not found')
+          Path('tools').mkdir(exist_ok=True)
+          Path('tools/apply-market-pipeline-fix.py').write_bytes(gzip.decompress(base64.b64decode(match.group(1))))
+          PY
+          python3 -m py_compile tools/apply-market-pipeline-fix.py
+      - name: Apply repair
+        run: |
+          rm -f .market-pipeline-trigger .market-pipeline-trigger-2
+          python3 tools/apply-market-pipeline-fix.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate JavaScript syntax
+        run: |
+          node --check app/src/main/assets/apps/mapping/js/api/live-price-websocket.js
+          node --check app/src/main/assets/apps/mapping/js/api/market-data.js
+          node --check app/src/main/assets/apps/mapping/js/main.js
+          node --check app/src/main/assets/apps/mapping/js/bridge/android-bridge.js
+          node --check app/src/main/assets/apps/mapping/js/ui/ui-render.js
+          node --check app/src/main/assets/apps/shared/amyfx-market-state-contract-v1.js
+      - name: Run full regression suite
+        run: timeout 20m npm test
+      - name: Commit tested repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          git commit -m 'fix: separate live WebSocket and deduplicate market candles [market-pipeline-applied]'
+          git push origin "HEAD:${{ matrix.branch }}"
+      - name: Record result on issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "${{ github.event.issue.number }}" --body "${{ matrix.branch }}: ${{ job.status }}"
