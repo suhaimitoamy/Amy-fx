@@ -61,13 +61,13 @@ test('journal runtime cannot create the global MutationObserver feedback loop th
   assert.match(runtime, /bindPoolUiNavigation/);
 });
 
-test('Amy FX public source identity is 2.0.1 code 52', () => {
+test('Amy FX public source identity is 2.0.2 code 53', () => {
   const gradle = source('app/build.gradle.kts');
   assert.match(gradle, /com\.amyelitesuite/);
   assert.match(gradle, /Amy FX/);
   assert.match(gradle, /amyfx/);
-  assert.match(gradle, /\?: 52\)/);
-  assert.match(gradle, /\?: "2\.0\.1"/);
+  assert.match(gradle, /\?: 53\)/);
+  assert.match(gradle, /\?: "2\.0\.2"/);
   assert.doesNotMatch(gradle, /learningpreview|Amy FX Preview|amyfxpreview|preview-update\.json/);
-  assert.match(source('app/src/main/assets/app-version.js'), /name: '2\.0\.1', code: 52/);
+  assert.match(source('app/src/main/assets/app-version.js'), /name: '2\.0\.2', code: 53/);
 });
