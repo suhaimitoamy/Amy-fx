@@ -1,3 +1,4 @@
+import "./ui/dom-stable-render.js";
 import "./bridge/sync-fix.js";
 import "./bridge/notify-guard.js";
 import {
@@ -13,10 +14,7 @@ import {
   analyzeActiveSetups
 } from './ui/ui-render.js';
 import {
-  saveConnect,
-  toggleBg,
-  testNotif,
-  downloadLogs
+  toggleBg
 } from './bridge/android-bridge.js';
 
 export const TF = {
@@ -36,9 +34,9 @@ export const state = {
   key: '',
   price: Number(localStorage.getItem('last_price') || 0),
   conn: 'Offline',
-  logs: JSON.parse(localStorage.getItem('amy_mapping_logs') || '[]'),
-  analyses: JSON.parse(localStorage.getItem('amy_mapping_analyses') || '[]'),
-  setups: JSON.parse(localStorage.getItem('amy_mapping_setups') || '[]'),
+  logs: [],
+  analyses: [],
+  setups: [],
   candles: {},
   result: null,
   bg: true,
@@ -46,6 +44,8 @@ export const state = {
 };
 
 const DISPLAY_TIME_ZONE = 'Asia/Makassar';
+const INTERNAL_LOG_LIMIT = 30;
+const INTERNAL_LOG_PATTERN = /error|gagal|usang|offline|invalid|timeout/i;
 
 export const p2 = value =>
   Number.isFinite(+value) ? Number(value).toFixed(2) : '-';
@@ -120,15 +120,16 @@ export function curSession() {
 }
 
 export function log(message) {
-  state.logs = [`[${nowTime()}] ${message}`, ...state.logs].slice(0, 200);
-  save();
-  try { render(); } catch (_) {}
+  const entry = `[${nowTime()}] ${message}`;
+  if (INTERNAL_LOG_PATTERN.test(String(message || ''))) {
+    state.logs = [entry, ...state.logs].slice(0, INTERNAL_LOG_LIMIT);
+    console.warn(entry);
+  } else {
+    console.info(entry);
+  }
 }
 
 export function save() {
-  localStorage.setItem('amy_mapping_logs', JSON.stringify(state.logs.slice(0, 200)));
-  localStorage.setItem('amy_mapping_analyses', JSON.stringify(state.analyses.slice(0, 80)));
-  localStorage.setItem('amy_mapping_setups', JSON.stringify(state.setups.slice(0, 50)));
   localStorage.setItem('bg_scanner', 'true');
 }
 
@@ -153,8 +154,9 @@ ${explanation?.action || 'Ikuti lifecycle setup; jangan mengejar harga.'}`;
 }
 
 function setTab(tab) {
-  state.tab = tab;
-  localStorage.setItem('amy_mapping_tab', tab);
+  const allowedTab = tab === 'Analyze' ? 'Analyze' : 'Dashboard';
+  state.tab = allowedTab;
+  localStorage.setItem('amy_mapping_tab', allowedTab);
   render();
   syncAutomaticScannerUi();
 }
@@ -163,10 +165,7 @@ window.setTab = setTab;
 window.runAnalysis = runAnalysis;
 window.render = render;
 window.analyzeActiveSetups = analyzeActiveSetups;
-window.saveConnect = saveConnect;
 window.toggleBg = toggleBg;
-window.testNotif = testNotif;
-window.downloadLogs = downloadLogs;
 window.state = state;
 window.TF = TF;
 
@@ -181,7 +180,7 @@ function livePriceWatchdog() {
 
 function syncAutomaticScannerUi() {
   const button = document.querySelector('[data-scanner-status]');
-  const buttonText = '📡 Scanner mengikuti setup tervalidasi';
+  const buttonText = '📡 Scanner mengikuti setup causal';
   if (button) {
     if (button.textContent !== buttonText) button.textContent = buttonText;
     if (!button.classList.contains('action')) button.className = 'action';
@@ -189,32 +188,42 @@ function syncAutomaticScannerUi() {
 
   const settings = document.querySelector('.settings');
   if (!settings) return;
-
   const helpText =
     'Harga live, snapshot Mapping, scanner, dan notifikasi memakai kontrak setupExecution yang sama.';
   const help = settings.querySelector('p.muted');
   if (help && help.textContent !== helpText) help.textContent = helpText;
 
   const warningHtml =
-    '<b>Monitor Tervalidasi</b><br>Scanner hanya aktif ketika setupExecution M15 masih aktif, searah forecast, dan belum terminal.';
+    '<b>Monitor Causal</b><br>Scanner hanya aktif ketika setup causal timeframe terpilih masih aktif, searah forecast, dan belum terminal.';
   const warning = settings.querySelector('.warn');
   if (warning && warning.innerHTML !== warningHtml) warning.innerHTML = warningHtml;
 }
 
 export function pruneStorage() {
-  try {
-    state.logs = state.logs.slice(0, 100);
-    state.analyses = state.analyses.slice(0, 30);
-    state.setups = state.setups.slice(0, 30);
-    save();
-
-    const keysToClean = ['amy_mapping_tmp', 'amy_test_cache', 'amy_debug_log'];
-    keysToClean.forEach(key => localStorage.removeItem(key));
-  } catch (_) {}
+  const keysToClean = [
+    'amy_mapping_logs',
+    'amy_mapping_analyses',
+    'amy_mapping_setups',
+    'amy_mapping_tmp',
+    'amy_test_cache',
+    'amy_debug_log'
+  ];
+  keysToClean.forEach(key => {
+    try { localStorage.removeItem(key); } catch (_) {}
+  });
+  state.logs = [];
+  state.analyses = [];
+  state.setups = [];
 }
 
 function initApp() {
   try { localStorage.removeItem('twelve_api_key'); } catch (_) {}
+  try {
+    const storedTab = localStorage.getItem('amy_mapping_tab');
+    if (storedTab !== 'Analyze' && storedTab !== 'Dashboard') {
+      localStorage.setItem('amy_mapping_tab', 'Dashboard');
+    }
+  } catch (_) {}
   pruneStorage();
 
   document.querySelectorAll('.nav button')
@@ -223,6 +232,7 @@ function initApp() {
   window.AmyFXIntel?.mountStrip(document.getElementById('mapping-command-strip'));
   window.AmyFXIntel?.mountBriefing(document.getElementById('intel-briefing'));
   applyAmyFxRoute();
+  if (state.tab !== 'Analyze') state.tab = 'Dashboard';
   render();
   syncAutomaticScannerUi();
 

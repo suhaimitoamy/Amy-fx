@@ -1,5 +1,44 @@
 # Technical Decisions
 
+## 2026-07-29
+
+### Causal Entry Watch 2021–2022 Correctness Contract
+- An eligible opposing sweep must be confirmed on a closed candle at or after Direction Forecast start; an MSS must be a later displaced closed-candle break.
+- Dealing Location uses a confirmed paired structural leg built from consecutive opposite slow pivots. Consecutive same-kind pivots compress to the more structural extreme.
+- Dealing Location's hard-gate reference is the sweep level. POI location, MSS-entry location, and MSS close strength remain separate diagnostics.
+- BUY remains valid only at sweep position `<= 0.60`; SELL remains valid only at `>= 0.40`. These thresholds may not be tuned to create setups.
+- Live analysis time defaults to the current clock. Replay time must be explicit or derive from the last closed candle; an open future candle cannot provide replay time.
+- `entryMap.setup` is authoritative for terminal lifecycle state even when `activeSetup` is null. Terminal states must remain `SL HIT`, `TP1 HIT / BE`, `TP2 HIT`, `TP1 / BE`, or `EXPIRED`.
+- Structural target diagnosis distinguishes no target, below 2R, above 8R, risk above 6 ATR, and valid 2R–8R without changing entry geometry or target thresholds.
+- The 2021–2022 final validation remains at zero M5/M15 setups because `SESSION` is the next cumulative blocker. Session rules must not be loosened from this result.
+
+### Rencana Eksekusi Read-Only Contract
+- Rencana Eksekusi is a presentation consumer, not a strategy or analysis engine. Its setup priority is `setupExecution` → `entryMap.setup` → another authoritative runtime output only when the higher-priority source lacks that field.
+- BUY/SELL is fail-closed and requires fresh Mapping data, an active aligned official direction, `entryWatch.entryAllowed === true`, a locked execution plan, the official closed-candle entry lifecycle (`ENTRY_ACTIVE` / `ENTRY CONFIRMED`, or the equivalent internal `ENTRY_TRIGGERED`), valid geometry, and official entry/SL/target levels.
+- WAIT is mandatory for incomplete gates, official context conflict, stale/expired data, post-TP1 management, or terminal lifecycle. Non-executable and old levels remain hidden.
+- Internal lifecycle names are never renamed or duplicated. UI labels only translate the existing Causal Entry Watch status.
+- The feature does not read forming candles, call a market API, create polling, calculate indicators, recalculate RR, or mutate Mapping/Entry Watch objects. It refreshes from existing Mapping, Entry Watch, candle, and market-state events with a content fingerprint.
+- Amy Bot receives the same structured `execution_plan` Context Envelope as the card and uses a deterministic read-only answer path before other market-answer paths. It may explain but cannot reverse the decision or create levels.
+- In Analyze, Rencana Eksekusi is immediately followed by Penjelasan Mapping; dynamic Asia Liquidity is anchored after Penjelasan Mapping. This is presentation-only and does not change Asia session calculation or WITA timing.
+
+## 2026-07-28
+
+### Mapping Accuracy V3
+- This section supersedes the 2026-07-11 decision that restricted actionable entries to M15.
+- Causal Entry Map is supported on M1, M5, M15, M30, H1, H4, D1, and W1. Source and trigger are the selected timeframe; each profile has an explicit context, session, sweep-memory, and bar-expiry contract.
+- The required causal order is active Direction Forecast → point-in-time context alignment → local EMA21/34/90 stack → opposing confirmed liquidity sweep → later displaced MSS → location/session filters → first still-available structural target at 2R–8R.
+- M5 entry context follows the trusted indicator's default H4 bias. Every context gate uses only the latest context candle closed by the trigger close; later HTF candles cannot validate an earlier trigger.
+- H1 entry close must remain within 2.00 ATR of EMA21.
+- Entry is the closed MSS candle close, SL is beyond the protected swing plus 0.50 ATR, TP1 is 1R, and the runner moves to break-even toward the first structural target.
+- H1 bearish forecast remains suppressed and must return `NO CLEAR DIRECTION`, matching the trusted reference.
+- M1, M30, H4, D1, and W1 profiles are rule-based/manual-validation profiles and may not display a win-probability claim.
+- `AMY_MAPPING_SINGLE_AUTHORITY_V3` is the read-only UI contract. Live price is provisional and cannot rewrite closed-candle facts or lifecycle.
+- Weak structure close-crosses are candidates only. Confirmed breaks require ATR penetration, minimum body, and body/range quality.
+- Liquidity first interaction is irreversible and distinguishes closed-through, unconfirmed sweep, and confirmed reaction.
+- FVG/OB inversion requires accepted break (three closes plus continuation), retest, and inverse rejection.
+- Previous-period liquidity is unavailable until its source period closes. W1 candle closure is anchored to Monday UTC.
+- Validation for this change is regression/syntax/build plus user-performed manual chart validation; no backtest is run.
+
 ## 2026-07-11
 
 ### Mapping Production Logic

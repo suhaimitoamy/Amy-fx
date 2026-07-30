@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       versionName:
-        description: "Version Name (e.g., 1.5.8)"
+        description: "Version Name (e.g., 2.0.0)"
         required: true
-        default: "1.5.8"
+        default: "2.0.0"
       versionCode:
         description: "Version Code (must increase)"
         required: true
-        default: "49"
+        default: "51"
 
 permissions:
   contents: read
@@ -76,7 +76,7 @@ jobs:
           node-version: "22"
 
       - name: Run JavaScript regression tests
-        run: timeout 10m npm test
+        run: timeout 15m npm test
 
       - name: Run Android unit tests
         run: ./gradlew testReleaseUnitTest --no-configuration-cache

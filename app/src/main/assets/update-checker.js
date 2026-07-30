@@ -1,8 +1,9 @@
 (function () {
-  const VERSION = window.AmyFXAppVersion || { name: '1.4.11', code: 34 };
-  const CURRENT_VERSION_CODE = Number(VERSION.code) || 34;
-  const CURRENT_VERSION_NAME = String(VERSION.name || '1.4.11');
-  const UPDATE_URL = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json';
+  const VERSION = window.AmyFXAppVersion || { name: '2.0.0-preview.173', code: 940173 };
+  const CURRENT_VERSION_CODE = Number(VERSION.code) || 940173;
+  const CURRENT_VERSION_NAME = String(VERSION.name || '2.0.0-preview.173');
+  const UPDATE_URL = window.AmyFXUpdateManifestUrl
+    || 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json';
   const CHECK_INTERVAL_MS = 15 * 60 * 1000;
   const RESUME_DELAY_MS = 900;
 
@@ -164,7 +165,7 @@
       : (Array.isArray(data.changelog) ? data.changelog : []);
 
     box.innerHTML = `
-      <div style="color:#d4af37;font-weight:950;font-size:20px;margin-bottom:8px">Update Amy FX Tersedia</div>
+      <div style="color:#d4af37;font-weight:950;font-size:20px;margin-bottom:8px">Update Amy FX Preview Tersedia</div>
       <div style="color:#ddd;line-height:1.5;margin-bottom:14px">
         Versi kamu: <b>${escapeHtml(CURRENT_VERSION_NAME)}</b> (${CURRENT_VERSION_CODE})<br>
         Versi terbaru: <b>${escapeHtml(latestName || latestCode)}</b> (${latestCode})
@@ -208,7 +209,7 @@
     const note = document.createElement('div');
     note.textContent = hasNativeUpdater()
       ? 'APK diunduh ke cache Amy FX, diverifikasi, lalu Android meminta konfirmasi instalasi. File tidak menumpuk di folder Download.'
-      : 'Versi Amy FX ini masih memakai unduhan browser. Setelah versi 1.4.11 terpasang, update berikutnya akan berlangsung di dalam aplikasi.';
+      : 'Versi Amy FX Preview ini masih memakai unduhan browser. Setelah versi 1.4.11 terpasang, update berikutnya akan berlangsung di dalam aplikasi.';
     css(note, { color: '#aaa', fontSize: '12px', lineHeight: '1.45', marginBottom: '16px' });
     box.appendChild(note);
 
@@ -239,7 +240,7 @@
           cancelBtn,
           downloading: true
         };
-        setNativeState('starting', `Menyiapkan unduhan Amy FX ${latestName}...`);
+        setNativeState('starting', `Menyiapkan unduhan Amy FX Preview ${latestName}...`);
         try {
           window.Android.startAppUpdate(String(downloadUrl), String(latestName), Number(latestCode));
         } catch (error) {
@@ -296,7 +297,7 @@
           return { status: 'update_available', latestCode, latestName };
         }
 
-        if (announce) notify(`Amy FX v${CURRENT_VERSION_NAME} (${CURRENT_VERSION_CODE}) sudah versi terbaru.`);
+        if (announce) notify(`Amy FX Preview v${CURRENT_VERSION_NAME} (${CURRENT_VERSION_CODE}) sudah versi terbaru.`);
         return { status: 'up_to_date', latestCode, latestName };
       } catch (error) {
         if (announce) notify('Gagal memeriksa pembaruan. Coba lagi saat koneksi stabil.');

@@ -6,7 +6,7 @@ const router = await readFile(new URL('../app/src/main/assets/apps/mapping/js/en
 const marketData = await readFile(new URL('../app/src/main/assets/apps/mapping/js/api/market-data.js', import.meta.url), 'utf8');
 const conceptAnalyze = await readFile(new URL('../app/src/main/assets/apps/mapping/js/engine/concept-analyze.js', import.meta.url), 'utf8');
 const entryRuntime = await readFile(new URL('../app/src/main/assets/apps/mapping/js/entry-watch-runtime-v2.js', import.meta.url), 'utf8');
-const ui = await readFile(new URL('../app/src/main/assets/apps/mapping/js/market-intent-ui.js', import.meta.url), 'utf8');
+const snapshot = await readFile(new URL('../app/src/main/assets/apps/mapping/js/engine/mapping-snapshot.js', import.meta.url), 'utf8');
 
 test('Market Shift stays advisory and cannot become an automatic hard gate', () => {
   assert.match(router, /const activeRegime = state\.activeRegime/);
@@ -19,31 +19,34 @@ test('Strategy Router remains contextual and cannot create or replace a primary 
   assert.match(router, /routerCanReplaceEntrySetup: false/);
   assert.match(router, /STRATEGY_SUITABILITY_ACCURACY_48_53_2022_2025/);
   assert.match(marketData, /mayReplaceEntryMap: false/);
-  assert.match(marketData, /result\.unroutedBestSetup = originalBestSetup/);
+  assert.match(marketData, /result\.unroutedBestSetup = causalBestSetup/);
   assert.doesNotMatch(marketData, /result\.bestSetup = router\.setup/);
   assert.doesNotMatch(marketData, /result\.bestSetup = router\.watchSetup/);
 });
 
-test('Entry Map remains audit-only while hardened Entry Watch owns the primary setup', () => {
-  assert.match(marketData, /ENTRY_MAP_REACTION_ACCURACY_48_24_2022_2025/);
-  assert.match(marketData, /result\.experimentalSetups = experimentalSetups/);
-  assert.match(marketData, /result\.experimentalBestSetup = experimentalBestSetup/);
-  assert.match(conceptAnalyze, /setups: \[\]/);
-  assert.match(conceptAnalyze, /bestSetup: null/);
-  assert.match(conceptAnalyze, /signal: 'WAIT'/);
-  assert.match(conceptAnalyze, /status: 'REPLACED_BY_MULTI_TF_LEVEL_WATCH'/);
-  assert.match(entryRuntime, /setupFromHardenedWatch\(watch\)/);
-  assert.match(entryRuntime, /result\.bestSetup = setup/);
-  assert.match(ui, /SKENARIO PEMANTAUAN/);
-  assert.match(ui, /Konfirmasi harga tetap diperlukan/);
+test('causal Entry Map owns the primary setup while the Entry Watch only renders it', () => {
+  assert.doesNotMatch(marketData, /ENTRY_MAP_REACTION_ACCURACY_48_24_2022_2025/);
+  assert.match(marketData, /result\.experimentalSetups = \[\]/);
+  assert.match(conceptAnalyze, /setups: activeSetup \? \[activeSetup\] : \[\]/);
+  assert.match(conceptAnalyze, /bestSetup: activeSetup/);
+  assert.match(conceptAnalyze, /detectTimeframeEntryMap/);
+  assert.match(entryRuntime, /result\.mappingSnapshot/);
+  assert.doesNotMatch(entryRuntime, /result\.bestSetup\s*=/);
+  assert.doesNotMatch(entryRuntime, /result\.setups\s*=/);
 });
 
 test('Validated Direction Forecast conflict protection remains active', () => {
   assert.match(marketData, /const setupConflict = Boolean/);
   assert.match(marketData, /result\.validatedSetupConflict = setupConflict/);
-  assert.match(marketData, /const experimentalSetups = setupConflict \|\| !forecastActive \? \[\]/);
   assert.match(marketData, /if \(!forecastActive \|\| setupConflict\)/);
   assert.match(marketData, /result\.setups = \[\]/);
   assert.match(marketData, /result\.bestSetup = null/);
-  assert.match(entryRuntime, /if \(directions\.length !== 1\) return null/);
+});
+
+test('snapshot contract is the only UI authority and forbids UI mutation', () => {
+  assert.match(snapshot, /AMY_MAPPING_SINGLE_AUTHORITY_V3/);
+  assert.match(snapshot, /closedCandleOnly: true/);
+  assert.match(snapshot, /mayRewriteClosedCandleFacts: false/);
+  assert.match(snapshot, /uiMayMutate: false/);
+  assert.match(marketData, /buildMappingSnapshot/);
 });

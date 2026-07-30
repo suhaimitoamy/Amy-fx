@@ -7,8 +7,9 @@ const indexPath = 'app/src/main/assets/apps/mapping/index.html';
 const runtimePath = 'app/src/main/assets/apps/mapping/js/entry-watch-runtime-v2.js';
 const coordinatorPath = 'app/src/main/assets/apps/mapping/js/api-request-coordinator.js';
 const candleCoordinatorPath = 'app/src/main/assets/apps/mapping/js/candle-refresh-coordinator.js';
+const timeframePath = 'app/src/main/assets/apps/mapping/js/engine/mapping-timeframes.js';
 const scannerGatePath = 'app/src/main/assets/apps/mapping/js/scanner-visibility-gate.js';
-const stabilityPath = 'app/src/main/assets/apps/mapping/js/view-stability.js';
+const stabilityPath = 'app/src/main/assets/apps/mapping/js/analysis-ui-stability-v4.js';
 const backendPath = 'api/twelvedata.js';
 const scannerServicePath = 'app/src/main/java/com/amyelitesuite/ScannerService.kt';
 
@@ -16,13 +17,14 @@ const index = fs.readFileSync(indexPath, 'utf8');
 const runtime = fs.readFileSync(runtimePath, 'utf8');
 const coordinator = fs.readFileSync(coordinatorPath, 'utf8');
 const candleCoordinator = fs.readFileSync(candleCoordinatorPath, 'utf8');
+const timeframe = fs.readFileSync(timeframePath, 'utf8');
 const scannerGate = fs.readFileSync(scannerGatePath, 'utf8');
 const stability = fs.readFileSync(stabilityPath, 'utf8');
 const backend = fs.readFileSync(backendPath, 'utf8');
 const scannerService = fs.readFileSync(scannerServicePath, 'utf8');
 
 test('new Mapping and backend runtime files remain syntactically valid', () => {
-  for (const path of [runtimePath, coordinatorPath, candleCoordinatorPath, scannerGatePath, stabilityPath, backendPath]) {
+  for (const path of [runtimePath, coordinatorPath, candleCoordinatorPath, timeframePath, scannerGatePath, stabilityPath, backendPath]) {
     execFileSync(process.execPath, ['--check', path], { stdio: 'pipe' });
   }
 });
@@ -43,7 +45,10 @@ test('Entry Watch consumes shared Mapping candles without a second API fetcher',
   assert.equal(runtime.includes('PROXY_URL'), false);
   assert.equal(runtime.includes('CANDLE_REFRESH_MS'), false);
   assert.equal(runtime.includes('fetch('), false);
-  assert.match(runtime, /candlesByTf:\s*state\.candles/);
+  assert.match(runtime, /result\.mappingSnapshot/);
+  assert.match(runtime, /snapshot\?\.scenario/);
+  assert.doesNotMatch(runtime, /result\.bestSetup\s*=/);
+  assert.doesNotMatch(runtime, /result\.setups\s*=/);
 });
 
 test('shared candle coordinator refreshes only closed watch timeframes', () => {
@@ -53,23 +58,31 @@ test('shared candle coordinator refreshes only closed watch timeframes', () => {
   assert.match(candleCoordinator, /watch\.triggerTf/);
   assert.match(candleCoordinator, /watch\.sourceTf/);
   assert.match(candleCoordinator, /expectedClosedOpenTime/);
+  assert.match(candleCoordinator, /expectedClosedCandleOpenTime/);
   assert.match(candleCoordinator, /amyfx:candles-updated/);
+  assert.match(timeframe, /W1:\s*7 \* 24 \* 60 \* 60/);
+  assert.match(timeframe, /mondayUtcAnchorSeconds/);
 });
 
-test('native scanner is background-only and rate limited', () => {
+test('legacy native Mapping scanner remains permanently disabled', () => {
   assert.ok(index.includes('js/scanner-visibility-gate.js'));
-  assert.match(scannerGate, /document\.hidden/);
   assert.match(scannerGate, /stopBackgroundScanner/);
-  assert.match(scannerGate, /startBackgroundScanner/);
+  assert.doesNotMatch(scannerGate, /startBackgroundScanner/);
   assert.match(scannerGate, /amyfx:entry-watch-updated/);
-  assert.match(scannerService, /MARKET_POLL_MS = 5L \* 60L \* 1000L/);
-  assert.match(scannerService, /memeriksa harga setiap 5 menit/);
+  assert.match(scannerGate, /only active notification source/);
+  assert.match(scannerService, /Legacy local Mapping scanner is retired/);
+  assert.match(scannerService, /putBoolean\(KEY_SCANNER_ENABLED, false\)/);
+  assert.match(scannerService, /return START_NOT_STICKY/);
+  assert.doesNotMatch(scannerService, /MARKET_POLL_MS/);
 });
 
-test('analysis view has scroll stability protection', () => {
-  assert.ok(index.includes('js/view-stability.js'));
+test('analysis view preserves disclosure state without forced scroll movement', () => {
+  assert.ok(index.includes('js/analysis-ui-stability-v4.js'));
+  assert.equal(index.includes('js/view-stability.js'), false);
+  assert.match(stability, /DISCLOSURE_STATE_KEY/);
   assert.match(stability, /MutationObserver/);
-  assert.match(stability, /window\.scrollTo/);
+  assert.doesNotMatch(stability, /window\.scrollTo/);
+  assert.doesNotMatch(stability, /window\.scrollBy/);
 });
 
 test('client Twelve Data requests are canonicalized, deduplicated and cached', () => {

@@ -94,9 +94,10 @@ test('session windows use exact Makassar boundaries', () => {
   assert.equal(window.active, true);
 });
 
-test('TwelveData backend normalizes UTC timestamps for session boundaries', () => {
+test('shared candle store requests UTC and normalizes provider timestamps', () => {
   const root = fileURLToPath(new URL('..', import.meta.url));
-  const backend = readFileSync(`${root}/api/twelvedata.js`, 'utf8');
-  assert.match(backend, /timezone=UTC/);
-  assert.match(backend, /normalizeUtcDatetime/);
+  const store = readFileSync(`${root}/lib/market-candle-store.mjs`, 'utf8');
+  assert.match(store, /timezone:\s*'UTC'/);
+  assert.match(store, /function parseUtcSeconds/);
+  assert.match(store, /replace\(' ', 'T'\)/);
 });

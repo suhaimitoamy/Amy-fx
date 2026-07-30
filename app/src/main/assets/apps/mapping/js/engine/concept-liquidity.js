@@ -61,11 +61,13 @@ export function detectLiquidityConcepts(candles, { currentPrice = null, maxLevel
   addEqualLevels(values, recentLows, 'SSL', levels, LIQUIDITY_SWING_LENGTH);
 
   const evaluated = levels.map(level => {
+    const levelAtr = Math.max(Number(level.localAtr || 0), 0.0000001);
+    const tolerance = Math.max(Number(level.tolerance || 0), levelAtr * 0.03, 0.0000001);
     let interactionIndex = -1;
     for (let index = Math.max(0, level.availableIndex + 1); index < values.length; index += 1) {
       const hit = level.type === 'BSL'
-        ? values[index].high > level.level
-        : values[index].low < level.level;
+        ? values[index].high > level.level + tolerance
+        : values[index].low < level.level - tolerance;
       if (hit) {
         interactionIndex = index;
         break;
@@ -74,6 +76,7 @@ export function detectLiquidityConcepts(candles, { currentPrice = null, maxLevel
     if (interactionIndex < 0) {
       return {
         ...level,
+        tolerance,
         status: 'DETECTED',
         active: true,
         interactionIndex,
@@ -85,16 +88,27 @@ export function detectLiquidityConcepts(candles, { currentPrice = null, maxLevel
 
     const candle = values[interactionIndex];
     const localAtr = Math.max(conceptAtrAtClean(values, interactionIndex), 0.0000001);
-    const confirmation = evaluateLevelConfirmation(level.type, level.level, candle.close, localAtr);
+    const closedThrough = level.type === 'BSL'
+      ? candle.close > level.level + tolerance
+      : candle.close < level.level - tolerance;
+    const confirmation = evaluateLevelConfirmation(
+      level.type,
+      level.level,
+      candle.close,
+      localAtr,
+      tolerance
+    );
     return {
       ...level,
+      tolerance,
       interactionIndex,
       interactionTime: candle.time,
       localAtr,
       reclaimDepthAtr: confirmation.depthAtr,
-      confirmed: confirmation.confirmed,
+      confirmed: !closedThrough && confirmation.confirmed,
       active: false,
-      status: confirmation.status,
+      status: closedThrough ? 'CLOSED_THROUGH' : confirmation.status,
+      consumedBy: closedThrough ? 'ACCEPTED_CLOSE' : 'WICK_SWEEP',
       reactionDirection: level.type === 'BSL' ? 'BEARISH' : 'BULLISH',
       distance: Math.abs(level.level - conceptNumber(currentPrice, values.at(-1)?.close))
     };

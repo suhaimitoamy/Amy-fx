@@ -4,42 +4,31 @@ import { readFileSync } from 'node:fs';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
-test('Amy FX 1.5.9 uses versionCode 50 without changing the production applicationId', () => {
+test('Amy FX public source uses the permanent production Android identity', () => {
   const gradle = read('app/build.gradle.kts');
   const version = read('app/src/main/assets/app-version.js');
   assert.match(gradle, /val configuredApplicationId = System\.getenv\("AMYFX_APPLICATION_ID"\) \?: "com\.amyelitesuite"/);
+  assert.match(gradle, /val configuredAppLabel = System\.getenv\("AMYFX_APP_LABEL"\) \?: "Amy FX"/);
+  assert.match(gradle, /val configuredUriScheme = System\.getenv\("AMYFX_URI_SCHEME"\) \?: "amyfx"/);
+  assert.match(gradle, /main\/update\.json/);
   assert.match(gradle, /applicationId = configuredApplicationId/);
-  assert.match(gradle, /versionCode[^\n]*50/);
-  assert.match(gradle, /versionName[^\n]*"1\.5\.9"/);
-  assert.match(version, /name: '1\.5\.9', code: 50/);
+  assert.match(gradle, /versionCode[^\n]*51/);
+  assert.match(gradle, /versionName[^\n]*"2\.0\.0"/);
+  assert.match(version, /name: '2\.0\.0', code: 51/);
+  assert.doesNotMatch(gradle, /learningpreview|Amy FX Preview|amyfxpreview|preview-update\.json/);
+  assert.doesNotMatch(version, /Amy FX Preview|personal\/amyfx-private|preview-update\.json/);
 });
 
-test('published metadata is never ahead of the APK source version', () => {
+test('published public metadata is never ahead of the published public APK', () => {
   const metadata = JSON.parse(read('update.json'));
-  assert.ok([40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50].includes(metadata.latest_version_code));
-  const expected = metadata.latest_version_code === 50
-    ? '1.5.9'
-    : metadata.latest_version_code === 49
-      ? '1.5.8'
-      : metadata.latest_version_code === 48
-        ? '1.5.7'
-        : metadata.latest_version_code === 47
-          ? '1.5.6'
-          : metadata.latest_version_code === 46
-            ? '1.5.5'
-            : metadata.latest_version_code === 45
-              ? '1.5.4'
-              : metadata.latest_version_code === 44
-                ? '1.5.3'
-                : metadata.latest_version_code === 43
-                  ? '1.5.2'
-                  : metadata.latest_version_code === 42
-                    ? '1.5.1'
-                    : metadata.latest_version_code === 41
-                      ? '1.5.0'
-                      : '1.4.17';
-  assert.equal(metadata.latest_version_name, expected);
-  assert.ok(metadata.latest_version_code <= 50);
+  assert.ok([40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51].includes(metadata.latest_version_code));
+  const versions = new Map([
+    [40, '1.4.17'], [41, '1.5.0'], [42, '1.5.1'], [43, '1.5.2'],
+    [44, '1.5.3'], [45, '1.5.4'], [46, '1.5.5'], [47, '1.5.6'],
+    [48, '1.5.7'], [49, '1.5.8'], [50, '1.5.9'], [51, '2.0.0']
+  ]);
+  assert.equal(metadata.latest_version_name, versions.get(metadata.latest_version_code));
+  assert.ok(metadata.latest_version_code <= 51);
   assert.ok(Array.isArray(metadata.release_notes));
   assert.ok(metadata.release_notes.length > 0);
 });
@@ -57,12 +46,15 @@ test('client no longer persists TwelveData credentials', () => {
 
 test('market proxy accepts only validated server-side requests', () => {
   const api = read('api/twelvedata.js');
+  const store = read('lib/market-candle-store.mjs');
   assert.match(api, /process\.env\.TWELVEDATA_API_KEY/);
   assert.doesNotMatch(api, /req\.query[^\n]*apikey/);
   assert.match(api, /req\.method !== 'GET'/);
   assert.match(api, /ALLOWED_INTERVALS\.has\(interval\)/);
-  assert.match(api, /new AbortController\(\)/);
-  assert.match(api, /Market service timeout/);
+  assert.match(store, /new AbortController\(\)/);
+  assert.match(store, /PROVIDER_TIMEOUT_MS/);
+  assert.match(store, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.doesNotMatch(store, /req\.query[^\n]*apikey/);
 });
 
 test('native notifications only open trusted local routes', () => {
@@ -86,12 +78,13 @@ test('release workflows pin the certificate and inspect v1 plus v2 structures', 
   }
 
   const rolling = read('.github/workflows/build-apk.yml');
-  assert.match(rolling, /AMYFX_VERSION_NAME: "1\.5\.9"/);
-  assert.match(rolling, /AMYFX_VERSION_CODE: "50"/);
+  assert.match(rolling, /AMYFX_VERSION_NAME: "2\.0\.0"/);
+  assert.match(rolling, /AMYFX_VERSION_CODE: "51"/);
   assert.match(rolling, /Verify public update manifest source/);
 
   const manual = read('.github/workflows/build-release.yml');
-  assert.match(manual, /workflow_dispatch/);
+  assert.match(manual, /default: "2\.0\.0"/);
+  assert.match(manual, /default: "51"/);
   assert.match(manual, /AMYFX_VERSION_NAME/);
   assert.match(manual, /AMYFX_VERSION_CODE/);
 
@@ -101,7 +94,7 @@ test('release workflows pin the certificate and inspect v1 plus v2 structures', 
   assert.match(candidate, /AMYFX_VERSION_CODE/);
 });
 
-test('Firebase Android client remains bound to the release applicationId', () => {
+test('public Firebase Android client remains bound to the public release applicationId', () => {
   const firebase = JSON.parse(read('app/google-services.json'));
   assert.equal(firebase.client[0].client_info.android_client_info.package_name, 'com.amyelitesuite');
   assert.equal('private_key' in firebase, false);

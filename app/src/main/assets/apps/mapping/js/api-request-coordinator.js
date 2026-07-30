@@ -8,8 +8,12 @@
   const inFlight = new Map();
   const responseCache = new Map();
   const intervalSnapshots = new Map();
-  const API_HOST = 'amy-fx.vercel.app';
-  const API_PATH = '/api/twelvedata';
+  const PRIVATE_MARKET_URL = 'https://wliecyxzlwhmtftnfnps.supabase.co/functions/v1/market-candles';
+  const MARKET_API_HOSTS = new Set([
+    'amy-fx.vercel.app',
+    'amy-fx-git-personal-amyfx-private-aplikasi-trading.vercel.app',
+    'wliecyxzlwhmtftnfnps.supabase.co'
+  ]);
   const LIVE_TTL_MS = 90_000;
   const SHARED_M1_OUTPUT_SIZE = 300;
 
@@ -18,7 +22,9 @@
     if (method !== 'GET') return false;
     try {
       const url = new URL(input instanceof Request ? input.url : String(input), location.href);
-      return url.hostname === API_HOST && url.pathname === API_PATH;
+      const supportedPath = url.pathname === '/api/twelvedata'
+        || url.pathname === '/functions/v1/market-candles';
+      return MARKET_API_HOSTS.has(url.hostname) && supportedPath;
     } catch (_) {
       return false;
     }
@@ -33,7 +39,7 @@
       : Math.max(requestedOutputsize || 300, 1);
     const symbol = String(sourceUrl.searchParams.get('symbol') || 'XAU/USD').toUpperCase();
 
-    const url = new URL(`${sourceUrl.origin}${sourceUrl.pathname}`);
+    const url = new URL(PRIVATE_MARKET_URL);
     url.searchParams.set('symbol', symbol);
     url.searchParams.set('interval', interval);
     url.searchParams.set('outputsize', String(outputsize));
@@ -72,6 +78,20 @@
       'content-length',
       'transfer-encoding'
     ].includes(String(name).toLowerCase()));
+  }
+
+  function normalizeClosedSeries(body) {
+    try {
+      const data = JSON.parse(body);
+      if (data?.closedOnly !== true || !Array.isArray(data.values) || !data.values.length) return body;
+      return JSON.stringify({
+        ...data,
+        values: [{ ...data.values[0], amyfxSyntheticCurrent: true }, ...data.values],
+        clientCompatibility: 'CLOSED_SERIES_SENTINEL_V1'
+      });
+    } catch (_) {
+      return body;
+    }
   }
 
   function cloneStored(stored) {
@@ -159,7 +179,7 @@
         ? new Request(info.fetchUrl, input)
         : info.fetchUrl;
       const response = await nativeFetch(canonicalInput, init);
-      const body = await response.clone().text();
+      const body = normalizeClosedSeries(await response.clone().text());
       const storedAt = Date.now();
       const stored = {
         body,
@@ -187,6 +207,7 @@
 
   window.fetch = coordinatedFetch;
   window.AmyFXRequestCoordinator = Object.freeze({
+    privateMarketUrl: PRIVATE_MARKET_URL,
     clear() {
       responseCache.clear();
       intervalSnapshots.clear();

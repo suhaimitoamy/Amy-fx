@@ -40,6 +40,48 @@ document.addEventListener('DOMContentLoaded', () => {
     return String(value ?? '').replace(/[&<>'\"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '\"': '&quot;' }[ch]));
   }
 
+  function readJsonSafe(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw == null || raw === '') return fallback;
+      return JSON.parse(raw);
+    } catch (_) {
+      try { localStorage.removeItem(key); } catch (_) {}
+      return fallback;
+    }
+  }
+
+  function readJsonArray(key) {
+    const value = readJsonSafe(key, []);
+    return Array.isArray(value) ? value : [];
+  }
+
+  function deleteIndexedDatabase(name) {
+    return new Promise(resolve => {
+      if (!('indexedDB' in window)) return resolve(false);
+      let settled = false;
+      const finish = value => { if (!settled) { settled = true; resolve(value); } };
+      try {
+        const request = indexedDB.deleteDatabase(name);
+        request.onsuccess = () => finish(true);
+        request.onerror = () => finish(false);
+        request.onblocked = () => finish(false);
+        setTimeout(() => finish(false), 2500);
+      } catch (_) { finish(false); }
+    });
+  }
+
+  async function clearPersonalLocalData() {
+    const keys = [
+      'amy_mapping_logs', 'amy_mapping_analyses', 'amy_mapping_setups',
+      'amy_mapping_lifecycle_v4', 'amy_mapping_active_pointer_v4',
+      'amy_entry_watch_state_v3', 'amy_recent_projects', 'amy_saved_code',
+      'amy_journal_entries', 'amy_mapping_notified'
+    ];
+    keys.forEach(key => { try { localStorage.removeItem(key); } catch (_) {} });
+    return deleteIndexedDatabase('tradingLibraryManager.files');
+  }
+
   async function loadRepoIndicators() {
     async function readLocalManifest() {
       const paths = [
@@ -140,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderKoleksi() {
     setActive('koleksi');
-    const recentIds = JSON.parse(localStorage.getItem('amy_recent_projects') || '[]');
+    const recentIds = readJsonArray('amy_recent_projects');
     const recent = recentIds.map(id => projects.find(item => item.id === id)).filter(Boolean).slice(0, 3);
     const favorites = [projects.find(item => item.id === 'mapping'), projects.find(item => item.id === 'jurnal'), projects.find(item => item.id === 'intel')].filter(Boolean);
     mainContent.innerHTML = `<div class="page-header"><div><span class="section-kicker">SIMPANAN &amp; AKSES</span><h2>Koleksi</h2><p>Jaga modul dan catatan penting tetap mudah ditemukan.</p></div></div><section class="collection-section"><div class="section-heading"><div><span class="section-kicker">FAVORIT</span><h2>Modul pilihan</h2></div><span class="section-count">${favorites.length}</span></div><div class="collection-grid">${favorites.map(projectCard).join('')}</div></section><section class="collection-section"><div class="section-heading"><div><span class="section-kicker">RIWAYAT DIBUKA</span><h2>Aktivitas terbaru</h2></div></div>${recent.length ? `<div class="collection-grid">${recent.map(projectCard).join('')}</div>` : '<div class="empty collection-empty">Belum ada modul yang dibuka dari sesi ini.</div>'}</section><section class="collection-tools"><button class="collection-tool" data-koleksi="kode"><span class="tool-icon">⌘</span><span><strong>Kode tersimpan</strong><small>${localStorage.getItem('amy_saved_code') ? 'Ada kode yang tersimpan' : 'Belum ada kode tersimpan'}</small></span><span class="chevron">›</span></button><button class="collection-tool" data-koleksi="update"><span class="tool-icon">↻</span><span><strong>Status aplikasi</strong><small>Versi terbaru aktif</small></span><span class="chevron">›</span></button></section>`;
@@ -149,9 +191,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderProfile() {
     setActive('profil');
     const savedCode = Boolean(localStorage.getItem('amy_saved_code'));
-    const analyses = JSON.parse(localStorage.getItem('amy_mapping_analyses') || '[]').length;
-    const journal = JSON.parse(localStorage.getItem('amy_journal_entries') || '[]').length;
-    mainContent.innerHTML = `<div class="page-header"><div><span class="section-kicker">PENGATURAN</span><h2>Profil</h2><p>Pengaturan ringan untuk perangkat ini.</p></div></div><section class="profile-card slide-up"><div class="profile-avatar">AMY</div><div><h3>Trader Amy FX</h3><p>VIP Member • Lifetime Access</p></div><span class="status-badge">AKTIF</span></section><section class="stats-grid"><div class="stat-card"><strong>${analyses}</strong><small>Analisis Mapping</small></div><div class="stat-card"><strong>${journal}</strong><small>Catatan Jurnal</small></div><div class="stat-card"><strong>${savedCode ? '1' : '0'}</strong><small>Kode Tersimpan</small></div></section><section class="profile-list"><div class="profile-row"><span class="tool-icon">◉</span><span><strong>Data Tersimpan</strong><small>Riwayat dan preferensi tetap aman.</small></span><span class="check-mark">✓</span></div><div class="profile-row"><span class="tool-icon">⚡</span><span><strong>Sistem Aktif</strong><small>Fitur premium aktif.</small></span><span class="check-mark">✓</span></div><button class="profile-row danger-row" data-profile-action="clear"><span class="tool-icon">⌫</span><span><strong>Bersihkan cache aplikasi</strong><small>Tidak menghapus lisensi atau API key.</small></span><span class="chevron">›</span></button></section>`;
+    const analyses = readJsonArray('amy_mapping_analyses').length;
+    const journal = readJsonArray('amy_journal_entries').length;
+    mainContent.innerHTML = `<div class="page-header"><div><span class="section-kicker">PENGATURAN</span><h2>Profil</h2><p>Pengaturan ringan untuk perangkat ini.</p></div></div><section class="profile-card slide-up"><div class="profile-avatar">AMY</div><div><h3>Trader Amy FX</h3><p>VIP Member • Lifetime Access</p></div><span class="status-badge">AKTIF</span></section><section class="stats-grid"><div class="stat-card"><strong>${analyses}</strong><small>Analisis Mapping</small></div><div class="stat-card"><strong>${journal}</strong><small>Catatan Jurnal</small></div><div class="stat-card"><strong>${savedCode ? '1' : '0'}</strong><small>Kode Tersimpan</small></div></section><section class="profile-list"><div class="profile-row"><span class="tool-icon">◉</span><span><strong>Data Tersimpan</strong><small>Riwayat dan preferensi tetap aman.</small></span><span class="check-mark">✓</span></div><div class="profile-row"><span class="tool-icon">⚡</span><span><strong>Sistem Aktif</strong><small>Fitur premium aktif.</small></span><span class="check-mark">✓</span></div><button class="profile-row danger-row" data-profile-action="clear"><span class="tool-icon">⌫</span><span><strong>Bersihkan data lokal</strong><small>Menghapus riwayat, jurnal, dan koleksi lokal. API key tetap disimpan.</small></span><span class="chevron">›</span></button></section>`;
   }
 
   function handleKoleksi(action) {
@@ -206,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function openProject(id) {
     const project = projects.find(item => item.id === id);
     if (!project) return;
-    const recent = JSON.parse(localStorage.getItem('amy_recent_projects') || '[]').filter(item => item !== id);
+    const recent = readJsonArray('amy_recent_projects').filter(item => item !== id);
     localStorage.setItem('amy_recent_projects', JSON.stringify([id, ...recent].slice(0, 8)));
     if (project.target === 'internal') {
       renderIndikator();
@@ -269,9 +311,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saveBtn) { localStorage.setItem('amy_saved_code', selectedIndicator.code || ''); saveBtn.textContent = 'Tersimpan'; }
     if (koleksiBtn) handleKoleksi(koleksiBtn.dataset.koleksi);
     if (profileBtn && profileBtn.dataset.profileAction === 'clear') {
-      if (window.confirm('Hapus riwayat analisis, jurnal, dan koleksi lokal? API key tidak ikut dihapus.')) {
-        ['amy_mapping_logs', 'amy_mapping_analyses', 'amy_mapping_setups', 'amy_recent_projects', 'amy_saved_code', 'amy_journal_entries'].forEach(key => localStorage.removeItem(key));
-        showToast('Riwayat lokal sudah dibersihkan.');
+      if (window.confirm('Hapus riwayat analisis, jurnal, library, dan koleksi lokal? API key tidak ikut dihapus.')) {
+        await clearPersonalLocalData();
+        showToast('Data lokal sudah dibersihkan. API key tetap tersimpan.');
         renderProfile();
       }
     }

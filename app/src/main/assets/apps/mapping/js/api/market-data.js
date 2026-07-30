@@ -3,6 +3,12 @@ import { analyze, tfGroup } from '../engine/ict-core.js';
 import { detectMarketRegimeV2 } from '../engine/market-regime-engine.js';
 import { routeRegimeStrategy } from '../engine/strategy-router-engine.js';
 import { evaluateValidatedMarketContext } from '../engine/validated-market-context.js';
+import {
+  SUPPORTED_MAPPING_TIMEFRAMES,
+  timeframeDurationMs
+} from '../engine/mapping-timeframes.js';
+import { causalEntryLifecycleContract } from '../engine/concept-entry-map-v3.js';
+import { buildMappingSnapshot } from '../engine/mapping-snapshot.js';
 import { render, renderSoft, renderAnalyzeLive } from '../ui/ui-render.js';
 import { sendTargetsToNative, notifyImportant } from '../bridge/android-bridge.js';
 
@@ -13,6 +19,7 @@ export let lastWsTickAt = Number(localStorage.getItem('last_ws_tick_at') || 0);
 let pollInFlight = false;
 let lastErrorLogAt = 0;
 let regimeRouterState = null;
+let analysisSequence = 0;
 
 const PROXY_URL = 'https://amy-fx.vercel.app/api/twelvedata';
 const LIVE_POLL_MS = 20_000;
@@ -136,7 +143,7 @@ export function buildDirectionDecision(result) {
       bias,
       signal: bias,
       source: 'VALIDATED_DIRECTION_FORECAST',
-      status: `${forecastDir} · VALIDATED FORECAST (${forecast.confidence || 60}%)`,
+      status: `${forecastDir} · ${forecast.confidenceLabel || (Number.isFinite(forecast.confidence) ? `${forecast.confidence}%` : 'RULE-BASED')}`,
       invalidated: false,
       invalidationReason: ''
     };
@@ -174,7 +181,7 @@ export function buildSetupId(setup, forecast, tf) {
   const type = String(setup.type || 'ENTRY_MAP').toUpperCase();
   const lo = numStr(setup.entryLow);
   const hi = numStr(setup.entryHigh);
-  const sl = numStr(setup.sl);
+  const sl = numStr(setup.initialSl ?? setup.sl);
   const tp1 = numStr(setup.tp1);
   const tp2 = numStr(setup.tp2);
   const ts = setup.timestamp || 0;
@@ -316,6 +323,81 @@ export function buildSetupExecution(result, { persist = true } = {}) {
     return { ...defaultExecution, status: 'DATA USANG', lifecycleStage: 'DATA_STALE', invalidated: true, invalidationReason: 'Data market usang.' };
   }
 
+  const causalSetup = result.entryMap?.setup;
+  const terminalCausalSetup = causalSetup?.executionMode === 'CAUSAL_ENTRY_MAP_ALL_TF'
+    && causalSetup.live === false;
+  if (terminalCausalSetup) {
+    const setupDirectionValue = setupDirection(causalSetup);
+    const direction = setupDirectionValue > 0 ? 'BUY' : setupDirectionValue < 0 ? 'SELL' : 'WAIT';
+    const geometrySetup = Number.isFinite(Number(causalSetup.initialSl))
+      ? { ...causalSetup, sl: Number(causalSetup.initialSl) }
+      : causalSetup;
+    const geom = validateSetupGeometry(geometrySetup, direction);
+    if (!geom.valid) {
+      return {
+        ...defaultExecution,
+        direction,
+        status: 'INVALID SETUP GEOMETRY',
+        lifecycleStage: 'INVALID_GEOMETRY',
+        alignedWithForecast: false,
+        geometryValid: false,
+        invalidated: true,
+        invalidationReason: geom.reason
+      };
+    }
+
+    const lifecycle = causalEntryLifecycleContract(causalSetup);
+    const setupId = buildSetupId(causalSetup, forecast, tf);
+    const lo = Math.min(Number(causalSetup.entryLow), Number(causalSetup.entryHigh));
+    const hi = Math.max(Number(causalSetup.entryLow), Number(causalSetup.entryHigh));
+    const tp2 = Number(causalSetup.tp2);
+    const target1Secured = Boolean(causalSetup.tp1Hit);
+    if (persist) {
+      persistTerminalSetup({
+        setupId,
+        lifecycleStage: lifecycle.lifecycleStage,
+        status: lifecycle.status,
+        invalidationReason: '',
+        entryTouched: true,
+        target1Secured,
+        entryAt: Number(causalSetup.timestamp || 0) || Date.now(),
+        target1At: target1Secured ? Number(causalSetup.tp1Time || 0) || null : null,
+        terminalAt: Number(causalSetup.endTime || 0) || Date.now()
+      });
+      deleteActivePointer(tf);
+    }
+
+    return {
+      active: false,
+      setupId,
+      direction,
+      status: lifecycle.status,
+      lifecycleStage: lifecycle.lifecycleStage,
+      outcome: lifecycle.status,
+      entryLow: lo,
+      entryHigh: hi,
+      stopLoss: Number(causalSetup.sl),
+      initialStopLoss: Number(causalSetup.initialSl),
+      target1: Number(causalSetup.tp1),
+      target2: Number.isFinite(tp2) ? tp2 : null,
+      singleTarget: Boolean(causalSetup.singleTarget),
+      entryTouched: true,
+      target1Secured,
+      terminal: true,
+      alignedWithForecast: direction !== 'WAIT',
+      geometryValid: true,
+      invalidated: false,
+      invalidationReason: '',
+      liquidityTarget: Number.isFinite(tp2)
+        ? { type: causalSetup.targetType || 'STRUCTURAL', level: tp2 }
+        : null,
+      endIndex: Number.isInteger(causalSetup.endIndex) ? causalSetup.endIndex : null,
+      endTime: Number(causalSetup.endTime || 0) || null,
+      lifecycle: causalSetup.lifecycle || null,
+      authority: 'CLOSED_CANDLE_CAUSAL_ENGINE'
+    };
+  }
+
   if (!forecastActive || dd.invalidated || dd.source !== 'VALIDATED_DIRECTION_FORECAST' || (dd.signal !== 'BUY' && dd.signal !== 'SELL')) {
     const reason = dd.invalidationReason || 'Direction Forecast tidak aktif atau ter-invalidasi.';
     if (persist) {
@@ -362,7 +444,11 @@ export function buildSetupExecution(result, { persist = true } = {}) {
     return { ...defaultExecution, direction: dd.signal, status: 'SETUP CONFLICT', lifecycleStage: 'FORECAST_INVALIDATED', alignedWithForecast: false, invalidated: true, invalidationReason: `Setup Entry Map (${setupDir}) bertentangan dengan Direction Forecast (${dd.signal}).` };
   }
 
-  const geom = validateSetupGeometry(bestSetup, dd.signal);
+  const causalExecution = bestSetup.executionMode === 'CAUSAL_ENTRY_MAP_ALL_TF';
+  const geometrySetup = causalExecution && Number.isFinite(Number(bestSetup.initialSl))
+    ? { ...bestSetup, sl: Number(bestSetup.initialSl) }
+    : bestSetup;
+  const geom = validateSetupGeometry(geometrySetup, dd.signal);
   if (!geom.valid) {
     if (persist) {
       const prev = getActivePointers()[tf];
@@ -401,6 +487,63 @@ export function buildSetupExecution(result, { persist = true } = {}) {
   const tp2 = Number(bestSetup.tp2);
   const singleTarget = Boolean(bestSetup.singleTarget);
   const isBuy = dd.signal === 'BUY';
+
+  if (causalExecution) {
+    const target1Secured = Boolean(bestSetup.tp1Hit);
+    const lifecycle = causalEntryLifecycleContract(bestSetup);
+    const lifecycleStage = lifecycle.lifecycleStage;
+    const status = target1Secured
+      ? lifecycle.status
+      : 'ENTRY CONFIRMED · CLOSED CANDLE';
+    if (persist) {
+      persistSetupLifecycle({
+        setupId,
+        lifecycleStage,
+        status,
+        terminal: false,
+        entryTouched: true,
+        target1Secured,
+        entryAt: Number(bestSetup.timestamp || 0) || Date.now(),
+        target1At: target1Secured
+          ? Number(bestSetup.tp1Time || savedState.target1At || Date.now())
+          : null
+      });
+      const pointers = getActivePointers();
+      pointers[tf] = {
+        setupId,
+        timeframe: tf,
+        direction: dd.signal,
+        forecastStartTime: forecast?.startTime || 0,
+        updatedAt: Date.now()
+      };
+      saveActivePointers(pointers);
+    }
+    return {
+      active: bestSetup.live !== false,
+      setupId,
+      direction: dd.signal,
+      status,
+      lifecycleStage,
+      entryLow: lo,
+      entryHigh: hi,
+      stopLoss: Number(bestSetup.sl),
+      initialStopLoss: Number(bestSetup.initialSl),
+      target1: tp1,
+      target2: Number.isFinite(tp2) ? tp2 : null,
+      singleTarget,
+      entryTouched: true,
+      target1Secured,
+      terminal: false,
+      alignedWithForecast: true,
+      geometryValid: true,
+      invalidated: false,
+      invalidationReason: '',
+      liquidityTarget: Number.isFinite(tp2)
+        ? { type: bestSetup.targetType || 'STRUCTURAL', level: tp2 }
+        : null,
+      authority: 'CLOSED_CANDLE_CAUSAL_ENGINE'
+    };
+  }
 
   if (savedState.terminal) {
     return {
@@ -446,11 +589,17 @@ export function buildSetupExecution(result, { persist = true } = {}) {
   let isTerminal = false;
   let invalidReason = '';
 
-  if (bestSetup.timestamp && Date.now() - bestSetup.timestamp > 86400000) {
+  const setupTimestamp = Number(bestSetup.timestamp || 0);
+  const setupExpiryBars = Math.max(1, Number(bestSetup.expiryBars || bestSetup.tradeManagement?.expiryBars || 1));
+  const setupExpiryMs = Math.max(
+    timeframeDurationMs(bestSetup.tf || tf) * setupExpiryBars,
+    timeframeDurationMs(bestSetup.tf || tf)
+  );
+  if (setupTimestamp > 0 && setupExpiryMs > 0 && Date.now() - setupTimestamp > setupExpiryMs) {
     stage = 'EXPIRED';
     statusText = 'SETUP EXPIRED';
     isTerminal = true;
-    invalidReason = 'Setup sudah kedaluwarsa (lebih dari 24 jam).';
+    invalidReason = `Setup sudah melewati ${setupExpiryBars} candle ${bestSetup.tf || tf}.`;
   } else if (price > 0) {
     const reachedTarget1BeforeEntry = !entryTouched && (isBuy ? price >= tp1 : price <= tp1);
     if (reachedTarget1BeforeEntry) {
@@ -551,12 +700,17 @@ export function buildMappingExplanation(result) {
 
   const dd = result.directionDecision || buildDirectionDecision(result);
   result.directionDecision = dd;
-  const se = buildSetupExecution(result);
-  result.setupExecution = se;
+  const se = result.setupExecution || buildSetupExecution(result);
+  if (!result.setupExecution) result.setupExecution = se;
   const validated = result.validatedMarketContext;
   const forecast = validated?.directionForecast;
   const marketState = validated?.marketState;
   const concepts = result.marketConcepts;
+  const confidenceText = forecast?.confidenceLabel
+    || (Number.isFinite(forecast?.confidence) ? `${forecast.confidence}%` : 'RULE-BASED');
+  const forecastKind = forecast?.validationMode === 'RULE_BASED_MANUAL'
+    ? 'Direction Forecast rule-based (perlu validasi manual)'
+    : 'Direction Forecast tervalidasi';
 
   if (dd.source === 'DATA_STALE' || result.dataStale) {
     return { headline: 'Data market sudah kedaluwarsa', action: 'Jangan mengambil keputusan entry.', reason: 'Cache candle telah melewati batas waktu dan API belum berhasil memperbarui data.', confirmationNeeded: 'Tunggu data candle terbaru tersedia.', invalidation: '-', marketContext: 'DATA USANG — CACHE KEDALUWARSA', dataStatus: 'DATA USANG' };
@@ -573,17 +727,27 @@ export function buildMappingExplanation(result) {
       const fvgInfo = concepts?.nearestFairValueGaps?.length ? ` FVG terdekat di ${p2(concepts.nearestFairValueGaps[0].bottom)}–${p2(concepts.nearestFairValueGaps[0].top)}.` : '';
       const targetMention = se.liquidityTarget ? ` Target likuiditas utama: ${se.liquidityTarget.type} ${p2(se.liquidityTarget.level)}.` : '';
       return {
-        headline: 'Setup searah dengan arah market tervalidasi',
+        headline: forecast?.validationMode === 'RULE_BASED_MANUAL'
+          ? 'Setup searah dengan arah market rule-based'
+          : 'Setup searah dengan arah market tervalidasi',
         action: `FOKUS ${se.direction}`,
-        reason: `Direction Forecast tervalidasi ${forecastDir} (${forecast.confidence || 0}%). Struktur market ${marketState?.structureTrend || 'TERBENTUK'}.${obInfo}${fvgInfo}${targetMention} Status setup: ${se.status}.`,
+        reason: `${forecastKind} ${forecastDir} (${confidenceText}). Struktur market ${marketState?.structureTrend || 'TERBENTUK'}.${obInfo}${fvgInfo}${targetMention} Status setup: ${se.status}.`,
         confirmationNeeded: se.entryTouched ? 'Setup sedang berjalan dalam area entry.' : `Harga sedang menunggu di area entry ${p2(se.entryLow)}–${p2(se.entryHigh)}.`,
         invalidation: se.stopLoss ? `SL pada ${p2(se.stopLoss)}` : 'Batas invalidasi setup',
-        marketContext: `VALIDATED FORECAST ${forecastDir}`,
+        marketContext: `${forecast?.validationMode === 'RULE_BASED_MANUAL' ? 'RULE-BASED' : 'VALIDATED'} FORECAST ${forecastDir}`,
         dataStatus: 'AKTIF'
       };
     }
     const reasonDetail = se.invalidationReason ? ` (${se.invalidationReason})` : '';
-    return { headline: 'Arah market tervalidasi, tetapi belum ada area entry', action: 'Jangan mengejar harga. Tunggu setup Entry Map searah.', reason: `Direction Forecast tervalidasi ${forecastDir} (${forecast.confidence || 0}%). Struktur market ${marketState?.structureTrend || 'TERBENTUK'}.${reasonDetail} Belum ada area entry aktif yang aman.`, confirmationNeeded: 'Setup Entry Map searah forecast dan masih aktif.', invalidation: 'Structural break berlawanan', marketContext: `VALIDATED FORECAST ${forecastDir}`, dataStatus: 'AKTIF' };
+    return {
+      headline: 'Arah market aktif, tetapi sequence entry belum lengkap',
+      action: 'Jangan mengejar harga. Tunggu setup Entry Map causal searah.',
+      reason: `${forecastKind} ${forecastDir} (${confidenceText}). Struktur market ${marketState?.structureTrend || 'TERBENTUK'}.${reasonDetail} Belum ada sequence entry aktif yang aman.`,
+      confirmationNeeded: 'Sweep likuiditas berlawanan, displaced MSS, dan target struktural minimal 2R.',
+      invalidation: 'Structural break berlawanan',
+      marketContext: `${forecast?.validationMode === 'RULE_BASED_MANUAL' ? 'RULE-BASED' : 'VALIDATED'} FORECAST ${forecastDir}`,
+      dataStatus: 'AKTIF'
+    };
   }
 
   const stateText = marketState?.state || 'RANGE / TRANSITION';
@@ -608,12 +772,19 @@ function publishMappingSnapshot(result = state.result) {
   if (!levels.some(item => item.type === 'SSL') && ssl > 0) levels.push({ type: 'SSL', price: ssl, distance: price > 0 ? ssl - price : 0, status: 'ACTIVE', source: 'MAPPING', timeframe: result?.tf || state.tf });
 
   const decision = result?.directionDecision || buildDirectionDecision(result);
-  if (result) result.directionDecision = decision;
-  const execution = buildSetupExecution(result);
-  if (result) result.setupExecution = execution;
-  const explanation = buildMappingExplanation(result);
-  if (result) result.mappingExplanation = explanation;
+  if (result && !result.directionDecision) result.directionDecision = decision;
+  const execution = result?.setupExecution || buildSetupExecution(result);
+  if (result && !result.setupExecution) result.setupExecution = execution;
+  const explanation = result?.mappingExplanation || buildMappingExplanation(result);
+  if (result && !result.mappingExplanation) result.mappingExplanation = explanation;
   const validated = result?.validatedMarketContext;
+  if (result) {
+    result.mappingSnapshot = buildMappingSnapshot(result, {
+      candles: state.candles[result.tf] || [],
+      livePrice: price,
+      capturedAt: Date.now()
+    });
+  }
 
   intel.write('mapping', {
     ...previous,
@@ -628,6 +799,7 @@ function publishMappingSnapshot(result = state.result) {
     directionDecision: decision,
     setupExecution: execution,
     mappingExplanation: explanation,
+    mappingSnapshot: result?.mappingSnapshot || null,
     marketState: result?.dataStale ? 'DATA USANG' : (validated?.marketState?.state || 'RANGE / TRANSITION'),
     directionForecast: decision.source === 'VALIDATED_DIRECTION_FORECAST' ? (validated?.directionForecast?.direction || 'NO CLEAR DIRECTION') : 'NO CLEAR DIRECTION',
     regime: result?.dataStale ? 'TRANSITION' : (result?.strategyRouter?.activeRegime || result?.marketRegime?.regime || 'TRANSITION'),
@@ -645,7 +817,9 @@ export async function fetchTf(tf) {
   if (data.status === 'error') throw new Error(data.message || 'Fetch gagal');
 
   const raw = (data.values || []).reverse();
-  const candles = raw.map((c, index) => ({
+  const closeCutoff = Date.now() - 10_000;
+  const duration = timeframeDurationMs(tf);
+  const candles = raw.map(c => ({
     time: new Date(c.datetime).getTime() / 1000,
     timeframe: tf,
     open: +c.open,
@@ -653,8 +827,18 @@ export async function fetchTf(tf) {
     low: +c.low,
     close: +c.close,
     tickCount: 1,
-    isClosed: index < raw.length - 1
-  })).filter(c => c.isClosed && Number.isFinite(c.close));
+    isClosed: false
+  })).map(candle => ({
+    ...candle,
+    isClosed: Number.isFinite(candle.time)
+      && duration > 0
+      && candle.time * 1000 + duration <= closeCutoff
+  })).filter(candle =>
+    candle.isClosed
+    && [candle.open, candle.high, candle.low, candle.close].every(Number.isFinite)
+    && candle.high >= Math.max(candle.open, candle.close, candle.low)
+    && candle.low <= Math.min(candle.open, candle.close, candle.high)
+  );
 
   if (!candles.length) throw new Error(`Candle ${tf} kosong`);
   state.candles[tf] = candles;
@@ -663,9 +847,14 @@ export async function fetchTf(tf) {
 }
 
 function attachValidatedMarketContext(result) {
-  if (!result || !['M5', 'M15', 'H1'].includes(result.tf)) return result;
+  if (!result || !SUPPORTED_MAPPING_TIMEFRAMES.includes(result.tf)) return result;
+  if (result.validatedMarketContext?.tf === result.tf) return result;
   const candles = state.candles[result.tf] || [];
-  const validated = evaluateValidatedMarketContext({ candles, tf: result.tf, htfCandles: { H4: state.candles.H4 || [] } });
+  const validated = evaluateValidatedMarketContext({
+    candles,
+    tf: result.tf,
+    htfCandles: state.candles
+  });
   result.validatedMarketContext = validated;
   result.validatedMarketState = validated.marketState;
   result.validatedDirectionForecast = validated.directionForecast;
@@ -679,20 +868,6 @@ function setupDirection(setup) {
   return 0;
 }
 
-function annotateExperimentalSetup(setup) {
-  if (!setup) return null;
-  const terminal = /INVALID|BROKEN|SL HIT|TP HIT|EXPIRED/.test(String(setup.status || '').toUpperCase());
-  if (terminal) return { ...setup };
-  return {
-    ...setup,
-    status: 'EXPERIMENTAL CLAIM',
-    validationStatus: 'ENTRY_MAP_REACTION_ACCURACY_48_24_2022_2025',
-    claimAccuracy: 48.24,
-    claimDefinition: 'Reaksi minimal 0,5 ATR searah mapping dalam 16 candle M15 dengan favorable excursion tidak lebih kecil dari adverse excursion.',
-    reason: `${setup.reason || 'Setup Entry Map terdeteksi.'} Entry Map tetap tersedia untuk audit di Analyze, tetapi tidak boleh ditampilkan sebagai setup utama karena akurasi klaim reaksinya 48,24% pada 2022-2025.`
-  };
-}
-
 function applyRegimeRouter(result, htfBiases) {
   result = attachValidatedMarketContext(result);
   if (!result) return result;
@@ -700,10 +875,13 @@ function applyRegimeRouter(result, htfBiases) {
   const forecast = result.validatedMarketContext?.directionForecast;
   const forecastActive = Boolean(forecast?.active);
   const forecastDirection = forecastActive ? Number(forecast.directionValue || 0) : 0;
-  const originalSetups = Array.isArray(result.setups) ? [...result.setups] : [];
-  const originalBestSetup = result.bestSetup || null;
-  const setupVal = setupDirection(originalBestSetup);
-  const setupConflict = Boolean(originalBestSetup && forecastDirection && setupVal !== forecastDirection);
+  const causalSetups = Array.isArray(result.setups) ? [...result.setups] : [];
+  const causalBestSetup = result.bestSetup || result.entryMap?.activeSetup || null;
+  const setupVal = setupDirection(causalBestSetup);
+  const setupConflict = Boolean(
+    causalBestSetup
+    && (!forecastActive || !forecastDirection || setupVal !== forecastDirection)
+  );
 
   let router = result.strategyRouter || {};
   if (result.tf === 'M15') {
@@ -717,20 +895,19 @@ function applyRegimeRouter(result, htfBiases) {
 
   result.strategyRouter = { ...router, role: 'CONTEXT_AND_STRATEGY_SUPPORT', mayOverrideValidatedMarketState: false, mayOverrideValidatedDirectionForecast: false, mayReplaceEntryMap: false, marketShiftHardGate: false };
 
-  const experimentalSetups = setupConflict || !forecastActive ? [] : originalSetups.map(annotateExperimentalSetup).filter(Boolean);
-  const experimentalBestSetup = setupConflict || !forecastActive ? null : annotateExperimentalSetup(originalBestSetup);
-
-  result.unroutedSetups = originalSetups;
-  result.unroutedBestSetup = originalBestSetup;
+  result.unroutedSetups = causalSetups;
+  result.unroutedBestSetup = causalBestSetup;
   result.validatedSetupConflict = setupConflict;
-  result.experimentalSetups = experimentalSetups;
-  result.experimentalBestSetup = experimentalBestSetup;
+  result.experimentalSetups = [];
+  result.experimentalBestSetup = null;
   if (!forecastActive || setupConflict) {
     result.setups = [];
     result.bestSetup = null;
   } else {
-    result.bestSetup = experimentalBestSetup;
-    result.setups = experimentalSetups;
+    result.bestSetup = causalBestSetup;
+    result.setups = causalBestSetup
+      ? [causalBestSetup]
+      : causalSetups.filter(Boolean);
   }
 
   const decision = buildDirectionDecision(result);
@@ -742,11 +919,18 @@ function applyRegimeRouter(result, htfBiases) {
   result.statusText = decision.status;
   result.final = decision.bias;
   result.routerDecision = router.decision;
+  result.mappingSnapshot = buildMappingSnapshot(result, {
+    candles: state.candles[result.tf] || [],
+    livePrice: state.price || result.price,
+    capturedAt: Date.now()
+  });
   return result;
 }
 
 export async function runAnalysis(tf = state.tf) {
   if (document.hidden) return;
+  const requestId = ++analysisSequence;
+  const isCurrentRequest = () => requestId === analysisSequence && state.tf === tf;
   if (scanTimer) { clearTimeout(scanTimer); scanTimer = null; }
   state.tf = tf;
   render();
@@ -755,20 +939,22 @@ export async function runAnalysis(tf = state.tf) {
     log(`Memindai ${tf}...`);
     const group = tfGroup(tf);
     const scanGroup = [...new Set([...group, 'M1', 'M5', 'M15', 'M30', 'H1', 'H4'])];
-    let staleFetchFailed = false;
+    const refreshFailures = new Set();
 
     await Promise.all(scanGroup.map(async currentTf => {
       const isStale = isCandleStale(currentTf);
       if (!state.candles[currentTf]?.length || isStale) {
-        try { await fetchTf(currentTf); } catch (_) {
+        try { await fetchTf(currentTf); } catch (error) {
           log(`Candle ${currentTf} belum diperbarui, memakai cache.`);
-          if (isStale || !state.candles[currentTf]?.length) staleFetchFailed = true;
+          if (isStale || !state.candles[currentTf]?.length) refreshFailures.add(currentTf);
         }
       }
       return state.candles[currentTf] || [];
     }));
+    if (!isCurrentRequest()) return;
 
-    if (staleFetchFailed) {
+    const currentDataUnavailable = !state.candles[tf]?.length || (refreshFailures.has(tf) && isCandleStale(tf));
+    if (currentDataUnavailable) {
       log(`DATA USANG: Cache ${tf} kedaluwarsa & API gagal diperbarui.`);
       const result = {
         tf,
@@ -807,10 +993,23 @@ export async function runAnalysis(tf = state.tf) {
       }
     }
 
-    const htfContext = { H4: state.candles.H4, D1: state.candles.D1, W1: state.candles.W1 };
+    const htfContext = { ...state.candles };
     let result = analyze(state.candles[tf], tf, htfBiases, state.price, htfContext);
     if (!result?.st) throw new Error('Hasil analisis tidak valid');
     result = applyRegimeRouter(result, htfBiases);
+    result.dataDegraded = refreshFailures.size > 0;
+    result.dataWarnings = [...refreshFailures].filter(item => item !== tf);
+    if (result.dataDegraded) {
+      result.dataStatus = 'PARTIAL';
+      result.dataStatusText = result.dataWarnings.length
+        ? `Sebagian timeframe belum diperbarui: ${result.dataWarnings.join(', ')}. Analisis utama ${tf} tetap memakai data valid terakhir.`
+        : 'Timeframe utama tersedia; pembaruan tambahan sedang dicoba ulang.';
+    }
+    result.mappingSnapshot = buildMappingSnapshot(result, {
+      candles: state.candles[result.tf] || [],
+      livePrice: state.price || result.price,
+      capturedAt: Date.now()
+    });
 
     state.result = result;
     state.setups = [...(result.setups || []), ...state.setups].slice(0, 50);
@@ -818,15 +1017,15 @@ export async function runAnalysis(tf = state.tf) {
     save();
     publishMappingSnapshot(result);
     const validatedText = result.validatedDirectionForecast?.active
-      ? `${result.validatedDirectionForecast.direction} · validated ${result.validatedDirectionForecast.confidence}%`
+      ? `${result.validatedDirectionForecast.direction} · ${result.validatedDirectionForecast.confidenceLabel || 'RULE-BASED'}`
       : result.validatedMarketState?.state;
     log(`${tf} selesai: ${validatedText || result.strategyRouter?.decision || `${result.signal} score ${result.score}/100`}`);
     sendTargetsToNative();
     notifyImportant(result);
   } catch (error) {
-    log(`Error ${tf}: ${error.message}`);
+    if (isCurrentRequest()) log(`Error ${tf}: ${error.message}`);
   }
-  render();
+  if (isCurrentRequest()) render();
 }
 
 function scheduleAnalysisRefresh() {
@@ -854,6 +1053,11 @@ async function pollLivePrice() {
     if (state.result) {
       state.result.setupExecution = buildSetupExecution(state.result);
       state.result.mappingExplanation = buildMappingExplanation(state.result);
+      state.result.mappingSnapshot = buildMappingSnapshot(state.result, {
+        candles: state.candles[state.result.tf] || [],
+        livePrice: state.price,
+        capturedAt: Date.now()
+      });
     }
     publishMappingSnapshot();
     sendTargetsToNative();

@@ -100,12 +100,19 @@ function evaluateLevel({
   values,
   currentPrice
 }) {
+  const referenceIndex = Math.max(0, values.length - 1);
+  const levelAtr = Math.max(conceptAtrAtClean(values, referenceIndex), 0.0000001);
+  const tolerance = levelAtr * 0.03;
+  const availableIndex = values.findIndex(candle => timestampMs(candle.time) >= sourceEnd);
   const hit = bars.find(candle => type === 'BSL'
-    ? candle.high >= level
-    : candle.low <= level);
+    ? candle.high > level + tolerance
+    : candle.low < level - tolerance);
   const exactSweep = Boolean(hit && hit.precision === 'INTRADAY' && (type === 'BSL'
-    ? hit.high > level && hit.close < level
-    : hit.low < level && hit.close > level));
+    ? hit.high > level + tolerance && hit.close < level - tolerance
+    : hit.low < level - tolerance && hit.close > level + tolerance));
+  const closedThrough = Boolean(hit && (type === 'BSL'
+    ? hit.close > level + tolerance
+    : hit.close < level - tolerance));
   let reclaimDepthAtr = 0;
   if (hit?.precision === 'INTRADAY' && hit.index >= 0) {
     const localAtr = Math.max(conceptAtrAtClean(values, hit.index), 0.0000001);
@@ -114,7 +121,13 @@ function evaluateLevel({
       : (hit.close - level) / localAtr;
   }
   const active = !hit;
-  const status = active ? 'DETECTED' : exactSweep ? 'CONFIRMED_REACTION' : 'REACHED';
+  const status = active
+    ? 'DETECTED'
+    : exactSweep
+      ? 'CONFIRMED_REACTION'
+      : closedThrough
+        ? 'CLOSED_THROUGH'
+        : 'SWEPT_UNCONFIRMED';
   return {
     id: `${label}:${sourceStart}:${Number(level).toFixed(5)}`,
     type,
@@ -126,13 +139,16 @@ function evaluateLevel({
     sourceStart,
     sourceEnd,
     originIndex: -1,
-    availableIndex: hit?.index ?? 0,
+    availableIndex: availableIndex >= 0 ? availableIndex : values.length,
     interactionIndex: hit?.index ?? -1,
     interactionTime: hit ? hit.timeMs / 1000 : null,
     interactionPrecision: hit?.precision || null,
     active,
     status,
     confirmed: exactSweep,
+    tolerance,
+    localAtr: levelAtr,
+    tier: 'EXTERNAL_KEY',
     reclaimDepthAtr,
     distance: Math.abs(level - conceptNumber(currentPrice, values.at(-1)?.close))
   };

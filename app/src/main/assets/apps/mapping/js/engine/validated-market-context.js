@@ -1,3 +1,8 @@
+import {
+  TIMEFRAME_CONTEXT,
+  normalizeMappingTimeframe
+} from './mapping-timeframes.js';
+
 const DEFAULTS = Object.freeze({
   swingLength: 4,
   slowSwingLength: 6,
@@ -10,9 +15,14 @@ const DEFAULTS = Object.freeze({
 });
 
 export const VALIDATED_FORECAST_PROFILES = Object.freeze({
-  M5: Object.freeze({ horizonBars: 288, cooldownBars: 144, confidence: 65, horizonText: '24H' }),
-  M15: Object.freeze({ horizonBars: 192, cooldownBars: 96, confidence: 60, horizonText: '48H' }),
-  H1: Object.freeze({ horizonBars: 72, cooldownBars: 36, confidence: 65, horizonText: '72H' })
+  M1: Object.freeze({ horizonBars: 1440, cooldownBars: 720, confidence: null, horizonText: '24H', validationMode: 'RULE_BASED_MANUAL' }),
+  M5: Object.freeze({ horizonBars: 288, cooldownBars: 144, confidence: 65, horizonText: '24H', validationMode: 'TRUSTED_REFERENCE_PARITY' }),
+  M15: Object.freeze({ horizonBars: 192, cooldownBars: 96, confidence: 60, horizonText: '48H', validationMode: 'TRUSTED_REFERENCE_PARITY' }),
+  M30: Object.freeze({ horizonBars: 96, cooldownBars: 48, confidence: null, horizonText: '48H', validationMode: 'RULE_BASED_MANUAL' }),
+  H1: Object.freeze({ horizonBars: 72, cooldownBars: 36, confidence: 65, horizonText: '72H', validationMode: 'TRUSTED_REFERENCE_PARITY' }),
+  H4: Object.freeze({ horizonBars: 30, cooldownBars: 15, confidence: null, horizonText: '5D', validationMode: 'RULE_BASED_MANUAL' }),
+  D1: Object.freeze({ horizonBars: 20, cooldownBars: 10, confidence: null, horizonText: '20D', validationMode: 'RULE_BASED_MANUAL' }),
+  W1: Object.freeze({ horizonBars: 12, cooldownBars: 6, confidence: null, horizonText: '12W', validationMode: 'RULE_BASED_MANUAL' })
 });
 
 function finite(value, fallback = NaN) {
@@ -21,11 +31,7 @@ function finite(value, fallback = NaN) {
 }
 
 function normalizeTf(tf) {
-  const value = String(tf || '').toUpperCase().replaceAll(' ', '');
-  if (value === '5' || value === '5MIN' || value === 'M5') return 'M5';
-  if (value === '15' || value === '15MIN' || value === 'M15') return 'M15';
-  if (value === '60' || value === '1H' || value === 'H1') return 'H1';
-  return value;
+  return normalizeMappingTimeframe(tf);
 }
 
 function cleanCandles(candles) {
@@ -205,6 +211,26 @@ export function validatedForecastCandidate({
     bull = rawBreakBull && htfBullConfirmed && priceBull && bullishMomentum;
     bear = false;
     rule = 'BULLISH STRUCTURAL BREAK + H4/PRICE ALIGNMENT + POSITIVE NON-OVEREXTENDED 3-BAR MOMENTUM';
+  } else if (timeframe === 'M1') {
+    bull = mssBull && marketBullConfirmed && priceBull && htfBullConfirmed;
+    bear = mssBear && marketBearConfirmed && priceBear && htfBearConfirmed;
+    rule = 'MSS + CONFIRMED LOCAL STATE + M5/PRICE ALIGNMENT';
+  } else if (timeframe === 'M30') {
+    bull = rawBreakBull && htfBullConfirmed && rangePosition < 0.45;
+    bear = rawBreakBear && htfBearConfirmed && rangePosition > 0.55;
+    rule = 'H4-ALIGNED STRUCTURAL BREAK FROM OPPOSITE SIDE OF 80-BAR RANGE';
+  } else if (timeframe === 'H4' || timeframe === 'D1') {
+    const bullishMomentum = momentum3Atr > 0 && momentum3Atr < 2.5;
+    const bearishMomentum = momentum3Atr < 0 && momentum3Atr > -2.5;
+    bull = rawBreakBull && htfBullConfirmed && priceBull && bullishMomentum;
+    bear = rawBreakBear && htfBearConfirmed && priceBear && bearishMomentum;
+    rule = `${TIMEFRAME_CONTEXT[timeframe]}-ALIGNED STRUCTURAL BREAK + PRICE ALIGNMENT + NON-OVEREXTENDED MOMENTUM`;
+  } else if (timeframe === 'W1') {
+    const bullishMomentum = momentum3Atr > 0 && momentum3Atr < 2.5;
+    const bearishMomentum = momentum3Atr < 0 && momentum3Atr > -2.5;
+    bull = rawBreakBull && marketBullConfirmed && priceBull && bullishMomentum;
+    bear = rawBreakBear && marketBearConfirmed && priceBear && bearishMomentum;
+    rule = 'CONFIRMED WEEKLY STRUCTURAL BREAK + PRICE ALIGNMENT + NON-OVEREXTENDED MOMENTUM';
   }
   const directionValue = bull && !bear ? 1 : bear && !bull ? -1 : 0;
   return {
@@ -299,7 +325,10 @@ export function evaluateValidatedSeries({
   const timeframe = normalizeTf(tf);
   const profile = VALIDATED_FORECAST_PROFILES[timeframe];
   const values = cleanCandles(candles);
-  const h4 = cleanCandles(htfCandles?.H4 || htfCandles?.['4H'] || []);
+  const contextTimeframe = TIMEFRAME_CONTEXT[timeframe] || null;
+  const contextCandles = contextTimeframe
+    ? cleanCandles(htfCandles?.[contextTimeframe] || [])
+    : [];
   const settings = { ...DEFAULTS, ...(options || {}) };
   if (!profile || values.length < Math.max(100, settings.emaSlowLength + settings.slowSwingLength * 2 + 1)) {
     return { status: profile ? 'INSUFFICIENT_DATA' : 'UNSUPPORTED_TIMEFRAME', tf: timeframe, snapshots: [], events: [] };
@@ -310,7 +339,10 @@ export function evaluateValidatedSeries({
   const ema34 = emaSeries(closes, settings.emaMidLength);
   const ema90 = emaSeries(closes, settings.emaSlowLength);
   const atr = atrSeries(values, settings.atrLength);
-  const h4Ema = emaSeries(h4.map(candle => candle.close), settings.htfEmaLength);
+  const contextEma = emaSeries(
+    contextCandles.map(candle => candle.close),
+    settings.htfEmaLength
+  );
 
   let lastHigh = null;
   let lastLow = null;
@@ -326,7 +358,7 @@ export function evaluateValidatedSeries({
   let slowLow = NaN;
   let previousSlowLow = NaN;
   let lastPivotType = 0;
-  let h4Cursor = -1;
+  let contextCursor = -1;
   let forecastState = null;
   const snapshots = [];
   const events = [];
@@ -394,8 +426,18 @@ export function evaluateValidatedSeries({
       atr: atr[index]
     });
 
-    const htf = closedHtfContext(h4, h4Ema, candle.time, h4Cursor);
-    h4Cursor = htf.cursor;
+    const htf = contextTimeframe
+      ? closedHtfContext(contextCandles, contextEma, candle.time, contextCursor)
+      : {
+          cursor: -1,
+          ready: true,
+          bullish: marketState.directionValue === 1,
+          bearish: marketState.directionValue === -1,
+          close: candle.close,
+          ema: ema21[index],
+          emaPrevious: ema21[index - 1]
+        };
+    contextCursor = htf.cursor;
     const priceBull = Number.isFinite(ema34[index]) && Number.isFinite(ema90[index]) && candle.close >= ema34[index] && ema34[index] >= ema90[index];
     const priceBear = Number.isFinite(ema34[index]) && Number.isFinite(ema90[index]) && candle.close <= ema34[index] && ema34[index] <= ema90[index];
     const start = Math.max(0, index - settings.rangeLookback + 1);
@@ -458,7 +500,7 @@ export function evaluateValidatedSeries({
       bosBull,
       bosBear,
       marketState,
-      htf,
+      htf: { ...htf, timeframe: contextTimeframe },
       priceBull,
       priceBear,
       rangeHigh,
@@ -470,7 +512,15 @@ export function evaluateValidatedSeries({
     });
   }
 
-  return { status: 'READY', tf: timeframe, values, snapshots, events, profile };
+  return {
+    status: 'READY',
+    tf: timeframe,
+    values,
+    snapshots,
+    events,
+    profile,
+    contextTimeframe
+  };
 }
 
 export function evaluateValidatedMarketContext(input = {}) {
@@ -478,7 +528,7 @@ export function evaluateValidatedMarketContext(input = {}) {
   if (series.status !== 'READY') {
     return {
       version: '1.0.0',
-      source: 'AMY_VALIDATED_PINE_PARITY',
+      source: 'AMY_MAPPING_CONTEXT_V3',
       status: series.status,
       tf: series.tf,
       marketState: { state: 'DATA BELUM CUKUP', direction: 'NEUTRAL', directionValue: 0, confirmed: false },
@@ -498,8 +548,10 @@ export function evaluateValidatedMarketContext(input = {}) {
     ? (forecast.directionValue > 0 ? 'BULLISH' : 'BEARISH')
     : 'NO CLEAR DIRECTION';
   return {
-    version: '1.0.0',
-    source: 'AMY_VALIDATED_PINE_PARITY',
+    version: '2.0.0',
+    source: series.profile.validationMode === 'TRUSTED_REFERENCE_PARITY'
+      ? 'AMY_VALIDATED_PINE_PARITY'
+      : 'AMY_RULE_BASED_TIMEFRAME_CONTEXT_V3',
     status: 'READY',
     tf: series.tf,
     calculatedAt: latest.time,
@@ -512,7 +564,14 @@ export function evaluateValidatedMarketContext(input = {}) {
       active: Boolean(forecast.active),
       direction,
       directionValue: forecast.active ? forecast.directionValue : 0,
-      confidence: forecast.active ? series.profile.confidence : 0,
+      confidence: forecast.active ? series.profile.confidence : null,
+      confidenceLabel: forecast.active && Number.isFinite(series.profile.confidence)
+        ? `${series.profile.confidence}%`
+        : forecast.active
+          ? 'RULE-BASED'
+          : 'WAIT',
+      validationMode: series.profile.validationMode,
+      manualValidationRequired: series.profile.validationMode === 'RULE_BASED_MANUAL',
       horizonBars: series.profile.horizonBars,
       horizonText: series.profile.horizonText,
       startIndex: forecast.startIndex,
@@ -523,7 +582,9 @@ export function evaluateValidatedMarketContext(input = {}) {
       invalidated: Boolean(forecast.invalidated),
       expired: Boolean(forecast.expired),
       invalidationReason: forecast.invalidationReason || '',
-      confidenceMeaning: 'DISPLAY_CONFIDENCE_FROM_VALIDATED_BACKTEST_NOT_LIVE_WIN_PROBABILITY'
+      confidenceMeaning: Number.isFinite(series.profile.confidence)
+        ? 'REFERENCE_DISPLAY_CONFIDENCE_NOT_LIVE_WIN_PROBABILITY'
+        : 'RULE_BASED_NO_WIN_PROBABILITY_CLAIM'
     },
     latestEvent: {
       rawBreakBull: latest.rawBreakBull,

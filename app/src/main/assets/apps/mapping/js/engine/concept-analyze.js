@@ -1,6 +1,10 @@
 import { analyze as analyzeLegacy, tfGroup } from './core/analyze.js';
 import { detectMarketConcepts } from './concept-engine.js';
-import { detectM15EntryMap } from './concept-entry-map.js';
+import {
+  causalEntryLifecycleContract,
+  detectTimeframeEntryMap
+} from './concept-entry-map-v3.js';
+import { evaluateValidatedMarketContext } from './validated-market-context.js';
 
 export { tfGroup };
 
@@ -17,16 +21,80 @@ function mergeRows(current, replacement) {
 
 function entryMapRow(entryMap) {
   const setup = entryMap?.setup;
-  if (!setup) return ['Entry Map', 'REPLACED', 'Entry Map lama dinonaktifkan. Entry utama memakai Multi-Timeframe Level Watch.'];
+  if (!setup) {
+    return [
+      'Entry Map',
+      entryMap?.scenario?.status || 'WAIT',
+      entryMap?.scenario?.reason || 'Sequence causal belum lengkap.'
+    ];
+  }
   return [
     'Entry Map',
-    'AUDIT ONLY',
-    `${setup.dir} ${setup.type || 'legacy setup'} tetap disimpan untuk audit, tetapi tidak boleh menjadi setup utama.`
+    setup.live ? 'AUTHORITATIVE' : setup.status,
+    `${setup.dir} ${setup.type} · sweep → displaced MSS → target struktural ${Number(setup.targetR || 0).toFixed(2)}R.`
   ];
 }
 
-export function analyze(candles, tf, htfBiases = {}, currentPrice = null, htfCandles = {}) {
-  const result = analyzeLegacy(candles, tf, htfBiases, currentPrice, htfCandles);
+export function buildCausalEntryWatch(entryMap, tf) {
+  const activeSetup = entryMap?.activeSetup || null;
+  const authoritativeSetup = entryMap?.setup || activeSetup;
+  const lifecycle = causalEntryLifecycleContract(authoritativeSetup);
+  return {
+    version: '3.0.0',
+    model: 'AMY_CAUSAL_ENTRY_MAP_MONITOR',
+    sourceTf: tf,
+    triggerTf: tf,
+    direction: entryMap?.scenario?.direction || 'WAIT',
+    status: authoritativeSetup
+      ? lifecycle.status
+      : entryMap?.scenario?.status || 'WAIT',
+    lifecycleStage: authoritativeSetup
+      ? lifecycle.lifecycleStage
+      : 'WAITING_CONFIRMATION',
+    active: Boolean(
+      !lifecycle.terminal
+      && entryMap?.scenario?.direction
+      && entryMap.scenario.direction !== 'WAIT'
+    ),
+    entryAllowed: Boolean(activeSetup),
+    terminal: lifecycle.terminal,
+    reason: entryMap?.scenario?.reason || 'Sequence causal belum lengkap.',
+    scenario: entryMap?.scenario,
+    executionPlan: authoritativeSetup ? {
+      locked: true,
+      lockedAt: authoritativeSetup.timestamp,
+      entry: authoritativeSetup.entry,
+      entryLow: authoritativeSetup.entryLow,
+      entryHigh: authoritativeSetup.entryHigh,
+      initialSl: authoritativeSetup.initialSl,
+      sl: authoritativeSetup.sl,
+      tp1: authoritativeSetup.tp1,
+      tp2: authoritativeSetup.tp2,
+      lifecycleStatus: lifecycle.status,
+      terminal: lifecycle.terminal,
+      tp1Hit: Boolean(authoritativeSetup.tp1Hit),
+      endIndex: authoritativeSetup.endIndex,
+      endTime: authoritativeSetup.endTime || null
+    } : null
+  };
+}
+
+export function analyze(
+  candles,
+  tf,
+  htfBiases = {},
+  currentPrice = null,
+  htfCandles = {},
+  analysisOptions = {}
+) {
+  const result = analyzeLegacy(
+    candles,
+    tf,
+    htfBiases,
+    currentPrice,
+    htfCandles,
+    analysisOptions
+  );
   if (!Array.isArray(candles) || candles.length < 30) return { ...result, htfBiases };
   const marketConcepts = detectMarketConcepts(candles, {
     tf,
@@ -34,15 +102,26 @@ export function analyze(candles, tf, htfBiases = {}, currentPrice = null, htfCan
     htfCandles,
     htfBias: result.htfNarrative?.htfBias || 'NEUTRAL'
   });
-  const entryMap = detectM15EntryMap(candles, { tf, htfCandles });
+  const validatedMarketContext = evaluateValidatedMarketContext({
+    candles,
+    tf,
+    htfCandles
+  });
+  const entryMap = detectTimeframeEntryMap(candles, {
+    tf,
+    marketConcepts,
+    validatedContext: validatedMarketContext,
+    htfCandles
+  });
+  const activeSetup = entryMap.activeSetup || null;
   const replacementRows = [...marketConcepts.concepts, entryMapRow(entryMap)];
 
   return {
     ...result,
     htfBiases: { ...htfBiases },
-    setups: [],
-    bestSetup: null,
-    signal: 'WAIT',
+    setups: activeSetup ? [activeSetup] : [],
+    bestSetup: activeSetup,
+    signal: activeSetup?.dir || 'WAIT',
     setupStructure: result.st,
     st: marketConcepts.structure,
     bsl: marketConcepts.bsl,
@@ -53,11 +132,12 @@ export function analyze(candles, tf, htfBiases = {}, currentPrice = null, htfCan
     marketConcepts,
     entryMap: {
       ...entryMap,
-      setup: null,
-      activeSetup: null,
-      status: 'REPLACED_BY_MULTI_TF_LEVEL_WATCH'
+      status: entryMap.status || 'AMY_CAUSAL_ENTRY_MAP_V3'
     },
-    legacyEntryMap: entryMap,
+    entryWatch: buildCausalEntryWatch(entryMap, tf),
+    validatedMarketContext,
+    validatedMarketState: validatedMarketContext.marketState,
+    validatedDirectionForecast: validatedMarketContext.directionForecast,
     mappingZones: marketConcepts.mappingZones,
     concepts: mergeRows(result.concepts, replacementRows)
   };

@@ -1,0 +1,231 @@
+{
+  "experiment": "January 2026 concurrent max-1h backtest with local wick stop",
+  "month": "2026-01",
+  "symbol": "XAUUSD",
+  "timeframe": "M15",
+  "scope": {
+    "repository": "suhaimitoamy/Amy-fx",
+    "branch": "personal/amyfx-private",
+    "research_only": true,
+    "application_source_changed": false,
+    "execution_plan_panel_changed": false,
+    "main_changed": false,
+    "release_created": false,
+    "apk_built": false,
+    "february_tested": false
+  },
+  "single_change": {
+    "from": "causal structural fractal-4 / zone-extreme stop with 0.10 ATR buffer",
+    "to": {
+      "FVG": "wick of middle displacement candle with 0.10 ATR buffer",
+      "IFVG": "wick of inversion/conversion candle with 0.10 ATR buffer"
+    },
+    "unchanged": [
+      "concurrent independent trades",
+      "M15",
+      "FVG/IFVG detection",
+      "confirmed reaction",
+      "deterministic signal selection",
+      "next M15 open entry",
+      "TP1 1R then BE",
+      "TP2 2R",
+      "maximum 4 active M15 candles",
+      "adverse intrabar stop first",
+      "no direction/quality filters"
+    ],
+    "invalid_local_stop_policy": "reject signal if local wick stop is already on wrong side of next-open entry"
+  },
+  "flow": {
+    "signals": 275,
+    "eligible_trades": 274,
+    "skipped": {
+      "IFVG:ATR_UNAVAILABLE": 1
+    }
+  },
+  "baseline_structural_sl_max_1h": {
+    "trades": 274,
+    "resolved_trades": 273,
+    "SL": 31,
+    "TP1_BE": 10,
+    "TP2": 9,
+    "TIME_EXIT": 223,
+    "TIME_EXIT_BEFORE_TP1": 204,
+    "TIME_EXIT_AFTER_TP1": 19,
+    "OPEN_AT_END": 1,
+    "tp2_win_rate": 0.03296703296703297,
+    "tp1_plus_rate": 0.1391941391941392,
+    "full_runner_r_resolved": 2.229942264205604,
+    "half_tp1_runner_r_resolved": 3.752678994094265,
+    "full_runner_r_mtm_inclusive": 1.8566089110645678,
+    "maximum_drawdown_full_runner_r": 13.355437904220814,
+    "maximum_drawdown_half_model_r": 12.505924816748491,
+    "maximum_consecutive_sl": 2,
+    "maximum_simultaneous_positions": 3,
+    "duration": {
+      "mean_hours": 0.6978021978021978,
+      "median_hours": 0.75,
+      "max_hours": 1.75
+    }
+  },
+  "baseline_structural_sl_price_distance_usd": {
+    "mean": 45.52124946878731,
+    "median": 26.435145707839183,
+    "min": 2.5596138122427874,
+    "max": 434.10411819530054,
+    "p25": 14.50265952056293,
+    "p75": 48.73725765033373,
+    "tp1_mean_usd": 45.52124946878731,
+    "tp1_median_usd": 26.435145707839183,
+    "tp2_mean_usd": 91.04249893757462,
+    "tp2_median_usd": 52.870291415678366
+  },
+  "local_wick_sl_price_distance_usd": {
+    "mean": 22.000147279006335,
+    "median": 14.516150079328327,
+    "min": 2.562621901152852,
+    "max": 270.41711819530065,
+    "p25": 8.758412869915446,
+    "p75": 23.20363086958878,
+    "tp1_mean_usd": 22.000147279006335,
+    "tp1_median_usd": 14.516150079328327,
+    "tp2_mean_usd": 44.00029455801267,
+    "tp2_median_usd": 29.032300158656653
+  },
+  "local_wick_sl_max_1h": {
+    "trades": 274,
+    "resolved_trades": 273,
+    "SL": 77,
+    "TP1_BE": 13,
+    "TP2": 28,
+    "TIME_EXIT": 155,
+    "TIME_EXIT_BEFORE_TP1": 124,
+    "TIME_EXIT_AFTER_TP1": 31,
+    "OPEN_AT_END": 1,
+    "tp2_win_rate": 0.10256410256410256,
+    "tp1_plus_rate": 0.26373626373626374,
+    "full_runner_r_resolved": 5.703118787666881,
+    "half_tp1_runner_r_resolved": -0.7818334327446133,
+    "full_runner_r_mtm_inclusive": 4.810050347263402,
+    "maximum_drawdown_full_runner_r": 20.411452096501403,
+    "maximum_drawdown_half_model_r": 21.680010308194465,
+    "maximum_consecutive_sl": 4,
+    "maximum_simultaneous_positions": 3,
+    "duration": {
+      "mean_hours": 0.5860805860805861,
+      "median_hours": 0.75,
+      "max_hours": 1.75
+    }
+  },
+  "breakdowns": {
+    "by_trigger": {
+      "FVG": {
+        "trades": 143,
+        "resolved_trades": 142,
+        "SL": 45,
+        "TP1_BE": 5,
+        "TP2": 9,
+        "TIME_EXIT": 83,
+        "TIME_EXIT_BEFORE_TP1": 64,
+        "TIME_EXIT_AFTER_TP1": 19,
+        "OPEN_AT_END": 1,
+        "tp2_win_rate": 0.06338028169014084,
+        "tp1_plus_rate": 0.2323943661971831,
+        "full_runner_r_resolved": -6.065448996356299,
+        "half_tp1_runner_r_resolved": -8.575902800626043,
+        "full_runner_r_mtm_inclusive": -6.958517436759777,
+        "maximum_drawdown_full_runner_r": 17.848953454027374,
+        "maximum_drawdown_half_model_r": 17.437320067324226,
+        "maximum_consecutive_sl": 4,
+        "maximum_simultaneous_positions": 2,
+        "duration": {
+          "mean_hours": 0.5933098591549296,
+          "median_hours": 0.75,
+          "max_hours": 1.75
+        }
+      },
+      "IFVG": {
+        "trades": 131,
+        "resolved_trades": 131,
+        "SL": 32,
+        "TP1_BE": 8,
+        "TP2": 19,
+        "TIME_EXIT": 72,
+        "TIME_EXIT_BEFORE_TP1": 60,
+        "TIME_EXIT_AFTER_TP1": 12,
+        "OPEN_AT_END": 0,
+        "tp2_win_rate": 0.1450381679389313,
+        "tp1_plus_rate": 0.29770992366412213,
+        "full_runner_r_resolved": 11.76856778402318,
+        "half_tp1_runner_r_resolved": 7.794069367881429,
+        "full_runner_r_mtm_inclusive": 11.76856778402318,
+        "maximum_drawdown_full_runner_r": 6.713602025646242,
+        "maximum_drawdown_half_model_r": 7.858673805786468,
+        "maximum_consecutive_sl": 2,
+        "maximum_simultaneous_positions": 3,
+        "duration": {
+          "mean_hours": 0.5782442748091603,
+          "median_hours": 0.75,
+          "max_hours": 1.75
+        }
+      }
+    },
+    "by_direction": {
+      "BUY": {
+        "trades": 160,
+        "resolved_trades": 160,
+        "SL": 51,
+        "TP1_BE": 4,
+        "TP2": 15,
+        "TIME_EXIT": 90,
+        "TIME_EXIT_BEFORE_TP1": 68,
+        "TIME_EXIT_AFTER_TP1": 22,
+        "OPEN_AT_END": 0,
+        "tp2_win_rate": 0.09375,
+        "tp1_plus_rate": 0.25625,
+        "full_runner_r_resolved": 8.464456892135885,
+        "half_tp1_runner_r_resolved": 2.0877800283668067,
+        "full_runner_r_mtm_inclusive": 8.464456892135885,
+        "maximum_drawdown_full_runner_r": 9.315152320397114,
+        "maximum_drawdown_half_model_r": 12.07529600977391,
+        "maximum_consecutive_sl": 3,
+        "maximum_simultaneous_positions": 2,
+        "duration": {
+          "mean_hours": 0.5703125,
+          "median_hours": 0.75,
+          "max_hours": 1.75
+        }
+      },
+      "SELL": {
+        "trades": 114,
+        "resolved_trades": 113,
+        "SL": 26,
+        "TP1_BE": 9,
+        "TP2": 13,
+        "TIME_EXIT": 65,
+        "TIME_EXIT_BEFORE_TP1": 56,
+        "TIME_EXIT_AFTER_TP1": 9,
+        "OPEN_AT_END": 1,
+        "tp2_win_rate": 0.11504424778761062,
+        "tp1_plus_rate": 0.2743362831858407,
+        "full_runner_r_resolved": -2.7613381044690035,
+        "half_tp1_runner_r_resolved": -2.86961346111142,
+        "full_runner_r_mtm_inclusive": -3.654406544872482,
+        "maximum_drawdown_full_runner_r": 13.971792521226998,
+        "maximum_drawdown_half_model_r": 14.616864301367222,
+        "maximum_consecutive_sl": 4,
+        "maximum_simultaneous_positions": 3,
+        "duration": {
+          "mean_hours": 0.6084070796460177,
+          "median_hours": 0.75,
+          "max_hours": 1.75
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "report": "AMYFX_FVG_IFVG_LOCAL_WICK_SL_MAX_1H_JANUARY_2026.md",
+    "json": "amyfx-fvg-ifvg-local-wick-sl-max-1h-january-2026.json",
+    "trades_csv": "amyfx-fvg-ifvg-local-wick-sl-max-1h-january-2026-trades.csv",
+    "trades_csv_rows": 274
+  }
+}

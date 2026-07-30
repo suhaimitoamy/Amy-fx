@@ -39,7 +39,7 @@ test('SWEEP ONLY tidak dilabeli sebagai BOS terkonfirmasi', () => {
   assert.match(result.explanation, /tidak mengesahkan BOS/i);
 });
 
-test('hanya setup M15 precision yang valid dan RR minimal 2 dihitung aktif', () => {
+test('legacy precision stays M15-only while causal RR ≥ 2 is actionable on every supported timeframe', () => {
   const base = {
     type: 'ORDER BLOCK',
     dir: 'SELL WATCH',
@@ -54,9 +54,18 @@ test('hanya setup M15 precision yang valid dan RR minimal 2 dihitung aktif', () 
     timestamp: Date.now(),
     conflictCheck: { conflictLevel: 'MEDIUM', rr: 3 }
   };
+  const causalH4 = {
+    ...base,
+    type: 'H4 CAUSAL ENTRY MAP',
+    tf: 'H4',
+    executionMode: 'CAUSAL_ENTRY_MAP_ALL_TF',
+    expiryBars: 24
+  };
   const setups = [
     base,
     { ...base, tf: 'M5' },
+    causalH4,
+    { ...causalH4, tf: 'W1', type: 'W1 CAUSAL ENTRY MAP', conflictCheck: { conflictLevel: 'NONE', rr: 1.5 } },
     { ...base, type: 'STRUCTURE SETUP', executionMode: 'CONTEXT_ONLY' },
     { ...base, status: 'WAIT' },
     { ...base, conflictCheck: { conflictLevel: 'FATAL', rr: 4 } },
@@ -64,8 +73,9 @@ test('hanya setup M15 precision yang valid dan RR minimal 2 dihitung aktif', () 
   ];
 
   const active = filterActionableSetups(setups, Date.now(), 4075);
-  assert.equal(active.length, 1);
+  assert.equal(active.length, 2);
   assert.equal(active[0], base);
+  assert.equal(active[1], causalH4);
 });
 
 test('BSL yang sudah dilewati live dikeluarkan dan target berikutnya dipilih', () => {

@@ -1,8 +1,9 @@
+import { getCandles, marketStoreInfo } from '../lib/market-candle-store.mjs';
+
 const ALLOWED_INTERVALS = new Set([
   '1min', '5min', '15min', '30min', '1h', '4h', '1day', '1week'
 ]);
-const MAX_OUTPUT_SIZE = 500;
-const FETCH_TIMEOUT_MS = 12_000;
+const MAX_OUTPUT_SIZE = 5_000;
 const MEMORY_CACHE_LIMIT = 40;
 const SHARED_M1_OUTPUT_SIZE = 300;
 
@@ -21,15 +22,6 @@ const memoryCache = globalThis.__amyFxTwelveDataCache
   || (globalThis.__amyFxTwelveDataCache = new Map());
 const inFlight = globalThis.__amyFxTwelveDataInFlight
   || (globalThis.__amyFxTwelveDataInFlight = new Map());
-
-function normalizeUtcDatetime(value) {
-  const text = String(value || '').trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return `${text}T00:00:00Z`;
-  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(text)) {
-    return `${text.replace(' ', 'T')}Z`;
-  }
-  return text;
-}
 
 function parseOutputSize(value) {
   const parsed = Number.parseInt(String(value || ''), 10);
@@ -79,12 +71,23 @@ function writeCache(key, data, ttl) {
     .forEach(([entryKey]) => memoryCache.delete(entryKey));
 }
 
-function setCacheHeaders(res, ttl, state = 'MISS') {
+function setCacheHeaders(res, ttl, state = 'MISS', source = '') {
   const staleSeconds = Math.max(ttl * 4, 300);
-  res.setHeader('Cache-Control', `public, s-maxage=${ttl}, stale-while-revalidate=${staleSeconds}, stale-if-error=${staleSeconds}`);
-  res.setHeader('CDN-Cache-Control', `public, s-maxage=${ttl}, stale-while-revalidate=${staleSeconds}, stale-if-error=${staleSeconds}`);
-  res.setHeader('Vercel-CDN-Cache-Control', `public, s-maxage=${ttl}, stale-while-revalidate=${staleSeconds}, stale-if-error=${staleSeconds}`);
+  const cacheControl = `public, s-maxage=${ttl}, stale-while-revalidate=${staleSeconds}, stale-if-error=${staleSeconds}`;
+  res.setHeader('Cache-Control', cacheControl);
+  res.setHeader('CDN-Cache-Control', cacheControl);
+  res.setHeader('Vercel-CDN-Cache-Control', cacheControl);
   res.setHeader('X-AmyFX-Market-Cache', state);
+  if (source) res.setHeader('X-AmyFX-Market-Source', source);
+}
+
+function clientCompatibleData(data) {
+  if (!data?.closedOnly || !Array.isArray(data.values) || !data.values.length) return data;
+  return {
+    ...data,
+    values: [{ ...data.values[0], amyfxSyntheticCurrent: true }, ...data.values],
+    clientCompatibility: 'CLOSED_SERIES_SENTINEL_V1'
+  };
 }
 
 function canonicalM1Url(symbol) {
@@ -94,42 +97,6 @@ function canonicalM1Url(symbol) {
     outputsize: String(SHARED_M1_OUTPUT_SIZE)
   });
   return `/api/twelvedata?${params.toString()}`;
-}
-
-async function fetchFromProvider({ symbol, interval, outputsize, apiKey }) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-
-  try {
-    const fetchUrl = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&outputsize=${outputsize}&timezone=UTC&apikey=${encodeURIComponent(apiKey)}`;
-    const response = await fetch(fetchUrl, {
-      signal: controller.signal,
-      headers: { Accept: 'application/json' }
-    });
-    if (!response.ok) {
-      const error = new Error(`TwelveData HTTP ${response.status}`);
-      error.statusCode = 502;
-      throw error;
-    }
-
-    const data = await response.json();
-    if (data?.status === 'error') {
-      const error = new Error(data.message || 'TwelveData returned an error');
-      error.statusCode = 502;
-      error.providerData = data;
-      throw error;
-    }
-
-    if (Array.isArray(data?.values)) {
-      data.values = data.values.map(item => ({
-        ...item,
-        datetime: normalizeUtcDatetime(item.datetime)
-      }));
-    }
-    return data;
-  } finally {
-    clearTimeout(timeout);
-  }
 }
 
 export default async function handler(req, res) {
@@ -145,16 +112,11 @@ export default async function handler(req, res) {
   }
 
   const { symbol = 'XAU/USD', interval, outputsize = '300' } = req.query;
-  const targetKey = process.env.TWELVEDATA_API_KEY;
-
   if (symbol !== 'XAU/USD') {
     return res.status(403).json({ status: 'error', message: 'Hanya XAU/USD yang diizinkan' });
   }
   if (!ALLOWED_INTERVALS.has(interval)) {
     return res.status(400).json({ status: 'error', message: 'Interval tidak didukung' });
-  }
-  if (!targetKey) {
-    return res.status(503).json({ status: 'error', message: 'Market service belum dikonfigurasi' });
   }
 
   const requestedOutputSize = parseOutputSize(outputsize);
@@ -163,48 +125,48 @@ export default async function handler(req, res) {
     return res.redirect(307, canonicalM1Url(symbol));
   }
 
-  const safeOutputSize = requestedOutputSize;
   const ttl = ttlSeconds(interval);
-  const key = cacheKey(symbol, interval, safeOutputSize);
+  const key = cacheKey(symbol, interval, requestedOutputSize);
   const fresh = readCache(key);
   if (fresh) {
-    setCacheHeaders(res, ttl, 'MEMORY_HIT');
+    setCacheHeaders(res, ttl, 'MEMORY_HIT', fresh.source || 'memory');
     return res.status(200).json(fresh);
   }
 
   let request = inFlight.get(key);
   if (!request) {
-    request = fetchFromProvider({
+    request = getCandles({
       symbol,
       interval,
-      outputsize: safeOutputSize,
-      apiKey: targetKey
+      outputsize: requestedOutputSize,
+      apiKey: process.env.TWELVEDATA_API_KEY
     });
     inFlight.set(key, request);
   }
 
   try {
-    const data = await request;
+    const rawData = await request;
+    const data = clientCompatibleData(rawData);
     writeCache(key, data, ttl);
-    setCacheHeaders(res, ttl, 'PROVIDER_MISS');
+    const cacheState = data.amyfxCacheState || 'PROVIDER_MISS';
+    const responseTtl = cacheState === 'SUPABASE_STALE_FALLBACK' ? Math.min(ttl, 60) : ttl;
+    setCacheHeaders(res, responseTtl, cacheState, data.source || 'unknown');
     return res.status(200).json(data);
   } catch (error) {
     const stale = readCache(key, { allowStale: true });
     if (stale) {
-      setCacheHeaders(res, Math.min(ttl, 60), 'STALE_FALLBACK');
+      setCacheHeaders(res, Math.min(ttl, 60), 'STALE_FALLBACK', stale.source || 'memory-stale');
       return res.status(200).json({
         ...stale,
         amyfxCacheState: 'STALE_FALLBACK'
       });
     }
 
-    if (error?.name === 'AbortError') {
-      return res.status(504).json({ status: 'error', message: 'Market service timeout' });
-    }
-    if (error?.providerData) return res.status(error.statusCode || 502).json(error.providerData);
-    return res.status(error?.statusCode || 502).json({
+    if (error?.providerData) return res.status(502).json(error.providerData);
+    return res.status(error?.name === 'AbortError' ? 504 : 502).json({
       status: 'error',
-      message: error?.message || 'Market service unavailable'
+      message: error?.message || 'Market service unavailable',
+      store: marketStoreInfo()
     });
   } finally {
     if (inFlight.get(key) === request) inFlight.delete(key);

@@ -272,6 +272,22 @@ const state = {
   scanProgress: null
 };
 
+function publishAmyFxJournalState() {
+  const journals = Array.isArray(state.journals) ? state.journals : [];
+  const selectedJournalId = state.journalOpenId || "";
+  const selectedJournal = journals.find(row => String(row?.id || "") === String(selectedJournalId)) || null;
+  window.AmyFXJournalState = {
+    getJournals: () => state.journals,
+    journals,
+    selectedJournalId: selectedJournalId || null,
+    selectedJournal,
+    view: state.view,
+    updatedAt: new Date().toISOString()
+  };
+  window.dispatchEvent(new CustomEvent("amyfx:journal-state-change", { detail: window.AmyFXJournalState }));
+  return window.AmyFXJournalState;
+}
+
 async function boot() {
   await requestPersistentStorage();
   await enforcePinLock();
@@ -794,6 +810,7 @@ function render() {
   updateRenderCounters(data);
   renderActiveView(data);
   syncSelectControls();
+  publishAmyFxJournalState();
 }
 
 function getRenderData() {
@@ -6076,7 +6093,7 @@ async function processAssistantInput(question, surface = "assistant") {
     const safeText = text || "Tidak ada jawaban.";
     state.aiPopupLastQuestion = question;
     state.aiPopupLastAnswer = safeText;
-    if (isAssistantSurface && pendingId) updateAssistantChatMessage(pendingId, safeText, extra);
+    if (isAssistantSurface && loadingId) updateAssistantChatMessage(loadingId, safeText, extra);
     if (!isAssistantSurface) renderAiPopupText(safeText);
     return safeText;
   };
@@ -6103,6 +6120,8 @@ async function processAssistantInput(question, surface = "assistant") {
     const message = `Asisten berhenti karena error: ${error.message || "proses gagal"}`;
     if (!isAssistantSurface && dom.saveAiPopupMaterialBtn) dom.saveAiPopupMaterialBtn.disabled = true;
     return finish(message);
+  } finally {
+    if (isAssistantSurface) state.isAiProcessing = false;
   }
 }
 

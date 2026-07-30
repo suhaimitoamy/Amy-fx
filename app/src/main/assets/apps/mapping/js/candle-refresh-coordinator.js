@@ -1,19 +1,13 @@
 import { state } from './main.js';
 import { fetchTf } from './api/market-data.js';
+import {
+  TIMEFRAME_SECONDS,
+  expectedClosedCandleOpenTime
+} from './engine/mapping-timeframes.js';
 
 const STORAGE_KEY = 'amy_entry_watch_state_v3';
 const CHECK_MS = 15_000;
-const CLOSE_GRACE_MS = 10_000;
 const FAILURE_BACKOFF_MS = 60_000;
-const TF_SECONDS = Object.freeze({
-  M1: 60,
-  M5: 300,
-  M15: 900,
-  M30: 1800,
-  H1: 3600,
-  H4: 14400,
-  D1: 86400
-});
 
 let refreshRunning = false;
 const lastAttemptAt = new Map();
@@ -37,14 +31,11 @@ function currentWatch() {
 
 function shouldTrack(watch) {
   if (!watch || watch.terminal || !watch.active) return false;
-  return ['WATCHING_LEVEL', 'LEVEL_TESTING'].includes(String(watch.lifecycleStage || ''));
+  return Boolean(watch.sourceTf || watch.triggerTf);
 }
 
 function expectedClosedOpenTime(tf, nowMs = Date.now()) {
-  const seconds = TF_SECONDS[tf];
-  if (!seconds) return 0;
-  const safeNowSeconds = Math.floor((nowMs - CLOSE_GRACE_MS) / 1000);
-  return Math.floor(safeNowSeconds / seconds) * seconds - seconds;
+  return expectedClosedCandleOpenTime(tf, nowMs);
 }
 
 function latestClosedOpenTime(tf) {
@@ -58,7 +49,7 @@ function dueTimeframes() {
   const requested = new Set([watch.triggerTf, watch.sourceTf]);
   const now = Date.now();
   return [...requested]
-    .filter(tf => TF_SECONDS[tf])
+    .filter(tf => TIMEFRAME_SECONDS[tf])
     .filter(tf => latestClosedOpenTime(tf) < expectedClosedOpenTime(tf, now))
     .filter(tf => now - finite(lastAttemptAt.get(tf), 0) >= FAILURE_BACKOFF_MS);
 }

@@ -102,6 +102,7 @@ class NewsSyncWorker(
         val intent = Intent(applicationContext, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("target_url", targetUrl)
+            putExtra("amyfx_route", "MarketIntel")
         }
         val requestCode = newsId.hashCode()
         val pendingIntent = PendingIntent.getActivity(
@@ -111,14 +112,15 @@ class NewsSyncWorker(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_NEWS)
+        val notification = NotificationCompat.Builder(applicationContext, AmyFxApplication.NEWS_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_amy_fx)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .build()
@@ -131,13 +133,14 @@ class NewsSyncWorker(
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channel = NotificationChannel(
-            CHANNEL_NEWS,
+            AmyFxApplication.NEWS_CHANNEL_ID,
             "Amy FX Breaking News",
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = "Breaking news yang relevan untuk XAU/USD"
+            description = "Breaking news XAU/USD yang tetap muncul saat Amy FX ditutup"
             enableVibration(true)
             enableLights(true)
+            setShowBadge(true)
         }
         manager.createNotificationChannel(channel)
     }
@@ -154,7 +157,6 @@ class NewsSyncWorker(
         private const val NEWS_URL = "https://amy-fx.vercel.app/api/news"
         private const val PREFS = "amy_news_worker"
         private const val KEY_LAST_NEWS_ID = "last_news_id"
-        private const val CHANNEL_NEWS = "amy_news_v1"
         private const val MAX_NEWS_BODY = 900
     }
 }

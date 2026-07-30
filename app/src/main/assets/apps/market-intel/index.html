@@ -7,32 +7,25 @@
   <link rel="stylesheet" href="../shared/market-intelligence.css">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="heatmap-v2.css">
+  <link rel="stylesheet" href="../shared/amyfx-blueprint-v1.css" data-amyfx-blueprint-css="v1">
 </head>
 <body>
   <div class="intel-container">
     <section id="market-command-strip" class="amy-command-strip" aria-label="Market command strip"></section>
-    <!-- Header -->
     <header class="intel-header">
       <h1>📰 Berita</h1>
       <p class="subtitle">News & Liquidity Heatmap</p>
     </header>
-
-    <!-- Tab Navigation -->
     <nav class="intel-tabs">
       <button class="intel-tab active" data-tab="news">📰 News</button>
       <button class="intel-tab" data-tab="heatmap">🔥 Heatmap</button>
       <button class="intel-tab" data-tab="liquidity">💧 Liquidity</button>
     </nav>
-
     <section id="intel-briefing" class="amy-briefing" aria-live="polite"></section>
-
-    <!-- News Panel -->
     <section id="panel-news" class="intel-panel active">
       <div class="status-bar" id="news-status">🔄 Memuat berita...</div>
       <div id="news-list" class="news-list"></div>
     </section>
-
-    <!-- Heatmap Panel -->
     <section id="panel-heatmap" class="intel-panel">
       <div class="status-bar" id="heatmap-status">🔄 Menghitung heatmap...</div>
       <div class="heatmap-info">
@@ -46,22 +39,21 @@
         <span class="legend-item"><span class="dot cur"></span> Harga Berjalan</span>
       </div>
     </section>
-
-    <!-- Liquidity Panel -->
     <section id="panel-liquidity" class="intel-panel">
       <div class="status-bar" id="liquidity-status">🔄 Melacak liquidity...</div>
       <div id="liquidity-list" class="liquidity-list"></div>
     </section>
-
-    <!-- Loading -->
     <div id="loading-overlay" class="loading-overlay">
       <div class="spinner"></div>
       <p>Memuat Berita...</p>
     </div>
   </div>
-
+  <script src="../shared/amyfx-market-state-contract-v1.js" data-amyfx-market-contract="v2"></script>
   <script src="../shared/market-intelligence.js"></script>
   <script src="app.js"></script>
   <script src="heatmap-v2.js"></script>
+  <script src="../shared/amyfx-blueprint-hotfix-v1.js" data-amyfx-blueprint-hotfix="v1"></script>
+  <script src="../shared/amyfx-blueprint-v1.js" data-amyfx-blueprint-js="v1"></script>
+  <script src="../shared/amyfx-provider-detection-v1.js" data-amyfx-provider-detection="v1"></script>
 </body>
 </html>

@@ -1,5 +1,28 @@
 # Feature History
 
+## Rencana Eksekusi
+- **Date:** 2026-07-29
+- **Status:** ✅ Implemented and regression/viewport validated
+- **Description:** Added a compact Dashboard card and full Analyze card that translate the authoritative Mapping result into BUY/SELL/WAIT, focus, watch/entry area, next gates, locked entry/SL/TP/RR, structural target, invalidation, freshness, and lifecycle status without creating a second decision engine.
+- **Authority:** `setupExecution` first, `entryMap.setup` second, then existing authoritative runtime contracts. Causal Entry Watch remains the only lifecycle owner.
+- **Amy Bot:** Contextual buttons send the exact card decision and official levels through a secret-free `execution_plan` Context Envelope; Amy uses a deterministic explanation path and cannot change the decision.
+- **Validation:** Feature regression matrix, full 87-file JavaScript suite, Mapping Accuracy V3 suite, and Android-size Chromium verification for duplicate cards, order, overflow, errors, navigation, accordion, and scroll stability.
+
+## Causal Entry Watch 2021–2022 Correctness Hardening
+- **Date:** 2026-07-29
+- **Status:** ✅ Implemented and regression-validated
+- **Description:** Preserved terminal lifecycle state across Mapping consumers, made replay session time injectable, separated structural-target diagnostics, enforced forecast-before-sweep-before-MSS ordering, and replaced unpaired Dealing Location anchors with a causal paired structural leg.
+- **Validation:** XAU/USD 2021–2022 M5/M15 closed-candle replay, rolling 300 and 800 parity, priority-window audit, and full regression suite.
+- **Result:** Dealing Location passes 2/2 M5 and 33/38 M15 displaced-MSS candidates. Final setup remains zero because SESSION is the next cumulative blocker; no threshold was changed.
+- **Reference:** `docs/backtests/AMYFX_CAUSAL_ENTRY_WATCH_2021_2022_FINAL_VALIDATION.md`
+
+## Mapping Accuracy V3 — All-Timeframe Causal Entry
+- **Date:** 2026-07-28
+- **Status:** ✅ Implemented; manual chart validation pending
+- **Description:** Rebuilt Mapping around one closed-candle authority, strict structure/liquidity/zone lifecycle, point-in-time HTF and EMA entry gates, a causal entry sequence, and timeframe profiles for M1 through W1. Scanner and Entry Watch consume the same setup contract. H1 bearish remains suppressed; extrapolated profiles are labeled rule-based without probability claims.
+- **Reference:** `docs/MAPPING_ACCURACY_V3_MANUAL_VALIDATION.md`
+- **Backtest:** Not run by user request.
+
 ## Context-Aware Mapping & Deep-Link News
 - **Date:** 2026-07-11
 - **Status:** ✅ Implemented

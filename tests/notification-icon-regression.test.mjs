@@ -19,13 +19,14 @@ const scannerService = fs.readFileSync(
   'utf8'
 );
 
-test('Firebase and native notifications use the AMY status icon', () => {
+test('active Firebase and native notifications use the AMY status icon', () => {
   assert.match(
     manifest,
     /com\.google\.firebase\.messaging\.default_notification_icon[\s\S]*@drawable\/ic_stat_amy_fx/
   );
   assert.match(firebaseService, /setSmallIcon\(R\.drawable\.ic_stat_amy_fx\)/);
-  assert.match(scannerService, /setSmallIcon\(R\.drawable\.ic_stat_amy_fx\)/);
+  assert.match(scannerService, /Legacy local Mapping scanner is retired/);
+  assert.doesNotMatch(scannerService, /setSmallIcon\(|NotificationCompat\.Builder/);
 });
 
 test('status icon is a monochrome AMY circle instead of the old chart arrow', () => {

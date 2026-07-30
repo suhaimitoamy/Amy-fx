@@ -60,28 +60,51 @@ function synthetic(highs, closes) {
   }));
 }
 
+function strongStructureRows({ failAfterFirstBreak = false } = {}) {
+  const highs = failAfterFirstBreak
+    ? [104,105,106,107,108,109,110,109,108,107,106,105,104,112,111]
+    : [104,105,106,107,108,109,110,109,108,107,106,105,104,112,113,114,115,114.5,114,113.5,113,112.8,112.5,112.2,118];
+  const closes = failAfterFirstBreak
+    ? [103,104,105,106,107,108,109,108,107,106,105,104,103.5,111.5,109]
+    : [103,104,105,106,107,108,109,108,107,106,105,104,103.5,111.5,112.2,113.2,114.2,113.8,113.2,112.8,112.4,112.1,111.9,111.5,117];
+  return highs.map((high, index) => {
+    const open = index === 13 ? 105
+      : index === 24 ? 111
+        : failAfterFirstBreak && index === 14 ? 111
+          : closes[index] - 0.3;
+    return {
+      time: index,
+      open,
+      high,
+      low: Math.min(open, closes[index]) - 1,
+      close: closes[index]
+    };
+  });
+}
+
 test('structure uses the same four-bar pivot length as the reference', () => {
   assert.equal(STRUCTURE_SWING_LENGTH, 4);
 });
 
-test('Drive candle close above confirmed swing creates MSS even without displacement', () => {
+test('weak Drive close-cross stays a candidate and cannot flip confirmed structure', () => {
   const result = detectStructureConcepts(driveRows);
-  assert.equal(result.trend, 'BULLISH');
+  assert.equal(result.trend, 'NEUTRAL');
   assert.equal(result.latestStructure.concept, 'MSS');
   assert.equal(result.latestStructure.direction, 'BULLISH');
   assert.equal(result.latestStructure.level, 2636.28);
   assert.equal(result.latestStructure.index, 39);
   assert.equal(result.latestStructure.hasDisplacement, false);
-  assert.equal(result.latestStructure.valid, true);
+  assert.equal(result.latestStructure.valid, false);
+  assert.equal(result.latestStructure.status, 'BREAK_CANDIDATE');
 });
 
-test('first directional close-cross is MSS and the next same-direction close-cross is BOS', () => {
-  const highs = [104,105,106,107,110,109,108,107,106,112,113,114,113,115,114,113,112,111,117];
-  const closes = [103,104,105,106,108,107,106,105,104,111,112,113,112,114,113,112,111,110,116];
-  const result = detectStructureConcepts(synthetic(highs, closes));
+test('first displaced major close-cross is MSS and the next same-direction break is BOS', () => {
+  const result = detectStructureConcepts(strongStructureRows());
   assert.deepEqual(
-    result.structureEvents.map(event => [event.concept, event.direction, event.level, event.index]),
-    [['MSS', 'BULLISH', 110, 9], ['BOS', 'BULLISH', 115, 18]]
+    result.structureEvents
+      .filter(event => event.scope === 'MAJOR')
+      .map(event => [event.concept, event.direction, event.level, event.index]),
+    [['MSS', 'BULLISH', 110, 13], ['BOS', 'BULLISH', 115, 24]]
   );
   assert.equal(result.trend, 'BULLISH');
 });
@@ -95,9 +118,9 @@ test('one confirmed swing can emit only one sweep before it is replaced', () => 
 });
 
 test('break lifecycle marks a close back inside as failed', () => {
-  const highs = [104,105,106,107,110,109,108,107,106,112,111];
-  const closes = [103,104,105,106,108,107,106,105,104,111,109];
-  const result = detectStructureConcepts(synthetic(highs, closes));
-  assert.equal(result.structureEvents[0].status, 'FAILED');
-  assert.equal(result.structureEvents[0].failureIndex, 10);
+  const result = detectStructureConcepts(strongStructureRows({ failAfterFirstBreak: true }));
+  const major = result.structureEvents.find(event => event.scope === 'MAJOR');
+  assert.equal(major.status, 'FAILED');
+  assert.equal(major.failureIndex, 14);
+  assert.equal(major.valid, false);
 });
