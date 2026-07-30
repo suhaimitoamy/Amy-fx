@@ -1,0 +1,82 @@
+name: Apply Market Pipeline Fix V2
+
+on:
+  push:
+    branches:
+      - fix/market-pipeline-live-price-20260730-definitive
+      - fix/preview-market-pipeline-live-price-20260730-definitive
+
+permissions:
+  contents: write
+
+concurrency:
+  group: market-pipeline-fix-v2-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apply-and-test:
+    if: ${{ !contains(github.event.head_commit.message, '[market-pipeline-applied]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore deterministic patcher from main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/contents/.github/workflows/apply-market-pipeline-fix.yml?ref=main" --jq .content | base64 -d > /tmp/market-pipeline-workflow.yml
+          python3 - <<'PY'
+          import base64, gzip, re
+          from pathlib import Path
+          text=Path('/tmp/market-pipeline-workflow.yml').read_text()
+          match=re.search(r"printf '%s' '([^']+)'", text)
+          if not match:
+              raise SystemExit('Embedded market pipeline patcher not found')
+          Path('tools').mkdir(exist_ok=True)
+          Path('tools/apply-market-pipeline-fix.py').write_bytes(gzip.decompress(base64.b64decode(match.group(1))))
+          PY
+          python3 -m py_compile tools/apply-market-pipeline-fix.py
+      - name: Apply market pipeline repair
+        run: |
+          rm -f .market-pipeline-trigger .market-pipeline-trigger-2 .market-pipeline-trigger-v2
+          python3 tools/apply-market-pipeline-fix.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tests/dynamic-heatmap-ui-regression.test.mjs')
+          text=p.read_text()
+          old='assert.match(contract, /source: "M1_QUOTE"/);'
+          new='assert.match(contract, /source: "(?:TWELVEDATA_WEBSOCKET|MAPPING_REST_FALLBACK)"/);'
+          if old not in text:
+              raise SystemExit('Expected canonical quote assertion not found')
+          p.write_text(text.replace(old,new,1))
+          PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate JavaScript syntax
+        run: |
+          node --check app/src/main/assets/apps/mapping/js/api/live-price-websocket.js
+          node --check app/src/main/assets/apps/mapping/js/api/market-data.js
+          node --check app/src/main/assets/apps/mapping/js/main.js
+          node --check app/src/main/assets/apps/mapping/js/bridge/android-bridge.js
+          node --check app/src/main/assets/apps/mapping/js/ui/ui-render.js
+          node --check app/src/main/assets/apps/shared/amyfx-market-state-contract-v1.js
+      - name: Run regression tests
+        run: timeout 20m npm test
+      - name: Commit generated repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No changes.'
+            exit 0
+          fi
+          git commit -m 'fix: separate live WebSocket and deduplicate market candles [market-pipeline-applied]'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
