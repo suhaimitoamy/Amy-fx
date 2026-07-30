@@ -3,10 +3,14 @@ import "./bridge/sync-fix.js";
 import "./bridge/notify-guard.js";
 import {
   runAnalysis,
-  connect,
-  isLivePriceRunning,
-  lastWsTickAt
+  connect as connectMappingQuote,
+  isLivePriceRunning as isMappingQuoteRunning
 } from './api/market-data.js';
+import {
+  connectLivePrice,
+  getLastLiveQuoteAt,
+  isLivePriceRunning
+} from './api/live-price-websocket.js';
 import { fmtDir } from './ui/ui-render.js';
 import {
   render,
@@ -31,8 +35,8 @@ export const TF = {
 export const state = {
   tab: 'Dashboard',
   tf: 'M15',
-  key: '',
-  price: Number(localStorage.getItem('last_price') || 0),
+  key: String(localStorage.getItem('twelve_api_key') || '').trim(),
+  price: Number(localStorage.getItem('last_mapping_price') || 0),
   conn: 'Offline',
   logs: [],
   analyses: [],
@@ -169,13 +173,15 @@ window.toggleBg = toggleBg;
 window.state = state;
 window.TF = TF;
 
-function autoConnectLivePrice() {
-  if (!isLivePriceRunning()) connect();
+function autoConnectMarketData() {
+  if (!isMappingQuoteRunning()) connectMappingQuote();
+  connectLivePrice();
 }
 
 function livePriceWatchdog() {
-  const stale = !lastWsTickAt || Date.now() - lastWsTickAt > 45000;
-  if (!isLivePriceRunning() || state.conn === 'Offline' || stale) connect();
+  const lastTickAt = getLastLiveQuoteAt();
+  const stale = !lastTickAt || Date.now() - lastTickAt > 45_000;
+  if (!isLivePriceRunning() || state.conn === 'Offline' || stale) connectLivePrice();
 }
 
 function syncAutomaticScannerUi() {
@@ -189,7 +195,7 @@ function syncAutomaticScannerUi() {
   const settings = document.querySelector('.settings');
   if (!settings) return;
   const helpText =
-    'Harga live, snapshot Mapping, scanner, dan notifikasi memakai kontrak setupExecution yang sama.';
+    'Harga live berasal dari WebSocket. Candle, snapshot, dan keputusan Mapping tetap berasal dari REST → Supabase.';
   const help = settings.querySelector('p.muted');
   if (help && help.textContent !== helpText) help.textContent = helpText;
 
@@ -217,7 +223,7 @@ export function pruneStorage() {
 }
 
 function initApp() {
-  try { localStorage.removeItem('twelve_api_key'); } catch (_) {}
+  try { state.key = String(localStorage.getItem('twelve_api_key') || '').trim(); } catch (_) {}
   try {
     const storedTab = localStorage.getItem('amy_mapping_tab');
     if (storedTab !== 'Analyze' && storedTab !== 'Dashboard') {
@@ -236,7 +242,7 @@ function initApp() {
   render();
   syncAutomaticScannerUi();
 
-  setTimeout(autoConnectLivePrice, 600);
+  setTimeout(autoConnectMarketData, 600);
   setInterval(livePriceWatchdog, 30000);
   document.addEventListener(
     'visibilitychange',

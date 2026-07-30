@@ -28,7 +28,7 @@ test('Mapping UI stability runtime remains syntactically valid', () => {
 
 test('README documents the public Amy FX identity and keeps Preview separate', () => {
   assert.match(readme, /Amy FX/);
-  assert.match(readme, /Versi publik:\*\* `2\.0\.1`/);
+  assert.match(readme, /Versi publik:\*\* `2\.0\.2`/);
   assert.match(readme, /com\.amyelitesuite/);
   assert.match(readme, /main\/update\.json/);
   assert.match(readme, /personal\/amyfx-private/);
@@ -93,8 +93,8 @@ test('issue-5 audit remains available in documentation but not injected into liv
   assert.doesNotMatch(fixes, /Akurasi arah close historis/);
 });
 
-test('source version uses public 2.0.1 while metadata stays on last published APK until release', () => {
-  assert.match(appVersion, /name: '2\.0\.1', code: 52/);
+test('source version uses public 2.0.2 while metadata stays on last published APK until release', () => {
+  assert.match(appVersion, /name: '2\.0\.2', code: 53/);
   assert.match(appVersion, /main\/update\.json/);
   assert.doesNotMatch(appVersion, /Preview|personal\/amyfx-private|preview-update\.json/);
   assert.ok(update.latest_version_code <= 52);

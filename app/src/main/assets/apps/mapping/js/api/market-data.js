@@ -14,7 +14,7 @@ import { sendTargetsToNative, notifyImportant } from '../bridge/android-bridge.j
 
 export let liveTimer = null;
 export let scanTimer = null;
-export let lastWsTickAt = Number(localStorage.getItem('last_ws_tick_at') || 0);
+export let lastMappingQuoteAt = Number(localStorage.getItem('last_mapping_quote_at') || 0);
 
 let pollInFlight = false;
 let lastErrorLogAt = 0;
@@ -791,6 +791,7 @@ function publishMappingSnapshot(result = state.result) {
   intel.write('mapping', {
     ...previous,
     price,
+    quoteCapturedAt: lastMappingQuoteAt || Number(localStorage.getItem('last_mapping_quote_at') || 0),
     bsl,
     ssl,
     levels,
@@ -1075,20 +1076,27 @@ async function pollLivePrice() {
     const response = await fetch(`${PROXY_URL}?symbol=XAU/USD&interval=1min&outputsize=1&_=${Math.floor(Date.now() / LIVE_POLL_MS)}`, { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
-    const price = +(data.values?.[0]?.close || 0);
-    if (data.status !== 'ok' || !Number.isFinite(price) || price <= 0) throw new Error(data.message || 'Harga live tidak valid');
-    lastWsTickAt = Date.now();
-    localStorage.setItem('last_ws_tick_at', String(lastWsTickAt));
-    localStorage.setItem('last_price', String(price));
+    const latest = data.values?.[0] || {};
+    const price = +(latest.close || 0);
+    if (data.status !== 'ok' || !Number.isFinite(price) || price <= 0) throw new Error(data.message || 'Harga Mapping tidak valid');
+
+    const explicitCapturedAt = Date.parse(String(data.quoteCapturedAt || ''));
+    const candleCapturedAt = Date.parse(String(latest.datetime || ''));
+    lastMappingQuoteAt = Number.isFinite(explicitCapturedAt)
+      ? explicitCapturedAt
+      : Number.isFinite(candleCapturedAt) ? candleCapturedAt : 0;
+    if (lastMappingQuoteAt > 0) localStorage.setItem('last_mapping_quote_at', String(lastMappingQuoteAt));
+    localStorage.setItem('last_mapping_price', String(price));
     state.price = price;
-    state.conn = 'Connected';
+
     if (state.result) {
+      state.result.quoteCapturedAt = lastMappingQuoteAt || null;
       state.result.setupExecution = buildSetupExecution(state.result);
       state.result.mappingExplanation = buildMappingExplanation(state.result);
       state.result.mappingSnapshot = buildMappingSnapshot(state.result, {
         candles: state.candles[state.result.tf] || [],
         livePrice: state.price,
-        capturedAt: Date.now()
+        capturedAt: lastMappingQuoteAt || Date.now()
       });
     }
     publishMappingSnapshot();
@@ -1098,11 +1106,9 @@ async function pollLivePrice() {
     renderSoft();
     scheduleAnalysisRefresh();
   } catch (error) {
-    state.conn = 'Offline';
-    renderSoft();
     if (Date.now() - lastErrorLogAt > 60000) {
       lastErrorLogAt = Date.now();
-      log(`Live price mencoba tersambung kembali: ${error.message}`);
+      log(`Harga internal Mapping mencoba tersambung kembali: ${error.message}`);
     }
   } finally {
     pollInFlight = false;
@@ -1111,8 +1117,6 @@ async function pollLivePrice() {
 
 export function connect() {
   if (liveTimer) clearInterval(liveTimer);
-  state.conn = 'Connecting';
-  renderSoft();
   pollLivePrice();
   liveTimer = setInterval(pollLivePrice, LIVE_POLL_MS);
   if (!state.candles[state.tf]?.length) runAnalysis(state.tf);
@@ -1123,6 +1127,4 @@ export function isLivePriceRunning() { return liveTimer !== null; }
 export function stopLivePrice() {
   if (liveTimer) { clearInterval(liveTimer); liveTimer = null; }
   if (scanTimer) { clearTimeout(scanTimer); scanTimer = null; }
-  state.conn = 'Offline';
-  renderSoft();
 }
