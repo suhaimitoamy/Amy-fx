@@ -23,9 +23,8 @@ def load_installer():
 
 
 def preserve_private_preview_identity(installer) -> list[Path]:
-    """Validate the personal Preview identity and leave versioned source untouched."""
+    """Validate the personal Preview identity and synchronize updater fallbacks."""
     app_version = installer.APP_VERSION.read_text(encoding="utf-8")
-    update_checker = installer.UPDATE_CHECKER.read_text(encoding="utf-8")
 
     version_match = re.search(
         r"const VERSION = Object\.freeze\(\{ name: '(2\.0\.0-preview\.\d+)', code: (94\d{4}) \}\);",
@@ -35,6 +34,34 @@ def preserve_private_preview_identity(installer) -> list[Path]:
         raise RuntimeError("Private Preview version identity is missing or invalid")
 
     version_name, version_code = version_match.groups()
+    update_checker = installer.UPDATE_CHECKER.read_text(encoding="utf-8")
+    normalized_checker = update_checker
+
+    replacements = (
+        (
+            r"const VERSION = window\.AmyFXAppVersion \|\| \{ name: '[^']+', code: \d+ \};",
+            f"const VERSION = window.AmyFXAppVersion || {{ name: '{version_name}', code: {version_code} }};",
+        ),
+        (
+            r"const CURRENT_VERSION_CODE = Number\(VERSION\.code\) \|\| \d+;",
+            f"const CURRENT_VERSION_CODE = Number(VERSION.code) || {version_code};",
+        ),
+        (
+            r"const CURRENT_VERSION_NAME = String\(VERSION\.name \|\| '[^']+'\);",
+            f"const CURRENT_VERSION_NAME = String(VERSION.name || '{version_name}');",
+        ),
+    )
+    for pattern, replacement in replacements:
+        normalized_checker, count = re.subn(pattern, replacement, normalized_checker, count=1)
+        if count != 1:
+            raise RuntimeError(f"Private Preview updater fallback pattern missing: {pattern}")
+
+    changed: list[Path] = []
+    if normalized_checker != update_checker:
+        installer.UPDATE_CHECKER.write_text(normalized_checker, encoding="utf-8")
+        changed.append(installer.UPDATE_CHECKER)
+    update_checker = normalized_checker
+
     required_markers = (
         PRIVATE_MANIFEST_URL,
         f"name: '{version_name}', code: {version_code}",
@@ -45,7 +72,7 @@ def preserve_private_preview_identity(installer) -> list[Path]:
     if missing:
         raise RuntimeError(f"Private Preview updater identity is incomplete: {', '.join(missing)}")
 
-    return []
+    return changed
 
 
 def main() -> None:
