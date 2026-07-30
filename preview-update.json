@@ -1,25 +1,28 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 940291,
-  "latest_version_name": "2.0.0-preview.291",
-  "versionCode": 940291,
-  "version": "2.0.0-preview.291",
-  "releaseDate": "2026-07-29",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.291/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.291/AmyFX-Preview-latest.apk",
+  "latest_version_code": 940292,
+  "latest_version_name": "2.0.0-preview.292",
+  "versionCode": 940292,
+  "version": "2.0.0-preview.292",
+  "releaseDate": "2026-07-30",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.292/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.292/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Amy FX Preview sekarang menggunakan branch pribadi permanen personal/amyfx-private.",
-    "Package, data aplikasi, URI scheme, dan sertifikat signing Preview tetap dipertahankan.",
-    "Update berikutnya akan dibaca langsung dari channel branch pribadi.",
+    "Mapping tidak lagi berkedip saat data diperbarui.",
+    "Posisi layar, scroll, dan accordion Analisis lebih stabil.",
+    "Kartu Scalper Shadow selalu tampil dan mempertahankan data valid terakhir.",
+    "Header status Mapping hanya menampilkan satu bulatan berwarna.",
+    "Lifecycle entry dan Stop Loss struktural Scalper Shadow diperbaiki.",
     "Amy FX publik pada branch main tidak diubah."
   ],
   "changelog": [
-    "Permanent private development branch",
-    "Private update manifest migration",
-    "Preview package and signer continuity",
+    "Stable keyed Mapping DOM updates",
+    "Persistent Scalper Shadow panel",
+    "Causal entry lock and structural ATR-buffered stop",
+    "Single Mapping status dot",
     "Public main isolation guard"
   ]
 }
