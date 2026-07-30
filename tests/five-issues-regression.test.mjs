@@ -12,7 +12,7 @@ const fixCssPath = 'app/src/main/assets/apps/mapping/css/five-issues-fix.css';
 const reportPath = 'docs/backtests/AMY_FX_MARKET_OUTLOOK_MAPPING_2022_2025.md';
 const dataPath = 'docs/backtests/amy-fx-market-outlook-mapping-2022-2025.json';
 const appVersionPath = 'app/src/main/assets/app-version.js';
-const updatePath = 'preview-update.json';
+const updatePath = 'update.json';
 
 const readme = read(readmePath);
 const index = read(indexPath);
@@ -27,11 +27,14 @@ test('Mapping UI stability runtime remains syntactically valid', () => {
   execFileSync(process.execPath, ['--check', fixScriptPath], { stdio: 'pipe' });
 });
 
-test('README retains the private Preview identity and APK route', () => {
+test('README documents the public Amy FX identity and keeps Preview separate', () => {
+  assert.match(readme, /Amy FX/);
+  assert.match(readme, /Versi publik:\*\* `2\.0\.0`/);
+  assert.match(readme, /com\.amyelitesuite/);
+  assert.match(readme, /main\/update\.json/);
   assert.match(readme, /personal\/amyfx-private/);
-  assert.match(readme, /Amy FX Preview/);
-  assert.match(readme, /com\.amyelitesuite\.learningpreview/);
-  assert.match(readme, /AmyFX-Preview-latest\.apk/);
+  assert.match(readme, /tidak menghapus atau mengubah branch/);
+  assert.doesNotMatch(readme, /Application ID:\*\* `com\.amyelitesuite\.learningpreview`/);
 });
 
 test('Mapping loads stable UI coordination and no longer loads scroll restoration', () => {
@@ -89,10 +92,12 @@ test('issue-5 audit remains available in documentation but not injected into liv
   assert.doesNotMatch(fixes, /Akurasi arah close historis/);
 });
 
-test('source version and updater stay on the private Preview channel', () => {
-  assert.match(appVersion, /name: '2\.0\.0-preview\.173', code: 940173/);
-  assert.match(appVersion, /personal\/amyfx-private\/preview-update\.json/);
-  assert.ok(update.latest_version_code >= 940000);
-  assert.match(update.latest_version_name, /^2\.0\.0-preview\.\d+$/);
-  assert.match(update.apk_url || update.downloadUrl || '', /AmyFX-Preview-latest\.apk/);
+test('source version uses public 2.0.0 while published metadata stays on the last available APK until release', () => {
+  assert.match(appVersion, /name: '2\.0\.0', code: 51/);
+  assert.match(appVersion, /main\/update\.json/);
+  assert.doesNotMatch(appVersion, /Preview|personal\/amyfx-private|preview-update\.json/);
+  assert.ok(update.latest_version_code <= 51);
+  assert.match(update.latest_version_name, /^(?:1\.\d+\.\d+|2\.0\.0)$/);
+  assert.match(update.apk_url || update.downloadUrl || '', /AmyFX-latest\.apk/);
+  assert.doesNotMatch(update.apk_url || update.downloadUrl || '', /AmyFX-Preview-latest\.apk/);
 });
