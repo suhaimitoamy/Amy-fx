@@ -41,7 +41,7 @@ function paint(timestamp = Date.now(), force = false) {
 function boot() {
   paint(Date.now(), true);
   clearInterval(timer);
-  timer = setInterval(() => paint(Date.now()), 250);
+  timer = setInterval(() => paint(Date.now()), 1000);
 
   const app = document.getElementById('app');
   if (app) {

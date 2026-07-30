@@ -58,8 +58,9 @@
   function isM15Stale() {
     const result = window.state?.result;
     if (result?.dataStale) return true;
-    const connection = String(document.getElementById('conn')?.textContent || '').toUpperCase();
-    if (connection.includes('STALE') || connection.includes('DATA USANG')) return true;
+    const connection = document.getElementById('conn');
+    const freshness = String(connection?.dataset?.analysisFreshness || '').toUpperCase();
+    if (freshness === 'STALE' || freshness === 'EXPIRED') return true;
     const quality = window.AmyMappingIntegrity?.qualityByInterval || {};
     const m15 = quality['15min'] || quality.M15 || quality.m15;
     const status = qualityState(m15).toUpperCase();
