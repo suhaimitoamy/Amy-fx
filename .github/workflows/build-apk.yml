@@ -21,7 +21,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       AMYFX_APPLICATION_ID: com.amyelitesuite
       AMYFX_APP_LABEL: Amy FX
@@ -31,8 +31,8 @@ jobs:
       AMYFX_KEYSTORE_PASSWORD: android
       AMYFX_KEY_ALIAS: androiddebugkey
       AMYFX_KEY_PASSWORD: android
-      AMYFX_VERSION_NAME: "1.5.9"
-      AMYFX_VERSION_CODE: "50"
+      AMYFX_VERSION_NAME: "2.0.0"
+      AMYFX_VERSION_CODE: "51"
       AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
     steps:
@@ -43,7 +43,7 @@ jobs:
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state='pending' \
             -f context='Amy FX Production Release' \
-            -f description='Testing and building signed Amy FX 1.5.9' \
+            -f description='Testing and building signed Amy FX 2.0.0' \
             -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
 
       - name: Checkout
@@ -60,25 +60,26 @@ jobs:
         run: |
           set -euo pipefail
           node --check app/src/main/assets/app-version.js
-          node --check app/src/main/assets/apps/journal/app.js
-          node --check app/src/main/assets/apps/journal/amy-journal-final-fix.js
-          node --check app/src/main/assets/apps/journal/amy-journal-final-fix-legacy.js
-          node --check app/src/main/assets/apps/journal/amy-journal-ai-runtime-fix.js
-          node --check app/src/main/assets/apps/journal/background-video.js
           node --check app/src/main/assets/update-checker.js
-          grep -Fq "name: '1.5.9', code: 50" app/src/main/assets/app-version.js
-          grep -Fq '?: 50)' app/build.gradle.kts
-          grep -Fq '?: "1.5.9"' app/build.gradle.kts
+          node --check app/src/main/assets/apps/mapping/js/mapping-live-consistency-v1.js
+          node --check app/src/main/assets/apps/mapping/js/execution-plan-core.js
+          node --check app/src/main/assets/apps/shared/market-intelligence.js
+          grep -Fq "name: '2.0.0', code: 51" app/src/main/assets/app-version.js
+          grep -Fq '?: 51)' app/build.gradle.kts
+          grep -Fq '?: "2.0.0"' app/build.gradle.kts
           grep -Fq 'com.amyelitesuite' app/build.gradle.kts
           grep -Fq 'main/update.json' app/build.gradle.kts
+          grep -Fq 'main/update.json' app/src/main/assets/app-version.js
           grep -Fq "cache: 'no-store'" app/src/main/assets/update-checker.js
-          grep -Fq 'BackgroundVideoPlaybackService' app/src/main/AndroidManifest.xml
-          grep -Fq 'foregroundServiceType="mediaPlayback"' app/src/main/AndroidManifest.xml
-          grep -Fq 'amy-journal-ai-runtime-fix.js?v=20260725-v159' app/src/main/assets/apps/journal/amy-journal-final-fix.js
-          ! grep -Fq 'new MutationObserver(ensurePoolUi)' app/src/main/assets/apps/journal/amy-journal-ai-runtime-fix.js
+          ! grep -Fq 'com.amyelitesuite.learningpreview' app/build.gradle.kts
+          ! grep -Fq 'Amy FX Preview' app/src/main/assets/app-version.js
+          ! grep -Fq 'personal/amyfx-private/preview-update.json' app/src/main/assets/app-version.js
+          test ! -e preview-update.json
+          test ! -e AmyFX-Preview-latest.apk
+          test ! -e app/src/main/assets/apps/market-intel/private-market-api-router.js
 
       - name: Run complete JavaScript regression suite
-        run: timeout 10m npm test
+        run: timeout 15m npm test
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -185,7 +186,7 @@ jobs:
           git tag -f amyfx-latest "$GITHUB_SHA"
           git push origin refs/tags/amyfx-latest --force
 
-          release_notes="Amy FX 1.5.9 memperbaiki freeze pada menu Trading Library/Jurnal, memulihkan klik menu samping serta navigasi Library, Media, Jurnal, dan Asisten, sambil mempertahankan jurnal hasil backup serta rotasi API AI."
+          release_notes="Amy FX 2.0.0 membawa Mapping dan Market Intelligence generasi baru, Rencana Eksekusi, lifecycle setup, integrasi Amy Mentor lintas modul, serta stabilitas data dan tampilan dari jalur Preview yang telah dipromosikan untuk publik. Package, signing, data pengguna, dan jalur update produksi tetap dipertahankan."
           if gh release view amyfx-latest >/dev/null 2>&1; then
             gh release edit amyfx-latest \
               --title "Amy FX Latest — v${AMYFX_VERSION_NAME}" \
@@ -212,20 +213,19 @@ jobs:
           path = Path('update.json')
           data = json.loads(path.read_text(encoding='utf-8'))
           notes = [
-              'Freeze pada Trading Library dan Jurnal akibat loop pembaruan DOM telah dihentikan.',
-              'Menu samping serta navigasi Library, Media, Jurnal, dan Asisten kembali dapat diklik.',
-              'Jurnal hasil backup tetap dibaca dari IndexedDB.',
-              'Kalender tetap menampilkan nominal Win hijau dan Loss merah.',
-              'Rotasi otomatis API Gemini dan OpenRouter tetap tersedia dengan timeout dan cooldown.',
-              'DeepSeek tetap tersedia sebagai fallback berbayar opsional.',
-              'Package com.amyelitesuite, sertifikat permanen, data lokal, dan jalur update tetap dipertahankan.',
-              'Pembaruan dapat dipasang tanpa menghapus aplikasi.'
+              'Mapping dan Market Intelligence generasi baru telah dipromosikan ke Amy FX publik.',
+              'Rencana Eksekusi menerjemahkan hasil Mapping menjadi BUY, SELL, atau WAIT beserta entry, SL, TP, RR, dan invalidasi.',
+              'Lifecycle setup, Entry Watch, scanner, dan notifikasi membaca kontrak market yang lebih konsisten.',
+              'Amy Mentor terintegrasi lintas Beranda, Mapping, Market Intelligence, Academy, dan Journal.',
+              'Stabilitas header, panel, navigasi, data candle, freshness, dan replay historis ditingkatkan.',
+              'Package com.amyelitesuite, signing produksi, data pengguna, URI amyfx, dan jalur update main tetap dipertahankan.',
+              'Amy FX Preview pribadi tetap berada pada branch terpisah dan tidak digantikan.'
           ]
           data.update({
-              'latest_version_code': 50,
-              'latest_version_name': '1.5.9',
-              'versionCode': 50,
-              'version': '1.5.9',
+              'latest_version_code': 51,
+              'latest_version_name': '2.0.0',
+              'versionCode': 51,
+              'version': '2.0.0',
               'releaseDate': os.environ['RELEASE_DATE'],
               'apk_url': 'https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',
               'downloadUrl': 'https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',
@@ -246,10 +246,10 @@ jobs:
             python3 -m json.tool update.json >/dev/null
             git add update.json
             if git diff --cached --quiet; then
-              echo "update.json sudah sesuai Amy FX 1.5.9."
+              echo "update.json sudah sesuai Amy FX 2.0.0."
               exit 0
             fi
-            git commit -m "release: activate Amy FX 1.5.9 in-app update [skip ci]"
+            git commit -m "release: activate Amy FX 2.0.0 in-app update [skip ci]"
             if git push origin HEAD:main; then
               exit 0
             fi
@@ -264,8 +264,8 @@ jobs:
           set -euo pipefail
           git fetch origin main
           manifest="$(git show origin/main:update.json)"
-          printf '%s\n' "$manifest" | grep -F '"latest_version_code": 50'
-          printf '%s\n' "$manifest" | grep -F '"latest_version_name": "1.5.9"'
+          printf '%s\n' "$manifest" | grep -F '"latest_version_code": 51'
+          printf '%s\n' "$manifest" | grep -F '"latest_version_name": "2.0.0"'
 
   report-status:
     if: always()
@@ -278,10 +278,10 @@ jobs:
           BUILD_RESULT: ${{ needs.build.result }}
         run: |
           state=success
-          description='Amy FX 1.5.9 published and update activated'
+          description='Amy FX 2.0.0 published and update activated'
           if [ "$BUILD_RESULT" != 'success' ]; then
             state=failure
-            description="Amy FX 1.5.9 production release failed: $BUILD_RESULT"
+            description="Amy FX 2.0.0 production release failed: $BUILD_RESULT"
           fi
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state="$state" \
