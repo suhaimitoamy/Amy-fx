@@ -9,21 +9,21 @@
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Harga live XAU/USD tetap memakai WebSocket Twelve Data langsung dan tidak diubah.",
+    "Harga live XAU/USD tetap memakai WebSocket Twelve Data langsung.",
     "REST Twelve Data dipusatkan ke satu sinkronisasi candle M1 setiap tiga menit saat market aktif.",
-    "M5, M15, M30, H1, H4, dan D1 dibentuk dari candle M1 di Supabase tanpa fallback REST per-timeframe.",
-    "Scalper Engine hanya membaca candle Supabase dan tidak lagi memicu request provider setiap menit.",
-    "Setup legacy seperti IFVG lama dipensiunkan dan tidak lagi muncul sebagai setup aktif.",
-    "Rencana Eksekusi serta Entry Watch mengikuti Scalper Engine sebagai otoritas eksekusi, sementara Mapping tetap menjadi sumber konteks market.",
-    "Academy menyimpan materi, posisi, dan riwayat baca terakhir agar belajar dapat dilanjutkan langsung.",
-    "Amy FX Preview dilebur ke Amy FX produksi dengan package, URI, signing, data pengguna, dan update channel produksi tetap dipertahankan."
+    "Timeframe lebih besar dibentuk dari M1 di Supabase tanpa request provider terpisah.",
+    "Scalper Engine membaca candle Supabase saja dan setup legacy dipensiunkan.",
+    "Rencana Eksekusi serta Entry Watch mengikuti Scalper Engine; Mapping tetap menyimpan konteks market.",
+    "Academy menyimpan materi dan posisi baca terakhir.",
+    "Package, signing, data pengguna, URI amyfx, dan update channel produksi tetap dipertahankan."
   ],
   "changelog": [
-    "Centralized Twelve Data REST M1 sync",
-    "Supabase-only Scalper Engine candle reads",
-    "Legacy scalper setup retirement",
-    "Scalper Engine execution authority for Mapping consumers",
-    "Academy last-read history and resume position",
-    "Unified Amy FX production release"
+    "Harga live XAU/USD tetap memakai WebSocket Twelve Data langsung.",
+    "REST Twelve Data dipusatkan ke satu sinkronisasi candle M1 setiap tiga menit saat market aktif.",
+    "Timeframe lebih besar dibentuk dari M1 di Supabase tanpa request provider terpisah.",
+    "Scalper Engine membaca candle Supabase saja dan setup legacy dipensiunkan.",
+    "Rencana Eksekusi serta Entry Watch mengikuti Scalper Engine; Mapping tetap menyimpan konteks market.",
+    "Academy menyimpan materi dan posisi baca terakhir.",
+    "Package, signing, data pengguna, URI amyfx, dan update channel produksi tetap dipertahankan."
   ]
 }
