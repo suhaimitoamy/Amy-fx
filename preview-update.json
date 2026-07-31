@@ -1,26 +1,27 @@
 {
-  "channel": "amyfx-preview-blueprint-v1",
+  "channel": "amyfx-preview-retired",
   "latest_version_code": 940295,
   "latest_version_name": "2.0.0-preview.295",
   "versionCode": 940295,
   "version": "2.0.0-preview.295",
-  "releaseDate": "2026-07-30",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.295/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.295/AmyFX-Preview-latest.apk",
+  "releaseDate": "2026-07-31",
+  "apk_url": "",
+  "downloadUrl": "",
   "force_update": false,
   "mandatory": false,
-  "enabled": true,
+  "enabled": false,
+  "retired": true,
+  "replacement": {
+    "application": "Amy FX",
+    "package": "com.amyelitesuite",
+    "update_manifest": "https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json"
+  },
   "release_notes": [
-    "Harga XAU/USD kembali memakai WebSocket Twelve Data langsung dari aplikasi.",
-    "Reconnect otomatis aktif saat jaringan kembali, aplikasi dibuka lagi, atau tick berhenti.",
-    "API key WebSocket disimpan terenkripsi oleh Android dan tidak masuk localStorage.",
-    "Candle serta analisis Mapping tetap memakai jalur REST yang sudah ada.",
-    "Amy FX publik pada branch main tidak diubah."
+    "Channel Amy FX Preview telah dipensiunkan setelah fiturnya dilebur ke Amy FX produksi.",
+    "Gunakan Amy FX produksi agar hanya ada satu jalur aplikasi dan satu backend market."
   ],
   "changelog": [
-    "Native Twelve Data WebSocket live price",
-    "Automatic live-price reconnect watchdog",
-    "Encrypted WebSocket credential storage",
-    "REST Mapping pipeline preserved"
+    "Preview channel retired",
+    "Unified with Amy FX production"
   ]
 }
