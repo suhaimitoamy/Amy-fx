@@ -22,7 +22,7 @@ const INTERVALS: Record<string, { timeframe: string; seconds: number }> = {
   "1week": { timeframe: "W1", seconds: 604_800 },
 };
 
-const M1_AGGREGATE_TARGETS = ["5min", "15min", "30min", "1h", "4h", "1day"];
+const M1_AGGREGATE_TARGETS = ["5min", "15min", "30min", "1h", "4h"];
 const activeSyncs = new Map<string, Promise<SyncResult>>();
 
 const corsHeaders = {
@@ -91,6 +91,23 @@ function parseUtcSeconds(value: unknown) {
   return Number.isFinite(milliseconds) ? Math.floor(milliseconds / 1_000) : 0;
 }
 
+function utcDayOpen(seconds: number) {
+  const date = new Date(seconds * 1_000);
+  return Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0) / 1_000);
+}
+
+function utcWeekOpen(seconds: number) {
+  const date = new Date(seconds * 1_000);
+  const daysSinceMonday = (date.getUTCDay() + 6) % 7;
+  return Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - daysSinceMonday, 0, 0, 0) / 1_000);
+}
+
+function tradingWeekOpen(seconds: number) {
+  const date = new Date(seconds * 1_000);
+  const calendarWeek = utcWeekOpen(seconds);
+  return date.getUTCDay() === 0 ? calendarWeek + INTERVALS["1week"].seconds : calendarWeek;
+}
+
 function latestExpectedMarketMinuteOpen(now = Date.now()) {
   const safeSeconds = Math.floor(now / 1_000) - CLOSE_GRACE_SECONDS;
   const date = new Date(safeSeconds * 1_000);
@@ -118,10 +135,15 @@ function isMarketOpen(now = Date.now()) {
   return true;
 }
 
-function utcWeekOpen(seconds: number) {
-  const date = new Date(seconds * 1_000);
-  const daysSinceMonday = (date.getUTCDay() + 6) % 7;
-  return Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - daysSinceMonday, 0, 0, 0) / 1_000);
+function expectedClosedDayOpen(now = Date.now()) {
+  const seconds = Math.floor(now / 1_000);
+  const date = new Date(now);
+  const day = date.getUTCDay();
+  const currentDay = utcDayOpen(seconds);
+  if (day === 5 && date.getUTCHours() >= 22) return currentDay;
+  if (day === 6) return currentDay - INTERVALS["1day"].seconds;
+  if (day === 0) return currentDay - 2 * INTERVALS["1day"].seconds;
+  return currentDay - INTERVALS["1day"].seconds;
 }
 
 function expectedClosedWeekOpen(now = Date.now()) {
@@ -139,6 +161,7 @@ function expectedClosedWeekOpen(now = Date.now()) {
 function expectedClosedOpenTime(interval: string, now = Date.now()) {
   const latestMinuteOpen = latestExpectedMarketMinuteOpen(now);
   if (interval === "1min") return latestMinuteOpen;
+  if (interval === "1day") return expectedClosedDayOpen(now);
   if (interval === "1week") return expectedClosedWeekOpen(now);
   const seconds = INTERVALS[interval].seconds;
   return Math.floor((latestMinuteOpen + 60) / seconds) * seconds - seconds;
@@ -323,11 +346,19 @@ function aggregateRows(m1Rows: CandleRow[], symbol: string, interval: string) {
   return dedupeRows(aggregated);
 }
 
-function aggregateWeeklyRows(dailyRows: CandleRow[], symbol: string) {
-  const expectedLatest = expectedClosedOpenTime("1week");
+function dailyMinuteBounds(bucket: number) {
+  const day = new Date(bucket * 1_000).getUTCDay();
+  if (day === 0) return { start: bucket + 22 * 3_600, end: bucket + 86_400 - 60, count: 120 };
+  if (day === 5) return { start: bucket, end: bucket + 22 * 3_600 - 60, count: 1_320 };
+  if (day === 6) return { start: bucket, end: bucket, count: 0 };
+  return { start: bucket, end: bucket + 86_400 - 60, count: 1_440 };
+}
+
+function aggregateDailyRows(m1Rows: CandleRow[], symbol: string) {
+  const expectedLatest = expectedClosedOpenTime("1day");
   const groups = new Map<number, CandleRow[]>();
-  for (const row of dedupeRows(dailyRows)) {
-    const bucket = utcWeekOpen(row.open_time);
+  for (const row of dedupeRows(m1Rows)) {
+    const bucket = utcDayOpen(row.open_time);
     if (bucket > expectedLatest) continue;
     const group = groups.get(bucket) || [];
     group.push(row);
@@ -335,22 +366,60 @@ function aggregateWeeklyRows(dailyRows: CandleRow[], symbol: string) {
   }
   const aggregated: CandleRow[] = [];
   for (const [bucket, raw] of groups.entries()) {
-    const group = dedupeRows(raw).sort((a, b) => a.open_time - b.open_time);
-    const tradingDays = group.filter(row => {
+    const bounds = dailyMinuteBounds(bucket);
+    if (!bounds.count) continue;
+    const group = dedupeRows(raw)
+      .filter(row => row.open_time >= bounds.start && row.open_time <= bounds.end)
+      .sort((a, b) => a.open_time - b.open_time);
+    if (group.length !== bounds.count) continue;
+    if (group[0]?.open_time !== bounds.start || group.at(-1)?.open_time !== bounds.end) continue;
+    if (group.some((row, index) => row.open_time !== bounds.start + index * 60)) continue;
+    aggregated.push({
+      symbol,
+      timeframe: "D1",
+      open_time: bucket,
+      close_time: bucket + INTERVALS["1day"].seconds,
+      open: group[0].open,
+      high: Math.max(...group.map(row => row.high)),
+      low: Math.min(...group.map(row => row.low)),
+      close: group.at(-1)!.close,
+      volume_tick: group.reduce((total, row) => total + Number(row.volume_tick || 0), 0),
+      is_closed: true,
+    });
+  }
+  return dedupeRows(aggregated);
+}
+
+function aggregateWeeklyRows(dailyRows: CandleRow[], symbol: string) {
+  const expectedLatest = expectedClosedOpenTime("1week");
+  const groups = new Map<number, CandleRow[]>();
+  for (const row of dedupeRows(dailyRows)) {
+    const bucket = tradingWeekOpen(row.open_time);
+    if (bucket > expectedLatest) continue;
+    const group = groups.get(bucket) || [];
+    group.push(row);
+    groups.set(bucket, group);
+  }
+  const aggregated: CandleRow[] = [];
+  for (const [bucket, raw] of groups.entries()) {
+    const group = dedupeRows(raw)
+      .filter(row => new Date(row.open_time * 1_000).getUTCDay() !== 6)
+      .sort((a, b) => a.open_time - b.open_time);
+    const weekdayCount = group.filter(row => {
       const day = new Date(row.open_time * 1_000).getUTCDay();
       return day >= 1 && day <= 5;
-    });
-    if (tradingDays.length < 5) continue;
+    }).length;
+    if (weekdayCount < 5) continue;
     aggregated.push({
       symbol,
       timeframe: "W1",
       open_time: bucket,
       close_time: bucket + INTERVALS["1week"].seconds,
-      open: tradingDays[0].open,
-      high: Math.max(...tradingDays.map(row => row.high)),
-      low: Math.min(...tradingDays.map(row => row.low)),
-      close: tradingDays.at(-1)!.close,
-      volume_tick: tradingDays.reduce((total, row) => total + Number(row.volume_tick || 0), 0),
+      open: group[0].open,
+      high: Math.max(...group.map(row => row.high)),
+      low: Math.min(...group.map(row => row.low)),
+      close: group.at(-1)!.close,
+      volume_tick: group.reduce((total, row) => total + Number(row.volume_tick || 0), 0),
       is_closed: true,
     });
   }
@@ -361,22 +430,35 @@ async function aggregateAndStore(symbol: string) {
   const m1Rows = await readRows(symbol, "1min", PROVIDER_OUTPUT_SIZE);
   let count = 0;
   for (const interval of M1_AGGREGATE_TARGETS) count += await upsertRows(aggregateRows(m1Rows, symbol, interval));
+  count += await upsertRows(aggregateDailyRows(m1Rows, symbol));
   const dailyRows = await readRows(symbol, "1day", 400);
   count += await upsertRows(aggregateWeeklyRows(dailyRows, symbol));
   return count;
+}
+
+async function needsClosedMarketAggregation(symbol: string) {
+  const [daily, weekly] = await Promise.all([
+    readRows(symbol, "1day", 1),
+    readRows(symbol, "1week", 1),
+  ]);
+  return Number(daily[0]?.open_time || 0) < expectedClosedOpenTime("1day")
+    || Number(weekly[0]?.open_time || 0) < expectedClosedOpenTime("1week");
 }
 
 async function syncM1(symbol: string): Promise<SyncResult> {
   const marketOpen = isMarketOpen();
   const rowsBefore = await readRows(symbol, "1min", 2);
   if (!marketOpen) {
+    const aggregateRows = await needsClosedMarketAggregation(symbol)
+      ? await aggregateAndStore(symbol)
+      : 0;
     return {
       synced: false,
       source: "supabase-market-closed",
       marketOpen,
       latestOpenTime: Number(rowsBefore[0]?.open_time || 0) || null,
       providerRows: 0,
-      aggregateRows: 0,
+      aggregateRows,
     };
   }
 
