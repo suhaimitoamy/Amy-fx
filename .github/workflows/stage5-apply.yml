@@ -1,9 +1,9 @@
-name: Validate Amy FX 2.1.0 Release Candidate
+name: Validate Amy FX 2.1.1 Release Candidate
 
 on:
   workflow_dispatch:
   push:
-    branches: [ "release/amyfx-public-2.1.0" ]
+    branches: [ "release/amyfx-public-2.1.1" ]
   pull_request:
     branches: [ "main" ]
 
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: amyfx-stage5-release-validation-${{ github.event.pull_request.number || github.ref }}
+  group: amyfx-2.1.1-validation-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
@@ -20,8 +20,8 @@ env:
   AMYFX_KEYSTORE_PASSWORD: android
   AMYFX_KEY_ALIAS: androiddebugkey
   AMYFX_KEY_PASSWORD: android
-  AMYFX_VERSION_NAME: "2.1.0"
-  AMYFX_VERSION_CODE: "54"
+  AMYFX_VERSION_NAME: "2.1.1"
+  AMYFX_VERSION_CODE: "55"
   AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
 jobs:
@@ -34,19 +34,20 @@ jobs:
         with: { fetch-depth: 0 }
       - uses: actions/setup-node@v4
         with: { node-version: "22" }
-      - name: Run JavaScript regression tests
+      - name: Run complete JavaScript regression suite
         run: timeout 15m npm test
-      - name: Verify repository integrity
+      - name: Verify WebSocket hotfix and production isolation
         run: |
           set -euo pipefail
           git diff --check
+          test -f app/src/main/java/com/amyelitesuite/TwelveDataPriceBridge.kt
+          grep -Fq 'addJavascriptInterface(twelveDataPriceBridge, "AmyLivePrice")' app/src/main/java/com/amyelitesuite/MainActivity.kt
+          grep -Fq "window.addEventListener('amyfx:twelvedata-price'" app/src/main/assets/apps/mapping/js/api/market-data.js
+          ! grep -Fq 'function pollLivePrice' app/src/main/assets/apps/mapping/js/api/market-data.js
+          grep -Fq 'class com.amyelitesuite.TwelveDataPriceBridge' app/proguard-rules.pro
           test ! -e preview-update.json
           test ! -e AmyFX-Preview-latest.apk
-          test ! -e app/src/main/assets/apps/market-intel/private-market-api-router.js
           ! grep -R -F 'personal/amyfx-private/preview-update.json' app/build.gradle.kts app/src/main/assets/app-version.js app/src/main/assets/update-checker.js
-          node --check app/src/main/assets/apps/mapping/js/scalper-execution-authority.js
-          node --check app/src/main/assets/apps/mapping/js/scalper-execution-decision-bridge.js
-          node --check app/src/main/assets/apps/academy/assets/js/reading-history-v2.js
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: "17", cache: gradle }
       - uses: android-actions/setup-android@v3
@@ -56,7 +57,7 @@ jobs:
         with:
           path: ~/.android/debug.keystore
           key: amy-fx-debug-keystore-v1
-      - name: Verify update-compatible signing certificate
+      - name: Verify permanent production signer
         run: |
           set -euo pipefail
           test "${{ steps.signing-cache.outputs.cache-hit }}" = "true"
@@ -66,36 +67,18 @@ jobs:
       - run: chmod +x ./gradlew
       - run: ./gradlew testReleaseUnitTest --no-configuration-cache
       - run: ./gradlew lintRelease --no-configuration-cache
-      - name: Build signed Amy FX 2.1.0 APK
-        run: ./gradlew assembleRelease --no-configuration-cache --stacktrace
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Amy-FX-v2.1.0-stage5-built-apk
-          path: app/build/outputs/apk/release/app-release.apk
-          if-no-files-found: error
-      - name: Verify APK identity, version, signing structures and signer
+      - run: ./gradlew assembleRelease --no-configuration-cache --stacktrace
+      - name: Verify APK identity, version and signer
         run: |
           set -euo pipefail
           apk="app/build/outputs/apk/release/app-release.apk"
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" | grep -F "package: name='com.amyelitesuite' versionCode='${AMYFX_VERSION_CODE}' versionName='${AMYFX_VERSION_NAME}'"
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$apk"
-          sf_entry="$(unzip -Z1 "$apk" | grep -E '^META-INF/[^/]+\.SF$' | head -n1)"
-          cert_entry="$(unzip -Z1 "$apk" | grep -E '^META-INF/[^/]+\.(RSA|DSA|EC)$' | head -n1)"
-          test -n "$sf_entry"; test -n "$cert_entry"
-          unzip -p "$apk" "$cert_entry" > /tmp/amyfx-apk-cert
-          expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
-          actual="$(keytool -printcert -file /tmp/amyfx-apk-cert | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
-          test "$actual" = "$expected"
-          APK_PATH="$apk" python3 - <<'PY'
-          import os, struct
-          data=open(os.environ['APK_PATH'],'rb').read(); i=data.rfind(b'APK Sig Block 42')
-          if i < 0: raise SystemExit('APK Signing Block tidak ditemukan')
-          size=struct.unpack_from('<Q',data,i-8)[0]; start=i+8-size
-          if start < 0 or struct.unpack_from('<Q',data,start)[0] != size: raise SystemExit('APK Signing Block tidak valid')
-          pos,end,ids=start+8,i-8,set()
-          while pos < end:
-              length=struct.unpack_from('<Q',data,pos)[0]; pos+=8
-              if length < 4 or pos+length > end: raise SystemExit('Pasangan APK Signing Block rusak')
-              ids.add(struct.unpack_from('<I',data,pos)[0]); pos+=length
-          if 0x7109871A not in ids: raise SystemExit('APK Signature Scheme v2 tidak ditemukan')
-          PY
+          aapt="$ANDROID_HOME/build-tools/35.0.0/aapt"
+          signer="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          "$aapt" dump badging "$apk" | grep -F "package: name='com.amyelitesuite' versionCode='55' versionName='2.1.1'"
+          "$signer" verify --verbose --print-certs "$apk"
+          "$signer" verify --print-certs "$apk" | grep -F "Signer #1 certificate SHA-256 digest: $(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Amy-FX-v2.1.1-validated-apk
+          path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error

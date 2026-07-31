@@ -4,6 +4,9 @@
 -keepclassmembers class com.amyelitesuite.MainActivity$WebAppInterface {
     @android.webkit.JavascriptInterface <methods>;
 }
+-keepclassmembers class com.amyelitesuite.TwelveDataPriceBridge {
+    @android.webkit.JavascriptInterface <methods>;
+}
 
 # Keep app service and receiver entry points stable.
 -keep class com.amyelitesuite.ScannerService { *; }
