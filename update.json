@@ -1,31 +1,29 @@
 {
-  "latest_version_code": 50,
-  "latest_version_name": "1.5.9",
-  "versionCode": 50,
-  "version": "1.5.9",
-  "releaseDate": "2026-07-25",
+  "latest_version_code": 54,
+  "latest_version_name": "2.1.0",
+  "versionCode": 54,
+  "version": "2.1.0",
+  "releaseDate": "2026-07-31",
   "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Freeze pada Trading Library dan Jurnal akibat loop pembaruan DOM telah dihentikan.",
-    "Menu samping serta navigasi Library, Media, Jurnal, dan Asisten kembali dapat diklik.",
-    "Jurnal hasil backup tetap dibaca dari IndexedDB.",
-    "Kalender tetap menampilkan nominal Win hijau dan Loss merah.",
-    "Rotasi otomatis API Gemini dan OpenRouter tetap tersedia dengan timeout dan cooldown.",
-    "DeepSeek tetap tersedia sebagai fallback berbayar opsional.",
-    "Package com.amyelitesuite, sertifikat permanen, data lokal, dan jalur update tetap dipertahankan.",
-    "Pembaruan dapat dipasang tanpa menghapus aplikasi."
+    "Harga live XAU/USD tetap memakai WebSocket Twelve Data langsung dan tidak diubah.",
+    "REST Twelve Data dipusatkan ke satu sinkronisasi candle M1 setiap tiga menit saat market aktif.",
+    "M5, M15, M30, H1, H4, dan D1 dibentuk dari candle M1 di Supabase tanpa fallback REST per-timeframe.",
+    "Scalper Engine hanya membaca candle Supabase dan tidak lagi memicu request provider setiap menit.",
+    "Setup legacy seperti IFVG lama dipensiunkan dan tidak lagi muncul sebagai setup aktif.",
+    "Rencana Eksekusi serta Entry Watch mengikuti Scalper Engine sebagai otoritas eksekusi, sementara Mapping tetap menjadi sumber konteks market.",
+    "Academy menyimpan materi, posisi, dan riwayat baca terakhir agar belajar dapat dilanjutkan langsung.",
+    "Amy FX Preview dilebur ke Amy FX produksi dengan package, URI, signing, data pengguna, dan update channel produksi tetap dipertahankan."
   ],
   "changelog": [
-    "Freeze pada Trading Library dan Jurnal akibat loop pembaruan DOM telah dihentikan.",
-    "Menu samping serta navigasi Library, Media, Jurnal, dan Asisten kembali dapat diklik.",
-    "Jurnal hasil backup tetap dibaca dari IndexedDB.",
-    "Kalender tetap menampilkan nominal Win hijau dan Loss merah.",
-    "Rotasi otomatis API Gemini dan OpenRouter tetap tersedia dengan timeout dan cooldown.",
-    "DeepSeek tetap tersedia sebagai fallback berbayar opsional.",
-    "Package com.amyelitesuite, sertifikat permanen, data lokal, dan jalur update tetap dipertahankan.",
-    "Pembaruan dapat dipasang tanpa menghapus aplikasi."
+    "Centralized Twelve Data REST M1 sync",
+    "Supabase-only Scalper Engine candle reads",
+    "Legacy scalper setup retirement",
+    "Scalper Engine execution authority for Mapping consumers",
+    "Academy last-read history and resume position",
+    "Unified Amy FX production release"
   ]
 }
