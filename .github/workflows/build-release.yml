@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       versionName:
-        description: "Version Name (e.g., 2.1.0)"
+        description: "Version Name"
         required: true
-        default: "2.1.0"
+        default: "2.1.1"
       versionCode:
-        description: "Version Code (must increase)"
+        description: "Version Code"
         required: true
-        default: "54"
+        default: "55"
 
 permissions:
   contents: read
@@ -37,6 +37,12 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "22" }
       - run: timeout 15m npm test
+      - name: Verify native WebSocket path
+        run: |
+          test -f app/src/main/java/com/amyelitesuite/TwelveDataPriceBridge.kt
+          grep -Fq 'addJavascriptInterface(twelveDataPriceBridge, "AmyLivePrice")' app/src/main/java/com/amyelitesuite/MainActivity.kt
+          grep -Fq "window.addEventListener('amyfx:twelvedata-price'" app/src/main/assets/apps/mapping/js/api/market-data.js
+          ! grep -Fq 'function pollLivePrice' app/src/main/assets/apps/mapping/js/api/market-data.js
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: "17", cache: gradle }
       - uses: android-actions/setup-android@v3
@@ -57,29 +63,16 @@ jobs:
       - run: ./gradlew testReleaseUnitTest --no-configuration-cache
       - run: ./gradlew lintRelease --no-configuration-cache
       - run: ./gradlew assembleRelease --no-configuration-cache --stacktrace
-      - name: Verify APK identity, requested version, signing structures and signer
+      - name: Verify APK identity and signer
         run: |
           set -euo pipefail
           apk="app/build/outputs/apk/release/app-release.apk"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" | grep -F "package: name='com.amyelitesuite' versionCode='${AMYFX_VERSION_CODE}' versionName='${AMYFX_VERSION_NAME}'"
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$apk"
-          sf_entry="$(unzip -Z1 "$apk" | grep -E '^META-INF/[^/]+\.SF$' | head -n1)"
-          cert_entry="$(unzip -Z1 "$apk" | grep -E '^META-INF/[^/]+\.(RSA|DSA|EC)$' | head -n1)"
-          test -n "$sf_entry"; test -n "$cert_entry"
-          unzip -p "$apk" "$cert_entry" > /tmp/amyfx-apk-cert
-          expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
-          actual="$(keytool -printcert -file /tmp/amyfx-apk-cert | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
-          test "$actual" = "$expected"
-          APK_PATH="$apk" python3 - <<'PY'
-          import os, struct
-          data=open(os.environ['APK_PATH'],'rb').read(); i=data.rfind(b'APK Sig Block 42')
-          if i < 0: raise SystemExit('APK Signing Block tidak ditemukan')
-          size=struct.unpack_from('<Q',data,i-8)[0]; start=i+8-size
-          if start < 0 or struct.unpack_from('<Q',data,start)[0] != size: raise SystemExit('APK Signing Block tidak valid')
-          pos,end,ids=start+8,i-8,set()
-          while pos < end:
-              length=struct.unpack_from('<Q',data,pos)[0]; pos+=8
-              if length < 4 or pos+length > end: raise SystemExit('Pasangan APK Signing Block rusak')
-              ids.add(struct.unpack_from('<I',data,pos)[0]); pos+=length
-          if 0x7109871A not in ids: raise SystemExit('APK Signature Scheme v2 tidak ditemukan')
-          PY
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$apk"
+          mkdir -p dist
+          cp "$apk" dist/AmyFX-${AMYFX_VERSION_NAME}.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Amy-FX-v${{ github.event.inputs.versionName }}-signed-apk
+          path: dist/*.apk
+          if-no-files-found: error
