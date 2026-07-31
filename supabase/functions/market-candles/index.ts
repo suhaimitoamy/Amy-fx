@@ -5,7 +5,7 @@ const SERVICE_ROLE_KEY = String(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "")
 const TWELVEDATA_API_KEY = String(Deno.env.get("TWELVEDATA_API_KEY") || "");
 const UPSTREAM_GATEWAY = String(
   Deno.env.get("AMYFX_UPSTREAM_MARKET_URL")
-  || "https://amy-fx.vercel.app/api/twelvedata"
+  || "https://amy-fx.vercel.app/api/twelvedata-internal"
 );
 
 const PROVIDER_REFRESH_MS = 180_000;
@@ -412,12 +412,17 @@ async function fetchProvider(symbol: string): Promise<ProviderBatch> {
     url = `https://api.twelvedata.com/time_series?${query}`;
   }
 
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (!TWELVEDATA_API_KEY) {
+    headers.Authorization = `Bearer ${SERVICE_ROLE_KEY}`;
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15_000);
   try {
     const response = await fetch(url, {
       signal: controller.signal,
-      headers: { Accept: "application/json" },
+      headers,
     });
     if (!response.ok) throw new Error(`provider_http_${response.status}`);
     const payload = await response.json();
