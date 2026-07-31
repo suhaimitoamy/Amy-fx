@@ -29,6 +29,9 @@ test('Twelve Data REST is owned by one POST-only central M1 synchronizer', async
   assert.match(source, /provider_data_stale/);
   assert.match(gateway, /timingSafeEqual/);
   assert.match(gateway, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(gateway, /auth\/v1\/admin\/users/);
+  assert.match(gateway, /verifiedBySupabaseAuth/);
+  assert.match(gateway, /createHash\('sha256'\)/);
   assert.match(gateway, /private, no-store/);
   assert.match(gateway, /twelvedata-internal-direct/);
   assert.doesNotMatch(gateway, /market-candle-store|SUPABASE_STALE_FALLBACK/);
