@@ -19,6 +19,9 @@ test('Twelve Data REST is owned by one POST-only central M1 synchronizer', async
   assert.doesNotMatch(source, /syncRequestedInterval/);
   assert.doesNotMatch(source, /fetchProvider\(symbol, interval/);
   assert.match(source, /supabase-market-closed/);
+  assert.match(source, /function expectedClosedWeekOpen/);
+  assert.match(source, /completedThisCalendarWeek/);
+  assert.match(source, /aggregateWeeklyRows\(dailyRows, symbol\)/);
 });
 
 test('Scalper Engine reads Supabase only and ignores legacy engine versions', async () => {
