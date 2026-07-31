@@ -70,6 +70,17 @@ WHERE status IN ('WAITING_TRIGGER', 'WAITING_NEXT_OPEN', 'ENTRY_READY', 'ACTIVE'
   AND (
     engine_version IS DISTINCT FROM 'amyfx-preview-scalper-multidriver-v2.0'
     OR driver_id IS NULL
+    OR driver_id NOT IN (
+      'FVG',
+      'CRT',
+      'ORDER_BLOCK',
+      'BREAKER_BLOCK',
+      'RETEST_BOS',
+      'TRENDLINE_BREAK_RETEST',
+      'EMA_PULLBACK',
+      'FALSE_BREAKOUT',
+      'RANGE_EXPANSION'
+    )
     OR COALESCE(schema_version, 1) < 2
   );
 
