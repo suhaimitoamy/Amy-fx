@@ -12,11 +12,12 @@ import { buildMappingSnapshot } from '../engine/mapping-snapshot.js';
 import { render, renderSoft, renderAnalyzeLive } from '../ui/ui-render.js';
 import { sendTargetsToNative, notifyImportant } from '../bridge/android-bridge.js';
 
-export let liveTimer = null;
 export let scanTimer = null;
 export let lastWsTickAt = Number(localStorage.getItem('last_ws_tick_at') || 0);
 
-let pollInFlight = false;
+let nativeLiveStarted = false;
+let reconnectTimer = null;
+let reconnectAttempt = 0;
 let lastErrorLogAt = 0;
 let regimeRouterState = null;
 let analysisSequence = 0;
@@ -24,8 +25,8 @@ let analysisController = null;
 let analysisInFlight = null;
 
 const PROXY_URL = 'https://amy-fx.vercel.app/api/twelvedata';
-const LIVE_POLL_MS = 20_000;
-const LIVE_QUOTE_HARD_TTL_MS = 180_000;
+const LIVE_TICK_HARD_TTL_MS = 180_000;
+const LIVE_RECONNECT_DELAYS_MS = [2_000, 5_000, 10_000, 30_000, 60_000];
 
 function normalizedMarketTimestamp(value) {
   const numeric = Number(value);
@@ -49,15 +50,13 @@ function assertBackendPayloadFresh(data, label = 'Market') {
   }
 }
 
-function validateLiveMarketPayload(data) {
-  assertBackendPayloadFresh(data, 'Harga live');
+function validateLiveTickPayload(data) {
   const capturedAt = normalizedMarketTimestamp(
-    data?.quoteCapturedAt
-    || data?.values?.[0]?.datetime
-    || data?.latestOpenTime
+    data?.timestamp
+    || data?.capturedAt
   );
   const ageMs = capturedAt ? Date.now() - capturedAt : Number.POSITIVE_INFINITY;
-  if (!capturedAt || ageMs > LIVE_QUOTE_HARD_TTL_MS || ageMs < -60_000) {
+  if (!capturedAt || ageMs > LIVE_TICK_HARD_TTL_MS || ageMs < -60_000) {
     throw new Error('Timestamp harga provider tidak lagi live');
   }
   return capturedAt;
@@ -1107,60 +1106,177 @@ function scheduleAnalysisRefresh() {
   }, analysisRefreshDelay(state.tf));
 }
 
-async function pollLivePrice() {
-  if (document.hidden || pollInFlight) return;
-  pollInFlight = true;
+function nativeLiveBridge() {
+  return window.AmyLivePrice || null;
+}
+
+function nativeHasApiKey() {
   try {
-    const response = await fetch(`${PROXY_URL}?symbol=XAU/USD&interval=1min&outputsize=1&_=${Math.floor(Date.now() / LIVE_POLL_MS)}`, { cache: 'no-store' });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    const price = +(data.values?.[0]?.close || 0);
-    if (data.status !== 'ok' || !Number.isFinite(price) || price <= 0) throw new Error(data.message || 'Harga live tidak valid');
-    lastWsTickAt = validateLiveMarketPayload(data);
-    localStorage.setItem('last_ws_tick_at', String(lastWsTickAt));
-    localStorage.setItem('last_price', String(price));
-    state.price = price;
-    state.conn = 'Connected';
-    if (state.result) {
-      state.result.setupExecution = buildSetupExecution(state.result);
-      state.result.mappingExplanation = buildMappingExplanation(state.result);
-      state.result.mappingSnapshot = buildMappingSnapshot(state.result, {
-        candles: state.candles[state.result.tf] || [],
-        livePrice: state.price,
-        capturedAt: Date.now()
-      });
-    }
-    publishMappingSnapshot();
-    sendTargetsToNative();
-    notifyImportant(state.result);
-    renderAnalyzeLive();
-    renderSoft();
-    scheduleAnalysisRefresh();
-  } catch (error) {
-    state.conn = 'Offline';
-    renderSoft();
-    if (Date.now() - lastErrorLogAt > 60000) {
-      lastErrorLogAt = Date.now();
-      log(`Live price mencoba tersambung kembali: ${error.message}`);
-    }
-  } finally {
-    pollInFlight = false;
+    return nativeLiveBridge()?.hasApiKey?.() === true;
+  } catch (_) {
+    return false;
   }
 }
 
-export function connect() {
-  if (liveTimer) clearInterval(liveTimer);
-  state.conn = 'Connecting';
-  renderSoft();
-  pollLivePrice();
-  liveTimer = setInterval(pollLivePrice, LIVE_POLL_MS);
-  if (!state.candles[state.tf]?.length) runAnalysis(state.tf);
+function clearReconnectTimer() {
+  if (!reconnectTimer) return;
+  clearTimeout(reconnectTimer);
+  reconnectTimer = null;
 }
 
-export function isLivePriceRunning() { return liveTimer !== null; }
+function scheduleLiveReconnect(reason = '') {
+  if (document.hidden || reconnectTimer || !nativeHasApiKey()) return;
+  const delay = LIVE_RECONNECT_DELAYS_MS[
+    Math.min(reconnectAttempt, LIVE_RECONNECT_DELAYS_MS.length - 1)
+  ];
+  reconnectAttempt += 1;
+  if (reason && Date.now() - lastErrorLogAt > 60_000) {
+    lastErrorLogAt = Date.now();
+    log(`Harga WebSocket mencoba tersambung kembali: ${reason}`);
+  }
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    connect({ force: true });
+  }, delay);
+}
+
+function applyLivePriceTick(detail) {
+  const price = Number(detail?.price);
+  if (!Number.isFinite(price) || price <= 0) return false;
+
+  let capturedAt;
+  try {
+    capturedAt = validateLiveTickPayload(detail);
+  } catch (error) {
+    scheduleLiveReconnect(error.message);
+    return false;
+  }
+
+  lastWsTickAt = capturedAt;
+  localStorage.setItem('last_ws_tick_at', String(lastWsTickAt));
+  localStorage.setItem('last_price', String(price));
+  state.price = price;
+  state.conn = 'Connected';
+  nativeLiveStarted = true;
+  reconnectAttempt = 0;
+  clearReconnectTimer();
+
+  if (state.result) {
+    state.result.setupExecution = buildSetupExecution(state.result);
+    state.result.mappingExplanation = buildMappingExplanation(state.result);
+    state.result.mappingSnapshot = buildMappingSnapshot(state.result, {
+      candles: state.candles[state.result.tf] || [],
+      livePrice: state.price,
+      capturedAt: Date.now()
+    });
+  }
+  publishMappingSnapshot();
+  sendTargetsToNative();
+  notifyImportant(state.result);
+  renderAnalyzeLive();
+  renderSoft();
+  scheduleAnalysisRefresh();
+  return true;
+}
+
+function handleNativeLiveStatus(detail) {
+  const status = String(detail?.status || '').toUpperCase();
+  const message = String(detail?.message || '').trim();
+
+  if (status === 'KEY_REQUIRED' || status === 'KEY_INVALID' || status === 'KEY_REJECTED') {
+    nativeLiveStarted = false;
+    clearReconnectTimer();
+    state.conn = 'Key Required';
+    render();
+    return;
+  }
+
+  if (status === 'CONNECTING') {
+    state.conn = 'Connecting';
+    renderSoft();
+    return;
+  }
+
+  if (status === 'CONNECTED' || status === 'SUBSCRIBED') {
+    nativeLiveStarted = true;
+    reconnectAttempt = 0;
+    state.conn = 'Connected';
+    renderSoft();
+    return;
+  }
+
+  if (status === 'ERROR' || status === 'CLOSED') {
+    nativeLiveStarted = false;
+    state.conn = 'Offline';
+    renderSoft();
+    scheduleLiveReconnect(message || 'koneksi terputus');
+  }
+}
+
+window.addEventListener('amyfx:twelvedata-price', event => {
+  applyLivePriceTick(event?.detail || {});
+});
+
+window.addEventListener('amyfx:twelvedata-status', event => {
+  handleNativeLiveStatus(event?.detail || {});
+});
+
+export function connect({ force = false } = {}) {
+  if (document.hidden) return false;
+  const bridge = nativeLiveBridge();
+  if (!bridge?.connect || !bridge?.hasApiKey) {
+    nativeLiveStarted = false;
+    state.conn = 'Offline';
+    renderSoft();
+    if (Date.now() - lastErrorLogAt > 60_000) {
+      lastErrorLogAt = Date.now();
+      log('Bridge harga WebSocket tidak tersedia.');
+    }
+    return false;
+  }
+
+  if (!nativeHasApiKey()) {
+    nativeLiveStarted = false;
+    clearReconnectTimer();
+    state.conn = 'Key Required';
+    render();
+    return false;
+  }
+
+  clearReconnectTimer();
+  if (force) {
+    try { bridge.disconnect?.(); } catch (_) {}
+    nativeLiveStarted = false;
+  } else if (nativeLiveStarted) {
+    return true;
+  }
+
+  state.conn = 'Connecting';
+  renderSoft();
+  let started = false;
+  try {
+    started = bridge.connect() === true;
+  } catch (_) {
+    started = false;
+  }
+  nativeLiveStarted = started;
+  if (!started) {
+    state.conn = 'Offline';
+    renderSoft();
+    scheduleLiveReconnect('gagal memulai koneksi');
+  }
+  if (!state.candles[state.tf]?.length) runAnalysis(state.tf);
+  return started;
+}
+
+export function isLivePriceRunning() {
+  return nativeLiveStarted || reconnectTimer !== null;
+}
 
 export function stopLivePrice() {
-  if (liveTimer) { clearInterval(liveTimer); liveTimer = null; }
+  clearReconnectTimer();
+  try { nativeLiveBridge()?.disconnect?.(); } catch (_) {}
+  nativeLiveStarted = false;
   if (scanTimer) { clearTimeout(scanTimer); scanTimer = null; }
   state.conn = 'Offline';
   renderSoft();
