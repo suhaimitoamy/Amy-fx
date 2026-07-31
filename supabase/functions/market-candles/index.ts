@@ -124,10 +124,22 @@ function utcWeekOpen(seconds: number) {
   return Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - daysSinceMonday, 0, 0, 0) / 1_000);
 }
 
+function expectedClosedWeekOpen(now = Date.now()) {
+  const date = new Date(now);
+  const day = date.getUTCDay();
+  const currentCalendarWeek = utcWeekOpen(Math.floor(now / 1_000));
+  const completedThisCalendarWeek = day === 5 && date.getUTCHours() >= 22
+    || day === 6
+    || day === 0;
+  return completedThisCalendarWeek
+    ? currentCalendarWeek
+    : currentCalendarWeek - INTERVALS["1week"].seconds;
+}
+
 function expectedClosedOpenTime(interval: string, now = Date.now()) {
   const latestMinuteOpen = latestExpectedMarketMinuteOpen(now);
   if (interval === "1min") return latestMinuteOpen;
-  if (interval === "1week") return utcWeekOpen(latestMinuteOpen + 60) - INTERVALS[interval].seconds;
+  if (interval === "1week") return expectedClosedWeekOpen(now);
   const seconds = INTERVALS[interval].seconds;
   return Math.floor((latestMinuteOpen + 60) / seconds) * seconds - seconds;
 }
