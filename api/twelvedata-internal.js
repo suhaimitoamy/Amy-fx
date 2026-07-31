@@ -1,7 +1,16 @@
-import { timingSafeEqual } from 'node:crypto';
+import { createHash, timingSafeEqual } from 'node:crypto';
 
 const MAX_OUTPUT_SIZE = 2_000;
 const PROVIDER_TIMEOUT_MS = 15_000;
+const AUTH_TIMEOUT_MS = 5_000;
+const AUTH_CACHE_MS = 15 * 60 * 1_000;
+const SUPABASE_URL = String(
+  process.env.SUPABASE_URL
+  || process.env.NEXT_PUBLIC_SUPABASE_URL
+  || 'https://wliecyxzlwhmtftnfnps.supabase.co'
+).replace(/\/$/, '');
+const verifiedTokens = globalThis.__amyFxVerifiedServiceTokens
+  || (globalThis.__amyFxVerifiedServiceTokens = new Map());
 
 function parseOutputSize(value) {
   const parsed = Number.parseInt(String(value || ''), 10);
@@ -14,16 +23,60 @@ function readBearerToken(req) {
   return authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
 }
 
-function authorized(req) {
-  const expected = String(
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-    || process.env.SUPABASE_SERVICE_KEY
-    || process.env.SUPABASE_SECRET_KEY
-    || ''
-  );
-  const received = readBearerToken(req);
-  if (!expected || !received || expected.length !== received.length) return false;
-  return timingSafeEqual(Buffer.from(received), Buffer.from(expected));
+function safeEqual(left, right) {
+  if (!left || !right || left.length !== right.length) return false;
+  return timingSafeEqual(Buffer.from(left), Buffer.from(right));
+}
+
+function localServiceTokenMatches(token) {
+  const candidates = [
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    process.env.SUPABASE_SERVICE_KEY,
+    process.env.SUPABASE_SECRET_KEY
+  ].map(value => String(value || '')).filter(Boolean);
+  return candidates.some(candidate => safeEqual(token, candidate));
+}
+
+function tokenFingerprint(token) {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+async function verifiedBySupabaseAuth(token) {
+  const fingerprint = tokenFingerprint(token);
+  const cachedUntil = Number(verifiedTokens.get(fingerprint) || 0);
+  if (cachedUntil > Date.now()) return true;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), AUTH_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=1`, {
+      signal: controller.signal,
+      headers: {
+        apikey: token,
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json'
+      }
+    });
+    if (!response.ok) return false;
+    verifiedTokens.set(fingerprint, Date.now() + AUTH_CACHE_MS);
+    if (verifiedTokens.size > 20) {
+      for (const [key, expiresAt] of verifiedTokens) {
+        if (Number(expiresAt) <= Date.now()) verifiedTokens.delete(key);
+      }
+    }
+    return true;
+  } catch (_) {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function authorized(req) {
+  const token = readBearerToken(req);
+  if (!token) return false;
+  if (localServiceTokenMatches(token)) return true;
+  return verifiedBySupabaseAuth(token);
 }
 
 export default async function handler(req, res) {
@@ -36,7 +89,7 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'GET');
     return res.status(405).json({ status: 'error', message: 'Method not allowed' });
   }
-  if (!authorized(req)) {
+  if (!(await authorized(req))) {
     return res.status(401).json({ status: 'error', message: 'Unauthorized internal market request' });
   }
 
