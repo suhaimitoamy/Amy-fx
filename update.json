@@ -1,29 +1,25 @@
 {
-  "latest_version_code": 54,
-  "latest_version_name": "2.1.0",
-  "versionCode": 54,
-  "version": "2.1.0",
+  "latest_version_code": 55,
+  "latest_version_name": "2.1.1",
+  "versionCode": 55,
+  "version": "2.1.1",
   "releaseDate": "2026-07-31",
   "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Harga live XAU/USD tetap memakai WebSocket Twelve Data langsung.",
-    "REST Twelve Data dipusatkan ke satu sinkronisasi candle M1 setiap tiga menit saat market aktif.",
-    "Timeframe lebih besar dibentuk dari M1 di Supabase tanpa request provider terpisah.",
-    "Scalper Engine membaca candle Supabase saja dan setup legacy dipensiunkan.",
-    "Rencana Eksekusi serta Entry Watch mengikuti Scalper Engine; Mapping tetap menyimpan konteks market.",
-    "Academy menyimpan materi dan posisi baca terakhir.",
-    "Package, signing, data pengguna, URI amyfx, dan update channel produksi tetap dipertahankan."
+    "Harga live XAU/USD pada Amy FX produksi kembali memakai native WebSocket Twelve Data yang sama dengan Preview.",
+    "Polling REST M1 tidak lagi digunakan sebagai sumber harga live di layar Mapping.",
+    "REST dan Supabase tetap digunakan khusus untuk candle analisis dan Scalper Engine.",
+    "Timestamp serta status koneksi harga mengikuti tick provider yang sebenarnya.",
+    "Panel dan fitur lain yang tidak berhubungan tidak diubah."
   ],
   "changelog": [
-    "Harga live XAU/USD tetap memakai WebSocket Twelve Data langsung.",
-    "REST Twelve Data dipusatkan ke satu sinkronisasi candle M1 setiap tiga menit saat market aktif.",
-    "Timeframe lebih besar dibentuk dari M1 di Supabase tanpa request provider terpisah.",
-    "Scalper Engine membaca candle Supabase saja dan setup legacy dipensiunkan.",
-    "Rencana Eksekusi serta Entry Watch mengikuti Scalper Engine; Mapping tetap menyimpan konteks market.",
-    "Academy menyimpan materi dan posisi baca terakhir.",
-    "Package, signing, data pengguna, URI amyfx, dan update channel produksi tetap dipertahankan."
+    "Harga live XAU/USD pada Amy FX produksi kembali memakai native WebSocket Twelve Data yang sama dengan Preview.",
+    "Polling REST M1 tidak lagi digunakan sebagai sumber harga live di layar Mapping.",
+    "REST dan Supabase tetap digunakan khusus untuk candle analisis dan Scalper Engine.",
+    "Timestamp serta status koneksi harga mengikuti tick provider yang sebenarnya.",
+    "Panel dan fitur lain yang tidak berhubungan tidak diubah."
   ]
 }
