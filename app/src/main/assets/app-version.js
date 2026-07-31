@@ -1,11 +1,11 @@
-// Amy FX Preview personal release identity.
+// Amy FX production release identity.
 (function () {
-  const VERSION = Object.freeze({ name: '2.0.0-preview.295', code: 940295 });
+  const VERSION = Object.freeze({ name: '2.1.0', code: 54 });
   window.AmyFXAppVersion = VERSION;
-  window.AmyFXUpdateManifestUrl = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json';
+  window.AmyFXUpdateManifestUrl = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json';
 
   function versionText() {
-    return `Amy FX Preview v${VERSION.name} • Version code ${VERSION.code}`;
+    return `Amy FX v${VERSION.name} • Version code ${VERSION.code}`;
   }
 
   function injectVersionRow() {
@@ -35,7 +35,7 @@
       window.AmyFXUpdate.checkNow({ announce: true });
       return;
     }
-    window.showToast?.(`Versi terpasang: Amy FX Preview v${VERSION.name} (${VERSION.code}). Pemeriksa update sedang dimuat.`);
+    window.showToast?.(`Versi terpasang: Amy FX v${VERSION.name} (${VERSION.code}). Pemeriksa update sedang dimuat.`);
     setTimeout(() => window.AmyFXUpdate?.checkNow?.({ announce: true }), 800);
   }
 
