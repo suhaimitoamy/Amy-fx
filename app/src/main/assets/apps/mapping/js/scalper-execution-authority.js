@@ -79,6 +79,14 @@ function waitAuthority(availability) {
     authority: 'SCALPER_ENGINE_EXECUTION_AUTHORITY',
     engineVersion: CURRENT_ENGINE_VERSION,
     setup: null,
+    directionDecision: {
+      bias: 'WAIT',
+      signal: 'WAIT',
+      source: 'SCALPER_ENGINE_EXECUTION_AUTHORITY',
+      status: stale ? 'SCALPER DATA STALE' : 'WAITING FOR SCALPER SETUP',
+      invalidated: stale,
+      invalidationReason: stale ? 'Data Scalper Engine belum segar.' : '',
+    },
     setupExecution: {
       active: false,
       setupId: '',
@@ -167,6 +175,14 @@ function activeAuthority(setup, availability) {
     authority: 'SCALPER_ENGINE_EXECUTION_AUTHORITY',
     engineVersion: CURRENT_ENGINE_VERSION,
     setup: normalizedSetup,
+    directionDecision: {
+      bias: side,
+      signal: side,
+      source: 'SCALPER_ENGINE_EXECUTION_AUTHORITY',
+      status: `${driverName} · ${setup.timeframe || 'M15'} · ${status}`,
+      invalidated: !fresh,
+      invalidationReason: fresh ? '' : 'Data Scalper Engine belum segar.',
+    },
     setupExecution: {
       active: entryActive || tp1Secured,
       setupId,
@@ -235,6 +251,15 @@ function cloneSnapshot(snapshot, authority, scenario) {
   };
 }
 
+function publishMarketState(result) {
+  const marketState = window.AmyFXMarketState;
+  if (!marketState || typeof marketState !== 'object' || Object.isFrozen(marketState)) return;
+  try {
+    marketState.result = result;
+    marketState.executionAuthority = result.scalperExecutionAuthority;
+  } catch (_) {}
+}
+
 function applyAuthority() {
   if (applying) return false;
   const runtime = window.AmyFXScalperState || {};
@@ -259,7 +284,10 @@ function applyAuthority() {
     }
 
     const authority = primary ? activeAuthority(primary, availability) : waitAuthority(availability);
-    const originalScenario = result.entryMap?.scenario || result.mappingSnapshot?.scenario || {};
+    const originalScenario = result.mappingContextBeforeScalper?.entryWatch?.scenario
+      || result.mappingSnapshot?.scenario
+      || result.entryMap?.scenario
+      || {};
     const scenario = primary
       ? {
           ...originalScenario,
@@ -283,27 +311,17 @@ function applyAuthority() {
       generatedAt: payload.generatedAt || null,
       engine: payload.engine || null,
     };
+    result.executionDirectionDecision = authority.directionDecision;
     result.setupExecution = authority.setupExecution;
     result.entryWatch = { ...authority.entryWatch, scenario };
     result.entryMap = { ...(result.entryMap || {}), setup: authority.setup, scenario, source: 'SCALPER_ENGINE_EXECUTION_AUTHORITY' };
     result.mappingSnapshot = cloneSnapshot(result.mappingSnapshot, authority, scenario);
 
-    if (primary) {
-      result.directionDecision = {
-        ...(result.directionDecision || {}),
-        bias: direction(primary.direction),
-        signal: direction(primary.direction),
-        source: 'SCALPER_ENGINE_EXECUTION_AUTHORITY',
-        status: `${primary.driverName || primary.driverId} · ${primary.timeframe || 'M15'} · ${statusText(primary.status)}`,
-        invalidated: availability !== 'LIVE',
-        invalidationReason: availability === 'LIVE' ? '' : 'Data Scalper Engine belum segar.',
-      };
+    if (result.mappingContextBeforeScalper?.directionDecision) {
+      result.directionDecision = result.mappingContextBeforeScalper.directionDecision;
     }
 
-    if (window.AmyFXMarketState && typeof window.AmyFXMarketState === 'object') {
-      window.AmyFXMarketState.result = result;
-      window.AmyFXMarketState.executionAuthority = result.scalperExecutionAuthority;
-    }
+    publishMarketState(result);
     window.AmyFXExecutionAuthority = Object.freeze({
       source: 'SCALPER_ENGINE_EXECUTION_AUTHORITY',
       engineVersion: CURRENT_ENGINE_VERSION,
