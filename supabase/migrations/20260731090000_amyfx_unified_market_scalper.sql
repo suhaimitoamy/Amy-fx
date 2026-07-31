@@ -57,11 +57,12 @@ SELECT cron.schedule(
 UPDATE public.amyfx_preview_scalper_setups
 SET
   status = 'CANCELLED',
-  recommendation_status = 'RETIRED',
+  recommendation_status = 'CLOSED',
   notification_enabled = false,
   exit_time = COALESCE(exit_time, EXTRACT(EPOCH FROM now())::bigint),
   updated_at = now(),
   quality = COALESCE(quality, '{}'::jsonb) || jsonb_build_object(
+    'retired', true,
     'retired_by', 'amyfx_unified_market_scalper_20260731',
     'retirement_reason', 'Engine atau driver legacy tidak lagi menjadi otoritas eksekusi.'
   )
