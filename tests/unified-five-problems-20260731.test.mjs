@@ -12,6 +12,7 @@ async function exists(path) {
 
 test('Twelve Data REST is owned by one POST-only central M1 synchronizer', async () => {
   const source = await read('supabase/functions/market-candles/index.ts');
+  const gateway = await read('api/twelvedata-internal.js');
   assert.match(source, /const PROVIDER_REFRESH_MS = 180_000/);
   assert.match(source, /interval: "1min"/);
   assert.match(source, /request\.method === "POST"/);
@@ -22,6 +23,15 @@ test('Twelve Data REST is owned by one POST-only central M1 synchronizer', async
   assert.match(source, /function expectedClosedWeekOpen/);
   assert.match(source, /completedThisCalendarWeek/);
   assert.match(source, /aggregateWeeklyRows\(dailyRows, symbol\)/);
+  assert.match(source, /api\/twelvedata-internal/);
+  assert.match(source, /headers\.Authorization = `Bearer \$\{SERVICE_ROLE_KEY\}`/);
+  assert.match(source, /PROVIDER_MAX_LAG_SECONDS = 5 \* 60/);
+  assert.match(source, /provider_data_stale/);
+  assert.match(gateway, /timingSafeEqual/);
+  assert.match(gateway, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(gateway, /private, no-store/);
+  assert.match(gateway, /twelvedata-internal-direct/);
+  assert.doesNotMatch(gateway, /market-candle-store|SUPABASE_STALE_FALLBACK/);
 });
 
 test('Scalper Engine reads Supabase only and ignores legacy engine versions', async () => {
