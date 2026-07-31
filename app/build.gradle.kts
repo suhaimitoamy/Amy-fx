@@ -19,6 +19,7 @@ val configuredAppLabel = System.getenv("AMYFX_APP_LABEL") ?: "Amy FX"
 val configuredUriScheme = System.getenv("AMYFX_URI_SCHEME") ?: "amyfx"
 val configuredUpdateManifestUrl = System.getenv("AMYFX_UPDATE_MANIFEST_URL")
     ?: "https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json"
+val configuredTwelveDataApiKey = System.getenv("TWELVEDATA_API_KEY").orEmpty()
 
 android {
     namespace = "com.amyelitesuite"
@@ -28,11 +29,12 @@ android {
         applicationId = configuredApplicationId
         minSdk = 26
         targetSdk = 35
-        versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 53)
-        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "2.0.2"
+        versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 54)
+        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "2.1.0"
         manifestPlaceholders["appLabel"] = configuredAppLabel
         manifestPlaceholders["amyFxScheme"] = configuredUriScheme
         buildConfigField("String", "UPDATE_MANIFEST_URL", buildConfigString(configuredUpdateManifestUrl))
+        buildConfigField("String", "TWELVE_DATA_API_KEY", buildConfigString(configuredTwelveDataApiKey))
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -43,7 +45,7 @@ android {
 
     signingConfigs {
         create("release") {
-            // Official Amy FX releases use the permanent signing certificate.
+            // Official Amy FX releases use the permanent production signing certificate.
             // Keep both schemes enabled for broad Android and OEM compatibility.
             enableV1Signing = true
             enableV2Signing = true
