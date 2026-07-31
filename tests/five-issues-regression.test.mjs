@@ -26,13 +26,15 @@ test('Mapping UI stability runtime remains syntactically valid', () => {
   execFileSync(process.execPath, ['--check', fixScriptPath], { stdio: 'pipe' });
 });
 
-test('README documents the public Amy FX identity and keeps Preview separate', () => {
+test('README documents one unified Amy FX production product', () => {
   assert.match(readme, /Amy FX/);
-  assert.match(readme, /Versi publik:\*\* `2\.0\.2`/);
+  assert.match(readme, /Versi publik:\*\* `2\.1\.0`/);
+  assert.match(readme, /Version code:\*\* `54`/);
   assert.match(readme, /com\.amyelitesuite/);
   assert.match(readme, /main\/update\.json/);
-  assert.match(readme, /personal\/amyfx-private/);
-  assert.match(readme, /tidak menghapus atau mengubah branch/);
+  assert.match(readme, /satu-satunya jalur aplikasi dan rilis aktif/);
+  assert.match(readme, /personal\/amyfx-private.*arsip riwayat pengembangan/s);
+  assert.match(readme, /bukan lagi aplikasi, backend, APK, workflow rilis, atau update channel yang aktif/);
   assert.doesNotMatch(readme, /Application ID:\*\* `com\.amyelitesuite\.learningpreview`/);
 });
 
@@ -93,12 +95,12 @@ test('issue-5 audit remains available in documentation but not injected into liv
   assert.doesNotMatch(fixes, /Akurasi arah close historis/);
 });
 
-test('source version uses public 2.0.2 while metadata stays on last published APK until release', () => {
-  assert.match(appVersion, /name: '2\.0\.2', code: 53/);
+test('source and published metadata use Amy FX 2.1.0 production identity', () => {
+  assert.match(appVersion, /name: '2\.1\.0', code: 54/);
   assert.match(appVersion, /main\/update\.json/);
   assert.doesNotMatch(appVersion, /Preview|personal\/amyfx-private|preview-update\.json/);
-  assert.ok(update.latest_version_code <= 53);
-  assert.match(update.latest_version_name, /^(?:1\.\d+\.\d+|2\.0\.[01])$/);
+  assert.equal(update.latest_version_code, 54);
+  assert.equal(update.latest_version_name, '2.1.0');
   assert.match(update.apk_url || update.downloadUrl || '', /AmyFX-latest\.apk/);
   assert.doesNotMatch(update.apk_url || update.downloadUrl || '', /AmyFX-Preview-latest\.apk/);
 });
