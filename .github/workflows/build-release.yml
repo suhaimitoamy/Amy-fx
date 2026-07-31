@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       versionName:
-        description: "Version Name (e.g., 2.0.2)"
+        description: "Version Name (e.g., 2.1.0)"
         required: true
-        default: "2.0.2"
+        default: "2.1.0"
       versionCode:
         description: "Version Code (must increase)"
         required: true
-        default: "53"
+        default: "54"
 
 permissions:
   contents: read
@@ -24,6 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
+      TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
       AMYFX_KEYSTORE_PATH: /tmp/amy-fx-signing.keystore
       AMYFX_KEYSTORE_PASSWORD: android
       AMYFX_KEY_ALIAS: androiddebugkey
