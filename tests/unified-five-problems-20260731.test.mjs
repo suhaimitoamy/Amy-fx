@@ -1,8 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 
-const read = path => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
+const url = path => new URL(`../${path}`, import.meta.url);
+const read = path => readFile(url(path), 'utf8');
+
+async function exists(path) {
+  try { await access(url(path)); return true; }
+  catch (_) { return false; }
+}
 
 test('Twelve Data REST is owned by one POST-only central M1 synchronizer', async () => {
   const source = await read('supabase/functions/market-candles/index.ts');
@@ -61,11 +67,10 @@ test('Academy stores and restores the exact last-read lesson position', async ()
   assert.match(history, /Lanjutkan dari posisi terakhir/);
 });
 
-test('unified build keeps Amy FX production identity and retires Preview channel', async () => {
+test('unified build keeps Amy FX production identity and has no Preview artifact channel in main', async () => {
   const gradle = await read('app/build.gradle.kts');
   const version = await read('app/src/main/assets/app-version.js');
   const update = JSON.parse(await read('update.json'));
-  const preview = JSON.parse(await read('preview-update.json'));
   assert.match(gradle, /"com\.amyelitesuite"/);
   assert.match(gradle, /"Amy FX"/);
   assert.match(gradle, /"amyfx"/);
@@ -75,6 +80,6 @@ test('unified build keeps Amy FX production identity and retires Preview channel
   assert.match(version, /name: '2\.1\.0', code: 54/);
   assert.equal(update.latest_version_code, 54);
   assert.equal(update.latest_version_name, '2.1.0');
-  assert.equal(preview.enabled, false);
-  assert.equal(preview.retired, true);
+  assert.equal(await exists('preview-update.json'), false);
+  assert.equal(await exists('AmyFX-Preview-latest.apk'), false);
 });
