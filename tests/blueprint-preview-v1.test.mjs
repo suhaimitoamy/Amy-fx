@@ -50,12 +50,17 @@ test('native secret vault never exposes a secret getter to WebView', async () =>
 
 test('private Preview release remains isolated from production main', async () => {
   const workflow = await read('.github/workflows/amyfx-blueprint-preview-release.yml');
+  const appVersion = await read('app/src/main/assets/app-version.js');
+  const identity = appVersion.match(/name: '(2\.0\.0-preview\.\d+)', code: (94\d{4})/);
+  assert.ok(identity, 'current Preview identity must be readable from app-version.js');
+  const [, versionName, versionCode] = identity;
+
   assert.match(workflow, /personal\/amyfx-private/);
   assert.match(workflow, /com\.amyelitesuite\.learningpreview/);
   assert.match(workflow, /Amy FX Preview/);
   assert.match(workflow, /amyfxpreview/);
-  assert.match(workflow, /AMYFX_VERSION_NAME: 2\.0\.0-preview\.295/);
-  assert.match(workflow, /AMYFX_VERSION_CODE: "940295"/);
+  assert.ok(workflow.includes(`AMYFX_VERSION_NAME: ${versionName}`));
+  assert.ok(workflow.includes(`AMYFX_VERSION_CODE: "${versionCode}"`));
   assert.match(workflow, /test "\$version_code" -gt "\$published_code"/);
   assert.match(workflow, /PYTHONDONTWRITEBYTECODE: "1"/);
   assert.doesNotMatch(workflow, /python3 -m py_compile/);
