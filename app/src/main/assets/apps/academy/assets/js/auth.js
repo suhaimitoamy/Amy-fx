@@ -39,6 +39,18 @@ function logout(){sessionStorage.removeItem(ACADEMY_SESSION_KEY);location.href=t
   script.src=root+'assets/js/catalog-36.js';script.async=false;document.head.appendChild(script);
 })();
 
+/* Academy reading history is shared with Amy FX production and loaded on every page. */
+(function(){
+  if(window.__amyAcademyReadingHistoryLoaderV2)return;
+  window.__amyAcademyReadingHistoryLoaderV2=true;
+  const script=document.createElement('script');
+  const root=(typeof ROOT_PATH!=='undefined')?ROOT_PATH:'';
+  script.src=root+'assets/js/reading-history-v2.js';
+  script.async=false;
+  script.onerror=function(){window.__amyAcademyReadingHistoryLoaderV2=false;};
+  document.head.appendChild(script);
+})();
+
 /* Every nested lesson receives the same Amy Mentor stack as the Academy home page. */
 (function(){
   if(window.__amyAcademyMentorLoaderV3)return;
