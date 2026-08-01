@@ -12,14 +12,17 @@ test('personal source stays Preview while the public release workflow keeps prod
   const gradle = source('app/build.gradle.kts');
   const version = source('app/src/main/assets/app-version.js');
   const workflow = source('.github/workflows/build-apk.yml');
+  const identity = version.match(/name: '(2\.0\.0-preview\.(\d+))', code: (94\d{4})/);
+  assert.ok(identity, 'Preview source identity must be readable');
+  const [, versionName, sequence, versionCode] = identity;
 
   assert.match(gradle, /com\.amyelitesuite\.learningpreview/);
   assert.match(gradle, /Amy FX Preview/);
   assert.match(gradle, /amyfxpreview/);
   assert.match(gradle, /personal\/amyfx-private\/preview-update\.json/);
-  assert.match(gradle, /\?: 940295\)/);
-  assert.match(gradle, /\?: "2\.0\.0-preview\.295"/);
-  assert.match(version, /name: '2\.0\.0-preview\.295', code: 940295/);
+  assert.equal(Number(versionCode), 940000 + Number(sequence));
+  assert.ok(gradle.includes(`?: ${versionCode})`);
+  assert.ok(gradle.includes(`?: "${versionName}"`));
   assert.match(version, /personal\/amyfx-private\/preview-update\.json/);
 
   assert.match(workflow, /AMYFX_APPLICATION_ID: com\.amyelitesuite/);
