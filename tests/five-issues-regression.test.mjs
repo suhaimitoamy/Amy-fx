@@ -91,8 +91,14 @@ test('issue-5 audit remains available in documentation but not injected into liv
 });
 
 test('source version and updater stay on the private Preview channel', () => {
-  assert.match(appVersion, /name: '2\.0\.0-preview\.295', code: 940295/);
+  const identity = appVersion.match(/name: '(2\.0\.0-preview\.(\d+))', code: (94\d{4})/);
+  assert.ok(identity, 'Preview source identity is missing');
+  const [, sourceName, sourceSequence, sourceCode] = identity;
+
+  assert.equal(Number(sourceCode), 940000 + Number(sourceSequence));
   assert.match(appVersion, /personal\/amyfx-private\/preview-update\.json/);
+  assert.ok(Number(sourceCode) >= Number(update.latest_version_code));
+  assert.match(sourceName, /^2\.0\.0-preview\.\d+$/);
   assert.ok(update.latest_version_code >= 940000);
   assert.match(update.latest_version_name, /^2\.0\.0-preview\.\d+$/);
   assert.match(update.apk_url || update.downloadUrl || '', /AmyFX-Preview-latest\.apk/);
