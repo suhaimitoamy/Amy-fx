@@ -21,7 +21,7 @@ test('personal source stays Preview while the public release workflow keeps prod
   assert.match(gradle, /amyfxpreview/);
   assert.match(gradle, /personal\/amyfx-private\/preview-update\.json/);
   assert.equal(Number(versionCode), 940000 + Number(sequence));
-  assert.ok(gradle.includes(`?: ${versionCode})`);
+  assert.ok(gradle.includes(`?: ${versionCode})`));
   assert.ok(gradle.includes(`?: "${versionName}"`));
   assert.match(version, /personal\/amyfx-private\/preview-update\.json/);
 
