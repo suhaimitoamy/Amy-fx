@@ -1,26 +1,25 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 940295,
-  "latest_version_name": "2.0.0-preview.295",
-  "versionCode": 940295,
-  "version": "2.0.0-preview.295",
-  "releaseDate": "2026-07-30",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.295/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.295/AmyFX-Preview-latest.apk",
+  "latest_version_code": 940297,
+  "latest_version_name": "2.0.0-preview.297",
+  "versionCode": 940297,
+  "version": "2.0.0-preview.297",
+  "releaseDate": "2026-08-01",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.297/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.297/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Harga XAU/USD kembali memakai WebSocket Twelve Data langsung dari aplikasi.",
-    "Reconnect otomatis aktif saat jaringan kembali, aplikasi dibuka lagi, atau tick berhenti.",
-    "API key WebSocket disimpan terenkripsi oleh Android dan tidak masuk localStorage.",
-    "Candle serta analisis Mapping tetap memakai jalur REST yang sudah ada.",
+    "Scalper Engine utama kini menjadi otoritas bersama untuk Rencana Eksekusi dan Entry Watch.",
+    "Panel detail Preview tetap dipertahankan untuk memilih dan memeriksa semua setup aktif.",
+    "Academy menyimpan riwayat baca, heading, persentase, dan posisi scroll terakhir.",
     "Amy FX publik pada branch main tidak diubah."
   ],
   "changelog": [
-    "Native Twelve Data WebSocket live price",
-    "Automatic live-price reconnect watchdog",
-    "Encrypted WebSocket credential storage",
-    "REST Mapping pipeline preserved"
+    "Unified Scalper execution authority",
+    "Execution decision bridge for Preview",
+    "Detailed multi-setup panel preserved",
+    "Academy reading history and resume position"
   ]
 }
