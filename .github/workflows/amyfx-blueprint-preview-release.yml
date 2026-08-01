@@ -22,8 +22,6 @@ env:
   AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
   AMYFX_APP_LABEL: Amy FX Preview
   AMYFX_URI_SCHEME: amyfxpreview
-  AMYFX_VERSION_NAME: 2.0.0-preview.296
-  AMYFX_VERSION_CODE: "940296"
   AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json
   TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
   AMYFX_KEYSTORE_PATH: /tmp/amy-fx-preview-signing.keystore
@@ -48,8 +46,30 @@ jobs:
           set -euo pipefail
           test "$GITHUB_REF_NAME" = "personal/amyfx-private"
           test "$GITHUB_REF_NAME" != "main"
-          version_code="$AMYFX_VERSION_CODE"
-          version_name="$AMYFX_VERSION_NAME"
+          mapfile -t preview_identity < <(python3 - <<'PY'
+          import pathlib
+          import re
+
+          source = pathlib.Path('app/src/main/assets/app-version.js').read_text(encoding='utf-8')
+          match = re.search(r"name:\s*'(2\.0\.0-preview\.(\d+))'\s*,\s*code:\s*(94\d{4})", source)
+          if not match:
+              raise SystemExit('Unable to read private Preview identity from app-version.js')
+
+          version_name, sequence_text, version_code_text = match.groups()
+          sequence = int(sequence_text)
+          version_code = int(version_code_text)
+          if version_code != 940000 + sequence:
+              raise SystemExit('Preview version code does not match its version suffix')
+
+          print(version_name)
+          print(version_code)
+          PY
+          )
+          test "${#preview_identity[@]}" -eq 2
+          version_name="${preview_identity[0]}"
+          version_code="${preview_identity[1]}"
+          echo "AMYFX_VERSION_NAME=$version_name" >> "$GITHUB_ENV"
+          echo "AMYFX_VERSION_CODE=$version_code" >> "$GITHUB_ENV"
           grep -Fq "?: $version_code)" app/build.gradle.kts
           grep -Fq "?: \"$version_name\"" app/build.gradle.kts
           grep -Fq "name: '$version_name', code: $version_code" app/src/main/assets/app-version.js
