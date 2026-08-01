@@ -53,14 +53,17 @@ test('private Preview release remains isolated from production main', async () =
   const appVersion = await read('app/src/main/assets/app-version.js');
   const identity = appVersion.match(/name: '(2\.0\.0-preview\.\d+)', code: (94\d{4})/);
   assert.ok(identity, 'current Preview identity must be readable from app-version.js');
-  const [, versionName, versionCode] = identity;
 
   assert.match(workflow, /personal\/amyfx-private/);
   assert.match(workflow, /com\.amyelitesuite\.learningpreview/);
   assert.match(workflow, /Amy FX Preview/);
   assert.match(workflow, /amyfxpreview/);
-  assert.ok(workflow.includes(`AMYFX_VERSION_NAME: ${versionName}`));
-  assert.ok(workflow.includes(`AMYFX_VERSION_CODE: "${versionCode}"`));
+  assert.match(workflow, /app\/src\/main\/assets\/app-version\.js/);
+  assert.match(workflow, /AMYFX_VERSION_NAME=\$version_name/);
+  assert.match(workflow, /AMYFX_VERSION_CODE=\$version_code/);
+  assert.match(workflow, /version_code != 940000 \+ sequence/);
+  assert.doesNotMatch(workflow, /AMYFX_VERSION_NAME:\s*2\.0\.0-preview\.\d+/);
+  assert.doesNotMatch(workflow, /AMYFX_VERSION_CODE:\s*["']?94\d{4}/);
   assert.match(workflow, /test "\$version_code" -gt "\$published_code"/);
   assert.match(workflow, /PYTHONDONTWRITEBYTECODE: "1"/);
   assert.doesNotMatch(workflow, /python3 -m py_compile/);
