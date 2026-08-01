@@ -1,6 +1,10 @@
 # Amy FX Preview — Personal Build
 
-Amy FX Preview adalah aplikasi Android hybrid untuk pemetaan dan pemantauan market **XAU/USD**. Antarmuka utama berjalan melalui WebView lokal, layanan native Android ditangani oleh Kotlin, sedangkan data market, engine sinyal, lifecycle setup, dan pengiriman notifikasi scalper berjalan melalui backend Supabase.
+Amy FX Preview adalah aplikasi Android hybrid untuk pemetaan market, pemantauan **XAU/USD**, Rencana Eksekusi, Entry Watch, jurnal trading, market intelligence, dan materi belajar. Antarmuka utama berjalan melalui WebView lokal, layanan native Android ditangani oleh Kotlin, sedangkan candle analisis, Scalper Engine, lifecycle setup, dan notifikasi memakai layanan backend yang terisolasi untuk Preview.
+
+> **Release aktif:** `2.0.0-preview.297` · Version code `940297`
+
+[Download Amy FX Preview 2.0.0-preview.297](https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.297/AmyFX-Preview-latest.apk)
 
 ## Fungsi Branch
 
@@ -8,168 +12,157 @@ Repository ini memiliki dua branch permanen dengan tujuan berbeda:
 
 | Branch | Fungsi |
 |---|---|
-| **`personal/amyfx-private`** | Sumber pengembangan, pengujian, build, dan update **Amy FX Preview** untuk penggunaan pribadi. |
-| **`main`** | Sumber aplikasi **Amy FX** untuk penggunaan publik. |
+| **`personal/amyfx-private`** | Sumber pengembangan, pengujian, build, release, dan update Amy FX Preview untuk penggunaan pribadi. |
+| **`main`** | Sumber aplikasi Amy FX publik/produksi. |
 
-Pengembangan aktif hanya dilakukan pada:
+Pengembangan Preview hanya dilakukan pada:
 
 ```text
 personal/amyfx-private
 ```
 
-Perubahan branch personal tidak boleh otomatis digabungkan, disalin, atau dipindahkan ke `main`.
+Perubahan pada branch personal tidak boleh otomatis digabungkan, disalin, atau dipindahkan ke `main`.
 
 ## Identitas Amy FX Preview
 
-- **Branch:** `personal/amyfx-private`
-- **Nama aplikasi:** `Amy FX Preview`
-- **Application ID:** `com.amyelitesuite.learningpreview`
-- **URI scheme:** `amyfxpreview`
-- **Versi aktif:** `2.0.0-preview.266`
-- **Version code:** `940266`
-- **Minimum Android:** Android 8.0 / API 26
-- **Target SDK:** Android SDK 35
-- **Update manifest:** `personal/amyfx-private/preview-update.json`
+| Properti | Nilai |
+|---|---|
+| Nama aplikasi | `Amy FX Preview` |
+| Application ID | `com.amyelitesuite.learningpreview` |
+| URI scheme | `amyfxpreview` |
+| Version name | `2.0.0-preview.297` |
+| Version code | `940297` |
+| Minimum Android | Android 8.0 / API 26 |
+| Target SDK | Android SDK 35 |
+| Update channel | `personal/amyfx-private/preview-update.json` |
+| Release tag | `amyfx-blueprint-preview-2.0.0-preview.297` |
 
-[Download Amy FX Preview](https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.266/AmyFX-Preview-latest.apk)
+Identitas package, URI, signing certificate, data aplikasi, dan update channel Preview harus tetap terpisah dari Amy FX publik.
 
 ## Kondisi Terbaru
 
-Amy FX Preview sekarang memiliki **Scalper Engine Shadow Mode** yang berjalan terpisah dari Mapping, Direction Forecast, Entry Watch lama, jurnal pengguna, dan sistem breaking news.
+Release `.297` memakai **Scalper Engine multidriver** sebagai otoritas eksekusi bersama untuk:
 
-Shadow Mode hanya melakukan simulasi dan pemantauan. Sistem belum membuka, mengubah, atau menutup order broker secara otomatis.
+- **Rencana Eksekusi**;
+- **Entry Watch**;
+- arah BUY, SELL, atau WAIT;
+- entry, Stop Loss, TP1, dan TP2;
+- lifecycle setup;
+- status data LIVE atau stale;
+- alasan setup dan invalidasi;
+- notifikasi perubahan lifecycle penting.
 
-### Model Sinyal Aktif
+Mapping tetap menyimpan dan menampilkan konteks market. Scalper Engine tidak menghapus fungsi Mapping, Market Outlook, News, Journal, Academy, atau modul lain.
 
-#### IFVG Scalper Engine
+Amy FX Preview bukan robot trading dan tidak membuka, mengubah, atau menutup order broker secara otomatis.
 
-- IFVG harus searah dengan H1 order flow yang sudah terkonfirmasi.
-- Entry dikunci pada next-open setelah sinyal M15 terkonfirmasi.
-- Stop Loss di luar wick candle inversion + `0.10 ATR`.
-- Target utama `2R`.
-- Breakeven diaktifkan setelah harga mencapai `1R`.
-- Lifecycle maksimal empat candle M15.
-- Jika belum TP, SL, atau BE setelah empat candle, setup ditutup sebagai `TIME_EXIT`.
+## Otoritas Eksekusi
 
-#### FVG BUY High Quality
+Scalper Engine hanya mengaktifkan rencana entry ketika seluruh kondisi berikut terpenuhi:
 
-- Hanya menerima arah BUY.
-- H1 harus bullish.
-- Candle displacement minimal `1 ATR`.
-- Body candle minimal 60% dari range.
-- Close harus menghasilkan BOS/MSS.
-- Stop Loss menggunakan wick lokal + `0.15 ATR`.
-- Target `2R` dan lifecycle maksimal empat candle M15.
+- setup berasal dari engine aktif `amyfx-preview-scalper-multidriver-v2.0`;
+- setup bukan setup legacy;
+- arah setup valid BUY atau SELL;
+- status setup masih nonterminal;
+- data berstatus `LIVE`;
+- entry, Stop Loss, TP1, dan TP2 membentuk geometri yang valid;
+- lifecycle sudah mencapai status yang mengizinkan entry.
 
-## Arsitektur Scalper Engine
+Aplikasi menampilkan **WAIT** ketika:
+
+- belum ada setup yang dipilih;
+- setup masih menunggu trigger atau candle berikutnya;
+- data Scalper Engine belum tersedia atau stale;
+- geometri entry, Stop Loss, atau target tidak valid;
+- setup sudah terminal, dibatalkan, atau tidak lagi dapat dieksekusi.
+
+Status utama yang diterjemahkan ke antarmuka:
 
 ```text
-Market Data XAU/USD
+WAITING_TRIGGER / WAITING_NEXT_OPEN / ENTRY_READY
+        ↓
+ACTIVE → ENTRY_TRIGGERED
+        ↓
+BE_ACTIVE → TP1 HIT / BE
+        ↓
+TP_HIT / SL_HIT / BE_HIT / TIME_EXIT / INVALIDATED / CANCELLED
+```
+
+## Arsitektur Utama
+
+```text
+Twelve Data WebSocket
+        └── Harga live XAU/USD
+
+Candle analisis
         ↓
 Supabase market-candles
         ↓
-Scalper Engine
+Scalper Engine Multidriver
         ↓
 Setup Lifecycle + State Store
-        ├── Scalper Entry Watch
-        ├── FCM Push Notification
-        └── Lifecycle History
+        ↓
+Scalper Execution Authority
+        ├── Rencana Eksekusi
+        ├── Entry Watch
+        ├── Panel detail setup
+        ├── Notifikasi
+        └── Lifecycle history
 ```
 
-Backend membaca:
+Harga live pada layar memakai jalur WebSocket native. Jalur candle analisis dan lifecycle tetap dipisahkan agar penggunaan REST tidak dijadikan sumber tick layar secara terus-menerus.
 
-- **M1** untuk pemantauan harga, BE, TP, SL, dan time exit;
-- **M15** untuk deteksi setup dan batas empat candle;
-- **H1** untuk causal order-flow bias.
+## Panel Preview
 
-Scheduler Supabase menjalankan engine setiap satu menit. Setup dan event disimpan pada tabel khusus Preview dengan akses service-role dan tidak bergantung pada aplikasi Android tetap terbuka.
+Panel detail Scalper Engine mempertahankan informasi berikut:
 
-## Multi-Setup dan Proteksi Risiko
-
-Rule satu posisi aktif sudah tidak digunakan.
-
-- Semua sinyal valid tetap dipantau dan dicatat.
-- Maksimum dua setup diberi rekomendasi `VALID` secara bersamaan.
-- Setup tambahan tetap terlihat dengan status `RISK_LIMIT`.
-- Setup searah dengan zona dan waktu berdekatan ditandai `DUPLICATE_CLUSTER`.
-- Setiap setup memiliki entry, SL, TP, BE, timer, dan lifecycle sendiri.
-
-## Panel Scalper Entry Watch
-
-Kartu **Scalper Engine · Shadow Mode** muncul pada halaman Mapping setelah Rencana Eksekusi dan menampilkan:
-
-- model IFVG atau FVG BUY High Quality;
-- arah BUY/SELL;
-- H1 bias;
+- setup aktif dan alternatif;
+- driver/model setup;
+- timeframe;
+- arah BUY atau SELL;
+- alasan pemilihan setup;
 - entry;
 - Stop Loss;
-- trigger BE 1R;
-- target 2R;
-- sisa candle;
+- TP1;
+- TP2;
 - status lifecycle;
-- setup aktif lainnya;
-- status `VALID`, `RISK_LIMIT`, atau `DUPLICATE_CLUSTER`.
+- status data;
+- validitas geometri;
+- invalidasi atau alasan WAIT.
 
-Panel membaca backend setiap 30 detik dan tidak mengganti hasil Mapping lama.
+Rencana Eksekusi dan Entry Watch membaca otoritas yang sama sehingga keduanya tidak menghasilkan keputusan yang saling bertentangan.
 
-## Lifecycle Setup
+## Academy dan Jurnal
 
-```text
-WAITING_NEXT_OPEN
-→ ACTIVE
-→ BE_ACTIVE
-→ TP_HIT / SL_HIT / BE_HIT / TIME_EXIT
-```
+Academy menyimpan:
 
-Status tambahan:
+- materi terakhir yang dibaca;
+- heading terakhir;
+- persentase bacaan;
+- posisi scroll terakhir.
 
-- `INVALIDATED`
-- `CANCELLED`
-- `RISK_LIMIT`
-- `DUPLICATE_CLUSTER`
+Journal tetap menjadi tempat penyimpanan catatan dan evaluasi trading pengguna. Fitur Academy dan Journal tidak dijadikan sumber sinyal trading.
 
-Proteksi live-only memastikan setup historis atau backfill tidak dikirim sebagai notifikasi baru.
-
-## Notifikasi Preview
-
-Sinyal scalper memakai kanal Android terpisah:
+## Struktur Repository
 
 ```text
-Amy FX Scalper Signals
-```
-
-Notifikasi dikirim untuk:
-
-- sinyal terkonfirmasi;
-- entry siap;
-- harga mencapai 1R;
-- TP, SL, BE, atau time exit;
-- perubahan lifecycle penting.
-
-Semua notifikasi tetap diberi label **SIMULASI**. Ketika 1R tercapai, aplikasi hanya memberi instruksi untuk memindahkan SL broker secara manual ke harga entry.
-
-Sistem breaking news tetap memakai kanal dan alur yang sudah ada.
-
-## Backend dan Struktur Utama
-
-```text
-app/src/main/assets/                         WebView assets
-app/src/main/assets/apps/mapping             Mapping, Rencana Eksekusi, Scalper Entry Watch
-app/src/main/assets/apps/market-intel        News, heatmap, dan liquidity
-app/src/main/assets/apps/journal             Jurnal Trading
-app/src/main/assets/apps/academy             Materi belajar
-app/src/main/java/                           Android native Kotlin dan FCM
-supabase/functions/scalper-engine/           Engine sinyal dan lifecycle
-supabase/functions/scalper-setups/           API tampilan setup Preview
-supabase/functions/scalper-system-push/      Pengiriman FCM scalper
+app/src/main/assets/                         WebView assets utama
+app/src/main/assets/apps/mapping/            Mapping, Rencana Eksekusi, Entry Watch
+app/src/main/assets/apps/market-intel/       News, heatmap, dan market intelligence
+app/src/main/assets/apps/journal/            Jurnal trading
+app/src/main/assets/apps/academy/            Materi belajar dan reading history
+app/src/main/java/                           Android native Kotlin, updater, FCM, WebSocket
+supabase/functions/scalper-engine/           Engine, driver, candle, sinyal, lifecycle
+supabase/functions/scalper-setups/           API setup Preview
+supabase/functions/scalper-system-push/      Pengiriman notifikasi scalper
 supabase/migrations/                         Schema dan scheduler backend
-api/                                         Vercel serverless functions lain
+api/                                         Vercel serverless functions
 lib/                                         Shared backend logic
-tests/                                       Regression dan scalper engine tests
-.github/workflows/                            CI dan build APK Preview
+tests/                                       Regression tests
+.github/workflows/                            CI, signed build, dan release Preview
 ```
 
-## Alur Build Preview
+## Alur Build dan Release
 
 Workflow Preview berada di:
 
@@ -179,28 +172,73 @@ Workflow Preview berada di:
 
 Workflow hanya berjalan untuk branch `personal/amyfx-private` dan melakukan:
 
-1. validasi identitas branch personal;
-2. stabilisasi source Preview;
-3. regression test JavaScript;
-4. pengujian scalper engine;
-5. Android unit test dan lint;
-6. build APK release bertanda tangan;
-7. verifikasi package, label, versi, dan sertifikat signer;
-8. publikasi release Amy FX Preview;
-9. pembaruan `preview-update.json` pada branch personal.
+1. memastikan branch bukan `main`;
+2. membaca version name dan version code dari source Preview;
+3. memvalidasi hubungan suffix versi dengan version code;
+4. menjalankan stabilisasi Blueprint Preview;
+5. menjalankan seluruh regression test JavaScript;
+6. menjalankan Android release unit test;
+7. menjalankan Android lint;
+8. membangun APK release bertanda tangan;
+9. memverifikasi package, label, versi, dan signer;
+10. membuat immutable prerelease GitHub;
+11. mengunggah APK dan checksum SHA-256;
+12. mengaktifkan `preview-update.json` hanya setelah APK berhasil diverifikasi.
 
-Proses Preview tidak menggunakan atau mengubah branch `main`.
+Workflow tidak boleh mengaktifkan manifest versi baru sebelum APK signed berhasil dibuat dan lolos verifikasi.
+
+## Status Verifikasi Release `.297`
+
+Release `2.0.0-preview.297` telah lulus:
+
+- 93 file regression JavaScript;
+- Android release unit test;
+- Android lint;
+- signed APK build;
+- package verification;
+- version verification;
+- application label verification;
+- signing certificate verification;
+- GitHub prerelease publication;
+- update-channel activation.
+
+Checksum APK:
+
+```text
+a45a9d7d70495167960c69120c298e84e904290b3b5ede6df7347f522bb2f769
+```
+
+## Update Channel
+
+Manifest aktif:
+
+```text
+personal/amyfx-private/preview-update.json
+```
+
+Manifest saat ini menunjuk ke:
+
+```text
+Version name : 2.0.0-preview.297
+Version code : 940297
+Enabled      : true
+Force update : false
+```
+
+Aplikasi versi `940295` atau lebih lama dapat mendeteksi `.297` sebagai pembaruan yang lebih baru melalui kanal Preview.
 
 ## Aturan Pengembangan
 
-- Fokus pekerjaan berada di `personal/amyfx-private`.
+- Kerjakan hanya branch `personal/amyfx-private` untuk Amy FX Preview.
 - Jangan menyentuh atau merge ke `main` tanpa instruksi khusus.
-- Jangan mengubah package, URI scheme, data aplikasi, signing certificate, atau update channel Preview.
-- Modul baru harus dibuat terisolasi dan tidak boleh merusak Mapping, News, Journal, Academy, atau fitur lain.
-- Engine live harus memakai candle yang sudah close dan tidak boleh memakai future candle.
-- Setup historis tidak boleh dikirim sebagai notifikasi live.
-- Shadow Mode harus tetap dipertahankan sampai hasil live dan lifecycle terbukti stabil.
+- Jangan mengubah package, URI scheme, signing certificate, data aplikasi, atau update channel Preview.
+- Jangan mengaktifkan manifest sebelum signed APK lolos seluruh verifikasi.
+- Jangan memakai candle yang belum close untuk keputusan analisis.
+- Jangan memakai future candle pada replay atau pengujian historis.
+- Data stale, setup terminal, atau geometri tidak valid harus menghasilkan WAIT.
+- Modul baru tidak boleh merusak Mapping, News, Journal, Academy, atau fitur lain.
+- Backtest tidak dijalankan otomatis oleh proses release.
 
 ## Disclaimer
 
-Amy FX Preview bukan robot trading, Expert Advisor, atau penasihat keuangan. Aplikasi tidak membuka atau menutup order secara otomatis dan tidak menjamin hasil tertentu. Seluruh informasi merupakan alat bantu analisis dan simulasi; keputusan serta risiko tetap berada pada pengguna.
+Amy FX Preview bukan robot trading, Expert Advisor, atau penasihat keuangan. Aplikasi tidak membuka atau menutup order secara otomatis dan tidak menjamin hasil tertentu. Seluruh informasi merupakan alat bantu analisis dan simulasi. Keputusan serta risiko trading tetap berada pada pengguna.
