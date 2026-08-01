@@ -3,18 +3,25 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 test('Amy FX personal source uses the permanent Preview Android identity', () => {
   const gradle = read('app/build.gradle.kts');
   const version = read('app/src/main/assets/app-version.js');
+  const identity = version.match(/name: '(2\.0\.0-preview\.(\d+))', code: (94\d{4})/);
+  assert.ok(identity, 'current Preview identity must be readable from app-version.js');
+
+  const [, versionName, suffixText, versionCodeText] = identity;
+  const versionCode = Number(versionCodeText);
+  assert.equal(versionCode, 940000 + Number(suffixText));
+
   assert.match(gradle, /val configuredApplicationId = System\.getenv\("AMYFX_APPLICATION_ID"\) \?: "com\.amyelitesuite\.learningpreview"/);
   assert.match(gradle, /val configuredAppLabel = System\.getenv\("AMYFX_APP_LABEL"\) \?: "Amy FX Preview"/);
   assert.match(gradle, /val configuredUriScheme = System\.getenv\("AMYFX_URI_SCHEME"\) \?: "amyfxpreview"/);
   assert.match(gradle, /personal\/amyfx-private\/preview-update\.json/);
   assert.match(gradle, /applicationId = configuredApplicationId/);
-  assert.match(gradle, /versionCode[^\n]*940295/);
-  assert.match(gradle, /versionName[^\n]*"2\.0\.0-preview\.295"/);
-  assert.match(version, /name: '2\.0\.0-preview\.295', code: 940295/);
+  assert.match(gradle, new RegExp(`versionCode[^\\n]*${versionCode}`));
+  assert.match(gradle, new RegExp(`versionName[^\\n]*"${escapeRegex(versionName)}"`));
 });
 
 test('published public metadata is never ahead of the public APK source version', () => {
