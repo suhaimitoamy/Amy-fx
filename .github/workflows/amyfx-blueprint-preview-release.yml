@@ -22,8 +22,8 @@ env:
   AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
   AMYFX_APP_LABEL: Amy FX Preview
   AMYFX_URI_SCHEME: amyfxpreview
-  AMYFX_VERSION_NAME: 2.0.0-preview.295
-  AMYFX_VERSION_CODE: "940295"
+  AMYFX_VERSION_NAME: 2.0.0-preview.296
+  AMYFX_VERSION_CODE: "940296"
   AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json
   TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
   AMYFX_KEYSTORE_PATH: /tmp/amy-fx-preview-signing.keystore
@@ -83,6 +83,9 @@ jobs:
           node --check app/src/main/assets/update-checker.js
           node --check app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
           node --check app/src/main/assets/apps/mapping/js/scalper-shadow-state.js
+          node --check app/src/main/assets/apps/mapping/js/scalper-execution-authority.js
+          node --check app/src/main/assets/apps/mapping/js/scalper-execution-decision-bridge.js
+          node --check app/src/main/assets/apps/academy/assets/js/reading-history-v2.js
           node --check supabase/functions/scalper-engine/candles.mjs
           node --check supabase/functions/scalper-engine/drivers.mjs
           node --check supabase/functions/scalper-engine/signals.mjs
@@ -181,12 +184,11 @@ jobs:
             exit 1
           fi
           cat > /tmp/amyfx-preview-release-notes.md <<NOTES
-          Amy FX Preview $AMYFX_VERSION_NAME — Live Price WebSocket.
+          Amy FX Preview $AMYFX_VERSION_NAME — Unified Execution.
 
-          - Harga XAU/USD kembali memakai satu koneksi WebSocket Twelve Data langsung dari aplikasi.
-          - Reconnect otomatis aktif ketika jaringan kembali, aplikasi dibuka lagi, atau tick berhenti.
-          - API key WebSocket tidak disimpan di source atau localStorage; Android menyimpannya terenkripsi.
-          - Candle dan analisis Mapping tetap memakai jalur REST yang sudah ada.
+          - Scalper Engine utama sekarang menjadi otoritas bersama untuk Rencana Eksekusi dan Entry Watch.
+          - Panel Preview yang lebih detail tetap dipertahankan, termasuk pilihan setup, driver, timeframe, alasan, SL, TP1, dan TP2.
+          - Academy menyimpan riwayat baca, heading, persentase, serta posisi scroll terakhir.
           - Amy FX publik pada branch main tidak diubah.
           NOTES
           gh release create "$AMYFX_RELEASE_TAG" \
@@ -195,7 +197,7 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$AMYFX_SOURCE_SHA" \
             --prerelease \
-            --title "Amy FX Preview $AMYFX_VERSION_NAME — Live Price WebSocket" \
+            --title "Amy FX Preview $AMYFX_VERSION_NAME — Unified Execution" \
             --notes-file /tmp/amyfx-preview-release-notes.md
           gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
 
@@ -221,17 +223,16 @@ jobs:
               'mandatory': False,
               'enabled': True,
               'release_notes': [
-                  'Harga XAU/USD kembali memakai WebSocket Twelve Data langsung dari aplikasi.',
-                  'Reconnect otomatis aktif saat jaringan kembali, aplikasi dibuka lagi, atau tick berhenti.',
-                  'API key WebSocket disimpan terenkripsi oleh Android dan tidak masuk localStorage.',
-                  'Candle serta analisis Mapping tetap memakai jalur REST yang sudah ada.',
+                  'Scalper Engine utama kini menjadi otoritas bersama untuk Rencana Eksekusi dan Entry Watch.',
+                  'Panel detail Preview tetap dipertahankan untuk memilih dan memeriksa semua setup aktif.',
+                  'Academy menyimpan riwayat baca, heading, persentase, dan posisi scroll terakhir.',
                   'Amy FX publik pada branch main tidak diubah.'
               ],
               'changelog': [
-                  'Native Twelve Data WebSocket live price',
-                  'Automatic live-price reconnect watchdog',
-                  'Encrypted WebSocket credential storage',
-                  'REST Mapping pipeline preserved'
+                  'Unified Scalper execution authority',
+                  'Execution decision bridge for Preview',
+                  'Detailed multi-setup panel preserved',
+                  'Academy reading history and resume position'
               ]
           }
           with open('preview-update.json', 'w', encoding='utf-8') as handle:
