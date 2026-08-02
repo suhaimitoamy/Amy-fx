@@ -1,25 +1,27 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 940297,
-  "latest_version_name": "2.0.0-preview.297",
-  "versionCode": 940297,
-  "version": "2.0.0-preview.297",
-  "releaseDate": "2026-08-01",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.297/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.297/AmyFX-Preview-latest.apk",
+  "latest_version_code": 940298,
+  "latest_version_name": "2.0.0-preview.298",
+  "versionCode": 940298,
+  "version": "2.0.0-preview.298",
+  "releaseDate": "2026-08-02",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.298/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.298/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Scalper Engine utama kini menjadi otoritas bersama untuk Rencana Eksekusi dan Entry Watch.",
-    "Panel detail Preview tetap dipertahankan untuk memilih dan memeriksa semua setup aktif.",
-    "Academy menyimpan riwayat baca, heading, persentase, dan posisi scroll terakhir.",
+    "Scalper Engine Pattern v3 mengaktifkan gate BT6 dan repair overlay BT6.1.",
+    "Driver AMD M30/H1 ditambahkan sebagai driver independen dengan entry midpoint FVG.",
+    "Target simulasi tetap TP1 +10 dan TP2 +20 poin; Stop Loss tidak dipindahkan ke breakeven.",
+    "News Preview memakai satu jalur notifikasi dengan canonical event key dan atomic delivery ledger.",
     "Amy FX publik pada branch main tidak diubah."
   ],
   "changelog": [
-    "Unified Scalper execution authority",
-    "Execution decision bridge for Preview",
-    "Detailed multi-setup panel preserved",
-    "Academy reading history and resume position"
+    "BT6-2025-V1 pattern gates",
+    "BT6.1-2026-H1-V1 repair overlays",
+    "AMD-2025-V1 M30/H1 driver",
+    "Fixed +10/+20 lifecycle without break-even",
+    "Preview news canonical delivery deduplication"
   ]
 }
