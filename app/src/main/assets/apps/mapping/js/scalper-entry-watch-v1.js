@@ -17,7 +17,7 @@ function instruction(setup){
   if(setup.status==='WAITING_TRIGGER')return'Menunggu syarat trigger driver terpenuhi pada candle yang sudah close.';
   if(setup.status==='WAITING_NEXT_OPEN'||setup.status==='ENTRY_READY')return'Menunggu open live berikutnya untuk mengunci entry, Stop Loss, TP1, dan TP2.';
   if(setup.status==='ACTIVE'&&setup.tp1Hit===true)return`${driver(setup)} ${timeframe(setup)} sudah mencapai TP1 +10 poin. Stop Loss tetap pada level awal; menunggu TP2 +20 poin.`;
-  if(setup.status==='ACTIVE')return`${driver(setup)} ${timeframe(setup)} aktif dalam simulasi Preview. Target tetap TP1 +10 dan TP2 +20 poin; tanpa perpindahan breakeven otomatis.`;
+  if(setup.status==='ACTIVE')return`${driver(setup)} ${timeframe(setup)} aktif dalam simulasi Amy FX. Target tetap TP1 +10 dan TP2 +20 poin; tanpa perpindahan breakeven otomatis.`;
   if(setup.status==='BE_ACTIVE')return'Status breakeven ini berasal dari lifecycle engine lama dan hanya ditampilkan sebagai riwayat.';
   if(setup.status==='TIME_EXIT')return`Batas waktu setup selesai. Hasil simulasi ${resultR(setup.resultR)}.`;
   if(setup.status==='TP_HIT')return'TP2 tercapai pada simulasi Scalper Engine.';
