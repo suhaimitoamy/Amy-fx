@@ -4,5 +4,8 @@
   "type": "module",
   "scripts": {
     "test": "node tools/run-tests-sequential.mjs"
+  },
+  "dependencies": {
+    "ws": "8.21.1"
   }
 }
