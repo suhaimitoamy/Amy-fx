@@ -36,11 +36,15 @@ jobs:
       - name: Download, audit, and package Dukascopy XAUUSD BID candles
         run: python /tmp/xauusd_2026_repair.py
 
-      - name: Upload audited data artifact
+      - name: Upload Drive-ready audited bundle
         uses: actions/upload-artifact@v4
         with:
-          name: xauusd-2026-repaired-audited
-          path: xauusd_2026_output/XAUUSD_2026_JAN-JUL_DUKASCOPY_BID_REPAIRED_AUDITED.zip
+          name: xauusd-2026-drive-bundle
+          path: |
+            xauusd_2026_output/XAUUSD_2026_0?_*.zip
+            xauusd_2026_output/XAUUSD_2026_DATA_REPAIR_AUDIT.json
+            xauusd_2026_output/XAUUSD_2026_DATA_REPAIR_REPORT.txt
+            xauusd_2026_output/UPLOAD_SHA256_MANIFEST.csv
           if-no-files-found: error
           retention-days: 1
           compression-level: 0
