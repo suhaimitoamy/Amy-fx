@@ -3,7 +3,7 @@ from pathlib import Path
 path = Path('/tmp/xauusd_2026_repair.py')
 s = path.read_text(encoding='utf-8')
 s = s.replace('Dukascopy Jetta API', 'Dukascopy native BI5 datafeed')
-s = s.replace('import json\nimport math', 'import json\nimport lzma\nimport math')
+s = s.replace('import json\nimport math', 'import http.client\nimport json\nimport lzma\nimport math')
 s = s.replace('import os\nimport sys', 'import os\nimport struct\nimport sys')
 s = s.replace('from collections import defaultdict', 'from collections import defaultdict\nfrom concurrent.futures import ThreadPoolExecutor, as_completed')
 s = s.replace('API_ROOT = "https://jetta.dukascopy.com/v1"', 'API_ROOT = "https://datafeed.dukascopy.com/datafeed"')
@@ -16,7 +16,7 @@ def fetch_bi5(url: str, retries: int = 5) -> tuple[bytes, int]:
     for attempt in range(retries):
         request = urllib.request.Request(
             url,
-            headers={"User-Agent": USER_AGENT, "Accept-Encoding": "identity"},
+            headers={"User-Agent": USER_AGENT, "Accept-Encoding": "identity", "Connection": "close"},
         )
         try:
             with urllib.request.urlopen(request, timeout=60) as response:
@@ -29,7 +29,7 @@ def fetch_bi5(url: str, retries: int = 5) -> tuple[bytes, int]:
             if exc.code == 404:
                 return b"", 404
             last_error = exc
-        except (urllib.error.URLError, TimeoutError) as exc:
+        except (urllib.error.URLError, TimeoutError, http.client.RemoteDisconnected, ConnectionResetError, OSError) as exc:
             last_error = exc
         if attempt + 1 < retries:
             time.sleep(1.5 * (attempt + 1))
@@ -98,7 +98,7 @@ new_loop = '''    dates = list(iter_dates(START_DATE, END_DATE_EXCLUSIVE))
         return current, url, raw, http_status, rows
 
     downloaded: dict[date, tuple[str, bytes, int, list[Candle]]] = {}
-    with ThreadPoolExecutor(max_workers=6) as executor:
+    with ThreadPoolExecutor(max_workers=4) as executor:
         futures = {executor.submit(download_day, current): current for current in dates}
         for future in as_completed(futures):
             current, url, raw, http_status, rows = future.result()
