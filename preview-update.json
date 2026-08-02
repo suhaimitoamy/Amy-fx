@@ -1,27 +1,28 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 940298,
-  "latest_version_name": "2.0.0-preview.298",
-  "versionCode": 940298,
-  "version": "2.0.0-preview.298",
+  "latest_version_code": 940299,
+  "latest_version_name": "2.0.0-preview.299",
+  "versionCode": 940299,
+  "version": "2.0.0-preview.299",
   "releaseDate": "2026-08-02",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.298/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.298/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.299/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.299/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Scalper Engine Pattern v3 mengaktifkan gate BT6 dan repair overlay BT6.1.",
-    "Driver AMD M30/H1 ditambahkan sebagai driver independen dengan entry midpoint FVG.",
-    "Target simulasi tetap TP1 +10 dan TP2 +20 poin; Stop Loss tidak dipindahkan ke breakeven.",
-    "News Preview memakai satu jalur notifikasi dengan canonical event key dan atomic delivery ledger.",
+    "Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.",
+    "Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.",
+    "Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.",
+    "Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.",
+    "Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.",
     "Amy FX publik pada branch main tidak diubah."
   ],
   "changelog": [
-    "BT6-2025-V1 pattern gates",
-    "BT6.1-2026-H1-V1 repair overlays",
-    "AMD-2025-V1 M30/H1 driver",
-    "Fixed +10/+20 lifecycle without break-even",
-    "Preview news canonical delivery deduplication"
+    "Professional glass UI tokens and shared components",
+    "System, light, and dark theme controller",
+    "Truthful home, collection, and profile presentation",
+    "Unified loading, accessibility, and vector icon polish",
+    "Android system bar theme synchronization"
   ]
 }
