@@ -257,7 +257,6 @@ export function mappingRenderSignature() {
   return JSON.stringify({
     tab: state.tab,
     tf: state.tf,
-    connection: state.conn,
     candleTimes,
     dataStale: Boolean(result?.dataStale),
     direction: result?.directionDecision || null,
