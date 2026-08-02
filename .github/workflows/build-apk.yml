@@ -24,8 +24,8 @@ env:
   AMYFX_KEYSTORE_PASSWORD: android
   AMYFX_KEY_ALIAS: androiddebugkey
   AMYFX_KEY_PASSWORD: android
-  AMYFX_VERSION_NAME: "2.1.1"
-  AMYFX_VERSION_CODE: "55"
+  AMYFX_VERSION_NAME: "2.2.0"
+  AMYFX_VERSION_CODE: "56"
   AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
 jobs:
@@ -35,21 +35,34 @@ jobs:
     steps:
       - name: Mark production release pending
         env: { GH_TOKEN: "${{ github.token }}" }
-        run: gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" -f state=pending -f context='Amy FX Production Release' -f description='Testing and building signed Amy FX 2.1.1' -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+        run: gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" -f state=pending -f context='Amy FX Production Release' -f description='Testing and building signed Amy FX 2.2.0' -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
       - uses: actions/setup-node@v4
         with: { node-version: "22" }
-      - name: Validate production identity and native WebSocket path
+      - name: Validate production identity, Pattern v3, and native WebSocket path
         run: |
           set -euo pipefail
           node --check app/src/main/assets/app-version.js
           node --check app/src/main/assets/update-checker.js
           node --check app/src/main/assets/apps/mapping/js/api/market-data.js
-          grep -Fq "name: '2.1.1', code: 55" app/src/main/assets/app-version.js
-          grep -Fq '?: 55)' app/build.gradle.kts
-          grep -Fq '?: "2.1.1"' app/build.gradle.kts
+          node --check app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          node --check app/src/main/assets/apps/mapping/js/scalper-execution-authority.js
+          node --check app/src/main/assets/apps/mapping/js/scalper-shadow-state.js
+          node --check supabase/functions/scalper-engine/pattern-gates.mjs
+          node --check supabase/functions/scalper-engine/drivers.mjs
+          node --check supabase/functions/scalper-engine/signals.mjs
+          node --check supabase/functions/scalper-engine/lifecycle.mjs
+          grep -Fq "name: '2.2.0', code: 56" app/src/main/assets/app-version.js
+          grep -Fq '?: 56)' app/build.gradle.kts
+          grep -Fq '?: "2.2.0"' app/build.gradle.kts
           grep -Fq 'com.amyelitesuite' app/build.gradle.kts
+          grep -Fq "CURRENT_ENGINE_VERSION = 'amyfx-preview-scalper-pattern-v3.0'" app/src/main/assets/apps/mapping/js/scalper-execution-authority.js
+          grep -Fq '10 driver BT6/BT6.1 + AMD' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          grep -Fq 'TP1 +10' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          grep -Fq 'TP2 +20' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          ! grep -Fq 'aktif dalam simulasi Preview' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          test -f supabase/functions/scalper-engine/pattern-gates.mjs
           test -f app/src/main/java/com/amyelitesuite/TwelveDataPriceBridge.kt
           grep -Fq 'addJavascriptInterface(twelveDataPriceBridge, "AmyLivePrice")' app/src/main/java/com/amyelitesuite/MainActivity.kt
           grep -Fq "window.addEventListener('amyfx:twelvedata-price'" app/src/main/assets/apps/mapping/js/api/market-data.js
@@ -86,7 +99,7 @@ jobs:
           aapt="$ANDROID_HOME/build-tools/35.0.0/aapt"
           signer="$ANDROID_HOME/build-tools/35.0.0/apksigner"
           "$aapt" dump badging "$apk" | tee /tmp/amyfx-badging.txt
-          grep -Fq "package: name='com.amyelitesuite' versionCode='55' versionName='2.1.1'" /tmp/amyfx-badging.txt
+          grep -Fq "package: name='com.amyelitesuite' versionCode='56' versionName='2.2.0'" /tmp/amyfx-badging.txt
           grep -Fq "application-label:'Amy FX'" /tmp/amyfx-badging.txt
           "$signer" verify --verbose --print-certs "$apk" | tee /tmp/amyfx-signing.txt
           expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
@@ -95,7 +108,7 @@ jobs:
           cp "$apk" dist/AmyFX-latest.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Amy-FX-v2.1.1-signed-apk
+          name: Amy-FX-v2.2.0-signed-apk
           path: dist/AmyFX-latest.apk
           if-no-files-found: error
       - name: Publish rolling production APK
@@ -104,15 +117,15 @@ jobs:
           set -euo pipefail
           git tag -f amyfx-latest "$GITHUB_SHA"
           git push origin refs/tags/amyfx-latest --force
-          notes='Amy FX 2.1.1 memulihkan harga live produksi melalui native Twelve Data WebSocket yang sama dengan Preview. REST/Supabase tetap khusus untuk candle analisis dan Scalper Engine.'
+          notes='Amy FX 2.2.0 membawa Scalper Engine Pattern v3 BT6/BT6.1, driver AMD M30/H1, lifecycle TP1 +10 dan TP2 +20 tanpa breakeven otomatis, serta panel multi-setup final dari Preview. Native Twelve Data WebSocket dan identitas produksi tetap dipertahankan.'
           if gh release view amyfx-latest >/dev/null 2>&1; then
-            gh release edit amyfx-latest --title "Amy FX Latest — v2.1.1" --notes "$notes" --latest
+            gh release edit amyfx-latest --title "Amy FX Latest — v2.2.0" --notes "$notes" --latest
           else
-            gh release create amyfx-latest --title "Amy FX Latest — v2.1.1" --notes "$notes" --latest
+            gh release create amyfx-latest --title "Amy FX Latest — v2.2.0" --notes "$notes" --latest
           fi
           gh release upload amyfx-latest dist/AmyFX-latest.apk --clobber
           gh release view amyfx-latest --json assets --jq '.assets[].name' | grep -Fx AmyFX-latest.apk
-      - name: Activate 2.1.1 update only after APK publication
+      - name: Activate 2.2.0 update only after APK publication
         run: |
           set -euo pipefail
           cat > /tmp/update.py <<'PY'
@@ -121,17 +134,17 @@ jobs:
           p=Path('update.json')
           data=json.loads(p.read_text())
           notes=[
-            'Harga live XAU/USD pada Amy FX produksi kembali memakai native WebSocket Twelve Data yang sama dengan Preview.',
-            'Polling REST M1 tidak lagi digunakan sebagai sumber harga live di layar Mapping.',
-            'REST dan Supabase tetap digunakan khusus untuk candle analisis dan Scalper Engine.',
-            'Timestamp serta status koneksi harga mengikuti tick provider yang sebenarnya.',
-            'Panel dan fitur lain yang tidak berhubungan tidak diubah.'
+            'Scalper Engine publik kini memakai Pattern v3 dengan gate BT6 dan repair overlay BT6.1.',
+            'Driver AMD M30/H1 ditambahkan sebagai driver independen dengan entry midpoint FVG.',
+            'Lifecycle simulasi memakai TP1 +10 poin dan TP2 +20 poin; Stop Loss tetap pada level awal tanpa perpindahan breakeven otomatis.',
+            'Panel Scalper menampilkan seluruh setup aktif, alasan driver, timeframe, entry, SL, TP1, TP2, dan lifecycle.',
+            'Harga live XAU/USD tetap memakai native Twelve Data WebSocket; package, signing, URI, data pengguna, dan kanal update Amy FX publik tetap dipertahankan.'
           ]
           data.update(
-            latest_version_code=55,
-            latest_version_name='2.1.1',
-            versionCode=55,
-            version='2.1.1',
+            latest_version_code=56,
+            latest_version_name='2.2.0',
+            versionCode=56,
+            version='2.2.0',
             releaseDate=os.environ['RELEASE_DATE'],
             apk_url='https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',
             downloadUrl='https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',
@@ -152,7 +165,7 @@ jobs:
             python3 -m json.tool update.json >/dev/null
             git add update.json
             if git diff --cached --quiet; then exit 0; fi
-            git commit -m 'release: activate Amy FX 2.1.1 WebSocket hotfix [skip ci]'
+            git commit -m 'release: activate Amy FX 2.2.0 Pattern v3 [skip ci]'
             if git push origin HEAD:main; then exit 0; fi
             sleep 2
           done
@@ -161,8 +174,8 @@ jobs:
         run: |
           git fetch origin main
           manifest="$(git show origin/main:update.json)"
-          printf '%s\n' "$manifest" | grep -F '"latest_version_code": 55'
-          printf '%s\n' "$manifest" | grep -F '"latest_version_name": "2.1.1"'
+          printf '%s\n' "$manifest" | grep -F '"latest_version_code": 56'
+          printf '%s\n' "$manifest" | grep -F '"latest_version_name": "2.2.0"'
 
   report-status:
     if: always()
@@ -173,9 +186,9 @@ jobs:
         env: { GH_TOKEN: "${{ github.token }}", BUILD_RESULT: "${{ needs.build.result }}" }
         run: |
           state=success
-          description='Amy FX 2.1.1 published and update activated'
+          description='Amy FX 2.2.0 published and update activated'
           if [ "$BUILD_RESULT" != success ]; then
             state=failure
-            description="Amy FX 2.1.1 production release failed: $BUILD_RESULT"
+            description="Amy FX 2.2.0 production release failed: $BUILD_RESULT"
           fi
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" -f state="$state" -f context='Amy FX Production Release' -f description="$description" -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
