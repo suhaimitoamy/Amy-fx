@@ -1,0 +1,80 @@
+name: BT7 Download HistData 2022-2025
+
+on:
+  pull_request:
+    branches:
+      - personal/amyfx-private
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  download-histdata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Download official HistData XAUUSD Generic ASCII M1 annual archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check requests beautifulsoup4
+          mkdir -p histdata-annual
+          cat > /tmp/download_histdata.py <<'PY'
+          import os
+          import requests
+          from bs4 import BeautifulSoup
+
+          PAIR = "xauusd"
+          PLATFORM = "ASCII"
+          TIMEFRAME = "M1"
+          PREFIX = "https://www.histdata.com/download-free-forex-historical-data/?/ascii/1-minute-bar-quotes/"
+
+          session = requests.Session()
+          session.headers.update({"User-Agent": "Mozilla/5.0 BT7 historical validation"})
+
+          for year in (2022, 2023, 2024, 2025):
+              referer = f"{PREFIX}{PAIR}/{year}"
+              page = session.get(referer, timeout=60)
+              page.raise_for_status()
+              soup = BeautifulSoup(page.content, "html.parser")
+              token_node = soup.find("input", {"id": "tk"})
+              if token_node is None or not token_node.get("value"):
+                  raise RuntimeError(f"Missing HistData token for {year}: {referer}")
+              token = token_node["value"]
+              data = {
+                  "tk": token,
+                  "date": str(year),
+                  "datemonth": str(year),
+                  "platform": PLATFORM,
+                  "timeframe": TIMEFRAME,
+                  "fxpair": PAIR.upper(),
+              }
+              headers = {
+                  "Origin": "https://www.histdata.com",
+                  "Referer": referer,
+                  "Content-Type": "application/x-www-form-urlencoded",
+              }
+              response = session.post("https://www.histdata.com/get.php", data=data, headers=headers, timeout=180)
+              response.raise_for_status()
+              if not response.content.startswith(b"PK"):
+                  raise RuntimeError(f"HistData response for {year} is not ZIP ({len(response.content)} bytes)")
+              output = f"histdata-annual/DAT_ASCII_XAUUSD_M1_{year}.zip"
+              with open(output, "wb") as handle:
+                  handle.write(response.content)
+              print(year, len(response.content), output)
+          PY
+          python /tmp/download_histdata.py
+          sha256sum histdata-annual/*.zip | tee histdata-annual/SHA256SUMS.txt
+          unzip -l histdata-annual/DAT_ASCII_XAUUSD_M1_2022.zip
+          unzip -l histdata-annual/DAT_ASCII_XAUUSD_M1_2023.zip
+          unzip -l histdata-annual/DAT_ASCII_XAUUSD_M1_2024.zip
+          unzip -l histdata-annual/DAT_ASCII_XAUUSD_M1_2025.zip
+
+      - name: Upload annual archives
+        uses: actions/upload-artifact@v4
+        with:
+          name: bt7-histdata-xauusd-2022-2025
+          path: histdata-annual
+          if-no-files-found: error
+          retention-days: 3
