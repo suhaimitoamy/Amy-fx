@@ -1,5 +1,21 @@
 # Technical Decisions
 
+## 2026-08-02
+
+### Professional Glassmorphism Presentation Contract
+- The app-facing product name is `Amy FX`. The permanent Android package label, application ID, URI scheme, release tag, and native update notification retain the private Preview identity for upgrade safety.
+- Beranda contains exactly five existing modules: Mapping, Berita, Jurnal Trading, Tutorial Trading, and Indikator TradingView. No duplicate access block, fabricated membership, sample profile, or hardcoded collection item is allowed.
+- Koleksi displays only data actually stored on the device; an empty device receives an explicit empty state. Profil reports actual local counts, connectivity, scanner state, data source, notification test, version/update state, and System/Light/Dark theme preference.
+- Shared presentation primitives are owned by `amyfx-ui-tokens.css`, `amyfx-theme.css`, `amyfx-components.css`, `amyfx-theme-controller.js`, and `amyfx-loading.js`. Legacy Blueprint assets remain loaded for runtime contracts, with the new presentation layer applied last.
+- Dark navy/graphite and light ice-blue themes use semantic BUY/SELL/WAIT colors and vector icons. Android status/navigation bars follow the resolved app theme.
+- Loading is delayed 350 ms, uses an Amy monogram and indeterminate ring, and exposes timeout/retry without fabricated percentage progress.
+- This redesign is presentation-only. Mapping authority, formulas, market data, scanner, lifecycle, notification ownership, and user data remain unchanged. No backtest is run for UI work.
+
+### Preview `.299` Update Activation Sequence
+- Source identity advances to `2.0.0-preview.299` / `940299` while the published manifest remains `.298` until the signed release workflow succeeds.
+- The workflow builds, tests, signs, verifies, and publishes the APK before updating `preview-update.json` to `.299`.
+- A device on `.298` receives the exact native notification title `Update Amy FX Preview Tersedia` before the in-app Amy FX update dialog.
+
 ## 2026-08-01
 
 ### Private Preview Scalper Pattern v3 Contract

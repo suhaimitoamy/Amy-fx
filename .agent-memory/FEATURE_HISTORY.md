@@ -1,5 +1,15 @@
 # Feature History
 
+## Professional Glassmorphism Full UI Redesign
+- **Date:** 2026-08-02
+- **Status:** ✅ Implemented and regression/viewport validated; signed release activation pending
+- **Description:** Reworked Beranda, Mapping, Berita, Jurnal Trading, Tutorial Trading, nested Academy pages, loading, update dialog, and Amy Mentor surfaces around a shared navy/graphite glass system with ice-blue accents and responsive vector UI.
+- **Themes:** Added persistent System, Terang, and Gelap modes plus native Android status/navigation bar synchronization.
+- **Truthful UI:** Beranda now exposes exactly five existing modules, Koleksi only renders actual stored items, and Profil removes fabricated VIP/profile claims while showing actual local counts, connectivity, scanner, data source, notification, and version/update state.
+- **Compatibility:** Legacy Blueprint runtime contracts remain installed; Mapping engine, scanner, lifecycle, notifications, formulas, market sources, and user data were not refactored.
+- **Validation:** Full 95-file JavaScript regression suite, syntax checks, and Chromium mobile viewport checks for dark/light themes, all principal modules, truthful empty states, overflow, and error fallbacks. No backtest was run.
+- **Release:** Candidate `2.0.0-preview.299` / `940299`; manifest activation occurs only after the signed APK workflow succeeds.
+
 ## Scalper Pattern v3 — BT6/BT6.1 + AMD
 - **Date:** 2026-08-01
 - **Status:** ✅ Implemented; release/deployment verification required

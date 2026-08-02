@@ -62,10 +62,12 @@ test('Preview source, Gradle, package, channel, and active manifest remain consi
   readPreviewIdentity();
 });
 
-test('profile displays the Amy FX Preview version and supports manual update checks', () => {
+test('profile displays a clean Amy FX version while retaining the private update channel', () => {
   const { version } = readPreviewIdentity();
   const index = source(indexUrl);
-  assert.match(version, /Amy FX Preview v\$\{VERSION\.name\}/);
+  assert.match(version, /Amy FX · v\$\{displayVersionName\(VERSION\.name\)\}/);
+  assert.match(version, /replace\(\/-preview/);
+  assert.doesNotMatch(version, /return `Amy FX Preview/);
   assert.match(version, /personal\/amyfx-private\/preview-update\.json/);
   assert.match(version, /Versi Aplikasi/);
   assert.match(version, /data-profile-action=\\?"version/);

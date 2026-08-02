@@ -1,11 +1,14 @@
 // Amy FX Preview personal release identity.
 (function () {
-  const VERSION = Object.freeze({ name: '2.0.0-preview.298', code: 940298 });
+  const VERSION = Object.freeze({ name: '2.0.0-preview.299', code: 940299 });
   window.AmyFXAppVersion = VERSION;
   window.AmyFXUpdateManifestUrl = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json';
+  function displayVersionName(name) {
+    return String(name || '').replace(/-preview(?:\.|-)?/i, ' · build ');
+  }
 
   function versionText() {
-    return `Amy FX Preview v${VERSION.name} • Version code ${VERSION.code}`;
+    return `Amy FX · v${displayVersionName(VERSION.name)} · Kode ${VERSION.code}`;
   }
 
   function injectVersionRow() {
@@ -18,7 +21,7 @@
     row.dataset.profileAction = 'version';
     row.setAttribute('aria-label', `Versi aplikasi ${VERSION.name}, periksa pembaruan`);
     row.innerHTML = `
-      <span class="tool-icon">ⓘ</span>
+      <span class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7h.01"></path></svg></span>
       <span>
         <strong>Versi Aplikasi</strong>
         <small>${versionText()}</small>
@@ -35,7 +38,7 @@
       window.AmyFXUpdate.checkNow({ announce: true });
       return;
     }
-    window.showToast?.(`Versi terpasang: Amy FX Preview v${VERSION.name} (${VERSION.code}). Pemeriksa update sedang dimuat.`);
+    window.showToast?.(`Versi terpasang: Amy FX v${displayVersionName(VERSION.name)} (${VERSION.code}). Pemeriksa update sedang dimuat.`);
     setTimeout(() => window.AmyFXUpdate?.checkNow?.({ announce: true }), 800);
   }
 

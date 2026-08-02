@@ -207,12 +207,13 @@ jobs:
             exit 1
           fi
           cat > /tmp/amyfx-preview-release-notes.md <<NOTES
-          Amy FX Preview $AMYFX_VERSION_NAME — BT6/BT6.1 + AMD.
+          Amy FX Preview $AMYFX_VERSION_NAME — Professional Glassmorphism UI.
 
-          - Sembilan driver lama memakai gate Pattern BT6; repair overlay BT6.1 diterapkan pada driver yang ditetapkan Blueprint.
-          - Driver AMD baru berjalan independen pada M30/H1 dengan entry midpoint FVG dan invalidasi extreme manipulasi.
-          - Lifecycle Preview memakai TP1 +10, TP2 +20, SL tetap tanpa breakeven, batas 24 jam, dan aturan SL-first.
-          - Notifikasi update native aktif; jalur news Preview memakai canonical event key dan atomic delivery ledger agar satu event tampil sekali.
+          - Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading memakai glass system navy/graphite dengan aksen ice blue.
+          - Tema Sistem, Terang, dan Gelap tersedia; system bar Android mengikuti tema terpilih.
+          - Beranda memuat tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya menampilkan data serta status aktual perangkat.
+          - Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.
+          - Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.
           - Amy FX publik pada branch main tidak diubah.
           NOTES
           gh release create "$AMYFX_RELEASE_TAG" \
@@ -221,7 +222,7 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$AMYFX_SOURCE_SHA" \
             --prerelease \
-            --title "Amy FX Preview $AMYFX_VERSION_NAME — BT6/BT6.1 + AMD" \
+            --title "Amy FX Preview $AMYFX_VERSION_NAME — Professional Glassmorphism UI" \
             --notes-file /tmp/amyfx-preview-release-notes.md
           gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
 
@@ -247,18 +248,19 @@ jobs:
               'mandatory': False,
               'enabled': True,
               'release_notes': [
-                  'Scalper Engine Pattern v3 mengaktifkan gate BT6 dan repair overlay BT6.1.',
-                  'Driver AMD M30/H1 ditambahkan sebagai driver independen dengan entry midpoint FVG.',
-                  'Target simulasi tetap TP1 +10 dan TP2 +20 poin; Stop Loss tidak dipindahkan ke breakeven.',
-                  'News Preview memakai satu jalur notifikasi dengan canonical event key dan atomic delivery ledger.',
+                  'Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.',
+                  'Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.',
+                  'Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.',
+                  'Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.',
+                  'Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.',
                   'Amy FX publik pada branch main tidak diubah.'
               ],
               'changelog': [
-                  'BT6-2025-V1 pattern gates',
-                  'BT6.1-2026-H1-V1 repair overlays',
-                  'AMD-2025-V1 M30/H1 driver',
-                  'Fixed +10/+20 lifecycle without break-even',
-                  'Preview news canonical delivery deduplication'
+                  'Professional glass UI tokens and shared components',
+                  'System, light, and dark theme controller',
+                  'Truthful home, collection, and profile presentation',
+                  'Unified loading, accessibility, and vector icon polish',
+                  'Android system bar theme synchronization'
               ]
           }
           with open('preview-update.json', 'w', encoding='utf-8') as handle:

@@ -59,9 +59,14 @@ function logout(){sessionStorage.removeItem(ACADEMY_SESSION_KEY);location.href=t
   if(/\/apps\/academy\/(?:index\.html)?$/i.test(pathname))return;
   const academyRoot=new URL((typeof ROOT_PATH!=='undefined')?ROOT_PATH:'./',location.href);
   const sharedRoot=new URL('../shared/',academyRoot);
-  if(!document.querySelector('link[data-amyfx-blueprint-css="v1"]')){
-    const link=document.createElement('link');link.rel='stylesheet';link.href=new URL('amyfx-blueprint-v1.css',sharedRoot).href;link.dataset.amyfxBlueprintCss='v1';document.head.appendChild(link);
+  function style(filename,marker){
+    if(document.querySelector(`link[${marker}="v1"]`))return;
+    const link=document.createElement('link');link.rel='stylesheet';link.href=new URL(filename,sharedRoot).href;link.setAttribute(marker,'v1');document.head.appendChild(link);
   }
+  style('amyfx-blueprint-v1.css','data-amyfx-blueprint-css');
+  style('amyfx-ui-tokens.css','data-amyfx-ui-tokens');
+  style('amyfx-theme.css','data-amyfx-theme');
+  style('amyfx-components.css','data-amyfx-components');
   function load(filename,marker,flag,next){
     if(window[flag]){next?.();return}
     const existing=document.querySelector(`script[${marker}="v1"]`);
@@ -69,9 +74,13 @@ function logout(){sessionStorage.removeItem(ACADEMY_SESSION_KEY);location.href=t
     const script=document.createElement('script');script.src=new URL(filename,sharedRoot).href;script.setAttribute(marker,'v1');script.async=false;
     script.addEventListener('load',()=>next?.(),{once:true});script.addEventListener('error',()=>next?.(),{once:true});document.head.appendChild(script);
   }
-  load('amyfx-blueprint-v1.js','data-amyfx-blueprint-js','__amyFxBlueprintPreviewV1',()=>{
-    load('amyfx-blueprint-hotfix-v1.js','data-amyfx-blueprint-hotfix','__amyFxBlueprintHotfixV1',()=>{
-      load('amyfx-provider-detection-v1.js','data-amyfx-provider-detection','__amyFxProviderDetectionV1');
+  load('amyfx-theme-controller.js','data-amyfx-theme-controller','__amyFxThemeController',()=>{
+    load('amyfx-loading.js','data-amyfx-loading','__amyFxLoadingRuntime',()=>{
+      load('amyfx-blueprint-v1.js','data-amyfx-blueprint-js','__amyFxBlueprintPreviewV1',()=>{
+        load('amyfx-blueprint-hotfix-v1.js','data-amyfx-blueprint-hotfix','__amyFxBlueprintHotfixV1',()=>{
+          load('amyfx-provider-detection-v1.js','data-amyfx-provider-detection','__amyFxProviderDetectionV1');
+        });
+      });
     });
   });
 })();

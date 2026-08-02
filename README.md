@@ -2,9 +2,9 @@
 
 Amy FX Preview adalah aplikasi Android hybrid untuk pemetaan market, pemantauan **XAU/USD**, Rencana Eksekusi, Entry Watch, jurnal trading, market intelligence, dan materi belajar. Antarmuka utama berjalan melalui WebView lokal, layanan native Android ditangani oleh Kotlin, sedangkan candle analisis, Scalper Engine, lifecycle setup, dan notifikasi memakai layanan backend yang terisolasi untuk Preview.
 
-> **Release aktif:** `2.0.0-preview.298` · Version code `940298`
+> **Release aktif:** `2.0.0-preview.299` · Version code `940299`
 
-[Download Amy FX Preview 2.0.0-preview.298](https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.298/AmyFX-Preview-latest.apk)
+[Download Amy FX Preview 2.0.0-preview.299](https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.299/AmyFX-Preview-latest.apk)
 
 ## Fungsi Branch
 
@@ -30,18 +30,18 @@ Perubahan pada branch personal tidak boleh otomatis digabungkan, disalin, atau d
 | Nama aplikasi | `Amy FX Preview` |
 | Application ID | `com.amyelitesuite.learningpreview` |
 | URI scheme | `amyfxpreview` |
-| Version name | `2.0.0-preview.298` |
-| Version code | `940298` |
+| Version name | `2.0.0-preview.299` |
+| Version code | `940299` |
 | Minimum Android | Android 8.0 / API 26 |
 | Target SDK | Android SDK 35 |
 | Update channel | `personal/amyfx-private/preview-update.json` |
-| Release tag | `amyfx-blueprint-preview-2.0.0-preview.298` |
+| Release tag | `amyfx-blueprint-preview-2.0.0-preview.299` |
 
 Identitas package, URI, signing certificate, data aplikasi, dan update channel Preview harus tetap terpisah dari Amy FX publik.
 
 ## Kondisi Terbaru
 
-Release `.298` memakai **Scalper Engine Pattern v3 BT6/BT6.1 + AMD** sebagai otoritas eksekusi bersama untuk:
+Release `.299` membawa **Professional Glassmorphism UI** dengan tema Sistem, Terang, dan Gelap, sambil mempertahankan **Scalper Engine Pattern v3 BT6/BT6.1 + AMD** sebagai otoritas eksekusi bersama untuk:
 
 - **Rencana Eksekusi**;
 - **Entry Watch**;
@@ -189,9 +189,9 @@ Workflow hanya berjalan untuk branch `personal/amyfx-private` dan melakukan:
 
 Workflow tidak boleh mengaktifkan manifest versi baru sebelum APK signed berhasil dibuat dan lolos verifikasi.
 
-## Status Verifikasi Release `.298`
+## Status Verifikasi Release `.299`
 
-Release `2.0.0-preview.298` menjalankan gerbang verifikasi berikut sebelum kanal update diaktifkan:
+Release `2.0.0-preview.299` menjalankan gerbang verifikasi berikut sebelum kanal update diaktifkan:
 
 - seluruh regression JavaScript;
 - Android release unit test;
@@ -215,13 +215,13 @@ personal/amyfx-private/preview-update.json
 Manifest saat ini menunjuk ke:
 
 ```text
-Version name : 2.0.0-preview.298
-Version code : 940298
+Version name : 2.0.0-preview.299
+Version code : 940299
 Enabled      : true
 Force update : false
 ```
 
-Aplikasi versi `940297` atau lebih lama dapat mendeteksi `.298` sebagai pembaruan yang lebih baru melalui kanal Preview. Saat versi baru terdeteksi, aplikasi menampilkan notifikasi native **Update Amy FX Preview Tersedia** dan dialog unduh APK bertanda tangan.
+Aplikasi versi `940298` atau lebih lama dapat mendeteksi `.299` sebagai pembaruan yang lebih baru melalui kanal Preview. Saat versi baru terdeteksi, aplikasi menampilkan notifikasi native **Update Amy FX Preview Tersedia** dan dialog unduh APK bertanda tangan.
 
 ## Aturan Pengembangan
 
