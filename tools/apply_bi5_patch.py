@@ -5,6 +5,7 @@ s = path.read_text(encoding='utf-8')
 s = s.replace('Dukascopy Jetta API', 'Dukascopy native BI5 datafeed')
 s = s.replace('import json\nimport math', 'import json\nimport lzma\nimport math')
 s = s.replace('import os\nimport sys', 'import os\nimport struct\nimport sys')
+s = s.replace('from collections import defaultdict', 'from collections import defaultdict\nfrom concurrent.futures import ThreadPoolExecutor, as_completed')
 s = s.replace('API_ROOT = "https://jetta.dukascopy.com/v1"', 'API_ROOT = "https://datafeed.dukascopy.com/datafeed"')
 s = s.replace('RAW_DIR = OUT_ROOT / "raw_daily_json"', 'RAW_DIR = OUT_ROOT / "raw_daily_bi5"')
 insert_at = '\n\ndef finite_number(value: object, field: str) -> float:\n'
@@ -84,16 +85,30 @@ old_loop = '''    for current in iter_dates(START_DATE, END_DATE_EXCLUSIVE):
         print(f"{current.isoformat()} rows={len(rows)} bytes={len(raw)}", flush=True)
         time.sleep(0.05)
 '''
-new_loop = '''    for current in iter_dates(START_DATE, END_DATE_EXCLUSIVE):
+new_loop = '''    dates = list(iter_dates(START_DATE, END_DATE_EXCLUSIVE))
+
+    def download_day(current: date) -> tuple[date, str, bytes, int, list[Candle]]:
         zero_based_month = current.month - 1
         url = (
             f"{API_ROOT}/{INSTRUMENT}/{current.year}/{zero_based_month:02d}/"
             f"{current.day:02d}/{PRICE_SIDE}_candles_min_1.bi5"
         )
         raw, http_status = fetch_bi5(url)
+        rows = decode_bi5_candles(raw, current)
+        return current, url, raw, http_status, rows
+
+    downloaded: dict[date, tuple[str, bytes, int, list[Candle]]] = {}
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        futures = {executor.submit(download_day, current): current for current in dates}
+        for future in as_completed(futures):
+            current, url, raw, http_status, rows = future.result()
+            downloaded[current] = (url, raw, http_status, rows)
+            print(f"{current.isoformat()} status={http_status} rows={len(rows)} bytes={len(raw)}", flush=True)
+
+    for current in dates:
+        url, raw, http_status, rows = downloaded[current]
         raw_path = RAW_DIR / f"{current.isoformat()}.bi5"
         raw_path.write_bytes(raw)
-        rows = decode_bi5_candles(raw, current)
         all_source.extend(rows)
         daily_fetch.append({
             "date": current.isoformat(),
@@ -103,8 +118,6 @@ new_loop = '''    for current in iter_dates(START_DATE, END_DATE_EXCLUSIVE):
             "rows": len(rows),
             "sha256": sha256_file(raw_path),
         })
-        print(f"{current.isoformat()} status={http_status} rows={len(rows)} bytes={len(raw)}", flush=True)
-        time.sleep(0.05)
 '''
 if old_loop not in s:
     raise SystemExit('download loop anchor missing')
