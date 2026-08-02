@@ -1,6 +1,6 @@
 // Amy FX Preview personal release identity.
 (function () {
-  const VERSION = Object.freeze({ name: '2.0.0-preview.299', code: 940299 });
+  const VERSION = Object.freeze({ name: '2.0.0-preview.300', code: 940300 });
   window.AmyFXAppVersion = VERSION;
   window.AmyFXUpdateManifestUrl = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json';
   function displayVersionName(name) {
