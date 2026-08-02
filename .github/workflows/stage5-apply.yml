@@ -35,7 +35,21 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "22" }
       - name: Run complete JavaScript regression suite
-        run: timeout 15m npm test
+        id: js-tests
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          timeout 15m npm test 2>&1 | tee npm-test.log
+      - name: Upload JavaScript regression log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: amyfx-2.2.0-javascript-test-log
+          path: npm-test.log
+          if-no-files-found: error
+      - name: Enforce JavaScript regression result
+        if: steps.js-tests.outcome != 'success'
+        run: exit 1
       - name: Verify Pattern v3, WebSocket path, and production isolation
         run: |
           set -euo pipefail
