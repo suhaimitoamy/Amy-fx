@@ -6,11 +6,11 @@ on:
       versionName:
         description: "Version Name"
         required: true
-        default: "2.1.1"
+        default: "2.2.0"
       versionCode:
         description: "Version Code"
         required: true
-        default: "55"
+        default: "56"
 
 permissions:
   contents: read
@@ -37,8 +37,10 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "22" }
       - run: timeout 15m npm test
-      - name: Verify native WebSocket path
+      - name: Verify Pattern v3 and native WebSocket path
         run: |
+          test -f supabase/functions/scalper-engine/pattern-gates.mjs
+          grep -Fq '10 driver BT6/BT6.1 + AMD' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
           test -f app/src/main/java/com/amyelitesuite/TwelveDataPriceBridge.kt
           grep -Fq 'addJavascriptInterface(twelveDataPriceBridge, "AmyLivePrice")' app/src/main/java/com/amyelitesuite/MainActivity.kt
           grep -Fq "window.addEventListener('amyfx:twelvedata-price'" app/src/main/assets/apps/mapping/js/api/market-data.js
