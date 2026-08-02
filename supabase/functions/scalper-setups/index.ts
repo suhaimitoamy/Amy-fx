@@ -34,7 +34,7 @@ const readiness = { ACTIVE: 0, BE_ACTIVE: 1, ENTRY_READY: 2, WAITING_NEXT_OPEN: 
 function publicSetup(row) {
   const quality = row.quality && typeof row.quality === "object" ? row.quality : {};
   const driverId = row.driver_id || quality.driver_id || row.model;
-  const driverName = row.driver_name || quality.driver_name || (row.model === "IFVG_SCALPER" ? "IFVG Legacy" : row.model);
+  const driverName = row.driver_name || quality.driver_name || String(row.model || "Scalper Engine").replaceAll("_", " ");
   const timeframe = row.timeframe || quality.timeframe || "M15";
   return {
     id: row.id,
