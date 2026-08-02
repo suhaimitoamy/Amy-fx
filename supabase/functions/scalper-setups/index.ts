@@ -2,7 +2,6 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const SUPABASE_URL = String(Deno.env.get("SUPABASE_URL") || "").replace(/\/$/, "");
 const SERVICE_ROLE_KEY = String(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "");
-const CURRENT_ENGINE_VERSION = "amyfx-preview-scalper-multidriver-v2.0";
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,OPTIONS",
@@ -34,16 +33,16 @@ const readiness = { ACTIVE: 0, BE_ACTIVE: 1, ENTRY_READY: 2, WAITING_NEXT_OPEN: 
 function publicSetup(row) {
   const quality = row.quality && typeof row.quality === "object" ? row.quality : {};
   const driverId = row.driver_id || quality.driver_id || row.model;
-  const driverName = row.driver_name || quality.driver_name || row.model;
+  const driverName = row.driver_name || quality.driver_name || (row.model === "IFVG_SCALPER" ? "IFVG Legacy" : row.model);
   const timeframe = row.timeframe || quality.timeframe || "M15";
   return {
     id: row.id,
     engineVersion: row.engine_version,
-    schemaVersion: row.schema_version || quality.schema_version || 2,
+    schemaVersion: row.schema_version || quality.schema_version || 1,
     model: row.model,
     driverId,
     driverName,
-    driverRuleVersion: row.driver_rule_version || quality.driver_rule_version || "1.0.0",
+    driverRuleVersion: row.driver_rule_version || quality.driver_rule_version || "legacy",
     timeframe,
     symbol: row.symbol,
     direction: row.direction,
@@ -69,6 +68,7 @@ function publicSetup(row) {
     zoneBottom: row.zone_bottom,
     zoneTop: row.zone_top,
     beArmed: row.be_armed,
+    tp1Hit: quality.tp1_hit === true,
     resultR: row.result_r,
     exitPrice: row.exit_price,
     exitTime: row.exit_time,
@@ -84,11 +84,16 @@ function publicSetup(row) {
     reason: quality.reason || null,
     invalidationReason: quality.invalidation_reason || null,
     stopBasis: quality.stop_basis_label || null,
-    isLegacy: false,
+    entryModel: quality.entry_model || "NEXT_OPEN",
+    patternGate: quality.pattern_gate || null,
+    baseConfigVersion: quality.base_config_version || null,
+    repairConfigVersion: quality.repair_config_version || null,
+    amdConfigVersion: quality.amd_config_version || null,
+    isLegacy: !row.driver_id || Number(row.schema_version || 1) < 3 || row.engine_version !== "amyfx-preview-scalper-pattern-v3.0",
   };
 }
 function rankRows(rows) {
-  return [...rows].sort((a, b) => (readiness[a.status] ?? 9) - (readiness[b.status] ?? 9)
+  return [...rows].sort((a,b) => (readiness[a.status] ?? 9) - (readiness[b.status] ?? 9)
     || Number(a.priority_display ?? a.priority ?? 99) - Number(b.priority_display ?? b.priority ?? 99)
     || Number(b.signal_candle_close_time || 0) - Number(a.signal_candle_close_time || 0));
 }
@@ -101,10 +106,9 @@ Deno.serve(async (request) => {
     const limit = Math.min(Math.max(Number.parseInt(url.searchParams.get("limit") || "20", 10) || 20, 1), 100);
     const recentThreshold = Math.floor(Date.now() / 1000) - 24 * 60 * 60;
     const select = "id,engine_version,schema_version,model,driver_id,driver_name,driver_rule_version,timeframe,symbol,direction,status,recommendation_status,signal_candle_open_time,signal_candle_close_time,entry_candle_open_time,entry_price,initial_stop_loss,stop_loss,break_even_trigger,target_price,risk,buffer_atr,max_bars,bars_elapsed,last_evaluated_open_time,htf_bias,htf_candle_close_time,zone_bottom,zone_top,be_armed,result_r,exit_price,exit_time,priority,priority_display,revision,quality,created_at,updated_at";
-    const engineFilter = `engine_version=eq.${encodeURIComponent(CURRENT_ENGINE_VERSION)}`;
     const [active, recent, lastRun] = await Promise.all([
-      rest(`amyfx_preview_scalper_setups?select=${select}&${engineFilter}&status=in.(WAITING_TRIGGER,WAITING_NEXT_OPEN,ENTRY_READY,ACTIVE,BE_ACTIVE)&order=signal_candle_close_time.desc&limit=${limit}`),
-      rest(`amyfx_preview_scalper_setups?select=${select}&${engineFilter}&status=in.(TP_HIT,SL_HIT,BE_HIT,TIME_EXIT,INVALIDATED,CANCELLED)&signal_candle_close_time=gte.${recentThreshold}&order=exit_time.desc&limit=${limit}`),
+      rest(`amyfx_preview_scalper_setups?select=${select}&status=in.(WAITING_TRIGGER,WAITING_NEXT_OPEN,ENTRY_READY,ACTIVE,BE_ACTIVE)&order=signal_candle_close_time.desc&limit=${limit}`),
+      rest(`amyfx_preview_scalper_setups?select=${select}&status=in.(TP_HIT,SL_HIT,BE_HIT,TIME_EXIT,INVALIDATED,CANCELLED)&signal_candle_close_time=gte.${recentThreshold}&order=exit_time.desc&limit=${limit}`),
       rest("amyfx_preview_scalper_runs?select=status,started_at,completed_at,result,error&order=run_bucket.desc&limit=1"),
     ]);
     const activeRows = rankRows(Array.isArray(active) ? active : []);
@@ -112,9 +116,7 @@ Deno.serve(async (request) => {
     const primary = activeRows[0] || null;
     return json({
       ok: true,
-      mode: "unified-shadow",
-      authority: "SCALPER_ENGINE_EXECUTION_AUTHORITY",
-      engineVersion: CURRENT_ENGINE_VERSION,
+      mode: "preview_simulation",
       generatedAt: new Date().toISOString(),
       primary: primary ? publicSetup(primary) : null,
       active: activeRows.map(publicSetup),

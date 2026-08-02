@@ -18,6 +18,43 @@ export function findNextOpen(candidate, { m1 = [], m15 = [] } = {}) {
   return candle ? { open_time: candle.open_time, price: candle.open, source: 'M15_NEXT_OPEN' } : null;
 }
 
+export function resolveTriggerEntry(candidate, { m1 = [], nowSeconds = Math.floor(Date.now() / 1000) } = {}) {
+  if (!candidate || candidate.status !== 'WAITING_TRIGGER') return { setup: candidate, event: null, nextOpen: null };
+  const signalClose = timestampSeconds(candidate.signal_candle_close_time);
+  const entry = Number(candidate?.quality?.planned_entry_price ?? candidate?.quality?.fvg_midpoint);
+  const extreme = Number(candidate?.quality?.manipulation_extreme ?? candidate.stop_reference);
+  const waitSeconds = Math.max(900, Number(candidate?.quality?.trigger_wait_seconds || 24 * 60 * 60));
+  if (!signalClose || !Number.isFinite(entry) || !Number.isFinite(extreme)) {
+    return { ...invalidate(candidate, null, 'TRIGGER_GEOMETRY_UNAVAILABLE'), nextOpen: null };
+  }
+  const deadline = signalClose + waitSeconds;
+  const values = normalizeCandles(m1, 60).filter(candle => candle.open_time >= signalClose && candle.open_time <= deadline);
+  for (const candle of values) {
+    const invalidatedBeforeFill = candidate.direction === 'BUY' ? candle.low < extreme : candle.high > extreme;
+    if (invalidatedBeforeFill) {
+      const setup = transition(candidate, 'CANCELLED', {
+        recommendation_status: 'CLOSED',
+        exit_price: extreme,
+        exit_time: candle.close_time,
+        quality: { ...(candidate.quality || {}), invalidation_reason: 'AMD_MANIPULATION_EXTREME_BROKEN_BEFORE_FILL' },
+      });
+      return { setup, event: { status: 'CANCELLED', price: extreme, candle_time: candle.open_time, result_r: null }, nextOpen: null };
+    }
+    if (candle.low <= entry && candle.high >= entry) {
+      return { setup: candidate, event: null, nextOpen: { open_time: candle.open_time, price: entry, source: 'FVG_MIDPOINT_LIMIT' } };
+    }
+  }
+  if (timestampSeconds(nowSeconds) >= deadline) {
+    const setup = transition(candidate, 'CANCELLED', {
+      recommendation_status: 'CLOSED',
+      exit_time: deadline,
+      quality: { ...(candidate.quality || {}), invalidation_reason: 'AMD_ENTRY_WAIT_EXPIRED' },
+    });
+    return { setup, event: { status: 'CANCELLED', price: null, candle_time: deadline, result_r: null }, nextOpen: null };
+  }
+  return { setup: candidate, event: null, nextOpen: null };
+}
+
 function invalidate(candidate, nextOpen, reason) {
   return {
     setup: {
@@ -39,19 +76,25 @@ export function activateCandidate(candidate, nextOpen) {
   const stop = candidate.direction === 'BUY' ? reference - buffer : reference + buffer;
   const risk = candidate.direction === 'BUY' ? entry - stop : stop - entry;
   if (!(risk > EPSILON)) return invalidate(candidate, nextOpen, 'NON_POSITIVE_STRUCTURAL_RISK');
+  const patternLifecycle = Number(candidate.schema_version || 1) >= 3 || candidate?.quality?.lifecycle_policy === 'BT6_FIXED_POINTS_NO_BE';
+  const stopCap = Number(candidate?.quality?.stop_cap_points || 50);
+  if (patternLifecycle && risk > stopCap) return invalidate(candidate, nextOpen, 'STRUCTURAL_RISK_EXCEEDS_50_POINT_CAP');
   const sign = candidate.direction === 'BUY' ? 1 : -1;
+  const tp1Points = Number(candidate?.quality?.tp1_points || 10);
+  const tp2Points = Number(candidate?.quality?.tp2_points || 20);
   const setup = {
     ...candidate,
     status: 'ACTIVE', recommendation_status: candidate.recommendation_status === 'PENDING' ? 'VALID' : candidate.recommendation_status,
     entry_candle_open_time: nextOpen.open_time, entry_price: entry,
     initial_stop_loss: stop, stop_loss: stop,
-    break_even_trigger: entry + sign * risk,
-    target_price: entry + sign * risk * Number(candidate.quality?.target_r || 2),
-    risk, bars_elapsed: 0, last_evaluated_open_time: null,
+    break_even_trigger: patternLifecycle ? entry + sign * tp1Points : entry + sign * risk,
+    target_price: patternLifecycle ? entry + sign * tp2Points : entry + sign * risk * Number(candidate.quality?.target_r || 2),
+    risk, be_armed: patternLifecycle ? false : Boolean(candidate.be_armed), bars_elapsed: 0, last_evaluated_open_time: null,
     quality: {
       ...(candidate.quality || {}),
       entry_source: nextOpen.source || 'UNKNOWN', entry_locked: true,
       entry_locked_at: nextOpen.open_time, entry_timestamp: nextOpen.open_time,
+      tp1_hit: patternLifecycle ? false : Boolean(candidate?.quality?.tp1_hit),
       lifecycle_sequence: Number(candidate.quality?.lifecycle_sequence || 0) + 1
     }
   };
@@ -64,10 +107,40 @@ function realizedR(setup, exitPrice) {
   return setup.direction==='BUY'?(exit-entry)/risk:(entry-exit)/risk;
 }
 function transition(setup,status,fields={}) {
-  return { ...setup, ...fields, status, quality: { ...(setup.quality || {}), lifecycle_sequence: Number(setup.quality?.lifecycle_sequence || 0) + 1 } };
+  const { quality: qualityPatch, ...rest } = fields;
+  return { ...setup, ...rest, status, quality: { ...(setup.quality || {}), ...(qualityPatch || {}), lifecycle_sequence: Number(setup.quality?.lifecycle_sequence || 0) + 1 } };
+}
+
+function advancePatternLifecycle(inputSetup, rows, options = {}) {
+  let setup={...inputSetup,quality:{...(inputSetup?.quality||{})}};
+  if(setup.status!=='ACTIVE'||setup.quality.entry_locked!==true||!Number.isFinite(Number(setup.entry_candle_open_time)))return{setup,events:[]};
+  const evaluationSeconds=Math.max(60,Number(options.evaluationSeconds||60));
+  const entryOpenTime=Number(setup.entry_candle_open_time);
+  const maxHoldSeconds=Math.max(900,Number(setup.quality.max_hold_seconds||24*60*60));
+  const timeExitAt=entryOpenTime+maxHoldSeconds;
+  const values=normalizeCandles(rows,evaluationSeconds).filter(c=>c.open_time>=entryOpenTime).filter(c=>!setup.last_evaluated_open_time||c.open_time>Number(setup.last_evaluated_open_time));
+  const events=[];
+  for(const candle of values){
+    if(setup.status!=='ACTIVE')break;
+    const stop=Number(setup.initial_stop_loss),tp1=Number(setup.break_even_trigger),tp2=Number(setup.target_price);
+    const stopHit=setup.direction==='BUY'?candle.low<=stop:candle.high>=stop;
+    const tp2Hit=setup.direction==='BUY'?candle.high>=tp2:candle.low<=tp2;
+    const tp1Hit=setup.direction==='BUY'?candle.high>=tp1:candle.low<=tp1;
+    setup.bars_elapsed=Math.max(Number(setup.bars_elapsed||0),Math.floor((candle.close_time-entryOpenTime)/900));
+    setup.last_evaluated_open_time=candle.open_time;
+    if(stopHit){setup=transition(setup,'SL_HIT',{stop_loss:stop,exit_price:stop,exit_time:candle.close_time,result_r:-1,recommendation_status:'CLOSED'});events.push({status:'SL_HIT',price:stop,candle_time:candle.open_time,result_r:-1});break;}
+    if(tp2Hit){
+      if(setup.quality.tp1_hit!==true){setup={...setup,quality:{...setup.quality,tp1_hit:true,lifecycle_sequence:Number(setup.quality.lifecycle_sequence||0)+1}};events.push({status:'TP1_HIT',price:tp1,candle_time:candle.open_time,result_r:realizedR(setup,tp1)});}
+      const result=realizedR(setup,tp2);setup=transition(setup,'TP_HIT',{exit_price:tp2,exit_time:candle.close_time,result_r:result,recommendation_status:'CLOSED'});events.push({status:'TP_HIT',price:tp2,candle_time:candle.open_time,result_r:result});break;
+    }
+    if(setup.quality.tp1_hit!==true&&tp1Hit){setup={...setup,quality:{...setup.quality,tp1_hit:true,lifecycle_sequence:Number(setup.quality.lifecycle_sequence||0)+1}};events.push({status:'TP1_HIT',price:tp1,candle_time:candle.open_time,result_r:realizedR(setup,tp1)});}
+    if(candle.close_time>=timeExitAt){setup=transition(setup,'TIME_EXIT',{exit_price:candle.close,exit_time:candle.close_time,result_r:realizedR(setup,candle.close),recommendation_status:'CLOSED'});events.push({status:'TIME_EXIT',price:candle.close,candle_time:candle.open_time,result_r:setup.result_r});break;}
+  }
+  return{setup,events};
 }
 
 export function advanceSetupLifecycle(inputSetup, rows, options = {}) {
+  if(Number(inputSetup?.schema_version||1)>=3||inputSetup?.quality?.lifecycle_policy==='BT6_FIXED_POINTS_NO_BE')return advancePatternLifecycle(inputSetup,rows,options);
   let setup={...inputSetup,quality:{...(inputSetup?.quality||{})}};
   if(!NON_TERMINAL_STATUSES.includes(setup.status)||!['ACTIVE','BE_ACTIVE'].includes(setup.status)||setup.quality.entry_locked!==true||!Number.isFinite(Number(setup.entry_candle_open_time)))return{setup,events:[]};
   const evaluationSeconds=Math.max(60,Number(options.evaluationSeconds||60));
@@ -119,8 +192,10 @@ export function assignRecommendations(setups, maxActive = Number.POSITIVE_INFINI
 export function lifecycleMessage(setup,status=setup?.status){
   const side=setup?.direction||'WAIT',name=setup?.driver_name||setup?.quality?.driver_name||(setup?.model==='IFVG_SCALPER'?'IFVG':'Scalper Engine');
   const price=v=>Number.isFinite(Number(v))?Number(v).toFixed(2):'-';
+  if(status==='WAITING_TRIGGER')return`${name} ${side} terkonfirmasi. Menunggu limit midpoint FVG tanpa melanggar extreme manipulasi.`;
   if(status==='WAITING_NEXT_OPEN'||status==='ENTRY_READY')return`${name} ${side} terkonfirmasi. Menunggu open live berikutnya.`;
-  if(status==='ACTIVE')return`${name} ${setup?.timeframe||setup?.quality?.timeframe||''} ${side} aktif · Entry ${price(setup.entry_price)} · SL ${price(setup.stop_loss)} · TP ${price(setup.target_price)}.`;
+  if(status==='ACTIVE')return`${name} ${setup?.timeframe||setup?.quality?.timeframe||''} ${side} aktif · Entry ${price(setup.entry_price)} · SL ${price(setup.stop_loss)} · TP1 ${price(setup.break_even_trigger)} · TP2 ${price(setup.target_price)}.`;
+  if(status==='TP1_HIT')return`${name} ${side} mencapai TP1 +10 poin. Stop Loss tetap; aturan BE dinonaktifkan.`;
   if(status==='BE_ACTIVE')return`${name} ${side} mencapai 1R. SL simulasi berpindah ke entry ${price(setup.entry_price)}.`;
   if(status==='TP_HIT')return`${name} ${side} mencapai target simulasi.`;
   if(status==='SL_HIT')return`${name} ${side} selesai terkena Stop Loss.`;
