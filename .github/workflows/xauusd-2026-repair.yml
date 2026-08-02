@@ -1,0 +1,45 @@
+name: XAUUSD 2026 Repair Audit
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-audited-dataset:
+    if: github.head_ref == 'data/xauusd-2026-repair'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout isolated data branch
+        uses: actions/checkout@v4
+
+      - name: Reassemble and verify repair script
+        shell: bash
+        run: |
+          cat \
+            tools/xauusd_2026_repair.py.b64.part01 \
+            tools/xauusd_2026_repair.py.b64.part02 \
+            tools/xauusd_2026_repair.py.b64.part03 \
+            tools/xauusd_2026_repair.py.b64.part04 \
+            tools/xauusd_2026_repair.py.b64.part05a \
+            tools/xauusd_2026_repair.py.b64.part05b \
+            tools/xauusd_2026_repair.py.b64.part06 \
+            tools/xauusd_2026_repair.py.b64.part07 \
+            | tr -d '[:space:]' | base64 --decode > /tmp/xauusd_2026_repair.py
+          python -m py_compile /tmp/xauusd_2026_repair.py
+
+      - name: Download, audit, and package Dukascopy XAUUSD BID candles
+        run: python /tmp/xauusd_2026_repair.py
+
+      - name: Upload audited data artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xauusd-2026-repaired-audited
+          path: xauusd_2026_output/XAUUSD_2026_JAN-JUL_DUKASCOPY_BID_REPAIRED_AUDITED.zip
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
