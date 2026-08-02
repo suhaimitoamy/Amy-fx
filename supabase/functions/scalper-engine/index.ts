@@ -2,22 +2,42 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {
   DRIVER_REGISTRY,
   ENGINE_VERSION,
+  BASE_CONFIG_VERSION,
+  REPAIR_CONFIG_VERSION,
+  AMD_CONFIG_VERSION,
   NON_TERMINAL_STATUSES,
   activateCandidate,
   advanceSetupLifecycle,
   assignRecommendations,
-  detectScalperCandidates,
+  evaluateScalperCandidates,
   findNextOpen,
   lifecycleMessage,
+  resolvePatternConfig,
+  resolveTriggerEntry,
 } from "./engine.mjs";
 
 const SUPABASE_URL = String(Deno.env.get("SUPABASE_URL") || "").replace(/\/$/, "");
 const SERVICE_ROLE_KEY = String(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "");
 const PUSH_FUNCTION = "scalper-system-push";
-const MAX_SIGNAL_AGE_SECONDS = 20 * 60;
-const NOTIFICATION_AGE_SECONDS = 10 * 60;
+const MAX_SIGNAL_AGE_SECONDS = 5 * 60;
+const NOTIFICATION_AGE_SECONDS = 5 * 60;
 const STALE_M15_SECONDS = 35 * 60;
 const STALE_H1_SECONDS = 3 * 60 * 60;
+
+function enabled(name: string, fallback = true) {
+  const value = String(Deno.env.get(name) || "").trim().toLowerCase();
+  if (!value) return fallback;
+  return ["1", "true", "yes", "on"].includes(value);
+}
+
+const PATTERN_CONFIG = resolvePatternConfig({
+  enabled: enabled("AMYFX_SCALPER_PATTERN_ENABLED", true),
+  repair_enabled: enabled("AMYFX_SCALPER_REPAIR_ENABLED", true),
+  driver_enabled: Object.fromEntries(DRIVER_REGISTRY.map(driver => [
+    driver.id,
+    enabled(`AMYFX_SCALPER_${driver.id}_ENABLED`, true),
+  ])),
+});
 
 const responseHeaders = { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
 function json(data, status = 200) { return new Response(JSON.stringify(data), { status, headers: responseHeaders }); }
@@ -78,6 +98,16 @@ async function insertSetup(candidate) {
   const rows = await rest("amyfx_preview_scalper_setups?on_conflict=id", { method: "POST", headers: { "Content-Type": "application/json", Prefer: "resolution=ignore-duplicates,return=representation" }, body: JSON.stringify({ ...candidate, updated_at: new Date().toISOString() }) });
   return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
 }
+async function insertCandidateTelemetry(items) {
+  const rows = (Array.isArray(items) ? items : []).filter(Boolean).map(item => ({ ...item, observed_at: new Date().toISOString() }));
+  if (!rows.length) return 0;
+  const inserted = await rest("amyfx_preview_scalper_candidate_telemetry?on_conflict=candidate_id,engine_version,base_config_version,repair_config_version", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Prefer: "resolution=ignore-duplicates,return=representation" },
+    body: JSON.stringify(rows),
+  });
+  return Array.isArray(inserted) ? inserted.length : 0;
+}
 async function updateSetup(setup, expected) {
   if (!expected?.updated_at || !expected?.status) throw new Error(`optimistic_update_missing_state:${setup?.id || "unknown"}`);
   const expectedRevision = Number(expected.revision || 0);
@@ -107,7 +137,18 @@ Deno.serve(async (request) => {
   if (request.method !== "GET" && request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) return json({ error: "backend_not_configured" }, 503);
   const url = new URL(request.url);
-  if (url.searchParams.get("health") === "1") return json({ ok: true, engine: ENGINE_VERSION, mode: "unified-shadow", candle_source: "supabase-central-read-only", active_driver_count: DRIVER_REGISTRY.length, max_active_recommendations: null, drivers: DRIVER_REGISTRY });
+  if (url.searchParams.get("health") === "1") return json({
+    ok: true,
+    engine: ENGINE_VERSION,
+    mode: "unified-shadow",
+    candle_source: "supabase-central-read-only",
+    provider_requests: 0,
+    schema_version: 3,
+    active_driver_count: DRIVER_REGISTRY.filter(driver => PATTERN_CONFIG.driver_enabled[driver.id]).length,
+    max_active_recommendations: null,
+    config: { enabled: PATTERN_CONFIG.enabled, repair_enabled: PATTERN_CONFIG.repair_enabled, base_version: BASE_CONFIG_VERSION, repair_version: REPAIR_CONFIG_VERSION, amd_version: AMD_CONFIG_VERSION },
+    drivers: DRIVER_REGISTRY,
+  });
 
   const nowSeconds = Math.floor(Date.now() / 1000); let run = null;
   try {
@@ -122,7 +163,7 @@ Deno.serve(async (request) => {
     ]);
     const latestM15 = m15.at(-1), latestH1 = h1.at(-1), latestM1 = m1.at(-1);
     if (!latestM15 || nowSeconds - Number(latestM15.close_time || 0) > STALE_M15_SECONDS || !latestH1 || nowSeconds - Number(latestH1.close_time || 0) > STALE_H1_SECONDS) {
-      const payload = { ok: false, skipped: true, reason: "driver_source_data_stale", candle_source: "supabase-central-read-only", latest_m1_close_time: latestM1?.close_time || null, latest_m15_close_time: latestM15?.close_time || null, latest_h1_close_time: latestH1?.close_time || null };
+      const payload = { ok: false, skipped: true, reason: "driver_source_data_stale", candle_source: "supabase-central-read-only", provider_requests: 0, latest_m1_close_time: latestM1?.close_time || null, latest_m15_close_time: latestM15?.close_time || null, latest_h1_close_time: latestH1?.close_time || null };
       await finishRun(run.run_bucket, payload);
       return json(payload, 200);
     }
@@ -130,10 +171,16 @@ Deno.serve(async (request) => {
     const m30 = aggregateCandles(m15, 1800, "M30", 900), h4 = aggregateCandles(h1, 14400, "H4", 3600);
     const series = { M15: m15, M30: m30, H1: h1, H4: h4 };
     const previousM15 = Number(previousRun?.latest_m15_close_time || 0);
-    const sourceChanged = previousM15 !== Number(latestM15.close_time || 0) || previousRun?.engine !== ENGINE_VERSION;
-    const candidates = sourceChanged
-      ? detectScalperCandidates({ series, h1, nowSeconds, maxSignalAgeSeconds: MAX_SIGNAL_AGE_SECONDS })
-      : [];
+    const sourceChanged = previousM15 !== Number(latestM15.close_time || 0)
+      || previousRun?.engine !== ENGINE_VERSION
+      || previousRun?.config?.base_version !== BASE_CONFIG_VERSION
+      || previousRun?.config?.repair_version !== REPAIR_CONFIG_VERSION
+      || previousRun?.config?.amd_version !== AMD_CONFIG_VERSION;
+    const evaluation = sourceChanged
+      ? evaluateScalperCandidates({ series, h1, nowSeconds, maxSignalAgeSeconds: MAX_SIGNAL_AGE_SECONDS, config: PATTERN_CONFIG })
+      : { candidates: [], telemetry: [], raw_count: 0, rejected_count: 0 };
+    const candidates = evaluation.candidates;
+    const telemetryInserted = await insertCandidateTelemetry(evaluation.telemetry);
 
     let inserted = 0, activated = 0, lifecycleEvents = 0;
     for (const candidate of candidates) {
@@ -141,12 +188,31 @@ Deno.serve(async (request) => {
       const created = await insertSetup({ ...candidate, notification_enabled: freshEnough });
       if (!created) continue;
       inserted++;
-      if (await insertEvent(created, { status: "WAITING_NEXT_OPEN", price: null, candle_time: candidate.signal_candle_open_time, result_r: null }, created.notification_enabled === true)) lifecycleEvents++;
+      if (await insertEvent(created, { status: candidate.status, price: null, candle_time: candidate.signal_candle_open_time, result_r: null }, created.notification_enabled === true)) lifecycleEvents++;
     }
 
     let active = await loadActiveSetups();
     for (const current of active) {
       let setup = current;
+      if (setup.status === "WAITING_TRIGGER") {
+        const trigger = resolveTriggerEntry(setup, { m1, nowSeconds });
+        if (trigger.event) {
+          const saved = await updateSetup(trigger.setup, setup);
+          if (!saved) continue;
+          setup = saved;
+          if (await insertEvent(setup, trigger.event, setup.notification_enabled === true)) lifecycleEvents++;
+          continue;
+        }
+        if (trigger.nextOpen) {
+          const activatedResult = activateCandidate(setup, trigger.nextOpen);
+          const saved = await updateSetup(activatedResult.setup, setup);
+          if (!saved) continue;
+          setup = saved;
+          if (activatedResult.event && await insertEvent(setup, activatedResult.event, setup.notification_enabled === true)) lifecycleEvents++;
+          activated += setup.status === "ACTIVE" ? 1 : 0;
+          continue;
+        }
+      }
       if (["WAITING_NEXT_OPEN", "ENTRY_READY"].includes(setup.status)) {
         const nextOpen = findNextOpen(setup, { m1, m15 });
         if (nextOpen) {
@@ -189,13 +255,18 @@ Deno.serve(async (request) => {
       mode: "unified-shadow",
       candle_source: "supabase-central-read-only",
       provider_requests: 0,
+      schema_version: 3,
+      config: { base_version: BASE_CONFIG_VERSION, repair_version: REPAIR_CONFIG_VERSION, amd_version: AMD_CONFIG_VERSION },
       source_changed: sourceChanged,
       latest_m1_close_time: latestM1?.close_time || null,
       latest_m15_close_time: latestM15?.close_time || null,
       latest_h1_close_time: latestH1?.close_time || null,
       driver_count: DRIVER_REGISTRY.length,
       candles: { M1: m1.length, M15: m15.length, M30: m30.length, H1: h1.length, H4: h4.length },
+      raw_candidates: evaluation.raw_count,
       candidates: candidates.length,
+      rejected_candidates: evaluation.rejected_count,
+      telemetry_inserted: telemetryInserted,
       inserted,
       activated,
       lifecycle_events: lifecycleEvents,

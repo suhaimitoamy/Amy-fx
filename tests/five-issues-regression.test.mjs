@@ -66,11 +66,11 @@ test('issue-5 audit remains available as documentation only', () => {
   assert.match(report, /Akurasi arah murni pada close horizon/);
 });
 
-test('source is Amy FX 2.1.1 while published metadata never points above an available APK', () => {
-  assert.match(appVersion, /name: '2\.1\.1', code: 55/);
+test('source is Amy FX 2.2.0 while published metadata never points above an available APK', () => {
+  assert.match(appVersion, /name: '2\.2\.0', code: 56/);
   assert.match(appVersion, /main\/update\.json/);
   assert.doesNotMatch(appVersion, /Preview|personal\/amyfx-private|preview-update\.json/);
-  assert.ok(Number(update.latest_version_code) <= 55);
+  assert.ok(Number(update.latest_version_code) <= 56);
   assert.match(update.apk_url || update.downloadUrl || '', /AmyFX-latest\.apk/);
   assert.doesNotMatch(update.apk_url || update.downloadUrl || '', /AmyFX-Preview-latest\.apk/);
 });

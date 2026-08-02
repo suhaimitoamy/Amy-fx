@@ -70,3 +70,22 @@ test('availability distinguishes waiting, stale, and backend failure without cle
   assert.equal(scalperFreshness(waiting, 'network failed', now), 'DATA BELUM TERSEDIA');
   assert.notEqual(scalperPayloadSignature(waiting, 'MENUNGGU SETUP'), scalperPayloadSignature(waiting, 'DATA BELUM TERSEDIA'));
 });
+
+test('TP1 progress changes the payload signature even while schema-v3 status remains ACTIVE', () => {
+  const base = {
+    ok: true,
+    primary: { ...setup('setup-a', 'ACTIVE', '2026-08-01T01:00:00.000Z', 2), tp1Hit: false },
+    active: [{ ...setup('setup-a', 'ACTIVE', '2026-08-01T01:00:00.000Z', 2), tp1Hit: false }],
+    recent: [],
+  };
+  const progressed = {
+    ...base,
+    primary: { ...base.primary, tp1Hit: true, lifecycleSequence: 3 },
+    active: [{ ...base.active[0], tp1Hit: true, lifecycleSequence: 3 }],
+  };
+
+  assert.notEqual(
+    scalperPayloadSignature(base, 'LIVE'),
+    scalperPayloadSignature(progressed, 'LIVE'),
+  );
+});

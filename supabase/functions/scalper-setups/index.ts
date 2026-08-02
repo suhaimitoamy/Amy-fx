@@ -2,7 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const SUPABASE_URL = String(Deno.env.get("SUPABASE_URL") || "").replace(/\/$/, "");
 const SERVICE_ROLE_KEY = String(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "");
-const CURRENT_ENGINE_VERSION = "amyfx-preview-scalper-multidriver-v2.0";
+const CURRENT_ENGINE_VERSION = "amyfx-preview-scalper-pattern-v3.0";
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,OPTIONS",
@@ -34,16 +34,16 @@ const readiness = { ACTIVE: 0, BE_ACTIVE: 1, ENTRY_READY: 2, WAITING_NEXT_OPEN: 
 function publicSetup(row) {
   const quality = row.quality && typeof row.quality === "object" ? row.quality : {};
   const driverId = row.driver_id || quality.driver_id || row.model;
-  const driverName = row.driver_name || quality.driver_name || row.model;
+  const driverName = row.driver_name || quality.driver_name || String(row.model || "Scalper Engine").replaceAll("_", " ");
   const timeframe = row.timeframe || quality.timeframe || "M15";
   return {
     id: row.id,
     engineVersion: row.engine_version,
-    schemaVersion: row.schema_version || quality.schema_version || 2,
+    schemaVersion: row.schema_version || quality.schema_version || 1,
     model: row.model,
     driverId,
     driverName,
-    driverRuleVersion: row.driver_rule_version || quality.driver_rule_version || "1.0.0",
+    driverRuleVersion: row.driver_rule_version || quality.driver_rule_version || "legacy",
     timeframe,
     symbol: row.symbol,
     direction: row.direction,
@@ -69,6 +69,7 @@ function publicSetup(row) {
     zoneBottom: row.zone_bottom,
     zoneTop: row.zone_top,
     beArmed: row.be_armed,
+    tp1Hit: quality.tp1_hit === true,
     resultR: row.result_r,
     exitPrice: row.exit_price,
     exitTime: row.exit_time,
@@ -84,7 +85,12 @@ function publicSetup(row) {
     reason: quality.reason || null,
     invalidationReason: quality.invalidation_reason || null,
     stopBasis: quality.stop_basis_label || null,
-    isLegacy: false,
+    entryModel: quality.entry_model || "NEXT_OPEN",
+    patternGate: quality.pattern_gate || null,
+    baseConfigVersion: quality.base_config_version || null,
+    repairConfigVersion: quality.repair_config_version || null,
+    amdConfigVersion: quality.amd_config_version || null,
+    isLegacy: !row.driver_id || Number(row.schema_version || 1) < 3 || row.engine_version !== CURRENT_ENGINE_VERSION,
   };
 }
 function rankRows(rows) {

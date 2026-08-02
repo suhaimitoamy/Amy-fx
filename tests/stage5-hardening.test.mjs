@@ -8,17 +8,17 @@ test('Amy FX public source uses permanent production identity',()=>{
  assert.match(g,/configuredApplicationId = System\.getenv\("AMYFX_APPLICATION_ID"\) \?: "com\.amyelitesuite"/);
  assert.match(g,/configuredAppLabel = System\.getenv\("AMYFX_APP_LABEL"\) \?: "Amy FX"/);
  assert.match(g,/configuredUriScheme = System\.getenv\("AMYFX_URI_SCHEME"\) \?: "amyfx"/);
- assert.match(g,/versionCode[^\n]*55/); assert.match(g,/versionName[^\n]*"2\.1\.1"/);
- assert.match(v,/name: '2\.1\.1', code: 55/);
+ assert.match(g,/versionCode[^\n]*56/); assert.match(g,/versionName[^\n]*"2\.2\.0"/);
+ assert.match(v,/name: '2\.2\.0', code: 56/);
  assert.doesNotMatch(g,/learningpreview|Amy FX Preview|amyfxpreview|preview-update\.json/);
  assert.doesNotMatch(v,/Preview|personal\/amyfx-private/);
 });
 
 test('published metadata is never ahead of a supported production version',()=>{
  const m=JSON.parse(read('update.json'));
- const versions=new Map([[40,'1.4.17'],[41,'1.5.0'],[42,'1.5.1'],[43,'1.5.2'],[44,'1.5.3'],[45,'1.5.4'],[46,'1.5.5'],[47,'1.5.6'],[48,'1.5.7'],[49,'1.5.8'],[50,'1.5.9'],[51,'2.0.0'],[52,'2.0.1'],[53,'2.0.2'],[54,'2.1.0'],[55,'2.1.1']]);
+ const versions=new Map([[40,'1.4.17'],[41,'1.5.0'],[42,'1.5.1'],[43,'1.5.2'],[44,'1.5.3'],[45,'1.5.4'],[46,'1.5.5'],[47,'1.5.6'],[48,'1.5.7'],[49,'1.5.8'],[50,'1.5.9'],[51,'2.0.0'],[52,'2.0.1'],[53,'2.0.2'],[54,'2.1.0'],[55,'2.1.1'],[56,'2.2.0']]);
  assert.equal(m.latest_version_name,versions.get(m.latest_version_code));
- assert.ok(m.latest_version_code<=55); assert.ok(m.release_notes.length>0);
+ assert.ok(m.latest_version_code<=56); assert.ok(m.release_notes.length>0);
 });
 
 test('native WebSocket credential stays native and REST remains candle-only',()=>{
@@ -30,14 +30,20 @@ test('native WebSocket credential stays native and REST remains candle-only',()=
  assert.match(market,/amyfx:twelvedata-price/); assert.match(market,/PROXY_URL/);
 });
 
+test('Pattern v3 final engine remains connected to the public Mapping UI',()=>{
+ const panel=read('app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js'),authority=read('app/src/main/assets/apps/mapping/js/scalper-execution-authority.js'),patterns=read('supabase/functions/scalper-engine/pattern-gates.mjs'),drivers=read('supabase/functions/scalper-engine/drivers.mjs');
+ assert.match(panel,/10 driver BT6\/BT6\.1 \+ AMD/); assert.match(panel,/TP1 \+10/); assert.match(panel,/TP2 \+20/); assert.doesNotMatch(panel,/aktif dalam simulasi Preview/);
+ assert.match(authority,/amyfx-preview-scalper-pattern-v3\.0/); assert.match(patterns,/BT6-2025-V1/); assert.match(patterns,/BT6\.1-2026-H1-V1/); assert.match(patterns,/AMD-2025-V1/); assert.match(drivers,/AMD/);
+});
+
 test('release workflows pin version and permanent certificate',()=>{
  const fingerprint=/47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7/;
  for(const p of ['.github/workflows/build-apk.yml','.github/workflows/build-release.yml','.github/workflows/stage5-apply.yml']){
   const w=read(p); assert.match(w,fingerprint); assert.match(w,/apksigner/); assert.match(w,/TWELVEDATA_API_KEY/);
  }
- const rolling=read('.github/workflows/build-apk.yml'); assert.match(rolling,/AMYFX_VERSION_NAME: "2\.1\.1"/); assert.match(rolling,/AMYFX_VERSION_CODE: "55"/); assert.match(rolling,/Verify public update manifest/);
- const manual=read('.github/workflows/build-release.yml'); assert.match(manual,/default: "2\.1\.1"/); assert.match(manual,/default: "55"/);
- const candidate=read('.github/workflows/stage5-apply.yml'); assert.match(candidate,/Validate Amy FX 2\.1\.1/);
+ const rolling=read('.github/workflows/build-apk.yml'); assert.match(rolling,/AMYFX_VERSION_NAME: "2\.2\.0"/); assert.match(rolling,/AMYFX_VERSION_CODE: "56"/); assert.match(rolling,/Verify public update manifest/);
+ const manual=read('.github/workflows/build-release.yml'); assert.match(manual,/default: "2\.2\.0"/); assert.match(manual,/default: "56"/);
+ const candidate=read('.github/workflows/stage5-apply.yml'); assert.match(candidate,/Validate Amy FX 2\.2\.0/);
 });
 
 test('public Firebase client remains public',()=>{const f=JSON.parse(read('app/google-services.json'));assert.equal(f.client[0].client_info.android_client_info.package_name,'com.amyelitesuite');assert.equal('private_key' in f,false)});

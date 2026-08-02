@@ -1,9 +1,9 @@
-name: Validate Amy FX 2.1.1 Release Candidate
+name: Validate Amy FX 2.2.0 Release Candidate
 
 on:
   workflow_dispatch:
   push:
-    branches: [ "release/amyfx-public-2.1.1" ]
+    branches: [ "release/amyfx-main-preview-final-20260802" ]
   pull_request:
     branches: [ "main" ]
 
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: amyfx-2.1.1-validation-${{ github.event.pull_request.number || github.ref }}
+  group: amyfx-2.2.0-validation-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
@@ -20,8 +20,8 @@ env:
   AMYFX_KEYSTORE_PASSWORD: android
   AMYFX_KEY_ALIAS: androiddebugkey
   AMYFX_KEY_PASSWORD: android
-  AMYFX_VERSION_NAME: "2.1.1"
-  AMYFX_VERSION_CODE: "55"
+  AMYFX_VERSION_NAME: "2.2.0"
+  AMYFX_VERSION_CODE: "56"
   AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
 jobs:
@@ -35,11 +35,36 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "22" }
       - name: Run complete JavaScript regression suite
-        run: timeout 15m npm test
-      - name: Verify WebSocket hotfix and production isolation
+        id: js-tests
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          timeout 15m npm test 2>&1 | tee npm-test.log
+      - name: Upload JavaScript regression log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: amyfx-2.2.0-javascript-test-log
+          path: npm-test.log
+          if-no-files-found: error
+      - name: Enforce JavaScript regression result
+        if: steps.js-tests.outcome != 'success'
+        run: exit 1
+      - name: Verify Pattern v3, WebSocket path, and production isolation
         run: |
           set -euo pipefail
           git diff --check
+          node --check app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          node --check app/src/main/assets/apps/mapping/js/scalper-execution-authority.js
+          node --check supabase/functions/scalper-engine/pattern-gates.mjs
+          node --check supabase/functions/scalper-engine/drivers.mjs
+          node --check supabase/functions/scalper-engine/signals.mjs
+          node --check supabase/functions/scalper-engine/lifecycle.mjs
+          grep -Fq "CURRENT_ENGINE_VERSION = 'amyfx-preview-scalper-pattern-v3.0'" app/src/main/assets/apps/mapping/js/scalper-execution-authority.js
+          grep -Fq '10 driver BT6/BT6.1 + AMD' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          grep -Fq 'TP1 +10' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          grep -Fq 'TP2 +20' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          ! grep -Fq 'aktif dalam simulasi Preview' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
           test -f app/src/main/java/com/amyelitesuite/TwelveDataPriceBridge.kt
           grep -Fq 'addJavascriptInterface(twelveDataPriceBridge, "AmyLivePrice")' app/src/main/java/com/amyelitesuite/MainActivity.kt
           grep -Fq "window.addEventListener('amyfx:twelvedata-price'" app/src/main/assets/apps/mapping/js/api/market-data.js
@@ -74,11 +99,11 @@ jobs:
           apk="app/build/outputs/apk/release/app-release.apk"
           aapt="$ANDROID_HOME/build-tools/35.0.0/aapt"
           signer="$ANDROID_HOME/build-tools/35.0.0/apksigner"
-          "$aapt" dump badging "$apk" | grep -F "package: name='com.amyelitesuite' versionCode='55' versionName='2.1.1'"
+          "$aapt" dump badging "$apk" | grep -F "package: name='com.amyelitesuite' versionCode='56' versionName='2.2.0'"
           "$signer" verify --verbose --print-certs "$apk"
           "$signer" verify --print-certs "$apk" | grep -F "Signer #1 certificate SHA-256 digest: $(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
       - uses: actions/upload-artifact@v4
         with:
-          name: Amy-FX-v2.1.1-validated-apk
+          name: Amy-FX-v2.2.0-validated-apk
           path: app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
