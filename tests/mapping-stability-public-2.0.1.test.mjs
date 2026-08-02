@@ -19,8 +19,8 @@ test('Mapping listeners, timers, and observers install once', async () => {
   const scalper = await read('app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js');
   const panels = await read('app/src/main/assets/apps/mapping/js/dashboard-only-panels-v1.js');
   const analysis = await read('app/src/main/assets/apps/mapping/js/analysis-ui-stability-v4.js');
-  assert.match(scalper, /if \(started\) return/);
-  assert.equal((scalper.match(/setInterval\(sync, 30_000\)/g) || []).length, 1);
+  assert.match(scalper, /if\s*\(\s*started\s*\)\s*return/);
+  assert.equal((scalper.match(/setInterval\s*\(\s*sync\s*,\s*30_000\s*\)/g) || []).length, 1);
   assert.doesNotMatch(scalper, /MutationObserver/);
   assert.match(panels, /if \(window\.__amyFxDashboardOnlyPanelsV1Installed\) return/);
   assert.match(panels, /if \(started\) return/);
@@ -43,8 +43,8 @@ test('Scalper Shadow keeps one persistent shell and last valid payload', async (
   const scalper = await read('app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js');
   assert.equal((ui.match(/function scalperShadowPlaceholder\(\)/g) || []).length, 1);
   assert.match(ui, /data-dom-persistent="true" data-stability-key="scalper-shadow"/);
-  assert.match(scalper, /lastValidPayload = reconcileScalperPayload/);
-  assert.match(scalper, /AmyFXDomStableRender\?\.patch\?\.\(existing, next\)/);
+  assert.match(scalper, /lastValidPayload\s*=\s*reconcileScalperPayload/);
+  assert.match(scalper, /AmyFXDomStableRender\?\.patch[\s\S]*AmyFXDomStableRender\.patch\(existing,\s*next\)/);
   assert.doesNotMatch(scalper, /outerHTML|\.remove\(\)/);
 });
 
@@ -56,7 +56,7 @@ test('overlapping Mapping and Scalper requests reject stale work', async () => {
   assert.match(market, /requestId === analysisSequence/);
   assert.match(coordinator, /active\?\.signal\?\.aborted/);
   assert.match(scalper, /requestController\?\.abort\(\)/);
-  assert.match(scalper, /sequence !== requestSequence/);
+  assert.match(scalper, /sequence\s*!==\s*requestSequence/);
 });
 
 test('Mapping header remains one fixed-size status dot', async () => {
