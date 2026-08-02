@@ -30,6 +30,7 @@ jobs:
             tools/xauusd_2026_repair.py.b64.part06 \
             tools/xauusd_2026_repair.py.b64.part07 \
             | tr -d '[:space:]' | base64 --decode > /tmp/xauusd_2026_repair.py
+          python tools/apply_bi5_patch.py
           python -m py_compile /tmp/xauusd_2026_repair.py
 
       - name: Download, audit, and package Dukascopy XAUUSD BID candles
