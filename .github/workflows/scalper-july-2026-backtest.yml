@@ -1,0 +1,43 @@
+name: Scalper Engine July 2026 Backtest
+
+on:
+  pull_request:
+    branches:
+      - personal/amyfx-private
+
+permissions:
+  contents: read
+
+jobs:
+  backtest:
+    if: github.head_ref == 'backtest/scalper-july-2026'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout isolated backtest branch
+        uses: actions/checkout@v4
+
+      - name: Verify current Scalper Engine tests
+        run: node --test tests/scalper-bt6-pattern-engine.test.mjs tests/scalper-multidriver.test.mjs
+
+      - name: Download audited source candles
+        run: python tools/backtests/download_xauusd_july_2026.py
+
+      - name: Replay Scalper Engine
+        run: node tools/backtests/run_scalper_july_2026.mjs
+
+      - name: Package reports
+        run: |
+          mkdir -p backtest_bundle
+          cp backtest_output/AMYFX_SCALPER_JULY_2026_* backtest_bundle/
+          cp backtest_output/data/DATA_AUDIT.json backtest_bundle/
+          cp tools/backtests/run_scalper_july_2026.mjs backtest_bundle/REPLAY_RUNNER.mjs
+          cp tools/backtests/download_xauusd_july_2026.py backtest_bundle/DATA_LOADER.py
+
+      - name: Upload backtest result
+        uses: actions/upload-artifact@v4
+        with:
+          name: amyfx-scalper-july-2026-backtest
+          path: backtest_bundle
+          if-no-files-found: error
+          retention-days: 7
