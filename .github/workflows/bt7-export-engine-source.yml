@@ -1,0 +1,37 @@
+name: BT7 Export Engine Source
+
+on:
+  pull_request:
+    branches:
+      - personal/amyfx-private
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export-engine-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout BT7 branch
+        uses: actions/checkout@v4
+
+      - name: Collect exact Preview engine sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p bt7-engine-source/supabase/functions
+          mkdir -p bt7-engine-source/app/src/main/assets/apps/mapping/js
+          cp -R supabase/functions/scalper-engine bt7-engine-source/supabase/functions/
+          cp -R app/src/main/assets/apps/mapping/js/engine bt7-engine-source/app/src/main/assets/apps/mapping/js/
+          cp package.json bt7-engine-source/
+          git rev-parse HEAD > bt7-engine-source/SOURCE_COMMIT.txt
+          printf '%s\n' 'personal/amyfx-private' > bt7-engine-source/SOURCE_BRANCH.txt
+
+      - name: Upload source package
+        uses: actions/upload-artifact@v4
+        with:
+          name: bt7-engine-source
+          path: bt7-engine-source
+          if-no-files-found: error
+          retention-days: 3
