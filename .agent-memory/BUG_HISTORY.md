@@ -1,5 +1,21 @@
 # Bug History
 
+## Fixed Preview Duplicate News Delivery — 2026-08-01
+
+### One News Event Could Produce Two or Three Notifications
+- **Severity:** High
+- **Cause:** Preview devices received the data-only push from `news-sync`, the second system notification from `news-system-push`, and could also receive the local WorkManager fallback for the same news item.
+- **Fix:** Preview devices now use one dedicated system-notification route. A canonical event key, atomic delivery ledger, retry state, and scheduler lease enforce one successful delivery per event/device; the upstream legacy data route excludes Preview so the unchanged public system route receives no Preview pairs, and Preview cancels its old local fallback.
+- **Validation:** Source regression covers routing, ledger/RPC markers, Preview device isolation, and local fallback cancellation; deployed health and database state must be checked before release.
+
+## Fixed Pattern-v3 TP1 UI Refresh — 2026-08-01
+
+### TP1 Could Be Reached Without Refreshing the Active Card
+- **Severity:** High
+- **Cause:** Pattern-v3 deliberately keeps lifecycle status `ACTIVE` after TP1 because Stop Loss does not move to breakeven, while the Mapping render signature did not include `tp1Hit` or lifecycle sequence.
+- **Fix:** Scalper payload and execution-authority signatures now include TP1 progress and pattern metadata, so the UI immediately changes to `TP1 HIT · SL TETAP` without changing the lifecycle status.
+- **Validation:** Deterministic regression verifies that otherwise-identical ACTIVE payloads produce different signatures when TP1 progress changes.
+
 ## Fixed Private Preview Frozen Live Price — 2026-07-31
 
 ### XAU/USD Price Stopped Refreshing Automatically

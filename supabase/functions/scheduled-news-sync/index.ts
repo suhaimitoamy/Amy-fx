@@ -65,17 +65,21 @@ Deno.serve(async (req: Request) => {
   try {
     const healthOnly = new URL(req.url).searchParams.get("health") === "1";
     if (healthOnly) {
-      const [sync, webPush, systemPush] = await Promise.all([
+      const [sync, webPush, systemPush, previewSystemPush] = await Promise.all([
         invokeFunction("news-sync", true, 20000),
         invokeFunction("web-push-delivery", true, 20000),
         invokeFunction("news-system-push", true, 20000),
+        invokeFunction("preview-news-system-push", true, 20000),
       ]);
+      // Preview health is reported independently and never changes the public scheduler result.
       const ok = sync.ok && webPush.ok && systemPush.ok;
       return json({
         ok,
         news_sync: sync.payload,
         web_push: webPush.payload,
         system_push: systemPush.payload,
+        preview_system_push: previewSystemPush.payload,
+        preview_system_push_ok: previewSystemPush.ok,
       }, ok ? 200 : 502);
     }
 
@@ -87,13 +91,16 @@ Deno.serve(async (req: Request) => {
       return json({ error: "news_sync_failed", status: sync.status, detail: sync.payload }, 502);
     }
 
-    const [webPush, systemPush] = await Promise.all([
+    const [webPush, systemPush, previewSystemPush] = await Promise.all([
       invokeFunction("web-push-delivery", false, 55000),
       invokeFunction("news-system-push", false, 55000),
+      invokeFunction("preview-news-system-push", false, 55000),
     ]);
     if (!webPush.ok) console.error("web-push-delivery returned an error", webPush.status, webPush.payload);
     if (!systemPush.ok) console.error("news-system-push returned an error", systemPush.status, systemPush.payload);
+    if (!previewSystemPush.ok) console.error("preview-news-system-push returned an error", previewSystemPush.status, previewSystemPush.payload);
 
+    // Preserve the existing public delivery status; Preview delivery is isolated and non-blocking.
     const deliveryOk = webPush.ok && systemPush.ok;
     return json({
       ...(typeof sync.payload === "object" && sync.payload ? sync.payload : { sync: sync.payload }),
@@ -101,6 +108,8 @@ Deno.serve(async (req: Request) => {
       web_push_ok: webPush.ok,
       system_push: systemPush.payload,
       system_push_ok: systemPush.ok,
+      preview_system_push: previewSystemPush.payload,
+      preview_system_push_ok: previewSystemPush.ok,
     }, deliveryOk ? 200 : 207);
   } catch (error) {
     console.error("scheduled-news-sync failed", error);

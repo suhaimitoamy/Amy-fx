@@ -50,7 +50,7 @@ class AmyFirebaseMessagingService : FirebaseMessagingService() {
         showNotification(
             channelId = AmyFxApplication.SCALPER_CHANNEL_ID,
             channelName = "Amy FX Scalper Signals",
-            channelDescription = "Sinyal simulasi IFVG dan FVG High Quality dari Amy FX Preview",
+            channelDescription = "Sinyal simulasi 10 driver BT6/BT6.1 + AMD dari Amy FX Preview",
             title = title,
             body = body,
             gateKey = "scalper|$setupId|$status",

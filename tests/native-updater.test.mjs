@@ -66,3 +66,10 @@ test('update popup displays native progress and keeps browser only as legacy fal
   assert.match(checker, /cache Amy FX/);
   assert.match(checker, /window\.location\.href = downloadUrl/);
 });
+
+test('a newer Preview manifest raises one native update notification before opening the popup', () => {
+  const checker = read('app/src/main/assets/update-checker.js');
+  assert.match(checker, /function announceNativeUpdate/);
+  assert.match(checker, /Android\.showNotification\('Update Amy FX Preview Tersedia'/);
+  assert.match(checker, /if \(latestCode > CURRENT_VERSION_CODE\) \{\s*announceNativeUpdate\(latestCode, latestName\);\s*showUpdatePopup/);
+});

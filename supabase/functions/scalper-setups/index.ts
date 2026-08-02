@@ -68,6 +68,7 @@ function publicSetup(row) {
     zoneBottom: row.zone_bottom,
     zoneTop: row.zone_top,
     beArmed: row.be_armed,
+    tp1Hit: quality.tp1_hit === true,
     resultR: row.result_r,
     exitPrice: row.exit_price,
     exitTime: row.exit_time,
@@ -83,7 +84,12 @@ function publicSetup(row) {
     reason: quality.reason || null,
     invalidationReason: quality.invalidation_reason || null,
     stopBasis: quality.stop_basis_label || null,
-    isLegacy: !row.driver_id || Number(row.schema_version || 1) < 2,
+    entryModel: quality.entry_model || "NEXT_OPEN",
+    patternGate: quality.pattern_gate || null,
+    baseConfigVersion: quality.base_config_version || null,
+    repairConfigVersion: quality.repair_config_version || null,
+    amdConfigVersion: quality.amd_config_version || null,
+    isLegacy: !row.driver_id || Number(row.schema_version || 1) < 3 || row.engine_version !== "amyfx-preview-scalper-pattern-v3.0",
   };
 }
 function rankRows(rows) {
@@ -110,7 +116,7 @@ Deno.serve(async (request) => {
     const primary = activeRows[0] || null;
     return json({
       ok: true,
-      mode: "shadow",
+      mode: "preview_simulation",
       generatedAt: new Date().toISOString(),
       primary: primary ? publicSetup(primary) : null,
       active: activeRows.map(publicSetup),

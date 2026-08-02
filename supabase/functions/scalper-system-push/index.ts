@@ -39,16 +39,18 @@ function driverLabel(setup) {
   return `${name}${timeframe}`.trim();
 }
 function recommendationPrefix(setup, status) {
-  if (status !== "WAITING_NEXT_OPEN" && status !== "ENTRY_READY" && status !== "ACTIVE") return "";
+  if (status !== "WAITING_TRIGGER" && status !== "WAITING_NEXT_OPEN" && status !== "ENTRY_READY" && status !== "ACTIVE") return "";
   if (setup.recommendation_status === "DUPLICATE_CLUSTER") return "CLUSTER · ";
   return "";
 }
 function titleFor(setup, status) {
   const label = driverLabel(setup);
   const prefix = recommendationPrefix(setup, status);
+  if (status === "WAITING_TRIGGER") return `${prefix}[SIMULASI] ${label} ${setup.direction} — MENUNGGU MIDPOINT FVG`;
   if (status === "WAITING_NEXT_OPEN" || status === "ENTRY_READY") return `${prefix}[SIMULASI] ${label} ${setup.direction} TERKONFIRMASI`;
   if (status === "ACTIVE") return `${prefix}[SIMULASI] ${label} ${setup.direction} — ENTRY READY`;
-  if (status === "BE_ACTIVE") return `[SIMULASI] ${label} ${setup.direction} — TP1 / 1R TERCAPAI`;
+  if (status === "TP1_HIT") return `[SIMULASI] ${label} ${setup.direction} — TP1 +10 HIT · SL TETAP`;
+  if (status === "BE_ACTIVE") return `[SIMULASI] ${label} ${setup.direction} — STATUS BE ENGINE LAMA`;
   if (status === "TP_HIT") return `[SIMULASI] ${label} ${setup.direction} — TP2 HIT`;
   if (status === "SL_HIT") return `[SIMULASI] ${label} ${setup.direction} — SL HIT`;
   if (status === "BE_HIT") return `[SIMULASI] ${label} ${setup.direction} — BREAKEVEN`;

@@ -1,5 +1,19 @@
 # Feature History
 
+## Scalper Pattern v3 — BT6/BT6.1 + AMD
+- **Date:** 2026-08-01
+- **Status:** ✅ Implemented; release/deployment verification required
+- **Description:** Added closed-candle Pattern BT6 gates to nine existing Scalper drivers, BT6.1 repair overlays to the four Blueprint drivers, and an independent AMD M30/H1 driver with shortest-window accumulation selection, manipulation invalidation, distribution FVG confirmation, and midpoint-limit entry.
+- **Lifecycle:** New schema-v3 setups use volatility-aware 0.18/0.20 ATR buffers, fixed TP1 +10 and TP2 +20 points, no breakeven move, 50-point structural-risk cap, 24-hour timeout, and chronological M1 SL-first evaluation.
+- **Operations:** Added immutable config records, per-candidate telemetry, environment kill switches, Preview UI metadata, and deterministic unit/regression coverage.
+- **Backtest:** Not rerun. The user-provided Blueprint results were accepted and the Master Backtest workbook was inspected read-only.
+
+## Preview Canonical News Delivery and Native Update Alert
+- **Date:** 2026-08-01
+- **Status:** ✅ Implemented; release/deployment verification required
+- **Description:** Added one Preview-only FCM notification route with canonical event keys, atomic per-device claims, retry/failure states, and a scheduler lease. Legacy server delivery and local fallback no longer target Preview devices.
+- **Update UX:** A newer Preview manifest raises the native `Update Amy FX Preview Tersedia` notification and opens the existing signed-APK update dialog.
+
 ## Rencana Eksekusi
 - **Date:** 2026-07-29
 - **Status:** ✅ Implemented and regression/viewport validated

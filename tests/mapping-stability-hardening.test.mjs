@@ -129,6 +129,7 @@ test('Scalper backend persists entry before lifecycle evaluation and uses optimi
   const engine = await read('supabase/functions/scalper-engine/index.ts');
   const signals = await read('supabase/functions/scalper-engine/signals.mjs');
   const drivers = await read('supabase/functions/scalper-engine/drivers.mjs');
+  const patterns = await read('supabase/functions/scalper-engine/pattern-gates.mjs');
   const lifecycle = await read('supabase/functions/scalper-engine/lifecycle.mjs');
   const api = await read('supabase/functions/scalper-setups/index.ts');
 
@@ -139,7 +140,9 @@ test('Scalper backend persists entry before lifecycle evaluation and uses optimi
   assert.match(engine, /if\s*\(\s*!saved\s*\)\s*continue/);
   assert.match(signals, /detectMultiDriverCandidates/);
   assert.match(drivers, /stop_basis_label:'Structural Invalidation \+ ATR Buffer'/);
-  assert.match(drivers, /buffer_atr:0\.10/);
+  assert.match(drivers, /buffer_atr:0\.18/);
+  assert.match(patterns, /normal_buffer_atr:\s*0\.18/);
+  assert.match(patterns, /high_volatility_buffer_atr:\s*0\.20/);
   assert.match(lifecycle, /setup\.quality\.entry_locked\s*!==\s*true/);
   assert.match(lifecycle, /\.filter\(c=>c\.open_time>=entryOpenTime\)/);
   assert.match(api, /lifecycleSequence/);

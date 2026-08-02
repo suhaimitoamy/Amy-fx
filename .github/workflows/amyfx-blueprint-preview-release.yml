@@ -109,6 +109,7 @@ jobs:
           node --check app/src/main/assets/apps/mapping/js/scalper-execution-decision-bridge.js
           node --check app/src/main/assets/apps/academy/assets/js/reading-history-v2.js
           node --check supabase/functions/scalper-engine/candles.mjs
+          node --check supabase/functions/scalper-engine/pattern-gates.mjs
           node --check supabase/functions/scalper-engine/drivers.mjs
           node --check supabase/functions/scalper-engine/signals.mjs
           node --check supabase/functions/scalper-engine/lifecycle.mjs
@@ -206,11 +207,12 @@ jobs:
             exit 1
           fi
           cat > /tmp/amyfx-preview-release-notes.md <<NOTES
-          Amy FX Preview $AMYFX_VERSION_NAME — Unified Execution.
+          Amy FX Preview $AMYFX_VERSION_NAME — BT6/BT6.1 + AMD.
 
-          - Scalper Engine utama sekarang menjadi otoritas bersama untuk Rencana Eksekusi dan Entry Watch.
-          - Panel Preview yang lebih detail tetap dipertahankan, termasuk pilihan setup, driver, timeframe, alasan, SL, TP1, dan TP2.
-          - Academy menyimpan riwayat baca, heading, persentase, serta posisi scroll terakhir.
+          - Sembilan driver lama memakai gate Pattern BT6; repair overlay BT6.1 diterapkan pada driver yang ditetapkan Blueprint.
+          - Driver AMD baru berjalan independen pada M30/H1 dengan entry midpoint FVG dan invalidasi extreme manipulasi.
+          - Lifecycle Preview memakai TP1 +10, TP2 +20, SL tetap tanpa breakeven, batas 24 jam, dan aturan SL-first.
+          - Notifikasi update native aktif; jalur news Preview memakai canonical event key dan atomic delivery ledger agar satu event tampil sekali.
           - Amy FX publik pada branch main tidak diubah.
           NOTES
           gh release create "$AMYFX_RELEASE_TAG" \
@@ -219,7 +221,7 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$AMYFX_SOURCE_SHA" \
             --prerelease \
-            --title "Amy FX Preview $AMYFX_VERSION_NAME — Unified Execution" \
+            --title "Amy FX Preview $AMYFX_VERSION_NAME — BT6/BT6.1 + AMD" \
             --notes-file /tmp/amyfx-preview-release-notes.md
           gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
 
@@ -245,16 +247,18 @@ jobs:
               'mandatory': False,
               'enabled': True,
               'release_notes': [
-                  'Scalper Engine utama kini menjadi otoritas bersama untuk Rencana Eksekusi dan Entry Watch.',
-                  'Panel detail Preview tetap dipertahankan untuk memilih dan memeriksa semua setup aktif.',
-                  'Academy menyimpan riwayat baca, heading, persentase, dan posisi scroll terakhir.',
+                  'Scalper Engine Pattern v3 mengaktifkan gate BT6 dan repair overlay BT6.1.',
+                  'Driver AMD M30/H1 ditambahkan sebagai driver independen dengan entry midpoint FVG.',
+                  'Target simulasi tetap TP1 +10 dan TP2 +20 poin; Stop Loss tidak dipindahkan ke breakeven.',
+                  'News Preview memakai satu jalur notifikasi dengan canonical event key dan atomic delivery ledger.',
                   'Amy FX publik pada branch main tidak diubah.'
               ],
               'changelog': [
-                  'Unified Scalper execution authority',
-                  'Execution decision bridge for Preview',
-                  'Detailed multi-setup panel preserved',
-                  'Academy reading history and resume position'
+                  'BT6-2025-V1 pattern gates',
+                  'BT6.1-2026-H1-V1 repair overlays',
+                  'AMD-2025-V1 M30/H1 driver',
+                  'Fixed +10/+20 lifecycle without break-even',
+                  'Preview news canonical delivery deduplication'
               ]
           }
           with open('preview-update.json', 'w', encoding='utf-8') as handle:

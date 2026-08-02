@@ -35,6 +35,6 @@ export function scalperFreshness(payload,error='',now=Date.now()){
   if(!payload.primary&&!(payload.active||[]).length&&!(payload.recent||[]).length)return'MENUNGGU SETUP';return'LIVE';
 }
 export function scalperPayloadSignature(payload,availability=''){
-  const setupShape=setup=>setup?{id:setup.id,driverId:setup.driverId,driverName:setup.driverName,timeframe:setup.timeframe,direction:setup.direction,status:setup.status,recommendationStatus:setup.recommendationStatus,updatedAt:setup.updatedAt,entry:setup.entry,stopLoss:setup.stopLoss,tp1:setup.tp1,target:setup.target,resultR:setup.resultR,barsElapsed:setup.barsElapsed,stopBasis:setup.stopBasis}:null;
+  const setupShape=setup=>setup?{id:setup.id,driverId:setup.driverId,driverName:setup.driverName,timeframe:setup.timeframe,direction:setup.direction,status:setup.status,recommendationStatus:setup.recommendationStatus,updatedAt:setup.updatedAt,lifecycleSequence:setup.lifecycleSequence,tp1Hit:setup.tp1Hit===true,entry:setup.entry,stopLoss:setup.stopLoss,tp1:setup.tp1,target:setup.target,resultR:setup.resultR,barsElapsed:setup.barsElapsed,stopBasis:setup.stopBasis,patternGate:setup.patternGate,baseConfigVersion:setup.baseConfigVersion,repairConfigVersion:setup.repairConfigVersion,amdConfigVersion:setup.amdConfigVersion}:null;
   return JSON.stringify({availability,primary:setupShape(payload?.primary),active:(payload?.active||[]).map(setupShape),recent:(payload?.recent||[]).map(setupShape)});
 }

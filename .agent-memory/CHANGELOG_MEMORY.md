@@ -1,5 +1,10 @@
 # Memory Changelog
 
+## 2026-08-01
+- Recorded the private-only Pattern v3 BT6/BT6.1 + AMD contract, immutable config versions, fixed-point lifecycle, kill switches, and explicit no-backtest instruction.
+- Recorded the canonical Preview news-delivery owner and the duplicate-notification fix.
+- Recorded the native update notification requirement and TP1 render-signature fix.
+
 ## 2026-07-30
 - Documented the Preview Mapping stable-DOM, persistent Scalper Shadow, single-dot header, and causal structural-stop fixes.
 - Recorded that Scalper lifecycle validation is deterministic/regression based and explicitly excludes backtesting.

@@ -65,15 +65,35 @@ test('Android news notifications use a durable high-priority system channel', ()
   assert.match(googleServices, /com\.amyelitesuite\.learningpreview/);
 });
 
-test('Supabase sends system notification plus data and scheduler invokes it', () => {
+test('Preview news uses one canonical ledger-backed system notification route', () => {
   const systemPush = read('supabase/functions/news-system-push/index.ts');
+  const previewPush = read('supabase/functions/preview-news-system-push/index.ts');
+  const newsSync = read('supabase/functions/news-sync/handler.ts');
   const scheduler = read('supabase/functions/scheduled-news-sync/index.ts');
+  const application = read('app/src/main/java/com/amyelitesuite/AmyFxApplication.kt');
+  const migration = read('supabase/migrations/20260801150000_amyfx_preview_scalper_bt6_amd_news_dedup.sql');
 
   assert.match(systemPush, /notification: \{ title, body \}/);
   assert.match(systemPush, /data: \{/);
   assert.match(systemPush, /channelId: CHANNEL_ID/);
   assert.match(systemPush, /firebase_system_notification_plus_data/);
   assert.match(systemPush, /notification_system_logs/);
+  assert.doesNotMatch(systemPush, /PREVIEW_DEVICE_PREFIX/);
+  assert.match(newsSync, /PREVIEW_DEVICE_PREFIX/);
+  assert.match(previewPush, /amyfx_claim_preview_news_delivery/);
+  assert.match(previewPush, /amyfx_claim_preview_scheduler_lease/);
+  assert.match(previewPush, /idempotency_key/);
+  assert.match(previewPush, /single_firebase_system_notification_plus_data/);
+  assert.match(previewPush, /function canonicalEventKey/);
+  assert.match(previewPush, /telegram:SM_News_24h:/);
+  assert.doesNotMatch(migration, /alter table public\.news/);
+  assert.match(migration, /unique \(event_key, stage, recipient_scope\)/);
+  assert.match(migration, /status in \('PENDING','CLAIMED','SENT','RETRY','FAILED'\)/);
+  assert.match(migration, /amyfx_complete_preview_news_delivery/);
+  assert.match(application, /cancelUniqueWork\(NewsSyncWorker\.UNIQUE_WORK_NAME\)/);
   assert.match(scheduler, /invokeFunction\("news-system-push"/);
+  assert.match(scheduler, /invokeFunction\("preview-news-system-push"/);
   assert.match(scheduler, /system_push_ok/);
+  assert.match(scheduler, /preview_system_push_ok/);
+  assert.match(scheduler, /const deliveryOk = webPush\.ok && systemPush\.ok/);
 });

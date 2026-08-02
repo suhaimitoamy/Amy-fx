@@ -6,26 +6,28 @@ function candle(time, open, high, low, close, seconds = 900) {
   return { open_time: time, close_time: time + seconds, open, high, low, close, is_closed: true };
 }
 
-test('registry contains exactly nine approved drivers and no IFVG', () => {
-  assert.equal(DRIVER_REGISTRY.length, 9);
+test('registry contains ten independent BT6/BT6.1 plus AMD drivers and no IFVG', () => {
+  assert.equal(DRIVER_REGISTRY.length, 10);
   assert.equal(DRIVER_REGISTRY.some(driver => driver.id.includes('IFVG')), false);
   assert.deepEqual(DRIVER_REGISTRY.find(driver => driver.id === 'FVG').timeframes, ['H4']);
   assert.deepEqual(DRIVER_REGISTRY.find(driver => driver.id === 'FALSE_BREAKOUT').timeframes, ['M15', 'H1', 'H4']);
+  assert.deepEqual(DRIVER_REGISTRY.find(driver => driver.id === 'AMD').timeframes, ['M30', 'H1']);
 });
 
 test('CRT H4 creates deterministic candidate from one-sided sweep reclaim', () => {
   const base = 1_700_000_000;
   const h4 = [];
-  for (let index = 0; index < 20; index += 1) h4.push(candle(base + index * 14400, 100, 102, 98, 100, 14400));
-  h4.push(candle(base + 20 * 14400, 100, 101, 97, 99, 14400));
-  const input = { series: { H4: h4 }, h1: h4, nowSeconds: base + 21 * 14400, maxSignalAgeSeconds: 20000 };
+  for (let index = 0; index < 80; index += 1) h4.push(candle(base + index * 14400, 100, 102, 98, 100, 14400));
+  h4.push(candle(base + 80 * 14400, 99, 101, 93, 100.5, 14400));
+  const input = { series: { H4: h4 }, h1: h4, nowSeconds: base + 81 * 14400, maxSignalAgeSeconds: 20000 };
   const first = detectScalperCandidates(input).find(candidate => candidate.driver_id === 'CRT');
   const second = detectScalperCandidates(input).find(candidate => candidate.driver_id === 'CRT');
   assert.ok(first);
   assert.equal(first.id, second.id);
   assert.equal(first.direction, 'BUY');
   assert.equal(first.timeframe, 'H4');
-  assert.equal(first.schema_version, 2);
+  assert.equal(first.schema_version, 3);
+  assert.equal(first.quality.pattern_gate, 'CRT_A');
 });
 
 test('activation uses structural invalidation and locks entry before lifecycle', () => {

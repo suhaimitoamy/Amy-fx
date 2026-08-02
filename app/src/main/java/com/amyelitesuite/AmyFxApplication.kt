@@ -46,7 +46,7 @@ class AmyFxApplication : android.app.Application() {
             "Amy FX Scalper Signals",
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = "Sinyal simulasi IFVG dan FVG High Quality dari Amy FX Preview"
+            description = "Sinyal simulasi 10 driver BT6/BT6.1 + AMD dari Amy FX Preview"
             enableVibration(true)
             enableLights(true)
             lightColor = Color.rgb(212, 175, 55)
@@ -56,6 +56,13 @@ class AmyFxApplication : android.app.Application() {
     }
 
     private fun scheduleNewsFallback() {
+        val workManager = WorkManager.getInstance(this)
+        if (BuildConfig.APPLICATION_ID == PREVIEW_APPLICATION_ID) {
+            // Preview menerima news hanya dari jalur FCM server yang memakai canonical event key
+            // dan atomic delivery ledger. Fallback lokal dinonaktifkan agar satu event tampil sekali.
+            workManager.cancelUniqueWork(NewsSyncWorker.UNIQUE_WORK_NAME)
+            return
+        }
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
@@ -65,7 +72,7 @@ class AmyFxApplication : android.app.Application() {
             .setConstraints(constraints)
             .build()
 
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+        workManager.enqueueUniquePeriodicWork(
             NewsSyncWorker.UNIQUE_WORK_NAME,
             ExistingPeriodicWorkPolicy.UPDATE,
             request
@@ -75,5 +82,6 @@ class AmyFxApplication : android.app.Application() {
     companion object {
         const val NEWS_CHANNEL_ID = "amy_news_v2"
         const val SCALPER_CHANNEL_ID = "amy_scalper_v1"
+        const val PREVIEW_APPLICATION_ID = "com.amyelitesuite.learningpreview"
     }
 }

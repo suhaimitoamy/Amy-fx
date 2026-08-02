@@ -22,16 +22,16 @@ test('Preview keeps its richer multi-setup Scalper detail', () => {
     'data-scalper-select-id',
     'Kembali ke setup utama',
     'Alasan driver',
-    'TP1 / BE',
-    '9 driver'
+    'TP1 +10',
+    '10 driver BT6/BT6.1 + AMD'
   ]) {
     assert.ok(source.includes(marker), `Preview detail marker missing: ${marker}`);
   }
 });
 
-test('Scalper authority uses only the current primary multidriver setup', () => {
+test('Scalper authority uses only the current primary pattern-v3 setup', () => {
   const source = read('app/src/main/assets/apps/mapping/js/scalper-execution-authority.js');
-  assert.ok(source.includes("CURRENT_ENGINE_VERSION = 'amyfx-preview-scalper-multidriver-v2.0'"));
+  assert.ok(source.includes("CURRENT_ENGINE_VERSION = 'amyfx-preview-scalper-pattern-v3.0'"));
   assert.ok(source.includes('payload.primary'));
   assert.ok(source.includes('setup.isLegacy !== true'));
   assert.ok(source.includes('result.setupExecution = authority.setupExecution'));

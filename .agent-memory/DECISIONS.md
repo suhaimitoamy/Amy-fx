@@ -1,5 +1,19 @@
 # Technical Decisions
 
+## 2026-08-01
+
+### Private Preview Scalper Pattern v3 Contract
+- This contract applies only to `personal/amyfx-private` and supersedes the 2026-07-30 Scalper Shadow buffer/target/BE contract for new schema-v3 setups. Legacy schema-v2 lifecycle remains readable and unchanged.
+- The user-approved source of truth is `Blueprint Update Scalper Engine BT6 + AMD`; `Amy FX Master Backtest` was inspected read-only for baseline context. No backtest, replay, threshold search, or historical rerun is part of this upgrade.
+- Nine existing drivers pass their raw closed-candle candidates through BT6 gates. The four named repair drivers additionally pass BT6.1 overlays. AMD is the tenth independent M30/H1 driver; there is no cross-driver veto or minimum-driver requirement.
+- Pattern features are calculated only at the selected closed signal candle. Configuration IDs are immutable: `BT6-2025-V1`, `BT6.1-2026-H1-V1`, and `AMD-2025-V1`; global, repair, and per-driver kill switches remain available.
+- New schema-v3 lifecycle uses a 0.18 ATR structural buffer, or 0.20 when ATR14/current is at least 1.20 of the previous-50 median with at least 20 samples. TP1 is fixed at +10 points, TP2 at +20 points, Stop Loss never moves to breakeven, max hold is 24 hours, and an ambiguous M1 candle resolves SL first.
+- AMD waits for a midpoint FVG limit fill and cancels if the manipulation extreme breaks before the fill; the shortest qualifying accumulation window owns the candidate.
+
+### Preview Notification Ownership
+- Preview news devices are excluded at the upstream legacy data-push owner and from local WorkManager fallback. The unchanged downstream public system route therefore receives no new Preview delivery pairs. One Preview-only FCM system-notification route owns delivery using canonical event keys, an atomic per-device ledger, retries, and a scheduler lease.
+- A newer enabled `preview-update.json` version must invoke the native `Update Amy FX Preview Tersedia` notification before showing the in-app update dialog. The signed release must exist and pass identity/signer verification before the manifest is activated.
+
 ## 2026-07-31
 
 ### Private Preview Live-Price Ownership

@@ -2,9 +2,9 @@
 
 Amy FX Preview adalah aplikasi Android hybrid untuk pemetaan market, pemantauan **XAU/USD**, Rencana Eksekusi, Entry Watch, jurnal trading, market intelligence, dan materi belajar. Antarmuka utama berjalan melalui WebView lokal, layanan native Android ditangani oleh Kotlin, sedangkan candle analisis, Scalper Engine, lifecycle setup, dan notifikasi memakai layanan backend yang terisolasi untuk Preview.
 
-> **Release aktif:** `2.0.0-preview.297` · Version code `940297`
+> **Release aktif:** `2.0.0-preview.298` · Version code `940298`
 
-[Download Amy FX Preview 2.0.0-preview.297](https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.297/AmyFX-Preview-latest.apk)
+[Download Amy FX Preview 2.0.0-preview.298](https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.298/AmyFX-Preview-latest.apk)
 
 ## Fungsi Branch
 
@@ -30,18 +30,18 @@ Perubahan pada branch personal tidak boleh otomatis digabungkan, disalin, atau d
 | Nama aplikasi | `Amy FX Preview` |
 | Application ID | `com.amyelitesuite.learningpreview` |
 | URI scheme | `amyfxpreview` |
-| Version name | `2.0.0-preview.297` |
-| Version code | `940297` |
+| Version name | `2.0.0-preview.298` |
+| Version code | `940298` |
 | Minimum Android | Android 8.0 / API 26 |
 | Target SDK | Android SDK 35 |
 | Update channel | `personal/amyfx-private/preview-update.json` |
-| Release tag | `amyfx-blueprint-preview-2.0.0-preview.297` |
+| Release tag | `amyfx-blueprint-preview-2.0.0-preview.298` |
 
 Identitas package, URI, signing certificate, data aplikasi, dan update channel Preview harus tetap terpisah dari Amy FX publik.
 
 ## Kondisi Terbaru
 
-Release `.297` memakai **Scalper Engine multidriver** sebagai otoritas eksekusi bersama untuk:
+Release `.298` memakai **Scalper Engine Pattern v3 BT6/BT6.1 + AMD** sebagai otoritas eksekusi bersama untuk:
 
 - **Rencana Eksekusi**;
 - **Entry Watch**;
@@ -60,13 +60,15 @@ Amy FX Preview bukan robot trading dan tidak membuka, mengubah, atau menutup ord
 
 Scalper Engine hanya mengaktifkan rencana entry ketika seluruh kondisi berikut terpenuhi:
 
-- setup berasal dari engine aktif `amyfx-preview-scalper-multidriver-v2.0`;
+- setup berasal dari engine aktif `amyfx-preview-scalper-pattern-v3.0`;
 - setup bukan setup legacy;
 - arah setup valid BUY atau SELL;
 - status setup masih nonterminal;
 - data berstatus `LIVE`;
 - entry, Stop Loss, TP1, dan TP2 membentuk geometri yang valid;
 - lifecycle sudah mencapai status yang mengizinkan entry.
+
+Kesepuluh driver—sembilan driver lama dan AMD M30/H1—dievaluasi independen tanpa veto lintas-driver. Semua keputusan memakai candle yang sudah close, gate Pattern BT6, repair overlay BT6.1 untuk driver terkait, dan konfigurasi AMD `AMD-2025-V1`.
 
 Aplikasi menampilkan **WAIT** ketika:
 
@@ -83,9 +85,9 @@ WAITING_TRIGGER / WAITING_NEXT_OPEN / ENTRY_READY
         ↓
 ACTIVE → ENTRY_TRIGGERED
         ↓
-BE_ACTIVE → TP1 HIT / BE
+TP1_HIT (event; Stop Loss tetap)
         ↓
-TP_HIT / SL_HIT / BE_HIT / TIME_EXIT / INVALIDATED / CANCELLED
+TP_HIT / SL_HIT / TIME_EXIT / INVALIDATED / CANCELLED
 ```
 
 ## Arsitektur Utama
@@ -98,7 +100,7 @@ Candle analisis
         ↓
 Supabase market-candles
         ↓
-Scalper Engine Multidriver
+Scalper Engine Pattern v3
         ↓
 Setup Lifecycle + State Store
         ↓
@@ -187,11 +189,11 @@ Workflow hanya berjalan untuk branch `personal/amyfx-private` dan melakukan:
 
 Workflow tidak boleh mengaktifkan manifest versi baru sebelum APK signed berhasil dibuat dan lolos verifikasi.
 
-## Status Verifikasi Release `.297`
+## Status Verifikasi Release `.298`
 
-Release `2.0.0-preview.297` telah lulus:
+Release `2.0.0-preview.298` menjalankan gerbang verifikasi berikut sebelum kanal update diaktifkan:
 
-- 93 file regression JavaScript;
+- seluruh regression JavaScript;
 - Android release unit test;
 - Android lint;
 - signed APK build;
@@ -200,13 +202,7 @@ Release `2.0.0-preview.297` telah lulus:
 - application label verification;
 - signing certificate verification;
 - GitHub prerelease publication;
-- update-channel activation.
-
-Checksum APK:
-
-```text
-a45a9d7d70495167960c69120c298e84e904290b3b5ede6df7347f522bb2f769
-```
+- update-channel activation setelah semua verifikasi berhasil.
 
 ## Update Channel
 
@@ -219,13 +215,13 @@ personal/amyfx-private/preview-update.json
 Manifest saat ini menunjuk ke:
 
 ```text
-Version name : 2.0.0-preview.297
-Version code : 940297
+Version name : 2.0.0-preview.298
+Version code : 940298
 Enabled      : true
 Force update : false
 ```
 
-Aplikasi versi `940295` atau lebih lama dapat mendeteksi `.297` sebagai pembaruan yang lebih baru melalui kanal Preview.
+Aplikasi versi `940297` atau lebih lama dapat mendeteksi `.298` sebagai pembaruan yang lebih baru melalui kanal Preview. Saat versi baru terdeteksi, aplikasi menampilkan notifikasi native **Update Amy FX Preview Tersedia** dan dialog unduh APK bertanda tangan.
 
 ## Aturan Pengembangan
 

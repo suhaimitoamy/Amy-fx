@@ -1,7 +1,7 @@
 (function () {
-  const VERSION = window.AmyFXAppVersion || { name: '2.0.0-preview.297', code: 940297 };
-  const CURRENT_VERSION_CODE = Number(VERSION.code) || 940297;
-  const CURRENT_VERSION_NAME = String(VERSION.name || '2.0.0-preview.297');
+  const VERSION = window.AmyFXAppVersion || { name: '2.0.0-preview.298', code: 940298 };
+  const CURRENT_VERSION_CODE = Number(VERSION.code) || 940298;
+  const CURRENT_VERSION_NAME = String(VERSION.name || '2.0.0-preview.298');
   const UPDATE_URL = window.AmyFXUpdateManifestUrl
     || 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json';
   const CHECK_INTERVAL_MS = 15 * 60 * 1000;
@@ -128,6 +128,24 @@
       ui.cancelBtn.textContent = 'Tutup';
     }
   };
+
+  function announceNativeUpdate(latestCode, latestName) {
+    const key = 'amy_fx_update_notified_' + latestCode;
+    try {
+      if (localStorage.getItem(key) === '1') return;
+    } catch (_) {}
+    const message = 'Amy FX Preview ' + latestName + ' siap dipasang.';
+    try {
+      if (window.Android && typeof window.Android.showNotification === 'function') {
+        window.Android.showNotification('Update Amy FX Preview Tersedia', message);
+      } else {
+        notify(message);
+      }
+      try { localStorage.setItem(key, '1'); } catch (_) {}
+    } catch (_) {
+      notify(message);
+    }
+  }
 
   function showUpdatePopup(data, latestCode, latestName) {
     if (popupOpen) return;
@@ -293,6 +311,7 @@
         const latestName = data.latest_version_name ?? data.version ?? latestCode;
 
         if (latestCode > CURRENT_VERSION_CODE) {
+          announceNativeUpdate(latestCode, latestName);
           showUpdatePopup(data, latestCode, latestName);
           return { status: 'update_available', latestCode, latestName };
         }

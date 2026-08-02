@@ -5,6 +5,7 @@ import { getNewsImpact, isRelevantNews } from '../../../lib/news-relevance.mjs';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const SOURCE = 'SM_News_24h';
+const PREVIEW_DEVICE_PREFIX = 'com.amyelitesuite.learningpreview:';
 const TELEGRAM_WEB_BASES = [
   'https://telegram.me/s',
   'https://telegram.dog/s'
@@ -234,9 +235,14 @@ async function pushNews(inserted: any[]) {
   const newsRows = [...newsMap.values()].filter(
     row => isRelevantNews(row.text_original || row.text_indonesian || '')
   );
-  const devices = await rest(
-    'device_tokens?select=id,fcm_token&enabled=eq.true&order=last_seen_at.desc&limit=500'
+  const deviceRows = await rest(
+    'device_tokens?select=id,device_id,fcm_token&enabled=eq.true&order=last_seen_at.desc&limit=500'
   ) || [];
+  // Preview has one authoritative system-notification route backed by an atomic ledger.
+  // Keep the existing public-app data push unchanged while excluding Preview devices here.
+  const devices = (Array.isArray(deviceRows) ? deviceRows : []).filter(
+    (device: any) => !String(device.device_id || '').startsWith(PREVIEW_DEVICE_PREFIX)
+  );
 
   if (!newsRows.length || !devices.length) {
     return { sent: 0, attempted: 0, configured: true, error: null };
