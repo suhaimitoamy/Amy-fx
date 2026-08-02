@@ -6,9 +6,11 @@ import { readFile } from 'node:fs/promises';
 const root = new URL('../', import.meta.url);
 const read = path => readFile(new URL(path, root), 'utf8');
 const runtimePath = 'app/src/main/assets/apps/mapping/js/ui/dom-stable-render.js';
+const uiRenderPath = 'app/src/main/assets/apps/mapping/js/ui/ui-render.js';
 
 test('stable DOM renderer is valid JavaScript and loads before Mapping data modules', async () => {
   execFileSync(process.execPath, ['--check', runtimePath], { stdio: 'pipe' });
+  execFileSync(process.execPath, ['--check', uiRenderPath], { stdio: 'pipe' });
   const main = await read('app/src/main/assets/apps/mapping/js/main.js');
   const stablePosition = main.indexOf('./ui/dom-stable-render.js');
   const marketPosition = main.indexOf('./api/market-data.js');
@@ -25,6 +27,17 @@ test('same-view Mapping updates patch existing DOM instead of replacing the app 
   assert.match(runtime, /next\.hasAttribute\('data-dom-persistent'\)/);
   assert.doesNotMatch(runtime, /lastAppView !== view[\s\S]*nativeInnerHtml\.set/);
   assert.doesNotMatch(runtime, /window\.scrollTo|window\.scrollBy/);
+});
+
+test('connection status changes use soft UI updates and cannot rebuild the Mapping page', async () => {
+  const uiRender = await read(uiRenderPath);
+  const signatureStart = uiRender.indexOf('export function mappingRenderSignature()');
+  const renderStart = uiRender.indexOf('export function render(){', signatureStart);
+  assert.ok(signatureStart >= 0);
+  assert.ok(renderStart > signatureStart);
+  const signatureSource = uiRender.slice(signatureStart, renderStart);
+  assert.doesNotMatch(signatureSource, /connection\s*:\s*state\.conn/);
+  assert.match(uiRender, /export function renderSoft\(\)\{statusDot\(\)/);
 });
 
 test('Market Regime card keeps its element identity during live refresh', async () => {
