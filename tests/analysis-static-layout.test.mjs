@@ -44,7 +44,7 @@ test('Observers do not watch every nested mutation or every click', () => {
 });
 
 test('stability-only checkpoint keeps Preview release identity unchanged', () => {
-  assert.match(appVersion, /2\.0\.0-preview\.305/);
-  assert.equal(updateManifest.latest_version_code, 940305);
-  assert.equal(updateManifest.latest_version_name, '2.0.0-preview.305');
+  assert.match(appVersion, /2\.0\.0-preview\.306/);
+  assert.equal(updateManifest.latest_version_code, 940306);
+  assert.equal(updateManifest.latest_version_name, '2.0.0-preview.306');
 });

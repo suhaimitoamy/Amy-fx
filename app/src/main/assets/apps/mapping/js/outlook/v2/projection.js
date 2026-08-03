@@ -256,7 +256,10 @@ export function buildMarketOutlooks({
     const config = configuredHorizon(base, session, now);
     const context = contextResult(config, combinedAnalyses);
     const votes = collectVotes(combinedAnalyses, config.weights);
-    const direction = directionName(votes.normalized);
+    const m15Trend = confirmedTrend(combinedAnalyses.M15);
+    const direction = config.id === 'SCALPING' && m15Trend !== 0
+      ? (m15Trend > 0 ? 'BULLISH' : 'BEARISH')
+      : directionName(votes.normalized);
     const atrValue = Math.max(horizonAtr(config, candlesByTf), currentPrice * 0.0003);
     const levels = collectLevels(combinedAnalyses, config, currentPrice, atrValue);
     const targets = chooseTargets(direction, levels, config, atrValue);
@@ -308,7 +311,7 @@ export function buildMarketOutlooks({
   });
 
   const coreFreshness = ['M15', 'H1', 'H4'].map(tf => String(freshness?.[tf]?.state || 'CACHE'));
-  const trackable = outlooks.length === 3
+  const trackable = outlooks.length === OUTLOOK_HORIZONS.length
     && outlooks.every(item => item.contextTf)
     && coreFreshness.every(value => !value.includes('STALE') && !value.includes('CACHE'));
 

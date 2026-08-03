@@ -49,5 +49,5 @@ test('analysis badge reports a closed-candle source instead of stale', () => {
 });
 
 test('checkpoint does not bump Preview version', () => {
-  assert.match(appVersion, /2\.0\.0-preview\.305/);
+  assert.match(appVersion, /2\.0\.0-preview\.306/);
 });

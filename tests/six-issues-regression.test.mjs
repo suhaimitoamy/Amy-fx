@@ -143,5 +143,5 @@ test('Asia Range uses canonical 06:00–14:00 WITA window', () => {
 
 test('Preview version remains unchanged', () => {
   const appVersion = fs.readFileSync('app/src/main/assets/app-version.js', 'utf8');
-  assert.match(appVersion, /2\.0\.0-preview\.305/);
+  assert.match(appVersion, /2\.0\.0-preview\.306/);
 });

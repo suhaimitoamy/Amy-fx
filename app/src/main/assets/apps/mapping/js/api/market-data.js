@@ -818,6 +818,7 @@ function publishMappingSnapshot(result = state.result) {
   const explanation = result?.mappingExplanation || buildMappingExplanation(result);
   if (result && !result.mappingExplanation) result.mappingExplanation = explanation;
   const validated = result?.validatedMarketContext;
+  const analysisUnavailable = Boolean(result?.dataStale && !result?.st && !validated?.marketState);
   if (result) {
     result.mappingSnapshot = buildMappingSnapshot(result, {
       candles: state.candles[result.tf] || [],
@@ -840,10 +841,10 @@ function publishMappingSnapshot(result = state.result) {
     setupExecution: execution,
     mappingExplanation: explanation,
     mappingSnapshot: result?.mappingSnapshot || null,
-    marketState: result?.dataStale ? 'DATA USANG' : (validated?.marketState?.state || 'RANGE / TRANSITION'),
+    marketState: analysisUnavailable ? 'DATA TIDAK TERSEDIA' : (validated?.marketState?.state || result?.st?.trend || 'RANGE / TRANSITION'),
     directionForecast: decision.source === 'VALIDATED_DIRECTION_FORECAST' ? (validated?.directionForecast?.direction || 'NO CLEAR DIRECTION') : 'NO CLEAR DIRECTION',
-    regime: result?.dataStale ? 'TRANSITION' : (result?.strategyRouter?.activeRegime || result?.marketRegime?.regime || 'TRANSITION'),
-    strategy: result?.dataStale ? 'NO_TRADE' : (result?.strategyRouter?.activeStrategy || 'NO_TRADE'),
+    regime: analysisUnavailable ? 'TRANSITION' : (result?.strategyRouter?.activeRegime || result?.marketRegime?.regime || 'TRANSITION'),
+    strategy: analysisUnavailable ? 'NO_TRADE' : (result?.strategyRouter?.activeStrategy || 'NO_TRADE'),
     shiftRisk: Number(result?.marketRegime?.shift?.risk || 0),
     analyzedAt: result ? Date.now() : Number(previous.analyzedAt || 0)
   });
