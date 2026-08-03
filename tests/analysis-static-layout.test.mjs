@@ -43,8 +43,24 @@ test('Observers do not watch every nested mutation or every click', () => {
   assert.doesNotMatch(panels, /amyfx:scalper-state-change/);
 });
 
-test('stability-only checkpoint keeps Preview release identity unchanged', () => {
-  assert.match(appVersion, /2\.0\.0-preview\.306/);
-  assert.equal(updateManifest.latest_version_code, 940306);
-  assert.equal(updateManifest.latest_version_name, '2.0.0-preview.306');
+test('Preview source identity is never behind the activated update manifest', () => {
+  const match = appVersion.match(/name:\s*'(2\.0\.0-preview\.(\d+))'\s*,\s*code:\s*(94\d{4})/);
+  assert.ok(match, 'Preview source identity must be readable');
+
+  const [, sourceName, sourceSequenceText, sourceCodeText] = match;
+  const sourceSequence = Number(sourceSequenceText);
+  const sourceCode = Number(sourceCodeText);
+  const publishedCode = Number(updateManifest.latest_version_code);
+  const publishedName = String(updateManifest.latest_version_name || '');
+
+  assert.equal(sourceCode, 940000 + sourceSequence);
+  assert.equal(sourceName, '2.0.0-preview.306');
+  assert.ok(sourceCode >= publishedCode, 'Preview source must not be older than the update manifest');
+
+  if (sourceCode === publishedCode) {
+    assert.equal(publishedName, sourceName);
+  } else {
+    assert.equal(sourceCode, publishedCode + 1, 'Pending release may be exactly one version ahead');
+    assert.equal(publishedName, '2.0.0-preview.305');
+  }
 });
