@@ -10,16 +10,32 @@ on:
 
 permissions:
   contents: write
+  statuses: write
+
+concurrency:
+  group: preview-outlook-polish
+  cancel-in-progress: true
 
 jobs:
   polish-and-regress:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout private Preview branch
         uses: actions/checkout@v4
         with:
           ref: personal/amyfx-private
           fetch-depth: 0
+
+      - name: Mark source regression pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -fsS -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -d '{"state":"pending","context":"Preview Source Regression","description":"Full Node regression is running"}'
 
       - name: Apply Outlook polish
         run: python3 scripts/apply-preview-outlook-polish.py
@@ -33,6 +49,25 @@ jobs:
           echo "$status" > preview-outlook-regression.status
           cat preview-outlook-regression.log
           exit 0
+
+      - name: Publish regression status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          status="$(cat preview-outlook-regression.status)"
+          if [ "$status" = "0" ]; then
+            state="success"
+            description="Full Node regression passed"
+          else
+            state="failure"
+            description="Full Node regression failed; report committed"
+          fi
+          curl -fsS -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -d "{\"state\":\"$state\",\"context\":\"Preview Source Regression\",\"description\":\"$description\"}"
 
       - name: Commit successful source or isolated failure report
         shell: bash
