@@ -45,3 +45,5 @@ jobs:
           git add -A
           git commit -m "fix(mapping): separate visible analysis from executable freshness [skip ci]"
           git push origin HEAD:personal/amyfx-private
+
+# Trigger after workflow installation.
