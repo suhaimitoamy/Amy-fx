@@ -230,6 +230,10 @@
     }
   }
 
+  function normalizeClosedSeries(body, info, now = Date.now()) {
+    return normalizeMarketBody(body, info, now);
+  }
+
   function cloneStored(stored) {
     return new Response(stored.body, {
       status: stored.status,
@@ -384,7 +388,7 @@
           : info.fetchUrl;
         const response = await nativeFetch(canonicalInput, init);
         const rawBody = await response.clone().text();
-        const body = normalizeMarketBody(rawBody, info, Date.now());
+        const body = normalizeClosedSeries(rawBody, info, Date.now());
         const storedAt = Date.now();
         const stored = {
           body,
