@@ -2,9 +2,9 @@ import { reconcileScalperPayload, scalperFreshness, scalperPayloadSignature } fr
 
 const CARD_ID='amy-scalper-entry-watch';
 const ENDPOINT='https://wliecyxzlwhmtftnfnps.supabase.co/functions/v1/scalper-setups?limit=50';
-let signature='',lastValidPayload=null,requestSequence=0,requestController=null,timer=0,started=false,lastFocusedHash='',displaySelectedSetupId='';
-const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char]);
-const price=value=>Number.isFinite(Number(value))?Number(value).toFixed(2):'-';
+let signature='',lastValidPayload=null,requestSequence=0,requestController=null,started=false,displaySelectedSetupId='';
+const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'})[char]);
+const price=value=>{const number=Number(value);return Number.isFinite(number)&&number>0?number.toFixed(2):'-';};
 const resultR=value=>Number.isFinite(Number(value))?`${Number(value)>=0?'+':''}${Number(value).toFixed(2)}R`:'-';
 const driver=setup=>setup?.driverName||(setup?.model==='IFVG_SCALPER'?'IFVG LEGACY':String(setup?.model||'SCALPER ENGINE').replaceAll('_',' '));
 const timeframe=setup=>setup?.timeframe||'M15';
@@ -57,12 +57,10 @@ function card(payload,availability,error=''){
     ${setup?`<div class="scalper-summary"><div><span>Driver</span><strong>${esc(driver(setup))}</strong></div><div><span>Timeframe</span><strong>${esc(timeframe(setup))}</strong></div><div><span>HTF Bias</span><strong>${esc(setup.htfBias||'WAIT')}</strong></div><div><span>Lifecycle</span><strong>${esc(status(setup.status))}</strong></div></div>${levels}${stopBasis}${reason}<p class="scalper-watch__instruction">${esc(instruction(setup))}</p>${reset}`:`<p class="scalper-watch__instruction">${esc(instruction(null))}</p>`}
     ${others.length?`<div class="scalper-watch__section"><h3>Setup aktif lainnya (${others.length})</h3><div class="scalper-active-list">${others.map(item=>mini(item,primary?.id,setup?.id)).join('')}</div></div>`:''}
     ${recent.length?`<details class="scalper-watch__recent"><summary>Lifecycle terbaru</summary>${recent.map(item=>mini(item,primary?.id,setup?.id)).join('')}</details>`:''}
-    
   </section>`;
 }
 function anchor(){return document.querySelector('[data-execution-plan-card="compact"]')||document.querySelector('[data-execution-plan-card="detail"]')||document.querySelector('#app > .card');}
 function ensureCard(){let existing=document.getElementById(CARD_ID);if(existing)return existing;const host=anchor();if(!host)return null;existing=document.createElement('section');existing.id=CARD_ID;existing.className='card scalper-watch scalper-watch--wait';existing.dataset.scalperMode='shadow';existing.dataset.domPersistent='true';existing.dataset.stabilityKey='scalper-shadow';host.insertAdjacentElement('afterend',existing);return existing;}
-
 function bindInteractions(node){
   node.addEventListener('click',event=>{const select=event.target.closest('[data-scalper-select-id]');if(select){displaySelectedSetupId=select.dataset.scalperSelectId||'';signature='';render(lastValidPayload,scalperFreshness(lastValidPayload));return;}if(event.target.closest('[data-scalper-return-primary]')){displaySelectedSetupId='';signature='';render(lastValidPayload,scalperFreshness(lastValidPayload));}});
 }
@@ -74,6 +72,6 @@ function render(payload,availability,error=''){
   window.AmyFXScalperState=Object.freeze({payload,error,availability,displaySelectedSetupId,updatedAt:Date.now()});window.dispatchEvent(new CustomEvent('amyfx:scalper-state-change',{detail:window.AmyFXScalperState}));return true;
 }
 async function sync(){const sequence=++requestSequence;requestController?.abort();const controller=new AbortController();requestController=controller;try{const response=await fetch(ENDPOINT,{headers:{Accept:'application/json'},cache:'no-store',signal:controller.signal});const payload=await response.json().catch(()=>null);if(!response.ok||!payload?.ok)throw new Error(payload?.detail||payload?.error||`HTTP ${response.status}`);if(sequence!==requestSequence||controller.signal.aborted)return false;lastValidPayload=reconcileScalperPayload(lastValidPayload,payload);return render(lastValidPayload,scalperFreshness(lastValidPayload));}catch(error){if(controller.signal.aborted||sequence!==requestSequence||error?.name==='AbortError')return false;const message=`Backend scalper belum dapat dibaca: ${error?.message||error}`;return render(lastValidPayload,scalperFreshness(lastValidPayload,message),message);}finally{if(requestController===controller)requestController=null;}}
-function start(){if(started)return;started=true;const cardNode=ensureCard();if(cardNode)bindInteractions(cardNode);sync();clearInterval(timer);timer=setInterval(sync,30_000);window.addEventListener('hashchange',focusHash);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync();});focusHash();}
+function start(){if(started)return;started=true;const cardNode=ensureCard();if(cardNode)bindInteractions(cardNode);sync();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 export{sync as syncScalperEntryWatch};
