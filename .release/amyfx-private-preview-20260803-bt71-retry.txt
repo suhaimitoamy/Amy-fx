@@ -1,0 +1,8 @@
+Amy FX Private Preview BT7.1 release retry
+Date: 2026-08-03 WITA
+Target branch: personal/amyfx-private
+Source version: 2.0.0-preview.301
+Source version code: 940301
+Published manifest before build: 2.0.0-preview.300 / 940300
+Purpose: build, verify, publish, and only then activate the signed Preview 301 APK.
+Production main, public package, production signing, and production update channel are not modified.
