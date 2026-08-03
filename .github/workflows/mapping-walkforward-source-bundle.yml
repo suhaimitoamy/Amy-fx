@@ -1,0 +1,42 @@
+name: Mapping Walk-Forward Source Bundle
+
+on:
+  pull_request:
+    branches:
+      - personal/amyfx-private
+    paths:
+      - '.github/workflows/mapping-walkforward-source-bundle.yml'
+      - 'tools/mapping-walkforward/**'
+      - 'tests/mapping-walkforward/**'
+      - 'docs/backtests/mapping-walkforward/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact PR revision
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Record immutable source metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _source_bundle
+          git rev-parse HEAD > _source_bundle/HEAD_SHA.txt
+          git status --porcelain=v1 > _source_bundle/GIT_STATUS.txt
+          git ls-files -z | tar --null -T - -czf _source_bundle/amyfx-source.tar.gz
+          sha256sum _source_bundle/amyfx-source.tar.gz > _source_bundle/amyfx-source.tar.gz.sha256
+
+      - name: Upload source bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: amyfx-mapping-walkforward-source-${{ github.event.pull_request.head.sha || github.sha }}
+          path: _source_bundle/
+          if-no-files-found: error
+          retention-days: 1
