@@ -4,41 +4,67 @@
   if (window.__amyFxStableAnalysisUiV4Installed) return;
   window.__amyFxStableAnalysisUiV4Installed = true;
 
-  const DISCLOSURE_STATE_KEY = 'amyfx.analysis.disclosures.v4';
   const MARKET_CONTEXT_KEY = 'market-context';
-
   let scheduled = false;
   let applying = false;
+  let observer = null;
 
   function currentTab() {
     return window.state?.tab || localStorage.getItem('amy_mapping_tab') || '';
   }
 
-  function readDisclosureState() {
-    try {
-      const value = JSON.parse(localStorage.getItem(DISCLOSURE_STATE_KEY) || '{}');
-      return value && typeof value === 'object' ? value : {};
-    } catch (_) {
-      return {};
+  function installStaticStyle() {
+    if (document.getElementById('amyfx-static-analysis-layout')) return;
+    const style = document.createElement('style');
+    style.id = 'amyfx-static-analysis-layout';
+    style.textContent = `
+      #app[data-analysis-static="true"] > details,
+      #app[data-analysis-static="true"] details.amy-analysis-section,
+      #app[data-analysis-static="true"] details.disclosure {
+        display: block;
+      }
+      #app[data-analysis-static="true"] details > summary {
+        cursor: default;
+        user-select: text;
+        pointer-events: none;
+      }
+      #app[data-analysis-static="true"] details > summary::-webkit-details-marker {
+        display: none;
+      }
+      #app[data-analysis-static="true"] details > summary::marker {
+        content: '';
+      }
+      #app[data-analysis-static="true"] details > summary::after {
+        display: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function forceStaticDisclosure(details) {
+    if (!details) return;
+    details.removeAttribute('name');
+    details.open = true;
+    details.dataset.amyStaticAnalysis = 'true';
+
+    const summary = details.querySelector(':scope > summary');
+    if (summary) {
+      summary.setAttribute('aria-disabled', 'true');
+      summary.setAttribute('tabindex', '-1');
     }
-  }
 
-  function writeDisclosureState(key, open) {
-    if (!key) return;
-    const state = readDisclosureState();
-    state[key] = Boolean(open);
-    try { localStorage.setItem(DISCLOSURE_STATE_KEY, JSON.stringify(state)); } catch (_) {}
-  }
+    if (details.dataset.amyStaticBound === 'true') return;
+    details.dataset.amyStaticBound = 'true';
 
-  function bindDisclosure(details, defaultOpen = false) {
-    if (!details || details.dataset.amyDisclosureBound === 'true') return;
-    const key = details.dataset.stabilityKey;
-    const saved = readDisclosureState();
-    details.open = Object.prototype.hasOwnProperty.call(saved, key)
-      ? Boolean(saved[key])
-      : Boolean(defaultOpen);
-    details.dataset.amyDisclosureBound = 'true';
-    details.addEventListener('toggle', () => writeDisclosureState(key, details.open));
+    details.addEventListener('toggle', () => {
+      if (!details.open) details.open = true;
+    });
+
+    summary?.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      details.open = true;
+    }, true);
   }
 
   function removeDashboardDuplicates() {
@@ -101,7 +127,7 @@
     const currentParent = card.parentElement;
     if (currentParent?.classList.contains('amy-analysis-section')) {
       currentParent.dataset.stabilityKey = MARKET_CONTEXT_KEY;
-      bindDisclosure(currentParent, false);
+      forceStaticDisclosure(currentParent);
       updateAnalysisBadge(card);
       return;
     }
@@ -109,10 +135,11 @@
     const details = document.createElement('details');
     details.className = 'card amy-analysis-section';
     details.dataset.stabilityKey = MARKET_CONTEXT_KEY;
+    details.open = true;
     details.innerHTML = '<summary><span>Ringkasan Market</span><small>Struktur, arah, dan skenario</small></summary>';
     card.before(details);
     details.appendChild(card);
-    bindDisclosure(details, false);
+    forceStaticDisclosure(details);
     updateAnalysisBadge(card);
   }
 
@@ -126,14 +153,16 @@
     return '';
   }
 
-  function bindTopLevelDisclosures() {
-    if (currentTab() !== 'Analyze') return;
-    document.querySelectorAll('#app > details').forEach(details => {
+  function makeAnalyzeStatic(app) {
+    if (!app || currentTab() !== 'Analyze') return;
+    app.dataset.analysisStatic = 'true';
+
+    app.querySelectorAll('details').forEach(details => {
       if (!details.dataset.stabilityKey) {
         const key = stableKeyForSummary(details.querySelector(':scope > summary')?.textContent);
         if (key) details.dataset.stabilityKey = key;
       }
-      if (details.dataset.stabilityKey) bindDisclosure(details, false);
+      forceStaticDisclosure(details);
     });
   }
 
@@ -146,7 +175,12 @@
     if (applying) return;
     applying = true;
     try {
+      installStaticStyle();
       removeDashboardDuplicates();
+
+      const app = document.getElementById('app');
+      if (!app) return;
+
       if (currentTab() === 'Analyze') {
         const card = document.getElementById('amy-regime-router-v3');
         if (card) {
@@ -154,8 +188,10 @@
           ensureMarketContextDisclosure(card);
           updateAnalysisBadge(card);
         }
-        bindTopLevelDisclosures();
+        makeAnalyzeStatic(app);
         removeHistoricalOutlookStats();
+      } else {
+        delete app.dataset.analysisStatic;
       }
     } finally {
       applying = false;
@@ -171,12 +207,15 @@
   function start() {
     const app = document.getElementById('app');
     if (!app) return;
-    new MutationObserver(() => {
-      if (!applying) schedule();
-    }).observe(app, { childList: true, subtree: true });
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) schedule();
+
+    observer = new MutationObserver(records => {
+      if (applying) return;
+      const topLevelChanged = records.some(record => record.target === app);
+      if (topLevelChanged) schedule();
     });
+    observer.observe(app, { childList: true, subtree: false });
+
+    window.addEventListener('amyfx:mapping-state-change', schedule);
     schedule();
   }
 
