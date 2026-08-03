@@ -27,16 +27,16 @@ test('closed-candle adapter is loaded after Mapping clarity', () => {
   );
 });
 
-test('last closed candle remains the displayed analysis source', () => {
+test('last closed candle remains the displayed analysis source without mutating engine freshness', () => {
   assert.match(adapter, /Basis candle terakhir tertutup/);
   assert.match(adapter, /CLOSED_CANDLE/);
-  assert.match(adapter, /state\.result\.dataStale = false/);
-  assert.match(adapter, /Status data lama tidak menghapus arah market/);
+  assert.match(adapter, /hasClosedCandle/);
+  assert.match(adapter, /Freshness tetap menjadi proteksi internal/);
+  assert.doesNotMatch(adapter, /state\.result\.dataStale\s*=\s*false/);
   assert.doesNotMatch(adapter, /ANALISIS KEDALUWARSA/);
-  assert.doesNotMatch(adapter, /Freshness resmi menandai/);
 });
 
-test('stale command-strip labels are replaced without nested mutation loops', () => {
+test('stale labels are presentation-only and do not create nested mutation loops', () => {
   assert.match(adapter, /CANDLE TERTUTUP/);
   assert.match(adapter, /subtree: false/);
   assert.doesNotMatch(adapter, /amyfx:market-update/);
