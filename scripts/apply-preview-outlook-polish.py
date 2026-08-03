@@ -3,6 +3,8 @@ import json
 
 OLD_VERSION = '2.0.0-preview.305'
 NEW_VERSION = '2.0.0-preview.306'
+OLD_VERSION_REGEX = r'2\.0\.0-preview\.305'
+NEW_VERSION_REGEX = r'2\.0\.0-preview\.306'
 OLD_CODE = '940305'
 NEW_CODE = '940306'
 
@@ -102,7 +104,12 @@ else:
 
 for test_path in Path('tests').rglob('*.mjs'):
     text = test_path.read_text(encoding='utf-8')
-    updated = text.replace(OLD_VERSION, NEW_VERSION).replace(OLD_CODE, NEW_CODE)
+    updated = (
+        text
+        .replace(OLD_VERSION, NEW_VERSION)
+        .replace(OLD_VERSION_REGEX, NEW_VERSION_REGEX)
+        .replace(OLD_CODE, NEW_CODE)
+    )
     if updated != text:
         test_path.write_text(updated, encoding='utf-8')
 
