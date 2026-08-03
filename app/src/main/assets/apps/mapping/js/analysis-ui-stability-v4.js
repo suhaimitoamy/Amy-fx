@@ -75,33 +75,29 @@
     });
   }
 
-  function qualityState(value) {
-    if (!value) return '';
-    if (typeof value === 'string') return value;
-    return String(value.state || value.status || value.label || '');
-  }
-
-  function isM15Stale() {
-    const result = window.state?.result;
-    if (result?.dataStale) return true;
-    const connection = document.getElementById('conn');
-    const freshness = String(connection?.dataset?.analysisFreshness || '').toUpperCase();
-    if (freshness === 'STALE' || freshness === 'EXPIRED') return true;
-    const quality = window.AmyMappingIntegrity?.qualityByInterval || {};
-    const m15 = quality['15min'] || quality.M15 || quality.m15;
-    const status = qualityState(m15).toUpperCase();
-    return status.includes('STALE') || status.includes('USANG');
+  function latestClosedCandle() {
+    const candles = window.state?.candles || {};
+    for (const timeframe of ['M15', 'M5', 'M1', 'M30', 'H1']) {
+      const list = Array.isArray(candles[timeframe]) ? candles[timeframe] : [];
+      const closed = [...list].reverse().find(candle => candle?.isClosed !== false);
+      if (closed) return { timeframe, candle: closed };
+    }
+    return null;
   }
 
   function updateAnalysisBadge(card) {
     const badge = card?.querySelector('.regime-badge');
     if (!badge) return;
-    const stale = isM15Stale();
-    const text = stale ? 'M15 STALE' : 'M15 LIVE';
+    const source = latestClosedCandle();
+    const available = Boolean(source);
+    const text = available ? `${source.timeframe} CANDLE TERTUTUP` : 'MENUNGGU DATA';
     if (badge.textContent !== text) badge.textContent = text;
-    badge.classList.toggle('stale', stale);
-    badge.classList.toggle('live', !stale);
-    badge.setAttribute('aria-label', stale ? 'Data candle M15 sedang usang' : 'Data candle M15 aktif');
+    badge.classList.remove('stale');
+    badge.classList.toggle('live', available);
+    badge.classList.toggle('waiting', !available);
+    badge.setAttribute('aria-label', available
+      ? `Analisis memakai candle ${source.timeframe} terakhir yang sudah close`
+      : 'Belum ada candle tertutup yang dapat dianalisis');
   }
 
   function removeHistoricalReliability(card) {
