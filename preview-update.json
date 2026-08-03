@@ -1,32 +1,28 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 940305,
-  "latest_version_name": "2.0.0-preview.305",
-  "versionCode": 940305,
-  "version": "2.0.0-preview.305",
+  "latest_version_code": 940306,
+  "latest_version_name": "2.0.0-preview.306",
+  "versionCode": 940306,
+  "version": "2.0.0-preview.306",
   "releaseDate": "2026-08-03",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.305/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.305/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.306/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.306/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Asia Range, Asia Liquidity, dan Market Outlook sekarang memakai satu window canonical 06:00–14:00 WITA.",
-    "Protected Low dan Protected High selalu ditampilkan sebagai invalidasi struktur meskipun Entry Permission masih WAIT.",
-    "Mapping Semua Timeframe memisahkan Struktur Saat Ini, Forecast, dan Entry Permission agar WAIT tidak menghapus arah market.",
-    "Market Outlook membedakan belum ada context event dari market netral dan tetap menampilkan fokus, invalidasi, target, serta Asia Session Context.",
-    "Ringkasan Market memakai klaim hasil backtest Juli 2026 dengan label metrik dan sampel yang jujur.",
-    "Valid Break tetap mempertahankan status INTERNAL, MAJOR, AT RISK, dan FAILED beserta arti praktisnya.",
-    "Panel Setup Aktif dihapus dari layar Analisis tanpa menghapus engine, lifecycle, scanner, atau histori setup.",
+    "Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.",
+    "Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.",
+    "Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.",
+    "Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.",
+    "Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.",
     "Amy FX publik pada branch main tidak diubah."
   ],
   "changelog": [
-    "Canonical Asia Session Context 06:00–14:00 WITA",
-    "Structural invalidation visibility across Outlook, Summary, Explanation, and all-timeframe table",
-    "Separated Structure, Forecast, and Entry Permission presentation",
-    "WAITING_EVENT semantic clarification",
-    "July 2026 evidence-scoped Market Summary claims",
-    "Valid Break status glossary and preserved lifecycle semantics",
-    "Analyze Setup Aktif panel removal with engine/history retention"
+    "Professional glass UI tokens and shared components",
+    "System, light, and dark theme controller",
+    "Truthful home, collection, and profile presentation",
+    "Unified loading, accessibility, and vector icon polish",
+    "Android system bar theme synchronization"
   ]
 }
