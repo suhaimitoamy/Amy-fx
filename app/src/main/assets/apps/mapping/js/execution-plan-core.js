@@ -1,7 +1,7 @@
 const ACTIVE_DIRECTIONS = new Set(['BUY', 'SELL']);
-const FRESH_STATES = new Set(['FRESH', 'LIVE', 'CLOSED_CANDLE', 'VALID', 'ACTIVE']);
 const TERMINAL_STATUS = /(TP2 HIT|TP1 \/ BE|SL HIT|STOPPED|TARGET_HIT|EXPIRED|INVALID|LEVEL_RETIRED|RETIRED|TERMINAL|SETUP REPLACED|SETUP NO LONGER ACTIVE)/i;
 const FORECAST_PAUSED = /(FORECAST_INVALIDATED|FORECAST INVALIDATED|FORECAST_PAUSED|FORECAST PAUSED)/i;
+const NON_BLOCKING_SCALPER_CONFLICT = /(QUOTE_MAPPING_TIMESTAMP_SKEW|BSL_SOURCE_DIFFERENCE|SSL_SOURCE_DIFFERENCE|HTF.*LOCAL|MACRO.*SCALP)/i;
 
 function clean(value) {
   return String(value ?? '').trim();
@@ -118,7 +118,7 @@ function requirementLabel(label, focusDirection, timeframe) {
     DIRECTION: 'Menunggu Direction Forecast resmi menetapkan arah.',
     'OPPOSING LIQUIDITY SWEEP': `Menunggu ${side} disapu dan reaksi sweep dikonfirmasi Mapping.`,
     'DISPLACED MSS': `Menunggu displaced MSS ${structure} ${tf} dari candle yang sudah close.`,
-    'HTF ALIGNMENT': 'Menunggu konteks HTF resmi selaras.',
+    'HTF ALIGNMENT': 'Menunggu konteks timeframe Mapping resmi selaras.',
     'EMA STACK': 'Menunggu filter EMA resmi terpenuhi.',
     'EMA DISTANCE': 'Menunggu jarak EMA resmi memenuhi filter.',
     SESSION: 'Menunggu session resmi yang diizinkan Mapping.',
@@ -138,7 +138,7 @@ function passedRequirementLabel(item, focusDirection, timeframe) {
     DIRECTION: `Direction Forecast resmi memprioritaskan ${focusDirection || 'arah setup'}.`,
     'OPPOSING LIQUIDITY SWEEP': `${side} sudah disapu dan dikonfirmasi oleh Mapping.`,
     'DISPLACED MSS': `Displaced MSS ${structure} ${tf} sudah terkonfirmasi.`,
-    'HTF ALIGNMENT': 'Konteks HTF resmi sudah selaras.',
+    'HTF ALIGNMENT': 'Konteks timeframe Mapping resmi sudah selaras.',
     'EMA STACK': 'Filter EMA stack resmi sudah terpenuhi.',
     'EMA DISTANCE': 'Filter jarak EMA resmi sudah terpenuhi.',
     SESSION: 'Filter session resmi sudah terpenuhi.',
@@ -167,20 +167,89 @@ function meaningfulExecution(execution) {
   );
 }
 
+function latestClosedCandle(input, result, snapshot) {
+  const candlesByTf = input?.runtimeState?.candles
+    || input?.marketState?.candles
+    || {};
+  const candidates = [
+    result?.tf,
+    snapshot?.timeframe,
+    input?.marketState?.timeframe,
+    'M15', 'M5', 'M1', 'M30', 'H1'
+  ].filter(Boolean);
+
+  for (const timeframe of [...new Set(candidates)]) {
+    const candles = Array.isArray(candlesByTf?.[timeframe]) ? candlesByTf[timeframe] : [];
+    const candle = [...candles].reverse().find(item =>
+      item?.isClosed !== false
+      && timestamp(item?.time)
+      && positivePrice(item?.close)
+    );
+    if (candle) return { timeframe, candle };
+  }
+  return null;
+}
+
 function freshnessFrom(input, result, snapshot) {
-  if (!input && !result && !snapshot) return {
+  const supplied = typeof input?.mappingFreshness === 'object'
+    ? input.mappingFreshness
+    : { state: input?.mappingFreshness };
+  const internalState = upper(
+    supplied?.state
+    || snapshot?.freshness?.state
+    || (result?.dataStale ? 'STALE' : '')
+    || 'UNKNOWN'
+  );
+  const closed = latestClosedCandle(input, result, snapshot);
+  const sourceTime = timestamp(
+    snapshot?.freshness?.sourceCandleTime
+    || snapshot?.sourceCandle?.time
+    || closed?.candle?.time
+    || input?.marketState?.mappingCapturedAt
+    || input?.marketState?.capturedAt
+  );
+  const hasAnalysis = Boolean(
+    result?.st
+    || result?.validatedMarketContext?.marketState
+    || snapshot?.facts?.structure
+    || snapshot?.context?.marketState
+  );
+
+  if (sourceTime || closed) {
+    return {
+      state: 'CLOSED_CANDLE',
+      valid: true,
+      stale: false,
+      expired: false,
+      label: 'CANDLE TERTUTUP',
+      sourceTime,
+      sourceTimeframe: closed?.timeframe || result?.tf || snapshot?.timeframe || null,
+      internalState
+    };
+  }
+
+  if (hasAnalysis) {
+    return {
+      state: 'ANALYSIS_AVAILABLE',
+      valid: true,
+      stale: false,
+      expired: false,
+      label: 'ANALISIS TERAKHIR',
+      sourceTime: null,
+      sourceTimeframe: result?.tf || snapshot?.timeframe || null,
+      internalState
+    };
+  }
+
+  return {
     state: 'UNAVAILABLE',
     valid: false,
     stale: false,
     expired: false,
-    label: 'BELUM TERSEDIA'
-  };
-  return {
-    state: 'LIVE',
-    valid: true,
-    stale: false,
-    expired: false,
-    label: 'LIVE'
+    label: 'BELUM TERSEDIA',
+    sourceTime: null,
+    sourceTimeframe: null,
+    internalState
   };
 }
 
@@ -336,25 +405,16 @@ function contextFields(result, snapshot, conflicts) {
     || result?.entryMap?.scenario?.location?.zone
     || dealing?.zone
   );
-  const higherTimeframeBias = upper(htf?.htfBias || htf?.bias || 'NEUTRAL');
-  const localStructure = upper(
-    structure?.localTrend
-    || marketState?.structureTrend
-    || structure?.confirmedTrend
-    || structure?.trend
-    || 'NEUTRAL'
-  );
-  const htfDirection = direction(higherTimeframeBias);
-  const localDirection = direction(localStructure);
-  const structuralConflict = Boolean(
-    htfDirection
-    && localDirection
-    && htfDirection !== localDirection
-  );
   return {
-    higherTimeframeBias,
-    localStructure,
-    marketCondition: conflicts.length || structuralConflict
+    higherTimeframeBias: upper(htf?.htfBias || htf?.bias || 'NEUTRAL'),
+    localStructure: upper(
+      structure?.localTrend
+      || marketState?.structureTrend
+      || structure?.confirmedTrend
+      || structure?.trend
+      || 'NEUTRAL'
+    ),
+    marketCondition: conflicts.length
       ? 'CONFLICT'
       : upper(marketState?.state || result?.marketCondition || 'BELUM TERSEDIA'),
     dealingLocation: upper(dealingLocation || 'BELUM TERSEDIA'),
@@ -362,27 +422,19 @@ function contextFields(result, snapshot, conflicts) {
   };
 }
 
-function hasOfficialContextConflict(result, snapshot, input) {
-  const explicitConflicts = Array.isArray(input.conflicts)
+function canonicalBlockingConflicts(input) {
+  const explicitConflicts = Array.isArray(input?.conflicts)
     ? input.conflicts
-    : Array.isArray(input.marketState?.conflicts)
+    : Array.isArray(input?.marketState?.conflicts)
       ? input.marketState.conflicts
       : [];
-  if (explicitConflicts.some(item => Boolean(conflictText(item)))) return true;
-  const higherTimeframeBias = direction(
-    result?.htfNarrative?.htfBias
-    || snapshot?.context?.htfNarrative?.htfBias
-  );
-  const localStructure = direction(
-    snapshot?.facts?.structure?.localTrend
-    || result?.st?.localTrend
-    || result?.validatedMarketContext?.marketState?.structureTrend
-  );
-  return Boolean(
-    higherTimeframeBias
-    && localStructure
-    && higherTimeframeBias !== localStructure
-  );
+  return explicitConflicts
+    .map(conflictText)
+    .filter(text => text && !NON_BLOCKING_SCALPER_CONFLICT.test(text));
+}
+
+function hasOfficialContextConflict(input) {
+  return canonicalBlockingConflicts(input).length > 0;
 }
 
 function statusHeadline({
@@ -394,8 +446,6 @@ function statusHeadline({
   status,
   invalidated
 }) {
-  if (freshness.expired) return 'WAIT — ANALISIS KEDALUWARSA';
-  if (freshness.stale) return 'WAIT — DATA MAPPING SUDAH LAMA';
   if (!freshness.valid) return 'WAIT — DATA MAPPING BELUM TERSEDIA';
   if (decision === 'BUY') return 'BUY — ENTRY SUDAH VALID';
   if (decision === 'SELL') return 'SELL — ENTRY SUDAH VALID';
@@ -552,7 +602,7 @@ export function determineExecutionDisplayStatus(input = {}) {
     || snapshot?.context?.directionDecision
     || input.marketState?.directionDecision
     || null;
-  const contextConflict = hasOfficialContextConflict(result, snapshot, input);
+  const contextConflict = hasOfficialContextConflict(input);
   const matrix = decisionMatrix({
     freshness,
     execution,
@@ -626,13 +676,8 @@ export function buildExecutionPlanViewModel(input = {}) {
   const confirmations = requirements.filter(item => item.passed).map(item =>
     formatExecutionReason(item, { focusDirection, timeframe, passed: true })
   );
-  const canonicalConflicts = Array.isArray(input.conflicts)
-    ? input.conflicts
-    : Array.isArray(input.marketState?.conflicts)
-      ? input.marketState.conflicts
-      : [];
-  const conflicts = uniqueTexts(canonicalConflicts.map(conflictText));
-  const context = contextFields(result, snapshot, conflicts);
+  const blockingConflicts = canonicalBlockingConflicts(input);
+  const context = contextFields(result, snapshot, blockingConflicts);
   const officialArea = watchArea({
     decision: display.decision,
     levels: display.levels,
@@ -647,11 +692,7 @@ export function buildExecutionPlanViewModel(input = {}) {
         high: null,
         level: null,
         source: null,
-        label: display.freshness.expired
-          ? 'Analisis kedaluwarsa — jangan gunakan level lama.'
-          : display.freshness.stale
-            ? 'Data Mapping sudah lama — lakukan analisis ulang.'
-            : 'Data Mapping belum tersedia.'
+        label: 'Data Mapping belum tersedia.'
       }
     : display.terminal || display.targetOneSecured
       ? {
@@ -664,9 +705,12 @@ export function buildExecutionPlanViewModel(input = {}) {
         }
       : officialArea;
   const target = structuralTarget(execution, setup, scenario);
+  const closed = latestClosedCandle(input, result, snapshot);
   const sourceCandleTime = isoTime(
     snapshot?.freshness?.sourceCandleTime
     || snapshot?.sourceCandle?.time
+    || closed?.candle?.time
+    || display.freshness.sourceTime
     || input.marketState?.mappingCapturedAt
     || input.marketState?.capturedAt
   );
@@ -716,20 +760,12 @@ export function buildExecutionPlanViewModel(input = {}) {
         : 'Belum tersedia — menunggu invalidasi resmi Mapping.');
 
   const reasons = [];
-  if (display.freshness.expired) {
-    reasons.push('Freshness resmi menandai analisis kedaluwarsa.');
-  } else if (display.freshness.stale) {
-    reasons.push('Freshness resmi menandai data Mapping sudah lama.');
-  }
   if (focusDirection) reasons.push(`Arah yang sedang dipantau oleh Mapping: ${focusDirection}.`);
-  if (context.marketCondition === 'CONFLICT') {
-    reasons.push(`Konteks HTF ${context.higherTimeframeBias} dan struktur lokal ${context.localStructure} belum selaras.`);
-  }
   reasons.push(...waitingRequirements.map(item => {
     const detail = clean(item.detail);
     return detail || formatExecutionReason(item, { focusDirection, timeframe });
   }));
-  reasons.push(...conflicts);
+  reasons.push(...blockingConflicts);
   if (display.decision === 'WAIT' && !display.terminal && !display.targetOneSecured) {
     if (display.checks.executionPlanLocked !== true) reasons.push('Execution plan resmi belum dikunci.');
     if (display.checks.entryAllowed !== true) reasons.push('Causal Entry Watch belum mengizinkan entry.');
@@ -742,16 +778,14 @@ export function buildExecutionPlanViewModel(input = {}) {
   let conclusion = '';
   if (display.decision === 'BUY' || display.decision === 'SELL') {
     conclusion = `Setup ${display.decision} sudah valid berdasarkan Mapping. Gunakan hanya level yang telah dikunci oleh setup resmi.`;
-  } else if (display.freshness.expired) {
-    conclusion = 'Jangan gunakan level entry lama. Lakukan analisis ulang sebelum mempertimbangkan entry.';
-  } else if (display.freshness.stale) {
-    conclusion = 'Lakukan analisis ulang sebelum mempertimbangkan entry.';
+  } else if (!display.freshness.valid) {
+    conclusion = 'Tunggu candle tertutup tersedia sebelum mempertimbangkan entry.';
   } else if (display.terminal || display.targetOneSecured) {
     conclusion = `${lifecycleLabel}. Jangan entry ulang menggunakan setup ini; tunggu setup baru dari Mapping.`;
   } else if (focusDirection) {
     conclusion = `Jangan ${focusDirection} sekarang. ${waitingFor[0] || 'Tunggu sampai setup resmi Mapping mengizinkan entry.'}`;
   } else {
-    conclusion = 'Jangan entry sekarang. Tunggu Direction Forecast dan setup resmi Mapping menetapkan arah yang valid.';
+    conclusion = 'Jangan entry sekarang. Tunggu arah scalping dan setup resmi Mapping menjadi jelas.';
   }
 
   const levelsAreExecutable = display.decision === 'BUY' || display.decision === 'SELL';
@@ -759,7 +793,7 @@ export function buildExecutionPlanViewModel(input = {}) {
     ? { type: null, subtype: null, level: null }
     : target;
   const plan = {
-    version: '1.0.0',
+    version: '1.1.0',
     source: 'AMY_MAPPING_EXECUTION_PLAN_READ_ONLY',
     authoritySource: result?.setupExecution
       ? 'setupExecution'
@@ -787,7 +821,7 @@ export function buildExecutionPlanViewModel(input = {}) {
     waitingFor: uniqueTexts(waitingFor),
     confirmations: uniqueTexts(confirmations),
     reasons: uniqueTexts(reasons),
-    conflicts,
+    conflicts: blockingConflicts,
     invalidation,
     conclusion,
     entryWatchStage: lifecycleStage,
@@ -796,8 +830,10 @@ export function buildExecutionPlanViewModel(input = {}) {
     terminal: display.terminal,
     targetOneSecured: display.targetOneSecured,
     mappingFreshness: display.freshness.state,
+    internalFreshness: display.freshness.internalState,
     dataStatus: display.freshness.label,
     sourceCandleTime,
+    sourceTimeframe: closed?.timeframe || display.freshness.sourceTimeframe || timeframe,
     analysisTime: analyzedAt,
     analysisTimeWita: witaTime(sourceCandleTime || analyzedAt),
     higherTimeframeBias: context.higherTimeframeBias,
@@ -824,6 +860,7 @@ export function buildAmyExecutionContext(viewModel) {
     focusDirection: vm.focusDirection || null,
     currentPrice: finite(vm.currentPrice),
     timeframe: clean(vm.timeframe),
+    sourceTimeframe: clean(vm.sourceTimeframe),
     higherTimeframeBias: clean(vm.higherTimeframeBias),
     localStructure: clean(vm.localStructure),
     marketCondition: clean(vm.marketCondition),
@@ -861,6 +898,7 @@ export function buildAmyExecutionContext(viewModel) {
     conclusion: clean(vm.conclusion),
     terminal: Boolean(vm.terminal),
     mappingFreshness: clean(vm.mappingFreshness),
+    internalFreshness: clean(vm.internalFreshness),
     sourceCandleTime: vm.sourceCandleTime || null,
     analysisTimeWita: clean(vm.analysisTimeWita),
     fingerprint: clean(vm.fingerprint)
