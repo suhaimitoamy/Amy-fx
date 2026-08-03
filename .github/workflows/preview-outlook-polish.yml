@@ -1,0 +1,38 @@
+name: Preview Outlook Polish
+
+on:
+  push:
+    branches:
+      - personal/amyfx-private
+    paths:
+      - scripts/apply-preview-outlook-polish.py
+      - .github/workflows/preview-outlook-polish.yml
+
+permissions:
+  contents: write
+
+jobs:
+  polish-and-regress:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout private Preview branch
+        uses: actions/checkout@v4
+        with:
+          ref: personal/amyfx-private
+          fetch-depth: 0
+
+      - name: Apply Outlook polish
+        run: python3 scripts/apply-preview-outlook-polish.py
+
+      - name: Run full Node regression
+        run: node --test tests/*.test.mjs
+
+      - name: Commit source and remove temporary runner
+        run: |
+          rm -f scripts/apply-preview-outlook-polish.py
+          rm -f .github/workflows/preview-outlook-polish.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(mapping): polish scalping outlook tracking [skip ci]"
+          git push origin HEAD:personal/amyfx-private
