@@ -1,25 +1,25 @@
 {
-  "latest_version_code": 56,
-  "latest_version_name": "2.2.0",
-  "versionCode": 56,
-  "version": "2.2.0",
+  "latest_version_code": 57,
+  "latest_version_name": "2.2.1",
+  "versionCode": 57,
+  "version": "2.2.1",
   "releaseDate": "2026-08-03",
   "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Scalper Engine publik kini memakai Pattern v3 dengan gate BT6 dan repair overlay BT6.1.",
-    "Driver AMD M30/H1 ditambahkan sebagai driver independen dengan entry midpoint FVG.",
-    "Lifecycle simulasi memakai TP1 +10 poin dan TP2 +20 poin; Stop Loss tetap pada level awal tanpa perpindahan breakeven otomatis.",
-    "Panel Scalper menampilkan seluruh setup aktif, alasan driver, timeframe, entry, SL, TP1, TP2, dan lifecycle.",
-    "Harga live XAU/USD tetap memakai native Twelve Data WebSocket; package, signing, URI, data pengguna, dan kanal update Amy FX publik tetap dipertahankan."
+    "Cache candle Mapping kini bertahan setelah aplikasi ditutup sehingga pembukaan ulang tidak mengulang request yang tidak perlu.",
+    "Freshness diverifikasi dari waktu candle closed terbaru, bukan hanya dari timer pengambilan data.",
+    "Refresh M1 latar belakang dibatasi lima menit; M1 tetap mengikuti penutupan satu menit saat timeframe M1 sedang dipilih.",
+    "Fallback Supabase yang masih aktual dapat dipakai ketika provider terganggu atau kuota REST terbatas.",
+    "Harga live tetap memakai native Twelve Data WebSocket; engine Mapping, Scalper, lifecycle, identitas produksi, signing, dan data pengguna tidak diubah."
   ],
   "changelog": [
-    "Scalper Engine publik kini memakai Pattern v3 dengan gate BT6 dan repair overlay BT6.1.",
-    "Driver AMD M30/H1 ditambahkan sebagai driver independen dengan entry midpoint FVG.",
-    "Lifecycle simulasi memakai TP1 +10 poin dan TP2 +20 poin; Stop Loss tetap pada level awal tanpa perpindahan breakeven otomatis.",
-    "Panel Scalper menampilkan seluruh setup aktif, alasan driver, timeframe, entry, SL, TP1, TP2, dan lifecycle.",
-    "Harga live XAU/USD tetap memakai native Twelve Data WebSocket; package, signing, URI, data pengguna, dan kanal update Amy FX publik tetap dipertahankan."
+    "Cache candle Mapping kini bertahan setelah aplikasi ditutup sehingga pembukaan ulang tidak mengulang request yang tidak perlu.",
+    "Freshness diverifikasi dari waktu candle closed terbaru, bukan hanya dari timer pengambilan data.",
+    "Refresh M1 latar belakang dibatasi lima menit; M1 tetap mengikuti penutupan satu menit saat timeframe M1 sedang dipilih.",
+    "Fallback Supabase yang masih aktual dapat dipakai ketika provider terganggu atau kuota REST terbatas.",
+    "Harga live tetap memakai native Twelve Data WebSocket; engine Mapping, Scalper, lifecycle, identitas produksi, signing, dan data pengguna tidak diubah."
   ]
 }
