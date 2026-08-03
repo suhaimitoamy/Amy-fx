@@ -17,14 +17,15 @@ test('unchanged Mapping state skips the root render and market-state publication
   assert.doesNotMatch(dom, /window\.scrollTo|window\.scrollBy/);
 });
 
-test('Mapping listeners, timers, and observers are installed once and do not call the root renderer', async () => {
+test('Mapping listeners and observers are installed once without autonomous Scalper polling', async () => {
   const scalper = await read('app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js');
   const panels = await read('app/src/main/assets/apps/mapping/js/dashboard-only-panels-v1.js');
   const analysis = await read('app/src/main/assets/apps/mapping/js/analysis-ui-stability-v4.js');
 
   assert.match(scalper, /if\s*\(\s*started\s*\)\s*return/);
-  assert.equal((scalper.match(/setInterval\s*\(\s*sync\s*,\s*30_000\s*\)/g) || []).length, 1);
-  assert.equal((scalper.match(/addEventListener\s*\(\s*'hashchange'\s*,\s*focusHash\s*\)/g) || []).length, 1);
+  assert.match(scalper, /function start\(\)\{[^}]*sync\(\)/);
+  assert.doesNotMatch(scalper, /setInterval|setTimeout/);
+  assert.doesNotMatch(scalper, /hashchange|visibilitychange|focusHash|lastFocusedHash/);
   assert.doesNotMatch(scalper, /MutationObserver/);
 
   assert.match(panels, /if \(window\.__amyFxDashboardOnlyPanelsV1Installed\) return/);
@@ -46,7 +47,8 @@ test('ordinary Mapping refresh does not force scroll and accordion state uses st
 
   assert.doesNotMatch(ui, /scrollIntoView|window\.scrollTo|window\.scrollBy/);
   assert.doesNotMatch(renderBlock, /scrollIntoView|scrollTo|scrollBy/);
-  assert.match(scalper, /if\s*\(\s*!hash\s*\|\|\s*hash\s*===\s*lastFocusedHash\s*\)\s*return/);
+  assert.doesNotMatch(scalper, /focusHash|location\.hash|hashchange/);
+  assert.match(scalper, /if\(nextSignature===signature\)return false/);
   assert.match(ui, /details\[data-stability-key\]/);
   assert.match(ui, /new Map\(/);
   assert.match(ui, /disclosureState\.get\(key\)/);
