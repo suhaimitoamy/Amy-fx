@@ -12,20 +12,23 @@ function assertSyntax(path) {
   assert.equal(result.status, 0, result.stderr || result.stdout);
 }
 
-test('Mapping repairs freshness from the latest actually closed candle', () => {
+test('Mapping keeps the latest closed candle authoritative without autonomous refresh', () => {
   const path = 'app/src/main/assets/apps/mapping/js/mapping-runtime-repair-v3.js';
   const runtime = read(path);
   const index = read('app/src/main/assets/apps/mapping/index.html');
 
   assertSyntax(path);
   assert.match(index, /mapping-runtime-repair-v3\.js/);
-  assert.match(runtime, /state\.result\?\.mappingSnapshot/);
+  assert.match(runtime, /const snapshot = result\.mappingSnapshot/);
   assert.match(runtime, /latestClosedCandleClose/);
   assert.match(runtime, /sourceCandleTime/);
-  assert.match(runtime, /snapshot\?\.data\?\.stale/);
-  assert.match(runtime, /AMY_MAPPING_SINGLE_AUTHORITY_V3/);
-  assert.match(runtime, /await runAnalysis\(state\.tf\)/);
+  assert.match(runtime, /markCachedSeriesUsable/);
+  assert.match(runtime, /sourceSignature/);
+  assert.match(runtime, /dataStale: false/);
+  assert.match(runtime, /await runEngineAnalysis\(tf\)/);
   assert.match(runtime, /amyfx:candles-updated/);
+  assert.match(runtime, /amyfx:mapping-refresh-request/);
+  assert.doesNotMatch(runtime, /setInterval|visibilitychange|addEventListener\('focus'|addEventListener\('online'/);
 });
 
 test('Entry Watch card stays hidden while lifecycle data remains read-only', () => {
