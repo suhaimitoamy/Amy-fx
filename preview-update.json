@@ -11,18 +11,22 @@
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.",
-    "Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.",
-    "Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.",
-    "Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.",
-    "Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.",
+    "Mapping mempertahankan analisis candle terakhir yang sudah close dan tidak lagi dikosongkan hanya karena status data lama.",
+    "Harga WebSocket tetap bergerak sebagai tampilan live tanpa menghitung ulang Mapping atau lifecycle pada setiap tick.",
+    "Arah scalping memakai M15 sebagai otoritas utama, M5 dan M1 sebagai pendukung, serta M30 dan H1 hanya sebagai fallback.",
+    "Halaman Analisis tidak lagi dipindah, digulir, difokuskan, atau dirender ulang oleh polling dan event latar belakang.",
+    "Freshness tetap bekerja sebagai proteksi internal: analisis terakhir tetap terlihat, tetapi setup STALE atau EXPIRED tidak mendapat izin BUY atau SELL.",
+    "Fallback M5 dan M15 dari M1 hanya dibentuk dari bucket candle tertutup yang lengkap dan berurutan.",
+    "Scalper Shadow dan rute notifikasi tidak lagi memakai polling, visibility refresh, hash focus, atau forced scroll.",
     "Amy FX publik pada branch main tidak diubah."
   ],
   "changelog": [
-    "Professional glass UI tokens and shared components",
-    "System, light, and dark theme controller",
-    "Truthful home, collection, and profile presentation",
-    "Unified loading, accessibility, and vector icon polish",
-    "Android system bar theme synchronization"
+    "Closed-candle Mapping persistence",
+    "Display-only WebSocket live price",
+    "M15-first scalper direction authority",
+    "Static Analyze navigation and layout",
+    "Internal freshness execution protection",
+    "Complete M1 candle aggregation",
+    "Event-free Scalper Shadow and notification routing"
   ]
 }
