@@ -4,13 +4,13 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 const root=new URL('../',import.meta.url); const path=r=>new URL(r,root); const source=r=>readFileSync(path(r),'utf8');
-test('Amy FX 2.2.0 keeps the public Android identity and updater channel',()=>{
+test('Amy FX 2.2.1 keeps the public Android identity and updater channel',()=>{
  const gradle=source('app/build.gradle.kts'),version=source('app/src/main/assets/app-version.js'),checker=source('app/src/main/assets/update-checker.js'),workflow=source('.github/workflows/build-apk.yml');
- assert.match(gradle,/com\.amyelitesuite/); assert.match(gradle,/\?: 56\)/); assert.match(gradle,/\?: "2\.2\.0"/); assert.match(gradle,/main\/update\.json/);
+ assert.match(gradle,/com\.amyelitesuite/); assert.match(gradle,/\?: 57\)/); assert.match(gradle,/\?: "2\.2\.1"/); assert.match(gradle,/main\/update\.json/);
  assert.doesNotMatch(gradle,/learningpreview|Amy FX Preview|amyfxpreview|preview-update\.json/);
- assert.match(version,/name: '2\.2\.0', code: 56/); assert.match(version,/main\/update\.json/); assert.doesNotMatch(version,/Preview|personal\/amyfx-private/);
+ assert.match(version,/name: '2\.2\.1', code: 57/); assert.match(version,/main\/update\.json/); assert.doesNotMatch(version,/Preview|personal\/amyfx-private/);
  assert.match(checker,/main\/update\.json/); assert.doesNotMatch(checker,/Amy FX Preview|personal\/amyfx-private|preview-update\.json/);
- assert.match(workflow,/AMYFX_VERSION_NAME: "2\.2\.0"/); assert.match(workflow,/AMYFX_VERSION_CODE: "56"/); assert.match(workflow,/latest_version_code=56/); assert.match(workflow,/Verify public update manifest/);
+ assert.match(workflow,/AMYFX_VERSION_NAME: "2\.2\.1"/); assert.match(workflow,/AMYFX_VERSION_CODE: "57"/); assert.match(workflow,/latest_version_code=57/); assert.match(workflow,/Verify public update manifest/);
  assert.match(workflow,/TWELVEDATA_API_KEY: \$\{\{ secrets\.TWELVEDATA_API_KEY \}\}/);
  assert.equal(existsSync(path('preview-update.json')),false); assert.equal(existsSync(path('AmyFX-Preview-latest.apk')),false); assert.equal(existsSync(path('app/src/main/assets/apps/market-intel/private-market-api-router.js')),false);
 });
@@ -19,6 +19,14 @@ test('Mapping presents a clean public interface without visible Preview badges',
  execFileSync(process.execPath,['--check',fileURLToPath(path('app/src/main/assets/apps/mapping/js/production-branding.js'))],{stdio:'pipe'});
  assert.match(html,/<title>Amy FX · Market Intelligence<\/title>/); assert.doesNotMatch(html,/Amy FX Preview/); assert.match(html,/js\/production-branding\.js/); assert.ok(html.indexOf('js/production-branding.js')<html.indexOf('js/main.js')); assert.doesNotMatch(main,/mountPreviewUpdateBadge/); assert.match(branding,/card\?\.remove\(\)/);
  assert.doesNotMatch(scalper,/aktif dalam simulasi Preview/); assert.match(scalper,/aktif dalam simulasi Amy FX/);
+});
+test('public Mapping keeps persistent candle freshness and quota guards',()=>{
+ const coordinator=source('app/src/main/assets/apps/mapping/js/api-request-coordinator.js');
+ execFileSync(process.execPath,['--check',fileURLToPath(path('app/src/main/assets/apps/mapping/js/api-request-coordinator.js'))],{stdio:'pipe'});
+ assert.match(coordinator,/PERSISTENT_CACHE_KEY = 'amyfx_market_response_cache_v3'/);
+ assert.match(coordinator,/BACKGROUND_M1_REFRESH_SECONDS = 300/);
+ assert.match(coordinator,/SUPABASE_VERIFIED_CURRENT/);
+ assert.match(coordinator,/RETRY_COOLDOWN_MS = 60_000/);
 });
 test('public Mapping loads final Pattern v3 Scalper modules',()=>{
  const html=source('app/src/main/assets/apps/mapping/index.html'),panel=source('app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js'),authority=source('app/src/main/assets/apps/mapping/js/scalper-execution-authority.js'),patterns=source('supabase/functions/scalper-engine/pattern-gates.mjs');
