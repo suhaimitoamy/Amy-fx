@@ -200,6 +200,9 @@ function freshnessFrom(input, result, snapshot) {
     || (result?.dataStale ? 'STALE' : '')
     || 'UNKNOWN'
   );
+  const internalStale = /STALE/.test(internalState);
+  const internalExpired = /EXPIRED/.test(internalState);
+  const executable = !internalStale && !internalExpired;
   const closed = latestClosedCandle(input, result, snapshot);
   const sourceTime = timestamp(
     snapshot?.freshness?.sourceCandleTime
@@ -219,8 +222,9 @@ function freshnessFrom(input, result, snapshot) {
     return {
       state: 'CLOSED_CANDLE',
       valid: true,
-      stale: false,
-      expired: false,
+      executable,
+      stale: internalStale,
+      expired: internalExpired,
       label: 'CANDLE TERTUTUP',
       sourceTime,
       sourceTimeframe: closed?.timeframe || result?.tf || snapshot?.timeframe || null,
@@ -232,8 +236,9 @@ function freshnessFrom(input, result, snapshot) {
     return {
       state: 'ANALYSIS_AVAILABLE',
       valid: true,
-      stale: false,
-      expired: false,
+      executable,
+      stale: internalStale,
+      expired: internalExpired,
       label: 'ANALISIS TERAKHIR',
       sourceTime: null,
       sourceTimeframe: result?.tf || snapshot?.timeframe || null,
@@ -244,6 +249,7 @@ function freshnessFrom(input, result, snapshot) {
   return {
     state: 'UNAVAILABLE',
     valid: false,
+    executable: false,
     stale: false,
     expired: false,
     label: 'BELUM TERSEDIA',
@@ -440,6 +446,7 @@ function hasOfficialContextConflict(input) {
 function statusHeadline({
   decision,
   freshness,
+  freshnessBlocked,
   focusDirection,
   terminal,
   targetOneSecured,
@@ -447,6 +454,8 @@ function statusHeadline({
   invalidated
 }) {
   if (!freshness.valid) return 'WAIT — DATA MAPPING BELUM TERSEDIA';
+  if (freshnessBlocked && freshness.expired) return 'WAIT — ANALISIS KEDALUWARSA';
+  if (freshnessBlocked && freshness.stale) return 'WAIT — DATA MAPPING SUDAH LAMA';
   if (decision === 'BUY') return 'BUY — ENTRY SUDAH VALID';
   if (decision === 'SELL') return 'SELL — ENTRY SUDAH VALID';
   if (/TP2 HIT|TARGET_HIT/i.test(status)) return 'WAIT — TARGET AKHIR TERCAPAI';
@@ -497,9 +506,8 @@ function decisionMatrix({
   const hasEntryArea = levels.entryLow != null && levels.entryHigh != null;
   const hasTargets = levels.tp1 != null
     && (execution?.singleTarget === true || setup?.singleTarget === true || levels.tp2 != null);
-  const complete = Boolean(
-    freshness.valid
-    && ACTIVE_DIRECTIONS.has(officialDirection)
+  const completeWithoutFreshness = Boolean(
+    ACTIVE_DIRECTIONS.has(officialDirection)
     && execution?.active === true
     && execution?.terminal !== true
     && execution?.invalidated !== true
@@ -517,14 +525,23 @@ function decisionMatrix({
     && levels.stopLoss != null
     && hasTargets
   );
+  const freshnessExecutable = Boolean(freshness.valid && freshness.executable !== false);
+  const complete = Boolean(freshnessExecutable && completeWithoutFreshness);
+  const freshnessBlocked = Boolean(
+    freshness.valid
+    && freshness.executable === false
+    && completeWithoutFreshness
+  );
   return {
     decision: complete ? officialDirection : 'WAIT',
     officialDirection,
     aligned,
     entryTriggered,
     complete,
+    freshnessBlocked,
     checks: {
-      freshnessValid: freshness.valid,
+      freshnessValid: freshnessExecutable,
+      analysisAvailable: freshness.valid,
       executionActive: execution?.active === true,
       setupActive: setup?.live !== false,
       entryAllowed: watch?.entryAllowed === true,
@@ -685,14 +702,18 @@ export function buildExecutionPlanViewModel(input = {}) {
     result,
     snapshot
   });
-  const area = !display.freshness.valid
+  const area = !display.freshness.valid || display.freshnessBlocked
     ? {
         kind: 'UNAVAILABLE',
         low: null,
         high: null,
         level: null,
         source: null,
-        label: 'Data Mapping belum tersedia.'
+        label: display.freshnessBlocked
+          ? (display.freshness.expired
+              ? 'Analisis terakhir tetap ditampilkan, tetapi setup sudah kedaluwarsa.'
+              : 'Analisis terakhir tetap ditampilkan, tetapi izin entry menunggu pembaruan candle.')
+          : 'Data Mapping belum tersedia.'
       }
     : display.terminal || display.targetOneSecured
       ? {
@@ -734,6 +755,7 @@ export function buildExecutionPlanViewModel(input = {}) {
   const headline = statusHeadline({
     decision: display.decision,
     freshness: display.freshness,
+    freshnessBlocked: display.freshnessBlocked,
     focusDirection,
     terminal: display.terminal,
     targetOneSecured: display.targetOneSecured,
@@ -760,6 +782,11 @@ export function buildExecutionPlanViewModel(input = {}) {
         : 'Belum tersedia — menunggu invalidasi resmi Mapping.');
 
   const reasons = [];
+  if (display.freshnessBlocked) {
+    reasons.push(display.freshness.expired
+      ? 'Freshness internal menandai setup kedaluwarsa; analisis terakhir tetap terlihat tetapi entry dinonaktifkan.'
+      : 'Freshness internal menunggu pembaruan; analisis terakhir tetap terlihat tetapi entry dinonaktifkan.');
+  }
   if (focusDirection) reasons.push(`Arah yang sedang dipantau oleh Mapping: ${focusDirection}.`);
   reasons.push(...waitingRequirements.map(item => {
     const detail = clean(item.detail);
@@ -780,6 +807,8 @@ export function buildExecutionPlanViewModel(input = {}) {
     conclusion = `Setup ${display.decision} sudah valid berdasarkan Mapping. Gunakan hanya level yang telah dikunci oleh setup resmi.`;
   } else if (!display.freshness.valid) {
     conclusion = 'Tunggu candle tertutup tersedia sebelum mempertimbangkan entry.';
+  } else if (display.freshnessBlocked) {
+    conclusion = 'Arah Mapping terakhir tetap berlaku sebagai konteks, tetapi jangan entry sampai freshness internal kembali valid.';
   } else if (display.terminal || display.targetOneSecured) {
     conclusion = `${lifecycleLabel}. Jangan entry ulang menggunakan setup ini; tunggu setup baru dari Mapping.`;
   } else if (focusDirection) {
@@ -789,7 +818,10 @@ export function buildExecutionPlanViewModel(input = {}) {
   }
 
   const levelsAreExecutable = display.decision === 'BUY' || display.decision === 'SELL';
-  const visibleTarget = display.terminal || display.targetOneSecured || !display.freshness.valid
+  const visibleTarget = display.terminal
+    || display.targetOneSecured
+    || !display.freshness.valid
+    || display.freshnessBlocked
     ? { type: null, subtype: null, level: null }
     : target;
   const plan = {
