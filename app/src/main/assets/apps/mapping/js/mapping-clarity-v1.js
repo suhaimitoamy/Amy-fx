@@ -6,7 +6,7 @@ import { calculateAsiaRange } from './session/asia-range.js';
 
 const ASIA_WINDOW = '06:00–14:00 WITA';
 const SCALPER_AUTHORITY_TFS = Object.freeze(['M15', 'M5', 'M1', 'M30', 'H1']);
-const SCALPER_WEIGHTS = Object.freeze({ M15: 6, M5: 5, M1: 2, M30: 3, H1: 2 });
+const SCALPER_WEIGHTS = Object.freeze({ M15: 45, M5: 25, M1: 20, M30: 5, H1: 5 });
 let queued = false;
 let busy = false;
 let tfCacheKey = '';
@@ -20,6 +20,14 @@ const num = (...values) => {
   for (const value of values) {
     const parsed = Number(value);
     if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+};
+
+const positiveNum = (...values) => {
+  for (const value of values) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
   }
   return null;
 };
@@ -75,13 +83,13 @@ function baseStructure(result) {
             : 'CONTINUATION'
     )
   ).replaceAll('_', ' ');
-  const protectedLow = num(
+  const protectedLow = positiveNum(
     market.protectedLow,
     result?.marketConcepts?.structureSnapshot?.protectedLow,
     result?.st?.protectedLow,
     result?.mappingSnapshot?.protectedLow
   );
-  const protectedHigh = num(
+  const protectedHigh = positiveNum(
     market.protectedHigh,
     result?.marketConcepts?.structureSnapshot?.protectedHigh,
     result?.st?.protectedHigh,
@@ -163,10 +171,10 @@ function chooseScalperDirection(rows = allTfRows()) {
     const bullishScore = bullishSupport.reduce((total, row) => total + (SCALPER_WEIGHTS[row.tf] || 0), 0);
     const bearishScore = bearishSupport.reduce((total, row) => total + (SCALPER_WEIGHTS[row.tf] || 0), 0);
 
-    if (bullishSupport.length >= 2 && bullishScore >= bearishScore + 2) {
+    if (bullishSupport.length >= 2 && bullishScore >= bearishScore + 10) {
       direction = 'BULLISH';
       reason = `Arah scalping bullish dikonfirmasi ${bullishSupport.map(row => row.tf).join(' + ')}.`;
-    } else if (bearishSupport.length >= 2 && bearishScore >= bullishScore + 2) {
+    } else if (bearishSupport.length >= 2 && bearishScore >= bullishScore + 10) {
       direction = 'BEARISH';
       reason = `Arah scalping bearish dikonfirmasi ${bearishSupport.map(row => row.tf).join(' + ')}.`;
     }
@@ -241,9 +249,9 @@ function permission(result = state.result) {
     && result?.entryWatch?.terminal !== true
     && result?.entryWatch?.entryAllowed !== false
     && execution.alignedWithForecast !== false
-    && num(execution.entryLow, execution.entry) != null
-    && num(execution.stopLoss, execution.sl, execution.initialStopLoss) != null
-    && num(execution.target1, execution.tp1) != null
+    && positiveNum(execution.entryLow, execution.entry) != null
+    && positiveNum(execution.stopLoss, execution.sl, execution.initialStopLoss) != null
+    && positiveNum(execution.target1, execution.tp1) != null
     && direction !== 'WAIT'
   );
   return {
@@ -264,7 +272,7 @@ function asia() {
   const now = last?.time
     ? (Number(last.time) > 1e11 ? Number(last.time) : Number(last.time) * 1000) + 15 * 60000
     : Date.now();
-  return calculateAsiaRange(candles, num(last?.close), now);
+  return calculateAsiaRange(candles, positiveNum(last?.close), now);
 }
 
 function asiaDraw(value) {
@@ -280,14 +288,14 @@ function asiaDraw(value) {
 
 function target(result = state.result) {
   const execution = permission(result).execution;
-  const targetPrice = num(execution?.target2, execution?.tp2, execution?.target1, execution?.tp1);
+  const targetPrice = positiveNum(execution?.target2, execution?.tp2, execution?.target1, execution?.tp1);
   if (targetPrice != null) return `Target execution ${p2(targetPrice)}`;
   const drawTarget = result?.liquidityHierarchy?.drawTarget || result?.drawTarget;
-  const drawLevel = num(drawTarget?.level, drawTarget?.price);
+  const drawLevel = positiveNum(drawTarget?.level, drawTarget?.price);
   if (drawLevel != null) return `${drawTarget?.type || drawTarget?.label || 'Liquidity'} ${p2(drawLevel)}`;
   const info = structure(result);
-  const bsl = num(result?.bsl);
-  const ssl = num(result?.ssl);
+  const bsl = positiveNum(result?.bsl);
+  const ssl = positiveNum(result?.ssl);
   if (info.direction === 'BULLISH' && bsl != null) return `BSL ${p2(bsl)}`;
   if (info.direction === 'BEARISH' && ssl != null) return `SSL ${p2(ssl)}`;
   return 'Belum ada target struktural aktif.';
@@ -363,7 +371,7 @@ function renderOutlook() {
 
   patch(panel, signature, `<section class="amy-level-panel ${entryPermission.active ? '' : 'waiting'}">
     <p class="amy-level-intro">Arah scalping memakai M15 → M5 → M1. M30/H1 hanya fallback; H4/D1 tidak ikut voting.</p>
-  <div class="clarity-grid">
+    <div class="clarity-grid">
       <div class="clarity-cell clarity-${structureInfo.direction.toLowerCase()}"><small>Arah Scalping</small><strong>${esc(structureInfo.label)}</strong><span>${esc(authorityNote(structureInfo))}</span></div>
       <div class="clarity-cell clarity-${forecastInfo.direction.toLowerCase()}"><small>Forecast</small><strong>${forecastInfo.active ? esc(forecastInfo.direction) : 'BELUM AKTIF'}</strong><span>${forecastInfo.active ? `Horizon ${esc(forecastInfo.horizon)}` : 'Tidak menghapus arah scalping.'}</span></div>
       <div class="clarity-cell clarity-${entryPermission.value.toLowerCase()}"><small>Entry Permission</small><strong>${esc(entryPermission.value)}</strong><span>${esc(entryPermission.reason)}</span></div>
@@ -421,7 +429,7 @@ function renderExplanation() {
   const entryPermission = permission(result);
   const asiaInfo = asia();
   const source = sourceTime(result);
- let host = details.querySelector('.clarity-explanation');
+  let host = details.querySelector('.clarity-explanation');
   if (!host) {
     [...details.children].forEach(child => {
       if (child.tagName !== 'SUMMARY') child.remove();
@@ -526,7 +534,7 @@ function boot() {
 }
 
 window.AmyFXMappingClarity = Object.freeze({
-  version: '1.1.0',
+  version: '1.2.0',
   canonicalAsiaWindow: ASIA_WINDOW,
   scalperAuthorityTimeframes: SCALPER_AUTHORITY_TFS,
   refresh: schedule,
