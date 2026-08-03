@@ -1,4 +1,4 @@
-// Amy FX Preview personal release identity.
+// Amy FX Preview personal release identity — Mapping stability release.
 (function () {
   const VERSION = Object.freeze({ name: '2.0.0-preview.306', code: 940306 });
   window.AmyFXAppVersion = VERSION;
