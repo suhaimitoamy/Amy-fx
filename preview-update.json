@@ -1,28 +1,28 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 940302,
-  "latest_version_name": "2.0.0-preview.302",
-  "versionCode": 940302,
-  "version": "2.0.0-preview.302",
+  "latest_version_code": 940303,
+  "latest_version_name": "2.0.0-preview.303",
+  "versionCode": 940303,
+  "version": "2.0.0-preview.303",
   "releaseDate": "2026-08-03",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.302/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.302/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.303/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.303/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Cache candle Mapping kini tetap tersimpan saat aplikasi ditutup dan dibuka kembali.",
-    "REST Twelve Data hanya dipanggil ketika candle closed terbaru memang belum tersedia.",
-    "Pembaruan M1 latar belakang dibatasi setiap lima menit; M1 terpilih tetap mengikuti penutupan candle satu menit.",
-    "Fallback Supabase diterima hanya setelah timestamp candle diverifikasi masih aktual.",
-    "Retry kegagalan dibatasi agar koneksi bermasalah tidak menghabiskan kuota gratis provider.",
-    "Branch main dan Amy FX publik tidak diubah."
+    "Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.",
+    "Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.",
+    "Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.",
+    "Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.",
+    "Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.",
+    "Amy FX publik pada branch main tidak diubah."
   ],
   "changelog": [
-    "Persistent closed-candle cache across app restarts",
-    "Closed-candle boundary freshness verification",
-    "Quota-safe background M1 throttling",
-    "Verified current Supabase fallback",
-    "Provider retry cooldown and request deduplication"
+    "Professional glass UI tokens and shared components",
+    "System, light, and dark theme controller",
+    "Truthful home, collection, and profile presentation",
+    "Unified loading, accessibility, and vector icon polish",
+    "Android system bar theme synchronization"
   ]
 }
