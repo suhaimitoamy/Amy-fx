@@ -99,14 +99,26 @@ test('quote timestamp and liquidity-source differences do not create a scalper h
 });
 
 test('scalping horizon keeps M15 primary and excludes H4 D1 W1', () => {
-  const code = fs.readFileSync('app/src/main/assets/apps/mapping/js/outlook/v2/base.js', 'utf8');
-  const block = code.match(/id: 'SCALPING'[\s\S]*?\n  \},/)?.[0] || '';
+  const base = fs.readFileSync('app/src/main/assets/apps/mapping/js/outlook/v2/base.js', 'utf8');
+  const block = base.match(/id: 'SCALPING'[\s\S]*?\n  \},/)?.[0] || '';
   assert.match(block, /M15: 0\.45/);
   assert.match(block, /M5: 0\.25/);
   assert.match(block, /M1: 0\.2/);
   assert.match(block, /M30: 0\.05/);
   assert.match(block, /H1: 0\.05/);
   assert.doesNotMatch(block, /H4|D1|W1/);
+
+  const projection = fs.readFileSync('app/src/main/assets/apps/mapping/js/outlook/v2/projection.js', 'utf8');
+  assert.match(projection, /config\.id === 'SCALPING' && m15Trend !== 0/);
+  assert.match(projection, /outlooks\.length === OUTLOOK_HORIZONS\.length/);
+});
+
+test('SCALPING tracker uses WITA, half-hour slots, and normalized candle timestamps', () => {
+  const tracker = fs.readFileSync('app/src/main/assets/apps/mapping/js/outlook/v2/tracker.js', 'utf8');
+  assert.match(tracker, /Asia\/Makassar/);
+  assert.match(tracker, /Math\.floor\(now \/ \(HOUR \/ 2\)\)/);
+  assert.match(tracker, /candleTimeMs\(candle\.time\)/);
+  assert.doesNotMatch(tracker, /Asia\/Jakarta/);
 });
 
 test('Analyze stability has no observer or synthetic scrolling', () => {
