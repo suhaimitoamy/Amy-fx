@@ -1,0 +1,379 @@
+name: Apply BT7.1 Market State Correction
+
+on:
+  push:
+    branches:
+      - fix/preview-bt71-market-state-20260803
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/preview-bt71-market-state-20260803
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply BT7.1 correction
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import json
+
+          validated = Path('app/src/main/assets/apps/mapping/js/engine/validated-market-context.js')
+          text = validated.read_text()
+          marker = "AMY_CONCEPT_STRUCTURE_RECONCILIATION_BT7_1"
+          if marker not in text:
+              classify_old = """    directionValue,
+              confirmed: bullConfirmed || bearConfirmed,"""
+              classify_new = """    directionValue,
+              forecastDirectionValue: directionValue,
+              strictDirectionValue: directionValue,
+              primaryDirection: directionValue > 0 ? 'BULLISH' : directionValue < 0 ? 'BEARISH' : 'NEUTRAL',
+              primaryDirectionValue: directionValue,
+              phase: bullPullback || bearPullback ? 'PULLBACK' : bullTransition || bearTransition ? 'TRANSITION' : directionValue ? 'CONTINUATION' : 'RANGE',
+              confirmed: bullConfirmed || bearConfirmed,"""
+              if classify_old not in text:
+                  raise SystemExit('classify return anchor not found')
+              text = text.replace(classify_old, classify_new, 1)
+
+              helper_anchor = 'export function validatedForecastCandidate({' 
+              helper = r'''
+          function structuralDirection(value) {
+            const text = String(value || '').trim().toUpperCase();
+            if (text === 'BULLISH' || text === 'BULL' || text === 'UPTREND' || text === 'BUY') return 1;
+            if (text === 'BEARISH' || text === 'BEAR' || text === 'DOWNTREND' || text === 'SELL') return -1;
+            return 0;
+          }
+
+          function marketStateLabel(directionValue, phase) {
+            if (directionValue > 0) {
+              if (phase === 'PULLBACK') return 'BULLISH PULLBACK';
+              if (phase === 'TRANSITION') return 'BULLISH TRANSITION';
+              return 'UPTREND CONFIRMED';
+            }
+            if (directionValue < 0) {
+              if (phase === 'PULLBACK') return 'BEARISH PULLBACK';
+              if (phase === 'TRANSITION') return 'BEARISH TRANSITION';
+              return 'DOWNTREND CONFIRMED';
+            }
+            return 'RANGE / TRANSITION';
+          }
+
+          /**
+           * BT7.1 reconciliation.
+           *
+           * Market State describes the structure that exists now. Direction Forecast is
+           * evaluated separately against future price. The independent Concept Structure
+           * engine therefore owns the displayed primary direction, while the canonical
+           * validated series remains the authority for Direction Forecast triggers.
+           */
+          export function reconcileValidatedMarketState(baseState = {}, {
+            objectiveStructure = null,
+            objectiveStructureSnapshot = null,
+            close = NaN
+          } = {}) {
+            if (!objectiveStructure || typeof objectiveStructure !== 'object') return baseState;
+
+            const confirmedDirection = structuralDirection(
+              objectiveStructure.confirmedTrend || objectiveStructure.trend
+            );
+            const majorDirection = structuralDirection(
+              objectiveStructure.lastMajorBreak?.dir
+                || objectiveStructure.lastMajorBreak?.direction
+                || objectiveStructure.lastConfirmedBreak?.dir
+                || objectiveStructure.lastConfirmedBreak?.direction
+            );
+            const localDirection = structuralDirection(objectiveStructure.localTrend);
+            const transitionDirection = structuralDirection(
+              objectiveStructure.transitionDirection
+                || objectiveStructure.transitionBreak?.dir
+                || objectiveStructure.transitionBreak?.direction
+            );
+            const objectiveDirection = confirmedDirection || majorDirection;
+            const transitionOnlyDirection = objectiveDirection ? 0 : transitionDirection;
+            const primaryDirection = objectiveDirection || transitionOnlyDirection;
+
+            const protectedHigh = finite(
+              objectiveStructureSnapshot?.protectedHigh,
+              finite(objectiveStructure.protectedHigh)
+            );
+            const protectedLow = finite(
+              objectiveStructureSnapshot?.protectedLow,
+              finite(objectiveStructure.protectedLow)
+            );
+            const currentClose = finite(close);
+            const protectedSwingIntact = primaryDirection > 0
+              ? (!Number.isFinite(protectedLow) || !Number.isFinite(currentClose) || currentClose > protectedLow)
+              : primaryDirection < 0
+                ? (!Number.isFinite(protectedHigh) || !Number.isFinite(currentClose) || currentClose < protectedHigh)
+                : true;
+
+            const resolvedDirection = protectedSwingIntact ? primaryDirection : 0;
+            let phase = 'RANGE';
+            if (resolvedDirection) {
+              const oppositeLocal = localDirection && localDirection !== resolvedDirection;
+              const oppositeTransition = transitionDirection && transitionDirection !== resolvedDirection;
+              phase = transitionOnlyDirection
+                ? 'TRANSITION'
+                : (oppositeLocal || oppositeTransition)
+                  ? 'PULLBACK'
+                  : 'CONTINUATION';
+            }
+
+            const forecastDirectionValue = finite(
+              baseState.forecastDirectionValue,
+              finite(baseState.directionValue, 0)
+            );
+            const state = marketStateLabel(resolvedDirection, phase);
+
+            return {
+              ...baseState,
+              state,
+              rawState: baseState.state || 'RANGE / TRANSITION',
+              direction: resolvedDirection > 0 ? 'BULLISH' : resolvedDirection < 0 ? 'BEARISH' : 'NEUTRAL',
+              directionValue: resolvedDirection,
+              primaryDirection: resolvedDirection > 0 ? 'BULLISH' : resolvedDirection < 0 ? 'BEARISH' : 'NEUTRAL',
+              primaryDirectionValue: resolvedDirection,
+              phase,
+              confirmed: Boolean(resolvedDirection && phase !== 'TRANSITION'),
+              transition: Boolean(resolvedDirection && phase === 'TRANSITION'),
+              pullback: phase === 'PULLBACK',
+              forecastDirectionValue,
+              strictDirectionValue: forecastDirectionValue,
+              conceptDirectionValue: objectiveDirection,
+              localDirectionValue: localDirection,
+              transitionDirectionValue: transitionDirection,
+              protectedHigh: Number.isFinite(protectedHigh) ? protectedHigh : null,
+              protectedLow: Number.isFinite(protectedLow) ? protectedLow : null,
+              protectedSwingIntact,
+              reconciled: resolvedDirection !== finite(baseState.directionValue, 0) || state !== baseState.state,
+              authority: 'AMY_CONCEPT_STRUCTURE_RECONCILIATION_BT7_1',
+              directionMeaning: 'CURRENT_STRUCTURE_NOT_FUTURE_PRICE_FORECAST',
+              phaseMeaning: 'CONTINUATION_PULLBACK_TRANSITION_OR_RANGE'
+            };
+          }
+
+          '''
+              if helper_anchor not in text:
+                  raise SystemExit('forecast candidate anchor not found')
+              text = text.replace(helper_anchor, helper + helper_anchor, 1)
+
+              latest_old = """  const latest = series.snapshots.at(-1);
+              const forecast = latest.forecast;"""
+              latest_new = """  const latest = series.snapshots.at(-1);
+              const reconciledMarketState = reconcileValidatedMarketState(latest.marketState, {
+                objectiveStructure: input.objectiveStructure,
+                objectiveStructureSnapshot: input.objectiveStructureSnapshot,
+                close: latest.close
+              });
+              const forecast = latest.forecast;"""
+              if latest_old not in text:
+                  raise SystemExit('latest state anchor not found')
+              text = text.replace(latest_old, latest_new, 1)
+              text = text.replace("    version: '2.0.0',", "    version: '2.1.0-bt7.1',", 1)
+
+              state_old = """    marketState: {
+                ...latest.marketState,
+                structureTrend: latest.structureTrend,
+                sourceRule: 'FAST 4/4 + SLOW 6/6 FRACTAL STRUCTURE + CONFIRMED BREAK + INTACT SWING'
+              },"""
+              state_new = """    marketState: {
+                ...reconciledMarketState,
+                structureTrend: latest.structureTrend,
+                sourceRule: input.objectiveStructure
+                  ? 'CONCEPT STRUCTURE PRIMARY DIRECTION + SEPARATE PHASE + VALIDATED FORECAST ISOLATION'
+                  : 'FAST 4/4 + SLOW 6/6 FRACTAL STRUCTURE + CONFIRMED BREAK + INTACT SWING',
+                bt71Applied: Boolean(input.objectiveStructure)
+              },"""
+              if state_old not in text:
+                  raise SystemExit('market state output anchor not found')
+              text = text.replace(state_old, state_new, 1)
+
+              isolation_old = """      regimeMayOverrideDirectionForecast: false,
+                    automaticTradeExecution: false"""
+              isolation_new = """      regimeMayOverrideDirectionForecast: false,
+                    conceptStructureMayReconcileMarketState: true,
+                    marketStateMayOverrideDirectionForecast: false,
+                    automaticTradeExecution: false"""
+              if isolation_old not in text:
+                  raise SystemExit('isolation anchor not found')
+              text = text.replace(isolation_old, isolation_new, 1)
+              validated.write_text(text)
+
+          analyze = Path('app/src/main/assets/apps/mapping/js/engine/concept-analyze.js')
+          text = analyze.read_text()
+          old = """  const validatedMarketContext = evaluateValidatedMarketContext({
+              candles,
+              tf,
+              htfCandles
+            });"""
+          new = """  const validatedMarketContext = evaluateValidatedMarketContext({
+              candles,
+              tf,
+              htfCandles,
+              objectiveStructure: marketConcepts.structure,
+              objectiveStructureSnapshot: marketConcepts.structureSnapshot
+            });"""
+          if old in text:
+              text = text.replace(old, new, 1)
+              analyze.write_text(text)
+          elif 'objectiveStructure: marketConcepts.structure' not in text:
+              raise SystemExit('concept analyze anchor not found')
+
+          claim = Path('app/src/main/assets/apps/mapping/js/engine/mapping-claim-accuracy.js')
+          text = claim.read_text()
+          text = text.replace("metric: 'structural agreement',", "metric: 'baseline structural agreement',", 1)
+          text = text.replace("period: '2022–Jun 2026',", "period: 'PRE-BT7.1 BASELINE · REVALIDATION REQUIRED',", 1)
+          text = text.replace(
+              "claim: 'Kondisi struktur saat ini sesuai audit struktur independen; bukan prediksi harga.'",
+              "claim: 'Baseline sebelum koreksi BT7.1. Build ini memakai Concept Structure sebagai arah utama dan wajib divalidasi ulang; Market State bukan prediksi harga.'",
+              1
+          )
+          claim.write_text(text)
+
+          test_file = Path('tests/mapping-bt71-market-state.test.mjs')
+          test_file.write_text(r'''import test from 'node:test';
+          import assert from 'node:assert/strict';
+          import {
+            reconcileValidatedMarketState,
+            evaluateValidatedMarketContext
+          } from '../app/src/main/assets/apps/mapping/js/engine/validated-market-context.js';
+
+          test('BT7.1 promotes objective bullish structure while preserving forecast authority', () => {
+            const result = reconcileValidatedMarketState({
+              state: 'RANGE / TRANSITION', direction: 'NEUTRAL', directionValue: 0, forecastDirectionValue: 0
+            }, {
+              objectiveStructure: { trend: 'BULLISH', confirmedTrend: 'BULLISH', localTrend: 'BEARISH' },
+              objectiveStructureSnapshot: { protectedLow: 100 }, close: 110
+            });
+            assert.equal(result.direction, 'BULLISH');
+            assert.equal(result.state, 'BULLISH PULLBACK');
+            assert.equal(result.phase, 'PULLBACK');
+            assert.equal(result.forecastDirectionValue, 0);
+          });
+
+          test('BT7.1 separates confirmed direction from continuation phase', () => {
+            const result = reconcileValidatedMarketState({ state: 'BULLISH TRANSITION', directionValue: 0 }, {
+              objectiveStructure: { trend: 'BULLISH', confirmedTrend: 'BULLISH', localTrend: 'BULLISH' },
+              objectiveStructureSnapshot: { protectedLow: 100 }, close: 110
+            });
+            assert.equal(result.directionValue, 1);
+            assert.equal(result.state, 'UPTREND CONFIRMED');
+            assert.equal(result.phase, 'CONTINUATION');
+            assert.equal(result.confirmed, true);
+          });
+
+          test('BT7.1 exposes transition direction without claiming confirmed trend', () => {
+            const result = reconcileValidatedMarketState({ state: 'RANGE / TRANSITION', directionValue: 0 }, {
+              objectiveStructure: {
+                trend: 'NEUTRAL', confirmedTrend: 'NEUTRAL', localTrend: 'BEARISH', transitionDirection: 'BEARISH'
+              }, close: 100
+            });
+            assert.equal(result.directionValue, -1);
+            assert.equal(result.state, 'BEARISH TRANSITION');
+            assert.equal(result.phase, 'TRANSITION');
+            assert.equal(result.confirmed, false);
+          });
+
+          test('BT7.1 rejects a direction after protected swing is broken', () => {
+            const result = reconcileValidatedMarketState({
+              state: 'UPTREND CONFIRMED', directionValue: 1, forecastDirectionValue: 1
+            }, {
+              objectiveStructure: { trend: 'BULLISH', confirmedTrend: 'BULLISH', localTrend: 'BULLISH' },
+              objectiveStructureSnapshot: { protectedLow: 105 }, close: 100
+            });
+            assert.equal(result.directionValue, 0);
+            assert.equal(result.state, 'RANGE / TRANSITION');
+            assert.equal(result.protectedSwingIntact, false);
+            assert.equal(result.forecastDirectionValue, 1);
+          });
+
+          test('validated context applies BT7.1 only to Market State, not Direction Forecast', () => {
+            const candles = [];
+            let close = 100;
+            for (let index = 0; index < 140; index += 1) {
+              const open = close;
+              close = open + (index % 7 === 0 ? -0.15 : 0.22);
+              candles.push({
+                time: 1_700_000_000 + index * 900,
+                open, high: Math.max(open, close) + 0.2,
+                low: Math.min(open, close) - 0.2, close
+              });
+            }
+            const context = evaluateValidatedMarketContext({
+              candles, tf: 'M15',
+              objectiveStructure: { trend: 'BULLISH', confirmedTrend: 'BULLISH', localTrend: 'BULLISH' },
+              objectiveStructureSnapshot: { protectedLow: 90 }
+            });
+            assert.equal(context.status, 'READY');
+            assert.equal(context.version, '2.1.0-bt7.1');
+            assert.equal(context.marketState.bt71Applied, true);
+            assert.equal(context.marketState.direction, 'BULLISH');
+            assert.equal(context.marketState.directionMeaning, 'CURRENT_STRUCTURE_NOT_FUTURE_PRICE_FORECAST');
+            assert.equal(context.isolation.marketStateMayOverrideDirectionForecast, false);
+          });
+          ''')
+
+          gradle = Path('app/build.gradle.kts')
+          text = gradle.read_text()
+          text = text.replace('?: 940300)', '?: 940301)', 1)
+          text = text.replace('?: "2.0.0-preview.300"', '?: "2.0.0-preview.301"', 1)
+          gradle.write_text(text)
+
+          app_version = Path('app/src/main/assets/app-version.js')
+          text = app_version.read_text()
+          text = text.replace("name: '2.0.0-preview.300', code: 940300", "name: '2.0.0-preview.301', code: 940301", 1)
+          app_version.write_text(text)
+
+          manifest_path = Path('preview-update.json')
+          manifest = json.loads(manifest_path.read_text())
+          manifest.update({
+              'latest_version_code': 940301,
+              'latest_version_name': '2.0.0-preview.301',
+              'versionCode': 940301,
+              'version': '2.0.0-preview.301',
+              'releaseDate': '2026-08-03',
+              'apk_url': 'https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.301/AmyFX-Preview-latest.apk',
+              'downloadUrl': 'https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.301/AmyFX-Preview-latest.apk',
+              'release_notes': [
+                  'Market State kini memakai Concept Structure sebagai otoritas arah struktur saat ini.',
+                  'Arah utama dipisahkan dari fase continuation, pullback, transition, dan range agar label tidak mudah berkedip.',
+                  'RANGE/TRANSITION berlebihan dikurangi tanpa mengubah rumus Direction Forecast.',
+                  'Protected swing tetap menjadi invalidasi arah sehingga tren tidak dipertahankan setelah struktur rusak.',
+                  'Scalper Engine, lifecycle setup, harga WebSocket, dan Amy FX publik tidak diubah.'
+              ],
+              'changelog': [
+                  'BT7.1 concept-structure reconciliation for Market State',
+                  'Primary direction and phase separation',
+                  'Protected-swing invalidation',
+                  'Direction Forecast isolation regression coverage'
+              ]
+          })
+          manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
+
+          Path('.github/workflows/bt71-apply.yml').unlink(missing_ok=True)
+          PY
+
+      - name: Validate JavaScript correction
+        run: |
+          node --check app/src/main/assets/apps/mapping/js/engine/validated-market-context.js
+          node --check app/src/main/assets/apps/mapping/js/engine/concept-analyze.js
+          node --test tests/mapping-bt71-market-state.test.mjs
+          npm test
+
+      - name: Commit corrected Preview Mapping
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(preview): apply BT7.1 market state correction"
+          git push origin HEAD:fix/preview-bt71-market-state-20260803
