@@ -40,3 +40,5 @@ jobs:
           path: _source_bundle/
           if-no-files-found: error
           retention-days: 1
+
+# Isolated backtest utility only; never merge this workflow into the Mapping source branch.
