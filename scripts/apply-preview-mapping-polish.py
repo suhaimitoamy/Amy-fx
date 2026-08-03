@@ -28,6 +28,27 @@ if old_setup_guard in text:
 elif new_setup_guard not in text:
     raise SystemExit('setup stale guard not found')
 
+old_explanation_guard = "if (dd.source === 'DATA_STALE' || result.dataStale) {"
+new_explanation_guard = "if ((dd.source === 'DATA_STALE' || result.dataStale) && !result.st && !result.validatedMarketContext?.marketState) {"
+if old_explanation_guard in text:
+    text = text.replace(old_explanation_guard, new_explanation_guard, 1)
+elif new_explanation_guard not in text:
+    raise SystemExit('explanation stale guard not found')
+
+old_geometry = "if (!Number.isFinite(lo) || !Number.isFinite(hi) || !Number.isFinite(sl) || !Number.isFinite(tp1)) {"
+new_geometry = "if (![lo, hi, sl, tp1].every(value => Number.isFinite(value) && value > 0)) {"
+if old_geometry in text:
+    text = text.replace(old_geometry, new_geometry, 1)
+elif new_geometry not in text:
+    raise SystemExit('geometry positive-price guard not found')
+
+old_tp2 = "if (!singleTarget && !Number.isFinite(tp2)) {"
+new_tp2 = "if (!singleTarget && (!Number.isFinite(tp2) || tp2 <= 0)) {"
+if old_tp2 in text:
+    text = text.replace(old_tp2, new_tp2, 1)
+elif new_tp2 not in text:
+    raise SystemExit('TP2 positive-price guard not found')
+
 fallback_pattern = re.compile(
     r"    if \(\(tf === 'M5' \|\| tf === 'M15'\) && state\.candles\['M1'\]\?\.length\) \{.*?\n    \}\n    throw err;",
     re.S,
@@ -75,3 +96,4 @@ if live_count != 1 and 'WebSocket is display-only' not in text:
 
 path.write_text(text, encoding='utf-8')
 print('market-data.js polished successfully')
+# Trigger revision 2: workflow already exists before this push.
