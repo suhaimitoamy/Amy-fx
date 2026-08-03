@@ -11,18 +11,20 @@
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.",
-    "Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.",
-    "Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.",
-    "Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.",
-    "Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.",
-    "Amy FX publik pada branch main tidak diubah."
+    "Mapping tetap menampilkan analisis dari candle terakhir yang sudah close dan tidak lagi dikosongkan oleh status data usang.",
+    "Freshness tetap menjadi proteksi internal untuk candle, cache, dan response race tanpa menjadi hard gate pada UI.",
+    "Polling Outlook 2,5 detik, refresh dari click biasa, dan refresh Mapping berulang telah dihapus.",
+    "Harga live WebSocket tetap bergerak melalui jalur display-only dan tidak menghitung atau merender ulang Mapping.",
+    "Market Outlook kini menjelaskan kondisi market, fokus, posisi harga, area pantauan, yang ditunggu, konfirmasi, invalidasi, target, dan sumber candle WITA.",
+    "Keselarasan Scalper dengan Mapping dihitung nyata; setup yang konflik tetap WAIT.",
+    "Amy FX publik pada branch main tidak diubah dan backtest tidak dilakukan."
   ],
   "changelog": [
-    "Professional glass UI tokens and shared components",
-    "System, light, and dark theme controller",
-    "Truthful home, collection, and profile presentation",
-    "Unified loading, accessibility, and vector icon polish",
-    "Android system bar theme synchronization"
+    "Closed-candle Mapping authority with source signature deduplication",
+    "Event-driven candle refresh at actual closed-bar boundaries",
+    "Display-only live WebSocket price bridge",
+    "Practical and stable Market Outlook presentation",
+    "Real Mapping-to-Scalper alignment validation",
+    "Regression coverage for stale hard gate, polling, UI stability, and release identity"
   ]
 }
