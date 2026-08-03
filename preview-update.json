@@ -1,28 +1,26 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 940300,
-  "latest_version_name": "2.0.0-preview.300",
-  "versionCode": 940300,
-  "version": "2.0.0-preview.300",
-  "releaseDate": "2026-08-02",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.300/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.300/AmyFX-Preview-latest.apk",
+  "latest_version_code": 940301,
+  "latest_version_name": "2.0.0-preview.301",
+  "versionCode": 940301,
+  "version": "2.0.0-preview.301",
+  "releaseDate": "2026-08-03",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.301/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.301/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.",
-    "Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.",
-    "Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.",
-    "Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.",
-    "Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.",
-    "Amy FX publik pada branch main tidak diubah."
+    "Market State kini memakai Concept Structure sebagai otoritas arah struktur saat ini.",
+    "Arah utama dipisahkan dari fase continuation, pullback, transition, dan range agar label lebih stabil.",
+    "RANGE/TRANSITION berlebihan dikurangi tanpa mengubah rumus Direction Forecast.",
+    "Protected swing tetap menjadi invalidasi arah sehingga tren tidak dipertahankan setelah struktur rusak.",
+    "Scalper Engine, lifecycle setup, harga WebSocket, dan Amy FX publik tidak diubah."
   ],
   "changelog": [
-    "Professional glass UI tokens and shared components",
-    "System, light, and dark theme controller",
-    "Truthful home, collection, and profile presentation",
-    "Unified loading, accessibility, and vector icon polish",
-    "Android system bar theme synchronization"
+    "BT7.1 Concept Structure reconciliation for Market State",
+    "Primary direction and phase separation",
+    "Protected-swing invalidation",
+    "Direction Forecast isolation regression coverage"
   ]
 }
