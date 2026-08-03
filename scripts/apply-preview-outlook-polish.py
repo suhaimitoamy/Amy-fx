@@ -55,4 +55,4 @@ market = market.replace("strategy: result?.dataStale ? 'NO_TRADE' : (result?.str
 market_path.write_text(market, encoding='utf-8')
 
 print('projection, tracker, and mapping publication polished')
-# Trigger revision 3: capture-enabled workflow exists before this push.
+# Trigger revision 4: status-enabled workflow exists before this push.
