@@ -11,18 +11,18 @@
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.",
-    "Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.",
-    "Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.",
-    "Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.",
-    "Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.",
-    "Amy FX publik pada branch main tidak diubah."
+    "Cache candle Mapping kini tetap tersimpan saat aplikasi ditutup dan dibuka kembali.",
+    "REST Twelve Data hanya dipanggil ketika candle closed terbaru memang belum tersedia.",
+    "Pembaruan M1 latar belakang dibatasi setiap lima menit; M1 terpilih tetap mengikuti penutupan candle satu menit.",
+    "Fallback Supabase diterima hanya setelah timestamp candle diverifikasi masih aktual.",
+    "Retry kegagalan dibatasi agar koneksi bermasalah tidak menghabiskan kuota gratis provider.",
+    "Branch main dan Amy FX publik tidak diubah."
   ],
   "changelog": [
-    "Professional glass UI tokens and shared components",
-    "System, light, and dark theme controller",
-    "Truthful home, collection, and profile presentation",
-    "Unified loading, accessibility, and vector icon polish",
-    "Android system bar theme synchronization"
+    "Persistent closed-candle cache across app restarts",
+    "Closed-candle boundary freshness verification",
+    "Quota-safe background M1 throttling",
+    "Verified current Supabase fallback",
+    "Provider retry cooldown and request deduplication"
   ]
 }
