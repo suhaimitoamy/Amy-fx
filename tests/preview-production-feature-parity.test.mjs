@@ -23,10 +23,26 @@ test('Preview keeps its richer multi-setup Scalper detail', () => {
     'Kembali ke setup utama',
     'Alasan driver',
     'TP1 +10',
-    '10 driver BT6/BT6.1 + AMD'
+    'TP2 +20',
+    'Setup aktif lainnya',
+    'Lifecycle terbaru'
   ]) {
     assert.ok(source.includes(marker), `Preview detail marker missing: ${marker}`);
   }
+  assert.doesNotMatch(source, /setInterval|visibilitychange|focusHash|scrollIntoView/);
+});
+
+test('Scalper engine registry contains ten current drivers including AMD', () => {
+  const source = read('supabase/functions/scalper-engine/drivers.mjs');
+  const registry = source.match(/DRIVER_REGISTRY = Object\.freeze\(\[([\s\S]*?)\]\);/)?.[1] || '';
+  const ids = [...registry.matchAll(/id:\s*'([^']+)'/g)].map(match => match[1]);
+
+  assert.equal(ids.length, 10);
+  assert.ok(ids.includes('AMD'));
+  assert.ok(ids.includes('FVG'));
+  assert.ok(ids.includes('ORDER_BLOCK'));
+  assert.ok(ids.includes('FALSE_BREAKOUT'));
+  assert.match(source, /ENGINE_VERSION = 'amyfx-preview-scalper-pattern-v3\.0'/);
 });
 
 test('Scalper authority uses only the current primary pattern-v3 setup', () => {
