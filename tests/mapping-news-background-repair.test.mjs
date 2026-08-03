@@ -26,6 +26,12 @@ test('Mapping repairs freshness from the latest actually closed candle', () => {
   assert.match(runtime, /AMY_MAPPING_SINGLE_AUTHORITY_V3/);
   assert.match(runtime, /await runAnalysis\(state\.tf\)/);
   assert.match(runtime, /amyfx:candles-updated/);
+  assert.match(runtime, /cachedSeriesIsCurrent/);
+  assert.match(runtime, /expectedClosedCandleOpen/);
+  assert.match(runtime, /primeCurrentCandleFreshness/);
+  assert.match(runtime, /setCandleFetchedAt\(normalizedTf, current \? nowMs : 0\)/);
+  assert.match(runtime, /SOURCE_VALIDATED_TFS = new Set\(\['M1', 'M5', 'M15', 'M30', 'H1', 'H4'\]\)/);
+  assert.match(runtime, /version: '4\.0\.0'/);
 });
 
 test('Entry Watch card stays hidden while lifecycle data remains read-only', () => {
