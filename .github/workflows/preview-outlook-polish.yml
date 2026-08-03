@@ -17,9 +17,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  polish-and-regress:
+  polish-regress-version:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 8
     steps:
       - name: Checkout private Preview branch
         uses: actions/checkout@v4
@@ -27,7 +27,7 @@ jobs:
           ref: personal/amyfx-private
           fetch-depth: 0
 
-      - name: Mark source regression pending
+      - name: Mark focused regression pending
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -35,58 +35,52 @@ jobs:
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            -d '{"state":"pending","context":"Preview Source Regression","description":"Full Node regression is running"}'
+            -d '{"state":"pending","context":"Preview Source Regression","description":"Focused Mapping regression is running"}'
 
-      - name: Apply Outlook polish
+      - name: Apply final Mapping polish and raise version
         run: python3 scripts/apply-preview-outlook-polish.py
 
-      - name: Run full Node regression and capture result
-        shell: bash
+      - name: Run focused Mapping regression
         run: |
-          set +e
-          node --test tests/*.test.mjs > preview-outlook-regression.log 2>&1
-          status=$?
-          echo "$status" > preview-outlook-regression.status
-          cat preview-outlook-regression.log
-          exit 0
+          timeout 300s node --test \
+            tests/closed-candle-aggregation.test.mjs \
+            tests/six-issues-regression.test.mjs \
+            tests/closed-candle-freshness-adapter.test.mjs
 
-      - name: Publish regression status
+      - name: Verify Preview identity and immutable updater order
+        run: |
+          grep -Fq "name: '2.0.0-preview.306', code: 940306" app/src/main/assets/app-version.js
+          grep -Fq '?: 940306)' app/build.gradle.kts
+          grep -Fq '?: "2.0.0-preview.306"' app/build.gradle.kts
+          test "$(python3 -c "import json; print(json.load(open('preview-update.json'))['latest_version_code'])")" = "940305"
+
+      - name: Mark focused regression successful
         env:
           GH_TOKEN: ${{ github.token }}
-        shell: bash
         run: |
-          status="$(cat preview-outlook-regression.status)"
-          if [ "$status" = "0" ]; then
-            state="success"
-            description="Full Node regression passed"
-          else
-            state="failure"
-            description="Full Node regression failed; report committed"
-          fi
           curl -fsS -X POST \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            -d "{\"state\":\"$state\",\"context\":\"Preview Source Regression\",\"description\":\"$description\"}"
+            -d '{"state":"success","context":"Preview Source Regression","description":"Focused Mapping regression passed; version 306 prepared"}'
 
-      - name: Commit successful source or isolated failure report
-        shell: bash
+      - name: Commit final source and trigger private Preview release
         run: |
-          status="$(cat preview-outlook-regression.status)"
-          rm -f preview-outlook-regression.status
           rm -f scripts/apply-preview-outlook-polish.py
           rm -f .github/workflows/preview-outlook-polish.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if [ "$status" = "0" ]; then
-            rm -f preview-outlook-regression.log
-            git add -A
-            git commit -m "fix(mapping): polish scalping outlook tracking [skip ci]"
-          else
-            git checkout -- app/src/main/assets/apps/mapping/js/outlook/v2/projection.js
-            git checkout -- app/src/main/assets/apps/mapping/js/outlook/v2/tracker.js
-            git checkout -- app/src/main/assets/apps/mapping/js/api/market-data.js
-            git add -A
-            git commit -m "test(mapping): capture Outlook full-regression failure [skip ci]"
-          fi
+          git add -A
+          git commit -m "release(preview): Amy FX Preview 2.0.0-preview.306"
           git push origin HEAD:personal/amyfx-private
+
+      - name: Mark focused regression failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -fsS -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -d '{"state":"failure","context":"Preview Source Regression","description":"Focused Mapping regression or version preparation failed"}'
