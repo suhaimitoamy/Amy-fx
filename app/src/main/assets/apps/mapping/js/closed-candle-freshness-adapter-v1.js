@@ -19,27 +19,32 @@ function closedCandle(timeframe) {
 
 function sourceContext(snapshot) {
   const authority = snapshot?.scalperAuthority || snapshot?.structure?.authority || {};
-  const sourceTf = authority.anchorTimeframe
-    || authority.sources?.[0]
-    || ['M15', 'M5', 'M1', 'M30', 'H1'].find(timeframe => closedCandle(timeframe))
-    || state.tf
-    || 'M15';
-  const candle = closedCandle(sourceTf);
-  return { sourceTf, candle };
+  const candidates = [
+    authority.anchorTimeframe,
+    ...(Array.isArray(authority.sources) ? authority.sources : []),
+    'M15', 'M5', 'M1', 'M30', 'H1',
+    state.tf
+  ].filter(Boolean);
+
+  for (const timeframe of [...new Set(candidates)]) {
+    const candle = closedCandle(timeframe);
+    if (candle) return { sourceTf: timeframe, candle };
+  }
+  return { sourceTf: state.tf || 'M15', candle: null };
 }
 
 function wita(candle) {
   const raw = Number(candle?.time || 0);
-  if (!(raw > 0)) return 'Candle terakhir tertutup';
+  if (!(raw > 0)) return 'Belum ada candle tertutup';
   const milliseconds = raw > 1e11 ? raw : raw * 1000;
-  return new Intl.DateTimeFormat('id-ID', {
+  return `${new Intl.DateTimeFormat('id-ID', {
     timeZone: 'Asia/Makassar',
     day: '2-digit',
     month: 'short',
     hour: '2-digit',
     minute: '2-digit',
     hour12: false
-  }).format(new Date(milliseconds)).replace('.', ':') + ' WITA';
+  }).format(new Date(milliseconds)).replace('.', ':')} WITA`;
 }
 
 function officialSetupActive() {
@@ -70,9 +75,8 @@ function normalizedContext() {
   const watchType = direction === 'BUY' ? 'SSL' : direction === 'SELL' ? 'BSL' : null;
   const targetType = direction === 'BUY' ? 'BSL' : direction === 'SELL' ? 'SSL' : null;
   const currentPrice = positive(state.price) || positive(result.price);
-  const focus = direction || 'WAIT';
   const directionLabel = direction
-    ? `${structure.label || structure.direction || direction}`
+    ? String(structure.label || structure.direction || direction)
     : 'Arah scalping belum jelas';
   const trigger = direction === 'BUY'
     ? 'Tunggu SSL sweep → reclaim → MSS bullish → candle close.'
@@ -82,14 +86,16 @@ function normalizedContext() {
   const invalidationText = invalidation
     ? structure.rule || `Batal bila protected structure ${p2(invalidation)} ditembus oleh candle close.`
     : 'Protected structure belum tersedia; entry tetap WAIT.';
+
   return {
     snapshot,
     structure,
     direction,
-    focus,
     directionLabel,
     sourceTf,
     sourceText: wita(candle),
+    sourceCandle: candle,
+    hasClosedCandle: Boolean(candle),
     currentPrice,
     watchLevel,
     watchType,
@@ -101,24 +107,24 @@ function normalizedContext() {
   };
 }
 
-function patchFreshnessLabels() {
+function patchFreshnessLabels(context) {
   const connection = document.getElementById('conn');
   if (connection) {
-    connection.dataset.analysisFreshness = 'CLOSED_CANDLE';
-    connection.classList.remove('stale');
+    connection.dataset.analysisFreshness = context.hasClosedCandle
+      ? 'CLOSED_CANDLE'
+      : 'UNAVAILABLE';
+    connection.classList.toggle('stale', false);
   }
+
   document.querySelectorAll('#mapping-command-strip *').forEach(node => {
     if (node.children.length) return;
     const text = String(node.textContent || '').trim().toUpperCase();
-    if (text === 'STALE' || text === 'EXPIRED' || text === 'DATA USANG') {
-      node.textContent = 'CANDLE TERTUTUP';
-      node.classList.remove('stale', 'expired');
-      node.classList.add('live');
-    }
+    if (!['STALE', 'EXPIRED', 'DATA USANG'].includes(text)) return;
+    node.textContent = context.hasClosedCandle ? 'CANDLE TERTUTUP' : 'MENUNGGU DATA';
+    node.classList.remove('stale', 'expired');
+    node.classList.toggle('live', context.hasClosedCandle);
+    node.classList.toggle('waiting', !context.hasClosedCandle);
   });
-  try {
-    if (state.result) state.result.dataStale = false;
-  } catch (_) {}
 }
 
 function compactMarkup(context) {
@@ -127,6 +133,10 @@ function compactMarkup(context) {
   const watch = context.watchLevel
     ? `${context.watchType} ${p2(context.watchLevel)}`
     : 'Belum tersedia dari liquidity Mapping.';
+  const source = context.hasClosedCandle
+    ? `Basis candle terakhir tertutup · ${context.sourceTf} · ${context.sourceText}`
+    : 'Belum ada candle tertutup yang dapat digunakan.';
+
   return `<div class="execution-plan__head">
       <div><div class="kicker">RENCANA EKSEKUSI</div><h2>WAIT — ${context.direction ? `PANTAU ${context.direction}` : 'MENUNGGU ARAH'}</h2></div>
       <span class="execution-badge execution-badge--${tone}">WAIT</span>
@@ -138,7 +148,7 @@ function compactMarkup(context) {
       <div><span>Arah scalping</span><strong>${esc(context.directionLabel)}</strong></div>
       <div><span>Invalidasi</span><strong>${esc(context.invalidationText)}</strong></div>
     </div>
-    <div class="execution-freshness execution-freshness--live">Basis candle terakhir tertutup · ${esc(context.sourceTf)} · ${esc(context.sourceText)}</div>
+    <div class="execution-freshness execution-freshness--${context.hasClosedCandle ? 'live' : 'waiting'}">${esc(source)}</div>
     <div class="execution-actions">
       <button type="button" class="action execution-action" data-execution-plan-action="detail">Lihat Rencana Lengkap</button>
       <button type="button" class="action execution-action execution-action--amy" data-execution-plan-action="ask-amy">Tanya Amy Kenapa Masih WAIT</button>
@@ -154,6 +164,10 @@ function detailMarkup(context) {
   const target = context.targetLevel
     ? `${context.targetType} ${p2(context.targetLevel)}`
     : 'Belum tersedia dari target struktural Mapping.';
+  const source = context.hasClosedCandle
+    ? `Basis candle terakhir tertutup · ${context.sourceTf} · ${context.sourceText}`
+    : 'Belum ada candle tertutup yang dapat digunakan.';
+
   return `<div class="execution-plan__head">
       <div><div class="kicker">RENCANA EKSEKUSI</div><h2>WAIT — ${context.direction ? `PANTAU ${context.direction}` : 'MENUNGGU ARAH'}</h2></div>
       <span class="execution-badge execution-badge--${tone}">WAIT</span>
@@ -161,7 +175,7 @@ function detailMarkup(context) {
     <div class="execution-detail-grid">
       <div><small>Arah yang diprioritaskan</small><strong>${esc(focusLabel)}</strong></div>
       <div><small>Harga saat ini</small><strong>${context.currentPrice ? p2(context.currentPrice) : 'Belum tersedia'}</strong></div>
-      <div class="execution-detail-wide"><small>Konteks</small><strong>${esc(context.directionLabel)}</strong><p>M15 → M5 → M1 menjadi otoritas scalping. M30/H1 hanya fallback; H4/D1 tidak ikut menentukan arah.</p></div>
+      <div class="execution-detail-wide"><small>Konteks</small><strong>${esc(context.directionLabel)}</strong><p>M15 menjadi arah utama, M5 membaca struktur entry, dan M1 menjadi trigger. M30/H1 hanya fallback; H4/D1 tidak menentukan arah scalping.</p></div>
       <div class="execution-detail-wide"><small>Area pantauan</small><strong>${esc(watch)}</strong></div>
     </div>
     <div class="execution-list-block"><h3>Trigger yang harus ditunggu</h3><ul><li>${esc(context.trigger)}</li><li>Entry tetap WAIT sampai setup resmi terkunci.</li></ul></div>
@@ -174,9 +188,9 @@ function detailMarkup(context) {
       <div><small>Target struktural</small><strong>${esc(target)}</strong></div>
     </div>
     <div class="execution-invalidation"><h3>Invalidasi</h3><p>${esc(context.invalidationText)}</p></div>
-    <div class="execution-list-block"><h3>Alasan masih WAIT</h3><ul><li>Arah scalping tetap ditampilkan dari candle terakhir yang sudah close.</li><li>Belum ada entry, SL, dan target resmi yang terkunci.</li><li>Status data lama tidak menghapus arah market.</li></ul></div>
+    <div class="execution-list-block"><h3>Alasan masih WAIT</h3><ul><li>Arah scalping tetap ditampilkan dari candle terakhir yang sudah close.</li><li>Belum ada entry, SL, dan target resmi yang terkunci.</li><li>Freshness tetap menjadi proteksi internal, tetapi tidak menghapus analisis terakhir dari UI.</li></ul></div>
     <div class="execution-conclusion"><small>KESIMPULAN SEDERHANA</small><strong>${esc(context.direction ? `Fokus ${context.direction}, tetapi tunggu trigger resmi.` : 'Tunggu arah M15/M5/M1 menjadi jelas.')}</strong></div>
-    <div class="execution-freshness execution-freshness--live">Basis candle terakhir tertutup · ${esc(context.sourceTf)} · ${esc(context.sourceText)}</div>
+    <div class="execution-freshness execution-freshness--${context.hasClosedCandle ? 'live' : 'waiting'}">${esc(source)}</div>
     <div class="execution-actions"><button type="button" class="action execution-action execution-action--amy" data-execution-plan-action="ask-amy">Tanya Amy Kenapa Masih WAIT</button></div>`;
 }
 
@@ -190,7 +204,8 @@ function patchCard(card, context) {
     context.currentPrice,
     context.watchLevel,
     context.targetLevel,
-    context.invalidation
+    context.invalidation,
+    context.hasClosedCandle
   ]);
   if (card.dataset.closedCandleSignature === signature) return;
   card.dataset.closedCandleSignature = signature;
@@ -207,7 +222,7 @@ function sync() {
   busy = true;
   try {
     const context = normalizedContext();
-    patchFreshnessLabels();
+    patchFreshnessLabels(context);
     document.querySelectorAll('[data-execution-plan-card]').forEach(card => patchCard(card, context));
   } finally {
     busy = false;
@@ -237,7 +252,7 @@ function boot() {
 }
 
 window.AmyFXClosedCandleFreshness = Object.freeze({
-  version: '1.0.0',
+  version: '1.1.0',
   refresh: schedule,
   snapshot: normalizedContext
 });
