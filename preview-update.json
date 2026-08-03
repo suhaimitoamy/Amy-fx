@@ -1,30 +1,28 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 940304,
-  "latest_version_name": "2.0.0-preview.304",
-  "versionCode": 940304,
-  "version": "2.0.0-preview.304",
+  "latest_version_code": 940305,
+  "latest_version_name": "2.0.0-preview.305",
+  "versionCode": 940305,
+  "version": "2.0.0-preview.305",
   "releaseDate": "2026-08-03",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.304/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.304/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.305/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.305/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Mapping tetap menampilkan analisis dari candle terakhir yang sudah close dan tidak lagi dikosongkan oleh status data usang.",
-    "Freshness tetap menjadi proteksi internal untuk candle, cache, dan response race tanpa menjadi hard gate pada UI.",
-    "Polling Outlook 2,5 detik, refresh dari click biasa, dan refresh Mapping berulang telah dihapus.",
-    "Harga live WebSocket tetap bergerak melalui jalur display-only dan tidak menghitung atau merender ulang Mapping.",
-    "Market Outlook kini menjelaskan kondisi market, fokus, posisi harga, area pantauan, yang ditunggu, konfirmasi, invalidasi, target, dan sumber candle WITA.",
-    "Keselarasan Scalper dengan Mapping dihitung nyata; setup yang konflik tetap WAIT.",
-    "Amy FX publik pada branch main tidak diubah dan backtest tidak dilakukan."
+    "Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.",
+    "Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.",
+    "Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.",
+    "Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.",
+    "Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.",
+    "Amy FX publik pada branch main tidak diubah."
   ],
   "changelog": [
-    "Closed-candle Mapping authority with source signature deduplication",
-    "Event-driven candle refresh at actual closed-bar boundaries",
-    "Display-only live WebSocket price bridge",
-    "Practical and stable Market Outlook presentation",
-    "Real Mapping-to-Scalper alignment validation",
-    "Regression coverage for stale hard gate, polling, UI stability, and release identity"
+    "Professional glass UI tokens and shared components",
+    "System, light, and dark theme controller",
+    "Truthful home, collection, and profile presentation",
+    "Unified loading, accessibility, and vector icon polish",
+    "Android system bar theme synchronization"
   ]
 }
