@@ -1,39 +1,135 @@
 import test from 'node:test';
-import assert from 'node:assert';
+import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import path from 'node:path';
+import {
+  buildAmyExecutionContext,
+  buildExecutionPlanViewModel,
+  determineExecutionDisplayStatus
+} from '../app/src/main/assets/apps/mapping/js/execution-plan-core.js';
 
-test('Regression: STALE/EXPIRED not a hard gate in execution-plan-core.js', () => {
-  const code = fs.readFileSync('app/src/main/assets/apps/mapping/js/execution-plan-core.js', 'utf8');
-  assert.ok(!code.includes("return 'STALE'"), "Should not have hard STALE return");
+const candleTime = 1_785_571_200;
+const closedM15 = {
+  time: candleTime,
+  open: 3300,
+  high: 3310,
+  low: 3295,
+  close: 3305,
+  isClosed: true
+};
+
+function staleResult() {
+  return {
+    tf: 'M15',
+    dataStale: true,
+    st: { confirmedTrend: 'BEARISH', protectedHigh: 3310 },
+    directionDecision: {
+      bias: 'SELL',
+      signal: 'WAIT',
+      source: 'DATA_STALE',
+      invalidated: false
+    },
+    mappingSnapshot: {
+      timeframe: 'M15',
+      freshness: {
+        state: 'STALE',
+        sourceCandleTime: candleTime
+      },
+      facts: {
+        structure: { confirmedTrend: 'BEARISH', protectedHigh: 3310 }
+      }
+    }
+  };
+}
+
+test('closed candle keeps the last analysis visible while stale remains internal', () => {
+  const vm = buildExecutionPlanViewModel({
+    result: staleResult(),
+    runtimeState: { candles: { M15: [closedM15] } },
+    mappingFreshness: { state: 'STALE' }
+  });
+
+  assert.equal(vm.mappingFreshness, 'CLOSED_CANDLE');
+  assert.equal(vm.internalFreshness, 'STALE');
+  assert.equal(vm.dataStatus, 'CANDLE TERTUTUP');
+  assert.equal(vm.sourceTimeframe, 'M15');
+  assert.match(vm.analysisTimeWita, /WITA/);
+  assert.equal(vm.focusDirection, 'SELL');
+  assert.doesNotMatch(vm.headline, /KEDALUWARSA|DATA MAPPING SUDAH LAMA/);
 });
 
-test('Regression: 0, 0.00, null, non-positive levels are invalid', () => {
-  const code = fs.readFileSync('app/src/main/assets/apps/mapping/js/execution-plan-core.js', 'utf8');
-  assert.ok(code.includes('number != null && number > 0 ? number : null'), "positivePrice logic must exist");
+test('no candle and no analysis remains unavailable', () => {
+  const status = determineExecutionDisplayStatus({});
+  assert.equal(status.freshness.valid, false);
+  assert.equal(status.freshness.state, 'UNAVAILABLE');
 });
 
-test('Regression: Asia Range uses canonical 06:00-14:00 window', () => {
-  const code = fs.readFileSync('app/src/main/assets/apps/mapping/js/session/asia-range.js', 'utf8');
-  assert.ok(code.includes('const ASIA_START_HOUR = 6;'), "ASIA_START_HOUR should be 6");
-  assert.ok(code.includes('const ASIA_END_HOUR = 14;'), "ASIA_END_HOUR should be 14");
+test('zero, null, and non-positive trade levels never enter Amy context', () => {
+  const context = buildAmyExecutionContext({
+    decision: 'WAIT',
+    entry: 0,
+    entryLow: 0,
+    entryHigh: -1,
+    stopLoss: 0,
+    tp1: 0,
+    tp2: -2,
+    area: { low: 0, high: -3, level: 0 },
+    structuralTarget: { level: 0 }
+  });
+
+  assert.equal(context.entry, null);
+  assert.equal(context.entryArea.low, null);
+  assert.equal(context.entryArea.high, null);
+  assert.equal(context.stopLoss, null);
+  assert.equal(context.tp1, null);
+  assert.equal(context.tp2, null);
+  assert.equal(context.watchArea.level, null);
+  assert.equal(context.structuralTarget.level, null);
 });
 
-test('Regression: M5/M15 aggregation from M1 when fetch fails', () => {
-  const code = fs.readFileSync('app/src/main/assets/apps/mapping/js/api/market-data.js', 'utf8');
-  assert.ok(code.includes("state.candles['M1']?.length"), "Should check M1 candles for fallback");
-  assert.ok(code.includes("Math.floor(c.time / targetSeconds) * targetSeconds"), "Should aggregate candles");
+test('quote timestamp and liquidity-source differences do not create a scalper hard conflict', () => {
+  const status = determineExecutionDisplayStatus({
+    result: staleResult(),
+    runtimeState: { candles: { M15: [closedM15] } },
+    conflicts: [
+      'QUOTE_MAPPING_TIMESTAMP_SKEW',
+      'BSL_SOURCE_DIFFERENCE'
+    ]
+  });
+  assert.equal(status.checks.noContextConflict, true);
 });
 
-test('Regression: Scalping direction prioritizing M15, M5, M1', () => {
+test('scalping horizon keeps M15 primary and excludes H4 D1 W1', () => {
   const code = fs.readFileSync('app/src/main/assets/apps/mapping/js/outlook/v2/base.js', 'utf8');
-  assert.ok(code.includes("id: 'SCALPING'"), "SCALPING horizon must exist");
-  assert.ok(code.includes("M15: 0.45, M5: 0.25, M1: 0.2, M30: 0.05, H1: 0.05"), "SCALPING weights should match requirements");
+  const block = code.match(/id: 'SCALPING'[\s\S]*?\n  \},/)?.[0] || '';
+  assert.match(block, /M15: 0\.45/);
+  assert.match(block, /M5: 0\.25/);
+  assert.match(block, /M1: 0\.2/);
+  assert.match(block, /M30: 0\.05/);
+  assert.match(block, /H1: 0\.05/);
+  assert.doesNotMatch(block, /H4|D1|W1/);
 });
 
-test('Regression: UI stability - observers and auto-scroll disabled', () => {
+test('Analyze stability has no observer or synthetic scrolling', () => {
   const code = fs.readFileSync('app/src/main/assets/apps/mapping/js/view-stability.js', 'utf8');
-  assert.ok(!code.includes('window.scrollTo({ top: target'), "auto-scroll should be disabled in restorePosition");
-  const execUi = fs.readFileSync('app/src/main/assets/apps/mapping/js/execution-plan-ui.js', 'utf8');
-  assert.ok(!execUi.includes('scrollIntoView'), "scrollIntoView should be removed");
+  assert.doesNotMatch(code, /MutationObserver|scrollIntoView|scrollTo\(|scrollBy\(/);
+  assert.match(code, /STATIC_NATIVE_SCROLL/);
+});
+
+test('market data uses complete aggregation and keeps WebSocket display-only', () => {
+  const code = fs.readFileSync('app/src/main/assets/apps/mapping/js/api/market-data.js', 'utf8');
+  assert.match(code, /aggregateClosedCandles/);
+  assert.match(code, /WebSocket is display-only/);
+  const liveTick = code.match(/function applyLivePriceTick[\s\S]*?\n\}/)?.[0] || '';
+  assert.doesNotMatch(liveTick, /buildSetupExecution|buildMappingSnapshot|publishMappingSnapshot|notifyImportant/);
+});
+
+test('Asia Range uses canonical 06:00–14:00 WITA window', () => {
+  const code = fs.readFileSync('app/src/main/assets/apps/mapping/js/session/asia-range.js', 'utf8');
+  assert.match(code, /const ASIA_START_HOUR = 6;/);
+  assert.match(code, /const ASIA_END_HOUR = 14;/);
+});
+
+test('Preview version remains unchanged', () => {
+  const appVersion = fs.readFileSync('app/src/main/assets/app-version.js', 'utf8');
+  assert.match(appVersion, /2\.0\.0-preview\.305/);
 });
