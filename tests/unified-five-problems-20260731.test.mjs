@@ -36,9 +36,9 @@ test('Academy restores the last-read position',async()=>{
  assert.match(auth,/reading-history-v2\.js/); assert.match(history,/amy_academy_last_read_v2/); assert.match(history,/amy_academy_reading_positions_v2/); assert.match(history,/Lanjutkan dari posisi terakhir/);
 });
 
-test('unified production build is Amy FX 2.2.0 and has no Preview artifact channel',async()=>{
+test('unified production build is Amy FX 2.2.1 and has no Preview artifact channel',async()=>{
  const gradle=await read('app/build.gradle.kts'),version=await read('app/src/main/assets/app-version.js'),workflow=await read('.github/workflows/build-apk.yml'),update=JSON.parse(await read('update.json'));
- assert.match(gradle,/"com\.amyelitesuite"/); assert.match(gradle,/versionCode = .*\?: 56/); assert.match(gradle,/versionName = .*"2\.2\.0"/); assert.match(gradle,/TWELVE_DATA_API_KEY/);
- assert.match(version,/name: '2\.2\.0', code: 56/); assert.match(workflow,/AMYFX_VERSION_NAME: "2\.2\.0"/); assert.match(workflow,/AMYFX_VERSION_CODE: "56"/);
- assert.ok(Number(update.latest_version_code)<=56); assert.equal(await exists('preview-update.json'),false); assert.equal(await exists('AmyFX-Preview-latest.apk'),false);
+ assert.match(gradle,/"com\.amyelitesuite"/); assert.match(gradle,/versionCode = .*\?: 57/); assert.match(gradle,/versionName = .*"2\.2\.1"/); assert.match(gradle,/TWELVE_DATA_API_KEY/);
+ assert.match(version,/name: '2\.2\.1', code: 57/); assert.match(workflow,/AMYFX_VERSION_NAME: "2\.2\.1"/); assert.match(workflow,/AMYFX_VERSION_CODE: "57"/);
+ assert.ok(Number(update.latest_version_code)<=57); assert.equal(await exists('preview-update.json'),false); assert.equal(await exists('AmyFX-Preview-latest.apk'),false);
 });
