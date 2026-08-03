@@ -24,22 +24,30 @@ test('AMY Market Context Final JavaScript remains syntactically valid', () => {
   assertSyntax(scriptUrl);
 });
 
-test('Market Outlook UI exposes qualified context events rather than unrestricted prediction', () => {
+test('Market Outlook translates qualified context events into a practical closed-candle view', () => {
   const ui = readFileSync(uiUrl, 'utf8');
   const core = readFileSync(activeCoreUrl, 'utf8');
   const css = readFileSync(cssUrl, 'utf8');
 
-  assert.match(ui, /AMY Market Context Final/);
-  assert.match(ui, /struktur M15/);
-  assert.match(ui, /trigger M5/);
-  assert.match(ui, /FVG revisit/);
-  assert.match(ui, /OB revisit/);
-  assert.match(ui, /DOL/);
-  assert.match(ui, /Asia entry/);
-  assert.match(ui, /AMY_MARKET_CONTEXT_FINAL/);
-  assert.match(ui, /state\.candles\?\.M1/);
-  assert.match(ui, /state\.candles\?\.M5/);
-  assert.match(ui, /state\.candles\?\.M15/);
+  assert.match(ui, /AMY_MARKET_CONTEXT_PRACTICAL_V2/);
+  assert.match(ui, /buildAmyMarketContextOutlook/);
+  assert.match(ui, /closedCandles\('M1'\)/);
+  assert.match(ui, /closedCandles\('M5'\)/);
+  assert.match(ui, /closedCandles\('M15'\)/);
+  assert.match(ui, /Kondisi market/);
+  assert.match(ui, /Status sekarang/);
+  assert.match(ui, /Area pantauan/);
+  assert.match(ui, /Yang ditunggu/);
+  assert.match(ui, /Konfirmasi/);
+  assert.match(ui, /Invalidasi/);
+  assert.match(ui, /Sumber analisis/);
+  assert.match(ui, /Arah perjalanan/);
+  assert.match(ui, /bukan perintah BUY\/SELL/);
+  assert.match(ui, /Harga live bergerak terpisah/);
+  assert.match(ui, /sourceSignature/);
+  assert.match(ui, /AmyFXDomStableRender\?\.patch/);
+  assert.doesNotMatch(ui, /DATA USANG|DATA_STALE|isOutlookStale/);
+  assert.doesNotMatch(ui, /setInterval|visibilitychange/);
   assert.equal(/Prediction Tracker/i.test(ui), false);
   assert.equal(/Probabilitas model/i.test(ui), false);
   assert.equal(/Validasi historis/i.test(ui), false);
