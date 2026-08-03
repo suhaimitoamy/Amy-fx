@@ -37,50 +37,81 @@ jobs:
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
             -d '{"state":"pending","context":"Preview Source Regression","description":"Focused Mapping regression is running"}'
 
-      - name: Apply final Mapping polish and raise version
-        run: python3 scripts/apply-preview-outlook-polish.py
-
-      - name: Run focused Mapping regression
+      - name: Apply polish and run focused regression
+        shell: bash
         run: |
-          timeout 300s node --test \
-            tests/closed-candle-aggregation.test.mjs \
-            tests/six-issues-regression.test.mjs \
-            tests/closed-candle-freshness-adapter.test.mjs
+          set +e
+          : > preview-polish-regression.log
+          python3 scripts/apply-preview-outlook-polish.py >> preview-polish-regression.log 2>&1
+          script_status=$?
+          test_status=99
+          if [ "$script_status" = "0" ]; then
+            timeout 300s node --test \
+              tests/closed-candle-aggregation.test.mjs \
+              tests/six-issues-regression.test.mjs \
+              tests/closed-candle-freshness-adapter.test.mjs \
+              >> preview-polish-regression.log 2>&1
+            test_status=$?
+          fi
+          {
+            echo
+            echo "SCRIPT_STATUS=$script_status"
+            echo "TEST_STATUS=$test_status"
+          } >> preview-polish-regression.log
+          cat preview-polish-regression.log
+          if [ "$script_status" = "0" ] && [ "$test_status" = "0" ]; then
+            echo success > preview-polish-regression.status
+          else
+            echo failure > preview-polish-regression.status
+          fi
+          exit 0
 
       - name: Verify Preview identity and immutable updater order
+        if: ${{ hashFiles('preview-polish-regression.status') != '' }}
+        shell: bash
         run: |
-          grep -Fq "name: '2.0.0-preview.306', code: 940306" app/src/main/assets/app-version.js
-          grep -Fq '?: 940306)' app/build.gradle.kts
-          grep -Fq '?: "2.0.0-preview.306"' app/build.gradle.kts
-          test "$(python3 -c "import json; print(json.load(open('preview-update.json'))['latest_version_code'])")" = "940305"
+          if [ "$(cat preview-polish-regression.status)" = "success" ]; then
+            grep -Fq "name: '2.0.0-preview.306', code: 940306" app/src/main/assets/app-version.js
+            grep -Fq '?: 940306)' app/build.gradle.kts
+            grep -Fq '?: "2.0.0-preview.306"' app/build.gradle.kts
+            test "$(python3 -c "import json; print(json.load(open('preview-update.json'))['latest_version_code'])")" = "940305"
+          fi
 
-      - name: Mark focused regression successful
+      - name: Publish focused regression result
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
+          result="$(cat preview-polish-regression.status)"
+          if [ "$result" = "success" ]; then
+            state="success"
+            description="Focused Mapping regression passed; version 306 prepared"
+          else
+            state="failure"
+            description="Focused Mapping regression failed; diagnostic committed"
+          fi
           curl -fsS -X POST \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            -d '{"state":"success","context":"Preview Source Regression","description":"Focused Mapping regression passed; version 306 prepared"}'
+            -d "{\"state\":\"$state\",\"context\":\"Preview Source Regression\",\"description\":\"$description\"}"
 
-      - name: Commit final source and trigger private Preview release
+      - name: Commit successful release candidate or isolated diagnostic
+        shell: bash
         run: |
-          rm -f scripts/apply-preview-outlook-polish.py
-          rm -f .github/workflows/preview-outlook-polish.yml
+          result="$(cat preview-polish-regression.status)"
+          rm -f preview-polish-regression.status
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "release(preview): Amy FX Preview 2.0.0-preview.306"
+          if [ "$result" = "success" ]; then
+            rm -f preview-polish-regression.log
+            rm -f scripts/apply-preview-outlook-polish.py
+            rm -f .github/workflows/preview-outlook-polish.yml
+            git add -A
+            git commit -m "release(preview): Amy FX Preview 2.0.0-preview.306"
+          else
+            git checkout -- app tests
+            git add preview-polish-regression.log
+            git commit -m "test(mapping): capture Preview polish regression failure [skip ci]"
+          fi
           git push origin HEAD:personal/amyfx-private
-
-      - name: Mark focused regression failed
-        if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          curl -fsS -X POST \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            -d '{"state":"failure","context":"Preview Source Regression","description":"Focused Mapping regression or version preparation failed"}'
