@@ -24,15 +24,34 @@ jobs:
       - name: Apply Outlook polish
         run: python3 scripts/apply-preview-outlook-polish.py
 
-      - name: Run full Node regression
-        run: node --test tests/*.test.mjs
-
-      - name: Commit source and remove temporary runner
+      - name: Run full Node regression and capture result
+        shell: bash
         run: |
+          set +e
+          node --test tests/*.test.mjs > preview-outlook-regression.log 2>&1
+          status=$?
+          echo "$status" > preview-outlook-regression.status
+          cat preview-outlook-regression.log
+          exit 0
+
+      - name: Commit successful source or isolated failure report
+        shell: bash
+        run: |
+          status="$(cat preview-outlook-regression.status)"
+          rm -f preview-outlook-regression.status
           rm -f scripts/apply-preview-outlook-polish.py
           rm -f .github/workflows/preview-outlook-polish.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "fix(mapping): polish scalping outlook tracking [skip ci]"
+          if [ "$status" = "0" ]; then
+            rm -f preview-outlook-regression.log
+            git add -A
+            git commit -m "fix(mapping): polish scalping outlook tracking [skip ci]"
+          else
+            git checkout -- app/src/main/assets/apps/mapping/js/outlook/v2/projection.js
+            git checkout -- app/src/main/assets/apps/mapping/js/outlook/v2/tracker.js
+            git checkout -- app/src/main/assets/apps/mapping/js/api/market-data.js
+            git add -A
+            git commit -m "test(mapping): capture Outlook full-regression failure [skip ci]"
+          fi
           git push origin HEAD:personal/amyfx-private
