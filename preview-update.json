@@ -11,18 +11,18 @@
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.",
-    "Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.",
-    "Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.",
-    "Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.",
-    "Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.",
-    "Amy FX publik pada branch main tidak diubah."
+    "Freshness Mapping kini ditentukan dari candle terakhir yang benar-benar sudah close, bukan sekadar umur request REST.",
+    "Cache candle yang masih memuat closed candle terbaru tetap dianggap valid dan tidak memicu status Market Usang.",
+    "M1 latar belakang tetap dibatasi lima menit untuk menjaga kuota gratis Twelve Data.",
+    "Kondisi market tutup akhir pekan diperhitungkan agar data Jumat tidak salah ditandai usang.",
+    "Harga live tetap memakai WebSocket; engine Mapping, Scalper, lifecycle, entry, SL, dan TP tidak diubah.",
+    "Perubahan hanya diterapkan pada Amy FX Preview di branch personal/amyfx-private."
   ],
   "changelog": [
-    "Professional glass UI tokens and shared components",
-    "System, light, and dark theme controller",
-    "Truthful home, collection, and profile presentation",
-    "Unified loading, accessibility, and vector icon polish",
-    "Android system bar theme synchronization"
+    "Closed-candle freshness runtime v4",
+    "Current-cache freshness priming",
+    "Quota-safe refresh suppression",
+    "Weekend market-close handling",
+    "Preview freshness regression guard"
   ]
 }
