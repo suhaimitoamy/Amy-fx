@@ -1,3 +1,4 @@
+// Release gate for Amy FX Preview 2.0.0-preview.305.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
