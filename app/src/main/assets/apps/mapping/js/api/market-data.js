@@ -7,6 +7,7 @@ import {
   SUPPORTED_MAPPING_TIMEFRAMES,
   timeframeDurationMs
 } from '../engine/mapping-timeframes.js';
+import { aggregateClosedCandles } from './closed-candle-aggregation.js';
 import { causalEntryLifecycleContract } from '../engine/concept-entry-map-v3.js';
 import { buildMappingSnapshot } from '../engine/mapping-snapshot.js';
 import { render, renderSoft, renderAnalyzeLive } from '../ui/ui-render.js';
@@ -130,7 +131,7 @@ export function buildDirectionDecision(result) {
     };
   }
 
-  if (result.dataStale) {
+  if (result.dataStale && !result.st && !result.validatedMarketContext?.marketState) {
     return {
       bias: 'DATA USANG',
       signal: 'WAIT',
@@ -242,7 +243,7 @@ export function validateSetupGeometry(setup, dirSignal) {
   const tp2 = Number(setup.tp2);
   const singleTarget = Boolean(setup.singleTarget);
 
-  if (!Number.isFinite(lo) || !Number.isFinite(hi) || !Number.isFinite(sl) || !Number.isFinite(tp1)) {
+  if (![lo, hi, sl, tp1].every(value => Number.isFinite(value) && value > 0)) {
     return { valid: false, reason: 'Angka entry, SL, atau TP1 tidak valid (NaN).' };
   }
 
@@ -250,7 +251,7 @@ export function validateSetupGeometry(setup, dirSignal) {
     return { valid: false, reason: `entryLow (${lo}) lebih tinggi dari entryHigh (${hi}).` };
   }
 
-  if (!singleTarget && !Number.isFinite(tp2)) {
+  if (!singleTarget && (!Number.isFinite(tp2) || tp2 <= 0)) {
     return { valid: false, reason: 'Target 2 wajib tersedia untuk setup multi-target.' };
   }
 
@@ -351,7 +352,7 @@ export function buildSetupExecution(result, { persist = true } = {}) {
   const tf = result.tf || 'M15';
   const price = Number(state.price || result.price || localStorage.getItem('last_price') || 0);
 
-  if (result.dataStale || dd.source === 'DATA_STALE') {
+  if ((result.dataStale || dd.source === 'DATA_STALE') && !result.st && !result.validatedMarketContext?.marketState) {
     if (persist) {
       const prev = getActivePointers()[tf];
       if (prev?.setupId) {
@@ -751,7 +752,7 @@ export function buildMappingExplanation(result) {
     ? 'Direction Forecast rule-based (perlu validasi manual)'
     : 'Direction Forecast tervalidasi';
 
-  if (dd.source === 'DATA_STALE' || result.dataStale) {
+  if ((dd.source === 'DATA_STALE' || result.dataStale) && !result.st && !result.validatedMarketContext?.marketState) {
     return { headline: 'Data market sudah kedaluwarsa', action: 'Jangan mengambil keputusan entry.', reason: 'Cache candle telah melewati batas waktu dan API belum berhasil memperbarui data.', confirmationNeeded: 'Tunggu data candle terbaru tersedia.', invalidation: '-', marketContext: 'DATA USANG — CACHE KEDALUWARSA', dataStatus: 'DATA USANG' };
   }
 
@@ -897,36 +898,17 @@ export async function fetchTf(tf, { signal } = {}) {
     return candles;
   } catch (err) {
     if (signal?.aborted) throw err;
-    if ((tf === 'M5' || tf === 'M15') && state.candles['M1']?.length) {
-      const duration = timeframeDurationMs(tf);
-      const targetSeconds = duration / 1000;
-      const aggregated = [];
-      let currentBucket = null;
-      for (const c of state.candles['M1']) {
-        if (!c.isClosed) continue;
-        const bucketTime = Math.floor(c.time / targetSeconds) * targetSeconds;
-        if (!currentBucket || currentBucket.time !== bucketTime) {
-          if (currentBucket) aggregated.push(currentBucket);
-          currentBucket = {
-            time: bucketTime,
-            timeframe: tf,
-            open: c.open,
-            high: c.high,
-            low: c.low,
-            close: c.close,
-            tickCount: c.tickCount,
-            isClosed: true
-          };
-        } else {
-          currentBucket.high = Math.max(currentBucket.high, c.high);
-          currentBucket.low = Math.min(currentBucket.low, c.low);
-          currentBucket.close = c.close;
-          currentBucket.tickCount += c.tickCount;
-        }
+    if (tf === 'M5' || tf === 'M15') {
+      if (!state.candles.M1?.length) {
+        try { await fetchTf('M1', { signal }); } catch (_) {}
       }
-      if (currentBucket) aggregated.push(currentBucket);
-      const closeCutoff = Date.now() - 10_000;
-      const candles = aggregated.filter(c => c.time * 1000 + duration <= closeCutoff);
+      const duration = timeframeDurationMs(tf);
+      const candles = aggregateClosedCandles(state.candles.M1 || [], {
+        timeframe: tf,
+        durationMs: duration,
+        sourceDurationMs: timeframeDurationMs('M1'),
+        closeCutoff: Date.now() - 10_000
+      });
       if (candles.length) {
         state.candles[tf] = candles;
         setCandleFetchedAt(tf, Date.now());
@@ -1043,7 +1025,7 @@ async function performAnalysis(tf, requestId, signal) {
     }));
     if (!isCurrentRequest()) return;
 
-    const currentDataUnavailable = !state.candles[tf]?.length || (refreshFailures.has(tf) && isCandleStale(tf));
+    const currentDataUnavailable = !(state.candles[tf] || []).some(candle => candle?.isClosed !== false);
     if (currentDataUnavailable) {
       log(`DATA USANG: Cache ${tf} kedaluwarsa & API gagal diperbarui.`);
       const result = {
@@ -1202,21 +1184,9 @@ function applyLivePriceTick(detail) {
   reconnectAttempt = 0;
   clearReconnectTimer();
 
-  if (state.result) {
-    state.result.setupExecution = buildSetupExecution(state.result);
-    state.result.mappingExplanation = buildMappingExplanation(state.result);
-    state.result.mappingSnapshot = buildMappingSnapshot(state.result, {
-      candles: state.candles[state.result.tf] || [],
-      livePrice: state.price,
-      capturedAt: Date.now()
-    });
-  }
-  publishMappingSnapshot();
-  sendTargetsToNative();
-  notifyImportant(state.result);
+  // WebSocket is display-only. Mapping and lifecycle remain bound to closed candles.
   renderAnalyzeLive();
   renderSoft();
-  scheduleAnalysisRefresh();
   return true;
 }
 
