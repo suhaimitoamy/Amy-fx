@@ -30,7 +30,7 @@ export const TF = {
 };
 
 export const state = {
-  tab: 'Dashboard',
+  tab: 'Analyze',
   tf: 'M15',
   key: '',
   price: Number(localStorage.getItem('last_price') || 0),
@@ -155,9 +155,8 @@ ${explanation?.action || 'Ikuti lifecycle setup; jangan mengejar harga.'}`;
 }
 
 function setTab(tab) {
-  const allowedTab = tab === 'Analyze' ? 'Analyze' : 'Dashboard';
-  state.tab = allowedTab;
-  localStorage.setItem('amy_mapping_tab', allowedTab);
+  state.tab = 'Analyze';
+  localStorage.setItem('amy_mapping_tab', 'Analyze');
   render();
   syncAutomaticScannerUi();
 }

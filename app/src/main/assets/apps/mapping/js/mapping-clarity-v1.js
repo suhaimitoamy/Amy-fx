@@ -133,7 +133,6 @@ function renderOutlook() {
   if (!panel) { panel = document.createElement('div'); panel.className = 'amy-trade-scenario-panel'; details.appendChild(panel); }
   const signature = JSON.stringify([sourceTime(result),s,f,e.value,a?.high,a?.low,a?.highStatus,a?.lowStatus,scenarios.map(x=>[x.setupType,x.side,x.target])]);
   patch(panel, signature, `<section class="amy-level-panel ${e.active?'':'waiting'}">
-    <p class="amy-level-intro">Struktur, Forecast, dan Entry Permission dipisahkan. Semua memakai candle terakhir yang sudah close.</p>
     <div class="clarity-grid">
       <div class="clarity-cell clarity-${s.direction.toLowerCase()}"><small>Struktur Saat Ini</small><strong>${esc(s.label)}</strong><span>Fase ${esc(s.phase)}</span></div>
       <div class="clarity-cell clarity-${f.direction.toLowerCase()}"><small>Forecast</small><strong>${f.active?esc(f.direction):'BELUM AKTIF'}</strong><span>${f.active?`Horizon ${esc(f.horizon)}`:'Struktur tidak berubah menjadi netral.'}</span></div>
@@ -146,7 +145,6 @@ function renderOutlook() {
     </div>
     <div class="clarity-note"><b>Asia Session Context · ${ASIA_WINDOW}</b><br>${a?.valid?`High ${p2(a.high)} (${esc(a.highStatus)}) · Low ${p2(a.low)} (${esc(a.lowStatus)}). ${esc(asiaDraw(a))}`:esc(a?.note||'Belum tersedia.')}</div>
     <p class="amy-level-disclaimer">WAIT berarti belum ada izin entry, bukan market netral.</p>
-    <p class="clarity-evidence">Backtest Juli 2026: 66 context event, target-zone reach 78,79%. Ini bukan win rate entry. Sumber ${esc(wita(sourceTime(result)))} WITA.</p>
   </section>`);
 }
 
@@ -167,8 +165,7 @@ function renderSummary() {
       <div class="clarity-cell"><small>Invalidasi Struktur</small><strong>${s.invalidation==null?'BELUM TERSEDIA':p2(s.invalidation)}</strong><span>${esc(s.rule)}</span></div>
       <div class="clarity-cell"><small>Target Likuiditas</small><strong>${esc(target(result))}</strong></div>
       <div class="clarity-cell"><small>Sumber Analisis</small><strong>${esc(wita(source))} WITA</strong><span>Candle sudah close.</span></div>
-    </div>
-    <p class="clarity-evidence">Structural parity Juli 2026 100% pada 14.353 snapshot (konsistensi, bukan prediksi). Forecast 42,86% dari 7 event; sampel kecil. Outlook target-zone 78,79% dari 66 event; bukan win rate.</p>`);
+    </div>`);
 }
 
 function renderExplanation() {
@@ -184,7 +181,7 @@ function renderExplanation() {
     <div class="clarity-note"><b>4. Invalidasi:</b> ${esc(s.rule)}</div>
     <div class="clarity-note"><b>5. Target:</b> ${esc(target(result))}</div>
     <div class="clarity-note"><b>6. Asia ${ASIA_WINDOW}:</b> ${a?.valid?`High ${p2(a.high)} (${esc(a.highStatus)}), Low ${p2(a.low)} (${esc(a.lowStatus)}). ${esc(asiaDraw(a))}`:esc(a?.note||'Belum tersedia.')}</div>
-    <div class="clarity-note clarity-event"><b>Kesimpulan:</b> ${e.active?`Izin ${e.value} aktif.`:`Struktur ${s.direction}; entry masih WAIT.`}</div><p class="clarity-evidence">Sumber ${esc(wita(source))} WITA.</p>`);
+    <div class="clarity-note clarity-event"><b>Kesimpulan:</b> ${e.active?`Izin ${e.value} aktif.`:`Struktur ${s.direction}; entry masih WAIT.`}</div>`);
 }
 
 function allTfRows() {

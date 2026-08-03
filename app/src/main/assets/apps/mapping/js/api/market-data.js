@@ -857,43 +857,84 @@ function throwIfAborted(signal) {
 
 export async function fetchTf(tf, { signal } = {}) {
   throwIfAborted(signal);
-  const params = new URLSearchParams({ symbol: 'XAU/USD', interval: TF[tf], outputsize: '300' });
-  const response = await fetch(`${PROXY_URL}?${params.toString()}`, { cache: 'no-store', signal });
-  if (!response.ok) throw new Error(`Market HTTP ${response.status}`);
-  const data = await response.json();
-  throwIfAborted(signal);
-  if (data.status === 'error') throw new Error(data.message || 'Fetch gagal');
-  assertBackendPayloadFresh(data, `Candle ${tf}`);
+  try {
+    const params = new URLSearchParams({ symbol: 'XAU/USD', interval: TF[tf], outputsize: '300' });
+    const response = await fetch(`${PROXY_URL}?${params.toString()}`, { cache: 'no-store', signal });
+    if (!response.ok) throw new Error(`Market HTTP ${response.status}`);
+    const data = await response.json();
+    throwIfAborted(signal);
+    if (data.status === 'error') throw new Error(data.message || 'Fetch gagal');
+    assertBackendPayloadFresh(data, `Candle ${tf}`);
 
-  const raw = (data.values || []).reverse();
-  const closeCutoff = Date.now() - 10_000;
-  const duration = timeframeDurationMs(tf);
-  const candles = raw.map(c => ({
-    time: new Date(c.datetime).getTime() / 1000,
-    timeframe: tf,
-    open: +c.open,
-    high: +c.high,
-    low: +c.low,
-    close: +c.close,
-    tickCount: 1,
-    isClosed: false
-  })).map(candle => ({
-    ...candle,
-    isClosed: Number.isFinite(candle.time)
-      && duration > 0
-      && candle.time * 1000 + duration <= closeCutoff
-  })).filter(candle =>
-    candle.isClosed
-    && [candle.open, candle.high, candle.low, candle.close].every(Number.isFinite)
-    && candle.high >= Math.max(candle.open, candle.close, candle.low)
-    && candle.low <= Math.min(candle.open, candle.close, candle.high)
-  );
+    const raw = (data.values || []).reverse();
+    const closeCutoff = Date.now() - 10_000;
+    const duration = timeframeDurationMs(tf);
+    const candles = raw.map(c => ({
+      time: new Date(c.datetime).getTime() / 1000,
+      timeframe: tf,
+      open: +c.open,
+      high: +c.high,
+      low: +c.low,
+      close: +c.close,
+      tickCount: 1,
+      isClosed: false
+    })).map(candle => ({
+      ...candle,
+      isClosed: Number.isFinite(candle.time)
+        && duration > 0
+        && candle.time * 1000 + duration <= closeCutoff
+    })).filter(candle =>
+      candle.isClosed
+      && [candle.open, candle.high, candle.low, candle.close].every(Number.isFinite)
+      && candle.high >= Math.max(candle.open, candle.close, candle.low)
+      && candle.low <= Math.min(candle.open, candle.close, candle.high)
+    );
 
-  if (!candles.length) throw new Error(`Candle ${tf} kosong`);
-  throwIfAborted(signal);
-  state.candles[tf] = candles;
-  setCandleFetchedAt(tf, Date.now());
-  return candles;
+    if (!candles.length) throw new Error(`Candle ${tf} kosong`);
+    throwIfAborted(signal);
+    state.candles[tf] = candles;
+    setCandleFetchedAt(tf, Date.now());
+    return candles;
+  } catch (err) {
+    if (signal?.aborted) throw err;
+    if ((tf === 'M5' || tf === 'M15') && state.candles['M1']?.length) {
+      const duration = timeframeDurationMs(tf);
+      const targetSeconds = duration / 1000;
+      const aggregated = [];
+      let currentBucket = null;
+      for (const c of state.candles['M1']) {
+        if (!c.isClosed) continue;
+        const bucketTime = Math.floor(c.time / targetSeconds) * targetSeconds;
+        if (!currentBucket || currentBucket.time !== bucketTime) {
+          if (currentBucket) aggregated.push(currentBucket);
+          currentBucket = {
+            time: bucketTime,
+            timeframe: tf,
+            open: c.open,
+            high: c.high,
+            low: c.low,
+            close: c.close,
+            tickCount: c.tickCount,
+            isClosed: true
+          };
+        } else {
+          currentBucket.high = Math.max(currentBucket.high, c.high);
+          currentBucket.low = Math.min(currentBucket.low, c.low);
+          currentBucket.close = c.close;
+          currentBucket.tickCount += c.tickCount;
+        }
+      }
+      if (currentBucket) aggregated.push(currentBucket);
+      const closeCutoff = Date.now() - 10_000;
+      const candles = aggregated.filter(c => c.time * 1000 + duration <= closeCutoff);
+      if (candles.length) {
+        state.candles[tf] = candles;
+        setCandleFetchedAt(tf, Date.now());
+        return candles;
+      }
+    }
+    throw err;
+  }
 }
 
 function attachValidatedMarketContext(result) {

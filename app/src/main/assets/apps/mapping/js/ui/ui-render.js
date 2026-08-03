@@ -37,7 +37,7 @@ function regimePlaceholder() {
 
 function marketContextPlaceholder() {
   return `<details class="card amy-analysis-section" data-stability-key="market-context">
-    <summary><span>Ringkasan Market</span><small>Struktur, arah, dan skenario</small></summary>
+    <summary><span>Ringkasan Market</span></summary>
     ${regimePlaceholder()}
   </details>`;
 }
@@ -186,7 +186,7 @@ export function dashboard() {
     ? `<div class="setup-summary"><div><small>Entry Area</small><strong>${p2(se.entryLow)} – ${p2(se.entryHigh)}</strong></div><div><small>Invalidasi</small><strong>${p2(se.stopLoss)}</strong></div><div><small>Target</small><strong>${p2(se.target1)}</strong></div><div><small>Status</small><strong>${se.status}</strong></div></div><p class="summary-note">${se.invalidationReason || setupAuthorityNote}</p>`
     : `<p class="muted">${se?.invalidationReason || 'Klik Analisis Setup untuk membuat mapping angka.'}</p>`;
   const executionPlan = renderExecutionPlanCompact(executionPlanRuntimeInput(r, state));
-  return `<section class="card tf-card" data-stability-key="timeframe"><div class="section-row"><div><div class="kicker">TIMEFRAME</div><h2>Pilih mapping</h2></div><span class="muted">${state.tf}</span></div><div class="tf-grid compact-tf">${tfList.map(x => `<button class="${state.tf === x ? 'active' : ''}" onclick="window.runAnalysis('${x}')">${x}</button>`).join('')}</div></section>${livePriceKeyCard()}${killzonePanel()}${regimePlaceholder()}<section class="card setup-focus" data-stability-key="setup-focus"><div class="section-row"><div><div class="kicker">SETUP UTAMA</div><h2>${setupTitle}</h2></div>${se?.active ? `<span class="badge ${se.direction === 'BUY' ? 'buy' : 'sell'}">${se.direction}</span>` : ''}</div>${setupBody}<button class="action" onclick="setTab('Analyze')" style="width:100%;margin-top:12px">⚡ Buka Analisis Lengkap</button></section>${scalperShadowPlaceholder()}${executionPlan}`;
+  return `<section class="card tf-card" data-stability-key="timeframe"><div class="section-row"><div><div class="kicker">TIMEFRAME</div><h2>Pilih mapping</h2></div><span class="muted">${state.tf}</span></div><div class="tf-grid compact-tf">${tfList.map(x => `<button class="${state.tf === x ? 'active' : ''}" onclick="window.runAnalysis('${x}')">${x}</button>`).join('')}</div></section>${livePriceKeyCard()}${killzonePanel()}${regimePlaceholder()}<section class="card setup-focus" data-stability-key="setup-focus"><div class="section-row"><div><div class="kicker">SETUP UTAMA</div><h2>${setupTitle}</h2></div>${se?.active ? `<span class="badge ${se.direction === 'BUY' ? 'buy' : 'sell'}">${se.direction}</span>` : ''}</div>${setupBody}</section>${scalperShadowPlaceholder()}${executionPlan}`;
 }
 
 export function lifecycleSetupCard(s, i = 0) {

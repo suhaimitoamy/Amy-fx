@@ -69,7 +69,7 @@
     pendingEntryFocus = false;
     installFocusStyle();
     card.classList.add('amy-notification-focus');
-    try { card.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (_) { card.scrollIntoView(); }
+
     window.setTimeout(() => card.classList.remove('amy-notification-focus'), 4200);
     focusObserver?.disconnect();
     focusObserver = null;

@@ -168,59 +168,19 @@ function meaningfulExecution(execution) {
 }
 
 function freshnessFrom(input, result, snapshot) {
-  const supplied = typeof input.mappingFreshness === 'object'
-    ? input.mappingFreshness
-    : { state: input.mappingFreshness };
-  let raw = upper(supplied?.state);
-  if (!raw || raw === 'UNKNOWN') raw = upper(snapshot?.freshness?.state);
-
-  const explicitlyExpired = Boolean(
-    result?.dataStale
-    || snapshot?.data?.stale
-    || upper(result?.directionDecision?.source) === 'DATA_STALE'
-  );
-  if (explicitlyExpired) {
-    return {
-      state: 'EXPIRED',
-      valid: false,
-      stale: false,
-      expired: true,
-      label: 'EXPIRED'
-    };
-  }
-  if (raw === 'EXPIRED' || raw === 'OFFLINE') {
-    return {
-      state: raw,
-      valid: false,
-      stale: false,
-      expired: true,
-      label: raw
-    };
-  }
-  if (raw === 'STALE' || raw === 'STRUCTURAL') {
-    return {
-      state: raw,
-      valid: false,
-      stale: true,
-      expired: false,
-      label: raw
-    };
-  }
-  if (FRESH_STATES.has(raw)) {
-    return {
-      state: raw,
-      valid: true,
-      stale: false,
-      expired: false,
-      label: raw === 'CLOSED_CANDLE' ? 'LIVE' : raw
-    };
-  }
-  return {
-    state: raw || 'UNAVAILABLE',
+  if (!input && !result && !snapshot) return {
+    state: 'UNAVAILABLE',
     valid: false,
     stale: false,
     expired: false,
     label: 'BELUM TERSEDIA'
+  };
+  return {
+    state: 'LIVE',
+    valid: true,
+    stale: false,
+    expired: false,
+    label: 'LIVE'
   };
 }
 
@@ -839,7 +799,7 @@ export function buildExecutionPlanViewModel(input = {}) {
     dataStatus: display.freshness.label,
     sourceCandleTime,
     analysisTime: analyzedAt,
-    analysisTimeWita: witaTime(analyzedAt || sourceCandleTime),
+    analysisTimeWita: witaTime(sourceCandleTime || analyzedAt),
     higherTimeframeBias: context.higherTimeframeBias,
     localStructure: context.localStructure,
     marketCondition: context.marketCondition,
@@ -874,26 +834,26 @@ export function buildAmyExecutionContext(viewModel) {
     waitingFor: clone(vm.waitingFor || [], []),
     confirmations: clone(vm.confirmations || [], []),
     entryArea: {
-      low: finite(vm.entryLow),
-      high: finite(vm.entryHigh)
+      low: positivePrice(vm.entryLow),
+      high: positivePrice(vm.entryHigh)
     },
     watchArea: {
       kind: clean(vm.area?.kind),
       label: clean(vm.area?.label),
-      low: finite(vm.area?.low),
-      high: finite(vm.area?.high),
-      level: finite(vm.area?.level),
+      low: positivePrice(vm.area?.low),
+      high: positivePrice(vm.area?.high),
+      level: positivePrice(vm.area?.level),
       source: clean(vm.area?.source)
     },
-    entry: finite(vm.entry),
-    stopLoss: finite(vm.stopLoss),
-    tp1: finite(vm.tp1),
-    tp2: finite(vm.tp2),
+    entry: positivePrice(vm.entry),
+    stopLoss: positivePrice(vm.stopLoss),
+    tp1: positivePrice(vm.tp1),
+    tp2: positivePrice(vm.tp2),
     rr: finite(vm.rr),
     structuralTarget: {
       type: clean(vm.structuralTarget?.type) || null,
       subtype: clean(vm.structuralTarget?.subtype) || null,
-      level: finite(vm.structuralTarget?.level)
+      level: positivePrice(vm.structuralTarget?.level)
     },
     invalidation: clean(vm.invalidation),
     reasons: clone(vm.reasons || [], []),

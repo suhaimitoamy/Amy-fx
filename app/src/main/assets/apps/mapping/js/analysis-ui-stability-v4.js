@@ -136,7 +136,7 @@
     details.className = 'card amy-analysis-section';
     details.dataset.stabilityKey = MARKET_CONTEXT_KEY;
     details.open = true;
-    details.innerHTML = '<summary><span>Ringkasan Market</span><small>Struktur, arah, dan skenario</small></summary>';
+    details.innerHTML = '<summary><span>Ringkasan Market</span></summary>';
     card.before(details);
     details.appendChild(card);
     forceStaticDisclosure(details);

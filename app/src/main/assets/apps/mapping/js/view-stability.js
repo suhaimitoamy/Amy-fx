@@ -73,18 +73,6 @@
 
   function restorePosition() {
     mutationQueued = false;
-    if (!shouldRestore()) return;
-
-    restoring = true;
-    try {
-      if (restoreFromAnchor()) return;
-      const maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      const target = Math.min(lastStableY, maxY);
-      if (Math.abs((window.scrollY || 0) - target) < 12) return;
-      window.scrollTo({ top: target, left: 0, behavior: 'auto' });
-    } finally {
-      requestAnimationFrame(() => { restoring = false; });
-    }
   }
 
   function queueRestore() {

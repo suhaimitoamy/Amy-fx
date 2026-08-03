@@ -421,7 +421,7 @@ function applyAuthority() {
 
     const placeholder = document.querySelector('#amy-scalper-entry-watch .scalper-watch__instruction');
     if (placeholder && /IFVG|FVG BUY High Quality/i.test(placeholder.textContent || '')) {
-      placeholder.textContent = 'Sepuluh driver BT6/BT6.1 + AMD memindai XAUUSD dari candle yang sudah close.';
+      placeholder.textContent = '';
     }
 
     lastResult = result;
