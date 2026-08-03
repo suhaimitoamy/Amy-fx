@@ -31,11 +31,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          target="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           curl -fsS -X POST \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            -d '{"state":"pending","context":"Preview Source Regression","description":"Focused Mapping regression is running"}'
+            -d "{\"state\":\"pending\",\"context\":\"Preview Source Regression\",\"description\":\"Focused Mapping regression is running\",\"target_url\":\"$target\"}"
 
       - name: Apply polish and run focused regression
         shell: bash
@@ -67,7 +68,6 @@ jobs:
           exit 0
 
       - name: Verify Preview identity and immutable updater order
-        if: ${{ hashFiles('preview-polish-regression.status') != '' }}
         shell: bash
         run: |
           if [ "$(cat preview-polish-regression.status)" = "success" ]; then
@@ -78,11 +78,13 @@ jobs:
           fi
 
       - name: Publish focused regression result
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          result="$(cat preview-polish-regression.status)"
+          result="failure"
+          [ -f preview-polish-regression.status ] && result="$(cat preview-polish-regression.status)"
           if [ "$result" = "success" ]; then
             state="success"
             description="Focused Mapping regression passed; version 306 prepared"
@@ -90,16 +92,19 @@ jobs:
             state="failure"
             description="Focused Mapping regression failed; diagnostic committed"
           fi
+          target="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           curl -fsS -X POST \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            -d "{\"state\":\"$state\",\"context\":\"Preview Source Regression\",\"description\":\"$description\"}"
+            -d "{\"state\":\"$state\",\"context\":\"Preview Source Regression\",\"description\":\"$description\",\"target_url\":\"$target\"}"
 
       - name: Commit successful release candidate or isolated diagnostic
+        if: always()
         shell: bash
         run: |
-          result="$(cat preview-polish-regression.status)"
+          result="failure"
+          [ -f preview-polish-regression.status ] && result="$(cat preview-polish-regression.status)"
           rm -f preview-polish-regression.status
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -110,8 +115,13 @@ jobs:
             git add -A
             git commit -m "release(preview): Amy FX Preview 2.0.0-preview.306"
           else
-            git checkout -- app tests
+            git restore --source=HEAD --staged --worktree app tests || true
+            {
+              echo
+              echo "RUN_URL=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            } >> preview-polish-regression.log
             git add preview-polish-regression.log
             git commit -m "test(mapping): capture Preview polish regression failure [skip ci]"
           fi
+          git pull --rebase origin personal/amyfx-private
           git push origin HEAD:personal/amyfx-private
