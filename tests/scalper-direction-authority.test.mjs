@@ -14,7 +14,7 @@ function loadChooser() {
   assert.ok(start >= 0 && end > start, 'scalper direction block must exist');
   const context = {
     SCALPER_AUTHORITY_TFS: Object.freeze(['M15', 'M5', 'M1', 'M30', 'H1']),
-    SCALPER_WEIGHTS: Object.freeze({ M15: 6, M5: 5, M1: 2, M30: 3, H1: 2 }),
+    SCALPER_WEIGHTS: Object.freeze({ M15: 45, M5: 25, M1: 20, M30: 5, H1: 5 }),
     chooser: null
   };
   vm.createContext(context);
@@ -63,6 +63,7 @@ test('M15 remains the primary scalping direction and reports lower-timeframe con
 
 test('H4, D1, and W1 never vote on scalping direction', () => {
   assert.match(source, /SCALPER_AUTHORITY_TFS = Object\.freeze\(\['M15', 'M5', 'M1', 'M30', 'H1'\]\)/);
+  assert.match(source, /SCALPER_WEIGHTS = Object\.freeze\(\{ M15: 45, M5: 25, M1: 20, M30: 5, H1: 5 \}\)/);
   assert.doesNotMatch(source, /SCALPER_AUTHORITY_TFS[^\n]*H4/);
   assert.doesNotMatch(source, /SCALPER_AUTHORITY_TFS[^\n]*D1/);
   assert.doesNotMatch(source, /SCALPER_AUTHORITY_TFS[^\n]*W1/);
