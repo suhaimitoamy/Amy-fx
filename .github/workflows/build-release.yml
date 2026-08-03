@@ -6,11 +6,11 @@ on:
       versionName:
         description: "Version Name"
         required: true
-        default: "2.2.0"
+        default: "2.2.1"
       versionCode:
         description: "Version Code"
         required: true
-        default: "56"
+        default: "57"
 
 permissions:
   contents: read
@@ -37,8 +37,12 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "22" }
       - run: timeout 15m npm test
-      - name: Verify Pattern v3 and native WebSocket path
+      - name: Verify market freshness, Pattern v3, and native WebSocket path
         run: |
+          node --check app/src/main/assets/apps/mapping/js/api-request-coordinator.js
+          grep -Fq "PERSISTENT_CACHE_KEY = 'amyfx_market_response_cache_v3'" app/src/main/assets/apps/mapping/js/api-request-coordinator.js
+          grep -Fq 'BACKGROUND_M1_REFRESH_SECONDS = 300' app/src/main/assets/apps/mapping/js/api-request-coordinator.js
+          grep -Fq 'SUPABASE_VERIFIED_CURRENT' app/src/main/assets/apps/mapping/js/api-request-coordinator.js
           test -f supabase/functions/scalper-engine/pattern-gates.mjs
           grep -Fq '10 driver BT6/BT6.1 + AMD' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
           test -f app/src/main/java/com/amyelitesuite/TwelveDataPriceBridge.kt
