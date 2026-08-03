@@ -8,23 +8,30 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const runtimePath = 'app/src/main/assets/apps/mapping/js/mapping-runtime-repair-v3.js';
 const runtime = readFileSync(`${root}/${runtimePath}`, 'utf8');
 
-test('Preview freshness is primed from the latest actually closed candle', () => {
+test('Preview keeps valid closed-candle cache analyzable without a freshness hard gate', () => {
   const syntax = spawnSync(process.execPath, ['--check', `${root}/${runtimePath}`], { encoding: 'utf8' });
   assert.equal(syntax.status, 0, syntax.stderr || syntax.stdout);
 
-  assert.match(runtime, /setCandleFetchedAt/);
-  assert.match(runtime, /expectedClosedCandleOpen/);
-  assert.match(runtime, /cachedSeriesIsCurrent/);
-  assert.match(runtime, /primeCurrentCandleFreshness/);
-  assert.match(runtime, /CLOSE_GRACE_MS = 10_000/);
-  assert.match(runtime, /fridayClosed/);
-  assert.match(runtime, /saturday/);
-  assert.match(runtime, /sundayClosed/);
-  assert.match(runtime, /version: '4\.0\.0'/);
+  assert.match(runtime, /markCachedSeriesUsable/);
+  assert.match(runtime, /setCandleFetchedAt\(tf, nowMs\)/);
+  assert.match(runtime, /candle\?\.isClosed !== false/);
+  assert.match(runtime, /sourceSignature/);
+  assert.match(runtime, /latestClosedCandleClose/);
+  assert.match(runtime, /dataStale: false/);
+  assert.match(runtime, /version: '5\.0\.0'/);
 });
 
-test('Preview avoids REST refresh while selected closed candle cache is current', () => {
-  assert.match(runtime, /selectedNeedsRefresh = !selectedHasData \|\| sourceStatus\[selectedTf\] === false/);
-  assert.match(runtime, /!force && !selectedNeedsRefresh/);
-  assert.match(runtime, /await runAnalysis\(state\.tf\)/);
+test('Preview preserves the previous result when a provider failure returns DATA_STALE', () => {
+  assert.match(runtime, /state\.result\?\.dataStale && previousResult/);
+  assert.match(runtime, /state\.result = previousResult/);
+  assert.match(runtime, /window\.runAnalysis = tf => refreshMapping/);
+});
+
+test('Preview Mapping runtime is event-driven instead of periodic', () => {
+  assert.doesNotMatch(runtime, /setInterval/);
+  assert.doesNotMatch(runtime, /addEventListener\('focus'/);
+  assert.doesNotMatch(runtime, /addEventListener\('online'/);
+  assert.doesNotMatch(runtime, /visibilitychange/);
+  assert.match(runtime, /amyfx:candles-updated/);
+  assert.match(runtime, /amyfx:mapping-refresh-request/);
 });
