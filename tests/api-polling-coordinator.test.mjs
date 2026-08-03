@@ -97,6 +97,33 @@ test('client Twelve Data requests are canonicalized, deduplicated and cached', (
   assert.match(coordinator, /window\.fetch = coordinatedFetch/);
 });
 
+test('closed candle cache survives app reload and blocks quota-wasting refetches', () => {
+  assert.match(coordinator, /PERSISTENT_CACHE_KEY = 'amyfx_market_response_cache_v3'/);
+  assert.match(coordinator, /restorePersistentCache\(\)/);
+  assert.match(coordinator, /persistResponseCache\(\)/);
+  assert.match(coordinator, /localStorage\.setItem\(PERSISTENT_CACHE_KEY/);
+  assert.match(coordinator, /storedIsCurrent\(exactCached, info, now\)/);
+  assert.match(coordinator, /expectedClosedOpenTime\(info, now/);
+  assert.match(coordinator, /marketReferenceNowMs/);
+  assert.match(coordinator, /MONDAY_UTC_ANCHOR_SECONDS/);
+});
+
+test('background M1 refresh is throttled while selected M1 remains candle-close accurate', () => {
+  assert.match(coordinator, /BACKGROUND_M1_REFRESH_SECONDS = 300/);
+  assert.match(coordinator, /activeMappingTf\(\) === 'M1'/);
+  assert.match(coordinator, /refreshSecondsFor/);
+  assert.match(coordinator, /RETRY_COOLDOWN_MS = 60_000/);
+  assert.match(coordinator, /retryAfter/);
+});
+
+test('current Supabase fallback is verified instead of rejected only for containing stale label', () => {
+  assert.match(coordinator, /dataIsCurrent\(data, info, now\)/);
+  assert.match(coordinator, /SUPABASE_VERIFIED_CURRENT/);
+  assert.match(coordinator, /amyfxOriginalCacheState/);
+  assert.match(coordinator, /amyfxProviderDegraded/);
+  assert.match(coordinator, /amyfxExpectedClosedOpenTime/);
+});
+
 test('backend shares provider responses and serves stale cache during provider failure', () => {
   assert.match(backend, /globalThis\.__amyFxTwelveDataCache/);
   assert.match(backend, /globalThis\.__amyFxTwelveDataInFlight/);
