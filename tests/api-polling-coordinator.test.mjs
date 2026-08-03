@@ -134,6 +134,8 @@ test('backend shares provider responses and serves stale cache during provider f
   assert.match(backend, /globalThis\.__amyFxTwelveDataCache/);
   assert.match(backend, /globalThis\.__amyFxTwelveDataInFlight/);
   assert.match(backend, /CACHE_TTL_SECONDS/);
-  assert.match(backend, /STALE_IF_ERROR_SECONDS/);
+  assert.match(backend, /Math\.max\(ttl \* 4, 300\)/);
+  assert.match(backend, /readCache\(key, \{ allowStale: true \}\)/);
+  assert.match(backend, /STALE_FALLBACK/);
   assert.match(backend, /stale-if-error/);
 });
