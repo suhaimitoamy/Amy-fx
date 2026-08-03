@@ -31,7 +31,7 @@ test('Mapping listeners and observers are installed once without autonomous Scal
   assert.match(panels, /if \(window\.__amyFxDashboardOnlyPanelsV1Installed\) return/);
   assert.match(panels, /if \(started\) return/);
   assert.equal((panels.match(/new MutationObserver/g) || []).length, 1);
-  assert.match(panels, /if \(needsCleanup\(records, app\)\) scheduleCleanup\(\)/);
+  assert.match(panels, /if \(records\.some\(record => record\.target === app\)\) scheduleCleanup\(\)/);
   assert.doesNotMatch(panels, /\brender\s*\(/);
 
   assert.match(analysis, /if \(window\.__amyFxStableAnalysisUiV4Installed\) return/);
@@ -39,7 +39,7 @@ test('Mapping listeners and observers are installed once without autonomous Scal
   assert.doesNotMatch(analysis, /\brender\s*\(/);
 });
 
-test('ordinary Mapping refresh does not force scroll and accordion state uses stable keys', async () => {
+test('ordinary Mapping refresh does not force scroll and Analyze DOM order remains authoritative', async () => {
   const ui = await read('app/src/main/assets/apps/mapping/js/ui/ui-render.js');
   const scalper = await read('app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js');
   const panels = await read('app/src/main/assets/apps/mapping/js/dashboard-only-panels-v1.js');
@@ -52,22 +52,10 @@ test('ordinary Mapping refresh does not force scroll and accordion state uses st
   assert.match(ui, /details\[data-stability-key\]/);
   assert.match(ui, /new Map\(/);
   assert.match(ui, /disclosureState\.get\(key\)/);
-  [
-    "{ selector: '.mapping-hero' }",
-    "{ selector: '[data-stability-key=\"market-outlook\"]' }",
-    "{ id: 'amy-regime-router-v3' }",
-    "{ selector: '[data-execution-plan-card=\"detail\"]' }",
-    "{ summary: 'Penjelasan Mapping' }",
-    "{ selector: '[data-asia-range-analyze]' }",
-    "{ summary: 'Valid Break' }",
-    "{ summary: 'Mapping Semua Timeframe' }",
-    "{ summary: 'Setup Aktif' }",
-    "{ id: 'amy-scalper-entry-watch' }"
-  ].reduce((lastIndex, token) => {
-    const index = panels.indexOf(token, lastIndex + 1);
-    assert.ok(index > lastIndex, `Analyze source-order guard missing ${token}`);
-    return index;
-  }, -1);
+  assert.match(panels, /Analyze is intentionally never reordered/);
+  assert.match(panels, /if \(currentView\(\) === 'Dashboard'\) reorderDashboardPanels\(app\)/);
+  assert.match(panels, /reorderedAnalyze: 0/);
+  assert.doesNotMatch(panels, /ANALYZE_ORDER|reorderAnalyzePanels/);
 });
 
 test('Scalper Shadow has one persistent shell and preserves valid data on refresh failure', async () => {
