@@ -32,10 +32,11 @@ test('live price display-only bridge loads before Mapping engine', () => {
   assert.ok(mainPosition > livePosition);
 });
 
-test('live WebSocket tick updates only price display and blocks legacy Mapping rebuild', () => {
+test('live WebSocket tick paints price immediately while preserving authoritative reconnect handling', () => {
   const live = read(paths.live);
   const main = read(paths.main);
-  assert.match(live, /stopImmediatePropagation\(\)/);
+  assert.doesNotMatch(live, /stopImmediatePropagation/);
+  assert.match(live, /authoritative market-data listener/);
   assert.match(live, /amyfx:live-price-display/);
   assert.match(live, /\.price, \[data-live-price\]/);
   assert.match(live, /__amyFxDisplayLastTickAt/);
