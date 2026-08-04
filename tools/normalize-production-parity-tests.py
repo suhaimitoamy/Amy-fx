@@ -6,10 +6,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 REPLACEMENTS = {
     "preview-update.json": "update.json",
+    r"preview-update\.json": r"update\.json",
+    "personal/amyfx-private/preview-update.json": "main/update.json",
+    r"personal\/amyfx-private\/preview-update\.json": r"main\/update\.json",
     "2.0.0-preview.307": "2.3.0",
+    r"2\.0\.0-preview\.307": r"2\.3\.0",
     "940307": "58",
     "Amy FX Preview": "Amy FX",
     "com.amyelitesuite.learningpreview": "com.amyelitesuite",
+    r"com\.amyelitesuite\.learningpreview": r"com\.amyelitesuite",
     "amyfxpreview": "amyfx",
 }
 
