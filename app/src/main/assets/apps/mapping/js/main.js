@@ -173,12 +173,18 @@ ${targetText}
 ${explanation?.action || 'Ikuti lifecycle setup; jangan mengejar harga.'}`;
 }
 
+function dispatchMappingUiRendered() {
+  if (typeof window?.dispatchEvent !== 'function' || typeof CustomEvent !== 'function') return;
+  window.dispatchEvent(new CustomEvent('amyfx:mapping-ui-rendered', {
+    detail: { tab: state.tab, timeframe: state.tf, renderedAt: Date.now() }
+  }));
+}
+
 function renderAndNotify() {
   const changed = render();
   if (changed) {
-    queueMicrotask(() => window.dispatchEvent(new CustomEvent('amyfx:mapping-ui-rendered', {
-      detail: { tab: state.tab, timeframe: state.tf, renderedAt: Date.now() }
-    })));
+    if (typeof queueMicrotask === 'function') queueMicrotask(dispatchMappingUiRendered);
+    else Promise.resolve().then(dispatchMappingUiRendered);
   }
   return changed;
 }
