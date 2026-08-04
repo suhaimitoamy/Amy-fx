@@ -6,7 +6,7 @@ const testsDir = resolve(process.cwd(), 'tests');
 const failureReportPath = resolve(process.cwd(), 'preview-regression-failure.txt');
 const testTimeoutMs = Math.max(
   30_000,
-  Number(process.env.AMYFX_TEST_FILE_TIMEOUT_MS || 180_000)
+  Number(process.env.AMYFX_TEST_FILE_TIMEOUT_MS || 60_000)
 );
 const files = readdirSync(testsDir)
   .filter(name => name.endsWith('.test.mjs'))
