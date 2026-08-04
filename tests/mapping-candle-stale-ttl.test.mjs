@@ -28,7 +28,9 @@ const createDummyElement = () => ({
   querySelector: () => createDummyElement(),
   querySelectorAll: () => [createDummyElement()],
   addEventListener: () => {},
-  removeEventListener: () => {}
+  removeEventListener: () => {},
+  setAttribute: () => {},
+  getAttribute: () => null
 });
 
 globalThis.document = {

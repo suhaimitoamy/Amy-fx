@@ -1,6 +1,6 @@
-// Amy FX Preview personal release identity — Mapping stability and safe execution freshness release.
+// Amy FX Preview personal release identity — Structural bias and permanent Scalper history release.
 (function () {
-  const VERSION = Object.freeze({ name: '2.0.0-preview.306', code: 940306 });
+  const VERSION = Object.freeze({ name: '2.0.0-preview.307', code: 940307 });
   window.AmyFXAppVersion = VERSION;
   window.AmyFXUpdateManifestUrl = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json';
   function displayVersionName(name) {

@@ -25,7 +25,7 @@ test('Preview keeps its richer multi-setup Scalper detail', () => {
     'TP1 +10',
     'TP2 +20',
     'Setup aktif lainnya',
-    'Lifecycle terbaru'
+    'Riwayat setup permanen'
   ]) {
     assert.ok(source.includes(marker), `Preview detail marker missing: ${marker}`);
   }

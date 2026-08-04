@@ -23,9 +23,10 @@ test('Mapping listeners and observers are installed once without autonomous Scal
   const analysis = await read('app/src/main/assets/apps/mapping/js/analysis-ui-stability-v4.js');
 
   assert.match(scalper, /if\s*\(\s*started\s*\)\s*return/);
-  assert.match(scalper, /function start\(\)\{[^}]*sync\(\)/);
+  assert.match(scalper, /function start\(\)\s*\{[\s\S]*?sync\(\);/);
   assert.doesNotMatch(scalper, /setInterval|setTimeout/);
-  assert.doesNotMatch(scalper, /hashchange|visibilitychange|focusHash|lastFocusedHash/);
+  assert.equal((scalper.match(/hashchange/g) || []).length, 1);
+  assert.doesNotMatch(scalper, /visibilitychange|focusHash|lastFocusedHash/);
   assert.doesNotMatch(scalper, /MutationObserver/);
 
   assert.match(panels, /if \(window\.__amyFxDashboardOnlyPanelsV1Installed\) return/);
@@ -47,8 +48,9 @@ test('ordinary Mapping refresh does not force scroll and Analyze DOM order remai
 
   assert.doesNotMatch(ui, /scrollIntoView|window\.scrollTo|window\.scrollBy/);
   assert.doesNotMatch(renderBlock, /scrollIntoView|scrollTo|scrollBy/);
-  assert.doesNotMatch(scalper, /focusHash|location\.hash|hashchange/);
-  assert.match(scalper, /if\(nextSignature===signature\)return false/);
+  assert.doesNotMatch(scalper, /focusHash|scrollIntoView/);
+  assert.match(scalper, /setupIdFromLocation/);
+  assert.match(scalper, /if\s*\(nextSignature\s*===\s*signature\)\s*return false/);
   assert.match(ui, /details\[data-stability-key\]/);
   assert.match(ui, /new Map\(/);
   assert.match(ui, /disclosureState\.get\(key\)/);
@@ -70,9 +72,9 @@ test('Scalper Shadow has one persistent shell and preserves valid data on refres
 
   assert.match(scalper, /document\.getElementById\(CARD_ID\)/);
   assert.match(scalper, /lastValidPayload\s*=\s*reconcileScalperPayload/);
-  assert.match(scalper, /render\(lastValidPayload,scalperFreshness\(lastValidPayload,message\),message\)/);
+  assert.match(scalper, /render\(lastValidPayload,\s*scalperFreshness\(lastValidPayload,\s*message\),\s*message\)/);
   assert.match(scalper, /AmyFXDomStableRender\?\.patch/);
-  assert.match(scalper, /patch\(existing,next\)/);
+  assert.match(scalper, /patch\(existing,\s*next\)/);
   assert.doesNotMatch(scalper, /outerHTML|\.remove\(\)/);
 });
 
