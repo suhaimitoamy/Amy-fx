@@ -51,12 +51,15 @@ test('dashboard duplicate Preview and price cards are removed without changing d
   assert.equal(fixes.includes('startBackgroundScanner'), false);
 });
 
-test('analysis badge keeps the latest closed-candle source instead of exposing stale UI state', () => {
+test('analysis badge reports both closed-candle availability and provider delay truthfully', () => {
   assert.match(fixes, /function latestClosedCandle/);
   assert.match(fixes, /CANDLE TERTUTUP/);
+  assert.match(fixes, /CACHE · PROVIDER TERTUNDA/);
   assert.match(fixes, /MENUNGGU DATA/);
   assert.match(fixes, /Analisis memakai candle/);
-  assert.match(fixes, /badge\.classList\.remove\('stale'\)/);
+  assert.match(fixes, /freshness\.providerDelayed/);
+  assert.match(fixes, /badge\.classList\.toggle\('stale', providerDelayed\)/);
+  assert.match(fixes, /entry diblokir sampai provider diperbarui/);
   assert.doesNotMatch(fixes, /M15 STALE/);
   assert.doesNotMatch(fixes, /M15 LIVE/);
   assert.doesNotMatch(fixes, /result\?\.dataStale/);
