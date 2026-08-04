@@ -28,6 +28,8 @@ POSITIVE_REPLACEMENTS = {
     "com.amyelitesuite.learningpreview": "com.amyelitesuite",
     r"com\.amyelitesuite\.learningpreview": r"com\.amyelitesuite",
     "amyfxpreview": "amyfx",
+    "amyfx.preview.scalper.permanent-history.v1": "amyfx.production.scalper.permanent-history.v1",
+    r"amyfx\.preview\.scalper\.permanent-history\.v1": r"amyfx\.production\.scalper\.permanent-history\.v1",
 }
 
 NEGATIVE_ASSERTION_MARKERS = (
