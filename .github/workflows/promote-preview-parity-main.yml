@@ -9,6 +9,7 @@ on:
       - tools/promote-preview-to-production.py
       - tools/normalize-production-parity-tests.py
       - tools/finalize-production-market-intel.py
+      - tools/production-test-overlays.txt
       - app/**
       - api/**
       - lib/**
@@ -66,23 +67,12 @@ jobs:
           cp -a production/supabase/functions/news-system-push "$preserve/supabase/functions/news-system-push"
           cp -a production/supabase/functions/scheduled-news-sync "$preserve/supabase/functions/scheduled-news-sync"
           cp production/supabase/functions/news-sync/handler.ts "$preserve/supabase/functions/news-sync/handler.ts"
-          for test_file in \
-            analysis-static-layout.test.mjs \
-            deepseek-provider-detection.test.mjs \
-            five-issues-regression.test.mjs \
-            journal-ai-rotation-v158.test.mjs \
-            mapping-news-background-repair.test.mjs \
-            market-candle-store.test.mjs \
-            native-updater.test.mjs \
-            preview-production-feature-parity.test.mjs \
-            production-copy-polish.test.mjs \
-            production-release-identity.test.mjs \
-            profile-version-update-regression.test.mjs
-          do
+          while IFS= read -r test_file; do
+            test -n "$test_file" || continue
             if test -f "production/tests/${test_file}"; then
               cp "production/tests/${test_file}" "$preserve/tests/${test_file}"
             fi
-          done
+          done < production/tools/production-test-overlays.txt
 
       - name: Promote Preview runtime while preserving production identity
         working-directory: production
