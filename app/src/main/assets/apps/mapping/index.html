@@ -54,7 +54,7 @@
     var app = document.getElementById('app');
     if (!app || app.children.length || app.textContent.trim()) return;
     var message = window.__amyMappingStartupError || 'Analisis market belum berhasil dimuat.';
-    app.innerHTML = '<section class="card"><div class="kicker">Status data</div><h2>Memuat ulang analisis</h2><p class="muted">' + String(message).replace(/[&<>"']/g, function (char) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char]; }) + '</p><button class="action" style="width:100%" onclick="location.reload()">Muat Ulang</button></section>';
+    app.innerHTML = '<section class="card"><span class="sr-only">PEMULIHAN DATA</span><div class="kicker">Status data</div><h2>Memuat ulang analisis</h2><p class="muted">' + String(message).replace(/[&<>"']/g, function (char) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char]; }) + '</p><button class="action" style="width:100%" onclick="location.reload()">Muat Ulang</button></section>';
   }, 3500);
 })();
 </script>
