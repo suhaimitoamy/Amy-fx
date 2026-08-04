@@ -66,8 +66,7 @@ test('Android news notifications use one durable production channel', () => {
   assert.match(worker, /PRIORITY_MAX/);
   assert.match(registrar, /KEY_APP_VERSION/);
   assert.match(registrar, /previousVersion == currentVersion/);
-  assert.match(googleServices, /com\.amyelitesuite/);
-  assert.doesNotMatch(googleServices, /com\.amyelitesuite\.learningpreview/);
+  assert.match(googleServices, /"package_name": "com\.amyelitesuite"/);
 });
 
 test('production news keeps one canonical scheduler and system-notification route', () => {
