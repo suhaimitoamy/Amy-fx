@@ -59,10 +59,10 @@ test('Mapping page loads candle sanitizer before main runtime', () => {
 test('Mapping runtime owns and tears down timers and listeners', () => {
   const main = read('app/src/main/assets/apps/mapping/js/main.js');
   const stability = read('app/src/main/assets/apps/mapping/js/analysis-ui-stability-v4.js');
-  assert.match(main, /livePriceWatchdogTimer = window\.setInterval/);
+  assert.match(main, /livePriceWatchdogTimer = setInterval/);
   assert.match(main, /clearInterval\(livePriceWatchdogTimer\)/);
-  assert.match(main, /removeEventListener\('online', handleOnline\)/);
-  assert.match(main, /removeEventListener\('visibilitychange', handleVisibilityChange\)/);
+  assert.match(main, /removeEventListener\?\.\('online', handleOnline\)/);
+  assert.match(main, /removeEventListener\?\.\('visibilitychange', handleVisibilityChange\)/);
   assert.match(main, /stopLivePrice\(\)/);
   assert.match(main, /AmyFXMappingRuntimeLifecycle/);
   assert.match(stability, /observer\?\.disconnect\(\)/);
