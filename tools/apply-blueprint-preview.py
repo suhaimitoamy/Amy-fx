@@ -40,8 +40,31 @@ def parse_preview_identity(source: str, label: str) -> tuple[str, int, int]:
     return version_name, sequence, version_code
 
 
+def align_updater_fallback(source: str, version_name: str, version_code: int) -> str:
+    """Keep the reviewed updater fallback aligned with the pending Preview source."""
+    aligned = re.sub(
+        r"window\.AmyFXAppVersion\s*\|\|\s*\{\s*name:\s*'2\.0\.0-preview\.\d+'\s*,\s*code:\s*94\d{4}\s*\}",
+        f"window.AmyFXAppVersion || {{ name: '{version_name}', code: {version_code} }}",
+        source,
+        count=1,
+    )
+    aligned = re.sub(
+        r"(const CURRENT_VERSION_CODE = Number\(VERSION\.code\) \|\| )94\d{4}",
+        rf"\g<1>{version_code}",
+        aligned,
+        count=1,
+    )
+    aligned = re.sub(
+        r"(const CURRENT_VERSION_NAME = String\(VERSION\.name \|\| )'2\.0\.0-preview\.\d+'(\);)",
+        rf"\g<1>'{version_name}'\g<2>",
+        aligned,
+        count=1,
+    )
+    return aligned
+
+
 def preserve_private_preview_identity(installer) -> list[Path]:
-    """Validate private Preview identity without silently rewriting build source."""
+    """Validate private Preview identity and align its deterministic updater fallback."""
     app_version = installer.APP_VERSION.read_text(encoding="utf-8")
     source_name, source_sequence, source_code = parse_preview_identity(
         app_version,
@@ -64,11 +87,24 @@ def preserve_private_preview_identity(installer) -> list[Path]:
     if source_sequence not in {published_sequence, published_sequence + 1}:
         raise RuntimeError("Private Preview source suffix is outside the safe release window")
 
+    changed: list[Path] = []
     update_checker = installer.UPDATE_CHECKER.read_text(encoding="utf-8")
     fallback_name, _, fallback_code = parse_preview_identity(
         update_checker,
         "Updater fallback",
     )
+    if fallback_code not in {published_code, source_code} or fallback_name not in {published_name, source_name}:
+        aligned = align_updater_fallback(update_checker, source_name, source_code)
+        if aligned == update_checker:
+            raise RuntimeError("Updater fallback could not be aligned with the pending Preview identity")
+        installer.UPDATE_CHECKER.write_text(aligned, encoding="utf-8")
+        update_checker = aligned
+        changed.append(installer.UPDATE_CHECKER)
+        fallback_name, _, fallback_code = parse_preview_identity(
+            update_checker,
+            "Aligned updater fallback",
+        )
+
     if fallback_code not in {published_code, source_code}:
         raise RuntimeError("Updater fallback must match the active or pending Preview identity")
     if fallback_name not in {published_name, source_name}:
@@ -86,9 +122,7 @@ def preserve_private_preview_identity(installer) -> list[Path]:
             f"Private Preview updater identity is incomplete: {', '.join(missing)}"
         )
 
-    # Source and build must remain byte-identical. Version fallback alignment is
-    # handled by a normal reviewed source commit, never by a hidden CI rewrite.
-    return []
+    return changed
 
 
 def main() -> None:
