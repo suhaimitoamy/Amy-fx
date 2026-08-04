@@ -8,28 +8,28 @@ const root = new URL('../', import.meta.url);
 const path = relative => new URL(relative, root);
 const source = relative => readFileSync(path(relative), 'utf8');
 
-test('Amy FX 2.3.0 keeps the public Android identity and updater channel', () => {
+test('Amy FX 2.3.1 keeps the public Android identity and updater channel', () => {
   const gradle = source('app/build.gradle.kts');
   const version = source('app/src/main/assets/app-version.js');
   const checker = source('app/src/main/assets/update-checker.js');
   const workflow = source('.github/workflows/build-apk.yml');
 
   assert.match(gradle, /com\.amyelitesuite/);
-  assert.match(gradle, /\?: 58\)/);
-  assert.match(gradle, /\?: "2\.3\.0"/);
+  assert.match(gradle, /\?: 59\)/);
+  assert.match(gradle, /\?: "2\.3\.1"/);
   assert.match(gradle, /main\/update\.json/);
   assert.doesNotMatch(gradle, /learningpreview|Amy FX Preview|amyfxpreview|preview-update\.json/);
 
-  assert.match(version, /name: '2\.3\.0', code: 58/);
+  assert.match(version, /name: '2\.3\.1', code: 59/);
   assert.match(version, /main\/update\.json/);
   assert.doesNotMatch(version, /personal\/amyfx-private|preview-update\.json|learningpreview|amyfxpreview/);
 
   assert.match(checker, /main\/update\.json/);
   assert.doesNotMatch(checker, /Amy FX Preview|personal\/amyfx-private|preview-update\.json/);
 
-  assert.match(workflow, /AMYFX_VERSION_NAME: "2\.3\.0"/);
-  assert.match(workflow, /AMYFX_VERSION_CODE: "58"/);
-  assert.match(workflow, /latest_version_code=58/);
+  assert.match(workflow, /AMYFX_VERSION_NAME: "2\.3\.1"/);
+  assert.match(workflow, /AMYFX_VERSION_CODE: "59"/);
+  assert.match(workflow, /latest_version_code=59/);
   assert.match(workflow, /Verify public update manifest/);
   assert.match(workflow, /TWELVEDATA_API_KEY: \$\{\{ secrets\.TWELVEDATA_API_KEY \}\}/);
 
@@ -64,8 +64,9 @@ test('public Mapping keeps persistent candle freshness and quota guards', () => 
   assert.match(coordinator, /BACKGROUND_M1_REFRESH_SECONDS = 300/);
   assert.match(coordinator, /SUPABASE_VERIFIED_CURRENT/);
   assert.match(coordinator, /RETRY_COOLDOWN_MS = 60_000/);
-  assert.match(runtime, /version: '5\.0\.0'/);
+  assert.match(runtime, /version: '6\.0\.0'/);
   assert.match(runtime, /markCachedSeriesUsable/);
+  assert.match(runtime, /closed-candle-update/);
 });
 
 test('public Mapping loads final Pattern v3 Scalper modules', () => {
