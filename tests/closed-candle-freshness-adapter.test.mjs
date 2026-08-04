@@ -18,6 +18,10 @@ const appVersion = fs.readFileSync(
   new URL('../app/src/main/assets/app-version.js', import.meta.url),
   'utf8'
 );
+const updateManifest = JSON.parse(fs.readFileSync(
+  new URL('../preview-update.json', import.meta.url),
+  'utf8'
+));
 
 test('closed-candle adapter is loaded after Mapping clarity', () => {
   assert.match(mappingV2, /mapping-clarity-v1\.js/);
@@ -48,6 +52,13 @@ test('analysis badge reports a closed-candle source instead of stale', () => {
   assert.doesNotMatch(stability, /M15 STALE/);
 });
 
-test('release bumps Preview version', () => {
-  assert.match(appVersion, /2\.0\.0-preview\.307/);
+test('release source is aligned with or exactly one signed build ahead of the active manifest', () => {
+  const match = appVersion.match(/name:\s*'2\.0\.0-preview\.(\d+)'\s*,\s*code:\s*(94\d{4})/);
+  assert.ok(match, 'Preview source identity must be readable');
+  const sourceSequence = Number(match[1]);
+  const sourceCode = Number(match[2]);
+  const publishedCode = Number(updateManifest.latest_version_code);
+
+  assert.equal(sourceCode, 940000 + sourceSequence);
+  assert.ok(sourceCode === publishedCode || sourceCode === publishedCode + 1);
 });
