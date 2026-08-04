@@ -4,20 +4,19 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+OVERLAY_MANIFEST = ROOT / "tools/production-test-overlays.txt"
+PRODUCTION_OVERLAYS = {
+    line.strip()
+    for line in OVERLAY_MANIFEST.read_text(encoding="utf-8").splitlines()
+    if line.strip()
+} if OVERLAY_MANIFEST.exists() else set()
 
-# Preview-only release/connectivity tests validate Preview workflows and files that
-# must not exist in production. They are intentionally excluded from the public
-# release suite. The production parity test with the preview-* filename is kept.
 EXCLUDED_PREVIEW_TESTS = {
     "blueprint-preview-stabilization.test.mjs",
     "blueprint-preview-v1.test.mjs",
     "personal-source-debug.test.mjs",
 }
 
-# Apply identity substitutions only to positive assertions and fixtures. Negative
-# assertions must keep Preview markers so they continue proving that Preview
-# package names, URI schemes, APK paths, and update channels do not leak into
-# production.
 POSITIVE_REPLACEMENTS = {
     "preview-update.json": "update.json",
     r"preview-update\.json": r"update\.json",
@@ -49,23 +48,6 @@ NEGATIVE_ASSERTION_MARKERS = (
     ", false)",
 )
 
-PRODUCTION_ANALYSIS_IDENTITY_BLOCK = """test('production source identity is never behind the activated update manifest', () => {
-  const match = appVersion.match(/name:\\s*'(\\d+\\.\\d+\\.\\d+)'\\s*,\\s*code:\\s*(\\d+)/);
-  assert.ok(match, 'Production source identity must be readable');
-
-  const [, sourceName, sourceCodeText] = match;
-  const sourceCode = Number(sourceCodeText);
-  const publishedCode = Number(updateManifest.latest_version_code);
-  const publishedName = String(updateManifest.latest_version_name || '');
-
-  assert.equal(sourceName, '2.3.0');
-  assert.equal(sourceCode, 58);
-  assert.ok(sourceCode >= publishedCode, 'Production source must not be older than update.json');
-  assert.ok(sourceCode - publishedCode <= 1, 'Pending source may be at most one version ahead of the active APK');
-  if (sourceCode === publishedCode) assert.equal(publishedName, sourceName);
-});
-"""
-
 
 def excluded(path: Path) -> bool:
     if path.name in EXCLUDED_PREVIEW_TESTS:
@@ -74,8 +56,6 @@ def excluded(path: Path) -> bool:
 
 
 def normalize_line(line: str) -> str:
-    # Keep explicit negative assertions intact. This also preserves their test
-    # value after the runtime itself is promoted to the production identity.
     if any(marker in line for marker in NEGATIVE_ASSERTION_MARKERS):
         return line
     updated = line
@@ -84,33 +64,24 @@ def normalize_line(line: str) -> str:
     return updated
 
 
-def normalize_file(path: Path, original: str) -> str:
-    updated = "".join(normalize_line(line) for line in original.splitlines(keepends=True))
-    if path.name == "analysis-static-layout.test.mjs":
-        marker = "test('Preview source identity is never behind the activated update manifest'"
-        alternate = "test('Amy FX source identity is never behind the activated update manifest'"
-        start = updated.find(marker)
-        if start < 0:
-            start = updated.find(alternate)
-        if start >= 0:
-            updated = updated[:start] + PRODUCTION_ANALYSIS_IDENTITY_BLOCK
-    return updated
-
-
 changed = 0
 removed = 0
+preserved = 0
 for path in (ROOT / "tests").glob("*.test.mjs"):
     if excluded(path):
         path.unlink()
         removed += 1
         continue
+    if path.name in PRODUCTION_OVERLAYS:
+        preserved += 1
+        continue
     original = path.read_text(encoding="utf-8")
-    updated = normalize_file(path, original)
+    updated = "".join(normalize_line(line) for line in original.splitlines(keepends=True))
     if updated != original:
         path.write_text(updated, encoding="utf-8")
         changed += 1
 
 print(
-    f"Normalized {changed} Preview regression tests for Amy FX production 2.3.0 (58); "
-    f"excluded {removed} Preview-only workflow/connectivity tests."
+    f"Normalized {changed} Preview regressions for Amy FX production 2.3.0 (58); "
+    f"preserved {preserved} production overlays; excluded {removed} Preview-only tests."
 )
