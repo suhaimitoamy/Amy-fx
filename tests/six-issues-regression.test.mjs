@@ -141,7 +141,22 @@ test('Asia Range uses canonical 06:00–14:00 WITA window', () => {
   assert.match(code, /const ASIA_END_HOUR = 14;/);
 });
 
-test('Preview version is updated for this release', () => {
+test('Preview source identity is current and no more than one signed build ahead of manifest', () => {
   const appVersion = fs.readFileSync('app/src/main/assets/app-version.js', 'utf8');
-  assert.match(appVersion, /2\.0\.0-preview\.307/);
+  const manifest = JSON.parse(fs.readFileSync('preview-update.json', 'utf8'));
+  const match = appVersion.match(/name:\s*'(2\.0\.0-preview\.(\d+))'\s*,\s*code:\s*(94\d{4})/);
+  assert.ok(match, 'Preview source identity must be readable');
+
+  const [, sourceName, sourceSequenceText, sourceCodeText] = match;
+  const sourceSequence = Number(sourceSequenceText);
+  const sourceCode = Number(sourceCodeText);
+  const publishedCode = Number(manifest.latest_version_code);
+  const publishedName = String(manifest.latest_version_name || '');
+  const publishedMatch = publishedName.match(/^2\.0\.0-preview\.(\d+)$/);
+
+  assert.ok(publishedMatch, 'Activated Preview manifest identity must be readable');
+  assert.equal(sourceCode, 940000 + sourceSequence);
+  assert.ok(sourceCode === publishedCode || sourceCode === publishedCode + 1);
+  assert.match(sourceName, /^2\.0\.0-preview\.\d+$/);
+  assert.match(appVersion, /personal\/amyfx-private\/preview-update\.json/);
 });
