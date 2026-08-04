@@ -55,11 +55,34 @@ jobs:
         shell: bash
         run: echo "AMYFX_PREVIEW_SOURCE_SHA=$(git -C preview rev-parse HEAD)" >> "$GITHUB_ENV"
 
+      - name: Preserve production-only news topology
+        shell: bash
+        run: |
+          set -euo pipefail
+          preserve="$RUNNER_TEMP/amyfx-production-preserve"
+          rm -rf "$preserve"
+          mkdir -p "$preserve/supabase/functions/news-sync" "$preserve/tests"
+          cp -a production/supabase/functions/news-system-push "$preserve/supabase/functions/news-system-push"
+          cp -a production/supabase/functions/scheduled-news-sync "$preserve/supabase/functions/scheduled-news-sync"
+          cp production/supabase/functions/news-sync/handler.ts "$preserve/supabase/functions/news-sync/handler.ts"
+          cp production/tests/mapping-news-background-repair.test.mjs "$preserve/tests/mapping-news-background-repair.test.mjs"
+
       - name: Promote Preview runtime while preserving production identity
         working-directory: production
         run: python3 tools/promote-preview-to-production.py ../preview .
 
-      - name: Include Scalper and news database migrations
+      - name: Restore the single production news scheduler and push route
+        shell: bash
+        run: |
+          set -euo pipefail
+          preserve="$RUNNER_TEMP/amyfx-production-preserve"
+          rm -rf production/supabase/functions/news-system-push production/supabase/functions/scheduled-news-sync
+          cp -a "$preserve/supabase/functions/news-system-push" production/supabase/functions/news-system-push
+          cp -a "$preserve/supabase/functions/scheduled-news-sync" production/supabase/functions/scheduled-news-sync
+          cp "$preserve/supabase/functions/news-sync/handler.ts" production/supabase/functions/news-sync/handler.ts
+          cp "$preserve/tests/mapping-news-background-repair.test.mjs" production/tests/mapping-news-background-repair.test.mjs
+
+      - name: Include Scalper database migrations
         shell: bash
         run: |
           set -euo pipefail
@@ -68,11 +91,11 @@ jobs:
             20260729212100_amyfx_preview_scalper_shadow.sql \
             20260729220000_amyfx_preview_scalper_live_notification_guard.sql \
             20260729222500_amyfx_preview_scalper_notification_device_index.sql \
-            20260730230000_amyfx_preview_scalper_multidriver.sql \
-            20260801150000_amyfx_preview_scalper_bt6_amd_news_dedup.sql
+            20260730230000_amyfx_preview_scalper_multidriver.sql
           do
             cp "preview/supabase/migrations/${migration}" "production/supabase/migrations/${migration}"
           done
+          test -f production/supabase/migrations/20260804130000_amyfx_production_scalper_bt6_amd.sql
 
       - name: Normalize Preview regressions for production identity
         working-directory: production
@@ -111,7 +134,8 @@ jobs:
           test -f app/src/main/assets/apps/mapping/js/live-price-display-only-v1.js
           grep -Fq 'live-price-display-only-v1.js' app/src/main/assets/apps/mapping/index.html
           grep -Fq 'scalper-execution-decision-bridge.js' app/src/main/assets/apps/mapping/index.html
-          test -f supabase/migrations/20260801150000_amyfx_preview_scalper_bt6_amd_news_dedup.sql
+          test -f supabase/migrations/20260804130000_amyfx_production_scalper_bt6_amd.sql
+          ! grep -R -n 'preview-news-system-push' supabase/functions/scheduled-news-sync supabase/functions/news-system-push supabase/functions/news-sync
 
       - name: Run complete JavaScript regression suite
         working-directory: production
@@ -152,6 +176,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          rm -f parity-tests.log
           if git diff --quiet && git diff --cached --quiet; then
             echo "Production branch is already synchronized with Amy FX Preview."
             exit 0
