@@ -1,4 +1,4 @@
-// Release gate for Amy FX Preview 2.0.0-preview.307.
+// Release gate for Amy FX Preview Mapping clarity.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -15,6 +15,10 @@ const asiaRange = fs.readFileSync(
   new URL('../app/src/main/assets/apps/mapping/js/session/asia-range.js', import.meta.url),
   'utf8'
 );
+const asiaRangeUi = fs.readFileSync(
+  new URL('../app/src/main/assets/apps/mapping/js/session/asia-range-ui.js', import.meta.url),
+  'utf8'
+);
 const uiRender = fs.readFileSync(
   new URL('../app/src/main/assets/apps/mapping/js/ui/ui-render.js', import.meta.url),
   'utf8'
@@ -25,13 +29,17 @@ test('July 2026 clarity layer is loaded after Mapping runtime', () => {
   assert.match(clarity, /AmyFXMappingClarity/);
 });
 
-test('Asia Range, Asia Liquidity, and Outlook use one canonical WITA window', () => {
-  assert.match(asiaRange, /ASIA_START_HOUR = 6/);
-  assert.match(asiaRange, /ASIA_END_HOUR = 14/);
-  assert.match(clarity, /06:00–14:00 WITA/);
+test('Asia Range, Asia Liquidity, and Outlook share one DST-aware New York session source', () => {
+  assert.match(asiaRange, /SESSION_ZONE = 'America\/New_York'/);
+  assert.match(asiaRange, /SESSION_START_HOUR = 18/);
+  assert.match(asiaRange, /SESSION_END_HOUR = 2/);
+  assert.match(asiaRange, /sourceSeason/);
   assert.match(clarity, /calculateAsiaRange/);
   assert.match(clarity, /setupType !== 'ASIA_ENTRY'/);
   assert.match(clarity, /canonicalAsia/);
+  assert.match(asiaRangeUi, /syncClarityAsiaWindow/);
+  assert.match(asiaRangeUi, /canonicalAsia\.window = label/);
+  assert.match(asiaRangeUi, /Asia Session Context · \$\{label\}/);
 });
 
 test('structural invalidation is exposed even when entry is WAIT', () => {

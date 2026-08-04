@@ -1,6 +1,6 @@
-// Amy FX Preview personal release identity — Runtime freshness, WebSocket, and candle integrity hardening.
+// Amy FX Preview personal release identity — Live price display and Asia Range DST synchronization.
 (function () {
-  const VERSION = Object.freeze({ name: '2.0.0-preview.308', code: 940308 });
+  const VERSION = Object.freeze({ name: '2.0.0-preview.309', code: 940309 });
   window.AmyFXAppVersion = VERSION;
   window.AmyFXUpdateManifestUrl = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json';
   function displayVersionName(name) {

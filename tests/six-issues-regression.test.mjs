@@ -135,10 +135,17 @@ test('market data uses complete aggregation and keeps WebSocket display-only', (
   assert.doesNotMatch(liveTick, /buildSetupExecution|buildMappingSnapshot|publishMappingSnapshot|notifyImportant/);
 });
 
-test('Asia Range uses canonical 06:00–14:00 WITA window', () => {
+test('Asia Range is anchored to New York and follows EDT EST automatically', () => {
   const code = fs.readFileSync('app/src/main/assets/apps/mapping/js/session/asia-range.js', 'utf8');
-  assert.match(code, /const ASIA_START_HOUR = 6;/);
-  assert.match(code, /const ASIA_END_HOUR = 14;/);
+  assert.match(code, /const SESSION_ZONE = 'America\/New_York';/);
+  assert.match(code, /const SESSION_START_HOUR = 18;/);
+  assert.match(code, /const SESSION_END_HOUR = 2;/);
+  assert.match(code, /sourceSeason/);
+  assert.match(code, /EDT/);
+  assert.match(code, /EST/);
+  assert.match(code, /Asia\/Makassar/);
+  assert.doesNotMatch(code, /const ASIA_START_HOUR = 6;/);
+  assert.doesNotMatch(code, /const ASIA_END_HOUR = 14;/);
 });
 
 test('Preview source identity is current and no more than one signed build ahead of manifest', () => {
