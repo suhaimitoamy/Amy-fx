@@ -8,6 +8,7 @@ const read = path => fs.readFileSync(path, 'utf8');
 const readmePath = 'README.md';
 const indexPath = 'app/src/main/assets/apps/mapping/index.html';
 const fixScriptPath = 'app/src/main/assets/apps/mapping/js/analysis-ui-stability-v4.js';
+const marketIntentPath = 'app/src/main/assets/apps/mapping/js/market-intent-ui.js';
 const fixCssPath = 'app/src/main/assets/apps/mapping/css/five-issues-fix.css';
 const reportPath = 'docs/backtests/AMY_FX_MARKET_OUTLOOK_MAPPING_2022_2025.md';
 const dataPath = 'docs/backtests/amy-fx-market-outlook-mapping-2022-2025.json';
@@ -17,14 +18,17 @@ const updatePath = 'preview-update.json';
 const readme = read(readmePath);
 const index = read(indexPath);
 const fixes = read(fixScriptPath);
+const marketIntent = read(marketIntentPath);
 const css = read(fixCssPath);
 const report = read(reportPath);
 const backtest = JSON.parse(read(dataPath));
 const appVersion = read(appVersionPath);
 const update = JSON.parse(read(updatePath));
 
-test('Mapping UI stability runtime remains syntactically valid', () => {
-  execFileSync(process.execPath, ['--check', fixScriptPath], { stdio: 'pipe' });
+test('Mapping UI stability runtimes remain syntactically valid', () => {
+  for (const path of [fixScriptPath, marketIntentPath]) {
+    execFileSync(process.execPath, ['--check', path], { stdio: 'pipe' });
+  }
 });
 
 test('README retains the private Preview identity and APK route', () => {
@@ -43,12 +47,14 @@ test('Mapping loads stable UI coordination and no longer loads scroll restoratio
   assert.ok(index.indexOf('js/analysis-ui-stability-v4.js') > index.indexOf('js/mapping-v2.js'));
 });
 
-test('dashboard duplicate Preview and price cards are removed without changing data services', () => {
-  assert.match(fixes, /AMY FX v1\.5 PREVIEW AKTIF/);
-  assert.match(fixes, /querySelector\('\.mapping-hero'\)/);
-  assert.match(fixes, /\.remove\(\)/);
+test('stability layer coordinates Analyze without deleting dashboard or market cards after render', () => {
+  assert.match(fixes, /ensureMarketContextDisclosure/);
+  assert.match(fixes, /makeAnalyzeStatic/);
   assert.equal(fixes.includes('fetch('), false);
   assert.equal(fixes.includes('startBackgroundScanner'), false);
+  assert.doesNotMatch(fixes, /querySelector\('\.mapping-hero'\)\?\.remove/);
+  assert.doesNotMatch(fixes, /removeDashboardDuplicates/);
+  assert.doesNotMatch(fixes, /removeHistoricalReliability/);
 });
 
 test('analysis badge reports both closed-candle availability and provider delay truthfully', () => {
@@ -66,12 +72,14 @@ test('analysis badge reports both closed-candle availability and provider delay 
   assert.match(css, /\.regime-badge\.stale/);
 });
 
-test('historical reliability is removed from the live Mapping display', () => {
-  assert.match(fixes, /removeHistoricalReliability/);
-  assert.match(fixes, /RELIABILITAS HISTORIS/);
-  assert.match(fixes, /Performa Historis Model/);
-  assert.match(fixes, /amy-outlook-backtest-note/);
-  assert.match(fixes, /amy-outlook-historical-rate/);
+test('historical reliability is excluded at the Market Intent source instead of removed after render', () => {
+  assert.match(marketIntent, /Konteks Market Lanjutan/);
+  assert.match(marketIntent, /Target & Skenario Harga/);
+  assert.doesNotMatch(marketIntent, /RELIABILITAS HISTORIS/);
+  assert.doesNotMatch(marketIntent, /Performa Historis Model/);
+  assert.doesNotMatch(fixes, /amy-outlook-backtest-note/);
+  assert.doesNotMatch(fixes, /amy-outlook-historical-rate/);
+  assert.doesNotMatch(fixes, /\.remove\(\)/);
 });
 
 test('Analyze view keeps keyed accordions without forced scroll movement', () => {
@@ -79,6 +87,9 @@ test('Analyze view keeps keyed accordions without forced scroll movement', () =>
     assert.ok(fixes.includes(key));
   }
   assert.match(fixes, /MutationObserver/);
+  assert.match(fixes, /observer\.observe\(app, \{ childList: true, subtree: false \}\)/);
+  assert.match(fixes, /observer\?\.disconnect\(\)/);
+  assert.match(fixes, /AbortController/);
   assert.doesNotMatch(fixes, /window\.scrollTo/);
   assert.doesNotMatch(fixes, /window\.scrollBy/);
   assert.doesNotMatch(fixes, /anchorKey/);
@@ -92,8 +103,8 @@ test('issue-5 audit remains available in documentation but not injected into liv
   assert.equal(backtest.marketOutlook.outOfSample2025.closeAccuracy, 37.03);
   assert.match(report, /Akurasi arah murni pada close horizon/);
   assert.match(report, /2025 dipisahkan sebagai out-of-sample/);
-  assert.doesNotMatch(fixes, /tracker success/);
-  assert.doesNotMatch(fixes, /Akurasi arah close historis/);
+  assert.doesNotMatch(marketIntent, /tracker success/);
+  assert.doesNotMatch(marketIntent, /Akurasi arah close historis/);
 });
 
 test('source version and updater stay on the private Preview channel', () => {
