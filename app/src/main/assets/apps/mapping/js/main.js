@@ -280,14 +280,21 @@ function handlePageHide() {
   stopRuntime();
 }
 
+function hasBrowserRuntimeLifecycle() {
+  return typeof window?.setTimeout === 'function'
+    && typeof window?.setInterval === 'function'
+    && typeof window?.addEventListener === 'function'
+    && typeof document?.addEventListener === 'function';
+}
+
 function startRuntime() {
-  if (runtimeStarted) return false;
+  if (runtimeStarted || !hasBrowserRuntimeLifecycle()) return false;
   runtimeStarted = true;
   autoConnectTimer = setTimeout(autoConnectLivePrice, 600);
   livePriceWatchdogTimer = setInterval(livePriceWatchdog, 30000);
-  window.addEventListener?.('online', handleOnline);
-  document.addEventListener?.('visibilitychange', handleVisibilityChange);
-  window.addEventListener?.('pagehide', handlePageHide, { once: true });
+  window.addEventListener('online', handleOnline);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('pagehide', handlePageHide, { once: true });
   return true;
 }
 
@@ -312,7 +319,8 @@ window.AmyFXMappingRuntimeLifecycle = Object.freeze({
   version: '1.0.0',
   start: startRuntime,
   stop: stopRuntime,
-  isStarted: () => runtimeStarted
+  isStarted: () => runtimeStarted,
+  supported: hasBrowserRuntimeLifecycle
 });
 
 function initApp() {
