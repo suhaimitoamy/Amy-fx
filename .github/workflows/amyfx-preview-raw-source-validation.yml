@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
+      PYTHONDONTWRITEBYTECODE: "1"
       AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
       AMYFX_APP_LABEL: Amy FX Preview
       AMYFX_URI_SCHEME: amyfxpreview
@@ -56,6 +57,8 @@ jobs:
           node --check app/src/main/assets/apps/mapping/js/live-price-display-only-v1.js
           node --check app/src/main/assets/apps/mapping/js/main.js
           node --check app/src/main/assets/apps/mapping/js/analysis-ui-stability-v4.js
+          node --check app/src/main/assets/apps/mapping/js/bridge/sync-fix.js
+          node --check app/src/main/assets/apps/mapping/js/bridge/notify-guard.js
           node --check app/src/main/assets/app-version.js
           node --check app/src/main/assets/update-checker.js
 
