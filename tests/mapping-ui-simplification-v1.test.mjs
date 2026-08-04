@@ -34,10 +34,18 @@ test('Profile owns market API information and notification test controls', async
   assert.match(profileSettings, /showNotificationWithUrl/);
 });
 
-test('stability runtime removes historical reliability UI without changing Mapping Engine', async () => {
-  const runtime = await read('app/src/main/assets/apps/mapping/js/analysis-ui-stability-v4.js');
-  assert.match(runtime, /removeHistoricalReliability/);
-  assert.match(runtime, /Performa Historis Model/);
+test('historical reliability is omitted at source and stability runtime never deletes live Mapping content', async () => {
+  const [runtime, marketIntent] = await Promise.all([
+    read('app/src/main/assets/apps/mapping/js/analysis-ui-stability-v4.js'),
+    read('app/src/main/assets/apps/mapping/js/market-intent-ui.js')
+  ]);
+  assert.match(runtime, /ensureMarketContextDisclosure/);
+  assert.match(runtime, /observer\.observe\(app, \{ childList: true, subtree: false \}\)/);
+  assert.match(runtime, /observer\?\.disconnect\(\)/);
+  assert.match(runtime, /AbortController/);
+  assert.doesNotMatch(runtime, /removeHistoricalReliability/);
+  assert.doesNotMatch(runtime, /\.remove\(\)/);
   assert.doesNotMatch(runtime, /scrollTo|scrollBy/);
   assert.doesNotMatch(runtime, /engine\//);
+  assert.doesNotMatch(marketIntent, /Performa Historis Model|RELIABILITAS HISTORIS/);
 });
