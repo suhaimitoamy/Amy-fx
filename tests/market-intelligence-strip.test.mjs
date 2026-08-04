@@ -18,7 +18,7 @@ function createRuntime(initialState) {
   ]);
   const listeners = new Map();
   const window = {
-    state: { tf: 'M15', candles: { M15: [] } },
+    state: { tf: 'M15', price: 0, candles: { M15: [] } },
     addEventListener(type, handler) {
       const list = listeners.get(type) || [];
       list.push(handler);
@@ -28,14 +28,15 @@ function createRuntime(initialState) {
       for (const handler of listeners.get(event.type) || []) handler(event);
     }
   };
+  const localStorage = {
+    getItem(key) { return values.has(key) ? values.get(key) : null; },
+    setItem(key, value) { values.set(key, String(value)); },
+    removeItem(key) { values.delete(key); }
+  };
   const context = {
     window,
     navigator: { onLine: true },
-    localStorage: {
-      getItem(key) { return values.has(key) ? values.get(key) : null; },
-      setItem(key, value) { values.set(key, String(value)); },
-      removeItem(key) { values.delete(key); }
-    },
+    localStorage,
     CustomEvent: class CustomEvent {
       constructor(type, options = {}) {
         this.type = type;
@@ -56,12 +57,12 @@ function createRuntime(initialState) {
   };
   vm.runInNewContext(contractSource, context);
   vm.runInNewContext(intelSource, context);
-  return window;
+  return { window, localStorage };
 }
 
 test('command strip shows official M1 quote and Intel Liquidity BSL SSL only', () => {
   const capturedAt = new Date().toISOString();
-  const window = createRuntime({
+  const { window } = createRuntime({
     schemaVersion: 2,
     quote: {
       capturedAt,
@@ -97,6 +98,52 @@ test('command strip shows official M1 quote and Intel Liquidity BSL SSL only', (
   assert.match(target.innerHTML, /4101\.75/);
   assert.doesNotMatch(target.innerHTML, /4199\.00/);
   assert.doesNotMatch(target.innerHTML, /4001\.00/);
+  assert.match(target.innerHTML, /data-live-price/);
   assert.match(target.innerHTML, /data-freshness="FRESH"/);
   assert.match(target.innerHTML, /data-domain="quote" data-freshness="LIVE"/);
+});
+
+test('live WebSocket display replaces an older contract quote without recalculating Mapping', () => {
+  const oldCapturedAt = new Date(Date.now() - 10 * 60_000).toISOString();
+  const { window, localStorage } = createRuntime({
+    schemaVersion: 2,
+    quote: {
+      capturedAt: oldCapturedAt,
+      price: 4059.10,
+      source: 'M1_QUOTE'
+    },
+    liquidity: {
+      capturedAt: oldCapturedAt,
+      currentPrice: 4059.10,
+      levels: [
+        { type: 'BSL', price: 4064.21, distance: 5.11, status: 'ACTIVE' },
+        { type: 'SSL', price: 4030.47, distance: -28.63, status: 'ACTIVE' }
+      ]
+    }
+  });
+
+  const target = { innerHTML: '' };
+  window.AmyFXIntel.mountStrip(target);
+  assert.match(target.innerHTML, /4059\.10/);
+  assert.match(target.innerHTML, /data-freshness="EXPIRED"/);
+
+  const tickAt = Date.now();
+  window.state.price = 4056.80;
+  window.__amyFxDisplayLastTickAt = tickAt;
+  localStorage.setItem('last_ws_tick_at', tickAt);
+  localStorage.setItem('last_price', 4056.80);
+  window.dispatchEvent({ type: 'amyfx:live-price-display', detail: { price: 4056.80, capturedAt: tickAt } });
+
+  assert.match(target.innerHTML, /4056\.80/);
+  assert.doesNotMatch(target.innerHTML, /4059\.10/);
+  assert.match(target.innerHTML, /data-live-price/);
+  assert.match(target.innerHTML, /data-domain="quote" data-freshness="LIVE"/);
+});
+
+test('Asia session label follows New York local time across daylight saving changes', () => {
+  const { window } = createRuntime({ schemaVersion: 2 });
+
+  assert.equal(window.AmyFXIntel.sessionInfo(new Date('2026-07-14T00:00:00Z')).id, 'ASIA');
+  assert.equal(window.AmyFXIntel.sessionInfo(new Date('2026-12-15T00:00:00Z')).id, 'ASIA');
+  assert.equal(window.AmyFXIntel.sessionInfo(new Date('2026-07-14T08:00:00Z')).id, 'OFF_SESSION');
 });
