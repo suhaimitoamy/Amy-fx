@@ -84,6 +84,16 @@ test('legacy Mapping sync bridge owns every timer and stops outside a real brows
   assert.match(syncFix, /WITA/);
 });
 
+test('notification guard scans native bridges only in a real browser and tears down cleanly', () => {
+  const guard = read('app/src/main/assets/apps/mapping/js/bridge/notify-guard.js');
+  assert.match(guard, /const hasBrowserLifecycle=/);
+  assert.match(guard, /if\(!hasBrowserLifecycle\)return/);
+  assert.match(guard, /bridgeScanTimer=window\.setInterval\(wrapAll,1500\)/);
+  assert.match(guard, /window\.clearInterval\(bridgeScanTimer\)/);
+  assert.match(guard, /window\.addEventListener\('pagehide',stop,\{once:true\}\)/);
+  assert.match(guard, /AmyFXNotifyGuardLifecycle/);
+});
+
 test('regression runner does not force successful process exit with leaked handles', () => {
   const runner = read('tools/run-tests-sequential.mjs');
   assert.doesNotMatch(runner, /--test-force-exit/);
