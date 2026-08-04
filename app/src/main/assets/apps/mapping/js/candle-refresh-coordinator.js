@@ -4,6 +4,7 @@ import {
   TIMEFRAME_SECONDS,
   expectedClosedCandleOpenTime
 } from './engine/mapping-timeframes.js';
+import { mappingRefreshDependencies } from './engine/mapping-refresh-dependencies.js';
 
 const STORAGE_KEY = 'amy_entry_watch_state_v3';
 const CLOSE_GRACE_MS = 12000;
@@ -35,13 +36,22 @@ function currentWatch() {
   return state?.result?.entryWatch || readStoredWatch();
 }
 
+function includeDependencies(requested, timeframe) {
+  for (const dependency of mappingRefreshDependencies(timeframe)) {
+    requested.add(String(dependency).toUpperCase());
+  }
+}
+
 function trackedTimeframes() {
-  const requested = new Set([String(state.tf || 'M15').toUpperCase()]);
+  const requested = new Set();
+  includeDependencies(requested, String(state.tf || 'M15').toUpperCase());
+
   const watch = currentWatch();
   if (watch && !watch.terminal && watch.active) {
-    if (watch.triggerTf) requested.add(String(watch.triggerTf).toUpperCase());
-    if (watch.sourceTf) requested.add(String(watch.sourceTf).toUpperCase());
+    if (watch.triggerTf) includeDependencies(requested, watch.triggerTf);
+    if (watch.sourceTf) includeDependencies(requested, watch.sourceTf);
   }
+
   return [...requested].filter(tf => TIMEFRAME_SECONDS[tf]);
 }
 
@@ -134,6 +144,13 @@ async function refreshDueCandles(reason = 'manual') {
   return true;
 }
 
+function stop() {
+  clearTimeout(nextCloseTimer);
+  nextCloseTimer = 0;
+  refreshRunning = false;
+  lastAttemptAt.clear();
+}
+
 function start() {
   refreshDueCandles('startup');
   scheduleNextClosedCandle();
@@ -142,12 +159,14 @@ function start() {
   window.addEventListener('amyfx:candle-refresh-request', event => {
     refreshDueCandles(event?.detail?.reason || 'manual').finally(scheduleNextClosedCandle);
   });
+  window.addEventListener('pagehide', stop, { once: true });
 }
 
 window.AmyFXCandleRefreshCoordinator = Object.freeze({
-  version: '2.0.0',
+  version: '3.0.0',
   refresh: refreshDueCandles,
   schedule: scheduleNextClosedCandle,
+  stop,
   trackedTimeframes,
   sourceSignature,
   nextBoundaryMs

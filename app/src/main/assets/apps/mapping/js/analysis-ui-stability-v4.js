@@ -8,6 +8,7 @@
   let scheduled = false;
   let applying = false;
   let observer = null;
+  let lifecycleController = null;
 
   function currentTab() {
     return window.state?.tab || localStorage.getItem('amy_mapping_tab') || '';
@@ -89,15 +90,23 @@
     const badge = card?.querySelector('.regime-badge');
     if (!badge) return;
     const source = latestClosedCandle();
+    const freshness = window.state?.result?.executionFreshness || {};
     const available = Boolean(source);
-    const text = available ? `${source.timeframe} CANDLE TERTUTUP` : 'MENUNGGU DATA';
+    const providerDelayed = Boolean(available && freshness.providerDelayed);
+    const text = providerDelayed
+      ? `${source.timeframe} CACHE · PROVIDER TERTUNDA`
+      : available
+        ? `${source.timeframe} CANDLE TERTUTUP`
+        : 'MENUNGGU DATA';
     if (badge.textContent !== text) badge.textContent = text;
-    badge.classList.remove('stale');
-    badge.classList.toggle('live', available);
-    badge.classList.toggle('waiting', !available);
-    badge.setAttribute('aria-label', available
-      ? `Analisis memakai candle ${source.timeframe} terakhir yang sudah close`
-      : 'Belum ada candle tertutup yang dapat dianalisis');
+    badge.classList.toggle('stale', providerDelayed);
+    badge.classList.toggle('live', available && !providerDelayed);
+    badge.classList.toggle('waiting', !available || providerDelayed);
+    badge.setAttribute('aria-label', providerDelayed
+      ? `Analisis memakai candle ${source.timeframe} terakhir; entry diblokir sampai provider diperbarui`
+      : available
+        ? `Analisis memakai candle ${source.timeframe} terakhir yang sudah close`
+        : 'Belum ada candle tertutup yang dapat dianalisis');
   }
 
   function removeHistoricalReliability(card) {
@@ -200,10 +209,23 @@
     requestAnimationFrame(applyFixes);
   }
 
+  function stop() {
+    observer?.disconnect();
+    observer = null;
+    lifecycleController?.abort();
+    lifecycleController = null;
+    scheduled = false;
+  }
+
   function start() {
     const app = document.getElementById('app');
-    if (!app) return;
+    if (!app || lifecycleController) return;
+    lifecycleController = new AbortController();
+    const signal = lifecycleController.signal;
 
+    // The renderer emits an explicit event. The bounded top-level observer is
+    // retained only as a fallback for older direct render callers and is fully
+    // disconnected when the Mapping page is left.
     observer = new MutationObserver(records => {
       if (applying) return;
       const topLevelChanged = records.some(record => record.target === app);
@@ -211,9 +233,19 @@
     });
     observer.observe(app, { childList: true, subtree: false });
 
-    window.addEventListener('amyfx:mapping-state-change', schedule);
+    window.addEventListener('amyfx:mapping-state-change', schedule, { signal });
+    window.addEventListener('amyfx:mapping-ui-rendered', schedule, { signal });
+    window.addEventListener('amyfx:entry-watch-updated', schedule, { signal });
+    window.addEventListener('pagehide', stop, { once: true, signal });
     schedule();
   }
+
+  window.AmyFXAnalysisUiStability = Object.freeze({
+    version: '5.0.0',
+    start,
+    stop,
+    schedule
+  });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', start, { once: true });
