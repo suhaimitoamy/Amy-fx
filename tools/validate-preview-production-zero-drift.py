@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Verify that production runtime is the normalized Amy FX Preview runtime."""
+"""Verify that production runtime is the normalized Amy FX Preview runtime.
+
+This validator is intentionally committed by the repository owner after the
+generated parity commit so GitHub executes the complete trusted PR checks.
+"""
 
 from __future__ import annotations
 
