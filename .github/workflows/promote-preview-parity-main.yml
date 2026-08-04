@@ -55,37 +55,32 @@ jobs:
         shell: bash
         run: echo "AMYFX_PREVIEW_SOURCE_SHA=$(git -C preview rev-parse HEAD)" >> "$GITHUB_ENV"
 
-      - name: Preserve production-only topology and assertions
+      - name: Preserve production topology and regression assertions
         shell: bash
         run: |
           set -euo pipefail
           preserve="$RUNNER_TEMP/amyfx-production-preserve"
           rm -rf "$preserve"
-          mkdir -p "$preserve/supabase/functions/news-sync" "$preserve/tests"
+          mkdir -p "$preserve/supabase/functions/news-sync"
           cp -a production/supabase/functions/news-system-push "$preserve/supabase/functions/news-system-push"
           cp -a production/supabase/functions/scheduled-news-sync "$preserve/supabase/functions/scheduled-news-sync"
           cp production/supabase/functions/news-sync/handler.ts "$preserve/supabase/functions/news-sync/handler.ts"
-          for test_file in \
-            five-issues-regression.test.mjs \
-            journal-ai-rotation-v158.test.mjs \
-            mapping-news-background-repair.test.mjs \
-            preview-production-feature-parity.test.mjs
-          do
-            cp "production/tests/${test_file}" "$preserve/tests/${test_file}"
-          done
+          cp -a production/tests "$preserve/tests"
 
       - name: Promote Preview runtime while preserving production identity
         working-directory: production
         run: python3 tools/promote-preview-to-production.py ../preview .
 
-      - name: Synchronize current Preview regression suite
+      - name: Merge current Preview tests with production assertions
         shell: bash
         run: |
           set -euo pipefail
+          preserve="$RUNNER_TEMP/amyfx-production-preserve"
           rm -rf production/tests
           cp -a preview/tests production/tests
+          cp -a "$preserve/tests/." production/tests/
 
-      - name: Restore production-only news topology and assertions
+      - name: Restore the single production news scheduler and push route
         shell: bash
         run: |
           set -euo pipefail
@@ -94,14 +89,6 @@ jobs:
           cp -a "$preserve/supabase/functions/news-system-push" production/supabase/functions/news-system-push
           cp -a "$preserve/supabase/functions/scheduled-news-sync" production/supabase/functions/scheduled-news-sync
           cp "$preserve/supabase/functions/news-sync/handler.ts" production/supabase/functions/news-sync/handler.ts
-          for test_file in \
-            five-issues-regression.test.mjs \
-            journal-ai-rotation-v158.test.mjs \
-            mapping-news-background-repair.test.mjs \
-            preview-production-feature-parity.test.mjs
-          do
-            cp "$preserve/tests/${test_file}" "production/tests/${test_file}"
-          done
 
       - name: Include Scalper database migrations
         shell: bash
