@@ -18,17 +18,19 @@ const forbiddenVisibleCopy = [
   /untuk audit/,
   /otoritas keputusan/,
   /bukan win rate/,
-  /Market Regime • Strategy Router • Market Shift/
+  /Market Regime • Strategy Router • Market Shift/,
+  /RELIABILITAS HISTORIS/,
+  /Performa Historis Model/
 ];
 
-test('user-facing Preview copy does not expose internal audit wording', () => {
+test('user-facing production copy does not expose internal audit wording', () => {
   const visibleSources = `${ui}\n${html}`;
   for (const pattern of forbiddenVisibleCopy) {
     assert.doesNotMatch(visibleSources, pattern);
   }
 });
 
-test('Preview uses the approved simplified Mapping navigation and header', () => {
+test('Amy FX uses the approved simplified Mapping navigation and header', () => {
   assert.match(html, /Market Intelligence/);
   assert.match(html, /Struktur • Arah • Likuiditas/);
   assert.match(html, />Dashboard</);
@@ -36,12 +38,13 @@ test('Preview uses the approved simplified Mapping navigation and header', () =>
   assert.doesNotMatch(html, />Skenario</);
   assert.doesNotMatch(html, />Riwayat</);
   assert.doesNotMatch(html, />Pengaturan</);
+  assert.doesNotMatch(html, /Amy FX Preview/);
 });
 
-test('long advanced sections remain collapsed by default in source markup', () => {
-  assert.match(ui, /<details class="professional-disclosure">/);
-  assert.doesNotMatch(ui, /<details class="professional-disclosure" open>/);
-  assert.match(ui, /Performa Historis Model/);
+test('advanced Mapping sections remain source-driven without historical reliability injection', () => {
   assert.match(ui, /Konteks Market Lanjutan/);
   assert.match(ui, /Target & Skenario Harga/);
+  assert.doesNotMatch(ui, /RELIABILITAS HISTORIS/);
+  assert.doesNotMatch(ui, /Performa Historis Model/);
+  assert.doesNotMatch(ui, /tracker success/);
 });
