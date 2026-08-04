@@ -5,6 +5,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
+# Preview-only release/connectivity tests validate Preview workflows and files that
+# must not exist in production. They are intentionally excluded from the public
+# release suite. The production parity test with the preview-* filename is kept.
+EXCLUDED_PREVIEW_TESTS = {
+    "blueprint-preview-stabilization.test.mjs",
+    "blueprint-preview-v1.test.mjs",
+    "personal-source-debug.test.mjs",
+}
+
 # Apply identity substitutions only to positive assertions and fixtures. Negative
 # assertions must keep Preview markers so they continue proving that Preview
 # package names, URI schemes, APK paths, and update channels do not leak into
@@ -58,6 +67,12 @@ PRODUCTION_ANALYSIS_IDENTITY_BLOCK = """test('production source identity is neve
 """
 
 
+def excluded(path: Path) -> bool:
+    if path.name in EXCLUDED_PREVIEW_TESTS:
+        return True
+    return path.name.startswith("preview-") and path.name != "preview-production-feature-parity.test.mjs"
+
+
 def normalize_line(line: str) -> str:
     # Keep explicit negative assertions intact. This also preserves their test
     # value after the runtime itself is promoted to the production identity.
@@ -83,11 +98,19 @@ def normalize_file(path: Path, original: str) -> str:
 
 
 changed = 0
+removed = 0
 for path in (ROOT / "tests").glob("*.test.mjs"):
+    if excluded(path):
+        path.unlink()
+        removed += 1
+        continue
     original = path.read_text(encoding="utf-8")
     updated = normalize_file(path, original)
     if updated != original:
         path.write_text(updated, encoding="utf-8")
         changed += 1
 
-print(f"Normalized {changed} Preview regression test files for Amy FX production 2.3.0 (58).")
+print(
+    f"Normalized {changed} Preview regression tests for Amy FX production 2.3.0 (58); "
+    f"excluded {removed} Preview-only workflow/connectivity tests."
+)
