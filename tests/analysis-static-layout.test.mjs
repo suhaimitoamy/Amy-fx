@@ -52,15 +52,19 @@ test('Preview source identity is never behind the activated update manifest', ()
   const sourceCode = Number(sourceCodeText);
   const publishedCode = Number(updateManifest.latest_version_code);
   const publishedName = String(updateManifest.latest_version_name || '');
+  const publishedMatch = publishedName.match(/^2\.0\.0-preview\.(\d+)$/);
+
+  assert.ok(publishedMatch, 'Activated Preview manifest identity must be readable');
+  const publishedSequence = Number(publishedMatch[1]);
 
   assert.equal(sourceCode, 940000 + sourceSequence);
-  assert.equal(sourceName, '2.0.0-preview.307');
+  assert.equal(publishedCode, 940000 + publishedSequence);
   assert.ok(sourceCode >= publishedCode, 'Preview source must not be older than the update manifest');
 
   if (sourceCode === publishedCode) {
-    assert.equal(publishedName, sourceName);
+    assert.equal(sourceName, publishedName);
   } else {
-    assert.equal(sourceCode, publishedCode + 1, 'Pending release may be exactly one version ahead');
-    assert.equal(publishedName, '2.0.0-preview.306');
+    assert.equal(sourceCode, publishedCode + 1, 'Pending signed release may be exactly one version ahead');
+    assert.equal(sourceSequence, publishedSequence + 1);
   }
 });
