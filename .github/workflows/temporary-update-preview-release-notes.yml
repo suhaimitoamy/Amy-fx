@@ -1,0 +1,67 @@
+name: Temporary Update Preview 307 Release Notes
+
+on:
+  pull_request:
+    branches:
+      - personal/amyfx-private
+
+permissions:
+  contents: write
+
+jobs:
+  update-release-notes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/mapping-bias-scalper-history-20260804
+          fetch-depth: 0
+      - name: Update Preview release notes and remove temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('.github/workflows/amyfx-blueprint-preview-release.yml')
+          text = path.read_text(encoding='utf-8')
+          old = """              'release_notes': [
+                  'Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.',
+                  'Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.',
+                  'Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.',
+                  'Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.',
+                  'Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.',
+                  'Amy FX publik pada branch main tidak diubah.'
+              ],
+              'changelog': [
+                  'Professional glass UI tokens and shared components',
+                  'System, light, and dark theme controller',
+                  'Truthful home, collection, and profile presentation',
+                  'Unified loading, accessibility, and vector icon polish',
+                  'Android system bar theme synchronization'
+              ]"""
+          new = """              'release_notes': [
+                  'Bias Mapping tetap terpisah dari setup dan memakai bias Mapping yang sudah ada sebagai sumber utama.',
+                  'Jika bias Mapping belum tersedia, arah dibentuk dari HH/HL atau LH/LL beserta invalidasi candle close.',
+                  'Status setup boleh WAIT tanpa menghilangkan bias BUY atau SELL untuk entry manual.',
+                  'Riwayat Scalper Engine disimpan permanen dan tidak hilang saat notifikasi dibuka.',
+                  'Klik notifikasi membuka setup yang tepat berdasarkan setup ID.',
+                  'Driver, arah, entry, Stop Loss, TP1, TP2, dan lifecycle Scalper Engine tidak diubah.',
+                  'Amy FX publik pada branch main tidak diubah.'
+              ],
+              'changelog': [
+                  'Independent Mapping structural bias with HH/HL/LH/LL fallback',
+                  'Close-based structural invalidation and last-valid-bias persistence',
+                  'Permanent Scalper setup history and exact notification deep links',
+                  'All-history Scalper API response without changing the engine',
+                  'Preview version 2.0.0-preview.307'
+              ]"""
+          if old not in text:
+              raise SystemExit('Expected old release-note block not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          rm -f .github/workflows/temporary-update-preview-release-notes.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'chore(private): finalize Preview 307 release notes [skip ci]'
+          git push origin HEAD:fix/mapping-bias-scalper-history-20260804
