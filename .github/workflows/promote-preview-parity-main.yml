@@ -1,0 +1,130 @@
+name: Promote Amy FX Preview parity to production
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/promote-preview-parity-main.yml
+      - tools/promote-preview-to-production.py
+      - app/**
+      - api/**
+      - lib/**
+      - supabase/functions/**
+      - tests/**
+      - .github/workflows/build-apk.yml
+      - .github/workflows/build-release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: amyfx-production-preview-parity-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  promote-and-validate:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'release/amyfx-main-preview-parity-20260804'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
+
+    steps:
+      - name: Checkout production promotion branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_BRANCH }}
+          fetch-depth: 0
+          path: production
+
+      - name: Checkout current Amy FX Preview source
+        uses: actions/checkout@v4
+        with:
+          repository: suhaimitoamy/Amy-fx
+          ref: personal/amyfx-private
+          fetch-depth: 1
+          path: preview
+          persist-credentials: false
+
+      - name: Record Preview source revision
+        shell: bash
+        run: echo "AMYFX_PREVIEW_SOURCE_SHA=$(git -C preview rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Promote Preview runtime while preserving production identity
+        working-directory: production
+        run: python3 tools/promote-preview-to-production.py ../preview .
+
+      - name: Verify production identity boundaries
+        working-directory: production
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq '?: "com.amyelitesuite"' app/build.gradle.kts
+          grep -Fq '?: "Amy FX"' app/build.gradle.kts
+          grep -Fq '?: "amyfx"' app/build.gradle.kts
+          grep -Fq '?: "https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json"' app/build.gradle.kts
+          grep -Fq "name: '2.3.0', code: 58" app/src/main/assets/app-version.js
+          grep -Fq 'suhaimitoamy/Amy-fx/main/update.json' app/src/main/assets/app-version.js
+          test ! -e preview-update.json
+          test ! -e AmyFX-Preview-latest.apk
+          ! grep -R -n -E 'com\.amyelitesuite\.learningpreview|amyfxpreview|personal/amyfx-private/preview-update\.json|AmyFX-Preview-latest\.apk|preview-news-system-push' app/src/main api lib supabase/functions
+
+      - name: Verify Mapping and Scalper parity markers
+        working-directory: production
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq "version: '5.0.0'" app/src/main/assets/apps/mapping/js/mapping-runtime-repair-v3.js
+          grep -Fq 'classifySwingSequence' app/src/main/assets/apps/mapping/js/engine/structural-bias.js
+          test -f app/src/main/assets/apps/mapping/js/engine/bt71-market-state-reconciliation.js
+          grep -Fq 'SCALPER ENGINE · SHADOW MODE' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          grep -Fq 'scalper-setups?limit=50' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          grep -Fq 'displaySelectedSetupId' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          grep -Fq "CURRENT_ENGINE_VERSION = 'amyfx-preview-scalper-pattern-v3.0'" app/src/main/assets/apps/mapping/js/scalper-execution-authority.js
+          grep -Fq 'let applyQueued = false' app/src/main/assets/apps/mapping/js/scalper-execution-authority.js
+          test -f app/src/main/assets/apps/mapping/js/scalper-execution-decision-bridge.js
+          test -f app/src/main/assets/apps/mapping/js/live-price-display-only-v1.js
+          grep -Fq 'live-price-display-only-v1.js' app/src/main/assets/apps/mapping/index.html
+          grep -Fq 'scalper-execution-decision-bridge.js' app/src/main/assets/apps/mapping/index.html
+
+      - name: Run complete JavaScript regression suite
+        working-directory: production
+        run: timeout 20m npm test
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Run Android unit tests and lint
+        working-directory: production
+        shell: bash
+        run: |
+          chmod +x ./gradlew
+          ./gradlew testReleaseUnitTest lintRelease --no-configuration-cache
+
+      - name: Check generated diff
+        working-directory: production
+        run: git diff --check
+
+      - name: Commit promoted production parity
+        working-directory: production
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "Production branch is already synchronized with Amy FX Preview."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git commit -m "release: align Amy FX production with Preview ${AMYFX_PREVIEW_SOURCE_SHA:0:12}"
+          git fetch origin "${TARGET_BRANCH}"
+          git rebase "origin/${TARGET_BRANCH}"
+          git push origin "HEAD:${TARGET_BRANCH}"
