@@ -22,16 +22,26 @@ POSITIVE_REPLACEMENTS = {
     r"preview-update\.json": r"update\.json",
     "personal/amyfx-private/preview-update.json": "main/update.json",
     r"personal\/amyfx-private\/preview-update\.json": r"main\/update\.json",
-    "2.0.0-preview.307": "2.3.0",
-    r"2\.0\.0-preview\.307": r"2\.3\.0",
-    "2.2.1": "2.3.0",
-    r"2\.2\.1": r"2\.3\.0",
-    "940307": "58",
-    "code: 57": "code: 58",
-    "code 57": "code 58",
-    r"\?: 57\)": r"\?: 58\)",
-    r"code:\s*57": r"code:\s*58",
-    "<= 57": "<= 58",
+    "2.0.0-preview.310": "2.3.1",
+    r"2\.0\.0-preview\.310": r"2\.3\.1",
+    "2.0.0-preview.307": "2.3.1",
+    r"2\.0\.0-preview\.307": r"2\.3\.1",
+    "2.3.0": "2.3.1",
+    r"2\.3\.0": r"2\.3\.1",
+    "2.2.1": "2.3.1",
+    r"2\.2\.1": r"2\.3\.1",
+    "940310": "59",
+    "940307": "59",
+    "code: 58": "code: 59",
+    "code 58": "code 59",
+    "code: 57": "code: 59",
+    "code 57": "code 59",
+    r"\?: 58\)": r"\?: 59\)",
+    r"\?: 57\)": r"\?: 59\)",
+    r"code:\s*58": r"code:\s*59",
+    r"code:\s*57": r"code:\s*59",
+    "<= 58": "<= 59",
+    "<= 57": "<= 59",
     "Amy FX Preview": "Amy FX",
     "com.amyelitesuite.learningpreview": "com.amyelitesuite",
     r"com\.amyelitesuite\.learningpreview": r"com\.amyelitesuite",
@@ -82,6 +92,6 @@ for path in (ROOT / "tests").glob("*.test.mjs"):
         changed += 1
 
 print(
-    f"Normalized {changed} Preview regressions for Amy FX production 2.3.0 (58); "
+    f"Normalized {changed} Preview regressions for Amy FX production 2.3.1 (59); "
     f"preserved {preserved} production overlays; excluded {removed} Preview-only tests."
 )
