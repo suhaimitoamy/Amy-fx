@@ -18,10 +18,12 @@ const forbiddenVisibleCopy = [
   /untuk audit/,
   /otoritas keputusan/,
   /bukan win rate/,
-  /Market Regime • Strategy Router • Market Shift/
+  /Market Regime • Strategy Router • Market Shift/,
+  /Performa Historis Model/,
+  /RELIABILITAS HISTORIS/
 ];
 
-test('user-facing Preview copy does not expose internal audit wording', () => {
+test('user-facing Preview copy does not expose internal audit wording or historical claims', () => {
   const visibleSources = `${ui}\n${html}`;
   for (const pattern of forbiddenVisibleCopy) {
     assert.doesNotMatch(visibleSources, pattern);
@@ -38,10 +40,13 @@ test('Preview uses the approved simplified Mapping navigation and header', () =>
   assert.doesNotMatch(html, />Pengaturan</);
 });
 
-test('long advanced sections remain collapsed by default in source markup', () => {
+test('advanced closed-candle sections remain collapsed by default and avoid automatic entry claims', () => {
   assert.match(ui, /<details class="professional-disclosure">/);
   assert.doesNotMatch(ui, /<details class="professional-disclosure" open>/);
-  assert.match(ui, /Performa Historis Model/);
   assert.match(ui, /Konteks Market Lanjutan/);
   assert.match(ui, /Target & Skenario Harga/);
+  assert.match(ui, /M15 CANDLE TERTUTUP/);
+  assert.match(ui, /bukan pada setiap tick harga live/);
+  assert.match(ui, /tunggu konfirmasi harga/);
+  assert.doesNotMatch(ui, /AUTO ENTRY|ENTRY SEKARANG|PASTI BUY|PASTI SELL/i);
 });
