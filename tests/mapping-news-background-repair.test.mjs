@@ -12,26 +12,24 @@ function assertSyntax(path) {
   assert.equal(result.status, 0, result.stderr || result.stdout);
 }
 
-test('Mapping repairs freshness from the latest actually closed candle', () => {
+test('Mapping keeps the latest closed candle authoritative without autonomous refresh', () => {
   const path = 'app/src/main/assets/apps/mapping/js/mapping-runtime-repair-v3.js';
   const runtime = read(path);
   const index = read('app/src/main/assets/apps/mapping/index.html');
 
   assertSyntax(path);
   assert.match(index, /mapping-runtime-repair-v3\.js/);
-  assert.match(runtime, /state\.result\?\.mappingSnapshot/);
+  assert.match(runtime, /const snapshot = result\.mappingSnapshot/);
   assert.match(runtime, /latestClosedCandleClose/);
   assert.match(runtime, /sourceCandleTime/);
-  assert.match(runtime, /snapshot\?\.data\?\.stale/);
-  assert.match(runtime, /AMY_MAPPING_SINGLE_AUTHORITY_V3/);
-  assert.match(runtime, /await runAnalysis\(state\.tf\)/);
+  assert.match(runtime, /markCachedSeriesUsable/);
+  assert.match(runtime, /sourceSignature/);
+  assert.match(runtime, /dataStale: false/);
+  assert.match(runtime, /await runEngineAnalysis\(tf\)/);
   assert.match(runtime, /amyfx:candles-updated/);
-  assert.match(runtime, /cachedSeriesIsCurrent/);
-  assert.match(runtime, /expectedClosedCandleOpen/);
-  assert.match(runtime, /primeCurrentCandleFreshness/);
-  assert.match(runtime, /setCandleFetchedAt\(normalizedTf, current \? nowMs : 0\)/);
-  assert.match(runtime, /SOURCE_VALIDATED_TFS = new Set\(\['M1', 'M5', 'M15', 'M30', 'H1', 'H4'\]\)/);
-  assert.match(runtime, /version: '4\.0\.0'/);
+  assert.match(runtime, /amyfx:mapping-refresh-request/);
+  assert.match(runtime, /version: '5\.0\.0'/);
+  assert.doesNotMatch(runtime, /setInterval|visibilitychange|addEventListener\('focus'|addEventListener\('online'/);
 });
 
 test('Entry Watch card stays hidden while lifecycle data remains read-only', () => {
@@ -49,7 +47,7 @@ test('Entry Watch card stays hidden while lifecycle data remains read-only', () 
   assert.doesNotMatch(runtime, /result\.bestSetup\s*=/);
 });
 
-test('Android news notifications use a durable high-priority system channel', () => {
+test('Android news notifications use one durable production channel', () => {
   const manifest = read('app/src/main/AndroidManifest.xml');
   const application = read('app/src/main/java/com/amyelitesuite/AmyFxApplication.kt');
   const firebase = read('app/src/main/java/com/amyelitesuite/AmyFirebaseMessagingService.kt');
@@ -68,11 +66,12 @@ test('Android news notifications use a durable high-priority system channel', ()
   assert.match(worker, /PRIORITY_MAX/);
   assert.match(registrar, /KEY_APP_VERSION/);
   assert.match(registrar, /previousVersion == currentVersion/);
-  assert.match(googleServices, /com\.amyelitesuite\.learningpreview/);
+  assert.match(googleServices, /"package_name": "com\.amyelitesuite"/);
 });
 
-test('Supabase sends system notification plus data and scheduler invokes it', () => {
+test('production news keeps one canonical scheduler and system-notification route', () => {
   const systemPush = read('supabase/functions/news-system-push/index.ts');
+  const newsSync = read('supabase/functions/news-sync/handler.ts');
   const scheduler = read('supabase/functions/scheduled-news-sync/index.ts');
 
   assert.match(systemPush, /notification: \{ title, body \}/);
@@ -80,6 +79,11 @@ test('Supabase sends system notification plus data and scheduler invokes it', ()
   assert.match(systemPush, /channelId: CHANNEL_ID/);
   assert.match(systemPush, /firebase_system_notification_plus_data/);
   assert.match(systemPush, /notification_system_logs/);
+  assert.doesNotMatch(systemPush, /PREVIEW_DEVICE_PREFIX|preview-news-system-push/);
+  assert.doesNotMatch(newsSync, /PREVIEW_DEVICE_PREFIX|learningpreview/);
+  assert.match(scheduler, /invokeFunction\("news-sync"/);
+  assert.match(scheduler, /invokeFunction\("web-push-delivery"/);
   assert.match(scheduler, /invokeFunction\("news-system-push"/);
-  assert.match(scheduler, /system_push_ok/);
+  assert.match(scheduler, /const deliveryOk = webPush\.ok && systemPush\.ok/);
+  assert.doesNotMatch(scheduler, /preview-news-system-push|previewSystemPush|preview_system_push/);
 });

@@ -17,42 +17,17 @@ function createHarness({ route = 'Analyze', hash = '#Analyze', search = '', cons
   const href = `https://appassets.androidplatform.net/assets/apps/mapping/index.html${search}${hash}`;
   if (consumedUrl) storage.set('amyfx.notification.consumed_url', consumedUrl === 'CURRENT' ? href : consumedUrl);
 
-  const calls = { tabs: [], scrolls: 0, addedClasses: [], removedClasses: [] };
-  let cardAvailable = false;
-  const card = {
-    classList: {
-      add(value) { calls.addedClasses.push(value); },
-      remove(value) { calls.removedClasses.push(value); }
-    },
-    scrollIntoView() { calls.scrolls += 1; }
-  };
-
-  class FakeMutationObserver {
-    constructor(callback) { this.callback = callback; }
-    observe() {}
-    disconnect() {}
-  }
-
+  const calls = { tabs: [] };
   const document = {
     readyState: 'complete',
     hidden: false,
-    documentElement: {},
-    head: { appendChild() {} },
-    addEventListener() {},
-    createElement() { return { id: '', textContent: '' }; },
-    getElementById(id) {
-      if (id === 'amy-notification-focus-style') return null;
-      if (id === 'amy-entry-watch-card' && cardAvailable) return card;
-      return null;
-    }
+    addEventListener() {}
   };
 
   const windowObject = {
     addEventListener() {},
     setTimeout(callback) { callback(); return 1; },
-    clearTimeout() {},
-    requestAnimationFrame(callback) { callback(); },
-    MutationObserver: FakeMutationObserver
+    clearTimeout() {}
   };
 
   const context = {
@@ -64,7 +39,6 @@ function createHarness({ route = 'Analyze', hash = '#Analyze', search = '', cons
       setItem(key, value) { storage.set(key, String(value)); },
       removeItem(key) { storage.delete(key); }
     },
-    MutationObserver: FakeMutationObserver,
     URLSearchParams,
     decodeURIComponent,
     Set,
@@ -82,7 +56,6 @@ function createHarness({ route = 'Analyze', hash = '#Analyze', search = '', cons
     context,
     storage,
     calls,
-    makeCardAvailable() { cardAvailable = true; },
     installSetTab() {
       windowObject.setTab = value => calls.tabs.push(value);
     }
@@ -100,7 +73,7 @@ test('notification route helper passes syntax validation and loads before Mappin
   assert.ok(helperIndex < runtimeIndex, 'route helper must load before Entry Watch runtime');
 });
 
-test('pending Android notification route survives until setTab is ready, then opens Analyze and focuses Entry Watch', () => {
+test('pending Android notification route survives until setTab is ready, then opens Analyze exactly once', () => {
   const harness = createHarness();
   assert.equal(harness.storage.get('amyfx.notification.route'), 'Analyze');
 
@@ -108,12 +81,19 @@ test('pending Android notification route survives until setTab is ready, then op
   assert.equal(harness.storage.get('amyfx.notification.route'), 'Analyze', 'route must not be lost during WebView startup race');
 
   harness.installSetTab();
-  harness.makeCardAvailable();
   assert.equal(harness.context.window.AmyFXNotificationRoute.consume(), true);
   assert.deepEqual(harness.calls.tabs, ['Analyze']);
   assert.equal(harness.storage.has('amyfx.notification.route'), false);
-  assert.equal(harness.calls.scrolls, 1);
-  assert.ok(harness.calls.addedClasses.includes('amy-notification-focus'));
+
+  assert.equal(harness.context.window.AmyFXNotificationRoute.consume(), true);
+  assert.deepEqual(harness.calls.tabs, ['Analyze'], 'consumed notification must not reopen Analyze');
+});
+
+test('notification route never forces card focus, nested observers, or visibility refresh', () => {
+  assert.doesNotMatch(routeSource, /scrollIntoView|scrollTo\(|scrollBy\(/);
+  assert.doesNotMatch(routeSource, /amy-notification-focus|focusEntryWatch|pendingEntryFocus/);
+  assert.doesNotMatch(routeSource, /MutationObserver/);
+  assert.doesNotMatch(routeSource, /visibilitychange|window\.addEventListener\('focus'/);
 });
 
 test('consumed hash does not force Analyze again after the user manually changes tabs', () => {

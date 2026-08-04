@@ -39,7 +39,7 @@ test('Amy Mentor can retrieve every Amy FX workspace domain', async () => {
   assert.match(runtime, /amyfx\.market\.intel\.v1/);
   assert.match(runtime, /apps\/academy\/index\.html/);
   assert.match(runtime, /apps\/indikator\/manifest\.json/);
-  assert.match(runtime, /preview-update\.json/);
+  assert.match(runtime, /update\.json/);
   assert.match(runtime, /amyfx_os_v1/);
   assert.match(runtime, /mentor_history/);
 });

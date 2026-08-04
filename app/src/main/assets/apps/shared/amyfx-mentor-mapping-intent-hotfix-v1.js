@@ -819,7 +819,7 @@
     }
     if (/versi|version/.test(value)) {
       const version = clean(app.version?.version || app.version?.versionName || app.version || window.AmyFXAppVersion?.version || window.AmyFXAppVersion?.versionName);
-      return version ? `Versi Amy FX Preview yang terbaca ${version}.` : "Versi aplikasi belum terbaca.";
+      return version ? `Versi Amy FX yang terbaca ${version}.` : "Versi aplikasi belum terbaca.";
     }
     if (/status|kesehatan|sistem|online|offline/.test(value)) {
       return `Status sistem: mode FULL BOT aktif, modul ${clean(app.active_module || currentModule()).toUpperCase()}, koneksi ${app.online === false ? "offline" : "online"}.`;

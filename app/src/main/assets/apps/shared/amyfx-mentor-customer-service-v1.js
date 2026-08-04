@@ -393,7 +393,7 @@
 
     if (/versi|version|update aplikasi|cek update/.test(value)) {
       const version = appVersion(ws);
-      return done("app-version", `Amy FX Preview yang terpasang adalah versi ${version.name}${version.code ? `, code ${version.code}` : ""}. Kamu bisa memeriksa update dari Profil → Versi Aplikasi.`, [["Buka Profil", "Buka Profil"], ["Cek update aplikasi", "Cek update"]]);
+      return done("app-version", `Amy FX yang terpasang adalah versi ${version.name}${version.code ? `, code ${version.code}` : ""}. Kamu bisa memeriksa update dari Profil → Versi Aplikasi.`, [["Buka Profil", "Buka Profil"], ["Cek update aplikasi", "Cek update"]]);
     }
 
     if (/hapus|delete|reset|bersihkan semua|ubah data|edit data/.test(value)) {

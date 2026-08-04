@@ -76,13 +76,19 @@ test('legacy native Mapping scanner remains permanently disabled', () => {
   assert.doesNotMatch(scannerService, /MARKET_POLL_MS/);
 });
 
-test('analysis view preserves disclosure state without forced scroll movement', () => {
+test('analysis view stays statically open without forced scroll or autonomous refresh hooks', () => {
   assert.ok(index.includes('js/analysis-ui-stability-v4.js'));
   assert.equal(index.includes('js/view-stability.js'), false);
-  assert.match(stability, /DISCLOSURE_STATE_KEY/);
-  assert.match(stability, /MutationObserver/);
+  assert.match(stability, /details\.open = true/);
+  assert.match(stability, /event\.preventDefault\(\)/);
+  assert.match(stability, /observer\.observe\(app, \{ childList: true, subtree: false \}\)/);
+  assert.match(stability, /amyfx:mapping-state-change/);
+  assert.doesNotMatch(stability, /DISCLOSURE_STATE_KEY/);
+  assert.doesNotMatch(stability, /visibilitychange/);
+  assert.doesNotMatch(stability, /amyfx:market-update/);
   assert.doesNotMatch(stability, /window\.scrollTo/);
   assert.doesNotMatch(stability, /window\.scrollBy/);
+  assert.doesNotMatch(stability, /scrollIntoView/);
 });
 
 test('client Twelve Data requests are canonicalized, deduplicated and cached', () => {
@@ -128,9 +134,8 @@ test('backend shares provider responses and serves stale cache during provider f
   assert.match(backend, /globalThis\.__amyFxTwelveDataCache/);
   assert.match(backend, /globalThis\.__amyFxTwelveDataInFlight/);
   assert.match(backend, /CACHE_TTL_SECONDS/);
-  assert.match(backend, /Vercel-CDN-Cache-Control/);
+  assert.match(backend, /Math\.max\(ttl \* 4, 300\)/);
+  assert.match(backend, /readCache\(key, \{ allowStale: true \}\)/);
   assert.match(backend, /STALE_FALLBACK/);
-  assert.match(backend, /canonicalM1Url/);
-  assert.match(backend, /res\.redirect\(307, canonicalM1Url\(symbol\)\)/);
-  assert.match(backend, /s-maxage=\$\{ttl\}/);
+  assert.match(backend, /stale-if-error/);
 });

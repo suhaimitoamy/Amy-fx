@@ -1,0 +1,8 @@
+{
+  "source_repository": "suhaimitoamy/Amy-fx",
+  "source_branch": "personal/amyfx-private",
+  "source_commit": "bac20b9481255a174dddfa5ed30173b892156c51",
+  "production_version": "2.3.0",
+  "production_version_code": 58,
+  "strategy": "preview-runtime-parity-with-production-identity-preserved"
+}

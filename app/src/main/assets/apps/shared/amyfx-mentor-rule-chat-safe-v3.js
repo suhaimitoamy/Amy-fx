@@ -234,7 +234,7 @@
 
     if (/versi|version|update aplikasi|cek update/.test(value)) {
       const version = ws?.system?.app_version || window.AmyFXAppVersion || {};
-      return `Amy FX Preview yang terpasang adalah versi ${clean(version.name || version.version || "belum diketahui")}. Pemeriksaan update tersedia di Profil → Versi Aplikasi.`;
+      return `Amy FX yang terpasang adalah versi ${clean(version.name || version.version || "belum diketahui")}. Pemeriksaan update tersedia di Profil → Versi Aplikasi.`;
     }
 
     if (/hapus|delete|reset|bersihkan semua|ubah data|edit data/.test(value)) {

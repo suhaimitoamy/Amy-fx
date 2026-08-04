@@ -480,7 +480,7 @@
     }
     return sanitize({
       app: {
-        product: "Amy FX Preview",
+        product: "Amy FX",
         version: window.AmyFXAppVersion || null,
         online: navigator.onLine,
         active_module: currentModule(),

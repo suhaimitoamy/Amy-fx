@@ -5,6 +5,7 @@ import { getMessaging } from "npm:firebase-admin@13.0.1/messaging";
 const SUPABASE_URL = String(Deno.env.get("SUPABASE_URL") || "").replace(/\/$/, "");
 const SERVICE_ROLE_KEY = String(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "");
 const CHANNEL_ID = "amy_scalper_v1";
+const PREVIEW_DEVICE_PREFIX = "com.amyelitesuite:";
 const headers = { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
 
 function json(data, status = 200) { return new Response(JSON.stringify(data), { status, headers }); }
@@ -75,7 +76,7 @@ Deno.serve(async (request) => {
   if (request.method !== "GET" && request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) return json({ error: "backend_not_configured" }, 503);
   const health = new URL(request.url).searchParams.get("health") === "1";
-  if (health) return json({ ok: true, channel: CHANNEL_ID, audience: "all_enabled_amyfx_devices", multiDriver: true });
+  if (health) return json({ ok: true, channel: CHANNEL_ID, previewOnly: true, multiDriver: true });
   if ((request.headers.get("authorization") || "") !== `Bearer ${SERVICE_ROLE_KEY}`) return json({ error: "unauthorized" }, 401);
   try {
     const since = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
@@ -86,11 +87,11 @@ Deno.serve(async (request) => {
       select: "id,model,driver_id,driver_name,timeframe,direction,status,recommendation_status,entry_price,stop_loss,break_even_trigger,target_price,result_r,bars_elapsed",
       id: `in.(${setupIds.map(id => `"${id.replaceAll('"', '')}"`).join(",")})`,
     });
-    const deviceQuery = new URLSearchParams({ select: "id,device_id,fcm_token,enabled", enabled: "eq.true" });
+    const deviceQuery = new URLSearchParams({ select: "id,device_id,fcm_token,enabled", enabled: "eq.true", device_id: `like.${PREVIEW_DEVICE_PREFIX}%` });
     const [setups, devices] = await Promise.all([rest(`amyfx_preview_scalper_setups?${setupQuery.toString()}`), rest(`device_tokens?${deviceQuery.toString()}`)]);
     const setupById = new Map((Array.isArray(setups) ? setups : []).map(row => [String(row.id), row]));
     const activeDevices = Array.isArray(devices) ? devices : [];
-    if (!activeDevices.length) return json({ ok: true, attempted: 0, sent: 0, failed: 0, reason: "no_enabled_devices" });
+    if (!activeDevices.length) return json({ ok: true, attempted: 0, sent: 0, failed: 0, reason: "no_preview_devices" });
     const client = messaging(); let sent = 0; let failed = 0;
     for (const event of events) {
       const setup = setupById.get(String(event.setup_id));

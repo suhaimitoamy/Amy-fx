@@ -3,30 +3,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const navBtns = document.querySelectorAll('.nav-btn');
 
   const projects = [
-    { id: 'indikator', title: 'Indikator TradingView', badge: 'Library', icon: 'chart', desc: 'Library indikator & file Pine Script', target: 'internal' },
+    { id: 'mapping', title: 'Mapping', badge: 'Mapping', icon: 'mapping', desc: 'Mapping market & chart untuk analisis peluang', target: 'apps/mapping/index.html' },
+    { id: 'intel', title: 'Berita', badge: 'News', icon: 'intel', desc: 'Berita dan liquidity heatmap XAU/USD', target: 'apps/market-intel/index.html' },
     { id: 'jurnal', title: 'Jurnal Trading', badge: 'Jurnal', icon: 'journal', desc: 'Catat jurnal, evaluasi performa, dan riwayat trading', target: 'apps/journal/index.html' },
     { id: 'academy', title: 'Tutorial Trading', badge: 'Learning', icon: 'academy', desc: 'Materi belajar trading dalam aplikasi', target: 'apps/academy/index.html' },
-    { id: 'mapping', title: 'Mapping', badge: 'Mapping', icon: 'mapping', desc: 'Mapping market & chart untuk analisis peluang', target: 'apps/mapping/index.html' },
-    { id: 'intel', title: 'Berita', badge: 'News', icon: 'chart', desc: 'Breaking News & Liquidity Heatmap XAU/USD', target: 'apps/market-intel/index.html' }
+    { id: 'indikator', title: 'Indikator TradingView', badge: 'Library', icon: 'indicator', desc: 'Library indikator dan file Pine Script', target: 'internal' }
   ];
 
   function showLoadingOverlay() {
-    const overlay = document.createElement('div');
-    overlay.style.position = 'fixed';
-    overlay.style.top = '0';
-    overlay.style.left = '0';
-    overlay.style.width = '100vw';
-    overlay.style.height = '100vh';
-    overlay.style.backgroundColor = 'var(--bg-color)';
-    overlay.style.zIndex = '9999';
-    overlay.style.display = 'flex';
-    overlay.style.flexDirection = 'column';
-    overlay.style.alignItems = 'center';
-    overlay.style.justifyContent = 'center';
-    overlay.style.color = 'var(--primary-gold)';
-    overlay.style.fontFamily = 'sans-serif';
-    overlay.innerHTML = `<div style="width: 40px; height: 40px; border: 3px solid rgba(255,193,7,0.2); border-top-color: var(--primary-gold); border-radius: 50%; animation: spin 1s linear infinite;"></div><p style="margin-top: 16px; font-weight: bold; font-size: 14px;">Memuat Aplikasi...</p><style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>`;
-    document.body.appendChild(overlay);
+    if (window.AmyFXLoading?.start) {
+      window.AmyFXLoading.start({
+        delay: 350,
+        message: 'Memuat modul…',
+        timeout: 12000,
+        retry: () => location.reload()
+      });
+      return;
+    }
+    document.documentElement.classList.add('is-loading');
   }
 
   let indicators = [
@@ -135,11 +129,12 @@ document.addEventListener('DOMContentLoaded', () => {
   loadRepoIndicators();
 
   const svgs = {
-    chart: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary-gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"></path><path d="M16 14h4v-2h-4zM10 8h4V6h-4zM4 16h4v-2H4z"></path><polyline points="4 14 10 8 16 14 22 4"></polyline></svg>`,
-    journal: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary-gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><path d="M17.5 7.5L12 13l-2.5-1.5L11 9l6.5-1.5z"></path></svg>`,
-    academy: `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--primary-gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><defs><linearGradient id="academyGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2a2211"/><stop offset="100%" stop-color="#050505"/></linearGradient></defs><rect x="1" y="1" width="22" height="22" rx="5" fill="url(#academyGrad)" stroke="var(--primary-gold)" stroke-width="0.8"/><line x1="5" y1="12" x2="5" y2="19" stroke="var(--primary-gold)" opacity="0.3" stroke-width="1"/><rect x="4" y="14" width="2" height="3" fill="var(--primary-gold)" stroke="none" opacity="0.4"/><line x1="19" y1="5" x2="19" y2="12" stroke="var(--primary-gold)" opacity="0.3" stroke-width="1"/><rect x="18" y="7" width="2" height="3" fill="var(--primary-gold)" stroke="none" opacity="0.4"/><path d="M1 18 L6 15 L10 16 L23 7" stroke="var(--primary-gold)" opacity="0.2" stroke-width="1"/><path d="M12 5.5 L7.5 7.5 V12.5 C7.5 15.5 9.5 18 12 19.5 C14.5 18 16.5 15.5 16.5 12.5 V7.5 L12 5.5 Z" fill="#0b0b0b" stroke="var(--primary-gold)" stroke-width="1"/><text x="12" y="14.8" font-family="Georgia, serif" font-size="6.5" font-weight="900" fill="var(--primary-gold)" stroke="none" text-anchor="middle" letter-spacing="0.5">AM</text><path d="M12 3 L7 5 L12 7 L17 5 Z" fill="var(--primary-gold)" stroke="none"/><path d="M16 5.5 V8" stroke="var(--primary-gold)" stroke-width="0.8"/><circle cx="16" cy="8.5" r="0.8" fill="var(--primary-gold)" stroke="none"/></svg>`,
-    mapping: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary-gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line><circle cx="12" cy="8" r="2"></circle><path d="M12 10v5"></path></svg>`,
-    code: `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary-gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>`
+    mapping: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>`,
+    intel: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v14H4z"></path><path d="M8 9h8M8 13h5M8 17h8"></path></svg>`,
+    journal: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h14v16H5z"></path><path d="M8 8h8M8 12h8M8 16h5"></path></svg>`,
+    academy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-5 9 5-9 5z"></path><path d="M7 12.5V17c2.7 2 7.3 2 10 0v-4.5M21 10v6"></path></svg>`,
+    indicator: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"></path><path d="m3 12 6-5 6 4 6-7"></path></svg>`,
+    code: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>`
   };
 
   const badgeSvgs = {
@@ -161,18 +156,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function projectCard(item) {
     const badgeIcon = badgeSvgs[item.badge] || '';
-    return `<button class="card project-card" data-open="${item.id}">${icon(item.icon)}<span class="card-content"><h3>${item.title}</h3><p>${item.desc}</p><span class="badge">${badgeIcon} ${item.badge}</span></span><span class="chevron">›</span></button>`;
+    return `<button class="card project-card" data-open="${item.id}" data-module="${item.id}">${icon(item.icon)}<span class="card-content"><h3>${item.title}</h3><p>${item.desc}</p><span class="badge">${badgeIcon} ${item.badge}</span></span><span class="chevron" aria-hidden="true">›</span></button>`;
   }
 
-  function quickCard(item) {
+  function quickCard(item, wide = false) {
     const badgeIcon = badgeSvgs[item.badge] || '';
-    return `<button class="quick-card" data-open="${item.id}">${icon(item.icon)}<span><strong>${item.title}</strong><small>${badgeIcon} ${item.badge}</small></span><span class="chevron">›</span></button>`;
+    return `<button class="quick-card${wide ? ' quick-card--wide' : ''}" data-open="${item.id}" data-module="${item.id}">${icon(item.icon)}<span><strong>${item.title}</strong><small>${item.desc}</small></span><span class="chevron" aria-hidden="true">›</span></button>`;
   }
 
   function renderHome() {
     setActive('beranda');
-    const quick = [projects[3], projects[4], projects[1], projects[2]].filter(Boolean);
-    mainContent.innerHTML = `<section class="home-hero slide-up"><div class="eyebrow">AMY FX <span>•</span> VIP FACILITY</div><h2>Selamat datang di Amy FX</h2><p>Ruang kerja trading untuk membaca market, mencatat keputusan, dan belajar dengan lebih terarah.</p><div class="hero-status"><span class="status-dot"></span><span>Sistem siap digunakan</span><span class="hero-divider"></span><span>VIP Member</span></div></section><div class="section-heading"><div><span class="section-kicker">MODUL UTAMA</span><h2>Ruang kerja trading</h2></div><span class="section-count">${projects.length} modul</span></div><div class="quick-grid slide-up">${quick.map(quickCard).join('')}</div><div class="section-heading"><div><span class="section-kicker">TERBARU</span><h2>Akses cepat</h2></div><button class="text-button" data-nav="proyek">Lihat semua</button></div><div class="project-grid compact slide-up">${projects.slice(0, 3).map(projectCard).join('')}</div>`;
+    const coreModules = projects.slice(0, 4);
+    const indicator = projects[4];
+    const online = navigator.onLine !== false;
+    mainContent.innerHTML = `<section class="home-hero slide-up"><div class="eyebrow">AMY FX WORKSPACE</div><h2>Keputusan market dalam satu ruang kerja</h2><p>Buka Mapping, pantau berita, simpan jurnal, dan lanjutkan materi trading dari satu tempat.</p><div class="home-status" data-online="${online}"><span class="status-dot"></span><span>${online ? 'Sistem siap digunakan' : 'Mode offline aktif'}</span></div></section><div class="section-heading"><div><span class="section-kicker">MODUL UTAMA</span><h2>Ruang kerja trading</h2></div><span class="section-count">${projects.length} modul</span></div><div class="quick-grid slide-up">${coreModules.map(item => quickCard(item)).join('')}${quickCard(indicator, true)}</div>`;
   }
 
   function renderProjectList(title) {
@@ -182,10 +179,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderKoleksi() {
     setActive('koleksi');
-    const recentIds = readJsonArray('amy_recent_projects');
-    const recent = recentIds.map(id => projects.find(item => item.id === id)).filter(Boolean).slice(0, 3);
-    const favorites = [projects.find(item => item.id === 'mapping'), projects.find(item => item.id === 'jurnal'), projects.find(item => item.id === 'intel')].filter(Boolean);
-    mainContent.innerHTML = `<div class="page-header"><div><span class="section-kicker">SIMPANAN &amp; AKSES</span><h2>Koleksi</h2><p>Jaga modul dan catatan penting tetap mudah ditemukan.</p></div></div><section class="collection-section"><div class="section-heading"><div><span class="section-kicker">FAVORIT</span><h2>Modul pilihan</h2></div><span class="section-count">${favorites.length}</span></div><div class="collection-grid">${favorites.map(projectCard).join('')}</div></section><section class="collection-section"><div class="section-heading"><div><span class="section-kicker">RIWAYAT DIBUKA</span><h2>Aktivitas terbaru</h2></div></div>${recent.length ? `<div class="collection-grid">${recent.map(projectCard).join('')}</div>` : '<div class="empty collection-empty">Belum ada modul yang dibuka dari sesi ini.</div>'}</section><section class="collection-tools"><button class="collection-tool" data-koleksi="kode"><span class="tool-icon">⌘</span><span><strong>Kode tersimpan</strong><small>${localStorage.getItem('amy_saved_code') ? 'Ada kode yang tersimpan' : 'Belum ada kode tersimpan'}</small></span><span class="chevron">›</span></button><button class="collection-tool" data-koleksi="update"><span class="tool-icon">↻</span><span><strong>Status aplikasi</strong><small>Versi terbaru aktif</small></span><span class="chevron">›</span></button></section>`;
+    const hasSavedCode = Boolean(localStorage.getItem('amy_saved_code'));
+    const favoriteIndicators = readJsonArray('amy_indicator_favorites');
+    const items = [];
+    if (hasSavedCode) {
+      items.push(`<button class="collection-item" data-koleksi="kode"><span class="app-icon code">${svgs.code}</span><span><strong>Kode indikator tersimpan</strong><small>Buka kembali Pine Script yang disimpan di perangkat ini.</small></span><span class="chevron" aria-hidden="true">›</span></button>`);
+    }
+    if (favoriteIndicators.length) {
+      items.push(`<button class="collection-item" data-open="indikator"><span class="app-icon indicator">${svgs.indicator}</span><span><strong>${favoriteIndicators.length} indikator favorit</strong><small>Favorit aktual dari library indikator perangkat ini.</small></span><span class="chevron" aria-hidden="true">›</span></button>`);
+    }
+    const content = items.length
+      ? `<div class="collection-list">${items.join('')}</div>`
+      : `<div class="empty-state-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 4h14v16l-7-4-7 4z"></path></svg><strong>Belum ada item tersimpan</strong><span>Simpan kode atau tandai indikator favorit agar muncul di sini.</span></div>`;
+    mainContent.innerHTML = `<div class="page-header"><div><span class="section-kicker">DATA PERANGKAT</span><h2>Koleksi</h2><p>Hanya item yang benar-benar tersimpan di perangkat ini.</p></div></div>${content}`;
   }
 
   function renderProfile() {
@@ -193,7 +199,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedCode = Boolean(localStorage.getItem('amy_saved_code'));
     const analyses = readJsonArray('amy_mapping_analyses').length;
     const journal = readJsonArray('amy_journal_entries').length;
-    mainContent.innerHTML = `<div class="page-header"><div><span class="section-kicker">PENGATURAN</span><h2>Profil</h2><p>Pengaturan ringan untuk perangkat ini.</p></div></div><section class="profile-card slide-up"><div class="profile-avatar">AMY</div><div><h3>Trader Amy FX</h3><p>VIP Member • Lifetime Access</p></div><span class="status-badge">AKTIF</span></section><section class="stats-grid"><div class="stat-card"><strong>${analyses}</strong><small>Analisis Mapping</small></div><div class="stat-card"><strong>${journal}</strong><small>Catatan Jurnal</small></div><div class="stat-card"><strong>${savedCode ? '1' : '0'}</strong><small>Kode Tersimpan</small></div></section><section class="profile-list"><div class="profile-row"><span class="tool-icon">◉</span><span><strong>Data Tersimpan</strong><small>Riwayat dan preferensi tetap aman.</small></span><span class="check-mark">✓</span></div><div class="profile-row"><span class="tool-icon">⚡</span><span><strong>Sistem Aktif</strong><small>Fitur premium aktif.</small></span><span class="check-mark">✓</span></div><button class="profile-row danger-row" data-profile-action="clear"><span class="tool-icon">⌫</span><span><strong>Bersihkan data lokal</strong><small>Menghapus riwayat, jurnal, dan koleksi lokal. API key tetap disimpan.</small></span><span class="chevron">›</span></button></section>`;
+    const scannerEnabled = localStorage.getItem('bg_scanner') === 'true';
+    mainContent.innerHTML = `<div class="page-header"><div><span class="section-kicker">PENGATURAN</span><h2>Profil</h2></div></div><section class="profile-summary slide-up"><div class="profile-avatar" aria-hidden="true">AMY</div><div><h3>Amy FX</h3><p>Data dan preferensi tersimpan di perangkat ini.</p></div></section><section class="stats-grid"><div class="stat-card"><strong>${analyses}</strong><small>Analisis Mapping</small></div><div class="stat-card"><strong>${journal}</strong><small>Catatan Jurnal</small></div><div class="stat-card"><strong>${savedCode ? '1' : '0'}</strong><small>Kode Tersimpan</small></div></section><div class="profile-section-title">Tampilan</div><section class="theme-selector" aria-label="Pilih tema aplikasi"><button class="theme-choice" type="button" data-amyfx-theme-choice="system"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path></svg><span>Sistem</span></button><button class="theme-choice" type="button" data-amyfx-theme-choice="light"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg><span>Terang</span></button><button class="theme-choice" type="button" data-amyfx-theme-choice="dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20.5 15.2A8.5 8.5 0 0 1 8.8 3.5 8.5 8.5 0 1 0 20.5 15.2z"></path></svg><span>Gelap</span></button></section><div class="profile-section-title">Sistem</div><section class="profile-list"><div class="profile-row"><span class="tool-icon">●</span><span><strong>Status Koneksi</strong><small>${navigator.onLine !== false ? 'Perangkat terhubung ke jaringan.' : 'Perangkat sedang offline.'}</small></span><span class="check-mark">${navigator.onLine !== false ? '✓' : '!'}</span></div><div class="profile-row"><span class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 17h3l2-7 4 10 2-6h5"></path></svg></span><span><strong>Scanner Mapping</strong><small>${scannerEnabled ? 'Scanner latar belakang aktif.' : 'Scanner latar belakang nonaktif.'}</small></span><span class="check-mark">${scannerEnabled ? '✓' : '—'}</span></div><button class="profile-row danger-row" data-profile-action="clear"><span class="tool-icon">×</span><span><strong>Bersihkan data lokal</strong><small>Menghapus riwayat, jurnal, dan koleksi lokal. API key tetap disimpan.</small></span><span class="chevron">›</span></button></section>`;
+    window.AmyFXTheme?.apply?.();
   }
 
   function handleKoleksi(action) {
@@ -205,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (action === 'favorit' || action === 'riwayat') {
       showToast('Fitur ini akan segera hadir pada update berikutnya.');
     } else if (action === 'update') {
-      showToast('Project saat ini sudah menggunakan versi terbaru.');
+      window.AmyFXUpdate?.checkNow?.({ announce: true });
     }
   }
 

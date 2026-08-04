@@ -255,7 +255,7 @@
       },
       system: {
         app_version: version,
-        app: { product: "Amy FX Preview", version, active_module: currentModule(), route: location.pathname, online: navigator.onLine },
+        app: { product: "Amy FX", version, active_module: currentModule(), route: location.pathname, online: navigator.onLine },
         ai,
         provider_status: ai,
         secure_vault: { available: ai.secure_vault_available }
