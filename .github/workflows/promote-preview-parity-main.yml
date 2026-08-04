@@ -68,6 +68,7 @@ jobs:
           cp production/supabase/functions/news-sync/handler.ts "$preserve/supabase/functions/news-sync/handler.ts"
           for test_file in \
             analysis-static-layout.test.mjs \
+            deepseek-provider-detection.test.mjs \
             five-issues-regression.test.mjs \
             journal-ai-rotation-v158.test.mjs \
             mapping-news-background-repair.test.mjs \
