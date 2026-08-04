@@ -1,10 +1,10 @@
 # Amy FX
 
-Amy FX adalah aplikasi Android hybrid untuk pemetaan, pemantauan, dan perencanaan eksekusi market **XAU/USD**. Antarmuka utama berjalan melalui WebView lokal, sedangkan background scanner, notifikasi, penyimpanan, Firebase Messaging, unduhan, serta pembaruan aplikasi ditangani oleh Kotlin native dan backend Supabase.
+Amy FX adalah aplikasi Android hybrid untuk pemetaan, pemantauan, dan perencanaan eksekusi market **XAU/USD**. Antarmuka utama berjalan melalui WebView lokal, sedangkan harga live, notifikasi, penyimpanan, Firebase Messaging, pembaruan aplikasi, dan layanan market ditangani oleh Kotlin native serta backend Amy FX.
 
-> **Versi produksi:** `2.1.0`  
-> **Version code:** `54`  
-> **Status:** rilis publik aktif
+> **Kandidat produksi:** `2.3.0`  
+> **Version code:** `58`  
+> **Tujuan rilis:** kesetaraan engine dan fitur dengan Amy FX Preview
 
 ## Identitas Produksi
 
@@ -18,58 +18,59 @@ Amy FX adalah aplikasi Android hybrid untuk pemetaan, pemantauan, dan perencanaa
 - **Release tag:** `amyfx-latest`
 - **Signing:** sertifikat produksi permanen yang kompatibel dengan instalasi Amy FX sebelumnya
 
-`main` merupakan sumber aplikasi dan rilis produksi. Fitur matang dari Amy FX Preview telah dikonsolidasikan ke produksi agar aplikasi, update channel, sinkronisasi candle, Mapping, dan Scalper Engine tidak berjalan melalui jalur ganda.
+`main` merupakan sumber aplikasi dan rilis produksi. Runtime yang telah matang pada `personal/amyfx-private` dipromosikan secara terkontrol ke produksi, sedangkan package, URI, signing, update channel, APK, serta data pengguna produksi tetap dipertahankan.
 
-Branch `personal/amyfx-private` tetap menjadi riwayat pengembangan privat dan bukan sumber APK atau update channel produksi.
+Branch `personal/amyfx-private` tetap menjadi ruang pengembangan Amy FX Preview dan bukan sumber APK atau update channel produksi.
+
+## Kesetaraan Amy FX Preview
+
+Amy FX 2.3.0 membawa runtime terbaru Amy FX Preview ke produksi, meliputi:
+
+- Mapping closed-candle runtime v5;
+- rekonsiliasi Market State BT7.1;
+- structural bias independen;
+- Mapping Accuracy V3;
+- Market Outlook dan Rencana Eksekusi;
+- Entry Watch dan lifecycle resmi;
+- Amy FX Scalper Engine pattern v3.0;
+- Scalper Execution Authority dan decision bridge;
+- permanent Scalper setup history;
+- tampilan profesional dan render DOM stabil;
+- Market Intelligence, Academy, Journal, dan Amy Mentor terbaru;
+- native live-price bridge serta integrasi backend terbaru.
+
+Kesetaraan berarti engine, logika, lifecycle, dan tampilan utama menggunakan implementasi Preview yang sama. Identitas platform tetap berbeda: Amy FX produksi tidak memakai package, URI, update manifest, APK, atau storage key milik Preview.
 
 ## Arsitektur Market Data
 
-Amy FX memisahkan **harga live** dan **data candle analisis** agar harga tetap responsif tanpa menghabiskan kuota REST Twelve Data.
+Amy FX memisahkan **harga live** dan **data candle analisis** agar harga tetap responsif tanpa membuat Mapping menghitung ulang pada setiap tick.
 
 ```text
 Twelve Data WebSocket
         │
         └── Harga live XAU/USD di aplikasi
 
-Twelve Data REST
+Gateway dan penyimpanan candle Amy FX
         │
-        └── Provider-only gateway Vercel
-                 │
-                 └── Central M1 Sync Supabase · setiap 3 menit
-                          │
-                          ├── M1 tersimpan
-                          ├── M5 / M15 / M30 / H1 / H4 diagregasi
-                          ├── D1 dibentuk dari H1 hasil central M1
-                          └── W1 dibentuk dari D1
-                                   │
-                                   ├── Mapping
-                                   ├── Scalper Engine
-                                   ├── Entry Watch
-                                   └── Rencana Eksekusi
+        ├── Candle tertutup lintas timeframe
+        ├── Mapping dan Market State
+        ├── Rencana Eksekusi dan Entry Watch
+        └── Scalper Engine dan lifecycle
 ```
 
 Ketentuan utama:
 
-- WebSocket Twelve Data hanya menangani harga live dan tidak diubah oleh sinkronisasi candle.
-- REST Twelve Data hanya dipanggil oleh satu sinkronisasi M1 terpusat.
-- Permintaan baca dari aplikasi tidak memicu request provider.
-- Timeframe besar dibentuk dari data tersimpan tanpa REST terpisah per timeframe.
-- Candle yang belum selesai tidak dipakai sebagai sumber keputusan.
-- Saat provider gagal atau mengirim data lama, backend tidak menulis candle stale sebagai data baru.
-
-## Jadwal Backend Produksi
-
-| Proses | Jadwal | Fungsi |
-|---|---:|---|
-| `amyfx-market-central-sync` | Setiap 3 menit | Sinkronisasi REST M1 dan agregasi timeframe |
-| `amyfx-scalper-engine-unified` | Setiap 1 menit | Evaluasi setup dan lifecycle dari candle Supabase |
-| `amyfx-news-sync` | Setiap 2 menit | Sinkronisasi news dan notifikasi terkait |
-
-Scalper Engine membaca Supabase secara read-only dan melaporkan `provider_requests: 0` pada setiap run.
+- Harga live WebSocket hanya memperbarui tampilan harga.
+- Mapping memakai candle terakhir yang sudah close.
+- Freshness menjadi proteksi internal, bukan hard gate yang mengosongkan analisis valid.
+- Candle belum selesai tidak dipakai sebagai sumber keputusan.
+- Data lama yang masih merupakan candle tertutup valid tetap dapat dianalisis.
+- Provider failure tidak boleh mengganti hasil Mapping valid dengan layar kosong.
+- Tidak ada polling, focus refresh, atau render berulang yang membuat layar meloncat.
 
 ## Mapping dan Otoritas Eksekusi
 
-Mapping tetap menjadi sumber konteks market, termasuk:
+Mapping menjadi sumber konteks market, termasuk:
 
 - struktur dan perubahan struktur;
 - likuiditas BSL/SSL;
@@ -80,25 +81,13 @@ Mapping tetap menjadi sumber konteks market, termasuk:
 - sesi WITA;
 - konflik, invalidasi, serta alasan analisis.
 
-Scalper Engine menjadi otoritas praktis untuk:
+Market State BT7.1 merekonsiliasi struktur, bias, forecast, dan kondisi market tanpa memakai future candle. Rencana Eksekusi menerjemahkan hasil tersebut menjadi BUY, SELL, atau WAIT dengan entry, Stop Loss, TP1, TP2, RR, invalidasi, dan lifecycle yang berasal dari setup resmi.
 
-- driver setup;
-- arah BUY atau SELL;
-- status entry;
-- entry price;
-- Stop Loss;
-- TP1 / break-even trigger;
-- TP2;
-- lifecycle setup;
-- setup utama yang ditampilkan.
+## Amy FX Scalper Engine
 
-**Rencana Eksekusi**, **Entry Watch**, scanner, dan notifikasi membaca keputusan eksekusi yang sama sehingga tidak menghasilkan arahan yang saling bertentangan. Konteks asli Mapping tetap disimpan untuk penjelasan dan audit.
+Engine aktif: `amyfx-preview-scalper-pattern-v3.0`
 
-## Scalper Engine Multidriver
-
-Engine aktif: `amyfx-preview-scalper-multidriver-v2.0`
-
-Driver yang terdaftar:
+Nama versi engine tetap dipertahankan sebagai kontrak teknis agar snapshot backend, lifecycle, dan UI menggunakan authority yang sama. Engine produksi mendukung sepuluh driver:
 
 1. FVG
 2. CRT
@@ -109,75 +98,77 @@ Driver yang terdaftar:
 7. EMA Pullback
 8. False Breakout / Judas Swing
 9. Range Expansion
+10. AMD
 
-Setup dari engine atau driver lama, termasuk **IFVG Legacy**, tidak dapat muncul kembali sebagai setup aktif. Riwayat terminal lama tetap disimpan untuk audit, tetapi endpoint aktif hanya memakai engine multidriver saat ini.
+Scalper Entry Watch dapat menampilkan setup utama, setup aktif lain, alasan driver, timeframe, HTF bias, Entry, Stop Loss, TP1 +10, TP2 +20, dan riwayat setup permanen. Storage key produksi terpisah dari Preview.
+
+Scalper Execution Authority hanya menerima setup current pattern-v3 yang valid dan tidak legacy. Mapping tetap menyediakan konteks arah; setup Scalper yang bertentangan dengan Mapping tetap WAIT.
 
 ## Lifecycle Setup
 
-Lifecycle utama yang ditangani backend mencakup:
+Lifecycle yang ditangani meliputi:
 
 ```text
+WAITING_TRIGGER
 WAITING_NEXT_OPEN
-        ↓
+ENTRY_READY
 ACTIVE
-        ├── BE_ACTIVE → BE_HIT
-        ├── TP_HIT
-        ├── SL_HIT
-        ├── TIME_EXIT
-        └── INVALIDATED
+TP1 HIT · SL TETAP
+TP_HIT
+SL_HIT
+BE_HIT
+TIME_EXIT
+INVALIDATED
+CANCELLED
 ```
 
-Entry, SL, target, dan timestamp dikunci oleh backend. UI tidak menghitung ulang level eksekusi secara mandiri.
+Entry, Stop Loss, TP1, TP2, timestamp, dan status terminal dikunci oleh backend. UI tidak menghitung ulang level eksekusi secara mandiri.
 
-## Fitur Utama 2.1.0
+## News dan Notifikasi
 
-- Harga live XAU/USD melalui WebSocket Twelve Data.
-- Sinkronisasi REST M1 terpusat dengan agregasi M5 sampai W1.
-- Mapping market lintas timeframe dengan kontrak freshness yang konsisten.
-- Rencana Eksekusi untuk menerjemahkan Mapping menjadi arahan praktis BUY, SELL, atau WAIT.
-- Entry Watch dan lifecycle setup yang mengikuti Scalper Engine.
-- Multidriver Scalper Engine dengan sembilan driver aktif.
+Produksi mempertahankan **satu** scheduler news dan satu jalur system-notification resmi. Promosi Preview tidak mengaktifkan scheduler, cron, atau backend news kedua.
+
+- `news-sync` menyinkronkan data news;
+- `web-push-delivery` menangani Web Push;
+- `news-system-push` menangani Firebase system notification;
+- `scheduled-news-sync` mengorkestrasi ketiganya melalui satu jadwal produksi.
+
+## Fitur Utama 2.3.0
+
+- Harga live XAU/USD melalui WebSocket.
+- Mapping lintas timeframe berbasis candle tertutup.
+- Market State BT7.1 dan structural bias independen.
+- Rencana Eksekusi BUY, SELL, atau WAIT.
+- Entry Watch dan lifecycle setup resmi.
+- Scalper Engine sepuluh driver termasuk AMD.
+- Permanent Scalper setup history.
 - Market Intelligence untuk news, heatmap, dan liquidity.
 - Amy Mentor dengan konteks Beranda, Mapping, Market Intelligence, Academy, dan Journal.
 - Journal Trading dan materi pembelajaran dalam aplikasi.
-- Academy menyimpan materi, heading, persentase, posisi scroll, dan riwayat baca terakhir.
-- Tombol **Lanjutkan dari posisi terakhir** pada Academy.
+- Academy reading history serta lanjut dari posisi terakhir.
 - Update dalam aplikasi melalui `main/update.json`.
-
-## Academy Reading History
-
-Academy menyimpan progres belajar secara lokal, meliputi:
-
-- materi terakhir dibuka;
-- heading terakhir;
-- persentase baca;
-- posisi scroll;
-- daftar riwayat materi;
-- waktu terakhir dibaca.
-
-Saat materi dibuka kembali, aplikasi dapat melanjutkan ke posisi terakhir tanpa mengubah isi materi.
 
 ## Struktur Repository
 
 ```text
 app/src/main/assets/                   WebView assets
-app/src/main/assets/apps/mapping/      Mapping, Entry Watch, Rencana Eksekusi
+app/src/main/assets/apps/mapping/      Mapping, Entry Watch, Rencana Eksekusi, Scalper UI
 app/src/main/assets/apps/market-intel/ News, heatmap, dan liquidity
 app/src/main/assets/apps/journal/      Journal Trading
 app/src/main/assets/apps/academy/      Materi dan reading history
-app/src/main/java/                     Android native Kotlin dan FCM
-api/                                   Serverless provider-only gateway
+app/src/main/java/                     Android native Kotlin, FCM, dan live-price bridge
+api/                                   Serverless market gateway
 lib/                                   Shared backend logic
-supabase/functions/market-candles/     Central M1 sync dan candle reads
-supabase/functions/scalper-engine/     Multidriver engine dan lifecycle
+supabase/functions/scalper-engine/     Pattern engine dan lifecycle
 supabase/functions/scalper-setups/     Endpoint setup resmi
-supabase/migrations/                   Database, cron, dan rollup timeframe
+supabase/functions/news-system-push/   System notification produksi
+supabase/migrations/                   Database dan konfigurasi engine
 tests/                                 Regression tests
 .github/workflows/                     CI, validasi, signing, dan release
 update.json                            Manifest update produksi
 ```
 
-## Build Lokal
+## Build dan Validasi
 
 Kebutuhan utama:
 
@@ -185,45 +176,35 @@ Kebutuhan utama:
 - Android SDK 35
 - Node.js 22
 
-Jalankan pemeriksaan JavaScript:
-
 ```bash
 npm test
-```
-
-Jalankan pemeriksaan Android:
-
-```bash
 ./gradlew testReleaseUnitTest
 ./gradlew lintRelease
 ```
-
-Build APK release membutuhkan konfigurasi signing dan secret yang disediakan melalui environment CI. Secret provider, service-role, signing key, dan kredensial push tidak disimpan di repository.
-
-## Validasi dan Rilis Produksi
 
 Setiap kandidat publik memeriksa:
 
 - seluruh regression test JavaScript;
 - Android release unit test;
 - Android lint;
-- build APK release signed;
 - package `com.amyelitesuite`;
 - label `Amy FX`;
+- URI `amyfx`;
 - version name dan version code;
-- APK Signature Scheme v1 dan v2;
-- fingerprint signer produksi;
-- sumber update `main/update.json`.
+- update channel `main/update.json`;
+- tidak adanya identitas Preview pada runtime produksi;
+- modul Mapping, Scalper, lifecycle, dan UI parity;
+- build APK release signed dan fingerprint signer produksi sebelum publikasi.
 
 Urutan publikasi:
 
-1. Build dan test selesai.
-2. Identitas package, versi, dan signer diverifikasi.
-3. APK diunggah sebagai `AmyFX-latest.apk`.
+1. Promotion parity dan seluruh test selesai.
+2. Identitas package, versi, URI, dan signer diverifikasi.
+3. APK signed diunggah sebagai `AmyFX-latest.apk`.
 4. Release `amyfx-latest` diperbarui.
 5. `update.json` baru diaktifkan.
 
-Dengan urutan tersebut, aplikasi tidak menawarkan update sebelum APK yang cocok tersedia.
+Aplikasi tidak menawarkan pembaruan sebelum APK yang cocok tersedia.
 
 ## Catatan Penggunaan
 
