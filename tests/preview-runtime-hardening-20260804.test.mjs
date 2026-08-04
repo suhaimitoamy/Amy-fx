@@ -70,6 +70,20 @@ test('Mapping runtime owns and tears down timers and listeners', () => {
   assert.match(stability, /amyfx:mapping-ui-rendered/);
 });
 
+test('legacy Mapping sync bridge owns every timer and stops outside a real browser lifecycle', () => {
+  const syncFix = read('app/src/main/assets/apps/mapping/js/bridge/sync-fix.js');
+  assert.match(syncFix, /const hasBrowserLifecycle=/);
+  assert.match(syncFix, /typeof window\.setTimeout==='function'/);
+  assert.match(syncFix, /if\(!hasBrowserLifecycle\)return/);
+  assert.match(syncFix, /const pendingTimers=new Set\(\)/);
+  assert.match(syncFix, /clockTimer=window\.setInterval\(syncClock,1000\)/);
+  assert.match(syncFix, /window\.clearInterval\(clockTimer\)/);
+  assert.match(syncFix, /window\.addEventListener\('pagehide',stop,\{once:true\}\)/);
+  assert.match(syncFix, /AmyFXSyncFixLifecycle/);
+  assert.match(syncFix, /Asia\/Makassar/);
+  assert.match(syncFix, /WITA/);
+});
+
 test('regression runner does not force successful process exit with leaked handles', () => {
   const runner = read('tools/run-tests-sequential.mjs');
   assert.doesNotMatch(runner, /--test-force-exit/);
