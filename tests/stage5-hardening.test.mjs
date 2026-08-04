@@ -100,17 +100,21 @@ test('release workflows pin version, certificate, and signer verification', () =
     assert.match(workflow, fingerprint);
     assert.match(workflow, /apksigner/);
     assert.match(workflow, /verify --verbose --print-certs/);
-    assert.match(workflow, /Signer #1 certificate SHA-256 digest/);
     assert.match(workflow, /TWELVEDATA_API_KEY/);
     assert.match(workflow, /com\.amyelitesuite/);
-    assert.match(workflow, /AmyFX-latest\.apk/);
   }
 
+  assert.match(rolling, /Signer #1 certificate SHA-256 digest/);
   assert.match(rolling, /AMYFX_VERSION_NAME: "2\.3\.0"/);
   assert.match(rolling, /AMYFX_VERSION_CODE: "58"/);
+  assert.match(rolling, /AmyFX-latest\.apk/);
   assert.match(rolling, /Verify public update manifest/);
+
   assert.match(manual, /default: "2\.3\.0"/);
   assert.match(manual, /default: "58"/);
+  assert.match(manual, /Verify permanent signing key/);
+  assert.match(manual, /test "\$actual" = "\$AMYFX_SIGNING_CERT_SHA256"/);
+  assert.match(manual, /AmyFX-\$\{AMYFX_VERSION_NAME\}\.apk/);
 });
 
 test('public Firebase Android client remains bound to the production applicationId', () => {
