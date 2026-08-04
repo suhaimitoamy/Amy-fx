@@ -1,31 +1,28 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 940308,
-  "latest_version_name": "2.0.0-preview.308",
-  "versionCode": 940308,
-  "version": "2.0.0-preview.308",
+  "latest_version_code": 940309,
+  "latest_version_name": "2.0.0-preview.309",
+  "versionCode": 940309,
+  "version": "2.0.0-preview.309",
   "releaseDate": "2026-08-04",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.308/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.308/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.309/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.309/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Freshness Mapping kini jujur: analisis candle tertutup terakhir tetap terlihat, tetapi entry diblokir saat pembaruan provider tertunda.",
-    "Harga WebSocket tidak lagi menelan event utama; reconnect timer dan status koneksi dibersihkan dengan benar.",
-    "Candle sintetis dan timestamp duplikat disaring sebelum masuk ke engine Mapping.",
-    "Refresh candle mengikuti timeframe terpilih beserta dependency HTF pada batas candle close.",
-    "Timer, listener, observer, dan bridge kompatibilitas dilepas saat halaman Mapping ditutup.",
-    "Seluruh 106 regression lulus tanpa forced-exit; unit test Android, lint, APK signed, package, label, versi, dan signer telah diverifikasi.",
-    "Formula Mapping, Scalper Engine, lifecycle trading, data pengguna, dan Amy FX publik pada branch main tidak diubah."
+    "Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.",
+    "Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.",
+    "Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.",
+    "Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.",
+    "Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.",
+    "Amy FX publik pada branch main tidak diubah."
   ],
   "changelog": [
-    "Truthful closed-candle provider freshness",
-    "Nonterminal execution block during provider delay",
-    "WebSocket reconnect lifecycle hardening",
-    "Synthetic and duplicate candle sanitization",
-    "HTF dependency-aware candle refresh",
-    "Runtime timer listener and observer teardown",
-    "Raw-source zero-drift CI and behavioral regressions"
+    "Professional glass UI tokens and shared components",
+    "System, light, and dark theme controller",
+    "Truthful home, collection, and profile presentation",
+    "Unified loading, accessibility, and vector icon polish",
+    "Android system bar theme synchronization"
   ]
 }
