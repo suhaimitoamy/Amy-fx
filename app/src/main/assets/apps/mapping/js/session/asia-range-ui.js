@@ -106,6 +106,20 @@ function mountAnalyze(range) {
   setMarkupIfChanged(strip, analyzeMarkup(range));
 }
 
+function syncClarityAsiaWindow(range) {
+  const label = String(range?.windowLabel || '').trim();
+  if (!label) return;
+
+  const canonicalAsia = state.result?.marketOutlook?.canonicalAsia;
+  if (canonicalAsia && canonicalAsia.window !== label) canonicalAsia.window = label;
+
+  document.querySelectorAll('.clarity-note > b').forEach(node => {
+    if (!String(node.textContent || '').startsWith('Asia Session Context')) return;
+    const next = `Asia Session Context · ${label}`;
+    if (node.textContent !== next) node.textContent = next;
+  });
+}
+
 function scheduleBoundarySync() {
   clearTimeout(boundaryTimer);
   boundaryTimer = 0;
@@ -122,6 +136,7 @@ export function syncAsiaRangeUi() {
   const range = currentRange();
   mountDashboard(range);
   mountAnalyze(range);
+  syncClarityAsiaWindow(range);
   scheduleBoundarySync();
 }
 
@@ -173,7 +188,7 @@ function start() {
 }
 
 window.AmyFXAsiaRangeUiLifecycle = Object.freeze({
-  version: '2.0.0',
+  version: '2.1.0',
   start,
   stop,
   schedule: scheduleAsiaRangeSync
