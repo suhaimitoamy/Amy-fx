@@ -1,31 +1,28 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 940309,
-  "latest_version_name": "2.0.0-preview.309",
-  "versionCode": 940309,
-  "version": "2.0.0-preview.309",
+  "latest_version_code": 940310,
+  "latest_version_name": "2.0.0-preview.310",
+  "versionCode": 940310,
+  "version": "2.0.0-preview.310",
   "releaseDate": "2026-08-04",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.309/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.309/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.310/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.310/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Harga XAU/USD pada strip atas kini mengikuti feed WebSocket live yang sama dengan kartu Gold Price sehingga tidak lagi menampilkan dua harga berbeda.",
-    "Status quote pada strip berubah menjadi LIVE ketika tick WebSocket terbaru masih valid; Mapping dan setup tetap dihitung hanya dari candle yang sudah close.",
-    "Asia High dan Asia Low kini mengikuti sesi New York 18:00–02:00 secara otomatis.",
-    "Konversi WITA menyesuaikan DST: 06:00–14:00 saat EDT dan 07:00–15:00 saat EST.",
-    "Asia Range diperbarui melalui event harga, candle close, render Mapping, dan batas pergantian sesi tanpa polling 20 detik.",
-    "Label Asia Session Context, dashboard, dan tab Analisis memakai sumber waktu DST yang sama.",
-    "Seluruh regression, Android unit test, lint, APK signed, package, label, versi, dan signer Preview telah diverifikasi.",
-    "Formula Mapping, Scalper Engine, data pengguna, dan Amy FX publik pada branch main tidak diubah."
+    "Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.",
+    "Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.",
+    "Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.",
+    "Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.",
+    "Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.",
+    "Amy FX publik pada branch main tidak diubah."
   ],
   "changelog": [
-    "Unified live XAUUSD display price",
-    "Live quote freshness synchronization",
-    "New York anchored Asia Range",
-    "Automatic EDT and EST conversion to WITA",
-    "Event and session-boundary driven Asia refresh",
-    "DST-aware Asia labels across Mapping UI"
+    "Professional glass UI tokens and shared components",
+    "System, light, and dark theme controller",
+    "Truthful home, collection, and profile presentation",
+    "Unified loading, accessibility, and vector icon polish",
+    "Android system bar theme synchronization"
   ]
 }
