@@ -28,7 +28,7 @@ test('canonical shared state survives localStorage read and write failures', asy
   assert.match(source, /try \{ localStorage\.setItem\(STORE_KEY, JSON\.stringify\(state\)\); \} catch \(_\) \{\}/);
 });
 
-test('news, Mapping, Liquidity or Heatmap cannot become the official XAU USD quote', async () => {
+test('news, Mapping, Liquidity or Heatmap cannot become the official stored XAU USD quote', async () => {
   const source = await readContract();
   const priceBlock = source.slice(source.indexOf('function bestCurrentPrice'), source.indexOf('function nearestLevels'));
   const freshnessBlock = source.slice(source.indexOf('function freshness'), source.indexOf('function purgeLegacyMarketCaches'));
@@ -49,11 +49,24 @@ test('source capturedAt is preferred and storedAt never participates in freshnes
   assert.doesNotMatch(assessBlock, /storedAt/);
 });
 
-test('briefing and command strip use the same canonical quote freshness and price', async () => {
+test('briefing and command strip use one display quote with live WebSocket priority', async () => {
   const source = await readShared();
   assert.match(source, /function freshness\(state = contract\.read\(\)\)/);
-  assert.match(source, /const quoteFreshness = freshness\(state\)/);
-  assert.match(source, /if \(quoteFreshness\.state !== 'LIVE'\)/);
-  assert.match(source, /const quoteFreshness = contract\.assess\('quote', quote\)/);
-  assert.match(source, /const price = contract\.bestCurrentPrice\(state\)/);
+  assert.match(source, /function runtimeLiveQuote\(\)/);
+  assert.match(source, /function displayQuote\(state = contract\.read\(\)\)/);
+  assert.match(source, /return runtimeLiveQuote\(\) \|\| state\.quote \|\| \{\}/);
+  assert.match(source, /const quoteFreshness = contract\.assess\('quote', displayQuote\(state\)\)/);
+  assert.match(source, /const quote = displayQuote\(state\)/);
+  assert.match(source, /const price = Number\(quote\?\.price \|\| contract\.bestCurrentPrice\(state\) \|\| 0\)/);
+  assert.match(source, /amyfx:live-price-display/);
+  assert.match(source, /data-live-price/);
+});
+
+test('live display quote does not mutate the canonical stored market contract', async () => {
+  const source = await readShared();
+  const liveBlock = source.slice(source.indexOf('function runtimeLiveQuote'), source.indexOf('function displayQuote'));
+  assert.match(liveBlock, /TWELVE_DATA_WEBSOCKET_DISPLAY/);
+  assert.match(liveBlock, /last_ws_tick_at/);
+  assert.match(liveBlock, /last_price/);
+  assert.doesNotMatch(liveBlock, /contract\.write|localStorage\.setItem\(contract\.storeKey/);
 });
