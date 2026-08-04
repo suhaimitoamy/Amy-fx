@@ -269,7 +269,7 @@
     if (currentModule() !== "home") return;
     const installed = version();
     document.querySelectorAll("[data-koleksi='update'] small").forEach(node => {
-      node.textContent = installed.code ? `Amy FX Preview ${installed.name} (${installed.code})` : "Periksa pembaruan aplikasi";
+      node.textContent = installed.code ? `Amy FX ${installed.name} (${installed.code})` : "Periksa pembaruan aplikasi";
     });
   }
 

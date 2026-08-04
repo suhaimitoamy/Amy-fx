@@ -3,23 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#070B12">
   <title>Amy FX</title>
+  <script src="apps/shared/amyfx-theme-controller.js" data-amyfx-theme-controller="v1"></script>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="apps/shared/amyfx-blueprint-v1.css" data-amyfx-blueprint-css="v1">
+  <link rel="stylesheet" href="apps/shared/amyfx-ui-tokens.css" data-amyfx-ui-tokens="v1">
+  <link rel="stylesheet" href="apps/shared/amyfx-theme.css" data-amyfx-theme="v1">
+  <link rel="stylesheet" href="apps/shared/amyfx-components.css" data-amyfx-components="v1">
 </head>
-<body>
+<body class="amyfx-module amyfx-module--home">
   <div class="app-container">
-    <header>
-      <div class="header-bg">
-        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none" fill="none" stroke="rgba(212, 175, 55, 0.08)" stroke-width="1">
-          <path d="M10 40v-20 M10 25h4v-10h-4z M30 50v-30 M30 35h4v-15h-4z M50 30v-10 M50 25h4v-5h-4z M70 45v-25 M70 30h4v-10h-4z M90 55v-40 M90 40h4v-25h-4z M110 35v-15 M110 28h4v-8h-4z M130 60v-35 M130 45h4v-20h-4z M150 40v-20 M150 25h4v-10h-4z M170 25v-15 M170 18h4v-8h-4z M190 45v-25 M190 30h4v-10h-4z"></path>
-        </svg>
+    <header class="app-header">
+      <div class="app-logo" aria-hidden="true">AMY</div>
+      <div class="app-header__copy">
+        <strong>Amy FX</strong>
+        <small>Market workspace</small>
       </div>
-      <div class="logo-container">
-        <div class="am-logo">AMY</div>
-      </div>
-      <h1>Amy FX</h1>
-      <p class="subtitle">VIP Facility</p>
+      <button class="app-header__action" type="button" data-nav="profil" aria-label="Buka pengaturan">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 .6 1.51 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.12.38.34.72.64.98.3.26.68.4 1.08.4H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51.62z"></path></svg>
+      </button>
     </header>
 
     <main id="main-content">
@@ -54,6 +57,7 @@
     </nav>
   </div>
 
+  <script src="apps/shared/amyfx-loading.js" data-amyfx-loading="v1"></script>
   <script src="app-version.js"></script>
   <script src="app.js"></script>
   <script src="update-checker.js"></script>

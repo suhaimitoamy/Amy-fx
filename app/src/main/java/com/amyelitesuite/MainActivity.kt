@@ -671,6 +671,31 @@ class MainActivity : Activity() {
         }
 
         @JavascriptInterface
+        fun setSystemUiTheme(theme: String?) {
+            (mContext as Activity).runOnUiThread {
+                val light = theme.equals("light", ignoreCase = true)
+                window.statusBarColor = Color.parseColor(if (light) "#EEF4FA" else "#070B12")
+                window.navigationBarColor = Color.parseColor(if (light) "#F7FAFD" else "#070B12")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    var flags = window.decorView.systemUiVisibility
+                    flags = if (light) {
+                        flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                    } else {
+                        flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        flags = if (light) {
+                            flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+                        } else {
+                            flags and View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv()
+                        }
+                    }
+                    window.decorView.systemUiVisibility = flags
+                }
+            }
+        }
+
+        @JavascriptInterface
         fun startAppUpdate(downloadUrl: String?, versionName: String?, versionCode: Int) {
             nativeUpdater.start(downloadUrl.orEmpty(), versionName.orEmpty(), versionCode)
         }

@@ -7,8 +7,10 @@ import {
   SUPPORTED_MAPPING_TIMEFRAMES,
   timeframeDurationMs
 } from '../engine/mapping-timeframes.js';
+import { aggregateClosedCandles } from './closed-candle-aggregation.js';
 import { causalEntryLifecycleContract } from '../engine/concept-entry-map-v3.js';
 import { buildMappingSnapshot } from '../engine/mapping-snapshot.js';
+import { resolveMappingBias } from '../engine/structural-bias.js';
 import { render, renderSoft, renderAnalyzeLive } from '../ui/ui-render.js';
 import { sendTargetsToNative, notifyImportant } from '../bridge/android-bridge.js';
 
@@ -112,6 +114,39 @@ function analysisRefreshDelay(tf) {
   return 3_600_000;
 }
 
+const STRUCTURAL_BIAS_STORAGE_KEY = 'amy_mapping_structural_bias_v1';
+
+function readStructuralBiasState() {
+  if (typeof localStorage === 'undefined') return {};
+  try {
+    const parsed = JSON.parse(localStorage.getItem(STRUCTURAL_BIAS_STORAGE_KEY) || '{}');
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function persistStructuralBias(tf, decision) {
+  if (typeof localStorage === 'undefined' || !decision || !['BUY', 'SELL'].includes(decision.bias)) return;
+  const all = readStructuralBiasState();
+  all[String(tf || 'M15').toUpperCase()] = {
+    bias: decision.bias,
+    source: decision.source,
+    invalidationLevel: decision.invalidationLevel,
+    structure: decision.structure,
+    updatedAt: Date.now()
+  };
+  try { localStorage.setItem(STRUCTURAL_BIAS_STORAGE_KEY, JSON.stringify(all)); } catch (_) {}
+}
+
+function structuralBiasDecision(result) {
+  const tf = String(result?.tf || state.tf || 'M15').toUpperCase();
+  const previous = readStructuralBiasState()[tf] || null;
+  const decision = resolveMappingBias(result, previous);
+  persistStructuralBias(tf, decision);
+  return decision;
+}
+
 function validatedDirection(result) {
   const forecast = result?.validatedMarketContext?.directionForecast;
   if (!forecast?.active) return null;
@@ -119,9 +154,19 @@ function validatedDirection(result) {
 }
 
 export function buildDirectionDecision(result) {
+  const biasDecision = structuralBiasDecision(result);
+  const biasFields = {
+    bias: biasDecision.bias,
+    biasSource: biasDecision.source,
+    biasReason: biasDecision.reason,
+    biasInvalidationLevel: biasDecision.invalidationLevel,
+    biasStructure: biasDecision.structure,
+    biasPreviousInvalidated: biasDecision.previousInvalidated
+  };
+
   if (!result) {
     return {
-      bias: 'WAIT',
+      ...biasFields,
       signal: 'WAIT',
       source: 'NO_CLEAR_DIRECTION',
       status: 'WAIT — DATA ANALISIS BELUM TERSEDIA',
@@ -130,8 +175,9 @@ export function buildDirectionDecision(result) {
     };
   }
 
-  if (result.dataStale) {
+  if (result.dataStale && !result.st && !result.validatedMarketContext?.marketState) {
     return {
+      ...biasFields,
       bias: 'DATA USANG',
       signal: 'WAIT',
       source: 'DATA_STALE',
@@ -144,15 +190,16 @@ export function buildDirectionDecision(result) {
   const validated = result.validatedMarketContext;
   const forecast = validated?.directionForecast;
   const marketState = validated?.marketState;
+  const biasLabel = ['BUY', 'SELL'].includes(biasDecision.bias) ? `BIAS ${biasDecision.bias}` : 'BIAS BELUM TERBENTUK';
 
   if (forecast && (forecast.invalidated || forecast.expired) && !forecast.active) {
     const reason = forecast.invalidationReason
       || (forecast.invalidated ? 'Direction Forecast dihentikan oleh structural break berlawanan.' : 'Direction Forecast telah melewati batas horizon.');
     return {
-      bias: 'WAIT',
+      ...biasFields,
       signal: 'WAIT',
       source: 'VALIDATED_DIRECTION_FORECAST',
-      status: `WAIT — ${reason}`,
+      status: `${biasLabel} · SETUP WAIT — ${reason}`,
       invalidated: true,
       invalidationReason: reason
     };
@@ -160,7 +207,7 @@ export function buildDirectionDecision(result) {
 
   if (forecast?.active) {
     const forecastDir = forecast.direction;
-    const bias = forecastDir === 'BULLISH' ? 'BUY' : forecastDir === 'BEARISH' ? 'SELL' : 'WAIT';
+    const executionDirection = forecastDir === 'BULLISH' ? 'BUY' : forecastDir === 'BEARISH' ? 'SELL' : 'WAIT';
     const rawSetup = result.experimentalBestSetup || result.bestSetup || result.entryMap?.setup;
     const setupVal = setupDirection(rawSetup);
     const forecastVal = forecast.directionValue > 0 ? 1 : forecast.directionValue < 0 ? -1 : 0;
@@ -169,20 +216,20 @@ export function buildDirectionDecision(result) {
     if (conflict) {
       const reason = `Setup Entry Map (${rawSetup?.dir || 'Entry Map'}) bertentangan dengan Validated Direction Forecast (${forecastDir}).`;
       return {
-        bias,
+        ...biasFields,
         signal: 'WAIT',
         source: 'VALIDATED_DIRECTION_FORECAST',
-        status: `WAIT — ${reason}`,
+        status: `${biasLabel} · SETUP WAIT — ${reason}`,
         invalidated: true,
         invalidationReason: reason
       };
     }
 
     return {
-      bias,
-      signal: bias,
+      ...biasFields,
+      signal: executionDirection,
       source: 'VALIDATED_DIRECTION_FORECAST',
-      status: `${forecastDir} · ${forecast.confidenceLabel || (Number.isFinite(forecast.confidence) ? `${forecast.confidence}%` : 'RULE-BASED')}`,
+      status: `${biasLabel} · ${forecastDir} · ${forecast.confidenceLabel || (Number.isFinite(forecast.confidence) ? `${forecast.confidence}%` : 'RULE-BASED')}`,
       invalidated: false,
       invalidationReason: ''
     };
@@ -190,20 +237,20 @@ export function buildDirectionDecision(result) {
 
   if (marketState?.state && marketState.state !== 'DATA BELUM CUKUP') {
     return {
-      bias: 'WAIT',
+      ...biasFields,
       signal: 'WAIT',
       source: 'VALIDATED_MARKET_STATE',
-      status: `WAIT — Market State: ${marketState.state} (Konteks saja, sinyal WAIT)`,
+      status: `${biasLabel} · SETUP WAIT — Market State: ${marketState.state}`,
       invalidated: false,
       invalidationReason: ''
     };
   }
 
   return {
-    bias: 'WAIT',
+    ...biasFields,
     signal: 'WAIT',
     source: 'NO_CLEAR_DIRECTION',
-    status: 'WAIT — NO CLEAR DIRECTION',
+    status: `${biasLabel} · SETUP WAIT — belum ada setup tervalidasi`,
     invalidated: false,
     invalidationReason: ''
   };
@@ -242,7 +289,7 @@ export function validateSetupGeometry(setup, dirSignal) {
   const tp2 = Number(setup.tp2);
   const singleTarget = Boolean(setup.singleTarget);
 
-  if (!Number.isFinite(lo) || !Number.isFinite(hi) || !Number.isFinite(sl) || !Number.isFinite(tp1)) {
+  if (![lo, hi, sl, tp1].every(value => Number.isFinite(value) && value > 0)) {
     return { valid: false, reason: 'Angka entry, SL, atau TP1 tidak valid (NaN).' };
   }
 
@@ -250,7 +297,7 @@ export function validateSetupGeometry(setup, dirSignal) {
     return { valid: false, reason: `entryLow (${lo}) lebih tinggi dari entryHigh (${hi}).` };
   }
 
-  if (!singleTarget && !Number.isFinite(tp2)) {
+  if (!singleTarget && (!Number.isFinite(tp2) || tp2 <= 0)) {
     return { valid: false, reason: 'Target 2 wajib tersedia untuk setup multi-target.' };
   }
 
@@ -351,7 +398,7 @@ export function buildSetupExecution(result, { persist = true } = {}) {
   const tf = result.tf || 'M15';
   const price = Number(state.price || result.price || localStorage.getItem('last_price') || 0);
 
-  if (result.dataStale || dd.source === 'DATA_STALE') {
+  if ((result.dataStale || dd.source === 'DATA_STALE') && !result.st && !result.validatedMarketContext?.marketState) {
     if (persist) {
       const prev = getActivePointers()[tf];
       if (prev?.setupId) {
@@ -751,7 +798,7 @@ export function buildMappingExplanation(result) {
     ? 'Direction Forecast rule-based (perlu validasi manual)'
     : 'Direction Forecast tervalidasi';
 
-  if (dd.source === 'DATA_STALE' || result.dataStale) {
+  if ((dd.source === 'DATA_STALE' || result.dataStale) && !result.st && !result.validatedMarketContext?.marketState) {
     return { headline: 'Data market sudah kedaluwarsa', action: 'Jangan mengambil keputusan entry.', reason: 'Cache candle telah melewati batas waktu dan API belum berhasil memperbarui data.', confirmationNeeded: 'Tunggu data candle terbaru tersedia.', invalidation: '-', marketContext: 'DATA USANG — CACHE KEDALUWARSA', dataStatus: 'DATA USANG' };
   }
 
@@ -790,7 +837,21 @@ export function buildMappingExplanation(result) {
   }
 
   const stateText = marketState?.state || 'RANGE / TRANSITION';
-  return { headline: 'Belum ada arah market yang tervalidasi', action: 'Tunggu konfirmasi arah baru.', reason: `Kondisi market saat ini adalah ${stateText}. Kondisi ini merupakan konteks perilaku harga, bukan sinyal BUY atau SELL.`, confirmationNeeded: 'Membutuhkan structural break terkonfirmasi dan Direction Forecast aktif.', invalidation: '-', marketContext: stateText, dataStatus: 'AKTIF' };
+  if (dd.bias === 'BUY' || dd.bias === 'SELL') {
+    const invalidation = Number.isFinite(Number(dd.biasInvalidationLevel))
+      ? `Bias ${dd.bias} batal jika candle close ${dd.bias === 'BUY' ? 'di bawah' : 'di atas'} ${p2(dd.biasInvalidationLevel)}.`
+      : 'Bias berubah setelah invalidasi struktur dan konfirmasi struktur lawan.';
+    return {
+      headline: `Bias struktur ${dd.bias} aktif, setup belum tersedia`,
+      action: `Gunakan ${dd.bias} sebagai arah analisis manual; tunggu konfirmasi entry sendiri.`,
+      reason: dd.biasReason || `Bias dibentuk dari struktur market ${dd.biasStructure?.highShape || '-'} / ${dd.biasStructure?.lowShape || '-'}.`,
+      confirmationNeeded: 'Setup Scalper Engine dan setup Mapping tetap terpisah dari bias.',
+      invalidation,
+      marketContext: `${stateText} · BIAS ${dd.bias}`,
+      dataStatus: 'AKTIF'
+    };
+  }
+  return { headline: 'Bias struktur belum terbentuk', action: 'Tunggu struktur HH/HL atau LH/LL yang valid.', reason: `Kondisi market saat ini adalah ${stateText}. Candle dan struktur belum cukup untuk membentuk bias yang dapat dipertahankan.`, confirmationNeeded: 'Membutuhkan struktur swing dan invalidasi yang jelas.', invalidation: '-', marketContext: stateText, dataStatus: 'AKTIF' };
 }
 
 function publishMappingSnapshot(result = state.result) {
@@ -817,6 +878,7 @@ function publishMappingSnapshot(result = state.result) {
   const explanation = result?.mappingExplanation || buildMappingExplanation(result);
   if (result && !result.mappingExplanation) result.mappingExplanation = explanation;
   const validated = result?.validatedMarketContext;
+  const analysisUnavailable = Boolean(result?.dataStale && !result?.st && !validated?.marketState);
   if (result) {
     result.mappingSnapshot = buildMappingSnapshot(result, {
       candles: state.candles[result.tf] || [],
@@ -839,10 +901,10 @@ function publishMappingSnapshot(result = state.result) {
     setupExecution: execution,
     mappingExplanation: explanation,
     mappingSnapshot: result?.mappingSnapshot || null,
-    marketState: result?.dataStale ? 'DATA USANG' : (validated?.marketState?.state || 'RANGE / TRANSITION'),
+    marketState: analysisUnavailable ? 'DATA TIDAK TERSEDIA' : (validated?.marketState?.state || result?.st?.trend || 'RANGE / TRANSITION'),
     directionForecast: decision.source === 'VALIDATED_DIRECTION_FORECAST' ? (validated?.directionForecast?.direction || 'NO CLEAR DIRECTION') : 'NO CLEAR DIRECTION',
-    regime: result?.dataStale ? 'TRANSITION' : (result?.strategyRouter?.activeRegime || result?.marketRegime?.regime || 'TRANSITION'),
-    strategy: result?.dataStale ? 'NO_TRADE' : (result?.strategyRouter?.activeStrategy || 'NO_TRADE'),
+    regime: analysisUnavailable ? 'TRANSITION' : (result?.strategyRouter?.activeRegime || result?.marketRegime?.regime || 'TRANSITION'),
+    strategy: analysisUnavailable ? 'NO_TRADE' : (result?.strategyRouter?.activeStrategy || 'NO_TRADE'),
     shiftRisk: Number(result?.marketRegime?.shift?.risk || 0),
     analyzedAt: result ? Date.now() : Number(previous.analyzedAt || 0)
   });
@@ -857,43 +919,65 @@ function throwIfAborted(signal) {
 
 export async function fetchTf(tf, { signal } = {}) {
   throwIfAborted(signal);
-  const params = new URLSearchParams({ symbol: 'XAU/USD', interval: TF[tf], outputsize: '300' });
-  const response = await fetch(`${PROXY_URL}?${params.toString()}`, { cache: 'no-store', signal });
-  if (!response.ok) throw new Error(`Market HTTP ${response.status}`);
-  const data = await response.json();
-  throwIfAborted(signal);
-  if (data.status === 'error') throw new Error(data.message || 'Fetch gagal');
-  assertBackendPayloadFresh(data, `Candle ${tf}`);
+  try {
+    const params = new URLSearchParams({ symbol: 'XAU/USD', interval: TF[tf], outputsize: '300' });
+    const response = await fetch(`${PROXY_URL}?${params.toString()}`, { cache: 'no-store', signal });
+    if (!response.ok) throw new Error(`Market HTTP ${response.status}`);
+    const data = await response.json();
+    throwIfAborted(signal);
+    if (data.status === 'error') throw new Error(data.message || 'Fetch gagal');
+    assertBackendPayloadFresh(data, `Candle ${tf}`);
 
-  const raw = (data.values || []).reverse();
-  const closeCutoff = Date.now() - 10_000;
-  const duration = timeframeDurationMs(tf);
-  const candles = raw.map(c => ({
-    time: new Date(c.datetime).getTime() / 1000,
-    timeframe: tf,
-    open: +c.open,
-    high: +c.high,
-    low: +c.low,
-    close: +c.close,
-    tickCount: 1,
-    isClosed: false
-  })).map(candle => ({
-    ...candle,
-    isClosed: Number.isFinite(candle.time)
-      && duration > 0
-      && candle.time * 1000 + duration <= closeCutoff
-  })).filter(candle =>
-    candle.isClosed
-    && [candle.open, candle.high, candle.low, candle.close].every(Number.isFinite)
-    && candle.high >= Math.max(candle.open, candle.close, candle.low)
-    && candle.low <= Math.min(candle.open, candle.close, candle.high)
-  );
+    const raw = (data.values || []).reverse();
+    const closeCutoff = Date.now() - 10_000;
+    const duration = timeframeDurationMs(tf);
+    const candles = raw.map(c => ({
+      time: new Date(c.datetime).getTime() / 1000,
+      timeframe: tf,
+      open: +c.open,
+      high: +c.high,
+      low: +c.low,
+      close: +c.close,
+      tickCount: 1,
+      isClosed: false
+    })).map(candle => ({
+      ...candle,
+      isClosed: Number.isFinite(candle.time)
+        && duration > 0
+        && candle.time * 1000 + duration <= closeCutoff
+    })).filter(candle =>
+      candle.isClosed
+      && [candle.open, candle.high, candle.low, candle.close].every(Number.isFinite)
+      && candle.high >= Math.max(candle.open, candle.close, candle.low)
+      && candle.low <= Math.min(candle.open, candle.close, candle.high)
+    );
 
-  if (!candles.length) throw new Error(`Candle ${tf} kosong`);
-  throwIfAborted(signal);
-  state.candles[tf] = candles;
-  setCandleFetchedAt(tf, Date.now());
-  return candles;
+    if (!candles.length) throw new Error(`Candle ${tf} kosong`);
+    throwIfAborted(signal);
+    state.candles[tf] = candles;
+    setCandleFetchedAt(tf, Date.now());
+    return candles;
+  } catch (err) {
+    if (signal?.aborted) throw err;
+    if (tf === 'M5' || tf === 'M15') {
+      if (!state.candles.M1?.length) {
+        try { await fetchTf('M1', { signal }); } catch (_) {}
+      }
+      const duration = timeframeDurationMs(tf);
+      const candles = aggregateClosedCandles(state.candles.M1 || [], {
+        timeframe: tf,
+        durationMs: duration,
+        sourceDurationMs: timeframeDurationMs('M1'),
+        closeCutoff: Date.now() - 10_000
+      });
+      if (candles.length) {
+        state.candles[tf] = candles;
+        setCandleFetchedAt(tf, Date.now());
+        return candles;
+      }
+    }
+    throw err;
+  }
 }
 
 function attachValidatedMarketContext(result) {
@@ -1002,7 +1086,7 @@ async function performAnalysis(tf, requestId, signal) {
     }));
     if (!isCurrentRequest()) return;
 
-    const currentDataUnavailable = !state.candles[tf]?.length || (refreshFailures.has(tf) && isCandleStale(tf));
+    const currentDataUnavailable = !(state.candles[tf] || []).some(candle => candle?.isClosed !== false);
     if (currentDataUnavailable) {
       log(`DATA USANG: Cache ${tf} kedaluwarsa & API gagal diperbarui.`);
       const result = {
@@ -1161,21 +1245,9 @@ function applyLivePriceTick(detail) {
   reconnectAttempt = 0;
   clearReconnectTimer();
 
-  if (state.result) {
-    state.result.setupExecution = buildSetupExecution(state.result);
-    state.result.mappingExplanation = buildMappingExplanation(state.result);
-    state.result.mappingSnapshot = buildMappingSnapshot(state.result, {
-      candles: state.candles[state.result.tf] || [],
-      livePrice: state.price,
-      capturedAt: Date.now()
-    });
-  }
-  publishMappingSnapshot();
-  sendTargetsToNative();
-  notifyImportant(state.result);
+  // WebSocket is display-only. Mapping and lifecycle remain bound to closed candles.
   renderAnalyzeLive();
   renderSoft();
-  scheduleAnalysisRefresh();
   return true;
 }
 
