@@ -11,18 +11,20 @@
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.",
-    "Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.",
-    "Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.",
-    "Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.",
-    "Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.",
-    "Amy FX publik pada branch main tidak diubah."
+    "Amy FX Trading Desk menggantikan tampilan glassmorphism berlebihan dengan UI yang lebih tenang, solid, dan berfokus pada data.",
+    "Beranda kini menampilkan snapshot XAU/USD dari state Mapping yang sudah tersimpan, lalu menyajikan modul sebagai daftar operasional yang lebih ringkas.",
+    "Header, timeframe, command strip, keputusan, Rencana Eksekusi, lifecycle, disclosure, dan navigasi Mapping telah disederhanakan.",
+    "Glow, blur, gradient dekoratif, nested card, badge, huruf kapital, dan ketebalan font berlebihan telah dikurangi secara menyeluruh.",
+    "Tema Sistem, Terang, dan Gelap tetap didukung dengan warna BUY, SELL, WAIT, dan interaksi yang konsisten.",
+    "Engine Mapping, Scalper Engine, scanner, formula, lifecycle, notifikasi, sumber data, dan data pengguna tidak diubah.",
+    "Perubahan hanya diterapkan pada branch personal/amyfx-private; branch main dan Amy FX publik tidak disentuh."
   ],
   "changelog": [
-    "Professional glass UI tokens and shared components",
-    "System, light, and dark theme controller",
-    "Truthful home, collection, and profile presentation",
-    "Unified loading, accessibility, and vector icon polish",
-    "Android system bar theme synchronization"
+    "Amy FX Trading Desk presentation layer",
+    "Flat data-first home and Mapping surfaces",
+    "Local-state XAU/USD home snapshot without polling",
+    "Simplified execution plan and lifecycle hierarchy",
+    "Reduced glow, blur, gradients, badges, and nested cards",
+    "Preview engine and production boundaries preserved"
   ]
 }
