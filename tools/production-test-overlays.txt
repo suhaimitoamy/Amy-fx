@@ -1,0 +1,12 @@
+analysis-static-layout.test.mjs
+deepseek-provider-detection.test.mjs
+five-issues-regression.test.mjs
+journal-ai-rotation-v158.test.mjs
+mapping-news-background-repair.test.mjs
+market-candle-store.test.mjs
+native-updater.test.mjs
+preview-production-feature-parity.test.mjs
+production-copy-polish.test.mjs
+production-release-identity.test.mjs
+professional-glassmorphism-redesign.test.mjs
+profile-version-update-regression.test.mjs
