@@ -58,6 +58,23 @@ NEGATIVE_ASSERTION_MARKERS = (
     ", false)",
 )
 
+PRODUCTION_IDENTITY_TEST = """test('production source identity matches the activated signed manifest', () => {
+  const appVersion = fs.readFileSync('app/src/main/assets/app-version.js', 'utf8');
+  const manifest = JSON.parse(fs.readFileSync('update.json', 'utf8'));
+  const match = appVersion.match(/name:\\s*'(\\d+\\.\\d+\\.\\d+)'\\s*,\\s*code:\\s*(\\d+)/);
+  assert.ok(match, 'Production source identity must be readable');
+
+  const [, sourceName, sourceCodeText] = match;
+  const sourceCode = Number(sourceCodeText);
+  assert.equal(sourceName, '2.3.1');
+  assert.equal(sourceCode, 59);
+  assert.equal(String(manifest.latest_version_name || ''), sourceName);
+  assert.equal(Number(manifest.latest_version_code), sourceCode);
+  assert.match(appVersion, /main\\/update\\.json/);
+  assert.doesNotMatch(appVersion, /personal\\/amyfx-private|preview-update\\.json|learningpreview|amyfxpreview/);
+});
+"""
+
 
 def excluded(path: Path) -> bool:
     if path.name in EXCLUDED_PREVIEW_TESTS:
@@ -74,6 +91,16 @@ def normalize_line(line: str) -> str:
     return updated
 
 
+def apply_special_rewrites(path: Path, content: str) -> str:
+    if path.name == "six-issues-regression.test.mjs":
+        marker = "test('Preview source identity is current and no more than one signed build ahead of manifest'"
+        position = content.find(marker)
+        if position < 0:
+            raise SystemExit(f"Missing expected Preview identity block in {path.name}")
+        return content[:position] + PRODUCTION_IDENTITY_TEST
+    return content
+
+
 changed = 0
 removed = 0
 preserved = 0
@@ -87,6 +114,7 @@ for path in (ROOT / "tests").glob("*.test.mjs"):
         continue
     original = path.read_text(encoding="utf-8")
     updated = "".join(normalize_line(line) for line in original.splitlines(keepends=True))
+    updated = apply_special_rewrites(path, updated)
     if updated != original:
         path.write_text(updated, encoding="utf-8")
         changed += 1
