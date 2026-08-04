@@ -7,6 +7,7 @@ on:
     paths:
       - .github/workflows/promote-preview-parity-main.yml
       - tools/promote-preview-to-production.py
+      - tools/normalize-production-parity-tests.py
       - app/**
       - api/**
       - lib/**
@@ -56,6 +57,10 @@ jobs:
       - name: Promote Preview runtime while preserving production identity
         working-directory: production
         run: python3 tools/promote-preview-to-production.py ../preview .
+
+      - name: Normalize Preview regressions for production identity
+        working-directory: production
+        run: python3 tools/normalize-production-parity-tests.py
 
       - name: Verify production identity boundaries
         working-directory: production
