@@ -1,0 +1,228 @@
+name: Promote latest Amy FX Preview parity to production
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/promote-preview-parity-main-v2.yml
+      - tools/promote-preview-to-production-latest.py
+      - tools/validate-preview-production-zero-drift.py
+      - tools/promote-preview-to-production.py
+      - tools/normalize-production-parity-tests.py
+      - tools/finalize-production-market-intel.py
+      - tools/production-test-overlays.txt
+      - app/**
+      - api/**
+      - lib/**
+      - supabase/functions/**
+      - supabase/migrations/**
+      - tests/**
+      - .github/workflows/build-apk.yml
+      - .github/workflows/build-release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: amyfx-production-preview-parity-v2-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  promote-and-validate:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'release/amyfx-main-preview-parity-20260804-v2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
+
+    steps:
+      - name: Checkout production promotion branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_BRANCH }}
+          fetch-depth: 0
+          path: production
+
+      - name: Checkout current Amy FX Preview source
+        uses: actions/checkout@v4
+        with:
+          repository: suhaimitoamy/Amy-fx
+          ref: personal/amyfx-private
+          fetch-depth: 1
+          path: preview
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Record Preview source revision
+        shell: bash
+        run: echo "AMYFX_PREVIEW_SOURCE_SHA=$(git -C preview rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Preserve production topology and identity assertions
+        shell: bash
+        run: |
+          set -euo pipefail
+          preserve="$RUNNER_TEMP/amyfx-production-preserve"
+          rm -rf "$preserve"
+          mkdir -p "$preserve/supabase/functions/news-sync" "$preserve/tests"
+          cp -a production/supabase/functions/news-system-push "$preserve/supabase/functions/news-system-push"
+          cp -a production/supabase/functions/scheduled-news-sync "$preserve/supabase/functions/scheduled-news-sync"
+          cp production/supabase/functions/news-sync/handler.ts "$preserve/supabase/functions/news-sync/handler.ts"
+          while IFS= read -r test_file; do
+            test -n "$test_file" || continue
+            if test -f "production/tests/${test_file}"; then
+              cp "production/tests/${test_file}" "$preserve/tests/${test_file}"
+            fi
+          done < production/tools/production-test-overlays.txt
+
+      - name: Promote latest Preview runtime with production identity
+        working-directory: production
+        run: python3 tools/promote-preview-to-production-latest.py ../preview .
+
+      - name: Finalize Market Intelligence production routing
+        working-directory: production
+        run: python3 tools/finalize-production-market-intel.py
+
+      - name: Verify zero-drift Preview runtime parity
+        working-directory: production
+        run: python3 tools/validate-preview-production-zero-drift.py ../preview .
+
+      - name: Use current Preview tests with production identity overlays
+        shell: bash
+        run: |
+          set -euo pipefail
+          preserve="$RUNNER_TEMP/amyfx-production-preserve"
+          rm -rf production/tests
+          cp -a preview/tests production/tests
+          cp -a "$preserve/tests/." production/tests/
+
+      - name: Restore the single production news scheduler and push route
+        shell: bash
+        run: |
+          set -euo pipefail
+          preserve="$RUNNER_TEMP/amyfx-production-preserve"
+          rm -rf production/supabase/functions/news-system-push production/supabase/functions/scheduled-news-sync
+          cp -a "$preserve/supabase/functions/news-system-push" production/supabase/functions/news-system-push
+          cp -a "$preserve/supabase/functions/scheduled-news-sync" production/supabase/functions/scheduled-news-sync
+          cp "$preserve/supabase/functions/news-sync/handler.ts" production/supabase/functions/news-sync/handler.ts
+
+      - name: Include Scalper database migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p production/supabase/migrations
+          for migration in \
+            20260729212100_amyfx_preview_scalper_shadow.sql \
+            20260729220000_amyfx_preview_scalper_live_notification_guard.sql \
+            20260729222500_amyfx_preview_scalper_notification_device_index.sql \
+            20260730230000_amyfx_preview_scalper_multidriver.sql
+          do
+            cp "preview/supabase/migrations/${migration}" "production/supabase/migrations/${migration}"
+          done
+          test -f production/supabase/migrations/20260804130000_amyfx_production_scalper_bt6_amd.sql
+
+      - name: Normalize Preview regressions for production identity
+        working-directory: production
+        run: python3 tools/normalize-production-parity-tests.py
+
+      - name: Verify production identity boundaries
+        working-directory: production
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq '?: "com.amyelitesuite"' app/build.gradle.kts
+          grep -Fq '?: "Amy FX"' app/build.gradle.kts
+          grep -Fq '?: "amyfx"' app/build.gradle.kts
+          grep -Fq '?: "https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json"' app/build.gradle.kts
+          grep -Fq "name: '2.3.1', code: 59" app/src/main/assets/app-version.js
+          grep -Fq 'suhaimitoamy/Amy-fx/main/update.json' app/src/main/assets/app-version.js
+          test ! -e preview-update.json
+          test ! -e AmyFX-Preview-latest.apk
+          ! grep -R -n -E 'com\.amyelitesuite\.learningpreview|amyfxpreview|personal/amyfx-private/preview-update\.json|AmyFX-Preview-latest\.apk|preview-news-system-push|amyfx\.preview\.scalper\.permanent-history\.v1' app/src/main api lib supabase/functions
+
+      - name: Verify latest Mapping and Scalper parity markers
+        working-directory: production
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq "version: '6.0.0'" app/src/main/assets/apps/mapping/js/mapping-runtime-repair-v3.js
+          grep -Fq 'closed-candle-update' app/src/main/assets/apps/mapping/js/mapping-runtime-repair-v3.js
+          test -f app/src/main/assets/apps/mapping/js/api/closed-candle-response-sanitizer.js
+          test -f app/src/main/assets/apps/mapping/js/engine/mapping-refresh-dependencies.js
+          grep -Fq 'classifySwingSequence' app/src/main/assets/apps/mapping/js/engine/structural-bias.js
+          test -f app/src/main/assets/apps/mapping/js/engine/bt71-market-state-reconciliation.js
+          grep -Fq 'SCALPER ENGINE · SHADOW MODE' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          grep -Fq 'history_limit' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          grep -Fq 'amyfx.production.scalper.permanent-history.v1' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          grep -Fq "CURRENT_ENGINE_VERSION = 'amyfx-preview-scalper-pattern-v3.0'" app/src/main/assets/apps/mapping/js/scalper-execution-authority.js
+          grep -Fq 'let applyQueued = false' app/src/main/assets/apps/mapping/js/scalper-execution-authority.js
+          test -f app/src/main/assets/apps/mapping/js/scalper-execution-decision-bridge.js
+          test -f app/src/main/assets/apps/mapping/js/live-price-display-only-v1.js
+          grep -Fq 'live-price-display-only-v1.js' app/src/main/assets/apps/mapping/index.html
+          grep -Fq 'scalper-execution-decision-bridge.js' app/src/main/assets/apps/mapping/index.html
+          test -f supabase/migrations/20260804130000_amyfx_production_scalper_bt6_amd.sql
+          test ! -f app/src/main/assets/apps/market-intel/private-market-api-router.js
+          ! grep -Fq 'private-market-api-router.js' app/src/main/assets/apps/market-intel/index.html
+          ! grep -R -n 'preview-news-system-push' supabase/functions/scheduled-news-sync supabase/functions/news-system-push supabase/functions/news-sync
+
+      - name: Run complete JavaScript regression suite
+        working-directory: production
+        shell: bash
+        run: |
+          set -o pipefail
+          timeout 20m npm test 2>&1 | tee parity-tests.log
+
+      - name: Upload JavaScript regression diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: amyfx-production-preview-310-parity-tests
+          path: production/parity-tests.log
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Run Android unit tests and lint
+        working-directory: production
+        shell: bash
+        run: |
+          chmod +x ./gradlew
+          ./gradlew testReleaseUnitTest lintRelease --no-configuration-cache
+
+      - name: Check generated diff
+        working-directory: production
+        run: git diff --check
+
+      - name: Commit promoted production parity
+        working-directory: production
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f parity-tests.log
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "Production branch is already synchronized with Amy FX Preview."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git commit -m "release: align Amy FX production with Preview ${AMYFX_PREVIEW_SOURCE_SHA:0:12}"
+          echo "Cleaning post-build tracked and untracked workspace changes before rebase."
+          git status --short
+          git reset --hard HEAD
+          git clean -fd
+          git fetch origin "${TARGET_BRANCH}"
+          git rebase "origin/${TARGET_BRANCH}"
+          git push origin "HEAD:${TARGET_BRANCH}"

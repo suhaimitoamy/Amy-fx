@@ -25,27 +25,31 @@ test('Dashboard contains only the three primary market outputs', () => {
   assert.match(dashboard, /AMY FX · MARKET INTELLIGENCE/);
   assert.match(dashboard, /Kondisi market saat ini/);
   assert.match(dashboard, /marketOverviewMarkup\(validated, liquidity\)/);
+  assert.match(dashboard, /M15 CANDLE TERTUTUP/);
   assert.doesNotMatch(dashboard, /Konteks Market Lanjutan/);
   assert.doesNotMatch(dashboard, /Performa Historis Model/);
   assert.doesNotMatch(dashboard, /strategy-engine-grid/);
   assert.doesNotMatch(dashboard, /regime-probability-list/);
 });
 
-test('Analyze presents performance and advanced context in compact disclosures', () => {
-  const helper = section('function marketOverviewMarkup(', 'function waitingMarkup(');
+test('Analyze presents closed-candle context and advanced scenario details without post-render historical blocks', () => {
+  const helper = section('function marketOverviewMarkup(', 'function targetMarkup(');
   const analyze = section('function renderAnalyzeCard(', 'function renderCard(');
   assert.match(helper, /RINGKASAN MARKET/);
-  assert.match(analyze, /RELIABILITAS HISTORIS/);
-  assert.match(analyze, /Performa Historis Model/);
+  assert.match(helper, /Sumber candle M15 yang sudah close/);
   assert.match(analyze, /Konteks Market Lanjutan/);
   assert.match(analyze, /Target & Skenario Harga/);
   assert.match(analyze, /professional-disclosure/);
   assert.match(analyze, /scenarioMarkup\(result, router\)/);
+  assert.match(analyze, /bukan pada setiap tick harga live/);
+  assert.doesNotMatch(analyze, /RELIABILITAS HISTORIS/);
+  assert.doesNotMatch(analyze, /Performa Historis Model/);
   assert.doesNotMatch(analyze, /<details class="professional-disclosure" open>/);
 });
 
-test('Legacy focus mode no longer hides the rest of Dashboard', () => {
-  const viewMode = section('function applyViewMode(', 'function bindCard(');
-  assert.match(viewMode, /classList\.remove\('regime-router-focus-mode', 'regime-router-detail-mode'\)/);
-  assert.doesNotMatch(viewMode, /classList\.toggle/);
+test('Legacy focus and detail modes are not applied by Market Intent', () => {
+  assert.doesNotMatch(source, /regime-router-focus-mode/);
+  assert.doesNotMatch(source, /regime-router-detail-mode/);
+  assert.doesNotMatch(source, /function applyViewMode/);
+  assert.doesNotMatch(source, /classList\.toggle\([^)]*focus-mode/);
 });

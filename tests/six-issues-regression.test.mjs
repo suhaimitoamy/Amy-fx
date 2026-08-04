@@ -135,13 +135,31 @@ test('market data uses complete aggregation and keeps WebSocket display-only', (
   assert.doesNotMatch(liveTick, /buildSetupExecution|buildMappingSnapshot|publishMappingSnapshot|notifyImportant/);
 });
 
-test('Asia Range uses canonical 06:00–14:00 WITA window', () => {
+test('Asia Range is anchored to New York and follows EDT EST automatically', () => {
   const code = fs.readFileSync('app/src/main/assets/apps/mapping/js/session/asia-range.js', 'utf8');
-  assert.match(code, /const ASIA_START_HOUR = 6;/);
-  assert.match(code, /const ASIA_END_HOUR = 14;/);
+  assert.match(code, /const SESSION_ZONE = 'America\/New_York';/);
+  assert.match(code, /const SESSION_START_HOUR = 18;/);
+  assert.match(code, /const SESSION_END_HOUR = 2;/);
+  assert.match(code, /sourceSeason/);
+  assert.match(code, /EDT/);
+  assert.match(code, /EST/);
+  assert.match(code, /Asia\/Makassar/);
+  assert.doesNotMatch(code, /const ASIA_START_HOUR = 6;/);
+  assert.doesNotMatch(code, /const ASIA_END_HOUR = 14;/);
 });
 
-test('Preview version is updated for this release', () => {
+test('production source identity matches the activated signed manifest', () => {
   const appVersion = fs.readFileSync('app/src/main/assets/app-version.js', 'utf8');
-  assert.match(appVersion, /2\.3\.0/);
+  const manifest = JSON.parse(fs.readFileSync('update.json', 'utf8'));
+  const match = appVersion.match(/name:\s*'(\d+\.\d+\.\d+)'\s*,\s*code:\s*(\d+)/);
+  assert.ok(match, 'Production source identity must be readable');
+
+  const [, sourceName, sourceCodeText] = match;
+  const sourceCode = Number(sourceCodeText);
+  assert.equal(sourceName, '2.3.1');
+  assert.equal(sourceCode, 59);
+  assert.equal(String(manifest.latest_version_name || ''), sourceName);
+  assert.equal(Number(manifest.latest_version_code), sourceCode);
+  assert.match(appVersion, /main\/update\.json/);
+  assert.doesNotMatch(appVersion, /personal\/amyfx-private|preview-update\.json|learningpreview|amyfxpreview/);
 });

@@ -24,8 +24,8 @@ env:
   AMYFX_KEYSTORE_PASSWORD: android
   AMYFX_KEY_ALIAS: androiddebugkey
   AMYFX_KEY_PASSWORD: android
-  AMYFX_VERSION_NAME: "2.3.0"
-  AMYFX_VERSION_CODE: "58"
+  AMYFX_VERSION_NAME: "2.3.1"
+  AMYFX_VERSION_CODE: "59"
   AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
 
 jobs:
@@ -40,7 +40,7 @@ jobs:
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state=pending \
             -f context='Amy FX Production Release' \
-            -f description='Testing and building signed Amy FX 2.3.0' \
+            -f description='Testing and building signed Amy FX 2.3.1' \
             -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
 
       - uses: actions/checkout@v4
@@ -68,14 +68,17 @@ jobs:
           node --check supabase/functions/scalper-engine/drivers.mjs
           node --check supabase/functions/scalper-engine/signals.mjs
           node --check supabase/functions/scalper-engine/lifecycle.mjs
-          grep -Fq "name: '2.3.0', code: 58" app/src/main/assets/app-version.js
-          grep -Fq '?: 58)' app/build.gradle.kts
-          grep -Fq '?: "2.3.0"' app/build.gradle.kts
+          grep -Fq "name: '2.3.1', code: 59" app/src/main/assets/app-version.js
+          grep -Fq '?: 59)' app/build.gradle.kts
+          grep -Fq '?: "2.3.1"' app/build.gradle.kts
           grep -Fq '?: "com.amyelitesuite"' app/build.gradle.kts
           grep -Fq '?: "Amy FX"' app/build.gradle.kts
           grep -Fq '?: "amyfx"' app/build.gradle.kts
           grep -Fq 'suhaimitoamy/Amy-fx/main/update.json' app/src/main/assets/app-version.js
-          grep -Fq "version: '5.0.0'" app/src/main/assets/apps/mapping/js/mapping-runtime-repair-v3.js
+          grep -Fq "version: '6.0.0'" app/src/main/assets/apps/mapping/js/mapping-runtime-repair-v3.js
+          grep -Fq 'closed-candle-update' app/src/main/assets/apps/mapping/js/mapping-runtime-repair-v3.js
+          test -f app/src/main/assets/apps/mapping/js/api/closed-candle-response-sanitizer.js
+          test -f app/src/main/assets/apps/mapping/js/engine/mapping-refresh-dependencies.js
           test -f app/src/main/assets/apps/mapping/js/engine/bt71-market-state-reconciliation.js
           test -f app/src/main/assets/apps/mapping/js/engine/structural-bias.js
           grep -Fq 'classifySwingSequence' app/src/main/assets/apps/mapping/js/engine/structural-bias.js
@@ -83,6 +86,7 @@ jobs:
           grep -Fq 'functions/v1/scalper-setups' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
           grep -Fq 'reconcileScalperPayload' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
           grep -Fq 'displaySelectedSetupId' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          grep -Fq 'history_limit' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
           grep -Fq 'amyfx.production.scalper.permanent-history.v1' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
           grep -Fq "CURRENT_ENGINE_VERSION = 'amyfx-preview-scalper-pattern-v3.0'" app/src/main/assets/apps/mapping/js/scalper-execution-authority.js
           grep -Fq 'let applyQueued = false' app/src/main/assets/apps/mapping/js/scalper-execution-authority.js
@@ -141,7 +145,7 @@ jobs:
           aapt="$ANDROID_HOME/build-tools/35.0.0/aapt"
           signer="$ANDROID_HOME/build-tools/35.0.0/apksigner"
           "$aapt" dump badging "$apk" | tee /tmp/amyfx-badging.txt
-          grep -Fq "package: name='com.amyelitesuite' versionCode='58' versionName='2.3.0'" /tmp/amyfx-badging.txt
+          grep -Fq "package: name='com.amyelitesuite' versionCode='59' versionName='2.3.1'" /tmp/amyfx-badging.txt
           grep -Fq "application-label:'Amy FX'" /tmp/amyfx-badging.txt
           "$signer" verify --verbose --print-certs "$apk" | tee /tmp/amyfx-signing.txt
           expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
@@ -151,7 +155,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Amy-FX-v2.3.0-signed-apk
+          name: Amy-FX-v2.3.1-signed-apk
           path: dist/AmyFX-latest.apk
           if-no-files-found: error
 
@@ -163,16 +167,16 @@ jobs:
           set -euo pipefail
           git tag -f amyfx-latest "$GITHUB_SHA"
           git push origin refs/tags/amyfx-latest --force
-          notes='Amy FX 2.3.0 menyelaraskan engine produksi dengan Amy FX Preview: Mapping closed-candle runtime v5, Market State BT7.1, structural bias, Rencana Eksekusi, Entry Watch, Scalper Engine, riwayat setup permanen, dan tampilan terbaru. Identitas produksi, signer, update channel, harga live WebSocket, serta data pengguna tetap dipertahankan.'
+          notes='Amy FX 2.3.1 menyelaraskan engine produksi secara zero-drift dengan Amy FX Preview 2.0.0-preview.310: Mapping closed-candle runtime v6, structural bias, dependency refresh, Rencana Eksekusi, Entry Watch, Scalper Engine, execution authority, decision bridge, riwayat permanen, dan tampilan stabil terbaru. Identitas produksi, signer, update channel, harga live WebSocket, serta data pengguna tetap dipertahankan.'
           if gh release view amyfx-latest >/dev/null 2>&1; then
-            gh release edit amyfx-latest --title "Amy FX Latest — v2.3.0" --notes "$notes" --latest
+            gh release edit amyfx-latest --title "Amy FX Latest — v2.3.1" --notes "$notes" --latest
           else
-            gh release create amyfx-latest --title "Amy FX Latest — v2.3.0" --notes "$notes" --latest
+            gh release create amyfx-latest --title "Amy FX Latest — v2.3.1" --notes "$notes" --latest
           fi
           gh release upload amyfx-latest dist/AmyFX-latest.apk --clobber
           gh release view amyfx-latest --json assets --jq '.assets[].name' | grep -Fx AmyFX-latest.apk
 
-      - name: Activate 2.3.0 update only after APK publication
+      - name: Activate 2.3.1 update only after APK publication
         shell: bash
         run: |
           set -euo pipefail
@@ -184,17 +188,17 @@ jobs:
           path = Path('update.json')
           data = json.loads(path.read_text(encoding='utf-8'))
           notes = [
-              'Engine Mapping produksi kini setara dengan Amy FX Preview, termasuk closed-candle runtime v5, Mapping Accuracy V3, dan stabilitas tampilan.',
-              'Market State memakai rekonsiliasi struktur BT7.1 serta structural bias independen dengan prioritas bias tervalidasi.',
-              'Rencana Eksekusi, Entry Watch, Scalper Entry Watch, execution authority, dan decision bridge memakai implementasi terbaru Preview.',
-              'Riwayat setup Scalper tersimpan dan dapat dibuka kembali; lifecycle TP1, TP2, Stop Loss, expired, serta notifikasi tetap konsisten.',
-              'Identitas produksi, package com.amyelitesuite, URI amyfx, signing permanen, update channel main, harga live WebSocket, dan data pengguna tetap dipertahankan.',
+              'Engine dan runtime Amy FX produksi kini zero-drift terhadap Amy FX Preview 2.0.0-preview.310 setelah normalisasi identitas produksi.',
+              'Mapping memakai closed-candle runtime v6 sehingga hasil candle terakhir tetap tampil, refresh mengikuti event candle close, dan harga live tidak merender ulang analisis.',
+              'Structural bias, dependency refresh, Dashboard dan Analisis terpisah, Rencana Eksekusi, Entry Watch, serta Market Outlook mengikuti implementasi Preview terbaru.',
+              'Scalper Engine, Scalper Entry Watch, execution authority, decision bridge, lifecycle, dan riwayat permanen mengikuti source Preview yang sama.',
+              'Package com.amyelitesuite, URI amyfx, signing permanen, update channel main, topologi news produksi, Market Intel public gateway, dan data pengguna tetap dipertahankan.',
           ]
           data.update(
-              latest_version_code=58,
-              latest_version_name='2.3.0',
-              versionCode=58,
-              version='2.3.0',
+              latest_version_code=59,
+              latest_version_name='2.3.1',
+              versionCode=59,
+              version='2.3.1',
               releaseDate=os.environ['RELEASE_DATE'],
               apk_url='https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',
               downloadUrl='https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',
@@ -217,7 +221,7 @@ jobs:
             if git diff --cached --quiet; then
               exit 0
             fi
-            git commit -m 'release: activate Amy FX 2.3.0 Preview parity [skip ci]'
+            git commit -m 'release: activate Amy FX 2.3.1 Preview parity [skip ci]'
             if git push origin HEAD:main; then
               exit 0
             fi
@@ -231,8 +235,8 @@ jobs:
           set -euo pipefail
           git fetch origin main
           manifest="$(git show origin/main:update.json)"
-          printf '%s\n' "$manifest" | grep -F '"latest_version_code": 58'
-          printf '%s\n' "$manifest" | grep -F '"latest_version_name": "2.3.0"'
+          printf '%s\n' "$manifest" | grep -F '"latest_version_code": 59'
+          printf '%s\n' "$manifest" | grep -F '"latest_version_name": "2.3.1"'
 
   report-status:
     if: always()
@@ -246,10 +250,10 @@ jobs:
         shell: bash
         run: |
           state=success
-          description='Amy FX 2.3.0 published and update activated'
+          description='Amy FX 2.3.1 published and update activated'
           if [ "$BUILD_RESULT" != success ]; then
             state=failure
-            description="Amy FX 2.3.0 production release failed: $BUILD_RESULT"
+            description="Amy FX 2.3.1 production release failed: $BUILD_RESULT"
           fi
           gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -f state="$state" \

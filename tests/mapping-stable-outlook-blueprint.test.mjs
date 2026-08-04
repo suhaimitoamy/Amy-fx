@@ -32,13 +32,18 @@ test('live price display-only bridge loads before Mapping engine', () => {
   assert.ok(mainPosition > livePosition);
 });
 
-test('live WebSocket tick updates only price display and blocks legacy Mapping rebuild', () => {
+test('live WebSocket tick paints all semantic prices while preserving authoritative reconnect handling', () => {
   const live = read(paths.live);
   const main = read(paths.main);
-  assert.match(live, /stopImmediatePropagation\(\)/);
+  assert.doesNotMatch(live, /stopImmediatePropagation/);
+  assert.match(live, /addEventListener\('amyfx:twelvedata-price', handlePrice, \{ capture: true, signal \}\)/);
   assert.match(live, /amyfx:live-price-display/);
   assert.match(live, /\.price, \[data-live-price\]/);
+  assert.match(live, /markSemanticLivePriceNodes/);
+  assert.match(live, /LIVE_LABEL_PATTERN/);
   assert.match(live, /__amyFxDisplayLastTickAt/);
+  assert.doesNotMatch(live, /runAnalysis\s*\(/);
+  assert.doesNotMatch(live, /window\.render\s*\(/);
   assert.match(main, /effectiveLastWsTickAt/);
   assert.match(main, /__amyFxDisplayLastTickAt/);
 });
@@ -81,6 +86,8 @@ test('closed-candle coordinator schedules exact boundaries without polling', () 
   assert.match(candles, /sourceSignature/);
   assert.match(candles, /after !== before/);
   assert.match(candles, /amyfx:candles-updated/);
+  assert.match(candles, /AbortController/);
+  assert.match(candles, /pagehide/);
 });
 
 test('Scalper authority computes real Mapping alignment and is event-driven', () => {

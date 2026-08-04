@@ -2,7 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { asiaSessionWindows, calculateAsiaRange } from '../app/src/main/assets/apps/mapping/js/session/asia-range.js';
+import {
+  ASIA_SESSION_CONFIG,
+  asiaSessionWindows,
+  calculateAsiaRange,
+  nextAsiaSessionBoundary
+} from '../app/src/main/assets/apps/mapping/js/session/asia-range.js';
 
 const candle = (iso, high, low, close) => ({
   time: Date.parse(iso) / 1000,
@@ -12,7 +17,7 @@ const candle = (iso, high, low, close) => ({
   open: close
 });
 
-test('Asia Range uses 06:00-14:00 Asia/Makassar and reports wick sweep', () => {
+test('Asia Range follows New York 18:00-02:00 and reports wick sweep during EDT', () => {
   const now = Date.parse('2026-07-13T10:00:00Z');
   const candles = [
     candle('2026-07-12T21:45:00Z', 4999, 3000, 4100),
@@ -32,7 +37,8 @@ test('Asia Range uses 06:00-14:00 Asia/Makassar and reports wick sweep', () => {
   assert.equal(result.range, 16);
   assert.equal(result.highStatus, 'TERSAPU WICK');
   assert.equal(result.lowStatus, 'BELUM DISAPU');
-  assert.match(result.windowLabel, /06:00–14:00 WITA/);
+  assert.equal(result.sourceSeason, 'EDT');
+  assert.match(result.windowLabel, /06:00–14:00 WITA · EDT/);
 });
 
 test('closed candle beyond Asia High has priority over wick sweep', () => {
@@ -57,6 +63,7 @@ test('active Asia session remains developing', () => {
   assert.equal(result.active, true);
   assert.equal(result.highStatus, 'BERKEMBANG');
   assert.equal(result.lowStatus, 'BERKEMBANG');
+  assert.equal(result.sourceSeason, 'EDT');
 });
 
 test('first closed M15 candle starts the active Asia Range instead of falling back to yesterday', () => {
@@ -73,7 +80,7 @@ test('first closed M15 candle starts the active Asia Range instead of falling ba
   assert.equal(result.low, 4068);
 });
 
-test('before 06:00 WITA the latest completed Asia Range remains selected', () => {
+test('before the current New York session starts, the latest completed Asia Range remains selected', () => {
   const now = Date.parse('2026-07-13T21:00:00Z');
   const candles = [
     candle('2026-07-12T22:00:00Z', 4105, 4098, 4102),
@@ -83,15 +90,45 @@ test('before 06:00 WITA the latest completed Asia Range remains selected', () =>
   assert.equal(result.valid, true);
   assert.equal(result.active, false);
   assert.equal(result.complete, true);
-  assert.match(result.windowLabel, /06:00–14:00 WITA/);
+  assert.match(result.windowLabel, /06:00–14:00 WITA · EDT/);
 });
 
-test('session windows use exact Makassar boundaries', () => {
+test('summer session windows convert EDT to 06:00-14:00 WITA', () => {
   const now = Date.parse('2026-07-13T23:00:00Z');
   const [window] = asiaSessionWindows(now, 1);
   assert.equal(new Date(window.start).toISOString(), '2026-07-13T22:00:00.000Z');
   assert.equal(new Date(window.end).toISOString(), '2026-07-14T06:00:00.000Z');
   assert.equal(window.active, true);
+  assert.equal(window.sourceSeason, 'EDT');
+  assert.match(window.label, /06:00–14:00 WITA · EDT/);
+});
+
+test('winter session windows shift automatically to 07:00-15:00 WITA under EST', () => {
+  const now = Date.parse('2026-12-15T12:00:00Z');
+  const [window] = asiaSessionWindows(now, 1);
+  assert.equal(new Date(window.start).toISOString(), '2026-12-14T23:00:00.000Z');
+  assert.equal(new Date(window.end).toISOString(), '2026-12-15T07:00:00.000Z');
+  assert.equal(window.active, false);
+  assert.equal(window.complete, true);
+  assert.equal(window.sourceSeason, 'EST');
+  assert.match(window.label, /07:00–15:00 WITA · EST/);
+});
+
+test('next boundary returns the active session end instead of polling', () => {
+  const now = Date.parse('2026-07-13T23:00:00Z');
+  assert.equal(
+    new Date(nextAsiaSessionBoundary(now)).toISOString(),
+    '2026-07-14T06:00:00.000Z'
+  );
+});
+
+test('Asia Range configuration is anchored to New York and displayed in WITA', () => {
+  assert.deepEqual(ASIA_SESSION_CONFIG, {
+    sourceZone: 'America/New_York',
+    displayZone: 'Asia/Makassar',
+    sourceStartHour: 18,
+    sourceEndHour: 2
+  });
 });
 
 test('shared candle store requests UTC and normalizes provider timestamps', () => {

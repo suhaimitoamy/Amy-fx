@@ -1,4 +1,5 @@
 analysis-static-layout.test.mjs
+closed-candle-freshness-adapter.test.mjs
 deepseek-provider-detection.test.mjs
 five-issues-regression.test.mjs
 journal-ai-rotation-v158.test.mjs
