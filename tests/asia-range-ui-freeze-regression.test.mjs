@@ -15,9 +15,10 @@ test('Asia range UI module remains syntactically valid', () => {
   assert.equal(result.status, 0, result.stderr || result.stdout);
 });
 
-test('MutationObserver does not call the renderer directly', () => {
+test('MutationObserver queues a bounded top-level sync instead of calling renderer directly', () => {
   const code = source();
-  assert.match(code, /new MutationObserver\(scheduleAsiaRangeSync\)/);
+  assert.match(code, /observer = new MutationObserver\(scheduleAsiaRangeSync\)/);
+  assert.match(code, /observer\.observe\(app, \{ childList: true, subtree: false \}\)/);
   assert.doesNotMatch(code, /new MutationObserver\(\(\) => syncAsiaRangeUi\(\)\)/);
   assert.match(code, /if \(syncQueued\) return;/);
 });
@@ -30,4 +31,24 @@ test('Asia range markup is only written when content changes', () => {
   assert.match(code, /setMarkupIfChanged\(strip, analyzeMarkup\(range\)\)/);
   assert.doesNotMatch(code, /block\.innerHTML = dashboardMarkup\(range\)/);
   assert.doesNotMatch(code, /strip\.innerHTML = analyzeMarkup\(range\)/);
+});
+
+test('Asia range follows live price, closed candles, render events, and exact session boundaries without polling', () => {
+  const code = source();
+  assert.match(code, /nextAsiaSessionBoundary/);
+  assert.match(code, /amyfx:live-price-display/);
+  assert.match(code, /amyfx:candles-updated/);
+  assert.match(code, /amyfx:mapping-ui-rendered/);
+  assert.match(code, /amyfx:mapping-state-change/);
+  assert.match(code, /boundaryTimer = setTimeout/);
+  assert.doesNotMatch(code, /setInterval/);
+});
+
+test('Asia range UI owns and tears down its observer, timer, and event listeners', () => {
+  const code = source();
+  assert.match(code, /observer\?\.disconnect\(\)/);
+  assert.match(code, /lifecycleController\?\.abort\(\)/);
+  assert.match(code, /clearTimeout\(boundaryTimer\)/);
+  assert.match(code, /window\.addEventListener\('pagehide', stop/);
+  assert.match(code, /AmyFXAsiaRangeUiLifecycle/);
 });
