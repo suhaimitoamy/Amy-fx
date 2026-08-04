@@ -18,6 +18,10 @@ const appVersion = fs.readFileSync(
   new URL('../app/src/main/assets/app-version.js', import.meta.url),
   'utf8'
 );
+const updateManifest = JSON.parse(fs.readFileSync(
+  new URL('../update.json', import.meta.url),
+  'utf8'
+));
 
 test('closed-candle adapter is loaded after Mapping clarity', () => {
   assert.match(mappingV2, /mapping-clarity-v1\.js/);
@@ -48,6 +52,11 @@ test('analysis badge reports a closed-candle source instead of stale', () => {
   assert.doesNotMatch(stability, /M15 STALE/);
 });
 
-test('release bumps Preview version', () => {
-  assert.match(appVersion, /2\.3\.0/);
+test('production release source matches the active signed manifest', () => {
+  const match = appVersion.match(/name:\s*'(\d+\.\d+\.\d+)'\s*,\s*code:\s*(\d+)/);
+  assert.ok(match, 'Production source identity must be readable');
+  assert.equal(match[1], '2.3.1');
+  assert.equal(Number(match[2]), 59);
+  assert.equal(updateManifest.latest_version_name, '2.3.1');
+  assert.equal(Number(updateManifest.latest_version_code), 59);
 });
