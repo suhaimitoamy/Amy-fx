@@ -76,7 +76,7 @@ test('Mapping UI helper changes presentation copy only and does not touch engine
   assert.doesNotMatch(mappingUi, /setupExecution\s*=/);
 });
 
-test('Preview 311 identity is consistent and leaves the published manifest behind until CI release activation', () => {
+test('Preview 311 identity remains consistent before and after CI release activation', () => {
   const version = read('app-version.js');
   const gradle = readFileSync(new URL('../app/build.gradle.kts', import.meta.url), 'utf8');
   const manifest = JSON.parse(readFileSync(new URL('../preview-update.json', import.meta.url), 'utf8'));
@@ -85,5 +85,10 @@ test('Preview 311 identity is consistent and leaves the published manifest behin
   assert.match(version, /code:\s*940311/);
   assert.match(gradle, /940311/);
   assert.match(gradle, /2\.0\.0-preview\.311/);
-  assert.ok(Number(manifest.latest_version_code) < 940311);
+
+  const publishedCode = Number(manifest.latest_version_code);
+  assert.ok(publishedCode <= 940311);
+  if (publishedCode === 940311) {
+    assert.equal(manifest.latest_version_name, '2.0.0-preview.311');
+  }
 });
