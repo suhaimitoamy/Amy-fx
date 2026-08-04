@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run the proven Preview promotion engine for the next production release."""
 
+import json
 from pathlib import Path
 import sys
 
@@ -29,3 +30,25 @@ namespace = {
     "__package__": None,
 }
 exec(compile(source, str(BASE_SCRIPT), "exec"), namespace)
+
+target = Path(sys.argv[2]).resolve()
+manifest_path = target / "update.json"
+manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+manifest.update({
+    "latest_version_code": 59,
+    "latest_version_name": "2.3.1",
+    "versionCode": 59,
+    "version": "2.3.1",
+    "releaseDate": "2026-08-04",
+})
+notes = [
+    "Engine dan runtime Amy FX produksi kini zero-drift terhadap Amy FX Preview 2.0.0-preview.310 setelah normalisasi identitas produksi.",
+    "Mapping memakai closed-candle runtime v6 sehingga hasil candle terakhir tetap tampil, refresh mengikuti event candle close, dan harga live tidak merender ulang analisis.",
+    "Structural bias, dependency refresh, Dashboard dan Analisis terpisah, Rencana Eksekusi, Entry Watch, serta Market Outlook mengikuti implementasi Preview terbaru.",
+    "Scalper Engine, Scalper Entry Watch, execution authority, decision bridge, lifecycle, dan riwayat permanen mengikuti source Preview yang sama.",
+    "Package com.amyelitesuite, URI amyfx, signing permanen, update channel main, topologi news produksi, Market Intel public gateway, dan data pengguna tetap dipertahankan."
+]
+manifest["release_notes"] = notes
+manifest["changelog"] = notes
+manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+print("Updated Amy FX production update manifest to 2.3.1 (59).")
