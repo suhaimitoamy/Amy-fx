@@ -74,7 +74,7 @@ test('Academy reading history is available on home and nested lessons', () => {
 
 test('production app version metadata stays on the production update channel', () => {
   const source = read('app/src/main/assets/app-version.js');
-  assert.match(source, /name:\s*'2\.3\.0',\s*code:\s*58/);
+  assert.match(source, /name:\s*'2\.3\.1',\s*code:\s*59/);
   assert.match(source, /suhaimitoamy\/Amy-fx\/main\/update\.json/);
   assert.doesNotMatch(source, /2\.0\.0-preview\.|940\d{3}|personal\/amyfx-private|preview-update\.json|learningpreview|amyfxpreview/);
 });
