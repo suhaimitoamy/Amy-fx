@@ -41,11 +41,15 @@ test('Mapping refresh dependency graph includes source and required HTF context 
   assert.equal(new Set(mappingRefreshDependencies('M1')).size, mappingRefreshDependencies('M1').length);
 });
 
-test('live price display no longer suppresses the authoritative WebSocket listener', () => {
+test('live price display does not suppress the authoritative WebSocket listener or trigger analysis', () => {
   const source = read('app/src/main/assets/apps/mapping/js/live-price-display-only-v1.js');
   assert.doesNotMatch(source, /stopImmediatePropagation/);
-  assert.match(source, /authoritative market-data listener/);
-  assert.match(source, /version: '2\.0\.0'/);
+  assert.match(source, /addEventListener\('amyfx:twelvedata-price', handlePrice, \{ capture: true, signal \}\)/);
+  assert.match(source, /markSemanticLivePriceNodes/);
+  assert.match(source, /updatePriceNodes/);
+  assert.match(source, /version: '3\.0\.0'/);
+  assert.doesNotMatch(source, /runAnalysis\s*\(/);
+  assert.doesNotMatch(source, /window\.render\s*\(/);
 });
 
 test('Mapping page loads candle sanitizer before main runtime', () => {
@@ -59,6 +63,8 @@ test('Mapping page loads candle sanitizer before main runtime', () => {
 test('Mapping runtime owns and tears down timers and listeners', () => {
   const main = read('app/src/main/assets/apps/mapping/js/main.js');
   const stability = read('app/src/main/assets/apps/mapping/js/analysis-ui-stability-v4.js');
+  const live = read('app/src/main/assets/apps/mapping/js/live-price-display-only-v1.js');
+  const coordinator = read('app/src/main/assets/apps/mapping/js/candle-refresh-coordinator.js');
   assert.match(main, /livePriceWatchdogTimer = setInterval/);
   assert.match(main, /clearInterval\(livePriceWatchdogTimer\)/);
   assert.match(main, /removeEventListener\?\.\('online', handleOnline\)/);
@@ -68,6 +74,10 @@ test('Mapping runtime owns and tears down timers and listeners', () => {
   assert.match(stability, /observer\?\.disconnect\(\)/);
   assert.match(stability, /lifecycleController\?\.abort\(\)/);
   assert.match(stability, /amyfx:mapping-ui-rendered/);
+  assert.match(live, /lifecycleController\?\.abort\(\)/);
+  assert.match(live, /pagehide/);
+  assert.match(coordinator, /lifecycleController\?\.abort\(\)/);
+  assert.match(coordinator, /clearTimeout\(nextCloseTimer\)/);
 });
 
 test('legacy Mapping sync bridge owns every timer and stops outside a real browser lifecycle', () => {
