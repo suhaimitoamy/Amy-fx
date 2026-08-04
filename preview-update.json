@@ -1,31 +1,28 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 940310,
-  "latest_version_name": "2.0.0-preview.310",
-  "versionCode": 940310,
-  "version": "2.0.0-preview.310",
+  "latest_version_code": 940311,
+  "latest_version_name": "2.0.0-preview.311",
+  "versionCode": 940311,
+  "version": "2.0.0-preview.311",
   "releaseDate": "2026-08-04",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.310/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.310/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.311/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.311/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Ringkasan Market tidak lagi dirender ulang pada setiap tick WebSocket sehingga harga live tidak membuat layar atau kartu analisis meloncat.",
-    "Hasil closed-candle terakhir tetap terlihat ketika candle baru sedang dimuat; status Menyiapkan analisis market tidak lagi menggantikan analisis yang masih valid.",
-    "Harga Saat Ini pada Rencana Eksekusi, Valid Break, setup, Gold Price, sticky price, dan strip atas sekarang memakai satu jalur tampilan WebSocket live.",
-    "Dashboard dan Analisis menggunakan pohon tampilan terpisah sehingga pergantian tab tidak lagi melakukan cross-patch pada kartu yang berbeda.",
-    "Polling Ringkasan Market 1,5 detik dan refresh Mapping duplikat 60 detik dihapus; pembaruan analisis mengikuti event serta batas candle yang sudah close.",
-    "Listener, observer, timer, dan request Mapping kini dihentikan saat halaman ditinggalkan dan dimulai kembali secara aman ketika aplikasi dilanjutkan.",
-    "Seluruh regression, raw-source zero-drift, Android unit test, lint, APK signed, package, label, versi, dan signer Preview telah diverifikasi.",
-    "Formula Mapping, Mapping Accuracy, Scalper Engine, data pengguna, dan Amy FX publik pada branch main tidak diubah."
+    "Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.",
+    "Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.",
+    "Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.",
+    "Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.",
+    "Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.",
+    "Amy FX publik pada branch main tidak diubah."
   ],
   "changelog": [
-    "Stable closed-candle Market Summary rendering",
-    "Unified semantic live-price display",
-    "Dashboard and Analyze view isolation",
-    "Event-driven Mapping refresh",
-    "Lifecycle-safe listeners, observers, timers, and requests",
-    "Regression coverage for loading price jumps"
+    "Professional glass UI tokens and shared components",
+    "System, light, and dark theme controller",
+    "Truthful home, collection, and profile presentation",
+    "Unified loading, accessibility, and vector icon polish",
+    "Android system bar theme synchronization"
   ]
 }
