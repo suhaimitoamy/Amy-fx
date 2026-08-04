@@ -11,9 +11,9 @@ test('Amy FX public source uses the permanent production Android identity', () =
   assert.match(gradle, /configuredApplicationId = System\.getenv\("AMYFX_APPLICATION_ID"\) \?: "com\.amyelitesuite"/);
   assert.match(gradle, /configuredAppLabel = System\.getenv\("AMYFX_APP_LABEL"\) \?: "Amy FX"/);
   assert.match(gradle, /configuredUriScheme = System\.getenv\("AMYFX_URI_SCHEME"\) \?: "amyfx"/);
-  assert.match(gradle, /versionCode[^\n]*58/);
-  assert.match(gradle, /versionName[^\n]*"2\.3\.0"/);
-  assert.match(version, /name: '2\.3\.0', code: 58/);
+  assert.match(gradle, /versionCode[^\n]*59/);
+  assert.match(gradle, /versionName[^\n]*"2\.3\.1"/);
+  assert.match(version, /name: '2\.3\.1', code: 59/);
   assert.match(version, /main\/update\.json/);
   assert.doesNotMatch(gradle, /learningpreview|Amy FX Preview|amyfxpreview|preview-update\.json/);
   assert.doesNotMatch(version, /personal\/amyfx-private|preview-update\.json|learningpreview|amyfxpreview/);
@@ -25,11 +25,11 @@ test('published public metadata is never ahead of the production source version'
     [40, '1.4.17'], [41, '1.5.0'], [42, '1.5.1'], [43, '1.5.2'], [44, '1.5.3'],
     [45, '1.5.4'], [46, '1.5.5'], [47, '1.5.6'], [48, '1.5.7'], [49, '1.5.8'],
     [50, '1.5.9'], [51, '2.0.0'], [52, '2.0.1'], [53, '2.0.2'], [54, '2.1.0'],
-    [55, '2.1.1'], [56, '2.2.0'], [57, '2.2.1'], [58, '2.3.0']
+    [55, '2.1.1'], [56, '2.2.0'], [57, '2.2.1'], [58, '2.3.0'], [59, '2.3.1']
   ]);
 
   assert.equal(metadata.latest_version_name, versions.get(Number(metadata.latest_version_code)));
-  assert.ok(Number(metadata.latest_version_code) <= 58);
+  assert.ok(Number(metadata.latest_version_code) <= 59);
   assert.ok(Array.isArray(metadata.release_notes) && metadata.release_notes.length > 0);
   assert.match(metadata.apk_url || metadata.downloadUrl || '', /AmyFX-latest\.apk/);
   assert.doesNotMatch(metadata.apk_url || metadata.downloadUrl || '', /AmyFX-Preview-latest\.apk/);
@@ -63,9 +63,10 @@ test('persistent candle cache keeps freshness while protecting Twelve Data quota
   assert.match(coordinator, /BACKGROUND_M1_REFRESH_SECONDS = 300/);
   assert.match(coordinator, /RETRY_COOLDOWN_MS = 60_000/);
   assert.match(coordinator, /SUPABASE_VERIFIED_CURRENT/);
-  assert.match(runtime, /version: '5\.0\.0'/);
+  assert.match(runtime, /version: '6\.0\.0'/);
   assert.match(runtime, /markCachedSeriesUsable/);
   assert.match(runtime, /lastAnalyzedSignature/);
+  assert.match(runtime, /closed-candle-update/);
 });
 
 test('Pattern v3 final engine remains connected to the public Mapping UI', () => {
@@ -105,13 +106,13 @@ test('release workflows pin version, certificate, and signer verification', () =
   }
 
   assert.match(rolling, /Signer #1 certificate SHA-256 digest/);
-  assert.match(rolling, /AMYFX_VERSION_NAME: "2\.3\.0"/);
-  assert.match(rolling, /AMYFX_VERSION_CODE: "58"/);
+  assert.match(rolling, /AMYFX_VERSION_NAME: "2\.3\.1"/);
+  assert.match(rolling, /AMYFX_VERSION_CODE: "59"/);
   assert.match(rolling, /AmyFX-latest\.apk/);
   assert.match(rolling, /Verify public update manifest/);
 
-  assert.match(manual, /default: "2\.3\.0"/);
-  assert.match(manual, /default: "58"/);
+  assert.match(manual, /default: "2\.3\.1"/);
+  assert.match(manual, /default: "59"/);
   assert.match(manual, /Verify permanent signing key/);
   assert.match(manual, /test "\$actual" = "\$AMYFX_SIGNING_CERT_SHA256"/);
   assert.match(manual, /AmyFX-\$\{AMYFX_VERSION_NAME\}\.apk/);
