@@ -1,25 +1,25 @@
 {
-  "latest_version_code": 58,
-  "latest_version_name": "2.3.0",
-  "versionCode": 58,
-  "version": "2.3.0",
+  "latest_version_code": 59,
+  "latest_version_name": "2.3.1",
+  "versionCode": 59,
+  "version": "2.3.1",
   "releaseDate": "2026-08-04",
   "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Engine Mapping produksi kini setara dengan Amy FX Preview, termasuk closed-candle runtime v5, Mapping Accuracy V3, dan stabilitas tampilan.",
-    "Market State memakai rekonsiliasi struktur BT7.1 serta structural bias independen dengan prioritas bias tervalidasi.",
-    "Rencana Eksekusi, Entry Watch, Scalper Entry Watch, execution authority, dan decision bridge memakai implementasi terbaru Preview.",
-    "Riwayat setup Scalper tersimpan dan dapat dibuka kembali; lifecycle TP1, TP2, Stop Loss, expired, serta notifikasi tetap konsisten.",
-    "Identitas produksi, package com.amyelitesuite, URI amyfx, signing permanen, update channel main, harga live WebSocket, dan data pengguna tetap dipertahankan."
+    "Engine dan runtime Amy FX produksi kini zero-drift terhadap Amy FX Preview 2.0.0-preview.310 setelah normalisasi identitas produksi.",
+    "Mapping memakai closed-candle runtime v6 sehingga hasil candle terakhir tetap tampil, refresh mengikuti event candle close, dan harga live tidak merender ulang analisis.",
+    "Structural bias, dependency refresh, Dashboard dan Analisis terpisah, Rencana Eksekusi, Entry Watch, serta Market Outlook mengikuti implementasi Preview terbaru.",
+    "Scalper Engine, Scalper Entry Watch, execution authority, decision bridge, lifecycle, dan riwayat permanen mengikuti source Preview yang sama.",
+    "Package com.amyelitesuite, URI amyfx, signing permanen, update channel main, topologi news produksi, Market Intel public gateway, dan data pengguna tetap dipertahankan."
   ],
   "changelog": [
-    "Engine Mapping produksi kini setara dengan Amy FX Preview, termasuk closed-candle runtime v5, Mapping Accuracy V3, dan stabilitas tampilan.",
-    "Market State memakai rekonsiliasi struktur BT7.1 serta structural bias independen dengan prioritas bias tervalidasi.",
-    "Rencana Eksekusi, Entry Watch, Scalper Entry Watch, execution authority, dan decision bridge memakai implementasi terbaru Preview.",
-    "Riwayat setup Scalper tersimpan dan dapat dibuka kembali; lifecycle TP1, TP2, Stop Loss, expired, serta notifikasi tetap konsisten.",
-    "Identitas produksi, package com.amyelitesuite, URI amyfx, signing permanen, update channel main, harga live WebSocket, dan data pengguna tetap dipertahankan."
+    "Engine dan runtime Amy FX produksi kini zero-drift terhadap Amy FX Preview 2.0.0-preview.310 setelah normalisasi identitas produksi.",
+    "Mapping memakai closed-candle runtime v6 sehingga hasil candle terakhir tetap tampil, refresh mengikuti event candle close, dan harga live tidak merender ulang analisis.",
+    "Structural bias, dependency refresh, Dashboard dan Analisis terpisah, Rencana Eksekusi, Entry Watch, serta Market Outlook mengikuti implementasi Preview terbaru.",
+    "Scalper Engine, Scalper Entry Watch, execution authority, decision bridge, lifecycle, dan riwayat permanen mengikuti source Preview yang sama.",
+    "Package com.amyelitesuite, URI amyfx, signing permanen, update channel main, topologi news produksi, Market Intel public gateway, dan data pengguna tetap dipertahankan."
   ]
 }

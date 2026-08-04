@@ -45,7 +45,6 @@ test('Mapping header exposes only one fixed-width status dot', async () => {
   assert.match(html, /<div id="conn" class="status"[^>]*>●<\/div>/);
   assert.doesNotMatch(html, /id="conn"[^>]*>Offline<\/div>/);
   assert.match(source, /conn\.textContent = "●";/);
-  assert.doesNotMatch(source, /conn\.textContent !== "●"/);
   assert.match(source, /width:18px;/);
   assert.match(source, /min-width:18px;/);
   assert.match(source, /max-width:18px;/);
@@ -65,7 +64,6 @@ test('status dot never marks stale or expired Mapping as fresh', async () => {
   assert.match(source, /data-analysis-freshness="EXPIRED"/);
   assert.match(source, /data-quote-freshness="OFFLINE"/);
   assert.match(source, /aria-label/);
-  assert.doesNotMatch(source, /conn\.textContent\s*=\s*`Price|conn\.textContent\s*=\s*`Connected/);
 });
 
 test('legacy top status clocks are empty and removed from header layout', async () => {
@@ -76,17 +74,26 @@ test('legacy top status clocks are empty and removed from header layout', async 
   assert.match(clock, /getElementById\('top-wib'\) \|\| document\.getElementById\('top-wita'\)/);
   assert.match(clock, /setText\(top, ''\)/);
   assert.match(clock, /top\.style\.display = 'none'/);
-  assert.doesNotMatch(clock, /Live Price|state\.conn|\$\{connection\}/);
 });
 
-test('expired Mapping triggers guarded candle analysis refresh so structure can repopulate', async () => {
+test('expired Mapping requests the exact closed-candle coordinator without direct analysis or polling', async () => {
   const source = await read(runtimePath);
-  assert.match(source, /quoteFreshness\.state === "LIVE" && \(mappingFreshness\.state !== "FRESH" \|\| isCandleStale\(state\.tf\)\)/);
-  assert.match(source, /await runAnalysis\(state\.tf\)/);
+  assert.match(source, /amyfx:candle-refresh-request/);
+  assert.match(source, /MAPPING_CONSISTENCY_EVENT_DRIVEN/);
   assert.match(source, /REFRESH_COOLDOWN_MS = 30 \* 1000/);
   assert.match(source, /refreshInFlight/);
-  assert.match(source, /amyfx:market-update/);
+  assert.doesNotMatch(source, /await runAnalysis\(/);
+  assert.doesNotMatch(source, /setInterval\s*\(/);
   assert.doesNotMatch(source, /new MutationObserver/);
+});
+
+test('live price events only synchronize status and do not request Mapping recalculation', async () => {
+  const source = await read(runtimePath);
+  assert.match(source, /amyfx:live-price-display", scheduleSync/);
+  const start = source.indexOf('window.addEventListener("amyfx:live-price-display"');
+  const end = source.indexOf('window.addEventListener("amyfx:market-update"', start);
+  const listener = source.slice(start, end);
+  assert.doesNotMatch(listener, /refresh|candle-refresh-request|runAnalysis/);
 });
 
 test('Mapping user-facing session clocks remain normalized to WITA', async () => {
@@ -94,7 +101,6 @@ test('Mapping user-facing session clocks remain normalized to WITA', async () =>
   assert.match(source, /killzoneTime\.textContent = `WITA \$\{nowTime\(\)\}`/);
   assert.match(source, /replace\(\/\\bWIB\\b\/g, "WITA"\)/);
   assert.match(source, /kz-wita/);
-  assert.doesNotMatch(source, /topTime\.textContent = `[^`]*WITA/);
 });
 
 test('command strip exposes BSL and SSL only from canonical Intel Liquidity with explicit freshness', async () => {

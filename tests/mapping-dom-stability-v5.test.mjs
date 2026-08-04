@@ -25,8 +25,18 @@ test('same-view Mapping updates patch existing DOM instead of replacing the app 
   assert.match(runtime, /patchNode\(current, nextNode\)/);
   assert.match(runtime, /current\.hasAttribute\('data-dom-persistent'\)/);
   assert.match(runtime, /next\.hasAttribute\('data-dom-persistent'\)/);
-  assert.doesNotMatch(runtime, /lastAppView !== view[\s\S]*nativeInnerHtml\.set/);
   assert.doesNotMatch(runtime, /window\.scrollTo|window\.scrollBy/);
+});
+
+test('Dashboard and Analyze tab switches replace the old view instead of cross-patching incompatible cards', async () => {
+  const runtime = await read(runtimePath);
+  assert.match(runtime, /lastAppView && lastAppView !== view/);
+  assert.match(runtime, /nativeInnerHtml\.set\.call\(this, markup\)/);
+  assert.match(runtime, /replacedViewRenders \+= 1/);
+  assert.ok(
+    runtime.indexOf('lastAppView && lastAppView !== view') < runtime.indexOf('patchSameViewApp(this, parseFragment(markup))'),
+    'view switch guard must run before same-view patching'
+  );
 });
 
 test('connection status changes use soft UI updates and cannot rebuild the Mapping page', async () => {
@@ -40,10 +50,12 @@ test('connection status changes use soft UI updates and cannot rebuild the Mappi
   assert.match(uiRender, /export function renderSoft\(\)\{statusDot\(\)/);
 });
 
-test('Market Regime card keeps its element identity during live refresh', async () => {
+test('Market Regime card keeps its element identity during context refresh', async () => {
   const runtime = await read(runtimePath);
+  const intent = await read('app/src/main/assets/apps/mapping/js/market-intent-ui.js');
   assert.match(runtime, /REGIME_CARD_ID = 'amy-regime-router-v3'/);
   assert.match(runtime, /Object\.defineProperty\(Element\.prototype, 'outerHTML'/);
   assert.match(runtime, /patchNode\(this, next\)/);
-  assert.match(runtime, /keepOpen/);
+  assert.match(intent, /current\.innerHTML = next\.innerHTML/);
+  assert.doesNotMatch(intent, /current\.outerHTML\s*=/);
 });

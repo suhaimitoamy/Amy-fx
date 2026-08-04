@@ -1,6 +1,6 @@
 // Amy FX production release identity — Preview engine parity release.
 (function () {
-  const VERSION = Object.freeze({ name: '2.3.0', code: 58 });
+  const VERSION = Object.freeze({ name: '2.3.1', code: 59 });
   window.AmyFXAppVersion = VERSION;
   window.AmyFXUpdateManifestUrl = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json';
 
