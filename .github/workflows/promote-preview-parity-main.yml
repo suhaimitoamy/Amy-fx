@@ -56,17 +56,32 @@ jobs:
         shell: bash
         run: echo "AMYFX_PREVIEW_SOURCE_SHA=$(git -C preview rev-parse HEAD)" >> "$GITHUB_ENV"
 
-      - name: Preserve production topology and regression assertions
+      - name: Preserve production topology and identity assertions
         shell: bash
         run: |
           set -euo pipefail
           preserve="$RUNNER_TEMP/amyfx-production-preserve"
           rm -rf "$preserve"
-          mkdir -p "$preserve/supabase/functions/news-sync"
+          mkdir -p "$preserve/supabase/functions/news-sync" "$preserve/tests"
           cp -a production/supabase/functions/news-system-push "$preserve/supabase/functions/news-system-push"
           cp -a production/supabase/functions/scheduled-news-sync "$preserve/supabase/functions/scheduled-news-sync"
           cp production/supabase/functions/news-sync/handler.ts "$preserve/supabase/functions/news-sync/handler.ts"
-          cp -a production/tests "$preserve/tests"
+          for test_file in \
+            analysis-static-layout.test.mjs \
+            five-issues-regression.test.mjs \
+            journal-ai-rotation-v158.test.mjs \
+            mapping-news-background-repair.test.mjs \
+            market-candle-store.test.mjs \
+            native-updater.test.mjs \
+            preview-production-feature-parity.test.mjs \
+            production-copy-polish.test.mjs \
+            production-release-identity.test.mjs \
+            profile-version-update-regression.test.mjs
+          do
+            if test -f "production/tests/${test_file}"; then
+              cp "production/tests/${test_file}" "$preserve/tests/${test_file}"
+            fi
+          done
 
       - name: Promote Preview runtime while preserving production identity
         working-directory: production
@@ -76,7 +91,7 @@ jobs:
         working-directory: production
         run: python3 tools/finalize-production-market-intel.py
 
-      - name: Merge current Preview tests with production assertions
+      - name: Use current Preview tests with production identity overlays
         shell: bash
         run: |
           set -euo pipefail
