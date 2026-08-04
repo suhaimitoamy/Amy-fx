@@ -115,9 +115,13 @@
   }
 
   function escapeHtml(value) {
-    return String(value ?? "").replace(/[&<>"']/g, char => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
-    })[char]);
+    return String(value ?? "").replace(/[&<>"']/g, char => {
+      if (char === "&") return "&amp;";
+      if (char === "<") return "&lt;";
+      if (char === ">") return "&gt;";
+      if (char === "\"") return "&quot;";
+      return "&#39;";
+    });
   }
 
   function renderSnapshot(section) {
