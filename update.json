@@ -1,25 +1,25 @@
 {
-  "latest_version_code": 57,
-  "latest_version_name": "2.2.1",
-  "versionCode": 57,
-  "version": "2.2.1",
-  "releaseDate": "2026-08-03",
+  "latest_version_code": 58,
+  "latest_version_name": "2.3.0",
+  "versionCode": 58,
+  "version": "2.3.0",
+  "releaseDate": "2026-08-04",
   "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk",
   "force_update": false,
   "mandatory": false,
   "release_notes": [
-    "Cache candle Mapping kini bertahan setelah aplikasi ditutup sehingga pembukaan ulang tidak mengulang request yang tidak perlu.",
-    "Freshness diverifikasi dari waktu candle closed terbaru, bukan hanya dari timer pengambilan data.",
-    "Refresh M1 latar belakang dibatasi lima menit; M1 tetap mengikuti penutupan satu menit saat timeframe M1 sedang dipilih.",
-    "Fallback Supabase yang masih aktual dapat dipakai ketika provider terganggu atau kuota REST terbatas.",
-    "Harga live tetap memakai native Twelve Data WebSocket; engine Mapping, Scalper, lifecycle, identitas produksi, signing, dan data pengguna tidak diubah."
+    "Engine Mapping produksi kini setara dengan Amy FX Preview, termasuk closed-candle runtime v5, Mapping Accuracy V3, dan stabilitas tampilan.",
+    "Market State memakai rekonsiliasi struktur BT7.1 serta structural bias independen dengan prioritas bias tervalidasi.",
+    "Rencana Eksekusi, Entry Watch, Scalper Entry Watch, execution authority, dan decision bridge memakai implementasi terbaru Preview.",
+    "Riwayat setup Scalper tersimpan dan dapat dibuka kembali; lifecycle TP1, TP2, Stop Loss, expired, serta notifikasi tetap konsisten.",
+    "Identitas produksi, package com.amyelitesuite, URI amyfx, signing permanen, update channel main, harga live WebSocket, dan data pengguna tetap dipertahankan."
   ],
   "changelog": [
-    "Cache candle Mapping kini bertahan setelah aplikasi ditutup sehingga pembukaan ulang tidak mengulang request yang tidak perlu.",
-    "Freshness diverifikasi dari waktu candle closed terbaru, bukan hanya dari timer pengambilan data.",
-    "Refresh M1 latar belakang dibatasi lima menit; M1 tetap mengikuti penutupan satu menit saat timeframe M1 sedang dipilih.",
-    "Fallback Supabase yang masih aktual dapat dipakai ketika provider terganggu atau kuota REST terbatas.",
-    "Harga live tetap memakai native Twelve Data WebSocket; engine Mapping, Scalper, lifecycle, identitas produksi, signing, dan data pengguna tidak diubah."
+    "Engine Mapping produksi kini setara dengan Amy FX Preview, termasuk closed-candle runtime v5, Mapping Accuracy V3, dan stabilitas tampilan.",
+    "Market State memakai rekonsiliasi struktur BT7.1 serta structural bias independen dengan prioritas bias tervalidasi.",
+    "Rencana Eksekusi, Entry Watch, Scalper Entry Watch, execution authority, dan decision bridge memakai implementasi terbaru Preview.",
+    "Riwayat setup Scalper tersimpan dan dapat dibuka kembali; lifecycle TP1, TP2, Stop Loss, expired, serta notifikasi tetap konsisten.",
+    "Identitas produksi, package com.amyelitesuite, URI amyfx, signing permanen, update channel main, harga live WebSocket, dan data pengguna tetap dipertahankan."
   ]
 }
