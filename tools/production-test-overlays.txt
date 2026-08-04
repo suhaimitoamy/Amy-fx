@@ -10,3 +10,4 @@ production-copy-polish.test.mjs
 production-release-identity.test.mjs
 professional-glassmorphism-redesign.test.mjs
 profile-version-update-regression.test.mjs
+stage5-hardening.test.mjs
