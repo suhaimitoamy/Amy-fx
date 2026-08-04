@@ -40,10 +40,12 @@ test('dashboard duplicate Preview and price cards remain removed', () => {
   assert.equal(fixes.includes('startBackgroundScanner'), false);
 });
 
-test('stale M15 never keeps a LIVE analysis badge', () => {
-  assert.match(fixes, /M15 STALE/);
-  assert.match(fixes, /result\?\.dataStale/);
-  assert.match(fixes, /freshness === 'STALE' \|\| freshness === 'EXPIRED'/);
+test('analysis badge uses the latest closed candle instead of a hard stale gate', () => {
+  assert.match(fixes, /latestClosedCandle/);
+  assert.match(fixes, /CANDLE TERTUTUP/);
+  assert.match(fixes, /classList\.remove\('stale'\)/);
+  assert.match(fixes, /Analisis memakai candle/);
+  assert.doesNotMatch(fixes, /M15 STALE/);
   assert.match(css, /\.regime-badge\.stale/);
 });
 
@@ -66,11 +68,11 @@ test('issue-5 audit remains available as documentation only', () => {
   assert.match(report, /Akurasi arah murni pada close horizon/);
 });
 
-test('source is Amy FX 2.2.1 while published metadata never points above an available APK', () => {
-  assert.match(appVersion, /name: '2\.2\.1', code: 57/);
+test('source is Amy FX 2.3.0 while published metadata never points above an available APK', () => {
+  assert.match(appVersion, /name: '2\.3\.0', code: 58/);
   assert.match(appVersion, /main\/update\.json/);
-  assert.doesNotMatch(appVersion, /Preview|personal\/amyfx-private|preview-update\.json/);
-  assert.ok(Number(update.latest_version_code) <= 57);
+  assert.doesNotMatch(appVersion, /learningpreview|personal\/amyfx-private|preview-update\.json/);
+  assert.ok(Number(update.latest_version_code) <= 58);
   assert.match(update.apk_url || update.downloadUrl || '', /AmyFX-latest\.apk/);
   assert.doesNotMatch(update.apk_url || update.downloadUrl || '', /AmyFX-Preview-latest\.apk/);
 });
