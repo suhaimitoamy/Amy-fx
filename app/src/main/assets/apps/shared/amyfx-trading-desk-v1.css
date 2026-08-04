@@ -1,0 +1,639 @@
+/* Amy FX Trading Desk v1
+ * Calm, data-first presentation layer.
+ * Loaded after the legacy design system so engine and DOM contracts remain unchanged.
+ */
+
+:root {
+  --desk-bg: #0b0e12;
+  --desk-surface: #11151b;
+  --desk-surface-raised: #161b22;
+  --desk-surface-soft: #1b212a;
+  --desk-border: #252b35;
+  --desk-border-strong: #343c48;
+  --desk-text: #e6edf3;
+  --desk-text-secondary: #9aa5b1;
+  --desk-text-muted: #6f7a87;
+  --desk-accent: #4c8dff;
+  --desk-accent-soft: rgba(76, 141, 255, 0.12);
+  --desk-buy: #2fbf71;
+  --desk-sell: #f05a67;
+  --desk-wait: #d8a23a;
+  --desk-radius-sm: 7px;
+  --desk-radius: 10px;
+  --desk-radius-lg: 12px;
+  --desk-page-padding: clamp(14px, 4vw, 18px);
+
+  --amy-bg: var(--desk-bg);
+  --amy-bg-secondary: var(--desk-bg);
+  --amy-surface: var(--desk-surface);
+  --amy-surface-strong: var(--desk-surface-raised);
+  --amy-surface-solid: var(--desk-surface);
+  --amy-surface-soft: var(--desk-surface-soft);
+  --amy-border: var(--desk-border);
+  --amy-border-strong: var(--desk-border-strong);
+  --amy-highlight: transparent;
+  --amy-text: var(--desk-text);
+  --amy-text-secondary: var(--desk-text-secondary);
+  --amy-text-muted: var(--desk-text-muted);
+  --amy-accent: var(--desk-accent);
+  --amy-accent-strong: #3778e8;
+  --amy-cyan: var(--desk-accent);
+  --amy-buy: var(--desk-buy);
+  --amy-sell: var(--desk-sell);
+  --amy-wait: var(--desk-wait);
+  --amy-info: var(--desk-accent);
+  --amy-neutral: var(--desk-text-secondary);
+  --amy-radius-xs: var(--desk-radius-sm);
+  --amy-radius-sm: var(--desk-radius-sm);
+  --amy-radius-md: var(--desk-radius);
+  --amy-radius-lg: var(--desk-radius-lg);
+  --amy-radius-xl: var(--desk-radius-lg);
+  --amy-blur: 0px;
+  --amy-blur-strong: 0px;
+  --amy-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+  --amy-shadow-soft: none;
+  --amy-page-padding: var(--desk-page-padding);
+
+  --bg: var(--desk-bg);
+  --card: var(--desk-surface);
+  --bg-card: var(--desk-surface);
+  --bg-card-hover: var(--desk-surface-raised);
+  --surface: var(--desk-surface);
+  --surface-soft: var(--desk-surface-soft);
+  --text: var(--desk-text);
+  --heading: var(--desk-text);
+  --muted: var(--desk-text-secondary);
+  --border: var(--desk-border);
+  --green: var(--desk-buy);
+  --red: var(--desk-sell);
+  --warning: var(--desk-wait);
+  --gold: var(--desk-accent);
+  --gold-text: var(--desk-accent);
+  --gold-dim: var(--desk-accent-soft);
+  --primary-gold: var(--desk-accent);
+  --secondary-gold: var(--desk-accent);
+  --glow-gold: transparent;
+}
+
+html[data-amyfx-theme="light"] {
+  --desk-bg: #f3f5f7;
+  --desk-surface: #ffffff;
+  --desk-surface-raised: #f8fafc;
+  --desk-surface-soft: #eef2f6;
+  --desk-border: #d9dfe7;
+  --desk-border-strong: #c4ccd7;
+  --desk-text: #18212c;
+  --desk-text-secondary: #596674;
+  --desk-text-muted: #7f8b98;
+  --desk-accent: #276fd6;
+  --desk-accent-soft: rgba(39, 111, 214, 0.1);
+  --desk-buy: #168b57;
+  --desk-sell: #d44756;
+  --desk-wait: #9a6a0a;
+  --amy-shadow: 0 8px 24px rgba(37, 48, 63, 0.12);
+}
+
+html,
+body {
+  background: var(--desk-bg) !important;
+  color: var(--desk-text) !important;
+}
+
+body {
+  background-image: none !important;
+  font-family: Inter, Roboto, "Noto Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-weight: 400;
+}
+
+body::before,
+body::after {
+  display: none !important;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  letter-spacing: normal;
+}
+
+button,
+[role="button"] {
+  font-weight: 600;
+}
+
+/* Shared flat surfaces. */
+.amyfx-glass,
+.card,
+.home-hero,
+.quick-card,
+.project-card,
+.collection-item,
+.profile-summary,
+.profile-row,
+.stat-card,
+.theme-selector,
+.intel-panel,
+.news-item,
+.node-card,
+.dashboard-card,
+.library-card,
+.journal-card,
+.workspace-card,
+.course-card,
+.article,
+.panel {
+  border-color: var(--desk-border) !important;
+  border-radius: var(--desk-radius) !important;
+  background: var(--desk-surface) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.badge,
+.chip,
+.pill,
+.status-badge,
+.category-tag,
+.status-tag,
+.session-pill,
+.entry-watch-badge,
+.execution-badge {
+  border: 1px solid var(--desk-border) !important;
+  border-radius: 6px !important;
+  background: var(--desk-surface-soft) !important;
+  color: var(--desk-text-secondary) !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.section-kicker,
+.eyebrow,
+.kicker,
+.profile-section-title {
+  color: var(--desk-text-muted) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.amyfx-button,
+.action-btn,
+.primary-button,
+.btn.primary,
+.execution-action,
+.action,
+.amy-os-command-actions button {
+  min-height: 42px;
+  border: 1px solid var(--desk-border-strong) !important;
+  border-radius: var(--desk-radius-sm) !important;
+  background: var(--desk-surface-raised) !important;
+  color: var(--desk-text) !important;
+  font-weight: 650 !important;
+  box-shadow: none !important;
+}
+
+.amyfx-button.primary,
+.action-btn.primary,
+.primary-button,
+.btn.primary,
+.action {
+  border-color: var(--desk-accent) !important;
+  background: var(--desk-accent) !important;
+  color: #ffffff !important;
+}
+
+input,
+textarea,
+select,
+.search-box,
+.search-input,
+.amyfx-search {
+  border: 1px solid var(--desk-border) !important;
+  border-radius: var(--desk-radius-sm) !important;
+  background: var(--desk-surface-raised) !important;
+  color: var(--desk-text) !important;
+  box-shadow: none !important;
+}
+
+/* Home shell. */
+body.amyfx-module--home .app-container {
+  max-width: 680px;
+  background: var(--desk-bg) !important;
+}
+
+body.amyfx-module--home .app-header {
+  min-height: 58px;
+  padding: calc(var(--amy-safe-top) + 9px) var(--desk-page-padding) 9px;
+  gap: 10px;
+  border-bottom: 1px solid var(--desk-border) !important;
+  background: var(--desk-bg) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+body.amyfx-module--home .app-logo,
+body.amyfx-module--home .profile-avatar,
+body.amyfx-module--home .amyfx-monogram {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--desk-border-strong);
+  border-radius: 8px;
+  background: var(--desk-surface-raised) !important;
+  color: var(--desk-text);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  box-shadow: none !important;
+}
+
+body.amyfx-module--home .app-header__copy strong {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+body.amyfx-module--home .app-header__copy small {
+  margin-top: 2px;
+  color: var(--desk-text-muted);
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+body.amyfx-module--home .app-header__action,
+.mapping-back,
+.intel-back {
+  width: 38px;
+  height: 38px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent !important;
+  color: var(--desk-text-secondary);
+  box-shadow: none !important;
+}
+
+body.amyfx-module--home .app-header__action:active,
+.mapping-back:active,
+.intel-back:active {
+  border-color: var(--desk-border);
+  background: var(--desk-surface-raised) !important;
+}
+
+body.amyfx-module--home main {
+  padding: 14px var(--desk-page-padding) calc(var(--amy-nav-height) + var(--amy-safe-bottom) + 26px);
+}
+
+/* Data-first home snapshot. */
+body.amyfx-module--home .home-hero,
+body.amyfx-module--home .desk-market-snapshot {
+  min-height: auto;
+  padding: 16px;
+  overflow: visible;
+  border-radius: var(--desk-radius-lg) !important;
+}
+
+body.amyfx-module--home .home-hero::before,
+body.amyfx-module--home .home-hero::after,
+body.amyfx-module--home .desk-market-snapshot::before,
+body.amyfx-module--home .desk-market-snapshot::after {
+  display: none !important;
+  content: none !important;
+}
+
+.desk-snapshot-button {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.desk-snapshot-head,
+.desk-snapshot-price-row,
+.desk-snapshot-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.desk-snapshot-head {
+  color: var(--desk-text-secondary);
+  font-size: 12px;
+}
+
+.desk-symbol {
+  color: var(--desk-text);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.desk-live-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--desk-text-secondary);
+  font-size: 11px;
+}
+
+.desk-live-state::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--desk-buy);
+}
+
+.desk-live-state[data-online="false"]::before {
+  background: var(--desk-wait);
+}
+
+.desk-snapshot-price-row {
+  margin-top: 10px;
+  align-items: flex-end;
+}
+
+.desk-snapshot-price {
+  color: var(--desk-text);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: clamp(24px, 7vw, 29px);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.desk-snapshot-decision {
+  border-left: 3px solid var(--desk-text-muted);
+  padding-left: 9px;
+  color: var(--desk-text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.desk-snapshot-decision[data-decision="BUY"] { border-color: var(--desk-buy); color: var(--desk-buy); }
+.desk-snapshot-decision[data-decision="SELL"] { border-color: var(--desk-sell); color: var(--desk-sell); }
+.desk-snapshot-decision[data-decision="WAIT"] { border-color: var(--desk-wait); color: var(--desk-wait); }
+
+.desk-snapshot-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin-top: 15px;
+  border-top: 1px solid var(--desk-border);
+}
+
+.desk-snapshot-meta > div {
+  min-width: 0;
+  padding: 11px 10px 0 0;
+}
+
+.desk-snapshot-meta > div + div {
+  padding-left: 10px;
+  border-left: 1px solid var(--desk-border);
+}
+
+.desk-snapshot-meta small,
+.desk-resume-card small {
+  display: block;
+  color: var(--desk-text-muted);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.desk-snapshot-meta strong {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--desk-text);
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desk-snapshot-foot {
+  margin-top: 13px;
+  color: var(--desk-text-muted);
+  font-size: 11px;
+}
+
+body.amyfx-module--home .section-heading {
+  margin: 22px 0 10px;
+}
+
+body.amyfx-module--home .section-heading h2 {
+  margin: 2px 0 0;
+  color: var(--desk-text);
+  font-size: 16px;
+  font-weight: 650;
+}
+
+body.amyfx-module--home .section-count {
+  color: var(--desk-text-muted);
+  font-size: 11px;
+}
+
+body.amyfx-module--home .quick-grid,
+body.amyfx-module--home .project-grid,
+body.amyfx-module--home .collection-list,
+body.amyfx-module--home .profile-list {
+  display: grid;
+  gap: 0 !important;
+  overflow: hidden;
+  border: 1px solid var(--desk-border);
+  border-radius: var(--desk-radius-lg);
+  background: var(--desk-surface);
+}
+
+body.amyfx-module--home .quick-card,
+body.amyfx-module--home .project-card,
+body.amyfx-module--home .collection-item,
+body.amyfx-module--home .profile-row {
+  min-height: 72px;
+  margin: 0 !important;
+  padding: 13px 14px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.amyfx-module--home .quick-card + .quick-card,
+body.amyfx-module--home .project-card + .project-card,
+body.amyfx-module--home .collection-item + .collection-item,
+body.amyfx-module--home .profile-row + .profile-row {
+  border-top: 1px solid var(--desk-border) !important;
+}
+
+body.amyfx-module--home .quick-card,
+body.amyfx-module--home .quick-card--wide,
+body.amyfx-module--home .project-card {
+  grid-column: auto;
+  grid-template-columns: 36px minmax(0, 1fr) 14px;
+}
+
+body.amyfx-module--home .quick-card:hover,
+body.amyfx-module--home .project-card:hover,
+body.amyfx-module--home .collection-item:hover,
+body.amyfx-module--home .profile-row:hover {
+  background: var(--desk-surface-raised) !important;
+}
+
+body.amyfx-module--home .app-icon {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--desk-border);
+  border-radius: 8px;
+  background: var(--desk-surface-raised) !important;
+  color: var(--desk-text-secondary) !important;
+  box-shadow: none !important;
+}
+
+body.amyfx-module--home .app-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+body.amyfx-module--home .quick-card strong,
+body.amyfx-module--home .project-card h3,
+body.amyfx-module--home .collection-item strong,
+body.amyfx-module--home .profile-row strong {
+  color: var(--desk-text);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+body.amyfx-module--home .quick-card small,
+body.amyfx-module--home .project-card p,
+body.amyfx-module--home .collection-item small,
+body.amyfx-module--home .profile-row small {
+  margin-top: 3px;
+  color: var(--desk-text-secondary);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+body.amyfx-module--home .project-card .badge,
+body.amyfx-module--home .quick-card .badge {
+  display: none !important;
+}
+
+body.amyfx-module--home .chevron {
+  color: var(--desk-text-muted);
+  font-size: 18px;
+  font-weight: 400;
+}
+
+body.amyfx-module--home .page-header {
+  margin: 6px 0 16px;
+}
+
+body.amyfx-module--home .page-header h2 {
+  margin: 2px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+body.amyfx-module--home .page-header p {
+  color: var(--desk-text-secondary);
+  font-size: 12px;
+}
+
+body.amyfx-module--home .profile-summary {
+  padding: 14px;
+}
+
+body.amyfx-module--home .stats-grid {
+  gap: 8px;
+}
+
+body.amyfx-module--home .stat-card {
+  padding: 12px;
+}
+
+body.amyfx-module--home .stat-card strong {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+body.amyfx-module--home .theme-selector {
+  padding: 5px;
+}
+
+body.amyfx-module--home .theme-choice {
+  min-height: 42px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+body.amyfx-module--home .bottom-nav {
+  right: max(10px, calc((100vw - 680px) / 2 + 10px));
+  bottom: calc(8px + var(--amy-safe-bottom));
+  left: max(10px, calc((100vw - 680px) / 2 + 10px));
+  height: 66px;
+  padding: 5px;
+  border: 1px solid var(--desk-border);
+  border-radius: 12px;
+  background: var(--desk-surface-raised) !important;
+  box-shadow: var(--amy-shadow) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+body.amyfx-module--home .nav-btn {
+  min-height: 54px;
+  border-radius: 8px;
+  color: var(--desk-text-muted);
+  font-size: 10px;
+  font-weight: 550;
+}
+
+body.amyfx-module--home .nav-btn .icon svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.7;
+}
+
+body.amyfx-module--home .nav-btn.active {
+  background: var(--desk-accent-soft) !important;
+  color: var(--desk-accent);
+}
+
+body.amyfx-module--home .nav-btn.active::before {
+  display: none !important;
+}
+
+.slide-up,
+.fade-in {
+  animation: none !important;
+}
+
+@media (max-width: 420px) {
+  .desk-snapshot-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .desk-snapshot-meta > div:nth-child(3) {
+    grid-column: 1 / -1;
+    margin-top: 10px;
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
