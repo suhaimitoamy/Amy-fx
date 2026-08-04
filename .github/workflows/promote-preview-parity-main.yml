@@ -12,6 +12,7 @@ on:
       - api/**
       - lib/**
       - supabase/functions/**
+      - supabase/migrations/**
       - tests/**
       - .github/workflows/build-apk.yml
       - .github/workflows/build-release.yml
@@ -58,6 +59,21 @@ jobs:
         working-directory: production
         run: python3 tools/promote-preview-to-production.py ../preview .
 
+      - name: Include Scalper and news database migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p production/supabase/migrations
+          for migration in \
+            20260729212100_amyfx_preview_scalper_shadow.sql \
+            20260729220000_amyfx_preview_scalper_live_notification_guard.sql \
+            20260729222500_amyfx_preview_scalper_notification_device_index.sql \
+            20260730230000_amyfx_preview_scalper_multidriver.sql \
+            20260801150000_amyfx_preview_scalper_bt6_amd_news_dedup.sql
+          do
+            cp "preview/supabase/migrations/${migration}" "production/supabase/migrations/${migration}"
+          done
+
       - name: Normalize Preview regressions for production identity
         working-directory: production
         run: python3 tools/normalize-production-parity-tests.py
@@ -95,6 +111,7 @@ jobs:
           test -f app/src/main/assets/apps/mapping/js/live-price-display-only-v1.js
           grep -Fq 'live-price-display-only-v1.js' app/src/main/assets/apps/mapping/index.html
           grep -Fq 'scalper-execution-decision-bridge.js' app/src/main/assets/apps/mapping/index.html
+          test -f supabase/migrations/20260801150000_amyfx_preview_scalper_bt6_amd_news_dedup.sql
 
       - name: Run complete JavaScript regression suite
         working-directory: production
