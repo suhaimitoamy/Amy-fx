@@ -22,7 +22,7 @@ test('README documents one unified Amy FX production product', () => {
   assert.match(readme, /com\.amyelitesuite/);
   assert.match(readme, /main\/update\.json/);
   assert.match(readme, /`main` merupakan sumber aplikasi dan rilis produksi/);
-  assert.match(readme, /personal\/amyfx-private.*riwayat pengembangan privat/s);
+  assert.match(readme, /personal\/amyfx-private.*ruang pengembangan Amy FX Preview/s);
   assert.doesNotMatch(readme, /Application ID:\*\* `com\.amyelitesuite\.learningpreview`/);
 });
 
