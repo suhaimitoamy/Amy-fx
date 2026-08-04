@@ -40,6 +40,23 @@ NEGATIVE_ASSERTION_MARKERS = (
     ", false)",
 )
 
+PRODUCTION_ANALYSIS_IDENTITY_BLOCK = """test('production source identity is never behind the activated update manifest', () => {
+  const match = appVersion.match(/name:\\s*'(\\d+\\.\\d+\\.\\d+)'\\s*,\\s*code:\\s*(\\d+)/);
+  assert.ok(match, 'Production source identity must be readable');
+
+  const [, sourceName, sourceCodeText] = match;
+  const sourceCode = Number(sourceCodeText);
+  const publishedCode = Number(updateManifest.latest_version_code);
+  const publishedName = String(updateManifest.latest_version_name || '');
+
+  assert.equal(sourceName, '2.3.0');
+  assert.equal(sourceCode, 58);
+  assert.ok(sourceCode >= publishedCode, 'Production source must not be older than update.json');
+  assert.ok(sourceCode - publishedCode <= 1, 'Pending source may be at most one version ahead of the active APK');
+  if (sourceCode === publishedCode) assert.equal(publishedName, sourceName);
+});
+"""
+
 
 def normalize_line(line: str) -> str:
     # Keep explicit negative assertions intact. This also preserves their test
@@ -52,10 +69,23 @@ def normalize_line(line: str) -> str:
     return updated
 
 
+def normalize_file(path: Path, original: str) -> str:
+    updated = "".join(normalize_line(line) for line in original.splitlines(keepends=True))
+    if path.name == "analysis-static-layout.test.mjs":
+        marker = "test('Preview source identity is never behind the activated update manifest'"
+        alternate = "test('Amy FX source identity is never behind the activated update manifest'"
+        start = updated.find(marker)
+        if start < 0:
+            start = updated.find(alternate)
+        if start >= 0:
+            updated = updated[:start] + PRODUCTION_ANALYSIS_IDENTITY_BLOCK
+    return updated
+
+
 changed = 0
 for path in (ROOT / "tests").glob("*.test.mjs"):
     original = path.read_text(encoding="utf-8")
-    updated = "".join(normalize_line(line) for line in original.splitlines(keepends=True))
+    updated = normalize_file(path, original)
     if updated != original:
         path.write_text(updated, encoding="utf-8")
         changed += 1
