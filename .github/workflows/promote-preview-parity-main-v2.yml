@@ -219,6 +219,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add --all
           git commit -m "release: align Amy FX production with Preview ${AMYFX_PREVIEW_SOURCE_SHA:0:12}"
+          echo "Cleaning post-build tracked and untracked workspace changes before rebase."
+          git status --short
+          git reset --hard HEAD
+          git clean -fd
           git fetch origin "${TARGET_BRANCH}"
           git rebase "origin/${TARGET_BRANCH}"
           git push origin "HEAD:${TARGET_BRANCH}"
