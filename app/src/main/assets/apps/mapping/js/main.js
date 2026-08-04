@@ -268,7 +268,7 @@ function handleOnline() {
 }
 
 function handleVisibilityChange() {
-  document.body.classList.toggle('webview-idle', document.hidden);
+  document.body?.classList?.toggle('webview-idle', document.hidden);
   if (!document.hidden) {
     const tickAt = effectiveLastWsTickAt();
     const stale = !tickAt || Date.now() - tickAt > 45000;
@@ -283,11 +283,11 @@ function handlePageHide() {
 function startRuntime() {
   if (runtimeStarted) return false;
   runtimeStarted = true;
-  autoConnectTimer = window.setTimeout(autoConnectLivePrice, 600);
-  livePriceWatchdogTimer = window.setInterval(livePriceWatchdog, 30000);
-  window.addEventListener('online', handleOnline);
-  document.addEventListener('visibilitychange', handleVisibilityChange);
-  window.addEventListener('pagehide', handlePageHide, { once: true });
+  autoConnectTimer = setTimeout(autoConnectLivePrice, 600);
+  livePriceWatchdogTimer = setInterval(livePriceWatchdog, 30000);
+  window.addEventListener?.('online', handleOnline);
+  document.addEventListener?.('visibilitychange', handleVisibilityChange);
+  window.addEventListener?.('pagehide', handlePageHide, { once: true });
   return true;
 }
 
@@ -300,9 +300,9 @@ function stopRuntime() {
     clearInterval(livePriceWatchdogTimer);
     livePriceWatchdogTimer = 0;
   }
-  window.removeEventListener('online', handleOnline);
-  document.removeEventListener('visibilitychange', handleVisibilityChange);
-  window.removeEventListener('pagehide', handlePageHide);
+  window.removeEventListener?.('online', handleOnline);
+  document.removeEventListener?.('visibilitychange', handleVisibilityChange);
+  window.removeEventListener?.('pagehide', handlePageHide);
   try { stopLivePrice(); } catch (_) {}
   runtimeStarted = false;
   return true;
