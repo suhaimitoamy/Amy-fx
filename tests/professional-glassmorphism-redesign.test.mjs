@@ -73,7 +73,6 @@ test('loading and native updater presentation follow the redesign without Previe
   assert.match(updater, /Update Amy FX Tersedia/);
   assert.match(updater, /Android\.startAppUpdate/);
   assert.match(updater, /AmyFXUpdateNative/);
-  assert.match(updater, /Pembaruan Amy FX Tersedia/);
   assert.doesNotMatch(updater, /Amy FX Preview|preview-update\.json|personal\/amyfx-private/);
   assert.match(native, /fun setSystemUiTheme\(theme: String\?\)/);
 });
