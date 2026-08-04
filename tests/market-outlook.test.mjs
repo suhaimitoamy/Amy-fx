@@ -41,20 +41,23 @@ test('mapping keeps the existing Market Outlook asset entry points', () => {
   assert.match(html, /js\/market-outlook\.js/);
 });
 
-test('Market Outlook uses AMY Market Context Final logic', () => {
+test('Market Outlook uses the context core but exposes an unambiguous practical layer', () => {
   const ui = readFileSync(uiUrl, 'utf8');
   const core = readFileSync(activeCoreUrl, 'utf8');
   const css = readFileSync(cssUrl, 'utf8');
 
-  assert.match(ui, /AMY Market Context Final/);
-  assert.match(ui, /FVG revisit/);
-  assert.match(ui, /OB revisit/);
-  assert.match(ui, /DOL/);
-  assert.match(ui, /Asia entry/);
-  assert.match(ui, /AMY_MARKET_CONTEXT_FINAL/);
-  assert.match(ui, /state\.candles\?\.M1/);
-  assert.match(ui, /state\.candles\?\.M5/);
-  assert.match(ui, /state\.candles\?\.M15/);
+  assert.match(ui, /buildAmyMarketContextOutlook/);
+  assert.match(ui, /AMY_MARKET_CONTEXT_PRACTICAL_V2/);
+  assert.match(ui, /closedCandles\('M1'\)/);
+  assert.match(ui, /closedCandles\('M5'\)/);
+  assert.match(ui, /closedCandles\('M15'\)/);
+  assert.match(ui, /Kondisi market/);
+  assert.match(ui, /Status sekarang/);
+  assert.match(ui, /Arah perjalanan/);
+  assert.match(ui, /bukan perintah BUY\/SELL/);
+  assert.match(ui, /Harga live bergerak terpisah/);
+  assert.doesNotMatch(ui, /DATA USANG|DATA_STALE|isOutlookStale/);
+  assert.doesNotMatch(ui, /setInterval|visibilitychange/);
   assert.equal(/Probabilitas model/i.test(ui), false);
 
   assert.match(core, /swingLength: 3/);
