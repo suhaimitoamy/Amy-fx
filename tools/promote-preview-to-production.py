@@ -35,7 +35,6 @@ COPY_FILES = [
     "supabase/functions/news-sync/handler.ts",
 ]
 COPY_TESTS = [
-    "tests/analysis-static-layout.test.mjs",
     "tests/closed-candle-aggregation.test.mjs",
     "tests/closed-candle-freshness-adapter.test.mjs",
     "tests/dashboard-only-panels-v1.test.mjs",
