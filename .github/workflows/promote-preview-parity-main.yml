@@ -115,7 +115,19 @@ jobs:
 
       - name: Run complete JavaScript regression suite
         working-directory: production
-        run: timeout 20m npm test
+        shell: bash
+        run: |
+          set -o pipefail
+          timeout 20m npm test 2>&1 | tee parity-tests.log
+
+      - name: Upload JavaScript regression diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: amyfx-production-parity-tests
+          path: production/parity-tests.log
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Set up Java
         uses: actions/setup-java@v4
