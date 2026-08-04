@@ -4,6 +4,10 @@ import { resolve } from 'node:path';
 
 const testsDir = resolve(process.cwd(), 'tests');
 const failureReportPath = resolve(process.cwd(), 'preview-regression-failure.txt');
+const testTimeoutMs = Math.max(
+  30_000,
+  Number(process.env.AMYFX_TEST_FILE_TIMEOUT_MS || 180_000)
+);
 const files = readdirSync(testsDir)
   .filter(name => name.endsWith('.test.mjs'))
   .sort();
@@ -23,18 +27,26 @@ for (const file of files) {
   const path = resolve(testsDir, file);
   const result = spawnSync(
     process.execPath,
-    ['--test', '--test-force-exit', path],
+    ['--test', path],
     {
       encoding: 'utf8',
       env: process.env,
-      maxBuffer: 32 * 1024 * 1024
+      maxBuffer: 32 * 1024 * 1024,
+      timeout: testTimeoutMs,
+      killSignal: 'SIGKILL'
     }
   );
 
   if (result.error) {
+    const timedOut = result.error.code === 'ETIMEDOUT';
     const report = [
-      `Regression failed to start: ${file}`,
-      result.error.stack || result.error.message || String(result.error)
+      timedOut
+        ? `Regression timed out with open handles or stalled work: ${file}`
+        : `Regression failed to start: ${file}`,
+      `Timeout limit: ${testTimeoutMs} ms`,
+      result.error.stack || result.error.message || String(result.error),
+      '',
+      excerpt([result.stdout, result.stderr].filter(Boolean).join('\n'))
     ].join('\n');
     writeFileSync(failureReportPath, `${report}\n`, 'utf8');
     console.error(report);
@@ -57,4 +69,4 @@ for (const file of files) {
   console.log(`PASS ${file}`);
 }
 
-console.log(`All ${files.length} Amy FX regression files passed.`);
+console.log(`All ${files.length} Amy FX regression files passed without forced process exit.`);
