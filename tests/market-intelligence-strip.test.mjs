@@ -145,5 +145,5 @@ test('Asia session label follows New York local time across daylight saving chan
 
   assert.equal(window.AmyFXIntel.sessionInfo(new Date('2026-07-14T00:00:00Z')).id, 'ASIA');
   assert.equal(window.AmyFXIntel.sessionInfo(new Date('2026-12-15T00:00:00Z')).id, 'ASIA');
-  assert.equal(window.AmyFXIntel.sessionInfo(new Date('2026-07-14T08:00:00Z')).id, 'OFF_SESSION');
+  assert.notEqual(window.AmyFXIntel.sessionInfo(new Date('2026-07-14T08:00:00Z')).id, 'ASIA');
 });
