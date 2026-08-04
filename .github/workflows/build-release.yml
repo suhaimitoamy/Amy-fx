@@ -6,11 +6,11 @@ on:
       versionName:
         description: "Version Name"
         required: true
-        default: "2.2.1"
+        default: "2.3.0"
       versionCode:
         description: "Version Code"
         required: true
-        default: "57"
+        default: "58"
 
 permissions:
   contents: read
@@ -32,51 +32,92 @@ jobs:
       AMYFX_VERSION_NAME: ${{ github.event.inputs.versionName }}
       AMYFX_VERSION_CODE: ${{ github.event.inputs.versionCode }}
       AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
-        with: { node-version: "22" }
-      - run: timeout 15m npm test
-      - name: Verify market freshness, Pattern v3, and native WebSocket path
+        with:
+          node-version: "22"
+
+      - name: Run complete JavaScript regression suite
+        run: timeout 20m npm test
+
+      - name: Verify production identity and Preview engine parity
+        shell: bash
         run: |
+          set -euo pipefail
           node --check app/src/main/assets/apps/mapping/js/api-request-coordinator.js
-          grep -Fq "PERSISTENT_CACHE_KEY = 'amyfx_market_response_cache_v3'" app/src/main/assets/apps/mapping/js/api-request-coordinator.js
-          grep -Fq 'BACKGROUND_M1_REFRESH_SECONDS = 300' app/src/main/assets/apps/mapping/js/api-request-coordinator.js
-          grep -Fq 'SUPABASE_VERIFIED_CURRENT' app/src/main/assets/apps/mapping/js/api-request-coordinator.js
+          node --check app/src/main/assets/apps/mapping/js/mapping-runtime-repair-v3.js
+          node --check app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          node --check app/src/main/assets/apps/mapping/js/scalper-execution-authority.js
+          node --check app/src/main/assets/apps/mapping/js/scalper-execution-decision-bridge.js
+          grep -Fq "version: '5.0.0'" app/src/main/assets/apps/mapping/js/mapping-runtime-repair-v3.js
+          test -f app/src/main/assets/apps/mapping/js/engine/bt71-market-state-reconciliation.js
+          test -f app/src/main/assets/apps/mapping/js/engine/structural-bias.js
+          grep -Fq 'classifySwingSequence' app/src/main/assets/apps/mapping/js/engine/structural-bias.js
+          grep -Fq 'SCALPER ENGINE · SHADOW MODE' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          grep -Fq 'functions/v1/scalper-setups' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          grep -Fq 'reconcileScalperPayload' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          grep -Fq 'amyfx.production.scalper.permanent-history.v1' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          grep -Fq "CURRENT_ENGINE_VERSION = 'amyfx-preview-scalper-pattern-v3.0'" app/src/main/assets/apps/mapping/js/scalper-execution-authority.js
+          grep -Fq 'let applyQueued = false' app/src/main/assets/apps/mapping/js/scalper-execution-authority.js
+          test -f app/src/main/assets/apps/mapping/js/scalper-execution-decision-bridge.js
+          test -f app/src/main/assets/apps/mapping/js/live-price-display-only-v1.js
           test -f supabase/functions/scalper-engine/pattern-gates.mjs
-          grep -Fq '10 driver BT6/BT6.1 + AMD' app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          test -f supabase/migrations/20260804130000_amyfx_production_scalper_bt6_amd.sql
           test -f app/src/main/java/com/amyelitesuite/TwelveDataPriceBridge.kt
           grep -Fq 'addJavascriptInterface(twelveDataPriceBridge, "AmyLivePrice")' app/src/main/java/com/amyelitesuite/MainActivity.kt
           grep -Fq "window.addEventListener('amyfx:twelvedata-price'" app/src/main/assets/apps/mapping/js/api/market-data.js
           ! grep -Fq 'function pollLivePrice' app/src/main/assets/apps/mapping/js/api/market-data.js
+          ! grep -R -n -E 'com\.amyelitesuite\.learningpreview|amyfxpreview|personal/amyfx-private/preview-update\.json|AmyFX-Preview-latest\.apk|preview-news-system-push|amyfx\.preview\.scalper\.permanent-history\.v1' app/src/main api lib supabase/functions
+
       - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: "17", cache: gradle }
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
       - uses: android-actions/setup-android@v3
+
       - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
       - id: signing-cache
         uses: actions/cache/restore@v4
         with:
           path: ~/.android/debug.keystore
           key: amy-fx-debug-keystore-v1
+
       - name: Verify permanent signing key
+        shell: bash
         run: |
           set -euo pipefail
           test "${{ steps.signing-cache.outputs.cache-hit }}" = "true"
           cp "$HOME/.android/debug.keystore" "$AMYFX_KEYSTORE_PATH"
           actual="$(keytool -list -v -keystore "$AMYFX_KEYSTORE_PATH" -storepass "$AMYFX_KEYSTORE_PASSWORD" -alias "$AMYFX_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1)"
           test "$actual" = "$AMYFX_SIGNING_CERT_SHA256"
+
       - run: chmod +x ./gradlew
       - run: ./gradlew testReleaseUnitTest --no-configuration-cache
       - run: ./gradlew lintRelease --no-configuration-cache
       - run: ./gradlew assembleRelease --no-configuration-cache --stacktrace
+
       - name: Verify APK identity and signer
+        shell: bash
         run: |
           set -euo pipefail
           apk="app/build/outputs/apk/release/app-release.apk"
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" | grep -F "package: name='com.amyelitesuite' versionCode='${AMYFX_VERSION_CODE}' versionName='${AMYFX_VERSION_NAME}'"
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$apk"
+          aapt="$ANDROID_HOME/build-tools/35.0.0/aapt"
+          signer="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          "$aapt" dump badging "$apk" | tee /tmp/amyfx-release-badging.txt
+          grep -Fq "package: name='com.amyelitesuite' versionCode='${AMYFX_VERSION_CODE}' versionName='${AMYFX_VERSION_NAME}'" /tmp/amyfx-release-badging.txt
+          grep -Fq "application-label:'Amy FX'" /tmp/amyfx-release-badging.txt
+          "$signer" verify --verbose --print-certs "$apk" | tee /tmp/amyfx-release-signing.txt
+          expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          grep -Fq "Signer #1 certificate SHA-256 digest: $expected" /tmp/amyfx-release-signing.txt
           mkdir -p dist
-          cp "$apk" dist/AmyFX-${AMYFX_VERSION_NAME}.apk
+          cp "$apk" "dist/AmyFX-${AMYFX_VERSION_NAME}.apk"
+
       - uses: actions/upload-artifact@v4
         with:
           name: Amy-FX-v${{ github.event.inputs.versionName }}-signed-apk
