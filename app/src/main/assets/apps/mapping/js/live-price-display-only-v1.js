@@ -59,10 +59,9 @@
     const tick = validTick(event?.detail || {});
     if (!tick) return;
 
-    // Closed-candle Mapping must not consume live ticks. Handle the visual price
-    // here and stop the older runtime listener from rebuilding Mapping state.
-    event.stopImmediatePropagation();
-
+    // This listener only paints the price immediately. It deliberately allows
+    // the authoritative market-data listener to continue receiving the same
+    // event so reconnect timers and connection state are cleaned up correctly.
     window.__amyFxDisplayLastTickAt = tick.capturedAt;
     try {
       localStorage.setItem('last_ws_tick_at', String(tick.capturedAt));
@@ -89,7 +88,7 @@
   window.addEventListener('amyfx:twelvedata-price', handlePrice, true);
 
   window.AmyFXLivePriceDisplayOnly = Object.freeze({
-    version: '1.0.0',
+    version: '2.0.0',
     lastTickAt: () => Number(window.__amyFxDisplayLastTickAt || 0),
     updatePriceNodes
   });
