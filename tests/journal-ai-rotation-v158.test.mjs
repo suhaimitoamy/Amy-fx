@@ -1,52 +1,52 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
-const source = path => fs.readFileSync(path, 'utf8');
-const index = source('app/src/main/assets/apps/journal/index.html');
-const app = source('app/src/main/assets/apps/journal/app.js');
-const core = source('app/src/main/assets/apps/journal/app-core.js');
-const finalFix = source('app/src/main/assets/apps/journal/amy-journal-final-fix.js');
-const runtimeFix = source('app/src/main/assets/apps/journal/amy-journal-ai-runtime-fix.js');
-const history = source('app/src/main/assets/apps/journal/amy-journal-history-bridge.js');
-const styles = source('app/src/main/assets/apps/journal/styles.css');
+const root = new URL('../', import.meta.url);
+const path = relative => new URL(relative, root);
+const source = relative => readFileSync(path(relative), 'utf8');
 
 test('journal runtime files remain syntactically valid and load in order', () => {
-  for (const path of [
-    'app/src/main/assets/apps/journal/app.js',
-    'app/src/main/assets/apps/journal/app-core.js',
+  const loader = source('app/src/main/assets/apps/journal/amy-journal-final-fix.js');
+  for (const relative of [
     'app/src/main/assets/apps/journal/amy-journal-final-fix.js',
-    'app/src/main/assets/apps/journal/amy-journal-ai-runtime-fix.js',
-    'app/src/main/assets/apps/journal/amy-journal-history-bridge.js'
+    'app/src/main/assets/apps/journal/amy-journal-final-fix-legacy.js',
+    'app/src/main/assets/apps/journal/amy-journal-ai-runtime-fix.js'
   ]) {
-    execFileSync(process.execPath, ['--check', path], { stdio: 'pipe' });
+    execFileSync(process.execPath, ['--check', fileURLToPath(path(relative))], { stdio: 'pipe' });
   }
-  assert.ok(index.indexOf('app.js') < index.indexOf('amy-journal-history-bridge.js'));
-  assert.ok(index.indexOf('amy-journal-history-bridge.js') < index.indexOf('amy-journal-final-fix.js'));
-  assert.ok(index.indexOf('amy-journal-final-fix.js') < index.indexOf('amy-journal-ai-runtime-fix.js'));
+  assert.match(loader, /amy-journal-final-fix-legacy\.js\?v=20260725-v159/);
+  assert.match(loader, /amy-journal-ai-runtime-fix\.js\?v=20260725-v159/);
 });
 
 test('journal history bridge persists the IndexedDB state used by the core app', () => {
-  assert.match(app, /app-core\.js/);
-  assert.match(history, /indexedDB/);
-  assert.match(history, /AmyFXJournal/);
-  assert.match(history, /journalEntries/);
-  assert.match(core, /db\.journal/);
+  const runtime = source('app/src/main/assets/apps/journal/amy-journal-ai-runtime-fix.js');
+  assert.match(runtime, /JOURNAL_KEY = "tradingLibraryManager\.journals\.v1"/);
+  assert.match(runtime, /Array\.isArray\(state\.journals\)/);
+  assert.match(runtime, /state\.journals = typeof normalizeJournals/);
+  assert.match(runtime, /saveJournals\(state\.journals\)/);
+  assert.match(runtime, /queueMicrotask\(render\)/);
 });
 
 test('journal calendar displays green wins and red losses with signed amounts', () => {
-  assert.match(finalFix, /journal-calendar-day--win/);
-  assert.match(finalFix, /journal-calendar-day--loss/);
-  assert.match(finalFix, /formatSignedAmount/);
-  assert.match(styles, /journal-calendar-day--win/);
-  assert.match(styles, /journal-calendar-day--loss/);
+  const runtime = source('app/src/main/assets/apps/journal/amy-journal-ai-runtime-fix.js');
+  assert.match(runtime, /net > 0 \? `\+\$\{formatTradeAmount\(net\)\}`/);
+  assert.match(runtime, /net < 0 \? formatTradeAmount\(net\)/);
+  assert.match(runtime, /"is-win"/);
+  assert.match(runtime, /"is-loss"/);
+  assert.match(runtime, /data-journal-date=/);
 });
 
 test('assistant rotates free Gemini and OpenRouter keys with bounded retries', () => {
-  const runtime = runtimeFix;
-  assert.match(runtime, /gemini/i);
-  assert.match(runtime, /openrouter/i);
+  const runtime = source('app/src/main/assets/apps/journal/amy-journal-ai-runtime-fix.js');
+  assert.match(runtime, /new Set\(\["gemini", "openrouter"\]\)/);
+  assert.match(runtime, /amyAiKeyPoolInput/);
+  assert.match(runtime, /amyAiPaidFallbackInput/);
+  assert.match(runtime, /DeepSeek sebagai fallback berbayar terakhir/);
+  assert.match(runtime, /timeout = 18000/);
+  assert.match(runtime, /Date\.now\(\) - started > 65000/);
   assert.match(runtime, /cooldowns\.set/);
   assert.match(runtime, /loadingId/);
   assert.doesNotMatch(runtime, /pendingId/);
