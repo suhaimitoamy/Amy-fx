@@ -12,7 +12,7 @@ function assertSyntax(path) {
   assert.equal(result.status, 0, result.stderr || result.stdout);
 }
 
-test('Mapping keeps the latest closed candle authoritative without autonomous refresh', () => {
+test('Mapping keeps the latest closed candle authoritative while reporting provider freshness truthfully', () => {
   const path = 'app/src/main/assets/apps/mapping/js/mapping-runtime-repair-v3.js';
   const runtime = read(path);
   const index = read('app/src/main/assets/apps/mapping/index.html');
@@ -22,13 +22,19 @@ test('Mapping keeps the latest closed candle authoritative without autonomous re
   assert.match(runtime, /const snapshot = result\.mappingSnapshot/);
   assert.match(runtime, /latestClosedCandleClose/);
   assert.match(runtime, /sourceCandleTime/);
-  assert.match(runtime, /markCachedSeriesUsable/);
+  assert.match(runtime, /inspectCachedSeries/);
   assert.match(runtime, /sourceSignature/);
-  assert.match(runtime, /dataStale: false/);
+  assert.match(runtime, /providerFresh/);
+  assert.match(runtime, /providerDelayed/);
+  assert.match(runtime, /executionFresh/);
+  assert.match(runtime, /dataStale: !freshness\.analysisAvailable/);
+  assert.match(runtime, /CACHED_PROVIDER_DELAYED/);
   assert.match(runtime, /await runEngineAnalysis\(tf\)/);
   assert.match(runtime, /amyfx:candles-updated/);
   assert.match(runtime, /amyfx:mapping-refresh-request/);
-  assert.match(runtime, /version: '5\.0\.0'/);
+  assert.match(runtime, /version: '6\.0\.0'/);
+  assert.doesNotMatch(runtime, /setCandleFetchedAt\(tf, nowMs\)/);
+  assert.doesNotMatch(runtime, /dataStale:\s*false/);
   assert.doesNotMatch(runtime, /setInterval|visibilitychange|addEventListener\('focus'|addEventListener\('online'/);
 });
 
