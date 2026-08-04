@@ -52,8 +52,8 @@ test('production source identity is never behind the activated update manifest',
   const publishedCode = Number(updateManifest.latest_version_code);
   const publishedName = String(updateManifest.latest_version_name || '');
 
-  assert.equal(sourceName, '2.3.0');
-  assert.equal(sourceCode, 58);
+  assert.equal(sourceName, '2.3.1');
+  assert.equal(sourceCode, 59);
   assert.ok(sourceCode >= publishedCode, 'Production source must not be older than update.json');
   assert.ok(sourceCode - publishedCode <= 1, 'Pending source may be at most one version ahead of the active APK');
 
