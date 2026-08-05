@@ -2,8 +2,13 @@ import { state, TF, p2 } from './main.js';
 import { analyze } from './engine/ict-core.js';
 import { SUPPORTED_MAPPING_TIMEFRAMES } from './engine/mapping-timeframes.js';
 import {
+  analyzeTimeframeSafely,
+  timeframeSourceSignature
+} from './engine/timeframe-analysis-contract.js';
+import {
   candleFreshness,
   classifyBreak,
+  resolveBreakInfo,
   deriveBiasView,
   executionGuidance,
   filterActionableSetups,
@@ -67,6 +72,7 @@ function resultSignature(result) {
   const targets = (result?.activeLiquidityTargets || [])
     .map(item => `${item.type}:${Number(item.level).toFixed(2)}`)
     .join('|');
+  const breakInfo = resolveBreakInfo(result);
   return [
     result?.tf,
     result?.bsl,
@@ -74,7 +80,8 @@ function resultSignature(result) {
     result?.bestSetup?.type,
     result?.bestSetup?.status,
     result?.setups?.length,
-    result?.st?.last?.breakType,
+    breakInfo?.breakType,
+    breakInfo?.eventId || breakInfo?.id || '',
     targets
   ].join('~');
 }
@@ -104,13 +111,21 @@ function findDisclosure(label) {
 }
 
 function breakMarkup(result) {
-  const info = result?.st?.last;
+  const info = resolveBreakInfo(result);
   const classification = classifyBreak(info, result?.st?.trend || 'NEUTRAL');
+  const sourceState = result?.candleSourceState?.[result?.tf]
+    || state.candleSourceState?.[result?.tf]
+    || null;
   if (!info) {
-    return `<section class="card integrity-break"><div class="kicker">VALID BREAK INFO</div><h2>${classification.title}</h2><div class="break-reason">${classification.explanation}</div></section>`;
+    const delayed = sourceState?.delayed
+      ? `<div class="warn">Candle ${safeText(result?.tf || state.tf)} tertunda ${sourceState.lagBars} bar. Status hanya berlaku sampai candle terakhir yang tersedia.</div>`
+      : '';
+    return `<section class="card integrity-break"><div class="kicker">VALID BREAK INFO</div><h2>${classification.title}</h2>${delayed}<div class="break-reason">${classification.explanation}</div></section>`;
   }
   const displacement = info.hasDisplacement
-    ? classification.isConfirmed ? 'KUAT + TERKONFIRMASI' : 'KUAT, TETAPI BREAK BELUM SAH'
+    ? classification.isConfirmed
+      ? 'KUAT + TERKONFIRMASI'
+      : 'KUAT, TETAPI BREAK BELUM SAH'
     : 'TIDAK CUKUP KUAT';
   const attemptLabel = classification.state === 'SWEEP'
     ? `${classification.attempt} ATTEMPT / LIQUIDITY SWEEP`
@@ -127,6 +142,7 @@ function breakMarkup(result) {
       <div><small>Struktur terkonfirmasi</small><strong>${safeText(classification.confirmedTrend)}</strong></div>
       <div class="wide"><small>Displacement</small><strong>${safeText(displacement)} · body ratio ${p2(info.bodyRatio)}</strong></div>
     </div>
+    ${sourceState?.delayed ? `<div class="warn">Provider candle tertunda ${sourceState.lagBars} bar. Break ini bukan pembacaan candle market terbaru.</div>` : ''}
     <div class="break-reason"><b>Kesimpulan:</b><br>${safeText(classification.explanation)}</div>
   </section>`;
 }
@@ -149,10 +165,12 @@ function concept(result, name) {
 }
 
 function miniAnalysis(tf) {
-  const candles = state.candles?.[tf] || [];
-  if (candles.length < 30) return null;
-  try {
-    const result = analyze(candles, tf, {}, Number(state.price || 0), {
+  return analyzeTimeframeSafely({
+    timeframe: tf,
+    candles: state.candles?.[tf] || [],
+    analyze,
+    currentPrice: Number(state.price || 0),
+    htfCandles: {
       M1: state.candles?.M1,
       M5: state.candles?.M5,
       M15: state.candles?.M15,
@@ -161,11 +179,9 @@ function miniAnalysis(tf) {
       H4: state.candles?.H4,
       D1: state.candles?.D1,
       W1: state.candles?.W1
-    });
-    return result;
-  } catch (_) {
-    return null;
-  }
+    },
+    minimumCandles: 30
+  });
 }
 
 function roleAction(tf, result) {
@@ -188,17 +204,32 @@ function zoneMarkup(zone, price) {
 function mappingMarkup() {
   const timeframes = SUPPORTED_MAPPING_TIMEFRAMES;
   const rows = timeframes.map(tf => {
-    const result = miniAnalysis(tf);
-    if (!result) {
-      return `<article class="integrity-map-row"><div class="tf">${tf}</div><div class="empty">Data belum cukup</div></article>`;
+    const analysis = miniAnalysis(tf);
+    if (analysis.status !== 'READY') {
+      const detail = analysis.status === 'INSUFFICIENT_DATA'
+        ? analysis.candleCount === 0
+          ? 'Candle belum dimuat.'
+          : `Hanya ${analysis.candleCount} candle; minimal ${analysis.minimumCandles}.`
+        : `Analisis gagal meski ${analysis.candleCount} candle tersedia: ${analysis.error}`;
+      const sourceLabel = analysis.sourceState?.delayed
+        ? ` · provider tertinggal ${analysis.sourceState.lagBars} bar`
+        : '';
+      return `<article class="integrity-map-row"><div class="tf">${tf}</div><div class="empty">${safeText(detail + sourceLabel)}</div></article>`;
     }
+    const result = analysis.result;
     const bias = deriveBiasView(result);
     const action = roleAction(tf, result);
     const ob = parseZone(concept(result, 'OB'), 'OB');
     const fvg = parseZone(concept(result, 'FVG'), 'FVG');
-    const freshness = candleFreshness(qualityByInterval[TF[tf]] || state.candleMeta?.[TF[tf]], tf);
+    const freshness = candleFreshness(
+      qualityByInterval[TF[tf]] || state.candleMeta?.[TF[tf]],
+      tf
+    );
+    const sourceFreshness = analysis.sourceState?.delayed
+      ? { state: 'STALE', label: `TERTUNDA ${analysis.sourceState.lagBars} BAR` }
+      : freshness;
     return `<article class="integrity-map-row ${tf === state.tf ? 'execution' : ''}">
-      <div class="integrity-row-head"><strong class="tf">${tf}</strong><span class="role">${action.role}</span><span class="fresh ${freshness.state.toLowerCase()}">${freshness.label}</span></div>
+      <div class="integrity-row-head"><strong class="tf">${tf}</strong><span class="role">${action.role}</span><span class="fresh ${sourceFreshness.state.toLowerCase()}">${sourceFreshness.label}</span></div>
       <div class="integrity-bias-grid">
         <div><small>Struktur lokal</small><strong class="${bias.local.toLowerCase()}">${bias.local}</strong></div>
         <div><small>Bias HTF</small><strong class="${bias.htf.toLowerCase()}">${bias.htf}</strong></div>
@@ -211,18 +242,26 @@ function mappingMarkup() {
   }).join('');
 
   const activeQuality = qualityByInterval[TF[state.tf]] || state.candleMeta?.[TF[state.tf]];
+  const engineCount = Array.isArray(state.candles?.[state.tf])
+    ? state.candles[state.tf].filter(candle => candle?.isClosed !== false).length
+    : 0;
+  const sourceState = miniAnalysis(state.tf).sourceState;
   const qualityNote = activeQuality
-    ? `${state.tf}: ${activeQuality.cleanCount}/${activeQuality.rawCount} candle dipakai${activeQuality.frozenRemoved ? ` · ${activeQuality.frozenRemoved} candle beku dibuang` : ''}${activeQuality.duplicates ? ` · ${activeQuality.duplicates} duplikat dibuang` : ''}.`
-    : 'Metadata kualitas candle belum tersedia; mapping memakai cache saat ini.';
+    ? `${state.tf}: feed ${activeQuality.cleanCount}/${activeQuality.rawCount}; engine menerima ${engineCount} candle tertutup${activeQuality.frozenRemoved ? ` · ${activeQuality.frozenRemoved} candle beku dibuang` : ''}${activeQuality.duplicates ? ` · ${activeQuality.duplicates} duplikat dibuang` : ''}${sourceState?.delayed ? ` · provider tertinggal ${sourceState.lagBars} bar` : ''}.`
+    : `${state.tf}: engine menerima ${engineCount} candle tertutup${sourceState?.delayed ? ` · provider tertinggal ${sourceState.lagBars} bar` : ''}.`;
 
   return `<section class="card integrity-mapping"><div class="kicker">ALL-TIMEFRAME MAPPING</div><h2>Struktur Lokal · Bias HTF · Status Closed Candle</h2><p class="integrity-quality-note">${safeText(qualityNote)}</p><div class="integrity-map-list">${rows}</div></section>`;
 }
 
 function explanationMarkup(result) {
   const bias = deriveBiasView(result);
-  const breakState = classifyBreak(result?.st?.last, bias.local);
+  const breakState = classifyBreak(resolveBreakInfo(result), bias.local);
   const active = filterActionableSetups(result?.setups || [], Date.now(), state.price);
-  const guidance = executionGuidance(bias.htf, result?.premiumDiscountZone || result?.zone, active.length > 0);
+  const guidance = executionGuidance(
+    bias.htf,
+    result?.premiumDiscountZone || result?.zone,
+    active.length > 0
+  );
   const target = result?.liquidityHierarchy?.drawTarget;
   const ob = parseZone(concept(result, 'OB'), 'OB');
   const fvg = parseZone(concept(result, 'FVG'), 'FVG');
@@ -265,20 +304,33 @@ function patchDisclosure(details, markup) {
 function patchHeaderFreshness() {
   const connection = document.getElementById('conn');
   if (!connection) return;
-  const freshness = candleFreshness(qualityByInterval[TF[state.tf]] || state.candleMeta?.[TF[state.tf]], state.tf);
+  const sourceState = miniAnalysis(state.tf).sourceState;
+  const freshness = sourceState?.delayed
+    ? { state: 'STALE', label: `TERTUNDA ${sourceState.lagBars} BAR` }
+    : candleFreshness(
+      qualityByInterval[TF[state.tf]] || state.candleMeta?.[TF[state.tf]],
+      state.tf
+    );
   connection.textContent = '●';
   connection.classList.toggle('stale', freshness.state === 'STALE');
-  connection.setAttribute('aria-label', `${state.conn} · Mapping ${state.tf} ${freshness.state}`);
+  connection.setAttribute(
+    'aria-label',
+    `${state.conn} · Mapping ${state.tf} ${freshness.label || freshness.state}`
+  );
 }
 
 function uiSignature() {
   const result = state.result;
+  const candleSources = SUPPORTED_MAPPING_TIMEFRAMES
+    .map(tf => timeframeSourceSignature(tf, state.candles?.[tf] || []))
+    .join('|');
   return [
     resultSignature(result),
     Number(state.price || 0).toFixed(2),
     state.tab,
     document.querySelectorAll('details.disclosure').length,
-    JSON.stringify(qualityByInterval)
+    JSON.stringify(qualityByInterval),
+    candleSources
   ].join('::');
 }
 

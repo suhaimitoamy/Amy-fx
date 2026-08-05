@@ -8,6 +8,10 @@ import {
   timeframeDurationMs
 } from '../engine/mapping-timeframes.js';
 import { aggregateClosedCandles } from './closed-candle-aggregation.js';
+import {
+  assertCurrentClosedCandleSource,
+  inspectClosedCandleSource
+} from '../engine/closed-candle-source-state.js';
 import { causalEntryLifecycleContract } from '../engine/concept-entry-map-v3.js';
 import { buildMappingSnapshot } from '../engine/mapping-snapshot.js';
 import { resolveMappingBias } from '../engine/structural-bias.js';
@@ -91,6 +95,8 @@ export function getCandleFetchedAt(tf) {
 
 export function isCandleStale(tf) {
   const norm = normalizeTfKey(tf);
+  const sourceState = inspectClosedCandleSource(norm, state.candles?.[norm] || []);
+  if (sourceState.blockingDelayed) return true;
   const fetched = getCandleFetchedAt(tf);
   const ageMinutes = (Date.now() - fetched) / (1000 * 60);
 
@@ -920,8 +926,15 @@ function throwIfAborted(signal) {
 export async function fetchTf(tf, { signal } = {}) {
   throwIfAborted(signal);
   try {
-    const params = new URLSearchParams({ symbol: 'XAU/USD', interval: TF[tf], outputsize: '300' });
-    const response = await fetch(`${PROXY_URL}?${params.toString()}`, { cache: 'no-store', signal });
+    const params = new URLSearchParams({
+      symbol: 'XAU/USD',
+      interval: TF[tf],
+      outputsize: '300'
+    });
+    const response = await fetch(`${PROXY_URL}?${params.toString()}`, {
+      cache: 'no-store',
+      signal
+    });
     if (!response.ok) throw new Error(`Market HTTP ${response.status}`);
     const data = await response.json();
     throwIfAborted(signal);
@@ -953,8 +966,13 @@ export async function fetchTf(tf, { signal } = {}) {
     );
 
     if (!candles.length) throw new Error(`Candle ${tf} kosong`);
+    const sourceState = assertCurrentClosedCandleSource(tf, candles);
     throwIfAborted(signal);
     state.candles[tf] = candles;
+    state.candleSourceState = {
+      ...(state.candleSourceState || {}),
+      [tf]: sourceState
+    };
     setCandleFetchedAt(tf, Date.now());
     return candles;
   } catch (err) {
@@ -971,7 +989,12 @@ export async function fetchTf(tf, { signal } = {}) {
         closeCutoff: Date.now() - 10_000
       });
       if (candles.length) {
+        const sourceState = assertCurrentClosedCandleSource(tf, candles);
         state.candles[tf] = candles;
+        state.candleSourceState = {
+          ...(state.candleSourceState || {}),
+          [tf]: sourceState
+        };
         setCandleFetchedAt(tf, Date.now());
         return candles;
       }
@@ -1131,7 +1154,11 @@ async function performAnalysis(tf, requestId, signal) {
     if (!result?.st) throw new Error('Hasil analisis tidak valid');
     result = applyRegimeRouter(result, htfBiases);
     result.dataDegraded = refreshFailures.size > 0;
-    result.dataWarnings = [...refreshFailures].filter(item => item !== tf);
+    result.dataWarnings = [...refreshFailures];
+    result.candleSourceState = {
+      ...(state.candleSourceState || {}),
+      [tf]: inspectClosedCandleSource(tf, state.candles[tf] || [])
+    };
     if (result.dataDegraded) {
       result.dataStatus = 'PARTIAL';
       result.dataStatusText = result.dataWarnings.length
