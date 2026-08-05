@@ -1,6 +1,6 @@
-// Amy FX Preview personal release identity — Trading Desk UI optimization.
+// Amy FX Preview personal release identity — Trading Desk home visibility repair.
 (function () {
-  const VERSION = Object.freeze({ name: '2.0.0-preview.311', code: 940311 });
+  const VERSION = Object.freeze({ name: '2.0.0-preview.312', code: 940312 });
   window.AmyFXAppVersion = VERSION;
   window.AmyFXUpdateManifestUrl = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json';
   function displayVersionName(name) {
