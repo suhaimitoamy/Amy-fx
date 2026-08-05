@@ -19,6 +19,8 @@ test('Trading Desk presentation loads after the legacy design contract', () => {
 
   assert.match(home, /amyfx-trading-desk-v1\.css/);
   assert.ok(home.indexOf('amyfx-trading-desk-v1.css') > home.indexOf('amyfx-components.css'));
+  assert.match(home, /amyfx-home-visibility-fix-v1\.css/);
+  assert.ok(home.indexOf('amyfx-home-visibility-fix-v1.css') > home.indexOf('amyfx-trading-desk-v1.css'));
   assert.match(home, /amyfx-trading-desk-home-v1\.js/);
   assert.ok(home.indexOf('amyfx-trading-desk-home-v1.js') > home.indexOf('amyfx-blueprint-hotfix-v1.js'));
 
@@ -49,6 +51,18 @@ test('Trading Desk uses calm solid surfaces and keeps state colors semantic', ()
   assert.match(mapping, /\.decision-main\.wait/);
 });
 
+test('home animation fallback cannot leave snapshot and module list invisible', () => {
+  const fix = read('apps/shared/amyfx-home-visibility-fix-v1.css');
+
+  assert.match(fix, /body\.amyfx-module--home \.slide-up/);
+  assert.match(fix, /body\.amyfx-module--home \.fade-in/);
+  assert.match(fix, /opacity:\s*1\s*!important/);
+  assert.match(fix, /transform:\s*none\s*!important/);
+  assert.match(fix, /visibility:\s*visible\s*!important/);
+  assert.match(fix, /\.home-hero/);
+  assert.match(fix, /\.quick-grid/);
+});
+
 test('home snapshot is derived from existing local state without polling or fabricated market values', () => {
   const homeUi = read('apps/shared/amyfx-trading-desk-home-v1.js');
 
@@ -76,19 +90,19 @@ test('Mapping UI helper changes presentation copy only and does not touch engine
   assert.doesNotMatch(mappingUi, /setupExecution\s*=/);
 });
 
-test('Preview 311 identity remains consistent before and after CI release activation', () => {
+test('Preview 312 identity remains consistent before and after CI release activation', () => {
   const version = read('app-version.js');
   const gradle = readFileSync(new URL('../app/build.gradle.kts', import.meta.url), 'utf8');
   const manifest = JSON.parse(readFileSync(new URL('../preview-update.json', import.meta.url), 'utf8'));
 
-  assert.match(version, /2\.0\.0-preview\.311/);
-  assert.match(version, /code:\s*940311/);
-  assert.match(gradle, /940311/);
-  assert.match(gradle, /2\.0\.0-preview\.311/);
+  assert.match(version, /2\.0\.0-preview\.312/);
+  assert.match(version, /code:\s*940312/);
+  assert.match(gradle, /940312/);
+  assert.match(gradle, /2\.0\.0-preview\.312/);
 
   const publishedCode = Number(manifest.latest_version_code);
-  assert.ok(publishedCode <= 940311);
-  if (publishedCode === 940311) {
-    assert.equal(manifest.latest_version_name, '2.0.0-preview.311');
+  assert.ok(publishedCode <= 940312);
+  if (publishedCode === 940312) {
+    assert.equal(manifest.latest_version_name, '2.0.0-preview.312');
   }
 });
