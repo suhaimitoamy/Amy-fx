@@ -32,6 +32,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           cat > app/src/main/assets/apps/mapping/js/engine/closed-candle-source-state.js <<'EOF'
           import {
             expectedClosedCandleOpenTime,
@@ -45,10 +46,14 @@ jobs:
             M15: 0,
             M30: 0,
             H1: 0,
-            H4: 0,
+            H4: 1,
             D1: 2,
             W1: 1
           });
+
+          const BLOCKING_DELAY_TIMEFRAMES = new Set([
+            'M1', 'M5', 'M15', 'M30', 'H1'
+          ]);
 
           function timestampSeconds(value) {
             const numeric = Number(value);
@@ -112,11 +117,14 @@ jobs:
               available
               && (marketClosed || !expectedOpen || lagBars <= allowance)
             );
+            const delayed = available && !current;
+            const blockingDelayed = delayed && BLOCKING_DELAY_TIMEFRAMES.has(tf);
             return {
               timeframe: tf,
               available,
               current,
-              delayed: available && !current,
+              delayed,
+              blockingDelayed,
               marketClosed,
               count: values.length,
               latest,
@@ -138,7 +146,7 @@ jobs:
             if (!state.available) {
               throw new Error(`Candle ${state.timeframe} kosong setelah validasi closed-candle.`);
             }
-            if (state.delayed) {
+            if (state.blockingDelayed) {
               throw new Error(
                 `Candle ${state.timeframe} tertinggal ${state.lagBars} bar; `
                 + `latest=${state.latestOpen}, expected=${state.expectedOpen}.`
@@ -148,7 +156,8 @@ jobs:
           }
 
           export const CLOSED_CANDLE_SOURCE_POLICY = Object.freeze({
-            allowedLagBars: ALLOWED_LAG_BARS
+            allowedLagBars: ALLOWED_LAG_BARS,
+            blockingDelayTimeframes: Object.freeze([...BLOCKING_DELAY_TIMEFRAMES])
           });
           EOF
 
@@ -164,10 +173,11 @@ jobs:
             analyze,
             currentPrice = null,
             htfCandles = {},
-            minimumCandles = 30
+            minimumCandles = 30,
+            nowMs = Date.now()
           }) {
             const values = closedSourceCandles(candles);
-            const sourceState = inspectClosedCandleSource(timeframe, values);
+            const sourceState = inspectClosedCandleSource(timeframe, values, { nowMs });
             if (values.length < minimumCandles) {
               return {
                 status: 'INSUFFICIENT_DATA',
@@ -231,7 +241,7 @@ jobs:
               file = Path(path)
               text = file.read_text(encoding='utf-8')
               if old not in text:
-                  raise SystemExit(f'Expected patch anchor not found in {path}: {old[:100]!r}')
+                  raise SystemExit(f'Expected patch anchor not found in {path}: {old[:140]!r}')
               file.write_text(text.replace(old, new, 1), encoding='utf-8')
 
           market = 'app/src/main/assets/apps/mapping/js/api/market-data.js'
@@ -255,7 +265,7 @@ jobs:
               """export function isCandleStale(tf) {
             const norm = normalizeTfKey(tf);
             const sourceState = inspectClosedCandleSource(norm, state.candles?.[norm] || []);
-            if (sourceState.available && sourceState.delayed) return true;
+            if (sourceState.blockingDelayed) return true;
             const fetched = getCandleFetchedAt(tf);
             const ageMinutes = (Date.now() - fetched) / (1000 * 60);
 
@@ -297,11 +307,20 @@ jobs:
                 return candles;
               }"""
           )
+          replace_once(
+              market,
+              """    result.dataDegraded = refreshFailures.size > 0;
+            result.dataWarnings = [...refreshFailures].filter(item => item !== tf);""",
+              """    result.dataDegraded = refreshFailures.size > 0;
+            result.dataWarnings = [...refreshFailures];
+            result.candleSourceState = {
+              ...(state.candleSourceState || {}),
+              [tf]: inspectClosedCandleSource(tf, state.candles[tf] || [])
+            };"""
+          )
 
           core = 'app/src/main/assets/apps/mapping/js/integrity/mapping-integrity-core.js'
-          replace_once(
-              core,
-              """export function classifyBreak(breakInfo, confirmedTrend = 'NEUTRAL') {
+          old_classify = """export function classifyBreak(breakInfo, confirmedTrend = 'NEUTRAL') {
             if (!breakInfo) {
               return { state: 'WAIT', title: 'BELUM ADA BREAK VALID', attempt: 'NONE', confirmedTrend, isConfirmed: false, explanation: 'Belum ada candle close yang mengonfirmasi BOS atau CHOCH.' };
             }
@@ -314,13 +333,15 @@ jobs:
             if (sweep) return { state: 'SWEEP', title: `${liquidity} SWEEP — BELUM ADA BOS`, attempt, confirmedTrend, isConfirmed: false, explanation: `Harga menyapu ${liquidity} dengan wick, tetapi candle close kembali ke dalam struktur sehingga sweep tidak mengesahkan BOS.` };
             if (valid) return { state: 'CONFIRMED', title: `VALID ${breakInfo.kind || 'STRUCTURE BREAK'} ${attempt}`, attempt, confirmedTrend: attempt, isConfirmed: true, explanation: `Candle sudah close melewati level struktur${breakInfo.hasDisplacement ? ' dan didukung displacement' : ''}.` };
             return { state: 'WAIT', title: 'BELUM ADA BREAK VALID', attempt, confirmedTrend, isConfirmed: false, explanation: 'Belum ada BOS atau CHOCH yang memenuhi syarat body close.' };
-          }""",
-              """function normalizedBreakInfo(breakInfo) {
+          }"""
+          new_classify = """function normalizedBreakInfo(breakInfo) {
             if (!breakInfo || typeof breakInfo !== 'object') return null;
             const status = String(breakInfo.status || breakInfo.liveStatus || '').toUpperCase();
             const rawKind = String(breakInfo.kind || '').toUpperCase();
             const concept = String(breakInfo.concept || breakInfo.kind || 'STRUCTURE BREAK').toUpperCase();
-            const direction = String(breakInfo.dir || breakInfo.direction || breakInfo.brokenSide || '').toUpperCase();
+            const direction = String(
+              breakInfo.dir || breakInfo.direction || breakInfo.brokenSide || ''
+            ).toUpperCase();
             const failed = Boolean(
               breakInfo.failed
               || breakInfo.breakType === 'BREAK_FAILED'
@@ -392,11 +413,46 @@ jobs:
             const failed = info.failed;
             const sweep = info.sweepOnly;
             const valid = info.valid;
-            const attempt = info.dir === 'BEARISH' ? 'BEARISH' : info.dir === 'BULLISH' ? 'BULLISH' : 'NONE';
-            const liquidity = attempt === 'BEARISH' ? 'SSL' : attempt === 'BULLISH' ? 'BSL' : 'LIQUIDITY';
-            if (failed) return { state: 'FAILED', title: 'BREAK GAGAL DIPERTAHANKAN', attempt, confirmedTrend, isConfirmed: false, explanation: 'Break sebelumnya gagal dipertahankan karena harga kembali close melewati level konfirmasi.' };
-            if (sweep) return { state: 'SWEEP', title: `${liquidity} SWEEP — BELUM ADA BOS`, attempt, confirmedTrend, isConfirmed: false, explanation: `Harga menyapu ${liquidity} dengan wick, tetapi candle close kembali ke dalam struktur sehingga sweep tidak mengesahkan BOS.` };
-            if (valid) return { state: 'CONFIRMED', title: `VALID ${info.kind || 'STRUCTURE BREAK'} ${attempt}`, attempt, confirmedTrend: attempt, isConfirmed: true, explanation: `Candle sudah close melewati level struktur${info.hasDisplacement ? ' dan didukung displacement' : ''}.` };
+            const attempt = info.dir === 'BEARISH'
+              ? 'BEARISH'
+              : info.dir === 'BULLISH'
+                ? 'BULLISH'
+                : 'NONE';
+            const liquidity = attempt === 'BEARISH'
+              ? 'SSL'
+              : attempt === 'BULLISH'
+                ? 'BSL'
+                : 'LIQUIDITY';
+            if (failed) {
+              return {
+                state: 'FAILED',
+                title: 'BREAK GAGAL DIPERTAHANKAN',
+                attempt,
+                confirmedTrend,
+                isConfirmed: false,
+                explanation: 'Break sebelumnya gagal dipertahankan karena harga kembali close melewati level konfirmasi.'
+              };
+            }
+            if (sweep) {
+              return {
+                state: 'SWEEP',
+                title: `${liquidity} SWEEP — BELUM ADA BOS`,
+                attempt,
+                confirmedTrend,
+                isConfirmed: false,
+                explanation: `Harga menyapu ${liquidity} dengan wick, tetapi candle close kembali ke dalam struktur sehingga sweep tidak mengesahkan BOS.`
+              };
+            }
+            if (valid) {
+              return {
+                state: 'CONFIRMED',
+                title: `VALID ${info.kind || 'STRUCTURE BREAK'} ${attempt}`,
+                attempt,
+                confirmedTrend: attempt,
+                isConfirmed: true,
+                explanation: `Candle sudah close melewati level struktur${info.hasDisplacement ? ' dan didukung displacement' : ''}.`
+              };
+            }
             return {
               state: 'CANDIDATE',
               title: `BREAK CANDIDATE ${attempt}`,
@@ -406,25 +462,27 @@ jobs:
               explanation: 'Candle telah menguji atau melewati level, tetapi penetrasi ATR atau displacement belum memenuhi syarat break valid.'
             };
           }"""
-          )
+          replace_once(core, old_classify, new_classify)
 
           integrity = 'app/src/main/assets/apps/mapping/js/mapping-integrity.js'
           replace_once(
               integrity,
-              """  classifyBreak,
+              """  candleFreshness,
+            classifyBreak,
             deriveBiasView,""",
-              """  classifyBreak,
+              """  candleFreshness,
+            classifyBreak,
             resolveBreakInfo,
             deriveBiasView,"""
           )
           replace_once(
               integrity,
-              """import { SUPPORTED_MAPPING_TIMEFRAMES } from './engine/mapping-timeframes.js';""",
-              """import { SUPPORTED_MAPPING_TIMEFRAMES } from './engine/mapping-timeframes.js';
-          import {
-            analyzeTimeframeSafely,
-            timeframeSourceSignature
-          } from './engine/timeframe-analysis-contract.js';"""
+              "import { SUPPORTED_MAPPING_TIMEFRAMES } from './engine/mapping-timeframes.js';",
+              "import { SUPPORTED_MAPPING_TIMEFRAMES } from './engine/mapping-timeframes.js';\n"
+              "import {\n"
+              "  analyzeTimeframeSafely,\n"
+              "  timeframeSourceSignature\n"
+              "} from './engine/timeframe-analysis-contract.js';"
           )
           replace_once(
               integrity,
@@ -441,7 +499,30 @@ jobs:
             const classification = classifyBreak(info, result?.st?.trend || 'NEUTRAL');""",
               """function breakMarkup(result) {
             const info = resolveBreakInfo(result);
-            const classification = classifyBreak(info, result?.st?.trend || 'NEUTRAL');"""
+            const classification = classifyBreak(info, result?.st?.trend || 'NEUTRAL');
+            const sourceState = result?.candleSourceState?.[result?.tf]
+              || state.candleSourceState?.[result?.tf]
+              || null;"""
+          )
+          replace_once(
+              integrity,
+              """  if (!info) {
+            return `<section class="card integrity-break"><div class="kicker">VALID BREAK INFO</div><h2>${classification.title}</h2><div class="break-reason">${classification.explanation}</div></section>`;
+            }""",
+              """  if (!info) {
+            const delayed = sourceState?.delayed
+              ? `<div class="warn">Candle ${safeText(result?.tf || state.tf)} tertunda ${sourceState.lagBars} bar. Status hanya berlaku sampai candle terakhir yang tersedia.</div>`
+              : '';
+            return `<section class="card integrity-break"><div class="kicker">VALID BREAK INFO</div><h2>${classification.title}</h2>${delayed}<div class="break-reason">${classification.explanation}</div></section>`;
+            }"""
+          )
+          replace_once(
+              integrity,
+              """    <div class="break-reason"><b>Kesimpulan:</b><br>${safeText(classification.explanation)}</div>
+            </section>`;""",
+              """    ${sourceState?.delayed ? `<div class="warn">Provider candle tertunda ${sourceState.lagBars} bar. Break ini bukan pembacaan candle market terbaru.</div>` : ''}
+            <div class="break-reason"><b>Kesimpulan:</b><br>${safeText(classification.explanation)}</div>
+            </section>`;"""
           )
           replace_once(
               integrity,
@@ -521,8 +602,8 @@ jobs:
           )
           replace_once(
               integrity,
-              """  const breakState = classifyBreak(result?.st?.last, bias.local);""",
-              """  const breakState = classifyBreak(resolveBreakInfo(result), bias.local);"""
+              "  const breakState = classifyBreak(result?.st?.last, bias.local);",
+              "  const breakState = classifyBreak(resolveBreakInfo(result), bias.local);"
           )
           replace_once(
               integrity,
@@ -555,9 +636,9 @@ jobs:
           freshness = 'app/src/main/assets/apps/mapping/js/closed-candle-freshness-adapter-v1.js'
           replace_once(
               freshness,
-              """import { state, p2 } from './main.js';""",
-              """import { state, p2 } from './main.js';
-          import { inspectClosedCandleSource } from './engine/closed-candle-source-state.js';"""
+              "import { state, p2 } from './main.js';",
+              "import { state, p2 } from './main.js';\n"
+              "import { inspectClosedCandleSource } from './engine/closed-candle-source-state.js';"
           )
           replace_once(
               freshness,
@@ -568,7 +649,10 @@ jobs:
                 return {
                   sourceTf: timeframe,
                   candle,
-                  sourceState: inspectClosedCandleSource(timeframe, state.candles?.[timeframe] || [])
+                  sourceState: inspectClosedCandleSource(
+                    timeframe,
+                    state.candles?.[timeframe] || []
+                  )
                 };
               }
             }
@@ -581,8 +665,8 @@ jobs:
           )
           replace_once(
               freshness,
-              """  const { sourceTf, candle } = sourceContext(snapshot);""",
-              """  const { sourceTf, candle, sourceState } = sourceContext(snapshot);"""
+              "  const { sourceTf, candle } = sourceContext(snapshot);",
+              "  const { sourceTf, candle, sourceState } = sourceContext(snapshot);"
           )
           replace_once(
               freshness,
@@ -623,28 +707,18 @@ jobs:
             node.classList.toggle('live', context.sourceCurrent);
             node.classList.toggle('waiting', !context.sourceCurrent);"""
           )
-          replace_once(
-              freshness,
-              """  const source = context.hasClosedCandle
+          old_source = """  const source = context.hasClosedCandle
             ? `Basis candle terakhir tertutup · ${context.sourceTf} · ${context.sourceText}`
-            : 'Belum ada candle tertutup yang dapat digunakan.';""",
-              """  const source = context.sourceDelayed
+            : 'Belum ada candle tertutup yang dapat digunakan.';"""
+          new_source = """  const source = context.sourceDelayed
             ? `Basis candle terakhir tertutup · ${context.sourceTf} · ${context.sourceText} · provider tertinggal ${context.sourceState?.lagBars || '?'} bar`
             : context.hasClosedCandle
               ? `Basis candle terakhir tertutup · ${context.sourceTf} · ${context.sourceText}`
               : 'Belum ada candle tertutup yang dapat digunakan.';"""
-          )
-          replace_once(
-              freshness,
-              """  const source = context.hasClosedCandle
-            ? `Basis candle terakhir tertutup · ${context.sourceTf} · ${context.sourceText}`
-            : 'Belum ada candle tertutup yang dapat digunakan.';""",
-              """  const source = context.sourceDelayed
-            ? `Basis candle terakhir tertutup · ${context.sourceTf} · ${context.sourceText} · provider tertinggal ${context.sourceState?.lagBars || '?'} bar`
-            : context.hasClosedCandle
-              ? `Basis candle terakhir tertutup · ${context.sourceTf} · ${context.sourceText}`
-              : 'Belum ada candle tertutup yang dapat digunakan.';"""
-          )
+          text = Path(freshness).read_text(encoding='utf-8')
+          if text.count(old_source) != 2:
+              raise SystemExit(f'Expected two freshness source anchors, found {text.count(old_source)}')
+          Path(freshness).write_text(text.replace(old_source, new_source), encoding='utf-8')
           replace_once(
               freshness,
               """    context.invalidation,
@@ -679,19 +753,17 @@ jobs:
             });
           }
 
-          test('300 stale candles are not treated as current merely because fetch completed now', () => {
+          test('300 stale candles are not current merely because fetch completed now', () => {
             const nowMs = Date.UTC(2026, 7, 5, 5, 5, 0);
             const expected = 1785905100;
-            const state = inspectClosedCandleSource('M15', candles({
-              latestOpen: expected - 8 * 900
-            }), { nowMs });
+            const values = candles({ latestOpen: expected - 8 * 900 });
+            const state = inspectClosedCandleSource('M15', values, { nowMs });
             assert.equal(state.count, 300);
             assert.equal(state.delayed, true);
+            assert.equal(state.blockingDelayed, true);
             assert.equal(state.lagBars, 8);
             assert.throws(
-              () => assertCurrentClosedCandleSource('M15', candles({
-                latestOpen: expected - 8 * 900
-              }), { nowMs }),
+              () => assertCurrentClosedCandleSource('M15', values, { nowMs }),
               /tertinggal 8 bar/
             );
           });
@@ -699,9 +771,11 @@ jobs:
           test('current M15 closed candle is accepted', () => {
             const nowMs = Date.UTC(2026, 7, 5, 5, 5, 0);
             const expected = 1785905100;
-            const state = inspectClosedCandleSource('M15', candles({
-              latestOpen: expected
-            }), { nowMs });
+            const state = inspectClosedCandleSource(
+              'M15',
+              candles({ latestOpen: expected }),
+              { nowMs }
+            );
             assert.equal(state.current, true);
             assert.equal(state.delayed, false);
             assert.equal(state.lagBars, 0);
@@ -733,7 +807,7 @@ jobs:
             });
           }
 
-          test('modern confirmed structure schema resolves as a valid break', () => {
+          test('modern confirmed structure schema resolves as valid break', () => {
             const result = {
               st: {
                 trend: 'BULLISH',
@@ -768,7 +842,7 @@ jobs:
             assert.doesNotMatch(classification.explanation, /Belum ada candle close/);
           });
 
-          test('analysis exception with 300 candles is ANALYSIS_ERROR, not insufficient data', () => {
+          test('analysis exception with 300 candles is ANALYSIS_ERROR', () => {
             const state = analyzeTimeframeSafely({
               timeframe: 'M15',
               candles: series(),
@@ -776,14 +850,15 @@ jobs:
                 throw new Error('synthetic engine failure');
               },
               currentPrice: 4135,
-              minimumCandles: 30
+              minimumCandles: 30,
+              nowMs: Date.UTC(2026, 7, 5, 5, 5, 0)
             });
             assert.equal(state.candleCount, 300);
             assert.equal(state.status, 'ANALYSIS_ERROR');
             assert.match(state.error, /synthetic engine failure/);
           });
 
-          test('300 candles with successful analyzer produce READY state', () => {
+          test('300 candles with successful analyzer produce READY', () => {
             const state = analyzeTimeframeSafely({
               timeframe: 'M15',
               candles: series(),
@@ -791,7 +866,8 @@ jobs:
                 return { tf, count: values.length, st: { trend: 'BULLISH' } };
               },
               currentPrice: 4135,
-              minimumCandles: 30
+              minimumCandles: 30,
+              nowMs: Date.UTC(2026, 7, 5, 5, 5, 0)
             });
             assert.equal(state.status, 'READY');
             assert.equal(state.result.count, 300);
@@ -817,7 +893,11 @@ jobs:
           node --check app/src/main/assets/apps/mapping/js/integrity/mapping-integrity-core.js
           node --check app/src/main/assets/apps/mapping/js/mapping-integrity.js
           node --check app/src/main/assets/apps/mapping/js/closed-candle-freshness-adapter-v1.js
-          node --test tests/closed-candle-source-state.test.mjs tests/mapping-break-and-timeframe-truth.test.mjs tests/bos-mss.test.mjs tests/closed-candle-aggregation.test.mjs
+          node --test \
+            tests/closed-candle-source-state.test.mjs \
+            tests/mapping-break-and-timeframe-truth.test.mjs \
+            tests/bos-mss.test.mjs \
+            tests/closed-candle-aggregation.test.mjs
 
       - name: Run full JavaScript regression
         run: timeout 25m npm test
@@ -840,7 +920,8 @@ jobs:
         run: |
           set -euo pipefail
           chmod +x gradlew
-          ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --stacktrace --no-daemon --no-configuration-cache
+          ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug \
+            --stacktrace --no-daemon --no-configuration-cache
 
       - name: Commit validated Preview repair
         shell: bash
