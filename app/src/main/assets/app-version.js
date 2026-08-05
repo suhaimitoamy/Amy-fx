@@ -1,6 +1,6 @@
-// Amy FX Preview 314 — validated mapping context enhancements; execution authority remains setup-only.
+// Amy FX Preview 315 — truthful break detection and closed-candle source status.
 (function () {
-  const VERSION = Object.freeze({ name: '2.0.0-preview.314', code: 940314 });
+  const VERSION = Object.freeze({ name: '2.0.0-preview.315', code: 940315 });
   window.AmyFXAppVersion = VERSION;
   window.AmyFXUpdateManifestUrl = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json';
   function displayVersionName(name) {
