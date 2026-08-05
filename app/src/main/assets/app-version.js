@@ -1,4 +1,4 @@
-// Amy FX Preview personal rollback release — full source restored to Preview 310.
+// Amy FX Preview rollback build — application tree restored to immutable Preview 310.
 (function () {
   const VERSION = Object.freeze({ name: '2.0.0-preview.313', code: 940313 });
   window.AmyFXAppVersion = VERSION;
