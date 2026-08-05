@@ -1,6 +1,6 @@
-// Amy FX Preview rollback build — application tree restored to immutable Preview 310.
+// Amy FX Preview mapping context enhancements build — execution authority remains setup-only.
 (function () {
-  const VERSION = Object.freeze({ name: '2.0.0-preview.313', code: 940313 });
+  const VERSION = Object.freeze({ name: '2.0.0-preview.314', code: 940314 });
   window.AmyFXAppVersion = VERSION;
   window.AmyFXUpdateManifestUrl = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json';
   function displayVersionName(name) {
