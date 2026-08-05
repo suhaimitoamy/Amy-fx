@@ -1,6 +1,6 @@
-// Amy FX Preview personal release identity — Analysis render stability and unified live-price display.
+// Amy FX Preview personal rollback release — full source restored to Preview 310.
 (function () {
-  const VERSION = Object.freeze({ name: '2.0.0-preview.310', code: 940310 });
+  const VERSION = Object.freeze({ name: '2.0.0-preview.313', code: 940313 });
   window.AmyFXAppVersion = VERSION;
   window.AmyFXUpdateManifestUrl = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json';
   function displayVersionName(name) {
