@@ -1,0 +1,19 @@
+/* Amy FX Trading Desk home visibility repair.
+ * Legacy .slide-up starts at opacity: 0. Trading Desk disables the animation,
+ * so Android/WebView configurations with animations disabled must receive the
+ * final visible state explicitly.
+ */
+body.amyfx-module--home .slide-up,
+body.amyfx-module--home .fade-in {
+  opacity: 1 !important;
+  transform: none !important;
+  animation: none !important;
+  visibility: visible !important;
+}
+
+body.amyfx-module--home .home-hero,
+body.amyfx-module--home .quick-grid {
+  opacity: 1 !important;
+  transform: none !important;
+  visibility: visible !important;
+}
