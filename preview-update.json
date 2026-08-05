@@ -1,28 +1,28 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 940313,
-  "latest_version_name": "2.0.0-preview.313",
-  "versionCode": 940313,
-  "version": "2.0.0-preview.313",
+  "latest_version_code": 940314,
+  "latest_version_name": "2.0.0-preview.314",
+  "versionCode": 940314,
+  "version": "2.0.0-preview.314",
   "releaseDate": "2026-08-05",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.313/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.313/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.314/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.314/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Seluruh tampilan dan source Amy FX Preview dikembalikan ke kondisi stabil Preview 310.",
-    "Perubahan Trading Desk dari Preview 311 dan 312 telah dihapus sepenuhnya.",
-    "Build memakai nomor Preview 313 hanya agar Android dapat memasangnya di atas Preview 312 tanpa uninstall dan tanpa menghapus data lokal.",
-    "Mapping, harga live, closed-candle lifecycle, scanner, notifikasi, dan seluruh perilaku aplikasi mengikuti Preview 310.",
-    "Package, URI, signing Preview, update channel, serta data pengguna tetap dipertahankan.",
-    "Branch main dan Amy FX publik tidak disentuh."
+    "Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.",
+    "Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.",
+    "Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.",
+    "Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.",
+    "Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.",
+    "Amy FX publik pada branch main tidak diubah."
   ],
   "changelog": [
-    "Full Preview 310 source rollback",
-    "Removed Trading Desk UI changes",
-    "Install-safe 313 version wrapper",
-    "Preserved Preview package and signer",
-    "Preserved local application data"
+    "Professional glass UI tokens and shared components",
+    "System, light, and dark theme controller",
+    "Truthful home, collection, and profile presentation",
+    "Unified loading, accessibility, and vector icon polish",
+    "Android system bar theme synchronization"
   ]
 }
