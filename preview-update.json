@@ -1,22 +1,28 @@
 {
   "channel": "amyfx-preview-blueprint-v1",
-  "latest_version_code": 940312,
-  "latest_version_name": "2.0.0-preview.312",
-  "versionCode": 940312,
-  "version": "2.0.0-preview.312",
+  "latest_version_code": 940313,
+  "latest_version_name": "2.0.0-preview.313",
+  "versionCode": 940313,
+  "version": "2.0.0-preview.313",
   "releaseDate": "2026-08-05",
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.312/AmyFX-Preview-latest.apk",
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.312/AmyFX-Preview-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.313/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.313/AmyFX-Preview-latest.apk",
   "force_update": false,
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Amy FX Trading Desk aktif pada Preview 312.",
-    "Update channel tetap menunjuk ke rilis signed aktif sampai build rollback berikutnya lolos seluruh validasi.",
-    "Engine Mapping, Scalper Engine, data pengguna, package, URI, dan signing Preview tetap dipertahankan."
+    "Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.",
+    "Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.",
+    "Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.",
+    "Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.",
+    "Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.",
+    "Amy FX publik pada branch main tidak diubah."
   ],
   "changelog": [
-    "Active signed Preview 312 checkpoint",
-    "Rollback candidate safety baseline"
+    "Professional glass UI tokens and shared components",
+    "System, light, and dark theme controller",
+    "Truthful home, collection, and profile presentation",
+    "Unified loading, accessibility, and vector icon polish",
+    "Android system bar theme synchronization"
   ]
 }
