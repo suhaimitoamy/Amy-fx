@@ -1,4 +1,4 @@
-// Amy FX Preview mapping context enhancements build — execution authority remains setup-only.
+// Amy FX Preview 314 — validated mapping context enhancements; execution authority remains setup-only.
 (function () {
   const VERSION = Object.freeze({ name: '2.0.0-preview.314', code: 940314 });
   window.AmyFXAppVersion = VERSION;
