@@ -11,18 +11,18 @@
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.",
-    "Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.",
-    "Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.",
-    "Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.",
-    "Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.",
-    "Amy FX publik pada branch main tidak diubah."
+    "Valid Break kini membaca schema struktur modern dan legacy secara konsisten; BOS/MSS terkonfirmasi tidak lagi hilang karena renderer membaca field lama.",
+    "Tulisan Data belum cukup hanya muncul bila jumlah candle benar-benar kurang; error analisis dengan 300 candle sekarang ditampilkan sebagai error yang sebenarnya.",
+    "Freshness candle ditentukan dari timestamp candle terakhir tertutup, bukan hanya waktu fetch, sehingga 300 candle lama tidak dapat disebut data terbaru.",
+    "Keterlambatan provider ditampilkan sebagai CANDLE TERTUNDA beserta jumlah bar dan tidak disamarkan menjadi CANDLE TERTUTUP.",
+    "Kegagalan refresh timeframe aktif tidak lagi disembunyikan dari data warning.",
+    "Direction Forecast, Mapping Accuracy V3, rumus Entry/SL/TP, lifecycle, package, signer, dan data pengguna tidak diubah."
   ],
   "changelog": [
-    "Professional glass UI tokens and shared components",
-    "System, light, and dark theme controller",
-    "Truthful home, collection, and profile presentation",
-    "Unified loading, accessibility, and vector icon polish",
-    "Android system bar theme synchronization"
+    "Modern and legacy structure-break schema resolver",
+    "Truthful all-timeframe candle and analysis status",
+    "Closed-candle timestamp freshness validation",
+    "Provider delay visibility and active-timeframe warning",
+    "Regression coverage for break and candle truth"
   ]
 }
