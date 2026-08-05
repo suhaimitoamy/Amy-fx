@@ -13,7 +13,7 @@ permissions:
 jobs:
   document-release:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - name: Checkout Preview branch
         uses: actions/checkout@v4
@@ -21,27 +21,23 @@ jobs:
           ref: personal/amyfx-private
           fetch-depth: 0
 
-      - name: Verify Preview branch and active release
+      - name: Write truthful manifest and README
         shell: bash
         run: |
           set -euo pipefail
           test "$(git branch --show-current)" = "personal/amyfx-private"
           test "$(git branch --show-current)" != "main"
-          test "$(python3 -c "import json; print(json.load(open('preview-update.json'))['latest_version_code'])")" = "940315"
-
-      - name: Write truthful manifest and README
-        shell: bash
-        run: |
-          set -euo pipefail
           python3 - <<'PY'
           import json
           from pathlib import Path
 
           manifest_path = Path('preview-update.json')
           manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+          if int(manifest.get('latest_version_code', 0)) != 940315:
+              raise SystemExit('Preview .315 manifest is not active')
           manifest['release_notes'] = [
               'Valid Break kini membaca schema struktur modern dan legacy secara konsisten; BOS/MSS terkonfirmasi tidak lagi hilang karena renderer membaca field lama.',
-              'Tulisan Data belum cukup hanya muncul bila jumlah candle benar-benar kurang; error analisis dengan 300 candle sekarang ditampilkan sebagai error yang sebenarnya.',
+              'Tulisan Data belum cukup hanya muncul bila jumlah candle benar-benar kurang; error analisis dengan 300 candle sekarang ditampilkan sebagai error sebenarnya.',
               'Freshness candle ditentukan dari timestamp candle terakhir tertutup, bukan hanya waktu fetch, sehingga 300 candle lama tidak dapat disebut data terbaru.',
               'Keterlambatan provider ditampilkan sebagai CANDLE TERTUNDA beserta jumlah bar dan tidak disamarkan menjadi CANDLE TERTUTUP.',
               'Kegagalan refresh timeframe aktif tidak lagi disembunyikan dari data warning.',
@@ -54,28 +50,20 @@ jobs:
               'Provider delay visibility and active-timeframe warning',
               'Regression coverage for break and candle truth'
           ]
-          manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          manifest_path.write_text(
+              json.dumps(manifest, indent=2, ensure_ascii=False) + '\n',
+              encoding='utf-8'
+          )
 
           readme_path = Path('README.md')
           text = readme_path.read_text(encoding='utf-8')
           text = text.replace('2.0.0-preview.314', '2.0.0-preview.315')
           text = text.replace('940314', '940315')
           text = text.replace('## Status Release `.314`', '## Status Release `.315`')
-          old = """Preview `.315` menambahkan konteks Mapping yang lebih lengkap tanpa memberikan otoritas entry kepada indikator mentah. Formula Direction Forecast, Mapping Accuracy V3, entry, Stop Loss, Take Profit, dan lifecycle setup tidak diubah.
-
-Perubahan utama:
-
-- kontrak bukti `RAW_OBSERVATION`, `VALIDATED_CONTEXT`, `VALIDATED_CLAIM`, dan `EXECUTION_AUTHORITY`;
-- sesi London dan New York mengikuti timezone pasar serta perubahan BST/GMT dan EDT/EST secara otomatis, lalu ditampilkan dalam WITA;
-- Previous Month High dan Previous Month Low sebagai external-liquidity context;
-- Strong/Weak High-Low berdasarkan protected structure dan active liquidity;
-- New York Midnight Open departure/retest sebagai konteks;
-- audit freshness untuk mencegah zona yang sudah tersentuh atau termitigasi disebut fresh-at-snapshot;
-- adaptive EQH/EQL per timeframe sebagai advisory experiment;
-- alternatif origin Order Block dalam causal impulse leg sebagai advisory review.
-
-Adaptive EQH/EQL dan alternatif origin Order Block **belum mengganti logika produksi**. Keduanya hanya mengeluarkan metadata eksperimen sampai memiliki validasi out-of-sample yang cukup."""
-          new = """Preview `.315` memperbaiki ketidakjujuran antara data candle, detector struktur, dan tampilan Mapping. Perbaikan ini tidak memaksa arah BUY/SELL; tujuannya memastikan UI menampilkan hasil engine dan kondisi sumber candle yang sebenarnya.
+          start = text.index('Preview `.315` menambahkan konteks Mapping')
+          end_marker = 'Adaptive EQH/EQL dan alternatif origin Order Block **belum mengganti logika produksi**. Keduanya hanya mengeluarkan metadata eksperimen sampai memiliki validasi out-of-sample yang cukup.'
+          end = text.index(end_marker, start) + len(end_marker)
+          replacement = '''Preview `.315` memperbaiki ketidakjujuran antara data candle, detector struktur, dan tampilan Mapping. Perbaikan ini tidak memaksa arah BUY/SELL; tujuannya memastikan UI menampilkan hasil engine dan kondisi sumber candle yang sebenarnya.
 
 Perubahan utama `.315`:
 
@@ -88,37 +76,12 @@ Perubahan utama `.315`:
 - kegagalan refresh timeframe aktif ikut diteruskan sebagai warning;
 - perubahan konteks `.314`—DST-aware session, PMH/PML, Strong/Weak High-Low, Midnight Open, evidence contract, dan advisory experiments—tetap dipertahankan.
 
-Direction Forecast, Mapping Accuracy V3, rumus Entry, Stop Loss, Take Profit, target struktural, lifecycle setup, Execution Authority, package, signer, dan data pengguna tidak diubah."""
-          if old not in text:
-              raise SystemExit('README .314 release block was not found after identity replacement')
-          readme_path.write_text(text.replace(old, new, 1), encoding='utf-8')
+Direction Forecast, Mapping Accuracy V3, rumus Entry, Stop Loss, Take Profit, target struktural, lifecycle setup, Execution Authority, package, signer, dan data pengguna tidak diubah.'''
+          readme_path.write_text(text[:start] + replacement + text[end:], encoding='utf-8')
           PY
           rm -f .github/workflows/one-time-document-preview-315-truth-repair.yml
 
-      - name: Update immutable release presentation
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          cat > /tmp/preview-315-notes.md <<'NOTES'
-          Amy FX Preview 2.0.0-preview.315 — Mapping Truth Repair.
-
-          - Valid Break membaca schema struktur modern dan legacy secara konsisten.
-          - BOS/MSS terkonfirmasi tidak lagi hilang karena renderer membaca field lama.
-          - `Data belum cukup` hanya muncul ketika jumlah candle benar-benar kurang.
-          - Error analisis dengan 300 candle ditampilkan sebagai error sebenarnya.
-          - Freshness memakai timestamp candle terakhir tertutup, bukan hanya waktu fetch.
-          - Provider yang tertinggal ditampilkan sebagai `CANDLE TERTUNDA N BAR`.
-          - Direction Forecast, Mapping Accuracy V3, Entry/SL/TP, lifecycle, package, signer, dan data pengguna tidak diubah.
-          - Branch `main` tidak diubah.
-          NOTES
-          gh release edit amyfx-blueprint-preview-2.0.0-preview.315 \
-            --repo "$GITHUB_REPOSITORY" \
-            --title 'Amy FX Preview 2.0.0-preview.315 — Mapping Truth Repair' \
-            --notes-file /tmp/preview-315-notes.md
-
-      - name: Validate and commit truthful documentation
+      - name: Validate and commit documentation
         shell: bash
         run: |
           set -euo pipefail
