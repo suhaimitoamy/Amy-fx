@@ -1,4 +1,4 @@
-// Amy FX Preview 315 — truthful break detection and closed-candle source status.
+// Amy FX Preview 315 — truthful break detection and closed-candle source status; validated release source.
 (function () {
   const VERSION = Object.freeze({ name: '2.0.0-preview.315', code: 940315 });
   window.AmyFXAppVersion = VERSION;
