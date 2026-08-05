@@ -11,18 +11,24 @@
   "mandatory": false,
   "enabled": true,
   "release_notes": [
-    "Professional Glassmorphism UI diterapkan pada Beranda, Mapping, Berita, Jurnal Trading, dan Tutorial Trading.",
-    "Tema Sistem, Terang, dan Gelap tersedia dan system bar Android mengikuti tema aplikasi.",
-    "Beranda kini berisi tepat lima modul resmi tanpa duplikasi; Koleksi dan Profil hanya memakai data aktual perangkat.",
-    "Loading memakai monogram Amy, delay 350 ms, timeout, dan retry tanpa persentase palsu.",
-    "Engine Mapping, scanner, lifecycle, notifikasi, formula, dan data pengguna tetap dipertahankan.",
-    "Amy FX publik pada branch main tidak diubah."
+    "Mapping kini membedakan RAW OBSERVATION, VALIDATED CONTEXT, VALIDATED CLAIM, dan EXECUTION AUTHORITY; konteks tambahan tidak dapat membuka entry sendiri.",
+    "Filter sesi London dan New York kini mengikuti timezone pasar serta perubahan BST/GMT dan EDT/EST secara otomatis, kemudian ditampilkan dalam WITA.",
+    "Previous Month High dan Previous Month Low ditambahkan sebagai external-liquidity context tanpa menjadi trigger entry.",
+    "Strong/Weak High-Low diturunkan dari protected structure dan active liquidity untuk memperjelas level yang harus bertahan dan level yang berpotensi menjadi target.",
+    "Midnight Open New York ditambahkan sebagai konteks departure/retest; tetap tidak memiliki otoritas arah atau eksekusi.",
+    "Audit freshness mencegah zona yang sudah tersentuh atau termitigasi diperlakukan sebagai fresh-at-snapshot.",
+    "Adaptive EQH/EQL dan alternatif origin Order Block tersedia sebagai advisory experiment; keduanya belum mengganti logika produksi sebelum validasi out-of-sample.",
+    "Direction Forecast, Mapping Accuracy V3, formula entry, SL/TP, lifecycle, signing, package Preview, serta data pengguna tidak diubah.",
+    "Amy FX publik dan branch main tidak disentuh."
   ],
   "changelog": [
-    "Professional glass UI tokens and shared components",
-    "System, light, and dark theme controller",
-    "Truthful home, collection, and profile presentation",
-    "Unified loading, accessibility, and vector icon polish",
-    "Android system bar theme synchronization"
+    "Evidence-class contract and setup-only execution authority",
+    "DST-aware London and New York execution sessions",
+    "PMH/PML external liquidity context",
+    "Protected-structure Strong/Weak High-Low context",
+    "New York Midnight Open departure and retest context",
+    "Zone stale-at-birth freshness audit",
+    "Advisory adaptive EQH/EQL profiles",
+    "Advisory dual-origin Order Block review"
   ]
 }
