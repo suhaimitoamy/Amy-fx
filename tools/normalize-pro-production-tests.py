@@ -38,19 +38,35 @@ NEGATIVE_MARKERS = (
     ", false)",
 )
 
+
+def remove_test_block(source: str, title: str) -> str:
+    marker = f"\ntest('{title}'"
+    start = source.find(marker)
+    if start < 0:
+        return source
+    next_test = source.find("\ntest('", start + len(marker))
+    if next_test < 0:
+        return source[:start].rstrip() + "\n"
+    return source[:start].rstrip() + "\n\n" + source[next_test + 1:]
+
+
 changed = 0
 for path in TESTS.glob("*.test.mjs"):
     original = path.read_text(encoding="utf-8")
     normalized = original
 
-    # Pro owns a Preview-only release-channel assertion. Production keeps the
-    # runtime/feature assertions in this file, but must not require a Preview
-    # workflow that intentionally does not exist in Amy FX main.
+    # Channel-specific release assertions are intentionally excluded from Amy FX
+    # production. Runtime/feature assertions remain intact.
     if path.name == "blueprint-preview-stabilization.test.mjs":
-        marker = "\ntest('release workflow validates stabilization without touching production main'"
-        start = normalized.find(marker)
-        if start >= 0:
-            normalized = normalized[:start].rstrip() + "\n"
+        normalized = remove_test_block(
+            normalized,
+            "release workflow validates stabilization without touching production main",
+        )
+    if path.name == "blueprint-preview-v1.test.mjs":
+        normalized = remove_test_block(
+            normalized,
+            "Pro release promotes Preview lineage into the Amy-fx-pro main channel",
+        )
 
     lines = []
     for line in normalized.splitlines(keepends=True):
