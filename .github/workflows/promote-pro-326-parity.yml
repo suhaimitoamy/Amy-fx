@@ -110,8 +110,12 @@ jobs:
           test -f app/src/main/assets/apps/academy/trading-practice/assets/js/zip-reader.js
           test -f app/src/main/assets/apps/academy/backtest-learning/index.html
           test -f supabase/functions/smt-dxy-candles/index.ts
-          grep -Fq 'Expansion Range' supabase/functions/scalper-engine/drivers.mjs
-          grep -Fq 'SMR' supabase/functions/scalper-engine/drivers.mjs
+          test -f supabase/functions/scalper-engine/expansion-range-reentry.mjs
+          grep -Fq 'EXPANSION_RANGE_REENTRY_VERSION' supabase/functions/scalper-engine/expansion-range-reentry.mjs
+          grep -Fq 'Expansion Range Re-entry' supabase/functions/scalper-engine/expansion-range-reentry.mjs
+          test -f supabase/functions/scalper-engine/smr-first-retest.mjs
+          grep -Fq 'SMR_FIRST_RETEST_VERSION' supabase/functions/scalper-engine/smr-first-retest.mjs
+          grep -Fq 'SMR / First Retest' supabase/functions/scalper-engine/smr-first-retest.mjs
           ! grep -R -n -E 'com\.amyelitesuite\.learningpreview|amyfxpreview|suhaimitoamy/Amy-fx-pro/main/update\.json|AmyFX-Pro-latest\.apk|Amy FX Pro' app/src/main supabase/functions
           test ! -f app/src/main/assets/apps/market-intel/private-market-api-router.js
 
@@ -125,6 +129,8 @@ jobs:
           node --check app/src/main/assets/apps/academy/trading-practice/assets/js/replay-engine.js
           node --check supabase/functions/scalper-engine/drivers.mjs
           node --check supabase/functions/scalper-engine/lifecycle.mjs
+          node --check supabase/functions/scalper-engine/expansion-range-reentry.mjs
+          node --check supabase/functions/scalper-engine/smr-first-retest.mjs
 
       - name: Run Amy FX production JavaScript regression suite
         working-directory: production
