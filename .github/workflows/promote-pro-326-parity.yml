@@ -7,6 +7,8 @@ on:
     paths:
       - .github/workflows/promote-pro-326-parity.yml
       - tools/promote-pro-326-to-production.py
+      - tools/normalize-pro-production-tests.py
+      - tools/production-test-overlays.txt
       - tools/finalize-production-market-intel.py
       - app/**
       - supabase/functions/**
@@ -70,24 +72,36 @@ jobs:
           grep -Fq '2.0.0-pro.326' pro/app/build.gradle.kts
           grep -Fq '950326' pro/app/build.gradle.kts
 
-      - name: Preserve production-only regression suite
+      - name: Preserve production-only regression overlays
         shell: bash
         run: |
           set -euo pipefail
-          preserve="$RUNNER_TEMP/amyfx-production-tests"
+          preserve="$RUNNER_TEMP/amyfx-production-test-overlays"
           rm -rf "$preserve"
-          cp -a production/tests "$preserve"
+          mkdir -p "$preserve"
+          while IFS= read -r test_file; do
+            test -n "$test_file" || continue
+            if test -f "production/tests/$test_file"; then
+              cp "production/tests/$test_file" "$preserve/$test_file"
+            fi
+          done < production/tools/production-test-overlays.txt
 
       - name: Promote Pro runtime and features
         working-directory: production
         run: python3 tools/promote-pro-326-to-production.py ../pro .
 
-      - name: Restore production regression overlays
+      - name: Restore production regression overlays on top of Pro tests
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf production/tests
-          cp -a "$RUNNER_TEMP/amyfx-production-tests" production/tests
+          preserve="$RUNNER_TEMP/amyfx-production-test-overlays"
+          if compgen -G "$preserve/*.test.mjs" > /dev/null; then
+            cp -a "$preserve/." production/tests/
+          fi
+
+      - name: Normalize Pro and production tests for Amy FX identity
+        working-directory: production
+        run: python3 tools/normalize-pro-production-tests.py
 
       - name: Finalize production Market Intelligence routing
         working-directory: production
