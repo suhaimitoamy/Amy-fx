@@ -39,15 +39,35 @@ NEGATIVE_MARKERS = (
 )
 
 
-def remove_test_block(source: str, title: str) -> str:
-    marker = f"\ntest('{title}'"
+def test_bounds(source: str, title: str):
+    marker = f"test('{title}'"
     start = source.find(marker)
     if start < 0:
-        return source
+        return None
+    if start > 0 and source[start - 1] == "\n":
+        start -= 1
     next_test = source.find("\ntest('", start + len(marker))
-    if next_test < 0:
-        return source[:start].rstrip() + "\n"
-    return source[:start].rstrip() + "\n\n" + source[next_test + 1:]
+    end = len(source) if next_test < 0 else next_test
+    return start, end
+
+
+def remove_test_block(source: str, title: str) -> str:
+    bounds = test_bounds(source, title)
+    if not bounds:
+        return source
+    start, end = bounds
+    return (source[:start].rstrip() + "\n\n" + source[end:].lstrip()).rstrip() + "\n"
+
+
+def replace_test_block(source: str, title: str, replacement: str) -> str:
+    bounds = test_bounds(source, title)
+    if not bounds:
+        return source
+    start, end = bounds
+    prefix = source[:start].rstrip()
+    suffix = source[end:].lstrip()
+    pieces = [part for part in [prefix, replacement.strip(), suffix] if part]
+    return "\n\n".join(pieces).rstrip() + "\n"
 
 
 def normalize_expansion_identity(source: str) -> str:
@@ -68,6 +88,50 @@ def normalize_expansion_identity(source: str) -> str:
         "  assert.ok(gradle.includes('versionName = System.getenv(\"AMYFX_VERSION_NAME\") ?: \"2.4.0\"'));",
     ])
     return source[:start] + replacement + source[end:]
+
+
+def normalize_five_issues(source: str) -> str:
+    source = replace_test_block(
+        source,
+        "README retains Preview lineage while declaring Amy FX Pro as the main release identity",
+        """test('README documents one unified Amy FX production product', () => {
+  assert.match(readme, /Amy FX/);
+  assert.match(readme, /com\\.amyelitesuite/);
+  assert.match(readme, /main\\/update\\.json/);
+  assert.match(readme, /`main` merupakan sumber aplikasi dan rilis produksi/);
+  assert.match(readme, /personal\\/amyfx-private.*ruang pengembangan Amy FX Preview/s);
+  assert.doesNotMatch(readme, /Application ID:\\*\\* `com\\.amyelitesuite\\.learningpreview`/);
+});""",
+    )
+
+    source = source.replace(
+        "  assert.match(marketIntent, /Konteks Market Lanjutan/);\n"
+        "  assert.match(marketIntent, /Target & Skenario Harga/);",
+        "  assert.match(marketIntent, /Context \\/ Descriptive/);\n"
+        "  assert.match(marketIntent, /Fresh Structural Evidence/);\n"
+        "  assert.match(marketIntent, /Predictive \\/ Event Signals/);\n"
+        "  assert.match(marketIntent, /consumer\\/read-only/);",
+    )
+
+    production_release_test = """test('source version is staged ahead of or equal to the active production manifest', () => {
+  const identity = appVersion.match(/name: '(\\d+\\.\\d+\\.\\d+)', code: (\\d+)/);
+  assert.ok(identity, 'Production source identity is missing');
+  const [, sourceName, sourceCode] = identity;
+
+  assert.equal(sourceName, '2.4.0');
+  assert.equal(Number(sourceCode), 60);
+  assert.match(appVersion, /Amy-fx\\/main\\/update\\.json|main\\/update\\.json/);
+  assert.doesNotMatch(appVersion, /learningpreview|amyfxpreview|Amy-fx-pro\\/main\\/update\\.json/);
+  assert.ok(Number(sourceCode) >= Number(update.latest_version_code));
+  assert.match(update.apk_url || update.downloadUrl || '', /AmyFX-latest\\.apk/);
+  assert.doesNotMatch(update.apk_url || update.downloadUrl || '', /AmyFX-(?:Preview|Pro)-latest\\.apk/);
+});"""
+    for title in (
+        "source version and updater stay on the production channel",
+        "source version and updater stay on the Amy FX Pro channel",
+    ):
+        source = replace_test_block(source, title, production_release_test)
+    return source
 
 
 changed = 0
@@ -96,6 +160,8 @@ for path in TESTS.glob("*.test.mjs"):
         )
     if path.name == "expansion-range-reentry.test.mjs":
         normalized = normalize_expansion_identity(normalized)
+    if path.name == "five-issues-regression.test.mjs":
+        normalized = normalize_five_issues(normalized)
 
     lines = []
     for line in normalized.splitlines(keepends=True):
