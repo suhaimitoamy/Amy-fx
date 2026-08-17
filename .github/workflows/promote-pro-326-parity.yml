@@ -148,7 +148,19 @@ jobs:
 
       - name: Run Amy FX production JavaScript regression suite
         working-directory: production
-        run: timeout 20m npm test
+        shell: bash
+        run: |
+          set +e
+          timeout 20m npm test 2>&1 | tee "$RUNNER_TEMP/amyfx-npm-test.log"
+          status=${PIPESTATUS[0]}
+          set -e
+          if [ "$status" -ne 0 ]; then
+            echo '### Amy FX JavaScript regression failure' >> "$GITHUB_STEP_SUMMARY"
+            tail -n 100 "$RUNNER_TEMP/amyfx-npm-test.log" >> "$GITHUB_STEP_SUMMARY"
+            detail="$(tail -n 40 "$RUNNER_TEMP/amyfx-npm-test.log" | sed -e 's/%/%25/g' -e 's/\r/%0D/g' -e ':a;N;$!ba;s/\n/%0A/g')"
+            echo "::error title=Amy FX JavaScript regression failure::$detail"
+            exit "$status"
+          fi
 
       - name: Run Android unit tests and lint
         working-directory: production
