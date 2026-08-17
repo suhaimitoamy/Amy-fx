@@ -41,8 +41,19 @@ NEGATIVE_MARKERS = (
 changed = 0
 for path in TESTS.glob("*.test.mjs"):
     original = path.read_text(encoding="utf-8")
+    normalized = original
+
+    # Pro owns a Preview-only release-channel assertion. Production keeps the
+    # runtime/feature assertions in this file, but must not require a Preview
+    # workflow that intentionally does not exist in Amy FX main.
+    if path.name == "blueprint-preview-stabilization.test.mjs":
+        marker = "\ntest('release workflow validates stabilization without touching production main'"
+        start = normalized.find(marker)
+        if start >= 0:
+            normalized = normalized[:start].rstrip() + "\n"
+
     lines = []
-    for line in original.splitlines(keepends=True):
+    for line in normalized.splitlines(keepends=True):
         if any(marker in line for marker in NEGATIVE_MARKERS):
             lines.append(line)
             continue
@@ -51,6 +62,7 @@ for path in TESTS.glob("*.test.mjs"):
             updated = updated.replace(old, new)
         lines.append(updated)
     normalized = "".join(lines)
+
     if normalized != original:
         path.write_text(normalized, encoding="utf-8")
         changed += 1
