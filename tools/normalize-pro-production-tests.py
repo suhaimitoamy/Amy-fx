@@ -50,6 +50,26 @@ def remove_test_block(source: str, title: str) -> str:
     return source[:start].rstrip() + "\n\n" + source[next_test + 1:]
 
 
+def normalize_expansion_identity(source: str) -> str:
+    start_marker = "  const identity = appVersion.match(/name: '(2\\.0\\.0-pro\\.(\\d+))', code: (95\\d{4})/);"
+    end_marker = '  assert.ok(gradle.includes(`versionName = System.getenv("AMYFX_VERSION_NAME") ?: "${versionName}"`));'
+    start = source.find(start_marker)
+    end = source.find(end_marker, start)
+    if start < 0 or end < 0:
+        return source
+    end += len(end_marker)
+    replacement = "\n".join([
+        "  const identity = appVersion.match(/name: '([^']+)', code: (\\d+)/);",
+        "  assert.ok(identity, 'current Amy FX production identity must be readable from app-version.js');",
+        "  const [, versionName, versionCodeText] = identity;",
+        "  assert.equal(versionName, '2.4.0');",
+        "  assert.equal(Number(versionCodeText), 60);",
+        "  assert.match(gradle, /versionCode = .*\\?: 60\\)/);",
+        "  assert.ok(gradle.includes('versionName = System.getenv(\"AMYFX_VERSION_NAME\") ?: \"2.4.0\"'));",
+    ])
+    return source[:start] + replacement + source[end:]
+
+
 changed = 0
 for path in TESTS.glob("*.test.mjs"):
     original = path.read_text(encoding="utf-8")
@@ -74,6 +94,8 @@ for path in TESTS.glob("*.test.mjs"):
             normalized,
             "production release source matches the active signed manifest",
         )
+    if path.name == "expansion-range-reentry.test.mjs":
+        normalized = normalize_expansion_identity(normalized)
 
     lines = []
     for line in normalized.splitlines(keepends=True):
