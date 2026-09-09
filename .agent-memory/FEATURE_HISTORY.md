@@ -84,3 +84,8 @@
 - **Files:**
   - `api/liquidity.js`
 - **Description:** Independent Vercel serverless function. Copies `fetchCandles()` and swing detection from heatmap.js. Detects BSL (swing highs) and SSL (swing lows), tracks sweep status, returns 15 nearest unswept levels.
+
+
+## 2026-09-09 — Pro334 backend deployment alignment
+
+amy-fx.vercel.app deploys suhaimitoamy/Amy-fx/main, not Amy-fx-pro/main. Add Pro334 api/live-price.js (server-owned Twelve Data WebSocket over SSE), 60-second duration and the bounded candle cache/Edge fallback repair to the production backend repository. Existing Node24 project runtime supports native WebSocket; existing rewrites and other APIs remain unchanged. Provider key stays in Vercel TWELVEDATA_API_KEY. Verify live endpoint after deployment before declaring restored.

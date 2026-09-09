@@ -30,7 +30,11 @@ function parseOutputSize(value) {
 }
 
 function ttlSeconds(interval) {
-  return CACHE_TTL_SECONDS[interval] || 300;
+  const duration = { '1min': 60, '5min': 300, '15min': 900, '30min': 1800,
+    '1h': 3600, '4h': 14400, '1day': 86400, '1week': 604800 }[interval] || 60;
+  const now = Date.now() / 1000;
+  const nextClose = (Math.floor((now - 10) / duration) + 1) * duration + 10;
+  return Math.max(1, Math.min(30, Math.ceil(nextClose - now)));
 }
 
 function cacheKey(symbol, interval, outputsize) {
@@ -72,11 +76,10 @@ function writeCache(key, data, ttl) {
 }
 
 function setCacheHeaders(res, ttl, state = 'MISS', source = '') {
-  const staleSeconds = Math.max(ttl * 4, 300);
-  const cacheControl = `public, s-maxage=${ttl}, stale-while-revalidate=${staleSeconds}, stale-if-error=${staleSeconds}`;
-  res.setHeader('Cache-Control', cacheControl);
-  res.setHeader('CDN-Cache-Control', cacheControl);
-  res.setHeader('Vercel-CDN-Cache-Control', cacheControl);
+  // A fresh HTTP response must not relabel old candle data as fresh.
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('CDN-Cache-Control', 'no-store');
+  res.setHeader('Vercel-CDN-Cache-Control', 'no-store');
   res.setHeader('X-AmyFX-Market-Cache', state);
   if (source) res.setHeader('X-AmyFX-Market-Source', source);
 }
@@ -147,7 +150,7 @@ export default async function handler(req, res) {
   try {
     const rawData = await request;
     const data = clientCompatibleData(rawData);
-    writeCache(key, data, ttl);
+    if (!/stale/i.test(`${data.source || ''} ${data.amyfxCacheState || ''}`)) writeCache(key, data, ttl);
     const cacheState = data.amyfxCacheState || 'PROVIDER_MISS';
     const responseTtl = cacheState === 'SUPABASE_STALE_FALLBACK' ? Math.min(ttl, 60) : ttl;
     setCacheHeaders(res, responseTtl, cacheState, data.source || 'unknown');

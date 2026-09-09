@@ -241,3 +241,8 @@
 - **Cause:** Both APK workflows tried to checkout the private `amy-trading-academy-vault` repository during every build, although the generated Academy assets were already committed in Amy-fx. The missing cross-repository token caused `Input required and not supplied: token`.
 - **Fix:** Removed the private Vault checkout and runtime Academy generator steps from `.github/workflows/build-apk.yml` and `.github/workflows/build-debug.yml`. APK builds now use the committed Academy assets directly.
 - **Verification:** GitHub Actions `Build Amy FX APK` run 29158586991 completed successfully.
+
+
+## 2026-09-09 — Pro334 backend deployment alignment
+
+amy-fx.vercel.app deploys suhaimitoamy/Amy-fx/main, not Amy-fx-pro/main. Add Pro334 api/live-price.js (server-owned Twelve Data WebSocket over SSE), 60-second duration and the bounded candle cache/Edge fallback repair to the production backend repository. Existing Node24 project runtime supports native WebSocket; existing rewrites and other APIs remain unchanged. Provider key stays in Vercel TWELVEDATA_API_KEY. Verify live endpoint after deployment before declaring restored.

@@ -135,3 +135,8 @@
 - Hermes agent switched from DeepSeek to Gemini to save DeepSeek tokens.
 - MOA (Mixture of Agents) disabled to reduce double API calls.
 - Config: `/root/.hermes/config.yaml`
+
+
+## 2026-09-09 — Pro334 backend deployment alignment
+
+amy-fx.vercel.app deploys suhaimitoamy/Amy-fx/main, not Amy-fx-pro/main. Add Pro334 api/live-price.js (server-owned Twelve Data WebSocket over SSE), 60-second duration and the bounded candle cache/Edge fallback repair to the production backend repository. Existing Node24 project runtime supports native WebSocket; existing rewrites and other APIs remain unchanged. Provider key stays in Vercel TWELVEDATA_API_KEY. Verify live endpoint after deployment before declaring restored.
