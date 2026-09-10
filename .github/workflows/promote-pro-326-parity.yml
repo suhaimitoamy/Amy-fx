@@ -1,0 +1,191 @@
+name: Promote Amy FX Pro 326 parity to production
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/promote-pro-326-parity.yml
+      - tools/promote-pro-326-to-production.py
+      - tools/normalize-pro-production-tests.py
+      - tools/production-test-overlays.txt
+      - tools/finalize-production-market-intel.py
+      - app/**
+      - supabase/functions/**
+      - supabase/migrations/**
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: amyfx-production-pro-326-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  promote-and-validate:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'release/amyfx-main-pro-326-parity-20260817'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
+      EXPECTED_PRO_SHA: 50c80c9ceb0c34dccc91d9d4da48e26d22455ba2
+
+    steps:
+      - name: Checkout Amy FX release branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_BRANCH }}
+          fetch-depth: 0
+          path: production
+
+      - name: Checkout canonical Amy FX Pro 326
+        uses: actions/checkout@v4
+        with:
+          repository: suhaimitoamy/Amy-fx-pro
+          ref: ${{ env.EXPECTED_PRO_SHA }}
+          fetch-depth: 1
+          path: pro
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+          cache-dependency-path: production/**/*.gradle*
+
+      - name: Verify canonical Pro source
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git -C pro rev-parse HEAD)"
+          test "$actual" = "$EXPECTED_PRO_SHA"
+          echo "AMYFX_PRO_SOURCE_SHA=$actual" >> "$GITHUB_ENV"
+          grep -Fq '2.0.0-pro.326' pro/app/build.gradle.kts
+          grep -Fq '950326' pro/app/build.gradle.kts
+
+      - name: Preserve production-only regression overlays
+        shell: bash
+        run: |
+          set -euo pipefail
+          preserve="$RUNNER_TEMP/amyfx-production-test-overlays"
+          rm -rf "$preserve"
+          mkdir -p "$preserve"
+          while IFS= read -r test_file; do
+            test -n "$test_file" || continue
+            if test -f "production/tests/$test_file"; then
+              cp "production/tests/$test_file" "$preserve/$test_file"
+            fi
+          done < production/tools/production-test-overlays.txt
+
+      - name: Promote Pro runtime and features
+        working-directory: production
+        run: python3 tools/promote-pro-326-to-production.py ../pro .
+
+      - name: Restore production regression overlays on top of Pro tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          preserve="$RUNNER_TEMP/amyfx-production-test-overlays"
+          if compgen -G "$preserve/*.test.mjs" > /dev/null; then
+            cp -a "$preserve/." production/tests/
+          fi
+
+      - name: Normalize Pro and production tests for Amy FX identity
+        working-directory: production
+        run: python3 tools/normalize-pro-production-tests.py
+
+      - name: Finalize production Market Intelligence routing
+        working-directory: production
+        run: python3 tools/finalize-production-market-intel.py
+
+      - name: Validate production identity and Pro feature parity
+        working-directory: production
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq '?: "com.amyelitesuite"' app/build.gradle.kts
+          grep -Fq '?: "Amy FX"' app/build.gradle.kts
+          grep -Fq '?: "amyfx"' app/build.gradle.kts
+          grep -Fq '?: 60)' app/build.gradle.kts
+          grep -Fq '?: "2.4.0"' app/build.gradle.kts
+          grep -Fq "name: '2.4.0', code: 60" app/src/main/assets/app-version.js
+          grep -Fq 'suhaimitoamy/Amy-fx/main/update.json' app/src/main/assets/app-version.js
+          test -f app/src/main/assets/apps/academy/trading-practice/index.html
+          test -f app/src/main/assets/apps/academy/trading-practice/assets/js/chart-engine.js
+          test -f app/src/main/assets/apps/academy/trading-practice/assets/js/zip-reader.js
+          test -f app/src/main/assets/apps/academy/backtest-learning/index.html
+          test -f supabase/functions/smt-dxy-candles/index.ts
+          test -f supabase/functions/scalper-engine/expansion-range-reentry.mjs
+          grep -Fq 'EXPANSION_RANGE_REENTRY_VERSION' supabase/functions/scalper-engine/expansion-range-reentry.mjs
+          grep -Fq 'Expansion Range Re-entry' supabase/functions/scalper-engine/expansion-range-reentry.mjs
+          test -f supabase/functions/scalper-engine/smr-first-retest.mjs
+          grep -Fq 'SMR_FIRST_RETEST_VERSION' supabase/functions/scalper-engine/smr-first-retest.mjs
+          grep -Fq 'SMR / First Retest' supabase/functions/scalper-engine/smr-first-retest.mjs
+          ! grep -R -n -E 'com\.amyelitesuite\.learningpreview|amyfxpreview|suhaimitoamy/Amy-fx-pro/main/update\.json|AmyFX-Pro-latest\.apk|Amy FX Pro' app/src/main supabase/functions
+          test ! -f app/src/main/assets/apps/market-intel/private-market-api-router.js
+
+      - name: Validate Pro 326 focused regressions at source
+        working-directory: pro
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/trading-practice-chart-regression.test.mjs
+          node --check app/src/main/assets/apps/academy/trading-practice/assets/js/chart-engine.js
+          node --check app/src/main/assets/apps/academy/trading-practice/assets/js/replay-engine.js
+          node --check supabase/functions/scalper-engine/drivers.mjs
+          node --check supabase/functions/scalper-engine/lifecycle.mjs
+          node --check supabase/functions/scalper-engine/expansion-range-reentry.mjs
+          node --check supabase/functions/scalper-engine/smr-first-retest.mjs
+
+      - name: Run Amy FX production JavaScript regression suite
+        working-directory: production
+        shell: bash
+        run: |
+          set +e
+          timeout 20m npm test 2>&1 | tee "$RUNNER_TEMP/amyfx-npm-test.log"
+          status=${PIPESTATUS[0]}
+          set -e
+          if [ "$status" -ne 0 ]; then
+            echo '### Amy FX JavaScript regression failure' >> "$GITHUB_STEP_SUMMARY"
+            tail -n 100 "$RUNNER_TEMP/amyfx-npm-test.log" >> "$GITHUB_STEP_SUMMARY"
+            detail="$(tail -n 40 "$RUNNER_TEMP/amyfx-npm-test.log" | sed -e 's/%/%25/g' -e 's/\r/%0D/g' -e ':a;N;$!ba;s/\n/%0A/g')"
+            echo "::error title=Amy FX JavaScript regression failure::$detail"
+            exit "$status"
+          fi
+
+      - name: Run Android unit tests and lint
+        working-directory: production
+        shell: bash
+        run: |
+          chmod +x ./gradlew
+          ./gradlew testReleaseUnitTest lintRelease --no-configuration-cache
+
+      - name: Check generated diff
+        working-directory: production
+        run: git diff --check
+
+      - name: Commit validated Pro parity to release branch
+        working-directory: production
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet && git diff --cached --quiet; then
+            echo 'Amy FX release branch is already aligned with Pro 326.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add --all
+          git commit -m "release: align Amy FX 2.4.0 with Pro ${AMYFX_PRO_SOURCE_SHA:0:12}"
+          git fetch origin "$TARGET_BRANCH"
+          git rebase "origin/$TARGET_BRANCH"
+          git push origin "HEAD:$TARGET_BRANCH"
