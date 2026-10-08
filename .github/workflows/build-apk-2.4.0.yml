@@ -1,0 +1,201 @@
+name: Build and Publish Amy FX 2.4.0
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore: ["update.json", "README.md", "*.md", "docs/**"]
+
+permissions:
+  contents: write
+  statuses: write
+
+concurrency:
+  group: amyfx-main-release-240
+  cancel-in-progress: true
+
+env:
+  AMYFX_APPLICATION_ID: com.amyelitesuite
+  AMYFX_APP_LABEL: Amy FX
+  AMYFX_URI_SCHEME: amyfx
+  AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json
+  TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
+  AMYFX_KEYSTORE_PATH: /tmp/amy-fx-signing.keystore
+  AMYFX_KEYSTORE_PASSWORD: android
+  AMYFX_KEY_ALIAS: androiddebugkey
+  AMYFX_KEY_PASSWORD: android
+  AMYFX_VERSION_NAME: "2.4.0"
+  AMYFX_VERSION_CODE: "60"
+  AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate Amy FX 2.4.0 identity and Pro 326 parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq "name: '2.4.0', code: 60" app/src/main/assets/app-version.js
+          grep -Fq '?: 60)' app/build.gradle.kts
+          grep -Fq '?: "2.4.0"' app/build.gradle.kts
+          grep -Fq '?: "com.amyelitesuite"' app/build.gradle.kts
+          grep -Fq '?: "Amy FX"' app/build.gradle.kts
+          grep -Fq '?: "amyfx"' app/build.gradle.kts
+          grep -Fq 'suhaimitoamy/Amy-fx/main/update.json' app/src/main/assets/app-version.js
+          grep -Fq '50c80c9ceb0c34dccc91d9d4da48e26d22455ba2' docs/amyfx-production-pro-parity.json
+          test -f app/src/main/assets/apps/academy/trading-practice/index.html
+          test -f app/src/main/assets/apps/academy/trading-practice/assets/js/chart-engine.js
+          test -f app/src/main/assets/apps/academy/trading-practice/assets/js/zip-reader.js
+          test -f app/src/main/assets/apps/academy/backtest-learning/index.html
+          test -f supabase/functions/smt-dxy-candles/index.ts
+          test -f supabase/functions/scalper-engine/expansion-range-reentry.mjs
+          grep -Fq 'EXPANSION_RANGE_REENTRY_VERSION' supabase/functions/scalper-engine/expansion-range-reentry.mjs
+          grep -Fq 'Expansion Range Re-entry' supabase/functions/scalper-engine/expansion-range-reentry.mjs
+          test -f supabase/functions/scalper-engine/smr-first-retest.mjs
+          grep -Fq 'SMR_FIRST_RETEST_VERSION' supabase/functions/scalper-engine/smr-first-retest.mjs
+          grep -Fq 'SMR / First Retest' supabase/functions/scalper-engine/smr-first-retest.mjs
+          ! grep -R -n -E 'com\.amyelitesuite\.learningpreview|amyfxpreview|suhaimitoamy/Amy-fx-pro/main/update\.json|AmyFX-Pro-latest\.apk|Amy FX Pro' app/src/main supabase/functions
+          test ! -f app/src/main/assets/apps/market-intel/private-market-api-router.js
+          node --check app/src/main/assets/apps/academy/trading-practice/assets/js/chart-engine.js
+          node --check app/src/main/assets/apps/academy/trading-practice/assets/js/replay-engine.js
+          node --check supabase/functions/scalper-engine/drivers.mjs
+          node --check supabase/functions/scalper-engine/lifecycle.mjs
+          node --check supabase/functions/scalper-engine/expansion-range-reentry.mjs
+          node --check supabase/functions/scalper-engine/smr-first-retest.mjs
+
+      - name: Run complete JavaScript regression suite
+        run: timeout 20m npm test
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - uses: android-actions/setup-android@v3
+
+      - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - id: signing-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: amy-fx-debug-keystore-v1
+
+      - name: Restore and verify permanent signer
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ steps.signing-cache.outputs.cache-hit }}" = "true"
+          cp "$HOME/.android/debug.keystore" "$AMYFX_KEYSTORE_PATH"
+          actual="$(keytool -list -v -keystore "$AMYFX_KEYSTORE_PATH" -storepass "$AMYFX_KEYSTORE_PASSWORD" -alias "$AMYFX_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1)"
+          test "$actual" = "$AMYFX_SIGNING_CERT_SHA256"
+
+      - run: chmod +x ./gradlew
+      - run: ./gradlew testReleaseUnitTest --no-configuration-cache
+      - run: ./gradlew lintRelease --no-configuration-cache
+      - run: ./gradlew assembleRelease --no-configuration-cache --stacktrace
+
+      - name: Verify signed APK identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="app/build/outputs/apk/release/app-release.apk"
+          aapt="$ANDROID_HOME/build-tools/35.0.0/aapt"
+          signer="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          "$aapt" dump badging "$apk" | tee /tmp/amyfx-badging.txt
+          grep -Fq "package: name='com.amyelitesuite' versionCode='60' versionName='2.4.0'" /tmp/amyfx-badging.txt
+          grep -Fq "application-label:'Amy FX'" /tmp/amyfx-badging.txt
+          "$signer" verify --verbose --print-certs "$apk" | tee /tmp/amyfx-signing.txt
+          expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          grep -Fq "Signer #1 certificate SHA-256 digest: $expected" /tmp/amyfx-signing.txt
+          mkdir -p dist
+          cp "$apk" dist/AmyFX-latest.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Amy-FX-v2.4.0-signed-apk
+          path: dist/AmyFX-latest.apk
+          if-no-files-found: error
+
+      - name: Publish rolling production APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git tag -f amyfx-latest "$GITHUB_SHA"
+          git push origin refs/tags/amyfx-latest --force
+          notes='Amy FX 2.4.0 membawa parity fitur/runtime dari Amy FX Pro 2.0.0-pro.326: Mapping context + SMT DXY, driver Scalper SMR dan Expansion Range Re-entry, Trading Practice/Replay dengan drawing dan zoom sinkron, historical pack library, serta quiz Academy bertingkat. Identitas produksi, signer, update channel, news topology, Market Intel gateway, dan data pengguna tetap dipertahankan.'
+          if gh release view amyfx-latest >/dev/null 2>&1; then
+            gh release edit amyfx-latest --title "Amy FX Latest — v2.4.0" --notes "$notes" --latest
+          else
+            gh release create amyfx-latest --title "Amy FX Latest — v2.4.0" --notes "$notes" --latest
+          fi
+          gh release upload amyfx-latest dist/AmyFX-latest.apk --clobber
+          gh release view amyfx-latest --json assets --jq '.assets[].name' | grep -Fx AmyFX-latest.apk
+
+      - name: Activate update only after APK publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/update.py <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('update.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          notes = [
+              'Amy FX kini membawa feature/runtime parity dari Amy FX Pro 2.0.0-pro.326.',
+              'Mapping mendapat context orchestrator, continuous event evidence, sweep-vs-acceptance classifier, dan SMT XAUUSD-DXY M15 read-only.',
+              'Scalper Engine mendapat SMR first-retest serta Expansion Range Re-entry V3 beserta lifecycle dan telemetry final Pro.',
+              'Academy mendapat Trading Practice, Candle Replay, historical pack lokal, ICT berbasis backtest, serta quiz easy/medium/hard.',
+              'Chart Practice membawa perbaikan zoom horizontal/vertikal, drawing mobile, selection, serta sinkronisasi drawing terhadap TIME+PRICE saat chart berubah.',
+              'Package com.amyelitesuite, URI amyfx, signer permanen, update channel main, news topology produksi, Market Intel public gateway, dan data pengguna tetap dipertahankan.',
+          ]
+          data.update(
+              latest_version_code=60,
+              latest_version_name='2.4.0',
+              versionCode=60,
+              version='2.4.0',
+              releaseDate=os.environ['RELEASE_DATE'],
+              apk_url='https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',
+              downloadUrl='https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-latest/AmyFX-latest.apk',
+              force_update=False,
+              mandatory=False,
+              release_notes=notes,
+              changelog=notes,
+          )
+          path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          export RELEASE_DATE="$(date -u +%F)"
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          for attempt in 1 2 3 4; do
+            git fetch origin main
+            git checkout -B release-metadata origin/main
+            RELEASE_DATE="$RELEASE_DATE" python3 /tmp/update.py
+            git add update.json
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m 'release: activate Amy FX 2.4.0 Pro 326 parity [skip ci]'
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
+
+      - name: Verify public update manifest
+        shell: bash
+        run: |
+          git fetch origin main
+          manifest="$(git show origin/main:update.json)"
+          printf '%s\n' "$manifest" | grep -F '"latest_version_code": 60'
+          printf '%s\n' "$manifest" | grep -F '"latest_version_name": "2.4.0"'
