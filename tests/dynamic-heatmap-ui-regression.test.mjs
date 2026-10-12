@@ -21,13 +21,14 @@ test('browser heatmap scripts remain syntactically valid', () => {
   assertSyntax(contractUrl);
 });
 
-test('market intel page loads canonical contract before dynamic heatmap consumers', () => {
+test('market intel page loads the ICT consumer without starting the legacy heatmap writer', () => {
   const html = readFileSync(indexUrl, 'utf8');
   assert.match(html, /heatmap-v2\.css/);
   assert.match(html, /data-amyfx-market-contract="v2"/);
-  assert.match(html, /<script src="app\.js"><\/script>\s*<script src="heatmap-v2\.js"><\/script>/);
+  assert.match(html, /<script type="module" src="ict-intel\.js"><\/script>/);
+  assert.doesNotMatch(html, /<script src="heatmap-v2\.js"/);
   assert.ok(html.indexOf('data-amyfx-market-contract="v2"') < html.indexOf('<script src="app.js"></script>'));
-  assert.match(html, /M15 · Dynamic/);
+  assert.match(html, /Kalender/);
 });
 
 test('dynamic heatmap refreshes independently and tracks strength changes', () => {

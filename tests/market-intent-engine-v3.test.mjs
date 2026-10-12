@@ -63,7 +63,8 @@ test('Market Intent uses closed candles and never rerenders from live price tick
   );
   assert.match(ui, /function closedCandlePrice/);
   assert.match(ui, /function closedCandleFingerprint/);
-  assert.match(ui, /M15 CANDLE TERTUTUP/);
+  assert.match(ui, /CLOSED CANDLE/);
+  assert.match(ui, /amyfxSyntheticCurrent !== true/);
   assert.match(ui, /amyfx:mapping-state-change/);
   assert.match(ui, /amyfx:candles-updated/);
   assert.doesNotMatch(ui, /setInterval\s*\(/);
@@ -77,11 +78,14 @@ test('Preview Market Intent keeps a professional closed-candle hierarchy', () =>
     new URL('../app/src/main/assets/apps/mapping/js/market-intent-ui.js', import.meta.url),
     'utf8'
   );
-  assert.match(ui, /AMY FX · MARKET INTELLIGENCE/);
-  assert.match(ui, /RINGKASAN MARKET/);
-  assert.match(ui, /Konteks Market Lanjutan/);
-  assert.match(ui, /TARGET TERDEKAT/);
-  assert.match(ui, /TARGET TIMEFRAME BESAR/);
+  assert.match(ui, /AMY-SMC-D/);
+  assert.match(ui, /Context \/ Descriptive/);
+  assert.match(ui, /Fresh Structural Evidence/);
+  assert.match(ui, /Predictive \/ Event Signals/);
+  assert.match(ui, /Candle sumber/);
+  assert.match(ui, /Dealing Range/);
+  assert.match(ui, /Sweep Continuation/);
   assert.match(ui, /data-market-intent-ready/);
+  assert.doesNotMatch(ui, /\d+(?:\.\d+)?%/);
   assert.doesNotMatch(ui, /NAIK KE BSL|TURUN KE SSL|Market mau ke mana\?/);
 });

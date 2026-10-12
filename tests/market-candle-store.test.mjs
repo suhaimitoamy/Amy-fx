@@ -1,6 +1,7 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
@@ -16,12 +17,12 @@ const files = [
   'api/liquidity.js',
   'app/src/main/assets/apps/mapping/js/api-request-coordinator.js',
   'app/src/main/assets/apps/mapping/js/mentor-market-context-sync.js',
-  'app/src/main/assets/apps/market-intel/app.js',
+  'app/src/main/assets/apps/market-intel/private-market-api-router.js',
   'app/src/main/assets/apps/shared/market-intelligence.js'
 ];
 const { expectedClosedOpenTime } = await import('../lib/market-candle-store.mjs');
 
-test('public market gateway files are valid JavaScript', () => {
+test('Supabase-first market gateway files are valid JavaScript', () => {
   for (const relative of files) {
     execFileSync(process.execPath, ['--check', path.join(root, relative)], { stdio: 'pipe' });
   }
@@ -54,26 +55,23 @@ test('weekly candle closure is anchored to Monday UTC instead of the Unix Thursd
   );
 });
 
-test('public clients use supported production market gateways and exclude the private router', async () => {
+test('active private clients route market reads through Supabase Edge gateways', async () => {
   const coordinator = await read('app/src/main/assets/apps/mapping/js/api-request-coordinator.js');
-  const intel = await read('app/src/main/assets/apps/market-intel/app.js');
-  const intelIndex = await read('app/src/main/assets/apps/market-intel/index.html');
+  const router = await read('app/src/main/assets/apps/market-intel/private-market-api-router.js');
   const scanner = await read('app/src/main/java/com/amyelitesuite/ScannerService.kt');
   assert.match(coordinator, /functions\/v1\/market-candles/);
   assert.match(coordinator, /normalizeClosedSeries/);
   assert.match(coordinator, /CLOSED_SERIES_SENTINEL_V1/);
-  assert.match(intel, /https:\/\/amy-fx\.vercel\.app\/api/);
-  assert.match(intel, /fetch\(`\$\{API_BASE\}\/(?:news|heatmap|liquidity)/);
-  assert.doesNotMatch(intelIndex, /private-market-api-router\.js/);
-  assert.equal(existsSync(path.join(root, 'app/src/main/assets/apps/market-intel/private-market-api-router.js')), false);
+  assert.match(router, /functions\/v1\/market-heatmap/);
+  assert.match(router, /functions\/v1\/market-liquidity/);
   assert.match(scanner, /Legacy local Mapping scanner is retired/);
   assert.match(scanner, /return START_NOT_STICKY/);
-  assert.doesNotMatch(scanner, /personal-amyfx-private-aplikasi-trading\.vercel\.app/);
+  assert.doesNotMatch(scanner, /functions\/v1\/market-candles|personal-amyfx-private-aplikasi-trading\.vercel\.app/);
 });
 
 test('Mapping shares Entry Watch zones with Amy Bot', async () => {
   const sync = await read('app/src/main/assets/apps/mapping/js/mentor-market-context-sync.js');
-  const index = await read('app/src/main/assets/apps/mapping/index.html');
+  const index = await read('app/src/main/assets/apps/mapping/legacy-index.html');
   assert.match(index, /mentor-market-context-sync\.js/);
   assert.match(sync, /entryWatch: watch/);
   assert.match(sync, /FVG: fairValueGaps/);

@@ -1,0 +1,157 @@
+Regression failed: five-issues-regression.test.mjs
+Exit status: 1
+
+TAP version 13
+# Subtest: Mapping UI stability runtimes remain syntactically valid
+ok 1 - Mapping UI stability runtimes remain syntactically valid
+  ---
+  duration_ms: 248.404539
+  type: 'test'
+  ...
+# Subtest: README retains Preview lineage while declaring Amy FX Pro as the main release identity
+not ok 2 - README retains Preview lineage while declaring Amy FX Pro as the main release identity
+  ---
+  duration_ms: 4.589461
+  type: 'test'
+  location: '/root/Amy-fx-pro/tests/five-issues-regression.test.mjs:34:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /personal\/amyfx-private/. Input:
+    
+    '# Amy FX Pro\n' +
+      '\n' +
+      'Amy FX Pro adalah jalur utama aplikasi **Amy FX Pro** dengan engine dan runtime yang dikembangkan secara berkelanjutan.\n' +
+      '\n' +
+      '## Current Version\n' +
+      '\n' +
+      '> **Latest update:** `Amy FX Pro v329 (source)`  \n' +
+      '> **Update date:** 5 September 2026\n' +
+      '\n' +
+      '## Status Utama\n' +
+      '\n' +
+      '`main` adalah branch produksi utama Amy FX Pro.\n' +
+      '\n' +
+      'Versi terbaru membawa update runtime dan validasi terbaru dari jalur Pro. Engine tetap mempertahankan prinsip:\n' +
+      '\n' +
+      '- canonical Mapping sebagai sumber utama data struktur;\n' +
+      '- pemrosesan candle tertutup secara sequential;\n' +
+      '- tidak menggunakan future candle, interpolation, atau synthetic candle;\n' +
+      '- consumer seperti scanner, Entry Watch, lifecycle, dan notifikasi membaca canonical state;\n' +
+      '- live market feed bersifat display/update data dan tidak mengubah historical Mapping secara sepihak.\n' +
+      '\n' +
+      '## Identitas Amy FX Pro\n' +
+      '\n' +
+      '| Properti | Nilai |\n' +
+      '|---|---|\n' +
+      '| Nama aplikasi | `Amy FX Pro` |\n' +
+      '| Branch utama | `main` |\n' +
+      '| Current version | `v329` (source) |\n' +
+      '| Update channel | `Amy-fx-pro/main/update.json` |\n' +
+      '\n' +
+      '## Perubahan sumber 329\n' +
+      '\n' +
+      'Candle Replay: gambar berulang tanpa batas jumlah objek dalam kode, seleksi langsung, delapan pegangan kotak, panah yang dapat diperpanjang ke ruang kosong, daftar objek, duplikasi, dan fullscreen. Future candle tetap dipotong oleh replay engine. News: gagal terjemah tidak lagi dianggap sebagai teks Indonesia; sinkronisasi mencoba lagi berita lama.\n' +
+      '\n' +
+      'Sumber `2.0.0-pro.329` / `950329` disiapkan. Belum diterbitkan: koneksi GitHub perlu diaktifkan kembali. Tidak ada tes, backtest, atau verifikasi tambahan sesuai permintaan pengguna. Workflow329 melewati tahap tersebut dan hanya build/publish. Update manifest tetap menunjuk328 sampai APK329 benar-benar dipublikasikan.\n'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    # Amy FX Pro
+    
+    Amy FX Pro adalah jalur utama aplikasi **Amy FX Pro** dengan engine dan runtime yang dikembangkan secara berkelanjutan.
+    
+    ## Current Version
+    
+    > **Latest update:** `Amy FX Pro v329 (source)`  
+    > **Update date:** 5 September 2026
+    
+    ## Status Utama
+    
+    `main` adalah branch produksi utama Amy FX Pro.
+    
+    Versi terbaru membawa update runtime dan validasi terbaru dari jalur Pro. Engine tetap mempertahankan prinsip:
+    
+    - canonical Mapping sebagai sumber utama data struktur;
+    - pemrosesan candle tertutup secara sequential;
+    - tidak menggunakan future candle, interpolation, atau synthetic candle;
+    - consumer seperti scanner, Entry Watch, lifecycle, dan notifikasi membaca canonical state;
+    - live market feed bersifat display/update data dan tidak mengubah historical Mapping secara sepihak.
+    
+    ## Identitas Amy FX Pro
+    
+    | Properti | Nilai |
+    |---|---|
+    | Nama aplikasi | `Amy FX Pro` |
+    | Branch utama | `main` |
+    | Current version | `v329` (source) |
+    | Update channel | `Amy-fx-pro/main/update.json` |
+    
+    ## Perubahan sumber 329
+    
+    Candle Replay: gambar berulang tanpa batas jumlah objek dalam kode, seleksi langsung, delapan pegangan kotak, panah yang dapat diperpanjang ke ruang kosong, daftar objek, duplikasi, dan fullscreen. Future candle tetap dipotong oleh replay engine. News: gagal terjemah tidak lagi dianggap sebagai teks Indonesia; sinkronisasi mencoba lagi berita lama.
+    
+    Sumber `2.0.0-pro.329` / `950329` disiapkan. Belum diterbitkan: koneksi GitHub perlu diaktifkan kembali. Tidak ada tes, backtest, atau verifikasi tambahan sesuai permintaan pengguna. Workflow329 melewati tahap tersebut dan hanya build/publish. Update manifest tetap menunjuk328 sampai APK329 benar-benar dipublikasikan.
+    
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///root/Amy-fx-pro/tests/five-issues-regression.test.mjs:35:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: Mapping loads stable UI coordination and no longer loads scroll restoration
+ok 3 - Mapping loads stable UI coordination and no longer loads scroll restoration
+  ---
+  duration_ms: 1.21823
+  type: 'test'
+  ...
+# Subtest: stability layer coordinates Analyze without deleting dashboard or market cards after render
+ok 4 - stability layer coordinates Analyze without deleting dashboard or market cards after render
+  ---
+  duration_ms: 1.052616
+  type: 'test'
+  ...
+# Subtest: analysis badge reports both closed-candle availability and provider delay truthfully
+ok 5 - analysis badge reports both closed-candle availability and provider delay truthfully
+  ---
+  duration_ms: 1.548231
+  type: 'test'
+  ...
+# Subtest: historical reliability is excluded at the Market Intent source instead of removed after render
+ok 6 - historical reliability is excluded at the Market Intent source instead of removed after render
+  ---
+  duration_ms: 0.985846
+  type: 'test'
+  ...
+# Subtest: Analyze view keeps keyed accordions without forced scroll movement
+ok 7 - Analyze view keeps keyed accordions without forced scroll movement
+  ---
+  duration_ms: 1.137539
+  type: 'test'
+  ...
+# Subtest: issue-5 audit remains available in documentation but not injected into live UI
+ok 8 - issue-5 audit remains available in documentation but not injected into live UI
+  ---
+  duration_ms: 0.717538
+  type: 'test'
+  ...
+# Subtest: source version and updater stay on the Amy FX Pro channel
+ok 9 - source version and updater stay on the Amy FX Pro channel
+  ---
+  duration_ms: 2.246846
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 8
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 503.58823

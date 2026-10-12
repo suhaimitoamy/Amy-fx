@@ -1,73 +1,28 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import vm from 'node:vm';
 
 const source = fs.readFileSync(
   new URL('../app/src/main/assets/apps/mapping/js/mapping-clarity-v1.js', import.meta.url),
   'utf8'
 );
 
-function loadChooser() {
-  const start = source.indexOf('function matchingRows');
-  const end = source.indexOf('function structure(', start);
-  assert.ok(start >= 0 && end > start, 'scalper direction block must exist');
-  const context = {
-    SCALPER_AUTHORITY_TFS: Object.freeze(['M15', 'M5', 'M1', 'M30', 'H1']),
-    SCALPER_WEIGHTS: Object.freeze({ M15: 45, M5: 25, M1: 20, M30: 5, H1: 5 }),
-    chooser: null
-  };
-  vm.createContext(context);
-  vm.runInContext(`${source.slice(start, end)}\nchooser = chooseScalperDirection;`, context);
-  return context.chooser;
-}
-
-const row = (tf, direction, invalidation = 1) => ({
-  tf,
-  missing: false,
-  s: {
-    direction,
-    phase: 'CONTINUATION',
-    invalidation,
-    rule: `${tf} invalidation`
-  },
-  sourceTime: 1
+test('clarity runtime has no cross-timeframe scalper direction chooser', () => {
+  assert.doesNotMatch(source, /chooseScalperDirection|matchingRows|SCALPER_WEIGHTS/);
+  assert.match(source, /SUPPORTED_MAPPING_TIMEFRAMES\.map\(analyzeTimeframe\)/);
 });
 
-test('M1 + M30 + H1 bearish stays bearish when M15 and M5 are not loaded', () => {
-  const choose = loadChooser();
-  const result = choose([
-    { tf: 'M15', missing: true },
-    { tf: 'M5', missing: true },
-    row('M1', 'BEARISH', 4051.54),
-    row('M30', 'BEARISH', 4071.66),
-    row('H1', 'BEARISH', 4116.43),
-    row('H4', 'BULLISH', 3983.43)
-  ]);
-  assert.equal(result.direction, 'BEARISH');
-  assert.deepEqual([...result.sources], ['M1', 'M30', 'H1']);
-  assert.ok(!result.sources.includes('H4'));
+test('each timeframe renders its own D Final Bias and Next Move', () => {
+  assert.match(source, /d\.descriptive\.finalBias\.direction/);
+  assert.match(source, /d\.predictive\.nextMove\.signal/);
+  assert.doesNotMatch(source, /d\.predictive\.nextMove\.source/);
+  assert.doesNotMatch(source, /primary scalping|lower-timeframe conflict|weighted vote/i);
 });
 
-test('M15 remains the primary scalping direction and reports lower-timeframe conflict', () => {
-  const choose = loadChooser();
-  const result = choose([
-    row('M15', 'BULLISH', 4000),
-    row('M5', 'BEARISH', 4050),
-    row('M1', 'BEARISH', 4040),
-    row('H1', 'BEARISH', 4100)
-  ]);
-  assert.equal(result.direction, 'BULLISH');
-  assert.match(result.label, /konflik M5 \+ M1/);
-});
-
-test('H4, D1, and W1 never vote on scalping direction', () => {
-  assert.match(source, /SCALPER_AUTHORITY_TFS = Object\.freeze\(\['M15', 'M5', 'M1', 'M30', 'H1'\]\)/);
-  assert.match(source, /SCALPER_WEIGHTS = Object\.freeze\(\{ M15: 45, M5: 25, M1: 20, M30: 5, H1: 5 \}\)/);
-  assert.doesNotMatch(source, /SCALPER_AUTHORITY_TFS[^\n]*H4/);
-  assert.doesNotMatch(source, /SCALPER_AUTHORITY_TFS[^\n]*D1/);
-  assert.doesNotMatch(source, /SCALPER_AUTHORITY_TFS[^\n]*W1/);
-  assert.match(source, /H4\/D1 tidak ikut menentukan arah scalping/);
+test('non-priority timeframes stay independent instead of voting on M5 M15 or H1', () => {
+  assert.match(source, /Setiap timeframe memakai perilaku Amy-SMC-D\/Z miliknya sendiri/);
+  assert.match(source, /Boundary 70\/30, 60\/40, dan rolling-240 hanya diterapkan pada M5, M15, dan H1/);
+  assert.doesNotMatch(source, /SCALPER_AUTHORITY_TFS/);
 });
 
 test('clarity runtime no longer watches nested mutations or live quote events', () => {

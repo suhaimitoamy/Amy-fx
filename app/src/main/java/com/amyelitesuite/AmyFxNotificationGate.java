@@ -22,7 +22,7 @@ public class AmyFxNotificationGate {
         String m = message.toLowerCase(Locale.ROOT);
         if (t.contains("news") || t.contains("berita") || m.contains("breaking news")) return "News";
         if (t.contains("journal") || t.contains("jurnal")) return "Journal";
-        if (t.contains("academy") || t.contains("akademi")) return "Academy";
+        if (t.contains("academy") || t.contains("akademi") || t.contains("belajar") || t.contains("materi") || t.contains("skill")) return "Academy";
         if (t.contains("target atas") || m.contains("bsl")) return "Analyze";
         if (t.contains("target bawah") || m.contains("ssl")) return "Analyze";
         if (t.contains("scanner") || m.contains("scanner")) return "Analyze";
@@ -37,7 +37,40 @@ public class AmyFxNotificationGate {
         return "https://appassets.androidplatform.net/assets/apps/mapping/index.html#" + Uri.encode(route);
     }
 
+    public static boolean isGoldMarketOpen(long nowMs) {
+        try {
+            java.time.ZonedDateTime zdt = java.time.ZonedDateTime.ofInstant(
+                java.time.Instant.ofEpochMilli(nowMs),
+                java.time.ZoneId.of("America/New_York")
+            );
+            java.time.DayOfWeek day = zdt.getDayOfWeek();
+            double hour = zdt.getHour() + zdt.getMinute() / 60.0;
+            if (day == java.time.DayOfWeek.SATURDAY) return false;
+            if (day == java.time.DayOfWeek.SUNDAY) return hour >= 17.0;
+            if (day == java.time.DayOfWeek.FRIDAY) return hour < 17.0;
+            if (hour >= 17.0 && hour < 18.0) return false;
+            return true;
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
+    public static boolean isTradingAlert(String key) {
+        if (key == null || key.trim().isEmpty()) return false;
+        String k = key.toLowerCase(Locale.ROOT);
+        // Educational, News, Journal, and System update alerts are permitted outside market hours
+        if (k.contains("news") || k.contains("berita") || k.contains("breaking news")) return false;
+        if (k.contains("journal") || k.contains("jurnal")) return false;
+        if (k.contains("academy") || k.contains("akademi") || k.contains("belajar") || k.contains("materi") || k.contains("reminder") || k.contains("pelajaran")) return false;
+        if (k.contains("update amy fx") || k.contains("pembaruan sistem")) return false;
+        // All other notifications (market context, scalper, driver setup, live assistant, entry watch, POI/DOL) are trading signals
+        return true;
+    }
+
     public static synchronized boolean shouldNotify(Context context, String gateKey, long nowMs) {
+        if (isTradingAlert(gateKey) && !isGoldMarketOpen(nowMs)) {
+            return false;
+        }
         String canonicalKey = canonicalKey(gateKey);
         if (canonicalKey.isEmpty()) return true;
         SharedPreferences sp = context.getSharedPreferences(PREF, Context.MODE_PRIVATE);

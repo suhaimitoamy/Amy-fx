@@ -1,3 +1,5 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -102,7 +104,7 @@ test('single market concept engine returns compatible production fields', () => 
 test('legacy diagnostic timers and Pine zone source are no longer wired to Mapping', () => {
   const directory = path.dirname(fileURLToPath(import.meta.url));
   const root = path.resolve(directory, '..');
-  const html = fs.readFileSync(path.join(root, 'app/src/main/assets/apps/mapping/index.html'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'app/src/main/assets/apps/mapping/legacy-index.html'), 'utf8');
   const sync = fs.readFileSync(path.join(root, 'app/src/main/assets/apps/mapping/js/mapping-zone-sync.js'), 'utf8');
   for (const name of ['concept-state-sync.js', 'concept-structure-state-sync.js', 'concept-ob-state-sync.js', 'concept-level-state-sync.js', 'concept-view-refresh.js']) {
     assert.equal(html.includes(name), false);

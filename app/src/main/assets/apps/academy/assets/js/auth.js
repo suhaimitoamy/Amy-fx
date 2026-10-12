@@ -78,7 +78,9 @@ function logout(){sessionStorage.removeItem(ACADEMY_SESSION_KEY);location.href=t
     load('amyfx-loading.js','data-amyfx-loading','__amyFxLoadingRuntime',()=>{
       load('amyfx-blueprint-v1.js','data-amyfx-blueprint-js','__amyFxBlueprintPreviewV1',()=>{
         load('amyfx-blueprint-hotfix-v1.js','data-amyfx-blueprint-hotfix','__amyFxBlueprintHotfixV1',()=>{
-          load('amyfx-provider-detection-v1.js','data-amyfx-provider-detection','__amyFxProviderDetectionV1');
+          load('amy-local-assistant.js','data-amy-local-assistant','AmyLocalAssistant',()=>{
+            load('amy-learning-reminder.js','data-amy-learning-reminder','AmyLearningReminder');
+          });
         });
       });
     });

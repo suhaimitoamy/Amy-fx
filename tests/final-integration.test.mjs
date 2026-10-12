@@ -1,3 +1,5 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -51,7 +53,7 @@ test('causal all-timeframe Entry Map owns execution and hidden watch runtime sta
 });
 
 test('Mapping UI loads hidden watch data, all timeframe controls, and WITA labels', () => {
-  const html = source('app/src/main/assets/apps/mapping/index.html');
+  const html = source('app/src/main/assets/apps/mapping/legacy-index.html');
   const main = source('app/src/main/assets/apps/mapping/js/main.js');
   const ui = source('app/src/main/assets/apps/mapping/js/ui/ui-render.js');
   const timeframes = source('app/src/main/assets/apps/mapping/js/engine/mapping-timeframes.js');

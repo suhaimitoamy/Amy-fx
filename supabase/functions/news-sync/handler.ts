@@ -1,10 +1,12 @@
+import { translateNewsToId } from '../_shared/news-translation.mjs';
 import { cert, getApps, initializeApp } from 'npm:firebase-admin@13.0.1/app';
 import { getMessaging } from 'npm:firebase-admin@13.0.1/messaging';
-import { getNewsImpact, isRelevantNews } from '../../../lib/news-relevance.mjs';
+import { getNewsImpact, isRelevantNews } from './news-relevance.mjs';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const SOURCE = 'SM_News_24h';
+const PREVIEW_DEVICE_PREFIX = 'com.amyelitesuite.learningpreview:';
 const TELEGRAM_WEB_BASES = [
   'https://telegram.me/s',
   'https://telegram.dog/s'
@@ -76,26 +78,34 @@ function decodeHtml(value: string) {
     .trim();
 }
 
-function extractTime(html: string, start: number, end: number) {
-  const block = html.slice(start, Math.min(html.length, end + 1600));
-  return block.match(/datetime="([^"]+)"/)?.[1]
-    || html.slice(Math.max(0, start - 700), start).match(/datetime="([^"]+)"/)?.[1]
-    || '';
-}
-
 function extractPosts(html: string) {
   const posts: Array<{ id: string; text: string; time: string; link: string }> = [];
-  const regex = /data-post="SM_News_24h\/(\d+)"[\s\S]*?<div class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>\s*(?:<div class="tgme_widget_message_author|<div class="tgme_widget_message_footer)/gi;
-  let match: RegExpExecArray | null;
+  const postPattern = /data-post="SM_News_24h\/(\d+)"/g;
+  const indices: Array<{ id: string; index: number }> = [];
+  let m: RegExpExecArray | null;
+  while ((m = postPattern.exec(html)) !== null) {
+    indices.push({ id: m[1], index: m.index });
+  }
 
-  while ((match = regex.exec(html)) !== null) {
-    const text = decodeHtml(match[2]);
+  for (let i = 0; i < indices.length; i++) {
+    const current = indices[i];
+    const nextIndex = (i + 1 < indices.length) ? indices[i + 1].index : html.length;
+    const postChunk = html.slice(current.index, nextIndex);
+
+    const textMatch = postChunk.match(/<div class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
+    if (!textMatch) continue;
+
+    const text = decodeHtml(textMatch[1]);
     if (text.length < 20) continue;
+
+    const timeMatch = postChunk.match(/datetime="([^"]+)"/i);
+    const time = timeMatch ? timeMatch[1] : '';
+
     posts.push({
-      id: match[1],
+      id: current.id,
       text,
-      time: extractTime(html, match.index, regex.lastIndex),
-      link: `https://telegram.me/${SOURCE}/${match[1]}`
+      time,
+      link: `https://telegram.me/${SOURCE}/${current.id}`
     });
   }
 
@@ -131,17 +141,7 @@ async function fetchSourcePosts() {
 }
 
 async function translate(text: string) {
-  try {
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=id&dt=t&q=${encodeURIComponent(text)}`;
-    const response = await fetchTimed(url, {}, 8000);
-    if (!response.ok) return text;
-    const data = await response.json();
-    return Array.isArray(data?.[0])
-      ? data[0].map((part: unknown[]) => String(part?.[0] || '')).join('').trim() || text
-      : text;
-  } catch (_) {
-    return text;
-  }
+  return (await translateNewsToId(text)) || '';
 }
 
 async function hash(text: string) {
@@ -234,9 +234,14 @@ async function pushNews(inserted: any[]) {
   const newsRows = [...newsMap.values()].filter(
     row => isRelevantNews(row.text_original || row.text_indonesian || '')
   );
-  const devices = await rest(
-    'device_tokens?select=id,fcm_token&enabled=eq.true&order=last_seen_at.desc&limit=500'
+  const deviceRows = await rest(
+    'device_tokens?select=id,device_id,fcm_token&enabled=eq.true&order=last_seen_at.desc&limit=500'
   ) || [];
+  // Preview has one authoritative system-notification route backed by an atomic ledger.
+  // Keep the existing public-app data push unchanged while excluding Preview devices here.
+  const devices = (Array.isArray(deviceRows) ? deviceRows : []).filter(
+    (device: any) => !String(device.device_id || '').startsWith(PREVIEW_DEVICE_PREFIX)
+  );
 
   if (!newsRows.length || !devices.length) {
     return { sent: 0, attempted: 0, configured: true, error: null };
@@ -277,7 +282,7 @@ async function pushNews(inserted: any[]) {
 
     attempted += pendingDevices.length;
     const body = String(
-      news.text_indonesian || news.text_original || 'Berita baru XAU/USD tersedia.'
+      news.text_indonesian || 'Berita baru tersedia. Terjemahan Bahasa Indonesia sedang disiapkan.'
     ).slice(0, 900);
     const postId = String(news.telegram_post_id || news.id);
     const title = news.impact === 'high'
@@ -348,6 +353,19 @@ export async function handler(req: Request) {
     const existing = await rest('news?select=telegram_post_id&order=id.desc&limit=500') || [];
     const existingIds = new Set(existing.map((row: any) => String(row.telegram_post_id)));
     const missing = candidates.filter(post => !existingIds.has(post.id));
+    // Repair only text freshly fetched from the existing public Telegram source.
+    // Never send stored database content to a translation provider.
+    const repairCandidates = candidates.filter(post => existingIds.has(post.id));
+    const repairStart = (Math.floor(Date.now() / 60000) % Math.max(1, Math.ceil(repairCandidates.length / 5))) * 5;
+    const publicRepairs = repairCandidates.slice(repairStart, repairStart + 5);
+    await Promise.all(publicRepairs.map(async post => {
+      const translated = await translateNewsToId(post.text);
+      if (!translated) return;
+      const match = new URLSearchParams({telegram_post_id:`eq.${post.id}`,text_original:`eq.${post.text}`});
+      await rest(`news?${match.toString()}`, {
+        method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({text_indonesian:translated})
+      });
+    }));
 
     const prepared: any[] = [];
     for (let index = 0; index < missing.length; index += 5) {

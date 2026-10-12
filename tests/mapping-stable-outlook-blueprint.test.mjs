@@ -1,3 +1,5 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -7,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('..', import.meta.url));
 const read = path => readFileSync(`${root}/${path}`, 'utf8');
 const paths = {
-  index: 'app/src/main/assets/apps/mapping/index.html',
+  index: 'app/src/main/assets/apps/mapping/legacy-index.html',
   main: 'app/src/main/assets/apps/mapping/js/main.js',
   live: 'app/src/main/assets/apps/mapping/js/live-price-display-only-v1.js',
   outlook: 'app/src/main/assets/apps/mapping/js/market-outlook.js',

@@ -2,6 +2,7 @@ package com.amyelitesuite
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Context
 import android.graphics.Color
 import android.os.Build
 import androidx.work.Constraints
@@ -23,6 +24,12 @@ class AmyFxApplication : android.app.Application() {
 
         // WorkManager tetap khusus fallback news yang sudah ada. Scalper engine berjalan di backend.
         scheduleNewsFallback()
+
+        // Background worker mandiri untuk setup driver dari cloud Vercel
+        scheduleDriverSetupWorker()
+
+        // Background worker terjadwal untuk pengingat materi belajar & skill trading
+        LearningReminderWorker.schedule(this)
     }
 
     private fun createNotificationChannels() {
@@ -42,33 +49,46 @@ class AmyFxApplication : android.app.Application() {
         manager.createNotificationChannel(newsChannel)
 
         val scalperChannel = NotificationChannel(
-            SCALPER_CHANNEL_ID,
-            "Amy FX Scalper Signals",
+            MARKET_CONTEXT_CHANNEL_ID,
+            "Amy FX Market Context",
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = "Sinyal simulasi 10 driver BT6/BT6.1 + AMD dari Amy FX"
+            description = "Perubahan struktur dan area penting Gold XAU/USD"
             enableVibration(true)
             enableLights(true)
             lightColor = Color.rgb(212, 175, 55)
             setShowBadge(true)
         }
         manager.createNotificationChannel(scalperChannel)
+
+        val learningChannel = NotificationChannel(
+            LEARNING_REMINDER_CHANNEL_ID,
+            "Amy FX Pengingat Belajar",
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = "Pengingat harian materi ICT dan peningkatan skill trading"
+            enableVibration(true)
+            enableLights(true)
+            lightColor = Color.rgb(56, 189, 248)
+            setShowBadge(true)
+        }
+        manager.createNotificationChannel(learningChannel)
     }
 
     private fun scheduleNewsFallback() {
         val workManager = WorkManager.getInstance(this)
-        if (BuildConfig.APPLICATION_ID == PREVIEW_APPLICATION_ID) {
-            // Preview menerima news hanya dari jalur FCM server yang memakai canonical event key
-            // dan atomic delivery ledger. Fallback lokal dinonaktifkan agar satu event tampil sekali.
+        val prefs = getSharedPreferences("amyfx_news_settings", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean("news_notifications_enabled", true)) {
             workManager.cancelUniqueWork(NewsSyncWorker.UNIQUE_WORK_NAME)
             return
         }
+
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
         val request = PeriodicWorkRequestBuilder<NewsSyncWorker>(15, TimeUnit.MINUTES)
-            .setInitialDelay(5, TimeUnit.MINUTES)
+            .setInitialDelay(1, TimeUnit.MINUTES)
             .setConstraints(constraints)
             .build()
 
@@ -79,9 +99,29 @@ class AmyFxApplication : android.app.Application() {
         )
     }
 
+    private fun scheduleDriverSetupWorker() {
+        val workManager = WorkManager.getInstance(this)
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val request = PeriodicWorkRequestBuilder<DriverSetupSyncWorker>(15, TimeUnit.MINUTES)
+            .setInitialDelay(1, TimeUnit.MINUTES)
+            .setConstraints(constraints)
+            .build()
+
+        workManager.enqueueUniquePeriodicWork(
+            DriverSetupSyncWorker.UNIQUE_WORK_NAME,
+            ExistingPeriodicWorkPolicy.UPDATE,
+            request
+        )
+    }
+
     companion object {
         const val NEWS_CHANNEL_ID = "amy_news_v2"
         const val SCALPER_CHANNEL_ID = "amy_scalper_v1"
-        const val PREVIEW_APPLICATION_ID = "com.amyelitesuite"
+        const val MARKET_CONTEXT_CHANNEL_ID = "amy_market_context_v1"
+        const val LEARNING_REMINDER_CHANNEL_ID = "amy_learning_reminder_v1"
+        const val PREVIEW_APPLICATION_ID = "com.amyelitesuite.learningpreview"
     }
 }

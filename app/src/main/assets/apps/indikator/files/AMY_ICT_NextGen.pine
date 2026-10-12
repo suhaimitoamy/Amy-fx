@@ -1,0 +1,1284 @@
+//@version=5
+indicator("AMY ICT NextGen Market Mapping", overlay=true, max_boxes_count=250, max_lines_count=300, max_labels_count=250, max_bars_back=3000)
+
+// ============================================================================
+// TYPES
+// ============================================================================
+type amyFvg
+    float top
+    float bot
+    int dir
+    box bx
+
+type amyOb
+    float top
+    float bot
+    int dir
+    box bx
+
+// ============================================================================
+// INPUTS
+// ============================================================================
+grpCore = "1. Core"
+tz = input.string("Asia/Makassar", "Timezone", group=grpCore)
+asiaSess = input.session("0600-1400", "Asia Session", group=grpCore)
+londonSess = input.session("1400-1800", "London Session", group=grpCore)
+nySess = input.session("1930-0400", "New York Session", group=grpCore)
+showAsia = input.bool(true, "Show Asia High / Low", group=grpCore)
+showPrevDay = input.bool(true, "Show PDH / PDL", group=grpCore)
+showPrevWeek = input.bool(true, "Show PWH / PWL", group=grpCore)
+showLiquidity = input.bool(true, "Show Liquidity", group=grpCore)
+showStructure = input.bool(true, "Show BOS / MSS", group=grpCore)
+showTrendInvalidation = input.bool(true, "Show Trend Invalidation", group=grpCore)
+structureHistory = input.int(3, "Visible BOS / MSS", minval=1, maxval=10, group=grpCore)
+liquidityHistory = input.int(3, "Visible BSL / SSL Each Side", minval=1, maxval=10, group=grpCore)
+showDashboard = input.bool(true, "Show Unified Dashboard", group=grpCore)
+
+grpCtx = "2. Context"
+htf = input.timeframe("240", "HTF Bias", group=grpCtx)
+htfEmaLen = input.int(20, "HTF EMA Length", minval=1, group=grpCtx)
+pdLookback = input.int(80, "Premium / Discount Lookback", minval=20, maxval=300, group=grpCtx)
+atrLen = input.int(14, "ATR Length", minval=1, group=grpCtx)
+liquidityDirectionThreshold = input.int(97, "Prediction Confidence Threshold", minval=50, maxval=99, group=grpCtx)
+showDirectionForecast = input.bool(true, "Show Direction Forecast", group=grpCtx)
+
+grpEma = "3. EMA"
+showEma = input.bool(true, "Show EMA", group=grpEma)
+ema1Len = input.int(21, "EMA 1 Length", minval=1, group=grpEma)
+ema2Len = input.int(34, "EMA 2 Length", minval=1, group=grpEma)
+ema3Len = input.int(90, "EMA 3 Length", minval=1, group=grpEma)
+
+grpStruct = "4. Structure"
+swingLen = input.int(4, "Swing Length", minval=1, maxval=20, group=grpStruct)
+marketStateSlowLen = input.int(6, "Market State Slow Swing", minval=3, maxval=20, group=grpStruct)
+
+grpSR = "5. Support Resistance"
+showSRBoxes = input.bool(true, "Show Support / Resistance", group=grpSR)
+srBoxAtrPad = input.float(0.20, "Zone Thickness ATR", minval=0.05, maxval=2.0, step=0.05, group=grpSR)
+srBoxExtend = input.int(55, "Zone Extend Bars", minval=10, maxval=200, group=grpSR)
+showSRLabels = input.bool(true, "Show Zone Text", group=grpSR)
+
+grpPoi = "6. ICT Base OB / FVG"
+showFvg = input.bool(true, "Show FVG", group=grpPoi)
+fvgVisible = input.int(3, "Visible FVG Each Direction", minval=1, maxval=10, group=grpPoi)
+fvgExtend = input.int(12, "FVG Extend Bars", minval=2, maxval=100, group=grpPoi)
+showOb = input.bool(true, "Show Order Blocks", group=grpPoi)
+obSearchBars = input.int(12, "OB Origin Search Bars", minval=3, maxval=50, group=grpPoi)
+obVisible = input.int(2, "Visible OB Each Direction", minval=1, maxval=10, group=grpPoi)
+obExtend = input.int(16, "OB Extend Bars", minval=2, maxval=100, group=grpPoi)
+obUseBody = input.bool(true, "Use Candle Body", group=grpPoi)
+poiNearAtr = input.float(0.35, "Near POI ATR", minval=0.05, maxval=2.0, step=0.05, group=grpPoi)
+
+grpEntry = "7. Entry Map"
+showEntryMap = input.bool(true, "Show Entry Map On Chart", group=grpEntry)
+entryProfile = input.string("Auto", "Profile", options=["Auto", "M5", "M15", "H1"], group=grpEntry)
+slAtrPad = input.float(0.50, "SL ATR Buffer", minval=0.0, maxval=2.0, step=0.05, group=grpEntry)
+
+entrySweepMemoryBars = timeframe.isminutes and timeframe.multiplier > 30 and timeframe.multiplier <= 60 ? 12 : 48
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+f_inSession(sess) =>
+    not na(time(timeframe.period, sess, tz))
+
+f_price(x) =>
+    na(x) ? "-" : str.tostring(x, format.mintick)
+
+f_meter(percent) =>
+    safePercent = int(math.max(0, math.min(100, percent)))
+    filled = int(math.round(safePercent / 10.0))
+    string meter = ""
+    for i = 1 to 10
+        meter += i <= filled ? "█" : "░"
+    meter
+
+// ============================================================================
+// SESSION ENGINE
+// ============================================================================
+inAsia = f_inSession(asiaSess)
+inLondon = f_inSession(londonSess)
+inNY = f_inSession(nySess)
+validSession = inLondon or inNY
+sessionText = inAsia ? "ASIA" : inLondon ? "LONDON" : inNY ? "NEW YORK" : "OFF SESSION"
+
+prevAsia = bar_index > 0 ? inAsia[1] : false
+asiaStart = inAsia and not prevAsia
+
+var float asiaHigh = na
+var float asiaLow = na
+var int asiaStartBar = na
+var line asiaHighLine = na
+var line asiaLowLine = na
+var label asiaHighLabel = na
+var label asiaLowLabel = na
+var bool asiaHighConsumed = false
+var bool asiaLowConsumed = false
+
+if asiaStart
+    asiaHigh := high
+    asiaLow := low
+    asiaStartBar := bar_index
+    asiaHighConsumed := false
+    asiaLowConsumed := false
+    if not na(asiaHighLine)
+        line.delete(asiaHighLine)
+        asiaHighLine := na
+    if not na(asiaLowLine)
+        line.delete(asiaLowLine)
+        asiaLowLine := na
+    if not na(asiaHighLabel)
+        label.delete(asiaHighLabel)
+        asiaHighLabel := na
+    if not na(asiaLowLabel)
+        label.delete(asiaLowLabel)
+        asiaLowLabel := na
+else if inAsia
+    asiaHigh := na(asiaHigh) ? high : math.max(asiaHigh, high)
+    asiaLow := na(asiaLow) ? low : math.min(asiaLow, low)
+
+if showAsia and not na(asiaHigh) and not na(asiaLow)
+    asiaLeft = na(asiaStartBar) ? bar_index : asiaStartBar
+    if na(asiaHighLine)
+        asiaHighLine := line.new(asiaLeft, asiaHigh, bar_index + 1, asiaHigh, extend=extend.right, color=color.new(color.purple, 10), width=1)
+    if na(asiaLowLine)
+        asiaLowLine := line.new(asiaLeft, asiaLow, bar_index + 1, asiaLow, extend=extend.right, color=color.new(color.purple, 10), width=1)
+    line.set_xy1(asiaHighLine, asiaLeft, asiaHigh)
+    line.set_xy2(asiaHighLine, bar_index + 1, asiaHigh)
+    line.set_xy1(asiaLowLine, asiaLeft, asiaLow)
+    line.set_xy2(asiaLowLine, bar_index + 1, asiaLow)
+    if na(asiaHighLabel)
+        asiaHighLabel := label.new(bar_index + 3, asiaHigh, "ASIA HIGH", style=label.style_label_left, color=color.rgb(96, 74, 128), textcolor=color.white, size=size.tiny)
+    if na(asiaLowLabel)
+        asiaLowLabel := label.new(bar_index + 3, asiaLow, "ASIA LOW", style=label.style_label_left, color=color.rgb(96, 74, 128), textcolor=color.white, size=size.tiny)
+    label.set_xy(asiaHighLabel, bar_index + 3, asiaHigh)
+    label.set_xy(asiaLowLabel, bar_index + 3, asiaLow)
+else if not showAsia
+    if not na(asiaHighLine)
+        line.delete(asiaHighLine)
+        asiaHighLine := na
+    if not na(asiaLowLine)
+        line.delete(asiaLowLine)
+        asiaLowLine := na
+    if not na(asiaHighLabel)
+        label.delete(asiaHighLabel)
+        asiaHighLabel := na
+    if not na(asiaLowLabel)
+        label.delete(asiaLowLabel)
+        asiaLowLabel := na
+
+// ============================================================================
+// PREVIOUS DAY LIQUIDITY — PDH / PDL
+// ============================================================================
+pdh = request.security(syminfo.tickerid, "D", high[1], lookahead=barmerge.lookahead_on)
+pdl = request.security(syminfo.tickerid, "D", low[1], lookahead=barmerge.lookahead_on)
+newTradingDay = nz(ta.change(time("D"))) != 0
+
+var line pdhLine = na
+var line pdlLine = na
+var label pdhLabel = na
+var label pdlLabel = na
+var bool pdhConsumed = false
+var bool pdlConsumed = false
+
+if newTradingDay
+    pdhConsumed := false
+    pdlConsumed := false
+
+newPdhSweep = not pdhConsumed and not na(pdh) and high > pdh and close < pdh and barstate.isconfirmed
+newPdlSweep = not pdlConsumed and not na(pdl) and low < pdl and close > pdl and barstate.isconfirmed
+pdhReached = not pdhConsumed and not na(pdh) and high >= pdh and barstate.isconfirmed
+pdlReached = not pdlConsumed and not na(pdl) and low <= pdl and barstate.isconfirmed
+
+if pdhReached
+    pdhConsumed := true
+if pdlReached
+    pdlConsumed := true
+
+if showPrevDay and not na(pdh) and not na(pdl)
+    if newTradingDay or na(pdhLine)
+        if not na(pdhLine)
+            line.delete(pdhLine)
+        if not na(pdlLine)
+            line.delete(pdlLine)
+        if not na(pdhLabel)
+            label.delete(pdhLabel)
+        if not na(pdlLabel)
+            label.delete(pdlLabel)
+        pdhLine := line.new(bar_index, pdh, bar_index + 1, pdh, extend=extend.right, color=color.new(color.orange, 10), style=line.style_dashed, width=1)
+        pdlLine := line.new(bar_index, pdl, bar_index + 1, pdl, extend=extend.right, color=color.new(color.blue, 10), style=line.style_dashed, width=1)
+        pdhLabel := label.new(bar_index + 3, pdh, "PDH " + f_price(pdh), style=label.style_label_left, color=color.new(color.orange, 35), textcolor=color.white, size=size.tiny)
+        pdlLabel := label.new(bar_index + 3, pdl, "PDL " + f_price(pdl), style=label.style_label_left, color=color.new(color.blue, 35), textcolor=color.white, size=size.tiny)
+    line.set_y1(pdhLine, pdh)
+    line.set_y2(pdhLine, pdh)
+    line.set_y1(pdlLine, pdl)
+    line.set_y2(pdlLine, pdl)
+    line.set_color(pdhLine, color.new(color.orange, pdhConsumed ? 72 : 10))
+    line.set_color(pdlLine, color.new(color.blue, pdlConsumed ? 72 : 10))
+    label.set_xy(pdhLabel, bar_index + 3, pdh)
+    label.set_xy(pdlLabel, bar_index + 3, pdl)
+    label.set_text(pdhLabel, "PDH " + f_price(pdh))
+    label.set_text(pdlLabel, "PDL " + f_price(pdl))
+    label.set_color(pdhLabel, color.new(color.orange, pdhConsumed ? 72 : 35))
+    label.set_color(pdlLabel, color.new(color.blue, pdlConsumed ? 72 : 35))
+else if not showPrevDay
+    if not na(pdhLine)
+        line.delete(pdhLine)
+        pdhLine := na
+    if not na(pdlLine)
+        line.delete(pdlLine)
+        pdlLine := na
+    if not na(pdhLabel)
+        label.delete(pdhLabel)
+        pdhLabel := na
+    if not na(pdlLabel)
+        label.delete(pdlLabel)
+        pdlLabel := na
+
+// ============================================================================
+// PREVIOUS WEEK LIQUIDITY — PWH / PWL
+// ============================================================================
+pwh = request.security(syminfo.tickerid, "W", high[1], lookahead=barmerge.lookahead_on)
+pwl = request.security(syminfo.tickerid, "W", low[1], lookahead=barmerge.lookahead_on)
+newTradingWeek = nz(ta.change(time("W"))) != 0
+
+var line pwhLine = na
+var line pwlLine = na
+var label pwhLabel = na
+var label pwlLabel = na
+var bool pwhConsumed = false
+var bool pwlConsumed = false
+
+if newTradingWeek
+    pwhConsumed := false
+    pwlConsumed := false
+
+newPwhSweep = not pwhConsumed and not na(pwh) and high > pwh and close < pwh and barstate.isconfirmed
+newPwlSweep = not pwlConsumed and not na(pwl) and low < pwl and close > pwl and barstate.isconfirmed
+pwhReached = not pwhConsumed and not na(pwh) and high >= pwh and barstate.isconfirmed
+pwlReached = not pwlConsumed and not na(pwl) and low <= pwl and barstate.isconfirmed
+
+if pwhReached
+    pwhConsumed := true
+if pwlReached
+    pwlConsumed := true
+
+if showPrevWeek and not na(pwh) and not na(pwl)
+    if newTradingWeek or na(pwhLine)
+        if not na(pwhLine)
+            line.delete(pwhLine)
+        if not na(pwlLine)
+            line.delete(pwlLine)
+        if not na(pwhLabel)
+            label.delete(pwhLabel)
+        if not na(pwlLabel)
+            label.delete(pwlLabel)
+        pwhLine := line.new(bar_index, pwh, bar_index + 1, pwh, extend=extend.right, color=color.new(color.fuchsia, 10), style=line.style_dotted, width=2)
+        pwlLine := line.new(bar_index, pwl, bar_index + 1, pwl, extend=extend.right, color=color.new(color.aqua, 10), style=line.style_dotted, width=2)
+        pwhLabel := label.new(bar_index + 3, pwh, "PWH " + f_price(pwh), style=label.style_label_left, color=color.new(color.fuchsia, 35), textcolor=color.white, size=size.tiny)
+        pwlLabel := label.new(bar_index + 3, pwl, "PWL " + f_price(pwl), style=label.style_label_left, color=color.new(color.aqua, 35), textcolor=color.white, size=size.tiny)
+    line.set_y1(pwhLine, pwh)
+    line.set_y2(pwhLine, pwh)
+    line.set_y1(pwlLine, pwl)
+    line.set_y2(pwlLine, pwl)
+    line.set_color(pwhLine, color.new(color.fuchsia, pwhConsumed ? 72 : 10))
+    line.set_color(pwlLine, color.new(color.aqua, pwlConsumed ? 72 : 10))
+    label.set_xy(pwhLabel, bar_index + 3, pwh)
+    label.set_xy(pwlLabel, bar_index + 3, pwl)
+    label.set_text(pwhLabel, "PWH " + f_price(pwh))
+    label.set_text(pwlLabel, "PWL " + f_price(pwl))
+    label.set_color(pwhLabel, color.new(color.fuchsia, pwhConsumed ? 72 : 35))
+    label.set_color(pwlLabel, color.new(color.aqua, pwlConsumed ? 72 : 35))
+else if not showPrevWeek
+    if not na(pwhLine)
+        line.delete(pwhLine)
+        pwhLine := na
+    if not na(pwlLine)
+        line.delete(pwlLine)
+        pwlLine := na
+    if not na(pwhLabel)
+        label.delete(pwhLabel)
+        pwhLabel := na
+    if not na(pwlLabel)
+        label.delete(pwlLabel)
+        pwlLabel := na
+
+// ============================================================================
+// CONTEXT + EMA
+// ============================================================================
+htfClose = request.security(syminfo.tickerid, htf, close[1], lookahead=barmerge.lookahead_on)
+htfEma = request.security(syminfo.tickerid, htf, ta.ema(close, htfEmaLen)[1], lookahead=barmerge.lookahead_on)
+htfEmaPrev = request.security(syminfo.tickerid, htf, ta.ema(close, htfEmaLen)[2], lookahead=barmerge.lookahead_on)
+
+biasBull = not na(htfClose) and not na(htfEma) and htfClose > htfEma
+biasBear = not na(htfClose) and not na(htfEma) and htfClose < htfEma
+htfSlopeBull = not na(htfEmaPrev) and htfEma >= htfEmaPrev
+htfSlopeBear = not na(htfEmaPrev) and htfEma <= htfEmaPrev
+biasText = biasBull and htfSlopeBull ? "BULL" : biasBear and htfSlopeBear ? "BEAR" : "MIXED"
+
+ema1 = ta.ema(close, ema1Len)
+ema2 = ta.ema(close, ema2Len)
+ema3 = ta.ema(close, ema3Len)
+emaBull = ema1 > ema2 and ema2 > ema3
+emaBear = ema1 < ema2 and ema2 < ema3
+emaText = emaBull ? "BULL STACK" : emaBear ? "BEAR STACK" : "MIXED"
+
+plot(showEma ? ema1 : na, "EMA 1", color=color.new(color.aqua, 0), linewidth=1)
+plot(showEma ? ema2 : na, "EMA 2", color=color.new(color.orange, 0), linewidth=1)
+plot(showEma ? ema3 : na, "EMA 3", color=color.new(color.purple, 0), linewidth=2)
+
+atr = ta.atr(atrLen)
+body = math.abs(close - open)
+barRange = math.max(high - low, syminfo.mintick)
+bodyRatio = body / barRange
+meanBody = ta.sma(body, math.max(3, swingLen))
+compactBody = high - math.max(close, open) < body * 0.36 and math.min(close, open) - low < body * 0.36
+displacementBull = close > open and body > meanBody and compactBody and bodyRatio >= 0.45
+displacementBear = close < open and body > meanBody and compactBody and bodyRatio >= 0.45
+
+pdHigh = ta.highest(high, pdLookback)
+pdLow = ta.lowest(low, pdLookback)
+pdEq = math.avg(pdHigh, pdLow)
+inDiscount = close < pdEq
+inPremium = close > pdEq
+rangeText = inDiscount ? "DISCOUNT" : inPremium ? "PREMIUM" : "EQUILIBRIUM"
+plot(pdEq, "PD EQ", color=color.new(color.gray, 82), linewidth=1)
+
+// ============================================================================
+// STRUCTURE + LIQUIDITY ENGINE
+// ============================================================================
+ph = ta.pivothigh(high, swingLen, swingLen)
+pl = ta.pivotlow(low, swingLen, swingLen)
+marketStatePhSlow = ta.pivothigh(high, marketStateSlowLen, marketStateSlowLen)
+marketStatePlSlow = ta.pivotlow(low, marketStateSlowLen, marketStateSlowLen)
+
+var float lastHigh = na
+var float lastLow = na
+var int lastHighBar = na
+var int lastLowBar = na
+var array<line> bslLines = array.new<line>()
+var array<line> sslLines = array.new<line>()
+var array<label> bslLabels = array.new<label>()
+var array<label> sslLabels = array.new<label>()
+var bool bslConsumed = false
+var bool sslConsumed = false
+var bool bslBroken = false
+var bool sslBroken = false
+var string trend = "NEUTRAL"
+
+// Independent Market State swing memory. These variables do not feed Liquidity Draw.
+var float marketFastHigh = na
+var float marketPrevFastHigh = na
+var float marketFastLow = na
+var float marketPrevFastLow = na
+var float marketSlowHigh = na
+var float marketPrevSlowHigh = na
+var float marketSlowLow = na
+var float marketPrevSlowLow = na
+var int marketLastPivotType = 0
+var array<line> structureLines = array.new<line>()
+var array<label> structureLabels = array.new<label>()
+var array<label> sweepLabels = array.new<label>()
+
+if not na(ph)
+    marketPrevFastHigh := marketFastHigh
+    marketFastHigh := ph
+    marketLastPivotType := 1
+    lastHigh := ph
+    lastHighBar := bar_index - swingLen
+    bslConsumed := false
+    bslBroken := false
+    if showLiquidity
+        newBslLine = line.new(lastHighBar, lastHigh, bar_index + 80, lastHigh, color=color.new(color.red, 25), style=line.style_dashed, width=1)
+        newBslLabel = label.new(lastHighBar, lastHigh, "BSL " + f_price(lastHigh), style=label.style_label_down, color=color.new(color.red, 68), textcolor=color.white, size=size.tiny)
+        bslLines.unshift(newBslLine)
+        bslLabels.unshift(newBslLabel)
+        if bslLines.size() > liquidityHistory
+            oldBslLine = bslLines.pop()
+            line.delete(oldBslLine)
+        if bslLabels.size() > liquidityHistory
+            oldBslLabel = bslLabels.pop()
+            label.delete(oldBslLabel)
+
+if not na(pl)
+    marketPrevFastLow := marketFastLow
+    marketFastLow := pl
+    marketLastPivotType := -1
+    lastLow := pl
+    lastLowBar := bar_index - swingLen
+    sslConsumed := false
+    sslBroken := false
+    if showLiquidity
+        newSslLine = line.new(lastLowBar, lastLow, bar_index + 80, lastLow, color=color.new(color.green, 25), style=line.style_dashed, width=1)
+        newSslLabel = label.new(lastLowBar, lastLow, "SSL " + f_price(lastLow), style=label.style_label_up, color=color.new(color.green, 68), textcolor=color.white, size=size.tiny)
+        sslLines.unshift(newSslLine)
+        sslLabels.unshift(newSslLabel)
+        if sslLines.size() > liquidityHistory
+            oldSslLine = sslLines.pop()
+            line.delete(oldSslLine)
+        if sslLabels.size() > liquidityHistory
+            oldSslLabel = sslLabels.pop()
+            label.delete(oldSslLabel)
+
+if not na(marketStatePhSlow)
+    marketPrevSlowHigh := marketSlowHigh
+    marketSlowHigh := marketStatePhSlow
+
+if not na(marketStatePlSlow)
+    marketPrevSlowLow := marketSlowLow
+    marketSlowLow := marketStatePlSlow
+
+if showLiquidity
+    if bslLines.size() > 0
+        for i = 0 to bslLines.size() - 1
+            line.set_x2(bslLines.get(i), bar_index + 80)
+    if sslLines.size() > 0
+        for i = 0 to sslLines.size() - 1
+            line.set_x2(sslLines.get(i), bar_index + 80)
+else
+    if bslLines.size() > 0
+        for i = bslLines.size() - 1 to 0
+            oldBslLine = bslLines.pop()
+            line.delete(oldBslLine)
+    if sslLines.size() > 0
+        for i = sslLines.size() - 1 to 0
+            oldSslLine = sslLines.pop()
+            line.delete(oldSslLine)
+    if bslLabels.size() > 0
+        for i = bslLabels.size() - 1 to 0
+            oldBslLabel = bslLabels.pop()
+            label.delete(oldBslLabel)
+    if sslLabels.size() > 0
+        for i = sslLabels.size() - 1 to 0
+            oldSslLabel = sslLabels.pop()
+            label.delete(oldSslLabel)
+
+newBslSweep = not bslConsumed and not na(lastHigh) and high > lastHigh and close < lastHigh and barstate.isconfirmed
+newSslSweep = not sslConsumed and not na(lastLow) and low < lastLow and close > lastLow and barstate.isconfirmed
+newAsiaHighSweep = validSession and not inAsia and not asiaHighConsumed and not na(asiaHigh) and high > asiaHigh and close < asiaHigh and barstate.isconfirmed
+newAsiaLowSweep = validSession and not inAsia and not asiaLowConsumed and not na(asiaLow) and low < asiaLow and close > asiaLow and barstate.isconfirmed
+asiaHighReached = not inAsia and not asiaHighConsumed and not na(asiaHigh) and high >= asiaHigh and barstate.isconfirmed
+asiaLowReached = not inAsia and not asiaLowConsumed and not na(asiaLow) and low <= asiaLow and barstate.isconfirmed
+
+var int lastBuySweepBar = na
+var int lastSellSweepBar = na
+var string lastBuySweepName = "BUYSIDE"
+var string lastSellSweepName = "SELLSIDE"
+if newBslSweep
+    bslConsumed := true
+    lastBuySweepBar := bar_index
+    lastBuySweepName := "INTERNAL BSL SWEPT"
+if newSslSweep
+    sslConsumed := true
+    lastSellSweepBar := bar_index
+    lastSellSweepName := "INTERNAL SSL SWEPT"
+if asiaHighReached
+    asiaHighConsumed := true
+if asiaLowReached
+    asiaLowConsumed := true
+if newAsiaHighSweep
+    lastBuySweepBar := bar_index
+    lastBuySweepName := "ASIA HIGH SWEPT"
+if newAsiaLowSweep
+    lastSellSweepBar := bar_index
+    lastSellSweepName := "ASIA LOW SWEPT"
+if newPdhSweep
+    lastBuySweepBar := bar_index
+    lastBuySweepName := "PDH SWEPT"
+if newPdlSweep
+    lastSellSweepBar := bar_index
+    lastSellSweepName := "PDL SWEPT"
+if newPwhSweep
+    lastBuySweepBar := bar_index
+    lastBuySweepName := "PWH SWEPT"
+if newPwlSweep
+    lastSellSweepBar := bar_index
+    lastSellSweepName := "PWL SWEPT"
+
+recentBuySweep = not na(lastBuySweepBar) and bar_index - lastBuySweepBar <= entrySweepMemoryBars
+recentSellSweep = not na(lastSellSweepBar) and bar_index - lastSellSweepBar <= entrySweepMemoryBars
+liqText = recentSellSweep and recentBuySweep ? "BOTH SIDES SWEPT" : recentSellSweep ? lastSellSweepName : recentBuySweep ? lastBuySweepName : "WAITING"
+
+label newSweepLabel = na
+if showLiquidity
+    if newBslSweep
+        newSweepLabel := label.new(bar_index, high, "×", style=label.style_none, textcolor=color.red, size=size.small)
+    else if newSslSweep
+        newSweepLabel := label.new(bar_index, low, "×", style=label.style_none, textcolor=color.lime, size=size.small)
+    else if newAsiaHighSweep
+        newSweepLabel := label.new(bar_index, high, "◆", style=label.style_none, textcolor=color.purple, size=size.tiny)
+    else if newAsiaLowSweep
+        newSweepLabel := label.new(bar_index, low, "◆", style=label.style_none, textcolor=color.purple, size=size.tiny)
+
+if not na(newSweepLabel)
+    sweepLabels.unshift(newSweepLabel)
+    if sweepLabels.size() > 3
+        oldSweepLabel = sweepLabels.pop()
+        label.delete(oldSweepLabel)
+
+rawBreakBull = not bslBroken and not na(lastHigh) and close > lastHigh and close[1] <= lastHigh and barstate.isconfirmed
+rawBreakBear = not sslBroken and not na(lastLow) and close < lastLow and close[1] >= lastLow and barstate.isconfirmed
+mssBull = rawBreakBull and trend != "BULL"
+mssBear = rawBreakBear and trend != "BEAR"
+bosBull = rawBreakBull and trend == "BULL"
+bosBear = rawBreakBear and trend == "BEAR"
+
+if rawBreakBull
+    trend := "BULL"
+    bslBroken := true
+if rawBreakBear
+    trend := "BEAR"
+    sslBroken := true
+
+structureEvent = mssBull or mssBear or bosBull or bosBear
+if showStructure and structureEvent
+    bullishStructure = mssBull or bosBull
+    structurePrice = bullishStructure ? lastHigh : lastLow
+    structureStart = bullishStructure ? lastHighBar : lastLowBar
+    structureName = mssBull or mssBear ? "MSS" : "BOS"
+    structureColor = bullishStructure ? color.lime : color.red
+    newStructureLine = line.new(structureStart, structurePrice, bar_index, structurePrice, color=structureColor, width=1)
+    structureMid = int(math.round(math.avg(structureStart, bar_index)))
+    newStructureLabel = label.new(structureMid, structurePrice, structureName, style=label.style_none, textcolor=structureColor, size=size.tiny)
+    structureLines.unshift(newStructureLine)
+    structureLabels.unshift(newStructureLabel)
+    if structureLines.size() > structureHistory
+        oldStructureLine = structureLines.pop()
+        line.delete(oldStructureLine)
+    if structureLabels.size() > structureHistory
+        oldStructureLabel = structureLabels.pop()
+        label.delete(oldStructureLabel)
+
+if not showStructure
+    if structureLines.size() > 0
+        for i = structureLines.size() - 1 to 0
+            oldLine = structureLines.pop()
+            line.delete(oldLine)
+    if structureLabels.size() > 0
+        for i = structureLabels.size() - 1 to 0
+            oldLabel = structureLabels.pop()
+            label.delete(oldLabel)
+
+// ============================================================================
+// STRUCTURAL TREND INVALIDATION
+// Bull trend invalidates below the latest confirmed swing low.
+// Bear trend invalidates above the latest confirmed swing high.
+// ============================================================================
+trendInvalidation = trend == "BULL" ? lastLow : trend == "BEAR" ? lastHigh : na
+trendInvalidationBar = trend == "BULL" ? lastLowBar : trend == "BEAR" ? lastHighBar : na
+trendInvalidationText = trend == "BULL" ? "BULL INVALID < " + f_price(trendInvalidation) : trend == "BEAR" ? "BEAR INVALID > " + f_price(trendInvalidation) : ""
+trendInvalidationColor = trend == "BULL" ? color.new(color.red, 10) : color.new(color.orange, 10)
+var line trendInvalidationLine = na
+var label trendInvalidationLabel = na
+
+if showTrendInvalidation and not na(trendInvalidation) and not na(trendInvalidationBar)
+    if na(trendInvalidationLine)
+        trendInvalidationLine := line.new(trendInvalidationBar, trendInvalidation, bar_index + 12, trendInvalidation, color=trendInvalidationColor, style=line.style_dotted, width=2)
+    if na(trendInvalidationLabel)
+        trendInvalidationLabel := label.new(bar_index + 12, trendInvalidation, trendInvalidationText, style=label.style_label_left, color=color.new(trendInvalidationColor, 55), textcolor=color.white, size=size.tiny)
+    line.set_xy1(trendInvalidationLine, trendInvalidationBar, trendInvalidation)
+    line.set_xy2(trendInvalidationLine, bar_index + 12, trendInvalidation)
+    line.set_color(trendInvalidationLine, trendInvalidationColor)
+    label.set_xy(trendInvalidationLabel, bar_index + 12, trendInvalidation)
+    label.set_text(trendInvalidationLabel, trendInvalidationText)
+    label.set_color(trendInvalidationLabel, color.new(trendInvalidationColor, 55))
+else
+    if not na(trendInvalidationLine)
+        line.delete(trendInvalidationLine)
+        trendInvalidationLine := na
+    if not na(trendInvalidationLabel)
+        label.delete(trendInvalidationLabel)
+        trendInvalidationLabel := na
+
+// ============================================================================
+// SUPPORT / RESISTANCE
+// ============================================================================
+var box resistanceBox = na
+var box supportBox = na
+resTop = not na(lastHigh) ? lastHigh + atr * srBoxAtrPad : na
+resBot = not na(lastHigh) ? lastHigh - atr * srBoxAtrPad : na
+supTop = not na(lastLow) ? lastLow + atr * srBoxAtrPad : na
+supBot = not na(lastLow) ? lastLow - atr * srBoxAtrPad : na
+resText = showSRLabels and not na(lastHigh) ? "Resistance\n" + f_price(lastHigh) : ""
+supText = showSRLabels and not na(lastLow) ? "Support\n" + f_price(lastLow) : ""
+
+if showSRBoxes and not na(lastHigh) and not na(lastHighBar)
+    if na(resistanceBox)
+        resistanceBox := box.new(lastHighBar, resTop, bar_index + srBoxExtend, resBot, bgcolor=color.new(color.purple, 82), border_color=color.new(color.purple, 55), text=resText, text_color=color.purple, text_size=size.tiny, text_halign=text.align_center, text_valign=text.align_center)
+    else
+        box.set_lefttop(resistanceBox, lastHighBar, resTop)
+        box.set_rightbottom(resistanceBox, bar_index + srBoxExtend, resBot)
+        box.set_text(resistanceBox, resText)
+else if not na(resistanceBox)
+    box.delete(resistanceBox)
+    resistanceBox := na
+
+if showSRBoxes and not na(lastLow) and not na(lastLowBar)
+    if na(supportBox)
+        supportBox := box.new(lastLowBar, supTop, bar_index + srBoxExtend, supBot, bgcolor=color.new(color.blue, 84), border_color=color.new(color.blue, 58), text=supText, text_color=color.blue, text_size=size.tiny, text_halign=text.align_center, text_valign=text.align_center)
+    else
+        box.set_lefttop(supportBox, lastLowBar, supTop)
+        box.set_rightbottom(supportBox, bar_index + srBoxExtend, supBot)
+        box.set_text(supportBox, supText)
+else if not na(supportBox)
+    box.delete(supportBox)
+    supportBox := na
+
+// ============================================================================
+// FVG ENGINE
+// ============================================================================
+var array<amyFvg> bullFvgs = array.new<amyFvg>()
+var array<amyFvg> bearFvgs = array.new<amyFvg>()
+
+fvgBull = barstate.isconfirmed and displacementBull[1] and low > high[2]
+fvgBear = barstate.isconfirmed and displacementBear[1] and high < low[2]
+
+if fvgBull
+    fvgTop = low
+    fvgBot = high[2]
+    newBullFvgBox = box.new(bar_index - 2, fvgTop, bar_index + fvgExtend, fvgBot, bgcolor=color.new(color.lime, showFvg ? 90 : 100), border_color=color.new(color.lime, showFvg ? 65 : 100), text=showFvg ? "FVG" : "", text_color=color.new(color.lime, showFvg ? 35 : 100), text_size=size.tiny, text_halign=text.align_right)
+    bullFvgs.unshift(amyFvg.new(fvgTop, fvgBot, 1, newBullFvgBox))
+    if bullFvgs.size() > fvgVisible
+        oldBullFvg = bullFvgs.pop()
+        box.delete(oldBullFvg.bx)
+
+if fvgBear
+    fvgTop = low[2]
+    fvgBot = high
+    newBearFvgBox = box.new(bar_index - 2, fvgTop, bar_index + fvgExtend, fvgBot, bgcolor=color.new(color.red, showFvg ? 90 : 100), border_color=color.new(color.red, showFvg ? 65 : 100), text=showFvg ? "FVG" : "", text_color=color.new(color.red, showFvg ? 35 : 100), text_size=size.tiny, text_halign=text.align_right)
+    bearFvgs.unshift(amyFvg.new(fvgTop, fvgBot, -1, newBearFvgBox))
+    if bearFvgs.size() > fvgVisible
+        oldBearFvg = bearFvgs.pop()
+        box.delete(oldBearFvg.bx)
+
+if bullFvgs.size() > 0
+    for i = bullFvgs.size() - 1 to 0
+        item = bullFvgs.get(i)
+        box.set_right(item.bx, bar_index + fvgExtend)
+        box.set_bgcolor(item.bx, color.new(color.lime, showFvg ? 90 : 100))
+        box.set_border_color(item.bx, color.new(color.lime, showFvg ? 65 : 100))
+        box.set_text(item.bx, showFvg ? "FVG" : "")
+        box.set_text_color(item.bx, color.new(color.lime, showFvg ? 35 : 100))
+        if showFvg and low < item.top
+            box.set_border_style(item.bx, line.style_dashed)
+        if barstate.isconfirmed and low <= item.bot
+            box.delete(item.bx)
+            bullFvgs.remove(i)
+
+if bearFvgs.size() > 0
+    for i = bearFvgs.size() - 1 to 0
+        item = bearFvgs.get(i)
+        box.set_right(item.bx, bar_index + fvgExtend)
+        box.set_bgcolor(item.bx, color.new(color.red, showFvg ? 90 : 100))
+        box.set_border_color(item.bx, color.new(color.red, showFvg ? 65 : 100))
+        box.set_text(item.bx, showFvg ? "FVG" : "")
+        box.set_text_color(item.bx, color.new(color.red, showFvg ? 35 : 100))
+        if showFvg and high > item.bot
+            box.set_border_style(item.bx, line.style_dashed)
+        if barstate.isconfirmed and high >= item.top
+            box.delete(item.bx)
+            bearFvgs.remove(i)
+
+// ============================================================================
+// ORDER BLOCK ENGINE — LAST OPPOSITE ORIGIN CANDLE BEFORE CONFIRMED BREAK
+// ============================================================================
+var array<amyOb> bullObs = array.new<amyOb>()
+var array<amyOb> bearObs = array.new<amyOb>()
+
+if rawBreakBull
+    float bullObTop = na
+    float bullObBot = na
+    int bullObOffset = na
+    for i = 1 to obSearchBars
+        if na(bullObOffset) and close[i] < open[i]
+            bullObTop := obUseBody ? math.max(open[i], close[i]) : high[i]
+            bullObBot := obUseBody ? math.min(open[i], close[i]) : low[i]
+            bullObOffset := i
+    if not na(bullObOffset)
+        newBullObBox = box.new(bar_index - bullObOffset, bullObTop, bar_index + obExtend, bullObBot, bgcolor=color.new(color.blue, showOb ? 90 : 100), border_color=color.new(color.blue, showOb ? 40 : 100), text=showOb ? "+OB" : "", text_color=color.new(color.blue, showOb ? 5 : 100), text_size=size.tiny, text_halign=text.align_right)
+        bullObs.unshift(amyOb.new(bullObTop, bullObBot, 1, newBullObBox))
+        if bullObs.size() > obVisible
+            oldBullOb = bullObs.pop()
+            box.delete(oldBullOb.bx)
+
+if rawBreakBear
+    float bearObTop = na
+    float bearObBot = na
+    int bearObOffset = na
+    for i = 1 to obSearchBars
+        if na(bearObOffset) and close[i] > open[i]
+            bearObTop := obUseBody ? math.max(open[i], close[i]) : high[i]
+            bearObBot := obUseBody ? math.min(open[i], close[i]) : low[i]
+            bearObOffset := i
+    if not na(bearObOffset)
+        newBearObBox = box.new(bar_index - bearObOffset, bearObTop, bar_index + obExtend, bearObBot, bgcolor=color.new(color.red, showOb ? 91 : 100), border_color=color.new(color.red, showOb ? 40 : 100), text=showOb ? "-OB" : "", text_color=color.new(color.red, showOb ? 5 : 100), text_size=size.tiny, text_halign=text.align_right)
+        bearObs.unshift(amyOb.new(bearObTop, bearObBot, -1, newBearObBox))
+        if bearObs.size() > obVisible
+            oldBearOb = bearObs.pop()
+            box.delete(oldBearOb.bx)
+
+if bullObs.size() > 0
+    for i = bullObs.size() - 1 to 0
+        item = bullObs.get(i)
+        box.set_right(item.bx, bar_index + obExtend)
+        box.set_bgcolor(item.bx, color.new(color.blue, showOb ? 90 : 100))
+        box.set_border_color(item.bx, color.new(color.blue, showOb ? 40 : 100))
+        box.set_text(item.bx, showOb ? "+OB" : "")
+        box.set_text_color(item.bx, color.new(color.blue, showOb ? 5 : 100))
+        if barstate.isconfirmed and close < item.bot
+            box.delete(item.bx)
+            bullObs.remove(i)
+
+if bearObs.size() > 0
+    for i = bearObs.size() - 1 to 0
+        item = bearObs.get(i)
+        box.set_right(item.bx, bar_index + obExtend)
+        box.set_bgcolor(item.bx, color.new(color.red, showOb ? 91 : 100))
+        box.set_border_color(item.bx, color.new(color.red, showOb ? 40 : 100))
+        box.set_text(item.bx, showOb ? "-OB" : "")
+        box.set_text_color(item.bx, color.new(color.red, showOb ? 5 : 100))
+        if barstate.isconfirmed and close > item.top
+            box.delete(item.bx)
+            bearObs.remove(i)
+
+// ============================================================================
+// POI PROXIMITY
+// ============================================================================
+nearBullFvg = false
+nearBearFvg = false
+nearBullOb = false
+nearBearOb = false
+
+if bullFvgs.size() > 0
+    for i = 0 to bullFvgs.size() - 1
+        item = bullFvgs.get(i)
+        if low <= item.top + atr * poiNearAtr and high >= item.bot - atr * 0.10
+            nearBullFvg := true
+
+if bearFvgs.size() > 0
+    for i = 0 to bearFvgs.size() - 1
+        item = bearFvgs.get(i)
+        if high >= item.bot - atr * poiNearAtr and low <= item.top + atr * 0.10
+            nearBearFvg := true
+
+if bullObs.size() > 0
+    for i = 0 to bullObs.size() - 1
+        item = bullObs.get(i)
+        if low <= item.top + atr * poiNearAtr and high >= item.bot - atr * 0.10
+            nearBullOb := true
+
+if bearObs.size() > 0
+    for i = 0 to bearObs.size() - 1
+        item = bearObs.get(i)
+        if high >= item.bot - atr * poiNearAtr and low <= item.top + atr * 0.10
+            nearBearOb := true
+
+nearBullPoi = nearBullFvg or nearBullOb
+nearBearPoi = nearBearFvg or nearBearOb
+bullPoiActive = bullFvgs.size() > 0 or bullObs.size() > 0
+bearPoiActive = bearFvgs.size() > 0 or bearObs.size() > 0
+poiText = nearBullPoi and nearBearPoi ? "BOTH POI NEAR" : nearBullPoi ? "NEAR BULL POI" : nearBearPoi ? "NEAR BEAR POI" : bullPoiActive and bearPoiActive ? "BULL + BEAR ACTIVE" : bullPoiActive ? "BULL POI ACTIVE" : bearPoiActive ? "BEAR POI ACTIVE" : "NONE"
+
+// ============================================================================
+// CONFIRMED CURRENT-STATE MAPPING
+// This classifies the closed candle. It does not claim to predict the future.
+// ============================================================================
+structureBull = trend == "BULL"
+structureBear = trend == "BEAR"
+htfBullConfirmed = biasBull and htfSlopeBull
+htfBearConfirmed = biasBear and htfSlopeBear
+priceBull = close >= ema2 and ema2 >= ema3
+priceBear = close <= ema2 and ema2 <= ema3
+
+bullAlignment = 0
+if htfBullConfirmed
+    bullAlignment += 1
+if structureBull
+    bullAlignment += 1
+if emaBull
+    bullAlignment += 1
+if priceBull
+    bullAlignment += 1
+if inDiscount or nearBullPoi or recentSellSweep
+    bullAlignment += 1
+
+bearAlignment = 0
+if htfBearConfirmed
+    bearAlignment += 1
+if structureBear
+    bearAlignment += 1
+if emaBear
+    bearAlignment += 1
+if priceBear
+    bearAlignment += 1
+if inPremium or nearBearPoi or recentBuySweep
+    bearAlignment += 1
+
+coreBull = htfBullConfirmed and structureBull and emaBull
+coreBear = htfBearConfirmed and structureBear and emaBear
+bullPullback = coreBull and (close < ema1 or recentSellSweep or nearBullPoi)
+bearPullback = coreBear and (close > ema1 or recentBuySweep or nearBearPoi)
+bullTransition = not coreBull and not coreBear and structureBull and (htfBullConfirmed or emaBull)
+bearTransition = not coreBull and not coreBear and structureBear and (htfBearConfirmed or emaBear)
+
+mappingDir = coreBull ? 1 : coreBear ? -1 : 0
+
+// Market State v2: current local structure only. HTF/EMA alignment remains available
+// as context and for the existing Entry Map, Liquidity Draw, and Direction Forecast.
+marketStateTolerance = atr * 0.05
+marketFastBull = not na(marketPrevFastHigh) and not na(marketPrevFastLow) and marketFastHigh > marketPrevFastHigh + marketStateTolerance and marketFastLow > marketPrevFastLow + marketStateTolerance
+marketFastBear = not na(marketPrevFastHigh) and not na(marketPrevFastLow) and marketFastHigh < marketPrevFastHigh - marketStateTolerance and marketFastLow < marketPrevFastLow - marketStateTolerance
+marketSlowBull = not na(marketPrevSlowHigh) and not na(marketPrevSlowLow) and marketSlowHigh > marketPrevSlowHigh + marketStateTolerance and marketSlowLow > marketPrevSlowLow + marketStateTolerance
+marketSlowBear = not na(marketPrevSlowHigh) and not na(marketPrevSlowLow) and marketSlowHigh < marketPrevSlowHigh - marketStateTolerance and marketSlowLow < marketPrevSlowLow - marketStateTolerance
+
+marketBullIntact = na(marketFastLow) or close > marketFastLow
+marketBearIntact = na(marketFastHigh) or close < marketFastHigh
+marketBullConfirmed = marketFastBull and marketSlowBull and structureBull and marketBullIntact
+marketBearConfirmed = marketFastBear and marketSlowBear and structureBear and marketBearIntact
+
+marketBullVotes = (marketFastBull ? 1 : 0) + (marketSlowBull ? 1 : 0) + (structureBull ? 1 : 0)
+marketBearVotes = (marketFastBear ? 1 : 0) + (marketSlowBear ? 1 : 0) + (structureBear ? 1 : 0)
+marketBullTransition = not marketBullConfirmed and not marketBearConfirmed and marketBullVotes >= 2 and marketBullVotes > marketBearVotes and marketBullIntact
+marketBearTransition = not marketBullConfirmed and not marketBearConfirmed and marketBearVotes >= 2 and marketBearVotes > marketBullVotes and marketBearIntact
+
+marketBullPullback = marketBullConfirmed and marketLastPivotType == 1 and close < ema1
+marketBearPullback = marketBearConfirmed and marketLastPivotType == -1 and close > ema1
+marketStateDir = marketBullConfirmed ? 1 : marketBearConfirmed ? -1 : 0
+marketState = marketBullConfirmed ? (marketBullPullback ? "BULLISH PULLBACK" : "UPTREND CONFIRMED") : marketBearConfirmed ? (marketBearPullback ? "BEARISH PULLBACK" : "DOWNTREND CONFIRMED") : marketBullTransition ? "BULLISH TRANSITION" : marketBearTransition ? "BEARISH TRANSITION" : "RANGE / TRANSITION"
+marketColor = marketStateDir == 1 ? color.lime : marketStateDir == -1 ? color.red : marketBullTransition ? color.aqua : marketBearTransition ? color.orange : color.yellow
+// Liquidity draw is calculated from the nearest valid liquidity on both sides.
+// Candidate BSL: active swing high, Asia High, unswept PDH, or unswept PWH.
+// Candidate SSL: active swing low, Asia Low, unswept PDL, or unswept PWL.
+float nearestBslTarget = na
+string nearestBslName = "NONE"
+if not bslConsumed and not bslBroken and not na(lastHigh) and lastHigh > close
+    nearestBslTarget := lastHigh
+    nearestBslName := "BSL"
+if not asiaHighConsumed and not na(asiaHigh) and asiaHigh > close and (na(nearestBslTarget) or asiaHigh < nearestBslTarget)
+    nearestBslTarget := asiaHigh
+    nearestBslName := "ASIA HIGH"
+if not pdhConsumed and not na(pdh) and pdh > close and (na(nearestBslTarget) or pdh < nearestBslTarget)
+    nearestBslTarget := pdh
+    nearestBslName := "PDH"
+if not pwhConsumed and not na(pwh) and pwh > close and (na(nearestBslTarget) or pwh < nearestBslTarget)
+    nearestBslTarget := pwh
+    nearestBslName := "PWH"
+
+float nearestSslTarget = na
+string nearestSslName = "NONE"
+if not sslConsumed and not sslBroken and not na(lastLow) and lastLow < close
+    nearestSslTarget := lastLow
+    nearestSslName := "SSL"
+if not asiaLowConsumed and not na(asiaLow) and asiaLow < close and (na(nearestSslTarget) or asiaLow > nearestSslTarget)
+    nearestSslTarget := asiaLow
+    nearestSslName := "ASIA LOW"
+if not pdlConsumed and not na(pdl) and pdl < close and (na(nearestSslTarget) or pdl > nearestSslTarget)
+    nearestSslTarget := pdl
+    nearestSslName := "PDL"
+if not pwlConsumed and not na(pwl) and pwl < close and (na(nearestSslTarget) or pwl > nearestSslTarget)
+    nearestSslTarget := pwl
+    nearestSslName := "PWL"
+
+upperWick = high - math.max(open, close)
+lowerWick = math.min(open, close) - low
+upperRejectionCandle = upperWick >= math.max(body * 0.75, atr * 0.10) and close <= high - barRange * 0.35
+lowerRejectionCandle = lowerWick >= math.max(body * 0.75, atr * 0.10) and close >= low + barRange * 0.35
+upperLiquidityRejection = upperRejectionCandle and not na(nearestBslTarget) and high >= nearestBslTarget - atr * 0.25 and close < nearestBslTarget
+lowerLiquidityRejection = lowerRejectionCandle and not na(nearestSslTarget) and low <= nearestSslTarget + atr * 0.25 and close > nearestSslTarget
+rejectionDirection = (lowerLiquidityRejection ? 1.0 : 0.0) - (upperLiquidityRejection ? 1.0 : 0.0)
+
+bslDistance = not na(nearestBslTarget) ? nearestBslTarget - close : na
+sslDistance = not na(nearestSslTarget) ? close - nearestSslTarget : na
+hasTwoSidedLiquidity = not na(bslDistance) and not na(sslDistance) and bslDistance > syminfo.mintick and sslDistance > syminfo.mintick
+
+// First-hit prediction model calibrated on XAUUSD January-April 2026.
+// Distance is only one factor. Trend, structure, sweeps, location and momentum
+// adjust the probability of BSL being reached before SSL.
+distanceLocation = hasTwoSidedLiquidity ? sslDistance / (bslDistance + sslDistance) : 0.50
+htfDirection = (htfBullConfirmed ? 1.0 : 0.0) - (htfBearConfirmed ? 1.0 : 0.0)
+structureDirection = (structureBull ? 1.0 : 0.0) - (structureBear ? 1.0 : 0.0)
+emaDirection = (emaBull ? 1.0 : 0.0) - (emaBear ? 1.0 : 0.0)
+priceDirection = (priceBull ? 1.0 : 0.0) - (priceBear ? 1.0 : 0.0)
+sweepDirection = (recentSellSweep ? 1.0 : 0.0) - (recentBuySweep ? 1.0 : 0.0)
+rangeDirection = (inDiscount ? 1.0 : 0.0) - (inPremium ? 1.0 : 0.0)
+eventDirection = (mssBull or bosBull ? 1.0 : 0.0) - (mssBear or bosBear ? 1.0 : 0.0)
+bodyAtr = atr > 0 ? math.max(-2.0, math.min(2.0, (close - open) / atr)) : 0.0
+emaSlopeAtr = atr > 0 and not na(ema1[3]) ? math.max(-2.0, math.min(2.0, (ema1 - ema1[3]) / atr)) : 0.0
+
+predictionLogit = 5.0 * (distanceLocation - 0.50) + 0.40 * htfDirection + 0.50 * structureDirection + 0.40 * emaDirection + 0.20 * priceDirection + 0.60 * sweepDirection + 0.25 * rangeDirection + 0.30 * eventDirection + 0.25 * emaSlopeAtr + 0.15 * bodyAtr + 0.40 * rejectionDirection
+rawBslProbability = hasTwoSidedLiquidity ? 100.0 / (1.0 + math.exp(-predictionLogit)) : 50.0
+bslDrawPercent = int(math.round(math.max(1.0, math.min(99.0, rawBslProbability))))
+sslDrawPercent = 100 - bslDrawPercent
+
+predictionM5 = timeframe.isminutes and timeframe.multiplier <= 5
+predictionM15 = timeframe.isminutes and timeframe.multiplier > 5 and timeframe.multiplier <= 30
+predictionH1 = timeframe.isminutes and timeframe.multiplier > 30 and timeframe.multiplier <= 60
+predictionSupported = predictionM5 or predictionM15 or predictionH1
+bslHighConfidence = predictionSupported and not inAsia and hasTwoSidedLiquidity and bslDrawPercent >= liquidityDirectionThreshold and not upperLiquidityRejection
+sslHighConfidence = predictionSupported and not inAsia and hasTwoSidedLiquidity and sslDrawPercent >= liquidityDirectionThreshold and not lowerLiquidityRejection
+predictionTextColor = bslHighConfidence ? color.lime : sslHighConfidence ? color.red : color.yellow
+liquidityDominance = not predictionSupported ? "PREDICTION UNSUPPORTED" : inAsia ? "ASIA RANGE BUILDING" : upperLiquidityRejection and bslDrawPercent > sslDrawPercent ? "WAIT - UPPER REJECTION" : lowerLiquidityRejection and sslDrawPercent > bslDrawPercent ? "WAIT - LOWER REJECTION" : bslHighConfidence ? "PREDICT BSL FIRST" : sslHighConfidence ? "PREDICT SSL FIRST" : hasTwoSidedLiquidity ? "WAIT - LOW CONFIDENCE" : "WAIT - LEVELS INCOMPLETE"
+
+// ============================================================================
+// DIRECTION FORECAST v2 — ONLY VALIDATED FORECAST PATTERNS
+// Fixed-horizon direction test using confirmed candles only.
+// M5: structural MSS aligned with confirmed local state and price, 24H horizon.
+// M15: H4-aligned structural break from the opposite side of the 80-bar range,
+//      48H horizon.
+// H1: selective bullish continuation only, with positive but non-overextended
+//     3-bar momentum, 72H horizon. Bearish H1 did not pass validation, therefore
+//     the correct output is NO CLEAR DIRECTION instead of a forced bearish call.
+// ============================================================================
+forecastM5 = timeframe.isminutes and timeframe.multiplier == 5
+forecastM15 = timeframe.isminutes and timeframe.multiplier == 15
+forecastH1 = timeframe.isminutes and timeframe.multiplier == 60
+forecastSupported = forecastM5 or forecastM15 or forecastH1
+
+pdRangeSize = math.max(pdHigh - pdLow, syminfo.mintick)
+pdRangePosition = (close - pdLow) / pdRangeSize
+directionMomentum3Atr = atr > 0 and not na(close[3]) ? (close - close[3]) / atr : 0.0
+
+m5BullForecastTrigger = forecastM5 and mssBull and marketBullConfirmed and priceBull
+m5BearForecastTrigger = forecastM5 and mssBear and marketBearConfirmed and priceBear
+
+m15BullForecastTrigger = forecastM15 and rawBreakBull and htfBullConfirmed and pdRangePosition < 0.45
+m15BearForecastTrigger = forecastM15 and rawBreakBear and htfBearConfirmed and pdRangePosition > 0.55
+
+h1BullMomentumOk = directionMomentum3Atr > 0.0 and directionMomentum3Atr < 2.50
+h1BullForecastTrigger = forecastH1 and rawBreakBull and htfBullConfirmed and priceBull and h1BullMomentumOk
+h1BearForecastTrigger = false
+
+bullForecastTrigger = m5BullForecastTrigger or m15BullForecastTrigger or h1BullForecastTrigger
+bearForecastTrigger = m5BearForecastTrigger or m15BearForecastTrigger or h1BearForecastTrigger
+forecastCandidateDir = bullForecastTrigger and not bearForecastTrigger ? 1 : bearForecastTrigger and not bullForecastTrigger ? -1 : 0
+
+forecastHorizonBars = forecastM5 ? 288 : forecastM15 ? 192 : forecastH1 ? 72 : 0
+forecastCooldownBars = forecastM5 ? 144 : forecastM15 ? 96 : forecastH1 ? 36 : 0
+forecastBaseConfidence = forecastM5 ? 65 : forecastM15 ? 60 : forecastH1 ? 65 : 0
+forecastHorizonText = forecastM5 ? "24H" : forecastM15 ? "48H" : forecastH1 ? "72H" : "-"
+
+var int directionForecastDir = 0
+var int directionForecastStartBar = na
+var int directionForecastExpiryBar = na
+
+forecastExpired = directionForecastDir != 0 and not na(directionForecastExpiryBar) and bar_index > directionForecastExpiryBar
+forecastInvalidated = directionForecastDir == 1 and rawBreakBear or directionForecastDir == -1 and rawBreakBull
+
+if forecastExpired or forecastInvalidated or not showDirectionForecast or not forecastSupported
+    directionForecastDir := 0
+    directionForecastStartBar := na
+    directionForecastExpiryBar := na
+
+canRefreshForecast = na(directionForecastStartBar) or forecastCandidateDir != directionForecastDir or bar_index - directionForecastStartBar >= forecastCooldownBars
+newDirectionForecast = showDirectionForecast and forecastCandidateDir != 0 and canRefreshForecast and barstate.isconfirmed
+
+if newDirectionForecast
+    directionForecastDir := forecastCandidateDir
+    directionForecastStartBar := bar_index
+    directionForecastExpiryBar := bar_index + forecastHorizonBars
+
+directionForecastActive = directionForecastDir != 0 and not na(directionForecastExpiryBar) and bar_index <= directionForecastExpiryBar
+directionForecastText = not forecastSupported ? "UNSUPPORTED — USE M5 / M15 / H1" : not showDirectionForecast ? "DISABLED" : directionForecastActive ? (directionForecastDir == 1 ? "BULLISH" : "BEARISH") + " · " + str.tostring(forecastBaseConfidence) + "% · " + forecastHorizonText : "NO CLEAR DIRECTION"
+directionForecastColor = directionForecastDir == 1 ? color.lime : directionForecastDir == -1 ? color.red : color.yellow
+
+// ============================================================================
+// COMPACT ENTRY MAP — CHART ONLY, ONE LIVE SETUP
+// ============================================================================
+isM5Auto = timeframe.isminutes and timeframe.multiplier <= 5
+isM15Auto = timeframe.isminutes and timeframe.multiplier > 5 and timeframe.multiplier <= 30
+isH1Auto = timeframe.isminutes and timeframe.multiplier > 30 and timeframe.multiplier <= 60
+profileM5 = entryProfile == "M5" or entryProfile == "Auto" and isM5Auto
+profileM15 = entryProfile == "M15" or entryProfile == "Auto" and isM15Auto
+profileH1 = entryProfile == "H1" or entryProfile == "Auto" and isH1Auto
+profileSupported = profileM5 or profileM15 or profileH1
+
+profileExpiryBars = profileM5 ? 48 : profileM15 ? 36 : 36
+profileTp1R = profileM5 ? 0.50 : profileM15 ? 0.35 : 0.30
+profileTp2R = profileM5 ? 1.25 : 1.75
+calibratedSlAtrPad = profileM5 ? 0.20 : profileM15 ? 0.10 : 0.25
+effectiveSlAtrPad = entryProfile == "Auto" ? calibratedSlAtrPad : slAtrPad
+profileMaxRiskAtr = 6.0
+profileSweepMemory = profileM5 ? 36 : profileM15 ? 12 : 18
+profileNeedsPoi = profileM5
+profileBullTrigger = mssBull
+profileBearTrigger = mssBear
+entryRecentBuySweep = not na(lastBuySweepBar) and bar_index - lastBuySweepBar <= profileSweepMemory
+entryRecentSellSweep = not na(lastSellSweepBar) and bar_index - lastSellSweepBar <= profileSweepMemory
+profileSessionValid = profileH1 ? inNY : validSession
+profileBullCandle = profileM5 ? close > open : profileM15 ? close >= low + barRange * 0.70 : close > open
+profileBearCandle = profileM5 ? close < open : profileM15 ? close <= high - barRange * 0.70 : close < open
+profileBullProbability = not profileM5 or bslDrawPercent >= 80
+profileBearProbability = not profileM5 or sslDrawPercent >= 80
+profileBullRejectionOk = not upperLiquidityRejection
+profileBearRejectionOk = not lowerLiquidityRejection
+profileEmaDistanceOk = not profileH1 or math.abs(close - ema1) <= atr * 2.0
+
+var bool setupLive = false
+var bool setupTp1Hit = false
+var int setupDir = 0
+var int setupStartBar = na
+var string setupState = "WAITING"
+var float setupEntry = na
+var float setupSl = na
+var float setupTp1 = na
+var float setupTp2 = na
+var line entryLine = na
+var line slLine = na
+var line tp1Line = na
+var line tp2Line = na
+var label entryLabel = na
+var label slLabel = na
+var label tp1Label = na
+var label tp2Label = na
+
+if setupLive and bar_index > setupStartBar
+    slHit = setupDir == 1 ? low <= setupSl : high >= setupSl
+    tp1HitNow = setupDir == 1 ? high >= setupTp1 : low <= setupTp1
+    tp2HitNow = setupDir == 1 ? high >= setupTp2 : low <= setupTp2
+    beHit = setupDir == 1 ? low <= setupEntry : high >= setupEntry
+
+    if not setupTp1Hit
+        if slHit
+            setupLive := false
+            setupState := "SL HIT"
+        else if tp2HitNow
+            setupTp1Hit := true
+            setupLive := false
+            setupState := "TP2 HIT"
+        else if tp1HitNow
+            setupTp1Hit := true
+            setupState := "TP1 HIT / BE"
+            setupSl := setupEntry
+            if not na(slLine)
+                line.set_y1(slLine, setupSl)
+                line.set_y2(slLine, setupSl)
+            if not na(slLabel)
+                label.set_text(slLabel, "BE " + f_price(setupSl))
+                label.set_y(slLabel, setupSl)
+    else
+        if tp2HitNow
+            setupLive := false
+            setupState := "TP2 HIT"
+        else if beHit
+            setupLive := false
+            setupState := "TP1 / BE"
+
+    if setupLive and bar_index - setupStartBar >= profileExpiryBars
+        setupLive := false
+        setupState := "EXPIRED"
+
+if setupLive
+    visualRight = bar_index + 10
+    if not na(entryLine)
+        line.set_x2(entryLine, visualRight)
+    if not na(slLine)
+        line.set_x2(slLine, visualRight)
+    if not na(tp1Line)
+        line.set_x2(tp1Line, visualRight)
+    if not na(tp2Line)
+        line.set_x2(tp2Line, visualRight)
+    if not na(entryLabel)
+        label.set_x(entryLabel, visualRight)
+    if not na(slLabel)
+        label.set_x(slLabel, visualRight)
+    if not na(tp1Label)
+        label.set_x(tp1Label, visualRight)
+    if not na(tp2Label)
+        label.set_x(tp2Label, visualRight)
+
+longFilter = profileSessionValid and htfBullConfirmed and emaBull and entryRecentSellSweep and mappingDir == 1 and (not profileNeedsPoi or nearBullPoi) and profileBullCandle and profileBullProbability and profileBullRejectionOk and profileEmaDistanceOk
+shortFilter = profileSessionValid and htfBearConfirmed and emaBear and entryRecentBuySweep and mappingDir == -1 and (not profileNeedsPoi or nearBearPoi) and profileBearCandle and profileBearProbability and profileBearRejectionOk and profileEmaDistanceOk
+newLongSetup = showEntryMap and profileSupported and not setupLive and profileBullTrigger and longFilter and not na(lastLow)
+newShortSetup = showEntryMap and profileSupported and not setupLive and profileBearTrigger and shortFilter and not na(lastHigh)
+
+if newLongSetup or newShortSetup
+    if not na(entryLine)
+        line.delete(entryLine)
+    if not na(slLine)
+        line.delete(slLine)
+    if not na(tp1Line)
+        line.delete(tp1Line)
+    if not na(tp2Line)
+        line.delete(tp2Line)
+    if not na(entryLabel)
+        label.delete(entryLabel)
+    if not na(slLabel)
+        label.delete(slLabel)
+    if not na(tp1Label)
+        label.delete(tp1Label)
+    if not na(tp2Label)
+        label.delete(tp2Label)
+
+    setupDir := newLongSetup ? 1 : -1
+    setupEntry := close
+    rawSetupSl = setupDir == 1 ? math.min(low, lastLow) - atr * effectiveSlAtrPad : math.max(high, lastHigh) + atr * effectiveSlAtrPad
+    setupRisk = setupDir == 1 ? setupEntry - rawSetupSl : rawSetupSl - setupEntry
+
+    if setupRisk > 0 and setupRisk <= atr * profileMaxRiskAtr
+        setupSl := rawSetupSl
+        setupTp1 := setupEntry + setupDir * setupRisk * profileTp1R
+        setupTp2 := setupEntry + setupDir * setupRisk * profileTp2R
+        setupStartBar := bar_index
+        setupTp1Hit := false
+        setupLive := true
+        setupState := setupDir == 1 ? "LONG ACTIVE" : "SHORT ACTIVE"
+
+        setupRight = bar_index + 10
+        entryLine := line.new(bar_index, setupEntry, setupRight, setupEntry, color=color.yellow, width=1)
+        slLine := line.new(bar_index, setupSl, setupRight, setupSl, color=color.red, width=1)
+        tp1Line := line.new(bar_index, setupTp1, setupRight, setupTp1, color=color.new(color.lime, 20), width=1, style=line.style_dashed)
+        tp2Line := line.new(bar_index, setupTp2, setupRight, setupTp2, color=color.lime, width=1)
+        entryLabel := label.new(setupRight, setupEntry, "ENTRY " + f_price(setupEntry), style=label.style_label_left, color=color.new(color.yellow, 72), textcolor=color.white, size=size.tiny)
+        slLabel := label.new(setupRight, setupSl, "SL " + f_price(setupSl), style=label.style_label_left, color=color.new(color.red, 72), textcolor=color.white, size=size.tiny)
+        tp1Label := label.new(setupRight, setupTp1, "TP1 " + f_price(setupTp1), style=label.style_label_left, color=color.new(color.green, 78), textcolor=color.white, size=size.tiny)
+        tp2Label := label.new(setupRight, setupTp2, "TP2 " + f_price(setupTp2), style=label.style_label_left, color=color.new(color.green, 68), textcolor=color.white, size=size.tiny)
+    else
+        setupDir := 0
+        setupState := "SKIPPED"
+
+if not showEntryMap
+    setupLive := false
+    setupState := "HIDDEN"
+    if not na(entryLine)
+        line.delete(entryLine)
+        entryLine := na
+    if not na(slLine)
+        line.delete(slLine)
+        slLine := na
+    if not na(tp1Line)
+        line.delete(tp1Line)
+        tp1Line := na
+    if not na(tp2Line)
+        line.delete(tp2Line)
+        tp2Line := na
+    if not na(entryLabel)
+        label.delete(entryLabel)
+        entryLabel := na
+    if not na(slLabel)
+        label.delete(slLabel)
+        slLabel := na
+    if not na(tp1Label)
+        label.delete(tp1Label)
+        tp1Label := na
+    if not na(tp2Label)
+        label.delete(tp2Label)
+        tp2Label := na
+
+// ============================================================================
+// EVENT HISTORY
+// ============================================================================
+var array<string> eventLog = array.new_string()
+string eventName = ""
+float eventPrice = na
+
+if mssBull
+    eventName := "MSS BULL"
+    eventPrice := lastHigh
+else if mssBear
+    eventName := "MSS BEAR"
+    eventPrice := lastLow
+else if bosBull
+    eventName := "BOS BULL"
+    eventPrice := lastHigh
+else if bosBear
+    eventName := "BOS BEAR"
+    eventPrice := lastLow
+else if newPwhSweep
+    eventName := "PWH SWEEP"
+    eventPrice := pwh
+else if newPwlSweep
+    eventName := "PWL SWEEP"
+    eventPrice := pwl
+else if newPdhSweep
+    eventName := "PDH SWEEP"
+    eventPrice := pdh
+else if newPdlSweep
+    eventName := "PDL SWEEP"
+    eventPrice := pdl
+else if newBslSweep
+    eventName := "BSL SWEEP"
+    eventPrice := lastHigh
+else if newSslSweep
+    eventName := "SSL SWEEP"
+    eventPrice := lastLow
+else if newAsiaHighSweep
+    eventName := "ASIA HIGH SWEEP"
+    eventPrice := asiaHigh
+else if newAsiaLowSweep
+    eventName := "ASIA LOW SWEEP"
+    eventPrice := asiaLow
+
+if barstate.isconfirmed and str.length(eventName) > 0
+    eventLine = str.format_time(time, "HH:mm", tz) + "  " + eventName + " @ " + f_price(eventPrice)
+    bool isNewEvent = true
+    if eventLog.size() > 0
+        isNewEvent := eventLog.get(0) != eventLine
+    if isNewEvent
+        eventLog.unshift(eventLine)
+        if eventLog.size() > 3
+            eventLog.pop()
+
+event0 = eventLog.size() > 0 ? eventLog.get(0) : "No confirmed event"
+event1 = eventLog.size() > 1 ? eventLog.get(1) : "-"
+event2 = eventLog.size() > 2 ? eventLog.get(2) : "-"
+bslTargetDashboard = na(nearestBslTarget) ? "NONE" : nearestBslName + " " + f_price(nearestBslTarget) + (hasTwoSidedLiquidity ? " · " + str.tostring(bslDrawPercent) + "%" : " · -")
+sslTargetDashboard = na(nearestSslTarget) ? "NONE" : nearestSslName + " " + f_price(nearestSslTarget) + (hasTwoSidedLiquidity ? " · " + str.tostring(sslDrawPercent) + "%" : " · -")
+
+// ============================================================================
+// COMPACT MAPPING DASHBOARD — ENTRY IS CHART-ONLY
+// ============================================================================
+dashHeader = color.rgb(58, 58, 58)
+dashBg = color.rgb(86, 86, 86)
+dashAlt = color.rgb(74, 74, 74)
+dashBorder = color.rgb(120, 120, 120)
+
+var table dashboard = table.new(position.bottom_right, 2, 16, bgcolor=dashBg, border_width=1, border_color=dashBorder)
+
+if barstate.isfirst
+    table.merge_cells(dashboard, 0, 0, 1, 0)
+    table.merge_cells(dashboard, 0, 1, 1, 1)
+    table.merge_cells(dashboard, 0, 12, 1, 12)
+    table.merge_cells(dashboard, 0, 13, 1, 13)
+    table.merge_cells(dashboard, 0, 14, 1, 14)
+    table.merge_cells(dashboard, 0, 15, 1, 15)
+
+if showDashboard and barstate.islast
+    table.cell(dashboard, 0, 0, "AMY ICT — " + timeframe.period + " CURRENT MAPPING", text_color=color.white, text_size=size.small, text_halign=text.align_left, bgcolor=dashHeader)
+    table.cell(dashboard, 0, 1, "MARKET STATE: " + marketState, text_color=marketColor, text_size=size.small, text_halign=text.align_left, bgcolor=dashAlt)
+
+    table.cell(dashboard, 0, 2, "Direction Forecast", text_color=color.white, text_size=size.small, bgcolor=dashBg)
+    table.cell(dashboard, 1, 2, directionForecastText, text_color=directionForecastColor, text_size=size.small, text_halign=text.align_left, bgcolor=dashBg)
+
+    table.cell(dashboard, 0, 3, "Liquidity Draw", text_color=color.white, text_size=size.small, bgcolor=dashAlt)
+    table.cell(dashboard, 1, 3, liquidityDominance, text_color=predictionTextColor, text_size=size.small, text_halign=text.align_left, bgcolor=dashAlt)
+
+    table.cell(dashboard, 0, 4, "BSL TARGET", text_color=color.white, text_size=size.small, bgcolor=dashBg)
+    table.cell(dashboard, 1, 4, bslTargetDashboard, text_color=color.lime, text_size=size.tiny, text_halign=text.align_left, bgcolor=dashBg)
+
+    table.cell(dashboard, 0, 5, "SSL TARGET", text_color=color.white, text_size=size.small, bgcolor=dashAlt)
+    table.cell(dashboard, 1, 5, sslTargetDashboard, text_color=color.red, text_size=size.tiny, text_halign=text.align_left, bgcolor=dashAlt)
+
+    table.cell(dashboard, 0, 6, "HTF", text_color=color.white, text_size=size.small, bgcolor=dashBg)
+    table.cell(dashboard, 1, 6, biasText, text_color=htfBullConfirmed ? color.lime : htfBearConfirmed ? color.red : color.silver, text_size=size.small, text_halign=text.align_left, bgcolor=dashBg)
+
+    table.cell(dashboard, 0, 7, "Structure", text_color=color.white, text_size=size.small, bgcolor=dashAlt)
+    table.cell(dashboard, 1, 7, trend, text_color=structureBull ? color.lime : structureBear ? color.red : color.silver, text_size=size.small, text_halign=text.align_left, bgcolor=dashAlt)
+
+    table.cell(dashboard, 0, 8, "EMA", text_color=color.white, text_size=size.small, bgcolor=dashBg)
+    table.cell(dashboard, 1, 8, emaText, text_color=emaBull ? color.lime : emaBear ? color.red : color.silver, text_size=size.small, text_halign=text.align_left, bgcolor=dashBg)
+
+    table.cell(dashboard, 0, 9, "Session", text_color=color.white, text_size=size.small, bgcolor=dashAlt)
+    table.cell(dashboard, 1, 9, sessionText, text_color=validSession ? color.lime : color.white, text_size=size.small, text_halign=text.align_left, bgcolor=dashAlt)
+
+    table.cell(dashboard, 0, 10, "Liquidity", text_color=color.white, text_size=size.small, bgcolor=dashBg)
+    table.cell(dashboard, 1, 10, liqText, text_color=color.white, text_size=size.small, text_halign=text.align_left, bgcolor=dashBg)
+
+    table.cell(dashboard, 0, 11, "Range / POI", text_color=color.white, text_size=size.small, bgcolor=dashAlt)
+    table.cell(dashboard, 1, 11, rangeText + " | " + poiText, text_color=inDiscount ? color.lime : inPremium ? color.orange : color.silver, text_size=size.tiny, text_halign=text.align_left, bgcolor=dashAlt)
+
+    table.cell(dashboard, 0, 12, "EVENT HISTORY", text_color=color.white, text_size=size.small, text_halign=text.align_left, bgcolor=dashHeader)
+    table.cell(dashboard, 0, 13, event0, text_color=color.white, text_size=size.tiny, text_halign=text.align_left, bgcolor=dashBg)
+    table.cell(dashboard, 0, 14, event1, text_color=color.white, text_size=size.tiny, text_halign=text.align_left, bgcolor=dashAlt)
+    table.cell(dashboard, 0, 15, event2, text_color=color.white, text_size=size.tiny, text_halign=text.align_left, bgcolor=dashBg)
+else if barstate.islast
+    table.clear(dashboard, 0, 0, 1, 15)

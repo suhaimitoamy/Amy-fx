@@ -45,47 +45,69 @@ class NewsSyncWorker(
                 val items = payload.optJSONArray("news") ?: return@withContext Result.success()
                 if (items.length() == 0) return@withContext Result.success()
 
-                var latest: JSONObject? = null
-                var latestNumericId = Long.MIN_VALUE
+                var latestRelevant: JSONObject? = null
+                var latestRelevantId = Long.MIN_VALUE
+                var highestId = Long.MIN_VALUE
+
                 for (index in 0 until items.length()) {
                     val item = items.optJSONObject(index) ?: continue
-                    val numericId = item.optString("id").toLongOrNull()
-                    if (latest == null || (numericId != null && numericId > latestNumericId)) {
-                        latest = item
-                        if (numericId != null) latestNumericId = numericId
+                    val numericId = item.optString("id").toLongOrNull() ?: 0L
+                    if (numericId > highestId) highestId = numericId
+                    if (isNewsRelevant(item)) {
+                        if (latestRelevant == null || numericId > latestRelevantId) {
+                            latestRelevant = item
+                            latestRelevantId = numericId
+                        }
                     }
                 }
 
-                val item = latest ?: return@withContext Result.success()
-                val newsId = item.optString("id").trim()
-                if (newsId.isBlank()) return@withContext Result.success()
-
                 val prefs = applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-                val storedId = prefs.getString(KEY_LAST_NEWS_ID, null)
-                if (storedId == null) {
-                    prefs.edit().putString(KEY_LAST_NEWS_ID, newsId).apply()
+                val storedIdStr = prefs.getString(KEY_LAST_NEWS_ID, null)
+
+                if (storedIdStr == null) {
+                    val seedId = if (highestId > 0) highestId.toString() else "0"
+                    prefs.edit().putString(KEY_LAST_NEWS_ID, seedId).apply()
                     return@withContext Result.success()
                 }
-                if (storedId == newsId) return@withContext Result.success()
 
-                val body = item.optString("text").ifBlank {
-                    item.optString("textOriginal", "Berita baru XAU/USD tersedia.")
-                }.take(MAX_NEWS_BODY)
-                val impact = item.optString("impact")
-                val title = if (impact.equals("high", ignoreCase = true)) {
-                    "Breaking News Penting XAU/USD"
-                } else {
-                    "Breaking News XAU/USD"
+                val storedId = storedIdStr.toLongOrNull() ?: 0L
+
+                if (latestRelevant != null && latestRelevantId > storedId) {
+                    val body = latestRelevant.optString("text").ifBlank {
+                        latestRelevant.optString("textOriginal", "Berita baru XAU/USD tersedia.")
+                    }.take(MAX_NEWS_BODY)
+                    val impact = latestRelevant.optString("impact")
+                    val title = if (impact.equals("high", ignoreCase = true)) {
+                        "🚨 Breaking News Penting XAU/USD"
+                    } else {
+                        "📰 Breaking News XAU/USD"
+                    }
+                    showNewsNotification(title, body, latestRelevantId.toString())
                 }
 
-                showNewsNotification(title, body, newsId)
-                prefs.edit().putString(KEY_LAST_NEWS_ID, newsId).apply()
+                if (highestId > storedId) {
+                    prefs.edit().putString(KEY_LAST_NEWS_ID, highestId.toString()).apply()
+                }
                 Result.success()
             }
         } catch (error: Exception) {
             android.util.Log.w("AmyFX-NewsWorker", "News fallback check failed", error)
             Result.retry()
         }
+    }
+
+    private fun isNewsRelevant(item: JSONObject): Boolean {
+        if (item.optBoolean("relevant", false)) return true
+        val text = (item.optString("text") + " " + item.optString("textOriginal")).lowercase()
+        val goldKeywords = listOf(
+            "gold", "xau", "emas", "bullion", "fed", "fomc", "powell",
+            "inflation", "cpi", "pce", "treasury", "yield", "dxy", "dollar",
+            "dolar", "nfp", "payroll", "jobless", "claims", "war", "perang",
+            "geopolit", "safe haven", "central bank", "bank sentral",
+            "suku bunga", "rate cut", "rate hike", "iran", "israel", "middle east",
+            "timur tengah", "oil", "minyak", "houthi", "russia", "rusia", "ukraine", "ukraina"
+        )
+        return goldKeywords.any { text.contains(it) }
     }
 
     private fun showNewsNotification(title: String, body: String, newsId: String) {

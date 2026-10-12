@@ -73,6 +73,7 @@ class MainActivity : Activity() {
     private lateinit var twelveDataPriceBridge: TwelveDataPriceBridge
     private lateinit var assetLoader: WebViewAssetLoader
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+    private var refreshPageUrl: String? = null
     private lateinit var rootLayout: FrameLayout
     private lateinit var permissionGate: LinearLayout
     private lateinit var batteryStatusText: TextView
@@ -94,6 +95,11 @@ class MainActivity : Activity() {
         )
 
         createNotificationChannels()
+        try {
+            androidx.work.WorkManager.getInstance(this).enqueue(
+                androidx.work.OneTimeWorkRequestBuilder<NewsSyncWorker>().build()
+            )
+        } catch (_: Exception) {}
 
         rootLayout = FrameLayout(this)
         rootLayout.layoutParams = matchParentParams
@@ -183,11 +189,42 @@ class MainActivity : Activity() {
 
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val uri = request?.url ?: return true
-                if (isTrustedLocalUri(uri)) return false
+                if (uri.host == APP_ASSET_HOST) {
+                    val path = uri.path ?: ""
+                    if (path == "/index.html" || path == "/" || path.isEmpty()) {
+                        view?.loadUrl(HOME_URL)
+                        return true
+                    }
+                    val lessonRegex = Regex("^/assets/apps/academy/(bagian-[^/]+)/([^/]+)\\.html$")
+                    val match = lessonRegex.find(path)
+                    if (match != null && match.groupValues[2] != "index") {
+                        val folder = match.groupValues[1]
+                        val chapter = match.groupValues[2]
+                        val rewritten = "${APP_ASSET_PREFIX}apps/academy/$folder/index.html#$chapter"
+                        view?.loadUrl(rewritten)
+                        return true
+                    }
+                    if (!path.startsWith("/assets/")) {
+                        val correctedUrl = "$APP_ASSET_PREFIX${path.removePrefix("/")}"
+                        view?.loadUrl(correctedUrl)
+                        return true
+                    }
+                    if (request.isForMainFrame) updateRefreshPolicy(uri.toString())
+                    return false
+                }
+                if (isTrustedLocalUri(uri)) {
+                    if (request.isForMainFrame) updateRefreshPolicy(uri.toString())
+                    return false
+                }
                 if (uri.scheme == "https" || uri.scheme == "http") {
                     try { startActivity(Intent(Intent.ACTION_VIEW, uri)) } catch (_: Exception) {}
                 }
                 return true
+            }
+
+            override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                super.onPageStarted(view, url, favicon)
+                updateRefreshPolicy(url)
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
@@ -204,8 +241,16 @@ class MainActivity : Activity() {
             }
         }
 
+        swipeRefreshLayout.setOnChildScrollUpCallback { _, _ ->
+            // Native interception happens before DOM touch-action/preventDefault.
+            isReplayRefreshBlocked() || webView.canScrollVertically(-1)
+        }
         swipeRefreshLayout.setOnRefreshListener {
-            webView.reload()
+            if (isReplayRefreshBlocked()) {
+                swipeRefreshLayout.isRefreshing = false
+            } else {
+                webView.reload()
+            }
         }
 
         webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
@@ -424,6 +469,17 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun isReplayRefreshBlocked(): Boolean =
+        ReplayRefreshPolicy.blocksPullToRefresh(refreshPageUrl) ||
+            ReplayRefreshPolicy.blocksPullToRefresh(webView.url)
+
+    private fun updateRefreshPolicy(url: String? = refreshPageUrl) {
+        refreshPageUrl = url
+        val enabled = !ReplayRefreshPolicy.blocksPullToRefresh(url)
+        swipeRefreshLayout.isEnabled = enabled
+        if (!enabled) swipeRefreshLayout.isRefreshing = false
+    }
+
     private fun updatePermissionGate(forceToast: Boolean = false) {
         if (!::permissionGate.isInitialized) return
 
@@ -436,7 +492,7 @@ class MainActivity : Activity() {
 
         // Izin background tidak boleh memblokir halaman Mapping atau modul lain.
         permissionGate.visibility = View.GONE
-        swipeRefreshLayout.isEnabled = true
+        updateRefreshPolicy()
 
         if (forceToast) {
             val message = if (notificationOk && batteryOk) {
@@ -555,7 +611,7 @@ class MainActivity : Activity() {
     private fun isTrustedLocalUri(uri: Uri): Boolean {
         return uri.scheme == "https" &&
             uri.host == APP_ASSET_HOST &&
-            uri.path?.startsWith("/assets/") == true
+            (uri.path?.startsWith("/assets/") == true || uri.path == "/index.html" || uri.path == "/")
     }
 
     private fun normalizeLocalUrl(rawUrl: String?): String? {
@@ -564,35 +620,21 @@ class MainActivity : Activity() {
             rawUrl.startsWith(APP_ASSET_PREFIX) -> rawUrl
             rawUrl.startsWith(LEGACY_ASSET_PREFIX) ->
                 APP_ASSET_PREFIX + rawUrl.removePrefix(LEGACY_ASSET_PREFIX)
+            rawUrl.startsWith("/assets/") ->
+                "https://${APP_ASSET_HOST}${rawUrl}"
+            rawUrl.startsWith("assets/") ->
+                "https://${APP_ASSET_HOST}/${rawUrl}"
+            rawUrl.startsWith("/apps/") ->
+                "${APP_ASSET_PREFIX}${rawUrl.removePrefix("/")}"
+            rawUrl.startsWith("apps/") ->
+                "${APP_ASSET_PREFIX}${rawUrl}"
             else -> null
         }
     }
 
     private fun injectHomeButtonForLocalModule(url: String?) {
-        if (url == null || !url.contains("/apps/")) return
-        webView.evaluateJavascript("""
-            (function(){
-              if (document.getElementById('amy-fx-home-button')) return;
-              var btn = document.createElement('button');
-              btn.id = 'amy-fx-home-button';
-              btn.textContent = '← Amy FX';
-              btn.style.position = 'fixed';
-              btn.style.left = '12px';
-              btn.style.bottom = '80px';
-              btn.style.zIndex = '2147483647';
-              btn.style.border = '1px solid rgba(212,175,55,.55)';
-              btn.style.borderRadius = '999px';
-              btn.style.background = 'rgba(10,10,10,.88)';
-              btn.style.color = '#d4af37';
-              btn.style.fontWeight = '800';
-              btn.style.fontSize = '12px';
-              btn.style.padding = '8px 12px';
-              btn.style.boxShadow = '0 6px 18px rgba(0,0,0,.35)';
-              btn.onclick = function(){ if (window.Android && window.Android.goHome) { window.Android.goHome(); } else { location.href = '${APP_ASSET_PREFIX}index.html'; } };
-              document.body.appendChild(btn);
-              document.body.style.setProperty('--amy-native-back-height','28px');
-            })();
-        """.trimIndent(), null)
+        // Floating DOM back button is retired in favor of native header back buttons.
+        return
     }
 
     private fun dp(value: Int): Int {
@@ -643,6 +685,9 @@ class MainActivity : Activity() {
 
     inner class WebAppInterface(private val mContext: Context) {
         private var backgroundVideoTransfer: BackgroundVideoTransferSession? = null
+
+        @JavascriptInterface
+        fun getScalperDeviceToken(): String = ScalperDeviceIdentity.token(mContext)
 
         @JavascriptInterface
         fun getElapsedRealtimeMs(): Long {
@@ -754,13 +799,17 @@ class MainActivity : Activity() {
                     putExtra("bsl", cleanBsl)
                     putExtra("ssl", cleanSsl)
                 }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    mContext.startForegroundService(intent)
-                } else {
-                    mContext.startService(intent)
-                }
+                // ScannerService is a retired compatibility stub; never call startForegroundService
+                mContext.startService(intent)
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+        }
+
+        @JavascriptInterface
+        fun setSwipeRefreshEnabled(enabled: Boolean) {
+            (mContext as Activity).runOnUiThread {
+                this@MainActivity.swipeRefreshLayout.isEnabled = enabled
             }
         }
 
@@ -1070,6 +1119,83 @@ class MainActivity : Activity() {
                 } // AMYFX_NOTIFY_NATIVE_FIX
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+        }
+
+        @JavascriptInterface
+        fun recordLastStudiedLesson(title: String?, url: String?, section: String?) {
+            try {
+                val cleanTitle = title?.trim()?.takeIf { it.isNotBlank() } ?: return
+                val cleanUrl = url?.trim()?.takeIf { it.isNotBlank() } ?: return
+                val prefs = mContext.getSharedPreferences(LearningReminderWorker.PREFS, Context.MODE_PRIVATE)
+                prefs.edit().apply {
+                    putString(LearningReminderWorker.KEY_LAST_TITLE, cleanTitle)
+                    putString(LearningReminderWorker.KEY_LAST_URL, cleanUrl)
+                    putString(LearningReminderWorker.KEY_LAST_SECTION, section?.trim().orEmpty())
+                    putLong(LearningReminderWorker.KEY_LAST_TIME, System.currentTimeMillis())
+                }.apply()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        @JavascriptInterface
+        fun saveLearningReminderConfig(enabled: Boolean, timeOfDay: String?): Boolean {
+            return try {
+                val cleanTime = timeOfDay?.trim()?.takeIf { it.matches(Regex("^\\d{1,2}:\\d{2}$")) } ?: "20:00"
+                val prefs = mContext.getSharedPreferences(LearningReminderWorker.PREFS, Context.MODE_PRIVATE)
+                prefs.edit().apply {
+                    putBoolean(LearningReminderWorker.KEY_ENABLED, enabled)
+                    putString(LearningReminderWorker.KEY_TIME, cleanTime)
+                }.apply()
+                LearningReminderWorker.schedule(mContext)
+                true
+            } catch (e: Exception) {
+                e.printStackTrace()
+                false
+            }
+        }
+
+        @JavascriptInterface
+        fun getLearningReminderConfig(): String {
+            return try {
+                val prefs = mContext.getSharedPreferences(LearningReminderWorker.PREFS, Context.MODE_PRIVATE)
+                val enabled = prefs.getBoolean(LearningReminderWorker.KEY_ENABLED, true)
+                val time = prefs.getString(LearningReminderWorker.KEY_TIME, "20:00") ?: "20:00"
+                val lastTitle = prefs.getString(LearningReminderWorker.KEY_LAST_TITLE, "") ?: ""
+                val lastUrl = prefs.getString(LearningReminderWorker.KEY_LAST_URL, "") ?: ""
+                val lastSection = prefs.getString(LearningReminderWorker.KEY_LAST_SECTION, "") ?: ""
+                val lastTime = prefs.getLong(LearningReminderWorker.KEY_LAST_TIME, 0L)
+                JSONObject().apply {
+                    put("enabled", enabled)
+                    put("time", time)
+                    put("lastTitle", lastTitle)
+                    put("lastUrl", lastUrl)
+                    put("lastSection", lastSection)
+                    put("lastTime", lastTime)
+                }.toString()
+            } catch (e: Exception) {
+                "{}"
+            }
+        }
+
+        @JavascriptInterface
+        fun triggerLearningReminderNotification(): Boolean {
+            return try {
+                val prefs = mContext.getSharedPreferences(LearningReminderWorker.PREFS, Context.MODE_PRIVATE)
+                val lastTitle = prefs.getString(LearningReminderWorker.KEY_LAST_TITLE, null)?.trim()
+                    ?: LearningReminderWorker.DEFAULT_LESSON_TITLE
+                val lastUrl = prefs.getString(LearningReminderWorker.KEY_LAST_URL, null)?.trim()
+                    ?: LearningReminderWorker.DEFAULT_LESSON_URL
+
+                val title = "📚 Waktunya Tingkatkan Skill Trading-mu!"
+                val message = "Materi terakhir yang kamu pelajari: \"$lastTitle\". Yuk lanjutkan belajar sekarang!"
+
+                showNotificationWithUrl(title, message, lastUrl)
+                true
+            } catch (e: Exception) {
+                e.printStackTrace()
+                false
             }
         }
 

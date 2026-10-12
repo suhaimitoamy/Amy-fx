@@ -152,15 +152,17 @@ test('liquidity context never converts destination into buy or sell', () => {
   assert.doesNotMatch(context.statement, /\bBUY\b|\bSELL\b/);
 });
 
-test('Preview separates stable market summary from compact advanced analysis', () => {
+test('Preview separates compact D summary from collapsed descriptive and predictive analysis', () => {
   const ui = readFileSync(new URL('../app/src/main/assets/apps/mapping/js/market-intent-ui.js', import.meta.url), 'utf8');
-  assert.match(ui, /RINGKASAN MARKET/);
-  assert.match(ui, /M15 CANDLE TERTUTUP/);
-  assert.match(ui, /Konteks Market Lanjutan/);
-  assert.match(ui, /KONTEKS STRATEGI/);
-  assert.match(ui, /Target & Skenario Harga/);
-  assert.match(ui, /Target likuiditas tidak menentukan waktu entry/);
+  assert.match(ui, /Ringkasan Mapping/);
+  assert.match(ui, /CLOSED CANDLE/);
+  assert.match(ui, /Context & Fresh Evidence/);
+  assert.match(ui, /Predictive \/ Event Signals/);
+  assert.match(ui, /Final Bias/);
+  assert.match(ui, /d\.predictive\.nextMove\.signal/);
+  assert.match(ui, /execution.status/);
   assert.match(ui, /closedCandleFingerprint/);
+  assert.doesNotMatch(ui, /KONTEKS STRATEGI|Strategy Router|regime-probability/i);
   assert.doesNotMatch(ui, /RELIABILITAS HISTORIS|Performa Historis Model/);
   assert.doesNotMatch(ui, /NAIK KE BSL|TURUN KE SSL/);
 });

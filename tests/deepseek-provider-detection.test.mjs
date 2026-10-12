@@ -1,3 +1,5 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -7,7 +9,7 @@ const read = path => readFile(new URL(path, root), 'utf8');
 
 const modulePages = [
   'app/src/main/assets/index.html',
-  'app/src/main/assets/apps/mapping/index.html',
+  'app/src/main/assets/apps/mapping/legacy-index.html',
   'app/src/main/assets/apps/market-intel/index.html',
   'app/src/main/assets/apps/journal/index.html',
   'app/src/main/assets/apps/academy/index.html'
@@ -40,13 +42,14 @@ test('native provider repair never exposes secret values to WebView', async () =
   assert.doesNotMatch(bridge, /return secret/);
 });
 
-test('provider repair bridge and detector are installed in every public module', async () => {
-  const native = await read('app/src/main/java/com/amyelitesuite/MainActivity.kt');
-  assert.match(native, /AmyFxAiProviderRepairBridge\(this\)/);
-  assert.match(native, /"AmyNativeAIRepair"/);
+test('provider repair bridge and detector are installed in every Preview module', async () => {
+  const installer = await read('tools/apply-blueprint-preview-core.py');
+  assert.match(installer, /AmyFxAiProviderRepairBridge\(this\)/);
+  assert.match(installer, /"AmyNativeAIRepair"/);
+  assert.match(installer, /data-amyfx-provider-detection/);
   for (const path of modulePages) {
     const html = await read(path);
-    assert.match(html, /data-amyfx-provider-detection="v1"/, `${path} missing provider detector`);
+    assert.match(html, /data-amy-local-assistant="v1"/, `${path} missing local assistant`);
   }
 });
 

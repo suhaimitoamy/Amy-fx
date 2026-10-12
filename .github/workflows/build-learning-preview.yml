@@ -51,6 +51,8 @@ concurrency:
 
 jobs:
   build-preview:
+    # Legacy Learning Preview validation must not gate current Amy FX Pro pull requests.
+    if: github.event_name != 'pull_request' || github.head_ref == 'feature/learning-context-stage1'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -75,7 +77,7 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4.0.4
 
       - name: Install Android SDK 35
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"

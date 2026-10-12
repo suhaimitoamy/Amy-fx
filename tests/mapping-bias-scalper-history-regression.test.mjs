@@ -65,14 +65,21 @@ test('riwayat terminal lama tidak hilang saat payload backend berikutnya hanya m
   assert.deepEqual(merged.recent.map(item => item.id), ['new', 'old']);
 });
 
-test('deep link notifikasi dan endpoint meminta setup spesifik serta seluruh riwayat', () => {
+test('deep link, endpoint, dan Scalper Vault menjaga seluruh riwayat', () => {
   const ui = fs.readFileSync(new URL('../app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js', import.meta.url), 'utf8');
+  const vault = fs.readFileSync(new URL('../app/src/main/assets/apps/mapping/js/scalper-vault.js', import.meta.url), 'utf8');
   const api = fs.readFileSync(new URL('../supabase/functions/scalper-setups/index.ts', import.meta.url), 'utf8');
   assert.match(ui, /setupIdFromLocation/);
   assert.match(ui, /history:\s*'all'/);
   assert.match(ui, /setup_id/);
-  assert.match(ui, /amyfx\.production\.scalper\.permanent-history\.v1/);
-  assert.match(ui, /Riwayat setup permanen/);
+  assert.match(ui, /SCALPER VAULT · ALL TIME/);
+  assert.match(ui, /persistScalperVault/);
+  assert.match(ui, /data-scalper-vault-export/);
+  assert.match(ui, /data-scalper-vault-import/);
+  assert.match(ui, /HISTORY_PAGE_SIZE = 100/);
+  assert.match(ui, /Riwayat permanen/);
+  assert.match(vault, /amyfx\.preview\.scalper\.permanent-history\.v1/);
+  assert.match(vault, /amyfx\.pro\.scalper\.vault\.v1/);
   assert.match(api, /historyPermanent/);
   assert.match(api, /setup_id/);
   assert.match(api, /history_limit/);

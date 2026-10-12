@@ -1,11 +1,5 @@
 {
   "version": 2,
-  "rewrites": [
-    {
-      "source": "/api/pwa-live-price",
-      "destination": "/api/twelvedata-internal?stream=1"
-    }
-  ],
   "headers": [
     {
       "source": "/api/(.*)",
@@ -20,7 +14,7 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Authorization, Accept, Content-Type"
+          "value": "Content-Type"
         },
         {
           "key": "X-Content-Type-Options",

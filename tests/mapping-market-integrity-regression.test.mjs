@@ -1,3 +1,5 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
@@ -148,14 +150,15 @@ test('status live OB dan arahan discount bearish tidak menyuruh mengejar SELL', 
 
 test('runtime dan halaman Mapping memuat lapisan integrity tanpa MutationObserver', () => {
   const runtime = fs.readFileSync(new URL('../app/src/main/assets/apps/mapping/js/mapping-integrity.js', import.meta.url), 'utf8');
-  const html = fs.readFileSync(new URL('../app/src/main/assets/apps/mapping/index.html', import.meta.url), 'utf8');
+  const html = fs.readFileSync(new URL('../app/src/main/assets/apps/mapping/legacy-index.html', import.meta.url), 'utf8');
   const css = fs.readFileSync(new URL('../app/src/main/assets/apps/mapping/css/mapping-integrity.css', import.meta.url), 'utf8');
 
   assert.match(html, /mapping-integrity\.css/);
   assert.match(html, /mapping-integrity\.js/);
   assert.match(runtime, /sanitizeCandleValues/);
-  assert.match(runtime, /filterActionableSetups/);
-  assert.match(runtime, /Struktur lokal/);
+  assert.match(runtime, /LAST VALID CLOSED CANDLE/);
+  assert.match(runtime, /mappingRecomputeOnLiveTick:\s*false/);
   assert.doesNotMatch(runtime, /new\s+MutationObserver/);
+  assert.doesNotMatch(runtime, /setInterval\s*\(|runAnalysis\s*\(|state\.price/);
   assert.match(css, /integrity-map-row/);
 });

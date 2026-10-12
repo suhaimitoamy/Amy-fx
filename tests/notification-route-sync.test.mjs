@@ -1,3 +1,5 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -7,14 +9,14 @@ import vm from 'node:vm';
 
 const root = new URL('../', import.meta.url);
 const routeScriptUrl = new URL('app/src/main/assets/apps/mapping/js/notification-route-sync.js', root);
-const indexUrl = new URL('app/src/main/assets/apps/mapping/index.html', root);
+const indexUrl = new URL('app/src/main/assets/apps/mapping/legacy-index.html', root);
 const mainActivityUrl = new URL('app/src/main/java/com/amyelitesuite/MainActivity.kt', root);
 const routeSource = readFileSync(routeScriptUrl, 'utf8');
 
 function createHarness({ route = 'Analyze', hash = '#Analyze', search = '', consumedUrl = '' } = {}) {
   const storage = new Map();
   if (route) storage.set('amyfx.notification.route', route);
-  const href = `https://appassets.androidplatform.net/assets/apps/mapping/index.html${search}${hash}`;
+  const href = `https://appassets.androidplatform.net/assets/apps/mapping/legacy-index.html${search}${hash}`;
   if (consumedUrl) storage.set('amyfx.notification.consumed_url', consumedUrl === 'CURRENT' ? href : consumedUrl);
 
   const calls = { tabs: [] };

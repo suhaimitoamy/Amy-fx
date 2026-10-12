@@ -1,3 +1,5 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -12,7 +14,7 @@ const clockPath = 'app/src/main/assets/apps/mapping/js/clock-sync.js';
 const contractPath = 'app/src/main/assets/apps/shared/amyfx-market-state-contract-v1.js';
 
 test('mapping page loads live consistency runtime after core mapping modules', async () => {
-  const html = await read('app/src/main/assets/apps/mapping/index.html');
+  const html = await read('app/src/main/assets/apps/mapping/legacy-index.html');
   const contract = html.indexOf('data-amyfx-market-contract="v2"');
   const core = html.indexOf('js/mapping-v2.js');
   const consistency = html.indexOf('js/mapping-live-consistency-v1.js');
@@ -40,7 +42,7 @@ test('fresh status requires same-timeframe canonical Mapping freshness', async (
 test('Mapping header exposes only one fixed-width status dot', async () => {
   const [source, html] = await Promise.all([
     read(runtimePath),
-    read('app/src/main/assets/apps/mapping/index.html')
+    read('app/src/main/assets/apps/mapping/legacy-index.html')
   ]);
   assert.match(html, /<div id="conn" class="status"[^>]*>●<\/div>/);
   assert.doesNotMatch(html, /id="conn"[^>]*>Offline<\/div>/);

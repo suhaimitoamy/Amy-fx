@@ -1,3 +1,5 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -6,7 +8,7 @@ const root = new URL('../', import.meta.url);
 const read = path => readFile(new URL(path, root), 'utf8');
 
 test('Dashboard presentation order is retained while Analyze DOM order stays authoritative', async () => {
-  const html = await read('app/src/main/assets/apps/mapping/index.html');
+  const html = await read('app/src/main/assets/apps/mapping/legacy-index.html');
   const gate = await read('app/src/main/assets/apps/mapping/js/dashboard-only-panels-v1.js');
 
   assert.match(html, /dashboard-only-panels-v1\.js/);

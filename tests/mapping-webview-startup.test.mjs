@@ -1,8 +1,10 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const html = readFileSync(new URL('../app/src/main/assets/apps/mapping/index.html', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../app/src/main/assets/apps/mapping/legacy-index.html', import.meta.url), 'utf8');
 const entrySync = readFileSync(new URL('../app/src/main/assets/apps/mapping/js/entry-map-ui-sync.js', import.meta.url), 'utf8');
 
 test('Mapping provides an ICU-safe fallback for Asia/Makassar', () => {

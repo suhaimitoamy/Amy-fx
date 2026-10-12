@@ -1,0 +1,8 @@
+Amy FX Private Preview BT7.1 release trigger
+Date: 2026-08-03 WITA
+Target branch: personal/amyfx-private
+Version: 2.0.0-preview.301
+Version code: 940301
+Purpose: build, verify, and publish the signed Preview APK after the BT7.1 Market State correction.
+Scope: Market State current-structure direction, phase separation, protected-swing invalidation, and Direction Forecast isolation.
+Production main, public package, production signing, and production update channel are not modified.

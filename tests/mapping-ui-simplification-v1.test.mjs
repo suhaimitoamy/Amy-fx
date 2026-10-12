@@ -1,3 +1,5 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -6,7 +8,7 @@ const root = new URL('../', import.meta.url);
 const read = path => readFile(new URL(path, root), 'utf8');
 
 test('Mapping keeps only Dashboard and Analyze navigation without scroll restoration', async () => {
-  const html = await read('app/src/main/assets/apps/mapping/index.html');
+  const html = await read('app/src/main/assets/apps/mapping/legacy-index.html');
   const tabs = [...html.matchAll(/data-tab="([^"]+)"/g)].map(match => match[1]);
   assert.deepEqual(tabs, ['Dashboard', 'Analyze']);
   assert.doesNotMatch(html, /view-stability\.js/);
@@ -25,11 +27,12 @@ test('Mapping no longer persists analysis, setup, or event-log history', async (
   assert.doesNotMatch(main, /window\.downloadLogs/);
 });
 
-test('Profile owns market API information and notification test controls', async () => {
+test('Profile preserves Pro345 removal of market API and notification test rows', async () => {
   const home = await read('app/src/main/assets/index.html');
   const profileSettings = await read('app/src/main/assets/profile-system-settings-v1.js');
   assert.match(home, /profile-system-settings-v1\.js/);
-  assert.match(profileSettings, /Data Market API/);
+  assert.doesNotMatch(profileSettings, /Data Market API/);
+  assert.doesNotMatch(profileSettings, /dataset\.profileAction\s*=\s*['"]test-notification/);
   assert.match(profileSettings, /test-notification/);
   assert.match(profileSettings, /showNotificationWithUrl/);
 });

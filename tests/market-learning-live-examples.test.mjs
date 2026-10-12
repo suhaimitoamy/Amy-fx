@@ -50,13 +50,13 @@ function validLiveResponse(group = 'order_math') {
   };
 }
 
-test('registry v2 maps all 645 HTML lessons to explicit topics', () => {
+test('registry v2 maps all 36 semester modules to explicit topics', () => {
   const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
   const entries = Object.entries(registry.lessons);
 
   assert.equal(registry.schemaVersion, 2);
   assert.equal(registry.defaults.showLiveExamples, true);
-  assert.equal(entries.length, 645);
+  assert.equal(entries.length, 36);
   for (const [path, config] of entries) {
     assert.match(path, /\.html$/);
     assert.equal(config.enabled, true);
@@ -68,18 +68,18 @@ test('registry v2 maps all 645 HTML lessons to explicit topics', () => {
 
 test('different pages inside the same category retain different topics', () => {
   const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
-  const trading = registry.lessons['bagian-01-pemula-nol/apa-itu-trading.html'];
-  const lot = registry.lessons['bagian-01-pemula-nol/lot-pip-point-dan-spread.html'];
-  const risk = registry.lessons['bagian-01-pemula-nol/risk-sebelum-entry.html'];
+  const trading = registry.lessons['bagian-01-pemula-nol/index.html'];
+  const chart = registry.lessons['bagian-02-membaca-chart/index.html'];
+  const risk = registry.lessons['bagian-12-risk-management/index.html'];
 
   assert.equal(trading.category, 'basics');
-  assert.equal(lot.category, 'basics');
-  assert.equal(risk.category, 'basics');
+  assert.equal(chart.category, 'basics');
+  assert.equal(risk.category, 'management');
   assert.equal(trading.topic, 'apa-itu-trading');
-  assert.equal(lot.topic, 'lot-pip-point-dan-spread');
-  assert.equal(risk.topic, 'risk-sebelum-entry');
-  assert.notEqual(trading.topic, lot.topic);
-  assert.notEqual(lot.topic, risk.topic);
+  assert.equal(chart.topic, 'candlestick-reading');
+  assert.equal(risk.topic, 'risk-management');
+  assert.notEqual(trading.topic, chart.topic);
+  assert.notEqual(chart.topic, risk.topic);
 });
 
 test('bridge calls topic-aware backend without hardcoded protected preview URL', () => {
@@ -106,11 +106,11 @@ test('inline glass UI, pulse animation, and no-redirect contract remain present'
 
 test('academy chapter URL resolves to its exact registry key', () => {
   const bridge = loadBridge({
-    location: { pathname: '/assets/apps/academy/bagian-01-pemula-nol/realita-trading-untuk-pemula.html' }
+    location: { pathname: '/assets/apps/academy/bagian-01-pemula-nol/index.html' }
   });
   assert.equal(
     bridge.getCurrentPath(),
-    'bagian-01-pemula-nol/realita-trading-untuk-pemula.html'
+    'bagian-01-pemula-nol/index.html'
   );
 });
 
@@ -241,14 +241,14 @@ test('injectChapterNavigation creates prev, catalog, and next chapter links', ()
       return el;
     }
   };
-  const bridge = loadBridge({ document, location: { pathname: '/bagian-01-pemula-nol/lot-pip-point-dan-spread.html' } });
+  const bridge = loadBridge({ document, location: { pathname: '/bagian-02-membaca-chart/index.html' } });
   bridge.injectChapterNavigation(registry);
 
   assert.equal(appended.length, 1);
   const nav = appended[0];
   assert.equal(nav.className, 'chapter-nav-box glass-panel');
   assert.equal(nav.children.length, 3);
-  assert.match(nav.children[0].href, /realita-trading-untuk-pemula/);
-  assert.match(nav.children[1].href, /daftar-materi.html/);
-  assert.match(nav.children[2].href, /apa-itu-trading/);
+  assert.match(nav.children[0].href, /bagian-01-pemula-nol/);
+  assert.match(nav.children[1].href, /daftar-materi\.html/);
+  assert.match(nav.children[2].href, /bagian-03-fondasi-market/);
 });

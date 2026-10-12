@@ -170,6 +170,23 @@
     }
   }
 
+  function injectLearningTrackLinks() {
+    var navlinks = document.querySelector('.navlinks');
+    if (!navlinks) return;
+    var root = (typeof ROOT_PATH !== 'undefined') ? ROOT_PATH : '';
+    [
+      { match: 'trading-practice/index.html', href: root + 'trading-practice/index.html', label: 'Practice' }
+    ].forEach(function (item) {
+      var exists = Array.prototype.some.call(navlinks.querySelectorAll('a'), function (link) { return String(link.getAttribute('href') || '').indexOf(item.match) >= 0; });
+      if (exists) return;
+      var link = document.createElement('a');
+      link.href = item.href;
+      link.textContent = item.label;
+      link.dataset.academyTrackLink = 'true';
+      navlinks.appendChild(link);
+    });
+  }
+
   /* ==========================================
      SECTION 2: HAMBURGER MENU
      ========================================== */
@@ -318,11 +335,11 @@
     var pBar = document.getElementById('academyProgressBar');
     var pText = document.getElementById('academyProgressText');
     if (pBar && pText) {
-      var totalBagian = 36;
-      var count = readSet.length;
+      var totalBagian = 35;
+      var count = Math.min(totalBagian, readSet.length);
       var pct = Math.min(100, Math.round((count / totalBagian) * 100));
       pBar.style.width = pct + '%';
-      pText.textContent = 'Membaca ' + count + ' dari ' + totalBagian + ' Bagian (' + pct + '%)';
+      pText.textContent = 'Menyelesaikan ' + count + ' dari ' + totalBagian + ' Pertemuan (' + pct + '%)';
     }
   }
 
@@ -333,6 +350,7 @@
     sInput.addEventListener('input', function() {
       var query = this.value.toLowerCase().trim();
       var panels = document.querySelectorAll('.panel');
+      var dividers = document.querySelectorAll('.semester-divider');
 
       panels.forEach(function(panel) {
         var text = panel.textContent.toLowerCase();
@@ -341,6 +359,10 @@
         } else {
           panel.style.display = 'none';
         }
+      });
+
+      dividers.forEach(function(div) {
+        div.style.display = query ? 'none' : 'block';
       });
     });
   }
@@ -360,11 +382,23 @@
         
         var filter = btn.dataset.filter;
         var panels = document.querySelectorAll('.panel');
+        var dividers = document.querySelectorAll('.semester-divider');
+
         panels.forEach(function(panel) {
-          if (filter === 'Semua' || panel.dataset.category === filter) {
+          var cats = (panel.dataset.category || '').split(',').map(function(s){ return s.trim(); });
+          if (filter === 'Semua' || cats.indexOf(filter) !== -1 || panel.dataset.category === filter) {
             panel.style.display = 'block';
           } else {
             panel.style.display = 'none';
+          }
+        });
+
+        dividers.forEach(function(div) {
+          var targetSem = div.dataset.semester;
+          if (filter === 'Semua' || filter === targetSem) {
+            div.style.display = 'block';
+          } else {
+            div.style.display = 'none';
           }
         });
       });
@@ -414,6 +448,7 @@
     injectGlassCSS();
     createThemePanel();
     injectThemeToggle();
+    injectLearningTrackLinks();
     initHamburger();
     initImageSlots();
     initLanjutBelajar();
@@ -596,7 +631,8 @@ if (!window.amyHapticListenerAdded) {
   if(window.__amyLearningBridgeLoaderV1)return;
   window.__amyLearningBridgeLoaderV1=true;
   var script=document.createElement('script');
-  script.src='/assets/apps/academy/assets/js/market-learning-bridge.js';
+  var root=(typeof ROOT_PATH!=='undefined')?ROOT_PATH:'';
+  script.src=root+'assets/js/market-learning-bridge.js';
   script.async=false;
   script.onerror=function(){window.__amyLearningBridgeLoaderV1=false;};
   document.head.appendChild(script);

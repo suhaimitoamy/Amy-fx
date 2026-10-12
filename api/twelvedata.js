@@ -52,11 +52,20 @@ function readCache(key, { allowStale = false } = {}) {
   if (!item) return null;
   const now = Date.now();
   if (!allowStale && item.expiresAt <= now) return null;
-  if (allowStale && item.staleUntil <= now) {
+  if (allowStale && item.staleUntil && item.staleUntil <= now) {
     memoryCache.delete(key);
     return null;
   }
   return cloneData(item.data);
+}
+
+function findAnyCached(symbol, interval) {
+  for (const [k, v] of memoryCache.entries()) {
+    if (k.startsWith(`${symbol}|${interval}|`) && v?.data?.values?.length) {
+      return cloneData(v.data);
+    }
+  }
+  return null;
 }
 
 function writeCache(key, data, ttl) {
@@ -65,7 +74,7 @@ function writeCache(key, data, ttl) {
     data: cloneData(data),
     storedAt: now,
     expiresAt: now + ttl * 1000,
-    staleUntil: now + Math.max(ttl * 10, 900) * 1000
+    staleUntil: now + Math.max(ttl * 10, 3600) * 1000
   });
 
   if (memoryCache.size <= MEMORY_CACHE_LIMIT) return;
@@ -156,16 +165,36 @@ export default async function handler(req, res) {
     setCacheHeaders(res, responseTtl, cacheState, data.source || 'unknown');
     return res.status(200).json(data);
   } catch (error) {
-    const stale = readCache(key, { allowStale: true });
+    const isRateLimited = error?.providerData?.code === 429
+      || error?.status === 429
+      || error?.statusCode === 429
+      || /429|rate limit/i.test(error?.message || '');
+
+    const stale = readCache(key, { allowStale: true }) || findAnyCached(symbol, interval);
     if (stale) {
       setCacheHeaders(res, Math.min(ttl, 60), 'STALE_FALLBACK', stale.source || 'memory-stale');
       return res.status(200).json({
         ...stale,
-        amyfxCacheState: 'STALE_FALLBACK'
+        amyfxCacheState: 'STALE_FALLBACK',
+        rateLimited: isRateLimited,
+        warning: isRateLimited
+          ? 'TwelveData rate limit (HTTP 429), serving cached data'
+          : (error?.message || 'Upstream provider error')
       });
     }
 
-    if (error?.providerData) return res.status(502).json(error.providerData);
+    if (error?.providerData) {
+      if (isRateLimited) {
+        setCacheHeaders(res, 30, 'RATE_LIMITED', 'twelvedata');
+        return res.status(429).json({
+          status: 'error',
+          code: 429,
+          message: error.providerData.message || 'TwelveData rate limit reached, please wait',
+          rateLimited: true
+        });
+      }
+      return res.status(502).json(error.providerData);
+    }
     return res.status(error?.name === 'AbortError' ? 504 : 502).json({
       status: 'error',
       message: error?.message || 'Market service unavailable',

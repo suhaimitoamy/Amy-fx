@@ -61,13 +61,18 @@ test('journal runtime cannot create the global MutationObserver feedback loop th
   assert.match(runtime, /bindPoolUiNavigation/);
 });
 
-test('Amy FX public source identity is 2.3.1 code 59', () => {
+test('Amy FX Pro source identity remains internally consistent with the promoted Preview lineage', () => {
   const gradle = source('app/build.gradle.kts');
-  assert.match(gradle, /com\.amyelitesuite/);
-  assert.match(gradle, /Amy FX/);
-  assert.match(gradle, /amyfx/);
-  assert.match(gradle, /\?: 59\)/);
-  assert.match(gradle, /\?: "2\.3\.1"/);
-  assert.doesNotMatch(gradle, /learningpreview|Amy FX Preview|amyfxpreview|preview-update\.json/);
-  assert.match(source('app/src/main/assets/app-version.js'), /name: '2\.3\.1', code: 59/);
+  const appVersion = source('app/src/main/assets/app-version.js');
+  const identity = appVersion.match(/name: '(2\.0\.0-pro\.(\d+))', code: (95\d{4})/);
+  assert.ok(identity, 'Pro app-version identity is missing');
+  const [, versionName, sequence, versionCode] = identity;
+
+  assert.match(gradle, /com\.amyelitesuite\.learningpreview/);
+  assert.match(gradle, /Amy FX Pro/);
+  assert.match(gradle, /amyfxpreview/);
+  assert.equal(Number(versionCode), 950000 + Number(sequence));
+  assert.ok(gradle.includes(`?: ${versionCode})`));
+  assert.ok(gradle.includes(`?: "${versionName}"`));
+  assert.match(appVersion, /Amy-fx-pro\/main\/update\.json/);
 });

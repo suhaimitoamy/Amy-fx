@@ -648,7 +648,7 @@ test('single Mapping snapshot is deeply frozen and separates live overlay from c
     livePrice: 105,
     capturedAt: 200
   });
-  assert.equal(snapshot.source, 'AMY_MAPPING_SINGLE_AUTHORITY_V3');
+  assert.equal(snapshot.source, 'AMY_SMC_D_SINGLE_MAPPING_AUTHORITY');
   assert.equal(snapshot.data.closedCandleOnly, true);
   assert.equal(snapshot.liveOverlay.mayRewriteClosedCandleFacts, false);
   assert.equal(Object.isFrozen(snapshot), true);

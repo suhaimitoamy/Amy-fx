@@ -63,6 +63,7 @@ object FcmDeviceRegistrar {
                 val payload = JSONObject().apply {
                     put("deviceId", deviceId)
                     put("fcmToken", token)
+                    put("scalperToken", ScalperDeviceIdentity.token(appContext))
                     put("appVersion", currentVersion)
                     put("appPackage", BuildConfig.APPLICATION_ID)
                     put("enabled", true)

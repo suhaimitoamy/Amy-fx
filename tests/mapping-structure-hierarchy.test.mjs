@@ -112,13 +112,15 @@ test('live price returning through break level blocks every setup as AT RISK', (
   assert.ok(result.conflicts.some(item => item.note.includes('AT RISK')));
 });
 
-test('mapping UI exposes internal trend, confirmed trend, next level, and AT RISK status', () => {
-  const source = readFileSync(
-    new URL('../app/src/main/assets/apps/mapping/js/ui/ui-render.js', import.meta.url),
-    'utf8'
-  );
-  assert.match(source, /INTERNAL CHOCH/);
-  assert.match(source, /Struktur terkonfirmasi/);
-  assert.match(source, /Konfirmasi berikutnya/);
-  assert.match(source, /AT RISK/);
+test('mapping UI exposes D swing/internal state separately from fresh qualified CHoCH', () => {
+  const source = [
+    '../app/src/main/assets/apps/mapping/js/market-intent-ui.js',
+    '../app/src/main/assets/apps/mapping/js/mapping-clarity-v1.js'
+  ].map(relative => readFileSync(new URL(relative, import.meta.url), 'utf8')).join('\n');
+  assert.match(source, /Swing Structure/);
+  assert.match(source, /Internal Structure/);
+  assert.match(source, /STALE \/ CONTINUOUS/);
+  assert.match(source, /Qualified CHoCH/);
+  assert.match(source, /Fresh qualified event/);
+  assert.match(source, /Harga live tidak mengubah event ini/);
 });

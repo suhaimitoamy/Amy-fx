@@ -1,3 +1,5 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -7,7 +9,7 @@ const read = relative => readFileSync(asset(relative), 'utf8');
 
 const principalPages = [
   'index.html',
-  'apps/mapping/index.html',
+  'apps/mapping/legacy-index.html',
   'apps/market-intel/index.html',
   'apps/journal/index.html',
   'apps/academy/index.html'
@@ -45,21 +47,21 @@ test('every principal Amy FX screen loads the shared redesign after its legacy c
   });
 });
 
-test('home uses exactly the five existing modules without duplicate access or fabricated profile data', () => {
+test('home uses the four requested main modules without duplicate access or fabricated profile data', () => {
   const app = read('app.js');
   const projectsBlock = app.match(/const projects = \[([\s\S]*?)\n  \];/)?.[1] || '';
   const ids = [...projectsBlock.matchAll(/id:\s*'([^']+)'/g)].map(match => match[1]);
 
-  assert.deepEqual(ids, ['mapping', 'intel', 'jurnal', 'academy', 'indikator']);
-  assert.match(app, /const coreModules = projects\.slice\(0, 4\)/);
-  assert.match(app, /quickCard\(indicator, true\)/);
+  assert.deepEqual(ids, ['mapping', 'intel', 'jurnal', 'academy']);
+  assert.match(app, /projects\.map\(item => quickCard\(item\)\)/);
+  assert.doesNotMatch(app, /quickCard\(indicator, true\)/);
   assert.doesNotMatch(app, /VIP Member|Lifetime Access|Trader Amy FX|VIP FACILITY/i);
   assert.doesNotMatch(app, /const favorites = \[projects\.find/);
   assert.match(app, /amy_indicator_favorites/);
   assert.match(app, /Belum ada item tersimpan/);
 });
 
-test('loading and native updater presentation follow the redesign without Preview identity', () => {
+test('loading and update presentation follow the redesign while native update notification remains intact', () => {
   const loading = read('apps/shared/amyfx-loading.js');
   const updater = read('update-checker.js');
   const native = read('../java/com/amyelitesuite/MainActivity.kt');
@@ -68,12 +70,9 @@ test('loading and native updater presentation follow the redesign without Previe
   assert.match(loading, /Pemuatan membutuhkan waktu lebih lama/);
   assert.match(loading, /data-amyfx-loading-retry/);
   assert.doesNotMatch(loading, /\d+%/);
-
-  assert.match(updater, /showUpdatePopup/);
-  assert.match(updater, /Update Amy FX Tersedia/);
-  assert.match(updater, /Android\.startAppUpdate/);
-  assert.match(updater, /AmyFXUpdateNative/);
-  assert.doesNotMatch(updater, /Amy FX Preview|preview-update\.json|personal\/amyfx-private/);
+  assert.match(updater, /Android\.showNotification\('Update Amy FX Pro Tersedia'/);
+  assert.match(updater, /Pembaruan Amy FX Pro Tersedia/);
+  assert.doesNotMatch(updater, />Update Amy FX Preview Tersedia</);
   assert.match(native, /fun setSystemUiTheme\(theme: String\?\)/);
 });
 

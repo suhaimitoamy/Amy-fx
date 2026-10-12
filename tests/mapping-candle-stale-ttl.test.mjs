@@ -197,6 +197,11 @@ test('causal runner keeps closed-candle break-even geometry despite stale live l
   const execution = buildSetupExecution({
     tf: 'H4',
     price: 104,
+    directionDecision: {
+      signal: 'BUY',
+      source: 'AMY_SMC_D_NEXT_MOVE',
+      invalidated: false
+    },
     validatedMarketContext: { directionForecast: forecast },
     bestSetup
   }, { persist: false });

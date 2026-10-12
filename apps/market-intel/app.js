@@ -108,6 +108,7 @@ function setupNewsInteractions() {
     item.classList.remove('news-focus');
   });
   document.getElementById('news-list')?.addEventListener('keydown', event => {
+    if (event.target.closest('a')) return;
     if (event.key !== 'Enter' && event.key !== ' ') return;
     const item = event.target.closest('.news-item');
     if (!item) return;
@@ -208,7 +209,7 @@ function renderNews(sortedNews) {
     <article class="news-item" data-news-id="${escapeHtml(newsId(item))}" style="animation-delay:${i * 0.05}s" tabindex="0">
       <div class="news-time">${formatTime(item.time)}</div>
       <div class="news-text">${escapeHtml(item.text)}</div>
-      <div class="news-link">Sumber: SM_News_24h</div>
+      <a class="news-link" href="${escapeHtml(/^https:\/\//i.test(String(item.link || '')) ? item.link : 'https://t.me/SM_News_24h')}" target="_blank" rel="noopener noreferrer">Buka sumber: SM_News_24h ↗</a>
     </article>
   `).join('');
 }

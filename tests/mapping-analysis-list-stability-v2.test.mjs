@@ -1,3 +1,5 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -8,7 +10,7 @@ const read = path => readFile(new URL(path, root), 'utf8');
 
 const runtimePath = 'app/src/main/assets/apps/mapping/js/ui/dom-stable-render.js';
 const cssPath = 'app/src/main/assets/apps/mapping/css/analysis-list-polish-v1.css';
-const indexPath = 'app/src/main/assets/apps/mapping/index.html';
+const indexPath = 'app/src/main/assets/apps/mapping/legacy-index.html';
 const renderPath = 'app/src/main/assets/apps/mapping/js/ui/ui-render.js';
 
 test('stable Mapping renderer is valid JavaScript and removes unused duplicate top-level cards', async () => {

@@ -1,3 +1,5 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -9,7 +11,7 @@ const uiUrl = new URL('../app/src/main/assets/apps/mapping/js/market-outlook.js'
 const activeCoreUrl = new URL('../app/src/main/assets/apps/mapping/js/outlook/amy-market-context-final-core.js', import.meta.url);
 const archivedCoreUrl = new URL('../app/src/main/assets/apps/mapping/js/outlook/trade-scenario-core.js', import.meta.url);
 const scriptUrl = new URL('../scripts/backtest-trade-scenarios-2024.mjs', import.meta.url);
-const indexUrl = new URL('../app/src/main/assets/apps/mapping/index.html', import.meta.url);
+const indexUrl = new URL('../app/src/main/assets/apps/mapping/legacy-index.html', import.meta.url);
 const cssUrl = new URL('../app/src/main/assets/apps/mapping/css/market-outlook.css', import.meta.url);
 const reportUrl = new URL('../docs/backtests/AMY_FX_TRADE_SCENARIOS_2024.md', import.meta.url);
 const dataUrl = new URL('../docs/backtests/amy-fx-trade-scenarios-2024.json', import.meta.url);

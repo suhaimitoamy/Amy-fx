@@ -83,7 +83,7 @@ test('all SM News posts are kept while relevance only gates notifications', asyn
   assert.match(apiSource, /backend: telegramOnly \? 'telegram_direct' : 'telegram_fallback'/);
   assert.match(apiSource, /https:\/\/telegram\.me\/\$\{TELEGRAM_SOURCE\}/);
 
-  assert.match(syncSource, /from '\.\.\/\.\.\/\.\.\/lib\/news-relevance\.mjs'/);
+  assert.match(syncSource, /from ['`]\.\/news-relevance\.mjs['`]/);
   assert.match(syncSource, /TELEGRAM_WEB_BASES = \[/);
   assert.match(syncSource, /https:\/\/telegram\.me\/s/);
   assert.match(syncSource, /https:\/\/telegram\.dog\/s/);

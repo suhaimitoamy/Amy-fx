@@ -28,11 +28,35 @@ class AmyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
-        if (message.data["notification_type"].equals("scalper", ignoreCase = true)) {
-            handleScalperMessage(message)
-        } else {
-            handleNewsMessage(message)
+        when (message.data["notification_type"]?.lowercase()) {
+            "market_context" -> handleMarketContext(message)
+            "scalper" -> return // The retired setup channel must never surface as a new idea.
+            else -> handleNewsMessage(message)
         }
+    }
+
+    private fun handleMarketContext(message: RemoteMessage) {
+        val data = message.data
+        val eventKey = data["event_key"].orEmpty()
+        if (eventKey.isBlank()) return
+        val title = data["title"].orEmpty().ifBlank { "Konteks Gold · Amy FX Pro" }
+        val body = data["body"].orEmpty().ifBlank { "Kondisi pasar Gold berubah. Buka Mapping untuk melihat konfirmasi M5 dan strukturnya." }
+        val suppliedTarget = data["target_url"].orEmpty()
+        val targetUrl = if (suppliedTarget.startsWith("https://appassets.androidplatform.net/assets/apps/mapping/"))
+            suppliedTarget else "https://appassets.androidplatform.net/assets/apps/mapping/index.html#context"
+        showNotification(
+            channelId = AmyFxApplication.MARKET_CONTEXT_CHANNEL_ID,
+            channelName = "Amy FX Market Context",
+            channelDescription = "Perubahan struktur dan area penting Gold XAU/USD",
+            title = title,
+            body = body,
+            gateKey = "market_context|$eventKey",
+            requestSeed = eventKey,
+            targetUrl = targetUrl,
+            route = "Mapping",
+            lightColor = Color.rgb(139, 185, 255),
+            category = NotificationCompat.CATEGORY_MESSAGE
+        )
     }
 
     private fun handleScalperMessage(message: RemoteMessage) {
@@ -50,7 +74,7 @@ class AmyFirebaseMessagingService : FirebaseMessagingService() {
         showNotification(
             channelId = AmyFxApplication.SCALPER_CHANNEL_ID,
             channelName = "Amy FX Scalper Signals",
-            channelDescription = "Sinyal simulasi 10 driver BT6/BT6.1 + AMD dari Amy FX",
+            channelDescription = "Sinyal simulasi 10 driver BT6/BT6.1 + AMD dari Amy FX Preview",
             title = title,
             body = body,
             gateKey = "scalper|$setupId|$status",

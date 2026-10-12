@@ -1,0 +1,5 @@
+Amy FX Private Preview release retry 5
+Date: 2026-07-29 WITA
+Includes retired scanner exclusion from active Supabase gateway regression contract.
+Target: personal/amyfx-private only.
+Production main remains untouched.

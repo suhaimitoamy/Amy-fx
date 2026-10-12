@@ -3,11 +3,53 @@ document.addEventListener('DOMContentLoaded', () => {
   const navBtns = document.querySelectorAll('.nav-btn');
 
   const projects = [
-    { id: 'mapping', title: 'Mapping', badge: 'Mapping', icon: 'mapping', desc: 'Mapping market & chart untuk analisis peluang', target: 'apps/mapping/index.html' },
-    { id: 'intel', title: 'Berita', badge: 'News', icon: 'intel', desc: 'Berita dan liquidity heatmap XAU/USD', target: 'apps/market-intel/index.html' },
-    { id: 'jurnal', title: 'Jurnal Trading', badge: 'Jurnal', icon: 'journal', desc: 'Catat jurnal, evaluasi performa, dan riwayat trading', target: 'apps/journal/index.html' },
-    { id: 'academy', title: 'Tutorial Trading', badge: 'Learning', icon: 'academy', desc: 'Materi belajar trading dalam aplikasi', target: 'apps/academy/index.html' },
-    { id: 'indikator', title: 'Indikator TradingView', badge: 'Library', icon: 'indicator', desc: 'Library indikator dan file Pine Script', target: 'internal' }
+    { id: 'mapping', title: 'Mapping', badge: 'Mapping', icon: 'mapping', desc: '', target: 'apps/mapping/index.html' },
+    { id: 'intel', title: 'Berita', badge: 'News', icon: 'intel', desc: '', target: 'apps/market-intel/index.html' },
+    { id: 'jurnal', title: 'Jurnal Trading', badge: 'Jurnal', icon: 'journal', desc: '', target: 'apps/journal/index.html' },
+    { id: 'academy', title: 'Tutorial Trading', badge: 'Learning', icon: 'academy', desc: '', target: 'apps/academy/index.html' },
+  ];
+
+  const practiceItems = [
+    {
+      id: 'fractal-advisor',
+      title: 'Fractal Advisor & Laya AI',
+      badge: 'System 1',
+      icon: 'indicator',
+      desc: 'Pencocokan fraktal 187k candle & audit gerbang AI Laya sebelum entry.',
+      target: 'apps/fractal-advisor/index.html'
+    },
+    {
+      id: 'chart-analysis',
+      title: 'Chart Analysis',
+      badge: 'Praktik',
+      icon: 'indicator',
+      desc: 'Analisis chart, gambar level, dan impor data historis candle.',
+      target: 'apps/academy/trading-practice/chart-analysis.html'
+    },
+    {
+      id: 'candle-replay',
+      title: 'Candle Replay',
+      badge: 'Replay',
+      icon: 'mapping',
+      desc: 'Latihan membaca candle satu per satu dan catat keputusan trading.',
+      target: 'apps/academy/trading-practice/candle-replay.html'
+    },
+    {
+      id: 'guided-practice',
+      title: 'Guided Practice',
+      badge: 'Latihan',
+      icon: 'academy',
+      desc: '60 soal acak ICT dengan chart ilustratif & evaluasi terpandu.',
+      target: 'apps/academy/trading-practice/guided-practice.html'
+    },
+    {
+      id: 'backtest-history',
+      title: 'Riwayat Backtest Lokal',
+      badge: 'Riwayat',
+      icon: 'journal',
+      desc: 'Tinjau setup manual, hasil forward candle, dan jurnal latihan.',
+      target: 'apps/academy/trading-practice/backtest-history.html'
+    }
   ];
 
   function showLoadingOverlay() {
@@ -142,65 +184,1434 @@ document.addEventListener('DOMContentLoaded', () => {
     Jurnal: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`,
     Learning: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`,
     Mapping: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`,
-    News: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"></path><path d="M8 8h8M8 12h8M8 16h5"></path></svg>`
+    News: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"></path><path d="M8 8h8M8 12h8M8 16h5"></path></svg>`,
+    Praktik: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"></path></svg>`,
+    Replay: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`,
+    Latihan: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>`,
+    Riwayat: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 15 15"></polyline></svg>`,
+    'System 1': `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>`,
+    'Jalur 03': `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>`
   };
 
   function icon(type) {
     return `<span class="app-icon ${type}">${svgs[type] || ''}</span>`;
   }
 
+  let disposeHomeChart=null;
   function setActive(target) {
-    navBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.target === target));
-    localStorage.setItem('amy_root_tab', target);
+    disposeHomeChart?.();disposeHomeChart=null;
+    const isVideo = t => t === 'video' || t === 'media';
+    navBtns.forEach(btn => {
+      const match = btn.dataset.target === target || (isVideo(target) && isVideo(btn.dataset.target));
+      btn.classList.toggle('active', Boolean(match));
+    });
+    try { localStorage.setItem('amy_root_tab', target); } catch (_) {}
   }
 
   function projectCard(item) {
     const badgeIcon = badgeSvgs[item.badge] || '';
-    return `<button class="card project-card" data-open="${item.id}" data-module="${item.id}">${icon(item.icon)}<span class="card-content"><h3>${item.title}</h3><p>${item.desc}</p><span class="badge">${badgeIcon} ${item.badge}</span></span><span class="chevron" aria-hidden="true">›</span></button>`;
+    const descMarkup = item.desc ? `<p>${item.desc}</p>` : '';
+    return `<button class="card project-card" data-open="${item.id}" data-module="${item.id}">${icon(item.icon)}<span class="card-content"><h3>${item.title}</h3>${descMarkup}<span class="badge">${badgeIcon} ${item.badge}</span></span><span class="chevron" aria-hidden="true">›</span></button>`;
   }
 
   function quickCard(item, wide = false) {
     const badgeIcon = badgeSvgs[item.badge] || '';
-    return `<button class="quick-card${wide ? ' quick-card--wide' : ''}" data-open="${item.id}" data-module="${item.id}">${icon(item.icon)}<span><strong>${item.title}</strong><small>${item.desc}</small></span><span class="chevron" aria-hidden="true">›</span></button>`;
+    const descMarkup = item.desc ? `<small>${item.desc}</small>` : '';
+    return `<button class="quick-card${wide ? ' quick-card--wide' : ''}" data-open="${item.id}" data-module="${item.id}">${icon(item.icon)}<span><strong>${item.title}</strong>${descMarkup}</span><span class="chevron" aria-hidden="true">›</span></button>`;
   }
 
   function renderHome() {
     setActive('beranda');
-    const coreModules = projects.slice(0, 4);
-    const indicator = projects[4];
-    const online = navigator.onLine !== false;
-    mainContent.innerHTML = `<section class="home-hero slide-up"><div class="eyebrow">AMY FX WORKSPACE</div><h2>Keputusan market dalam satu ruang kerja</h2><p>Buka Mapping, pantau berita, simpan jurnal, dan lanjutkan materi trading dari satu tempat.</p><div class="home-status" data-online="${online}"><span class="status-dot"></span><span>${online ? 'Sistem siap digunakan' : 'Mode offline aktif'}</span></div></section><div class="section-heading"><div><span class="section-kicker">MODUL UTAMA</span><h2>Ruang kerja trading</h2></div><span class="section-count">${projects.length} modul</span></div><div class="quick-grid slide-up">${coreModules.map(item => quickCard(item)).join('')}${quickCard(indicator, true)}</div>`;
+    mainContent.innerHTML = `<section class="home-price-panel" aria-label="Peta harga XAU/USD">
+      <div class="section-heading"><h2>Peta harga · XAU/USD</h2><strong id="home-chart-price">—</strong></div>
+      <div class="home-chart-controls"><label>Timeframe <select id="home-chart-tf"><option value="M15">M15</option><option value="M5">M5</option></select></label><button type="button" id="home-chart-refresh">Perbarui</button></div>
+      <p id="home-chart-source" role="status">Memuat candle tertutup…</p><p id="home-chart-error" role="alert"></p>
+      <div id="home-price-chart" aria-label="Chart candlestick XAU/USD dengan level model ICT"></div>
+      <p id="home-chart-note"></p>
+    </section><div class="section-heading"><h2>Menu Utama</h2></div><div class="quick-grid slide-up">${projects.map(item => quickCard(item)).join('')}</div>`;
+    if(window.AmyHomeChart)disposeHomeChart=window.AmyHomeChart.mount(mainContent.querySelector('.home-price-panel'));
   }
 
   function renderProjectList(title) {
     setActive('proyek');
-    mainContent.innerHTML = `<div class="page-header"><div><span class="section-kicker">WORKSPACE</span><h2>${title}</h2><p>Pilih modul Amy FX yang ingin dibuka.</p></div></div><div class="project-grid slide-up">${projects.map(projectCard).join('')}</div>`;
+    mainContent.innerHTML = `<div class="page-header"><div><span class="section-kicker">JALUR 03</span><h2>${title || 'Backtest'}</h2></div></div><div class="project-grid slide-up">${practiceItems.map(projectCard).join('')}</div>`;
+  }
+
+  // ─── AMY FX PRO ROOT MEDIA HUB & VAULT ──────────────────────────────
+  const MEDIA_DB_NAME = 'tradingLibraryManager.files';
+  const MEDIA_DB_VERSION = 2;
+  const MEDIA_FILE_STORE = 'files';
+  const MEDIA_META_STORE = 'metadata';
+  const MEDIA_ITEMS_META_RECORD = 'items.v2';
+  const MEDIA_LEGACY_KEY = 'tradingLibraryManager.items.v1';
+
+  let mediaDbPromise = null;
+  function openMediaDb() {
+    if (!('indexedDB' in window)) return Promise.reject(new Error('IndexedDB tidak tersedia'));
+    if (mediaDbPromise) return mediaDbPromise;
+    mediaDbPromise = new Promise((resolve, reject) => {
+      const req = indexedDB.open(MEDIA_DB_NAME, MEDIA_DB_VERSION);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(MEDIA_FILE_STORE)) db.createObjectStore(MEDIA_FILE_STORE, { keyPath: 'id' });
+        if (!db.objectStoreNames.contains(MEDIA_META_STORE)) db.createObjectStore(MEDIA_META_STORE, { keyPath: 'id' });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    return mediaDbPromise;
+  }
+
+  async function getMediaMetadataRecord(recordId) {
+    try {
+      const db = await openMediaDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(MEDIA_META_STORE, 'readonly');
+        const req = tx.objectStore(MEDIA_META_STORE).get(recordId);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (_) { return null; }
+  }
+
+  async function putMediaMetadataRecord(record) {
+    try {
+      const db = await openMediaDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(MEDIA_META_STORE, 'readwrite');
+        const req = tx.objectStore(MEDIA_META_STORE).put(record);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (_) { return false; }
+  }
+
+  async function getMediaFileRecord(fileId) {
+    if (!fileId) return null;
+    try {
+      const db = await openMediaDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(MEDIA_FILE_STORE, 'readonly');
+        const req = tx.objectStore(MEDIA_FILE_STORE).get(fileId);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (_) { return null; }
+  }
+
+  async function putMediaFileRecord(record) {
+    try {
+      const db = await openMediaDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(MEDIA_FILE_STORE, 'readwrite');
+        const req = tx.objectStore(MEDIA_FILE_STORE).put(record);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (_) { return false; }
+  }
+
+  async function deleteMediaFileRecord(fileId) {
+    if (!fileId) return;
+    try {
+      const db = await openMediaDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(MEDIA_FILE_STORE, 'readwrite');
+        const req = tx.objectStore(MEDIA_FILE_STORE).delete(fileId);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (_) {}
+  }
+
+  async function loadAllMediaItems() {
+    const itemMap = new Map();
+    // 1. IndexedDB items.v2 (Library Utama)
+    try {
+      const rec = await getMediaMetadataRecord(MEDIA_ITEMS_META_RECORD);
+      if (Array.isArray(rec?.value)) {
+        rec.value.forEach(it => { if (it && it.id) itemMap.set(it.id, it); });
+      }
+    } catch (_) {}
+
+    // 2. localStorage tradingLibraryManager.items.v1 (Legacy Library)
+    try {
+      const legacy = JSON.parse(localStorage.getItem(MEDIA_LEGACY_KEY) || '[]');
+      if (Array.isArray(legacy)) {
+        legacy.forEach(it => { if (it && it.id && !itemMap.has(it.id)) itemMap.set(it.id, it); });
+      }
+    } catch (_) {}
+
+    // 3. localStorage amy_media_items
+    try {
+      const extra = JSON.parse(localStorage.getItem('amy_media_items') || '[]');
+      if (Array.isArray(extra)) {
+        extra.forEach(it => { if (it && it.id && !itemMap.has(it.id)) itemMap.set(it.id, it); });
+      }
+    } catch (_) {}
+
+    // 4. Video attachments dari Jurnal Trading & Notes
+    try {
+      const journalsRaw = localStorage.getItem('tradingLibraryManager.journals.v1') || localStorage.getItem('amy_journal_entries') || '[]';
+      const journals = JSON.parse(journalsRaw);
+      if (Array.isArray(journals)) {
+        journals.forEach(j => {
+          (j?.attachments || []).forEach(att => {
+            const isVid = att.kind === 'video' || (att.type && String(att.type).startsWith('video/')) || /\.(mp4|mkv|webm|ogg|mov|m4v|3gp|avi)$/i.test(att.name || '');
+            if (isVid) {
+              const attId = att.id || att.fileId || `journal_vid_${j.id}_${att.name}`;
+              if (!itemMap.has(attId)) {
+                itemMap.set(attId, {
+                  id: attId,
+                  title: att.name || j.title || 'Video Jurnal Trading',
+                  type: 'Video Pembelajaran',
+                  category: 'Video',
+                  status: 'Selesai dibaca',
+                  collection: 'Jurnal',
+                  tags: ['Video', 'Jurnal'],
+                  fileId: att.fileId || '',
+                  nativeUri: att.nativeUri || att.uri || '',
+                  externalUri: att.externalUri || att.uri || '',
+                  mediaUrl: att.mediaUrl || att.url || '',
+                  thumbnailUrl: att.thumbnailUrl || att.thumbnailUri || '',
+                  mediaKind: 'video',
+                  mediaName: att.name || 'video.mp4',
+                  mediaType: att.type || 'video/mp4',
+                  mediaSize: Number(att.size || 0),
+                  createdAt: j.date || j.createdAt || new Date().toISOString()
+                });
+              }
+            }
+          });
+        });
+      }
+    } catch (_) {}
+
+    return Array.from(itemMap.values());
+  }
+
+  async function saveAllMediaItems(items) {
+    const cleaned = items.map(it => {
+      const { data, file, blob, objectUrl, textPreview, ...meta } = it;
+      return meta;
+    });
+    await putMediaMetadataRecord({ id: MEDIA_ITEMS_META_RECORD, value: cleaned, updatedAt: new Date().toISOString() });
+    try { localStorage.setItem(MEDIA_LEGACY_KEY, JSON.stringify(cleaned)); } catch (_) {}
+  }
+
+  function formatBytes(bytes) {
+    if (!bytes || isNaN(bytes)) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  let currentMediaFilter = 'Semua';
+
+  async function renderMedia() {
+    setActive('video');
+    const allItems = await loadAllMediaItems();
+    const hasSavedCode = Boolean(localStorage.getItem('amy_saved_code'));
+    const favoriteIndicators = readJsonArray('amy_indicator_favorites');
+
+    const isMediaItem = item => {
+      return item.mediaKind === 'image' || item.mediaKind === 'video' || item.mediaKind === 'audio' ||
+             item.type === 'Gambar Chart' || item.type === 'Video Pembelajaran' ||
+             item.collection === 'Media' || Boolean(item.fileId && item.mediaName);
+    };
+
+    const isDocItem = item => {
+      return item.mediaKind === 'document' || item.type === 'Dokumen' || Boolean(item.documentType);
+    };
+
+    let filteredItems = [];
+    if (currentMediaFilter === 'Video') {
+      filteredItems = allItems.filter(it => it.mediaKind === 'video' || it.type === 'Video Pembelajaran' || (it.mediaType && it.mediaType.startsWith('video/')));
+    } else if (currentMediaFilter === 'Gambar') {
+      filteredItems = allItems.filter(it => it.mediaKind === 'image' || it.type === 'Gambar Chart' || (it.mediaType && it.mediaType.startsWith('image/')));
+    } else if (currentMediaFilter === 'Dokumen') {
+      filteredItems = allItems.filter(isDocItem);
+    } else if (currentMediaFilter === 'Kode') {
+      filteredItems = [];
+    } else {
+      // 'Semua'
+      filteredItems = allItems.filter(it => isMediaItem(it) || isDocItem(it));
+    }
+
+    const totalMediaCount = allItems.filter(it => isMediaItem(it) || isDocItem(it)).length;
+    const countLabel = totalMediaCount > 0 ? `${totalMediaCount} video &amp; media tersimpan` : 'Belum ada video tersimpan';
+
+    const pillsHTML = [
+      { id: 'Semua', label: `Semua (${totalMediaCount})` },
+      { id: 'Video', label: 'Video Replay' },
+      { id: 'Gambar', label: 'Gambar & Chart' },
+      { id: 'Dokumen', label: 'Dokumen PDF' },
+      { id: 'Kode', label: 'Kode Tersimpan' }
+    ].map(p => `
+      <button class="pill ${currentMediaFilter === p.id ? 'active' : ''}" data-media-filter="${p.id}" type="button">${p.label}</button>
+    `).join('');
+
+    let contentHTML = '';
+
+    if (currentMediaFilter === 'Kode') {
+      const codeItems = [];
+      if (hasSavedCode) {
+        codeItems.push(`<button class="collection-item" data-koleksi="kode"><span class="app-icon code">${svgs.code}</span><span><strong>Kode indikator tersimpan</strong><small>Buka kembali Pine Script yang disimpan di perangkat ini.</small></span><span class="chevron" aria-hidden="true">›</span></button>`);
+      }
+      if (favoriteIndicators.length) {
+        codeItems.push(`<button class="collection-item" data-open="indikator"><span class="app-icon indicator">${svgs.indicator}</span><span><strong>${favoriteIndicators.length} indikator favorit</strong><small>Favorit aktual dari library indikator perangkat ini.</small></span><span class="chevron" aria-hidden="true">›</span></button>`);
+      }
+      contentHTML = codeItems.length
+        ? `<div class="collection-list slide-up">${codeItems.join('')}</div>`
+        : `<div class="empty-state-card slide-up"><div style="font-size:32px; margin-bottom:8px;">💻</div><strong>Belum ada item tersimpan</strong><span>Simpan kode Pine Script dari menu Indikator agar muncul di sini.</span></div>`;
+    } else if (filteredItems.length === 0) {
+      contentHTML = `
+        <div class="empty-state-card slide-up" style="text-align:center; padding:36px 20px; border-radius:20px; background:var(--surface-color); border:1px solid var(--border-color); margin-top:10px;">
+          <div style="font-size:42px; margin-bottom:12px;">🎬</div>
+          <strong style="display:block; font-size:16px; margin-bottom:6px; color:var(--text-main);">Belum Ada Video di Kategori Ini</strong>
+          <span style="display:block; font-size:13px; color:var(--text-muted); max-width:340px; margin:0 auto 18px;">Simpan rekaman video replay setup XAU/USD, video materi, screenshot chart, atau dokumen trading Anda.</span>
+          <button type="button" id="rootEmptyUploadMediaBtn" class="media-upload-btn" style="padding:10px 20px; font-size:13px;">+ Upload Video Pertama</button>
+        </div>
+      `;
+    } else {
+      const cardsHTML = filteredItems.map(item => {
+        const isVid = item.mediaKind === 'video' || item.type === 'Video Pembelajaran' || (item.mediaType && item.mediaType.startsWith('video/'));
+        const isDoc = isDocItem(item);
+        const itemSize = formatBytes(item.mediaSize || item.fileSize || 0);
+
+        let thumbMarkup = '';
+        if (isVid) {
+          thumbMarkup = `
+            <div class="media-video-thumb is-loading" data-video-thumb-id="${escapeHtml(item.id)}" aria-hidden="true"></div>
+            <div class="media-play-overlay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="8 5 19 12 8 19 8 5"></polygon></svg></div>
+            <span class="media-video-badge">▶ Video</span>
+          `;
+        } else if (isDoc) {
+          const docLabel = (item.documentType || (item.mediaName ? item.mediaName.split('.').pop() : 'DOC')).toUpperCase();
+          thumbMarkup = `
+            <div class="media-doc-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+              <strong style="font-size:11px; letter-spacing:0.05em;">${escapeHtml(docLabel)}</strong>
+            </div>
+          `;
+        } else {
+          thumbMarkup = `<img class="media-thumb-img" data-media-thumb="${item.fileId || ''}" alt="${escapeHtml(item.title)}" loading="lazy" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10'%3E%3Crect width='16' height='10' fill='%230b1020'/%3E%3C/svg%3E">`;
+        }
+
+        return `
+          <article class="media-card slide-up" data-item-id="${escapeHtml(item.id)}">
+            <div class="media-thumb-box" data-view-media="${escapeHtml(item.id)}">
+              ${thumbMarkup}
+            </div>
+            <div class="media-card-body">
+              <div class="media-card-meta">
+                <span class="media-card-badge">${escapeHtml(item.category || item.type || 'Media')}</span>
+                <span>${itemSize}</span>
+              </div>
+              <strong class="media-card-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</strong>
+              <div class="media-card-actions">
+                <button type="button" class="media-card-btn${isVid ? ' is-video-action' : ''}" data-view-media="${escapeHtml(item.id)}">
+                  <span>${isVid ? '▶ Putar Video' : 'Lihat Full'}</span>
+                </button>
+                <button type="button" class="media-card-btn danger-btn" data-delete-media="${escapeHtml(item.id)}" title="Hapus Media">
+                  <span>🗑️</span>
+                </button>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      contentHTML = `<div class="media-grid">${cardsHTML}</div>`;
+    }
+
+    mainContent.innerHTML = `
+      <div class="media-section-head">
+        <div class="page-title-group">
+          <span class="section-kicker">GALERI &amp; VIDEO TRADING</span>
+          <h2>Video</h2>
+          <small style="color:var(--text-muted); font-size:12px; font-weight:600;">${countLabel}</small>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="file" id="rootMediaFileInput" multiple accept="video/*,image/*,.mp4,.mkv,.webm,.ogg,.mov,.m4v,.png,.jpg,.jpeg,.webp,.gif,.pdf,.doc,.docx,.txt" style="display:none;">
+          <button type="button" id="rootUploadMediaBtn" class="media-upload-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            <span>+ Upload Video</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="media-filter-pills">${pillsHTML}</div>
+
+      ${contentHTML}
+
+      <a href="apps/journal/index.html" class="media-journal-shortcut" style="margin-top:18px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:18px;">📖</span>
+          <div>
+            <strong style="display:block; color:var(--text-main); font-size:13px;">Buka Jurnal Trading &amp; Habits Lengkap</strong>
+            <small style="color:var(--text-muted); font-size:11px;">Analisis performa, win rate, dan catatan disiplin trading harian</small>
+          </div>
+        </div>
+        <span class="chevron" aria-hidden="true">›</span>
+      </a>
+    `;
+
+    // Asynchronously load actual blob contents for image cards
+    const thumbImgs = mainContent.querySelectorAll('[data-media-thumb]');
+    thumbImgs.forEach(async img => {
+      const fileId = img.dataset.mediaThumb;
+      if (!fileId) return;
+      const fileRec = await getMediaFileRecord(fileId);
+      if (fileRec?.blob) {
+        img.src = URL.createObjectURL(fileRec.blob);
+      }
+    });
+
+    // Video: pakai thumbnail tersimpan (videoThumb dari Jurnal / native scanner), atau capture 1 frame secara lazy
+    mainContent.querySelectorAll('[data-video-thumb-id]').forEach(el => {
+      const item = filteredItems.find(it => it.id === el.dataset.videoThumbId);
+      const cached = item ? getCachedVideoThumb(item) : '';
+      if (cached) applyVideoThumbToEl(el, cached);
+      else getVideoThumbObserver().observe(el);
+    });
+
+    // Bind file input handler
+    const fileInput = document.getElementById('rootMediaFileInput');
+    fileInput?.addEventListener('change', handleRootMediaUpload);
+
+    // Saat klik menu utama Video: langsung putar video pertama ala TikTok!
+    const videoItems = allItems.filter(isVideoMediaItem);
+    if (options.autoPlay && !reelState.open) {
+      if (videoItems.length > 0) {
+        openVideoReel(videoItems[0]);
+      } else {
+        showToast('Belum ada video tersimpan. Silakan upload video pertama Anda.');
+      }
+    }
+  }
+
+  // ─── VIDEO THUMBNAIL ENGINE & REEL FEED (paritas dengan Jurnal Trading) ───
+  function isVideoMediaItem(item) {
+    if (!item) return false;
+    if (item.mediaKind === 'video') return true;
+    if (item.type === 'Video' || item.type === 'Video Pembelajaran') return true;
+    if (item.category === 'Video' || item.category === 'Video Replay') return true;
+    if (item.mediaType && String(item.mediaType).toLowerCase().startsWith('video/')) return true;
+    const path = String(item.mediaName || item.title || item.nativeUri || item.externalUri || item.mediaUrl || '').toLowerCase();
+    return /\.(mp4|mkv|webm|ogg|mov|m4v|3gp|avi)(\?.*)?$/i.test(path);
+  }
+
+  function toWebViewSrc(value) {
+    const v = String(value || '');
+    if (!v) return '';
+    if (v.startsWith('content://')) return v;
+    if (v.startsWith('file://') && window.Capacitor?.convertFileSrc) {
+      try { return window.Capacitor.convertFileSrc(v); } catch (_) {}
+    }
+    return v;
+  }
+
+  function getCachedVideoThumb(item) {
+    return toWebViewSrc(item.thumbnailUrl || item.thumbnailUri || item.videoThumb || item.imageThumb || '');
+  }
+
+  function triggerStorageScan() {
+    if (window.TradingStorageScanner && typeof window.TradingStorageScanner.scanFiles === 'function') {
+      try { window.TradingStorageScanner.scanFiles(); } catch (_) {}
+    }
+  }
+
+  function requestNativeThumbnail(item) {
+    const nativeUri = item.nativeUri || item.externalUri || (String(item.mediaUrl || '').startsWith('content://') ? item.mediaUrl : '');
+    if (!item?.id || !nativeUri) return;
+    if (window.TradingStorageScanner && typeof window.TradingStorageScanner.requestThumbnail === 'function') {
+      try { window.TradingStorageScanner.requestThumbnail(item.id, nativeUri, 'video'); } catch (_) {}
+    }
+  }
+
+  function handleThumbnailResult(detail) {
+    const itemId = detail?.itemId || detail?.id || '';
+    const thumb = detail?.thumbnailUri || detail?.thumbnailUrl || '';
+    if (itemId && thumb) applyVideoThumbToDom(itemId, toWebViewSrc(thumb));
+  }
+  window.addEventListener('trading_storage_thumbnail_result', e => handleThumbnailResult(e?.detail));
+  window.addEventListener('amyNativeThumbnailResult', e => handleThumbnailResult(e?.detail));
+  window.handleNativeThumbnailResult = detail => handleThumbnailResult(detail);
+
+  async function handleScanResult(detail) {
+    const status = detail?.status || '';
+    const files = Array.isArray(detail?.files) ? detail.files : [];
+    if (status === 'success' && files.length) {
+      const now = new Date().toISOString();
+      const current = await loadAllMediaItems();
+      const newItems = [];
+      for (const f of files) {
+        const uri = f.uri || f.contentUri || '';
+        if (!uri) continue;
+        const name = f.name || f.displayName || 'Video Trading';
+        const isVid = f.mimeType?.startsWith('video/') || /\.(mp4|mkv|webm|ogg|mov|m4v|3gp|avi)$/i.test(name);
+        if (!isVid) continue;
+        if (current.some(it => it.nativeUri === uri || it.mediaUrl === uri || it.externalUri === uri)) continue;
+        newItems.push({
+          id: 'scan_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+          title: name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
+          type: 'Video Pembelajaran',
+          category: 'Video',
+          status: 'Belum dibaca',
+          collection: 'Scan HP',
+          tags: ['Video', 'Scan HP'],
+          notes: 'File video dari scan storage HP.',
+          nativeUri: uri,
+          externalUri: uri,
+          thumbnailUrl: f.thumbnailUri || f.thumbnailUrl || '',
+          mediaKind: 'video',
+          mediaName: name,
+          mediaType: f.mimeType || 'video/mp4',
+          mediaSize: Number(f.size || 0),
+          createdAt: now,
+          updatedAt: now
+        });
+      }
+      if (newItems.length > 0) {
+        await saveAllMediaItems([...newItems, ...current]);
+        if (localStorage.getItem('amy_root_tab') === 'video') {
+          await renderMedia({ autoPlay: false });
+          if (!reelState.open) {
+            const freshAll = await loadAllMediaItems();
+            const freshVids = freshAll.filter(isVideoMediaItem);
+            if (freshVids.length > 0) openVideoReel(freshVids[0]);
+          }
+        }
+      }
+    }
+  }
+  window.addEventListener('trading_storage_scan_result', e => handleScanResult(e?.detail));
+  window.addEventListener('amyNativeStorageScanResult', e => handleScanResult(e?.detail));
+  window.handleNativeStorageScanResult = detail => handleScanResult(detail);
+
+  async function resolveMediaSource(item, trackSet) {
+    if (!item) return '';
+    if (item.blob) {
+      const url = URL.createObjectURL(item.blob);
+      trackSet?.add(url);
+      return url;
+    }
+    const direct = toWebViewSrc(item.mediaUrl || '');
+    if (direct && !direct.startsWith('blob:')) return direct;
+    const nativeUri = item.nativeUri || item.externalUri || (String(item.mediaUrl || '').startsWith('content://') ? item.mediaUrl : '');
+    if (nativeUri) return toWebViewSrc(nativeUri);
+    if (!item.fileId) return '';
+    const rec = await getMediaFileRecord(item.fileId);
+    if (!rec?.blob) return '';
+    let blob = rec.blob;
+    const mime = rec.type || item.mediaType || 'video/mp4';
+    if (!blob.type || blob.type === 'application/octet-stream') blob = new Blob([blob], { type: mime });
+    const url = URL.createObjectURL(blob);
+    trackSet?.add(url);
+    return url;
+  }
+
+  function applyVideoThumbToEl(el, thumb) {
+    el.classList.remove('is-loading');
+    el.classList.add('has-thumb');
+    el.style.backgroundImage = `linear-gradient(rgba(0,0,0,.08), rgba(0,0,0,.4)), url("${thumb}")`;
+  }
+
+  function applyVideoThumbToDom(itemId, thumb) {
+    document.querySelectorAll(`[data-video-thumb-id="${CSS.escape(itemId)}"]`).forEach(el => applyVideoThumbToEl(el, thumb));
+  }
+
+  function captureVideoFrame(source) {
+    return new Promise(resolve => {
+      const video = document.createElement('video');
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = 'metadata';
+      if (!source.startsWith('blob:') && !source.startsWith('content://')) video.crossOrigin = 'anonymous';
+      let done = false;
+      const finish = (value = '') => {
+        if (done) return;
+        done = true;
+        video.removeAttribute('src');
+        try { video.load(); } catch (_) {}
+        resolve(value);
+      };
+      const capture = () => {
+        if (!video.videoWidth || !video.videoHeight) return finish('');
+        try {
+          const canvas = document.createElement('canvas');
+          const ratio = Math.min(1, 360 / video.videoWidth);
+          canvas.width = Math.max(1, Math.round(video.videoWidth * ratio));
+          canvas.height = Math.max(1, Math.round(video.videoHeight * ratio));
+          canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+          finish(canvas.toDataURL('image/jpeg', 0.66));
+        } catch (_) { finish(''); }
+      };
+      video.addEventListener('error', () => finish(''), { once: true });
+      video.addEventListener('loadedmetadata', () => {
+        try {
+          video.currentTime = Number.isFinite(video.duration) && video.duration > 1 ? Math.min(1, video.duration * 0.08) : 0;
+        } catch (_) { capture(); }
+      }, { once: true });
+      video.addEventListener('seeked', capture, { once: true });
+      video.addEventListener('loadeddata', () => setTimeout(capture, 120), { once: true });
+      setTimeout(() => finish(''), 3500);
+      video.src = source;
+    });
+  }
+
+  const videoThumbQueue = [];
+  const videoThumbFailed = new Set();
+  let videoThumbBusy = false;
+  let videoThumbObserver = null;
+
+  function getVideoThumbObserver() {
+    if (videoThumbObserver) return videoThumbObserver;
+    videoThumbObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        videoThumbObserver.unobserve(entry.target);
+        const id = entry.target.dataset.videoThumbId;
+        if (id && !videoThumbQueue.includes(id) && !videoThumbFailed.has(id)) videoThumbQueue.push(id);
+      });
+      processVideoThumbQueue();
+    }, { rootMargin: '200px' });
+    return videoThumbObserver;
+  }
+
+  async function processVideoThumbQueue() {
+    if (videoThumbBusy) return;
+    if (reelState.open) { setTimeout(processVideoThumbQueue, 1500); return; }
+    const id = videoThumbQueue.shift();
+    if (!id) return;
+    videoThumbBusy = true;
+    try {
+      const items = await loadAllMediaItems();
+      const item = items.find(it => it.id === id);
+      const cached = item ? getCachedVideoThumb(item) : '';
+      if (cached) {
+        applyVideoThumbToDom(id, cached);
+      } else if (item) {
+        const urls = new Set();
+        const src = await resolveMediaSource(item, urls);
+        const thumb = src ? await captureVideoFrame(src) : '';
+        urls.forEach(u => URL.revokeObjectURL(u));
+        if (thumb) {
+          const fresh = await loadAllMediaItems();
+          await saveAllMediaItems(fresh.map(it => it.id === id ? { ...it, videoThumb: thumb } : it));
+          applyVideoThumbToDom(id, thumb);
+        } else {
+          videoThumbFailed.add(id);
+          document.querySelectorAll(`[data-video-thumb-id="${CSS.escape(id)}"]`).forEach(el => el.classList.remove('is-loading'));
+        }
+      }
+    } catch (_) {}
+    videoThumbBusy = false;
+    setTimeout(processVideoThumbQueue, 200);
+  }
+
+  const reelState = { open: false, dialog: null, observer: null, urls: new Set(), pushedHistory: false };
+
+  function shuffleMedia(list) {
+    const arr = [...list];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function closeVideoReel(fromPopState = false) {
+    if (!reelState.open) return;
+    reelState.open = false;
+    reelState.observer?.disconnect();
+    reelState.observer = null;
+    const dialog = reelState.dialog;
+    dialog?.querySelectorAll('video').forEach(v => {
+      v.pause();
+      v.removeAttribute('src');
+      try { v.load(); } catch (_) {}
+    });
+    reelState.urls.forEach(u => URL.revokeObjectURL(u));
+    reelState.urls.clear();
+    if (dialog?.open) dialog.close();
+    if (dialog) dialog.innerHTML = '';
+    document.documentElement.classList.remove('is-reel-open');
+    document.body.classList.remove('is-reel-open');
+    if (reelState.pushedHistory && !fromPopState && history.state?.amyReel) history.back();
+    reelState.pushedHistory = false;
+  }
+
+  window.addEventListener('popstate', () => { if (reelState.open) closeVideoReel(true); });
+
+  async function openVideoReel(activeItem) {
+    const all = await loadAllMediaItems();
+    const others = shuffleMedia(all.filter(it => isVideoMediaItem(it) && it.id !== activeItem.id)).slice(0, 20);
+    const feedItems = [activeItem, ...others];
+
+    let dialog = document.getElementById('rootVideoReelDialog');
+    if (!dialog) {
+      dialog = document.createElement('dialog');
+      dialog.id = 'rootVideoReelDialog';
+      dialog.className = 'amy-reel-dialog';
+      dialog.addEventListener('cancel', e => { e.preventDefault(); closeVideoReel(); });
+      document.body.appendChild(dialog);
+    }
+    reelState.dialog = dialog;
+
+    dialog.innerHTML = `
+      <div class="amy-reel-bar">
+        <div class="amy-reel-title-box">
+          <small id="amyReelMeta"></small>
+          <h3 id="amyReelTitle"></h3>
+        </div>
+        <button type="button" class="amy-reel-close" id="amyReelClose" aria-label="Tutup">×</button>
+      </div>
+      <div class="amy-reel-feed"></div>
+    `;
+    const feed = dialog.querySelector('.amy-reel-feed');
+    const titleEl = dialog.querySelector('#amyReelTitle');
+    const metaEl = dialog.querySelector('#amyReelMeta');
+    dialog.querySelector('#amyReelClose').addEventListener('click', () => closeVideoReel());
+
+    // Cegah pull-to-refresh saat swipe ke bawah di video pertama
+    let feedStartY = 0, feedStartX = 0;
+    feed.addEventListener('touchstart', e => {
+      if (e.touches?.length === 1) { feedStartY = e.touches[0].clientY; feedStartX = e.touches[0].clientX; }
+    }, { passive: true });
+    feed.addEventListener('touchmove', e => {
+      if (e.touches?.length !== 1) return;
+      const dy = e.touches[0].clientY - feedStartY;
+      const dx = Math.abs(e.touches[0].clientX - feedStartX);
+      if (Math.abs(dy) > dx && feed.scrollTop <= 0 && dy > 0) e.preventDefault();
+    }, { passive: false });
+
+    const panelMap = new Map();
+
+    const setMuted = (panel, video) => {
+      video.muted = true;
+      const st = panel.querySelector('.amy-reel-sound');
+      if (st) st.textContent = '🔇';
+    };
+
+    const tryPlay = (panel, video) => {
+      const p = video.play();
+      if (p !== undefined) p.catch(() => { setMuted(panel, video); video.play().catch(() => {}); });
+    };
+
+    async function loadAndPlay(panel, item) {
+      const video = panel.querySelector('video');
+      if (!video) return;
+      if (panel.dataset.sourceLoaded === '1') {
+        if (panel.dataset.isActive === '1' && panel.dataset.userPaused !== '1') tryPlay(panel, video);
+        return;
+      }
+      panel.dataset.sourceLoaded = '1';
+      panel.classList.add('is-buffering');
+      try {
+        const src = await resolveMediaSource(item, reelState.urls);
+        if (!reelState.open) return;
+        if (!src) {
+          panel.classList.remove('is-buffering');
+          const err = document.createElement('div');
+          err.className = 'amy-reel-error';
+          err.textContent = 'Video belum bisa dimuat.';
+          panel.append(err);
+          return;
+        }
+        video.src = src;
+        video.autoplay = true;
+        video.load();
+        const onReady = () => {
+          panel.classList.remove('is-buffering');
+          if (panel.dataset.isActive === '1' && panel.dataset.userPaused !== '1') tryPlay(panel, video);
+        };
+        if (video.readyState >= 2) onReady();
+        else {
+          video.addEventListener('canplay', onReady, { once: true });
+          video.addEventListener('loadeddata', onReady, { once: true });
+        }
+      } catch (err) {
+        panel.classList.remove('is-buffering');
+        console.warn('Reel load error:', err);
+      }
+    }
+
+    function unloadPanel(panel) {
+      const video = panel.querySelector('video');
+      if (!video || panel.dataset.sourceLoaded !== '1') return;
+      video.pause();
+      video.removeAttribute('src');
+      try { video.load(); } catch (_) {}
+      panel.dataset.sourceLoaded = '0';
+      panel.classList.remove('is-buffering');
+    }
+
+    function createPanel(item) {
+      const panel = document.createElement('section');
+      panel.className = 'amy-reel-panel';
+      panel.dataset.id = item.id;
+      panel.dataset.userPaused = '0';
+
+      const video = document.createElement('video');
+      video.className = 'amy-reel-video';
+      video.playsInline = true;
+      video.setAttribute('playsinline', 'true');
+      video.setAttribute('webkit-playsinline', 'true');
+      video.loop = true;
+      video.preload = 'none';
+      video.controls = false;
+      const thumb = getCachedVideoThumb(item);
+      if (thumb) video.poster = thumb;
+
+      const spinner = document.createElement('div');
+      spinner.className = 'amy-reel-spinner';
+      const playIndicator = document.createElement('div');
+      playIndicator.className = 'amy-reel-play-indicator';
+      playIndicator.textContent = '▶';
+
+      const overlay = document.createElement('div');
+      overlay.className = 'amy-reel-overlay';
+      const tags = Array.isArray(item.tags) && item.tags.length ? `#${item.tags.slice(0, 3).join(' #')}` : '';
+      overlay.innerHTML = `
+        <h3 class="amy-reel-overlay-title">${escapeHtml(item.title || item.mediaName || 'Video Edukasi')}</h3>
+        <div class="amy-reel-overlay-meta">
+          <span class="amy-reel-tag">${escapeHtml(item.category || 'Media')}</span>
+          ${tags ? `<span>${escapeHtml(tags)}</span>` : ''}
+        </div>
+      `;
+
+      const progressBar = document.createElement('div');
+      progressBar.className = 'amy-reel-progress';
+      const progressFill = document.createElement('div');
+      progressFill.className = 'amy-reel-progress-fill';
+      progressBar.append(progressFill);
+      progressBar.addEventListener('click', e => {
+        e.stopPropagation();
+        const rect = progressBar.getBoundingClientRect();
+        const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        if (Number.isFinite(video.duration) && video.duration > 0) video.currentTime = ratio * video.duration;
+      });
+
+      const sound = document.createElement('button');
+      sound.type = 'button';
+      sound.className = 'amy-reel-sound';
+      sound.setAttribute('aria-label', 'Toggle Suara');
+      sound.textContent = '🔊';
+      sound.addEventListener('click', e => { e.stopPropagation(); video.muted = !video.muted; });
+      video.addEventListener('volumechange', () => { sound.textContent = video.muted ? '🔇' : '🔊'; });
+
+      video.addEventListener('waiting', () => panel.classList.add('is-buffering'));
+      video.addEventListener('playing', () => { panel.classList.remove('is-buffering'); playIndicator.classList.remove('is-visible'); });
+      video.addEventListener('timeupdate', () => {
+        if (video.duration && Number.isFinite(video.duration)) progressFill.style.width = `${(video.currentTime / video.duration) * 100}%`;
+      });
+
+      // Tap untuk play/pause, abaikan jika jari bergeser (swipe)
+      let moved = false, sy = 0, sx = 0;
+      panel.addEventListener('touchstart', e => {
+        if (e.touches?.length === 1) { moved = false; sy = e.touches[0].clientY; sx = e.touches[0].clientX; }
+      }, { passive: true });
+      panel.addEventListener('touchmove', e => {
+        if (e.touches?.length === 1 && (Math.abs(e.touches[0].clientY - sy) > 10 || Math.abs(e.touches[0].clientX - sx) > 10)) moved = true;
+      }, { passive: true });
+      panel.addEventListener('click', e => {
+        if (moved) return;
+        if (e.target.closest('button, .amy-reel-progress')) return;
+        e.stopPropagation();
+        if (video.paused) {
+          panel.dataset.userPaused = '0';
+          tryPlay(panel, video);
+          playIndicator.classList.remove('is-visible');
+        } else {
+          panel.dataset.userPaused = '1';
+          video.pause();
+          playIndicator.classList.add('is-visible');
+        }
+      });
+
+      panel.append(video, spinner, playIndicator, overlay, progressBar, sound);
+      panelMap.set(panel, item);
+      return panel;
+    }
+
+    feedItems.forEach((item, idx) => {
+      const panel = createPanel(item);
+      if (idx === 0) panel.dataset.isActive = '1';
+      feed.append(panel);
+    });
+
+    const setHeader = item => {
+      titleEl.textContent = item.title || 'Video';
+      metaEl.textContent = `${item.category || item.type || 'Media'} • ${formatBytes(item.mediaSize || item.fileSize || 0)}`;
+    };
+    setHeader(activeItem);
+
+    reelState.open = true;
+    document.documentElement.classList.add('is-reel-open');
+    if (!dialog.open) {
+      if (typeof dialog.showModal === 'function') {
+        try { dialog.showModal(); } catch (_) { dialog.setAttribute('open', ''); }
+      } else {
+        dialog.setAttribute('open', '');
+      }
+    }
+    try {
+      history.pushState({ ...(history.state || {}), amyReel: true }, '', location.href);
+      reelState.pushedHistory = true;
+    } catch (_) {}
+
+    loadAndPlay(feed.children[0], activeItem);
+
+    let activeIndex = 0;
+    reelState.observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        const panel = entry.target;
+        const item = panelMap.get(panel);
+        const video = panel.querySelector('video');
+        const idx = Array.prototype.indexOf.call(feed.children, panel);
+        if (entry.isIntersecting) {
+          panel.dataset.isActive = '1';
+          activeIndex = idx;
+          if (item) setHeader(item);
+          loadAndPlay(panel, item);
+        } else {
+          panel.dataset.isActive = '0';
+          panel.dataset.userPaused = '0';
+          video?.pause();
+          panel.querySelector('.amy-reel-play-indicator')?.classList.remove('is-visible');
+          // Lepas decoder GPU untuk panel yang jauh dari posisi aktif
+          if (Math.abs(idx - activeIndex) > 2) unloadPanel(panel);
+        }
+      });
+    }, { root: feed, threshold: 0.65 });
+    Array.from(feed.children).forEach(p => reelState.observer.observe(p));
+  }
+
+  async function showMediaFullscreen(item) {
+    let dialog = document.getElementById('rootMediaViewerDialog');
+    if (!dialog) {
+      dialog = document.createElement('dialog');
+      dialog.id = 'rootMediaViewerDialog';
+      dialog.className = 'media-fullscreen-dialog';
+      document.body.appendChild(dialog);
+    }
+    const fileRec = item.fileId ? await getMediaFileRecord(item.fileId) : null;
+    let blobUrl = fileRec?.blob ? URL.createObjectURL(fileRec.blob) : (item.mediaUrl || '');
+
+    const isVid = item.mediaKind === 'video' || item.type === 'Video Pembelajaran' || (item.mediaType && item.mediaType.startsWith('video/')) || (fileRec?.blob?.type || '').startsWith('video/');
+    const isDoc = item.mediaKind === 'document' || item.type === 'Dokumen';
+
+    let stageContent = '';
+    if (isVid) {
+      stageContent = `<video src="${blobUrl}" controls autoplay playsinline style="max-width:100%; max-height:80vh; border-radius:12px;"></video>`;
+    } else if (isDoc) {
+      stageContent = `
+        <div style="text-align:center; padding:32px 20px; background:var(--surface-color); border-radius:20px; border:1px solid var(--border-color); max-width:400px; margin:auto;">
+          <div style="font-size:52px; margin-bottom:12px;">📄</div>
+          <h3 style="color:#fff; margin-bottom:8px; font-size:16px;">${escapeHtml(item.title)}</h3>
+          <p style="color:var(--text-muted); font-size:12px; margin-bottom:20px;">${escapeHtml(item.mediaName || item.title)} • ${formatBytes(item.mediaSize || fileRec?.size)}</p>
+          ${blobUrl ? `<a href="${blobUrl}" download="${escapeHtml(item.mediaName || item.title)}" class="media-upload-btn" style="text-decoration:none; display:inline-flex;">💾 Unduh / Buka Dokumen</a>` : ''}
+        </div>
+      `;
+    } else {
+      stageContent = `<img src="${blobUrl}" alt="${escapeHtml(item.title)}" style="max-width:100%; max-height:80vh; object-fit:contain; border-radius:12px;">`;
+    }
+
+    dialog.innerHTML = `
+      <div class="media-fullscreen-bar">
+        <div class="media-fullscreen-title-box">
+          <small>${escapeHtml(item.category || item.type || 'Media')} • ${formatBytes(item.mediaSize || fileRec?.size)}</small>
+          <h3>${escapeHtml(item.title)}</h3>
+        </div>
+        <div class="media-fullscreen-actions">
+          ${blobUrl ? `<a href="${blobUrl}" download="${escapeHtml(item.mediaName || item.title)}" class="media-fullscreen-close-btn" style="text-decoration:none;" title="Unduh File">💾</a>` : ''}
+          <button type="button" class="media-fullscreen-close-btn" id="closeMediaViewerBtn" title="Tutup">×</button>
+        </div>
+      </div>
+      <div class="media-fullscreen-stage">${stageContent}</div>
+    `;
+
+    dialog.showModal();
+    const closeBtn = dialog.querySelector('#closeMediaViewerBtn');
+    const closeDialog = () => {
+      dialog.close();
+      const vid = dialog.querySelector('video');
+      if (vid) { vid.pause(); vid.src = ''; }
+    };
+    closeBtn?.addEventListener('click', closeDialog);
+    dialog.addEventListener('click', e => {
+      if (e.target === dialog) closeDialog();
+    });
+  }
+
+  async function handleRootMediaUpload(event) {
+    const files = [...(event.target.files || [])];
+    if (!files.length) return;
+    showToast('Memproses upload media...');
+    let uploadedCount = 0;
+    const now = new Date().toISOString();
+
+    for (const file of files) {
+      if (file.size > 200 * 1024 * 1024) {
+        showToast(`File "${file.name}" terlalu besar (>200MB).`);
+        continue;
+      }
+      let kind = 'document';
+      let itemType = 'Dokumen';
+      if (file.type.startsWith('image/')) {
+        kind = 'image';
+        itemType = 'Gambar Chart';
+      } else if (file.type.startsWith('video/')) {
+        kind = 'video';
+        itemType = 'Video Pembelajaran';
+      } else if (file.type.startsWith('audio/')) {
+        kind = 'audio';
+        itemType = 'Audio';
+      }
+
+      const id = 'media_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+      const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+      const title = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+
+      const item = {
+        id,
+        title,
+        type: itemType,
+        category: 'Setup XAU',
+        status: 'Selesai dibaca',
+        collection: 'Media',
+        tags: [itemType.toLowerCase(), 'media'],
+        notes: `File ${file.name} diupload ke Media Utama.`,
+        checklist: [],
+        code: '',
+        mediaUrl: '',
+        fileId,
+        mediaKind: kind,
+        mediaName: file.name,
+        mediaType: file.type,
+        mediaSize: file.size,
+        documentType: kind === 'document' ? (file.name.split('.').pop() || 'doc').toUpperCase() : '',
+        documentText: '',
+        favorite: false,
+        archived: false,
+        revisionHistory: [],
+        uploadedAt: now,
+        createdAt: now,
+        updatedAt: now
+      };
+
+      await putMediaFileRecord({
+        id: fileId,
+        itemId: id,
+        blob: file,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        kind,
+        uploadedAt: now
+      });
+
+      const currentItems = await loadAllMediaItems();
+      await saveAllMediaItems([item, ...currentItems]);
+      uploadedCount++;
+    }
+
+    if (uploadedCount > 0) {
+      showToast(`${uploadedCount} media berhasil ditambahkan!`);
+      renderMedia();
+    }
+  }
+
+  async function handleRootMediaDelete(itemId) {
+    const allItems = await loadAllMediaItems();
+    const item = allItems.find(it => it.id === itemId);
+    if (!item) return;
+    if (!window.confirm(`Hapus media "${item.title}" dari perangkat?`)) return;
+
+    if (item.fileId) {
+      await deleteMediaFileRecord(item.fileId);
+    }
+    const updated = allItems.filter(it => it.id !== itemId);
+    await saveAllMediaItems(updated);
+    showToast(`Media "${item.title}" berhasil dihapus.`);
+    renderMedia();
   }
 
   function renderKoleksi() {
-    setActive('koleksi');
-    const hasSavedCode = Boolean(localStorage.getItem('amy_saved_code'));
-    const favoriteIndicators = readJsonArray('amy_indicator_favorites');
-    const items = [];
-    if (hasSavedCode) {
-      items.push(`<button class="collection-item" data-koleksi="kode"><span class="app-icon code">${svgs.code}</span><span><strong>Kode indikator tersimpan</strong><small>Buka kembali Pine Script yang disimpan di perangkat ini.</small></span><span class="chevron" aria-hidden="true">›</span></button>`);
-    }
-    if (favoriteIndicators.length) {
-      items.push(`<button class="collection-item" data-open="indikator"><span class="app-icon indicator">${svgs.indicator}</span><span><strong>${favoriteIndicators.length} indikator favorit</strong><small>Favorit aktual dari library indikator perangkat ini.</small></span><span class="chevron" aria-hidden="true">›</span></button>`);
-    }
-    const content = items.length
-      ? `<div class="collection-list">${items.join('')}</div>`
-      : `<div class="empty-state-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 4h14v16l-7-4-7 4z"></path></svg><strong>Belum ada item tersimpan</strong><span>Simpan kode atau tandai indikator favorit agar muncul di sini.</span></div>`;
-    mainContent.innerHTML = `<div class="page-header"><div><span class="section-kicker">DATA PERANGKAT</span><h2>Koleksi</h2><p>Hanya item yang benar-benar tersimpan di perangkat ini.</p></div></div>${content}`;
+    renderMedia();
   }
 
   function renderProfile() {
     setActive('profil');
-    const savedCode = Boolean(localStorage.getItem('amy_saved_code'));
-    const analyses = readJsonArray('amy_mapping_analyses').length;
-    const journal = readJsonArray('amy_journal_entries').length;
-    const scannerEnabled = localStorage.getItem('bg_scanner') === 'true';
-    mainContent.innerHTML = `<div class="page-header"><div><span class="section-kicker">PENGATURAN</span><h2>Profil</h2></div></div><section class="profile-summary slide-up"><div class="profile-avatar" aria-hidden="true">AMY</div><div><h3>Amy FX</h3><p>Data dan preferensi tersimpan di perangkat ini.</p></div></section><section class="stats-grid"><div class="stat-card"><strong>${analyses}</strong><small>Analisis Mapping</small></div><div class="stat-card"><strong>${journal}</strong><small>Catatan Jurnal</small></div><div class="stat-card"><strong>${savedCode ? '1' : '0'}</strong><small>Kode Tersimpan</small></div></section><div class="profile-section-title">Tampilan</div><section class="theme-selector" aria-label="Pilih tema aplikasi"><button class="theme-choice" type="button" data-amyfx-theme-choice="system"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path></svg><span>Sistem</span></button><button class="theme-choice" type="button" data-amyfx-theme-choice="light"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg><span>Terang</span></button><button class="theme-choice" type="button" data-amyfx-theme-choice="dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20.5 15.2A8.5 8.5 0 0 1 8.8 3.5 8.5 8.5 0 1 0 20.5 15.2z"></path></svg><span>Gelap</span></button></section><div class="profile-section-title">Sistem</div><section class="profile-list"><div class="profile-row"><span class="tool-icon">●</span><span><strong>Status Koneksi</strong><small>${navigator.onLine !== false ? 'Perangkat terhubung ke jaringan.' : 'Perangkat sedang offline.'}</small></span><span class="check-mark">${navigator.onLine !== false ? '✓' : '!'}</span></div><div class="profile-row"><span class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 17h3l2-7 4 10 2-6h5"></path></svg></span><span><strong>Scanner Mapping</strong><small>${scannerEnabled ? 'Scanner latar belakang aktif.' : 'Scanner latar belakang nonaktif.'}</small></span><span class="check-mark">${scannerEnabled ? '✓' : '—'}</span></div><button class="profile-row danger-row" data-profile-action="clear"><span class="tool-icon">×</span><span><strong>Bersihkan data lokal</strong><small>Menghapus riwayat, jurnal, dan koleksi lokal. API key tetap disimpan.</small></span><span class="chevron">›</span></button></section>`;
+    const userBalance = localStorage.getItem('amy_default_balance') || '5000';
+    const userRisk = localStorage.getItem('amy_default_risk') || '1.5';
+    const reminderConfig = window.AmyLearningReminder ? window.AmyLearningReminder.getConfig() : {
+      enabled: localStorage.getItem('amy_learning_reminder_enabled') !== 'false',
+      time: localStorage.getItem('amy_learning_reminder_time') || '20:00',
+      lastTitle: localStorage.getItem('amy_last_opened_title') || 'Fondasi ICT & Market Structure Dasar',
+      lastTimeText: 'Belum ada riwayat belajar'
+    };
+
+    const GLASS_PRESETS = [
+      { id: 'obsidian', name: 'Obsidian Glass', bg: '#070b14', accent: '#F5C451' },
+      { id: 'gold', name: 'Gold Terminal', bg: '#0c0f18', accent: '#F5C451' },
+      { id: 'cyber', name: 'Cyber Blue', bg: '#070e20', accent: '#3B82F6' },
+      { id: 'emerald', name: 'Emerald Risk', bg: '#05130e', accent: '#22C55E' },
+      { id: 'amethyst', name: 'Amethyst Flow', bg: '#0d0718', accent: '#C084FC' }
+    ];
+
+    const activeGlassPreset = window.AmyFXTheme?.colors?.preset || 'obsidian';
+    const presetsHTML = GLASS_PRESETS.map(p => `
+      <button type="button" class="glass-preset-btn ${p.id === activeGlassPreset ? 'is-active' : ''}" data-glass-preset="${p.id}">
+        <span class="preset-dot" style="background:${p.accent}; box-shadow:0 0 8px ${p.accent};"></span>
+        <span>${p.name}</span>
+      </button>
+    `).join('');
+
+    const customBgData = window.AmyFXTheme?.customBg;
+    const hasCustomBg = Boolean(customBgData && customBgData.image);
+    const customBgDim = customBgData?.dim ?? 50;
+    const customBgBlur = customBgData?.blur ?? 20;
+
+
+    mainContent.innerHTML = `
+      <div class="page-header">
+        <div>
+          <h2>Profil &amp; Pengaturan</h2>
+        </div>
+      </div>
+
+      <!-- Trading Environment Customization -->
+      <div class="profile-section-title" style="margin-top:8px;">Trading Environment Customization</div>
+      <section class="profile-glass-panel slide-up" data-amyfx-color-settings="true">
+        <div class="glass-group-label">Mode Tampilan</div>
+        <div class="theme-selector">
+          <button class="theme-choice" type="button" data-amyfx-theme-choice="system">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path></svg>
+            <span>Sistem</span>
+          </button>
+          <button class="theme-choice" type="button" data-amyfx-theme-choice="light">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+            <span>Terang</span>
+          </button>
+          <button class="theme-choice" type="button" data-amyfx-theme-choice="dark">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.5 15.2A8.5 8.5 0 0 1 8.8 3.5 8.5 8.5 0 1 0 20.5 15.2z"></path></svg>
+            <span>Gelap</span>
+          </button>
+        </div>
+
+        <div class="glass-group-label" style="margin-top:16px;">Preset Kaca &amp; Nuansa Trading</div>
+        <div class="presets-row">
+          ${presetsHTML}
+        </div>
+
+        <div class="glass-group-label" style="margin-top:18px; display:flex; justify-content:space-between; align-items:center;">
+          <span>Wallpaper &amp; Latar Belakang</span>
+          <span id="customBgBadge" class="bg-status-badge ${hasCustomBg ? 'active' : ''}">${hasCustomBg ? '● Foto Kustom Aktif' : 'Default Gradien'}</span>
+        </div>
+        <div class="wallpaper-controls-wrap">
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <input type="file" id="customBgFileInput" accept="image/*" style="display:none;">
+            <button type="button" id="uploadCustomBgBtn" class="glass-preset-btn">
+              <span>🖼️</span>
+              <span>Pilih Foto Sendiri</span>
+            </button>
+            <button type="button" id="removeCustomBgBtn" class="glass-preset-btn danger-preset-btn" style="${hasCustomBg ? '' : 'display:none;'}">
+              <span>🗑️</span>
+              <span>Hapus Wallpaper</span>
+            </button>
+          </div>
+
+          <div id="customBgControls" class="wallpaper-sliders-card" style="${hasCustomBg ? '' : 'display:none;'}">
+            <div style="margin-bottom:12px;">
+              <div class="slider-header">
+                <span>Kecerahan / Dimming Latar</span>
+                <span id="customBgDimVal">${customBgDim}%</span>
+              </div>
+              <input type="range" id="customBgDimSlider" min="0" max="100" value="${customBgDim}" class="trading-slider">
+            </div>
+            <div>
+              <div class="slider-header">
+                <span>Efek Frosted Blur (Kaca Buram)</span>
+                <span id="customBgBlurVal">${customBgBlur}px</span>
+              </div>
+              <input type="range" id="customBgBlurSlider" min="0" max="25" value="${customBgBlur}" class="trading-slider">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 2: Parameter Risiko Trading XAU/USD -->
+      <div class="profile-section-title" style="margin-top:20px; font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.08em;">Parameter Trading &amp; Risiko (XAU/USD)</div>
+      <section style="padding:16px; border-radius:16px; background:var(--surface-color); border:1px solid var(--border-color); box-shadow:0 4px 16px rgba(0,0,0,0.05); margin-top:8px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <span style="display:block; font-size:11px; font-weight:750; color:var(--text-muted); margin-bottom:4px;">Saldo Default ($)</span>
+            <input type="number" id="profileBalance" value="${escapeHtml(userBalance)}" style="width:100%; border:1px solid var(--border-color); background:var(--surface-soft); color:var(--text-main); border-radius:10px; padding:10px; font-size:14px; font-weight:700; font-family:monospace; box-sizing:border-box;">
+          </div>
+          <div>
+            <span style="display:block; font-size:11px; font-weight:750; color:var(--text-muted); margin-bottom:4px;">Batas Risiko / Trade (%)</span>
+            <input type="number" step="0.5" id="profileRisk" value="${escapeHtml(userRisk)}" style="width:100%; border:1px solid var(--border-color); background:var(--surface-soft); color:var(--text-main); border-radius:10px; padding:10px; font-size:14px; font-weight:700; font-family:monospace; box-sizing:border-box;">
+          </div>
+        </div>
+        <div style="margin-top:12px; display:flex; justify-content:space-between; align-items:center;">
+          <small style="color:var(--text-muted); font-size:11px; font-weight:600;">Aturan baku: Jangan ambil trade jika SL &gt; 2% modal.</small>
+          <button type="button" id="saveTradingParamsBtn" style="padding:8px 16px; background:linear-gradient(135deg, #d4af37, #aa8524); color:#000; font-weight:800; border-radius:10px; border:none; font-size:12px; cursor:pointer;">Simpan Parameter</button>
+        </div>
+      </section>
+
+      <!-- Panel 2.5: Pengingat Belajar & Peningkatan Skill (Academy) -->
+      <div class="profile-section-title" style="margin-top:20px; font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.08em;">Pengingat Belajar &amp; Skill (Academy)</div>
+      <section style="padding:16px; border-radius:16px; background:var(--surface-color); border:1px solid var(--border-color); box-shadow:0 4px 16px rgba(0,0,0,0.05); margin-top:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+          <div>
+            <strong style="display:block; font-size:13px; font-weight:750; color:var(--text-main);">Notifikasi Pengingat Belajar</strong>
+            <small style="color:var(--text-muted); font-size:11px;">Mengingatkan materi terakhir untuk terus mengasah skill trading ICT-mu.</small>
+          </div>
+          <input type="checkbox" id="learningReminderEnabled" ${reminderConfig.enabled ? 'checked' : ''} style="width:20px; height:20px; accent-color:#38bdf8; cursor:pointer;">
+        </div>
+
+        <div id="learningReminderSettingsWrap" style="margin-top:14px; ${reminderConfig.enabled ? '' : 'display:none;'}">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-top:1px solid var(--border-color);">
+            <div>
+              <span style="display:block; font-size:12px; font-weight:750; color:var(--text-main);">Waktu Notifikasi</span>
+              <small style="color:var(--text-muted); font-size:11px;">Pilih jam pengingat muncul setiap hari</small>
+            </div>
+            <input type="time" id="learningReminderTimeInput" value="${escapeHtml(reminderConfig.time)}" style="border:1px solid var(--border-color); background:var(--surface-soft); color:var(--text-main); border-radius:8px; padding:6px 12px; font-size:14px; font-weight:700; font-family:monospace; outline:none;">
+          </div>
+
+          <div style="margin-top:10px; padding:10px 12px; background:var(--surface-soft); border-radius:10px; border:1px solid var(--border-color);">
+            <span style="display:block; font-size:10px; font-weight:750; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Materi Terakhir yang Kamu Pelajari</span>
+            <div id="learningReminderLastTitle" style="font-size:13px; font-weight:700; margin-top:3px; color:var(--accent,#38bdf8);">${escapeHtml(reminderConfig.lastTitle)}</div>
+            <small id="learningReminderLastTime" style="color:var(--text-muted); font-size:11px;">${escapeHtml(reminderConfig.lastTimeText)}</small>
+          </div>
+
+          <div style="margin-top:12px; display:flex; gap:8px;">
+            <button type="button" id="saveLearningReminderBtn" style="flex:1; padding:9px 14px; background:linear-gradient(135deg, #38bdf8, #0284c7); color:#000; font-weight:800; border-radius:10px; border:none; font-size:12px; cursor:pointer;">Simpan Jadwal Pengingat</button>
+            <button type="button" id="testLearningReminderBtn" style="padding:9px 14px; background:var(--surface-soft); border:1px solid var(--border-color); color:var(--text-main); font-weight:700; border-radius:10px; font-size:12px; cursor:pointer;">🔔 Uji Notifikasi</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 3: Manajemen Data & Keamanan -->
+      <div class="profile-section-title" style="margin-top:20px; font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.08em;">Manajemen Data &amp; Reset</div>
+      <section class="profile-list" style="margin-top:8px;">
+        <button class="profile-row" id="profileExportBtn" type="button">
+          <span class="tool-icon">💾</span>
+          <span><strong>Cadangkan / Ekspor Data</strong><small>Unduh file JSON berisi semua jurnal, rutinitas, dan catatan lokal.</small></span>
+          <span class="chevron">›</span>
+        </button>
+        <button class="profile-row danger-row" data-profile-action="clear" type="button">
+          <span class="tool-icon">×</span>
+          <span><strong>Bersihkan Data Lokal</strong><small>Menghapus riwayat, jurnal, dan koleksi lokal secara aman.</small></span>
+          <span class="chevron">›</span>
+        </button>
+      </section>
+    `;
+
+    // Event bindings for new profile features
+    document.getElementById('editTraderNameBtn')?.addEventListener('click', () => {
+      const current = localStorage.getItem('amy_trader_name') || 'Trader';
+      const updated = window.prompt('Masukkan Nama Trader Anda:', current);
+      if (updated && updated.trim()) {
+        localStorage.setItem('amy_trader_name', updated.trim());
+        const titleEl = document.getElementById('traderNameTitle');
+        if (titleEl) titleEl.textContent = updated.trim();
+        showToast('Nama profil trader berhasil diperbarui.');
+      }
+    });
+
+    document.getElementById('saveTradingParamsBtn')?.addEventListener('click', () => {
+      const bal = document.getElementById('profileBalance')?.value || '5000';
+      const r = document.getElementById('profileRisk')?.value || '1.5';
+      localStorage.setItem('amy_default_balance', bal);
+      localStorage.setItem('amy_default_risk', r);
+      showToast('Parameter risiko trading XAU/USD berhasil disimpan.');
+    });
+
+    // Learning Reminder event bindings
+    const reminderToggle = document.getElementById('learningReminderEnabled');
+    const reminderSettingsWrap = document.getElementById('learningReminderSettingsWrap');
+    reminderToggle?.addEventListener('change', () => {
+      const isChecked = reminderToggle.checked;
+      if (reminderSettingsWrap) reminderSettingsWrap.style.display = isChecked ? 'block' : 'none';
+      const timeVal = document.getElementById('learningReminderTimeInput')?.value || '20:00';
+      if (window.AmyLearningReminder) {
+        window.AmyLearningReminder.saveConfig(isChecked, timeVal);
+      } else {
+        localStorage.setItem('amy_learning_reminder_enabled', isChecked ? 'true' : 'false');
+        localStorage.setItem('amy_learning_reminder_time', timeVal);
+      }
+      showToast(isChecked ? 'Pengingat belajar diaktifkan.' : 'Pengingat belajar dinonaktifkan.');
+    });
+
+    document.getElementById('saveLearningReminderBtn')?.addEventListener('click', () => {
+      const isChecked = document.getElementById('learningReminderEnabled')?.checked ?? true;
+      const timeVal = document.getElementById('learningReminderTimeInput')?.value || '20:00';
+      if (window.AmyLearningReminder) {
+        window.AmyLearningReminder.saveConfig(isChecked, timeVal);
+      } else {
+        localStorage.setItem('amy_learning_reminder_enabled', isChecked ? 'true' : 'false');
+        localStorage.setItem('amy_learning_reminder_time', timeVal);
+      }
+      showToast(`Jadwal pengingat disimpan: Setiap hari jam ${timeVal}`);
+    });
+
+    document.getElementById('testLearningReminderBtn')?.addEventListener('click', () => {
+      if (window.AmyLearningReminder) {
+        window.AmyLearningReminder.triggerReminderNotification();
+      } else if (window.Android?.triggerLearningReminderNotification) {
+        window.Android.triggerLearningReminderNotification();
+      }
+      showToast('Notifikasi pengingat belajar dikirim!');
+    });
+
+    document.getElementById('profileExportBtn')?.addEventListener('click', () => {
+      const backupData = {
+        app: 'Amy FX Pro',
+        exportedAt: new Date().toISOString(),
+        traderName: localStorage.getItem('amy_trader_name') || 'Trader',
+        balance: localStorage.getItem('amy_default_balance') || '5000',
+        risk: localStorage.getItem('amy_default_risk') || '1.5',
+        habits: readJsonSafe('amy_habits_v2', []),
+        completedHabits: readJsonSafe('amy_completed_dates_v2', {}),
+        journals: readJsonArray('amy_journal_entries')
+      };
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `amyfx-pro-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('File backup profil & data berhasil diunduh.');
+    });
+
+    // Preset color buttons
+    document.querySelectorAll('[data-glass-preset]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const presetId = btn.dataset.glassPreset;
+        const preset = GLASS_PRESETS.find(p => p.id === presetId);
+        if (preset) {
+          window.AmyFXTheme?.setPreset?.(presetId);
+          document.querySelectorAll('[data-glass-preset]').forEach(b => {
+            b.classList.toggle('is-active', b.dataset.glassPreset === presetId);
+          });
+          showToast(`Tema kaca "${preset.name}" diterapkan.`);
+        }
+      });
+    });
+
+    // Custom Background Photo Handlers
+    const fileInput = document.getElementById('customBgFileInput');
+    const uploadBtn = document.getElementById('uploadCustomBgBtn');
+    const removeBtn = document.getElementById('removeCustomBgBtn');
+    const controls = document.getElementById('customBgControls');
+    const badge = document.getElementById('customBgBadge');
+    const dimSlider = document.getElementById('customBgDimSlider');
+    const blurSlider = document.getElementById('customBgBlurSlider');
+    const dimVal = document.getElementById('customBgDimVal');
+    const blurVal = document.getElementById('customBgBlurVal');
+
+    uploadBtn?.addEventListener('click', () => fileInput?.click());
+
+    fileInput?.addEventListener('change', event => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        showToast('Pilih file gambar (JPG, PNG, WebP).');
+        return;
+      }
+      showToast('Memproses foto latar...');
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 1280;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+
+          const currentDim = dimSlider ? Number(dimSlider.value) : 50;
+          const currentBlur = blurSlider ? Number(blurSlider.value) : 20;
+          window.AmyFXTheme?.setCustomBg?.({
+            image: dataUrl,
+            dim: currentDim,
+            blur: currentBlur
+          });
+
+          if (controls) controls.style.display = 'block';
+          if (removeBtn) removeBtn.style.display = 'inline-flex';
+          if (badge) {
+            badge.textContent = '● Foto Kustom Aktif';
+            badge.style.color = '#10b981';
+          }
+          showToast('Wallpaper kustom berhasil dipasang!');
+        };
+        img.onerror = () => showToast('Gagal memuat gambar.');
+        img.src = e.target.result;
+      };
+      reader.onerror = () => showToast('Gagal membaca file gambar.');
+      reader.readAsDataURL(file);
+    });
+
+    dimSlider?.addEventListener('input', e => {
+      const val = Number(e.target.value);
+      if (dimVal) dimVal.textContent = `${val}%`;
+      const overlay = document.getElementById('amyfx-custom-bg-overlay');
+      if (overlay) {
+        overlay.style.backgroundColor = `rgba(7, 11, 20, ${(val / 100).toFixed(2)})`;
+      }
+      const current = window.AmyFXTheme?.customBg;
+      if (current) {
+        window.AmyFXTheme?.setCustomBg?.({ ...current, dim: val });
+      }
+    });
+
+    blurSlider?.addEventListener('input', e => {
+      const val = Number(e.target.value);
+      if (blurVal) blurVal.textContent = `${val}px`;
+      document.documentElement.style.setProperty('--glass-blur', `${val}px`);
+      const current = window.AmyFXTheme?.customBg;
+      if (current) {
+        window.AmyFXTheme?.setCustomBg?.({ ...current, blur: val });
+      }
+    });
+
+    removeBtn?.addEventListener('click', () => {
+      window.AmyFXTheme?.removeCustomBg?.();
+      if (controls) controls.style.display = 'none';
+      if (removeBtn) removeBtn.style.display = 'none';
+      if (badge) {
+        badge.textContent = 'Default Gradien';
+        badge.style.color = 'var(--text-muted)';
+      }
+      if (fileInput) fileInput.value = '';
+      showToast('Wallpaper kustom dihapus.');
+    });
+
+    const activePref = window.AmyFXTheme?.preference || 'system';
+    document.querySelectorAll('[data-amyfx-theme-choice]').forEach(b => {
+      b.classList.toggle('is-active', b.dataset.amyfxThemeChoice === activePref);
+    });
+
     window.AmyFXTheme?.apply?.();
   }
 
@@ -254,7 +1665,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function openProject(id) {
-    const project = projects.find(item => item.id === id);
+    const project = [...projects, ...practiceItems].find(item => item.id === id);
     if (!project) return;
     const recent = readJsonArray('amy_recent_projects').filter(item => item !== id);
     localStorage.setItem('amy_recent_projects', JSON.stringify([id, ...recent].slice(0, 8)));
@@ -266,10 +1677,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function navigate(target) {
+  function navigate(target, options = {}) {
     if (target === 'beranda') renderHome();
-    if (target === 'proyek') renderProjectList('Proyek');
-    if (target === 'koleksi') renderKoleksi();
+    if (target === 'proyek' || target === 'backtest') renderProjectList('Backtest');
+    if (target === 'video' || target === 'media' || target === 'koleksi') renderMedia(options);
     if (target === 'profil') renderProfile();
   }
 
@@ -307,8 +1718,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const koleksiBtn = event.target.closest('[data-koleksi]');
     const copyKoleksiBtn = event.target.closest('[data-copy-koleksi]');
     const profileBtn = event.target.closest('[data-profile-action]');
+    const mediaFilterBtn = event.target.closest('[data-media-filter]');
+    const viewMediaBtn = event.target.closest('[data-view-media]');
+    const deleteMediaBtn = event.target.closest('[data-delete-media]');
+    const uploadMediaBtn = event.target.closest('#rootUploadMediaBtn, #rootEmptyUploadMediaBtn');
     if (openBtn) openProject(openBtn.dataset.open);
-    if (navBtn) navigate(navBtn.dataset.nav);
+    if (navBtn) {
+      const target = navBtn.dataset.nav;
+      if (target === 'video' || target === 'media') {
+        setActive('video');
+        const all = await loadAllMediaItems();
+        const vids = all.filter(isVideoMediaItem);
+        await renderMedia({ autoPlay: false });
+        if (vids.length > 0) {
+          openVideoReel(vids[0]);
+        } else {
+          showToast('Belum ada video tersimpan. Silakan upload video pertama Anda.');
+        }
+        return;
+      }
+      navigate(target);
+    }
     if (indicatorBtn) { selectedIndicator = indicators[Number(indicatorBtn.dataset.selectIndicator)]; renderIndikator(); }
     if (filterBtn) { document.querySelectorAll('.pill').forEach(item => item.classList.remove('active')); filterBtn.classList.add('active'); renderIndicatorList(filterBtn.dataset.filter, document.getElementById('indicator-search')?.value || ''); }
     if (copyBtn) {
@@ -318,6 +1748,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (saveBtn) { localStorage.setItem('amy_saved_code', selectedIndicator.code || ''); saveBtn.textContent = 'Tersimpan'; }
     if (koleksiBtn) handleKoleksi(koleksiBtn.dataset.koleksi);
+    if (mediaFilterBtn) {
+      currentMediaFilter = mediaFilterBtn.dataset.mediaFilter;
+      renderMedia({ autoPlay: false });
+    }
+    if (viewMediaBtn) {
+      const itemId = viewMediaBtn.dataset.viewMedia;
+      const all = await loadAllMediaItems();
+      const targetItem = all.find(it => it.id === itemId);
+      if (targetItem) {
+        // Video dibuka sebagai feed swipe vertikal ala Jurnal Trading; gambar/dokumen tetap viewer biasa
+        if (isVideoMediaItem(targetItem)) openVideoReel(targetItem);
+        else showMediaFullscreen(targetItem);
+      }
+    }
+    if (deleteMediaBtn) {
+      event.stopPropagation();
+      await handleRootMediaDelete(deleteMediaBtn.dataset.deleteMedia);
+    }
+    if (uploadMediaBtn) {
+      document.getElementById('rootMediaFileInput')?.click();
+    }
     if (profileBtn && profileBtn.dataset.profileAction === 'clear') {
       if (window.confirm('Hapus riwayat analisis, jurnal, library, dan koleksi lokal? API key tidak ikut dihapus.')) {
         await clearPersonalLocalData();
@@ -339,8 +1790,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  navBtns.forEach(btn => btn.addEventListener('click', () => navigate(btn.dataset.target)));
-  navigate(localStorage.getItem('amy_root_tab') || 'beranda');
+  navBtns.forEach(btn => btn.addEventListener('click', async () => {
+    const target = btn.dataset.target;
+    // Saat klik menu Video di menu utama: langsung putar video pertama ala TikTok!
+    if (target === 'video' || target === 'media') {
+      setActive('video');
+      const allItems = await loadAllMediaItems();
+      const vids = allItems.filter(isVideoMediaItem);
+      await renderMedia({ autoPlay: false });
+      if (vids.length > 0) {
+        openVideoReel(vids[0]);
+      } else {
+        showToast('Belum ada video tersimpan. Silakan upload video pertama Anda.');
+      }
+      return;
+    }
+    navigate(target);
+  }));
+  let initialTab = 'beranda';
+  try { initialTab = localStorage.getItem('amy_root_tab') || initialTab; } catch (_) {}
+  if (initialTab === 'koleksi' || initialTab === 'media') initialTab = 'video';
+  navigate(['beranda', 'proyek', 'video', 'media', 'profil'].includes(initialTab) ? initialTab : 'beranda');
 });
 
 

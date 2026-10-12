@@ -13,11 +13,13 @@ test('live quote uses one native Twelve Data WebSocket while Mapping keeps REST 
   assert.match(source, /assertBackendPayloadFresh\(data, `Candle \${tf}`\)/);
   assert.doesNotMatch(source, /LIVE_POLL_MS|outputsize=1/);
   assert.doesNotMatch(source, /localStorage\.(?:getItem|setItem)\(['"]twelve_api_key/);
-  assert.match(bridge, /wss:\/\/ws\.twelvedata\.com\/v1\/quotes\/price/);
-  assert.match(bridge, /client\.newWebSocket/);
-  assert.match(bridge, /\.put\("action", "subscribe"\)/);
-  assert.match(bridge, /\.put\("symbols", SYMBOL\)/);
-  assert.match(bridge, /private const val SYMBOL = "XAU\/USD"/);
+  const relay = read('api/live-price.js');
+  assert.match(bridge, /https:\/\/amy-fx\.vercel\.app\/api\/live-price/);
+  assert.match(bridge, /text\/event-stream/);
+  assert.doesNotMatch(bridge, /configuredApiKey|BuildConfig\.TWELVE_DATA_API_KEY/);
+  assert.match(relay, /process\.env\.TWELVEDATA_API_KEY/);
+  assert.match(relay, /new WebSocket/);
+
 });
 test('duplicate candle keys collapse before Supabase upsert', () => {
   const rows = dedupeCandleRows([

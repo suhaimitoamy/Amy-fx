@@ -18,7 +18,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Native AI gateway for Amy FX.
+ * Native AI gateway for Amy FX Preview.
  * Secrets remain in EncryptedSharedPreferences and are never returned to WebView.
  */
 class AmyFxAiBridge(
@@ -207,7 +207,7 @@ class AmyFxAiBridge(
                     .header("Content-Type", "application/json")
                 if (provider == "openrouter") {
                     builder.header("HTTP-Referer", "https://github.com/suhaimitoamy/Amy-fx")
-                    builder.header("X-Title", "Amy FX")
+                    builder.header("X-Title", "Amy FX Preview")
                 }
                 builder.post(payload.toString().toRequestBody(jsonMediaType)).build()
             }

@@ -44,7 +44,9 @@ test('Validated Direction Forecast conflict protection remains active', () => {
 });
 
 test('snapshot contract is the only UI authority and forbids UI mutation', () => {
-  assert.match(snapshot, /AMY_MAPPING_SINGLE_AUTHORITY_V3/);
+  assert.match(snapshot, /AMY_SMC_D_SINGLE_MAPPING_AUTHORITY/);
+  assert.match(snapshot, /direction:\s*'AMY_SMC_D_NEXT_MOVE'/);
+  assert.match(snapshot, /executionRole:\s*'READ_ONLY_CONSUMER'/);
   assert.match(snapshot, /closedCandleOnly: true/);
   assert.match(snapshot, /mayRewriteClosedCandleFacts: false/);
   assert.match(snapshot, /uiMayMutate: false/);

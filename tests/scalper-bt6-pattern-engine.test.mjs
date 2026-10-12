@@ -50,7 +50,7 @@ test('pattern features use the selected closed signal candle without future-cand
   assert.equal(before.atr_ratio50_samples, 50);
 });
 
-test('per-driver kill switch rejects an otherwise accepted CRT candidate with telemetry', () => {
+test('per-driver kill switch skips CRT before candidate scanning', () => {
   const { base, h4 } = passingCrtFixture();
   const result = evaluateScalperCandidates({
     series: { H4: h4 },
@@ -61,8 +61,7 @@ test('per-driver kill switch rejects an otherwise accepted CRT candidate with te
   });
   assert.equal(result.candidates.some(candidate => candidate.driver_id === 'CRT'), false);
   const rejection = result.telemetry.find(item => item.driver_id === 'CRT');
-  assert.equal(rejection.accepted, false);
-  assert.equal(rejection.gate_id, 'DRIVER_KILL_SWITCH');
+  assert.equal(rejection, undefined);
 });
 
 test('BT6 lifecycle locks fixed +10/+20 targets and never moves stop to breakeven', () => {
@@ -173,5 +172,5 @@ test('AMD detects the shortest valid accumulation window and emits an M30 midpoi
   assert.equal(amd.quality.accumulation_window, 6);
   assert.equal(amd.quality.entry_model, 'FVG_MIDPOINT_LIMIT');
   assert.equal(amd.quality.fvg_midpoint, 101.5);
-  assert.equal(amd.quality.pattern_gate, 'AMD_DISTRIBUTION');
+  assert.equal(amd.quality.pattern_gate, 'STRUCTURAL-2026-09-V1');
 });

@@ -1,0 +1,308 @@
+name: Amy FX Private Preview Release
+
+on:
+  push:
+    branches:
+      - personal/amyfx-private
+    paths-ignore:
+      - preview-update.json
+      - preview-regression-failure.txt
+      - README.md
+      - docs/**
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  statuses: write
+
+concurrency:
+  group: amyfx-private-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
+  AMYFX_APP_LABEL: Amy FX Preview
+  AMYFX_URI_SCHEME: amyfxpreview
+  AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/personal/amyfx-private/preview-update.json
+  TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
+  AMYFX_KEYSTORE_PATH: /tmp/amy-fx-preview-signing.keystore
+  AMYFX_KEYSTORE_PASSWORD: android
+  AMYFX_KEY_ALIAS: androiddebugkey
+  AMYFX_KEY_PASSWORD: android
+  AMYFX_SIGNING_CERT_SHA256: "47:C2:32:BC:44:FA:63:C9:2F:FE:41:1F:71:40:40:4C:09:AA:2A:9C:BF:82:B1:85:9A:86:0B:85:56:7B:AD:C7"
+
+jobs:
+  build-publish-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout private Preview branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare immutable private Preview identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = "personal/amyfx-private"
+          test "$GITHUB_REF_NAME" != "main"
+          mapfile -t preview_identity < <(python3 - <<'PY'
+          import pathlib
+          import re
+
+          source = pathlib.Path('app/src/main/assets/app-version.js').read_text(encoding='utf-8')
+          match = re.search(r"name:\s*'(2\.0\.0-preview\.(\d+))'\s*,\s*code:\s*(94\d{4})", source)
+          if not match:
+              raise SystemExit('Unable to read private Preview identity from app-version.js')
+
+          version_name, sequence_text, version_code_text = match.groups()
+          sequence = int(sequence_text)
+          version_code = int(version_code_text)
+          if version_code != 940000 + sequence:
+              raise SystemExit('Preview version code does not match its version suffix')
+
+          print(version_name)
+          print(version_code)
+          PY
+          )
+          test "${#preview_identity[@]}" -eq 2
+          version_name="${preview_identity[0]}"
+          version_code="${preview_identity[1]}"
+          echo "AMYFX_VERSION_NAME=$version_name" >> "$GITHUB_ENV"
+          echo "AMYFX_VERSION_CODE=$version_code" >> "$GITHUB_ENV"
+          grep -Fq "?: $version_code)" app/build.gradle.kts
+          grep -Fq "?: \"$version_name\"" app/build.gradle.kts
+          grep -Fq "name: '$version_name', code: $version_code" app/src/main/assets/app-version.js
+          published_code="$(python3 -c "import json; print(json.load(open('preview-update.json'))['latest_version_code'])")"
+          test "$version_code" -gt "$published_code"
+          echo "AMYFX_RELEASE_TAG=amyfx-blueprint-preview-${version_name}" >> "$GITHUB_ENV"
+          echo "AMYFX_ARTIFACT_NAME=AmyFX-Preview-${version_name}-signed" >> "$GITHUB_ENV"
+
+      - name: Mark private Preview release pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='pending' \
+            -f context='Amy FX Private Preview' \
+            -f description="Building $AMYFX_VERSION_NAME" \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply Blueprint stabilization to Preview source
+        run: |
+          set -euo pipefail
+          python3 tools/apply-blueprint-preview.py
+          node --check app/src/main/assets/apps/shared/amyfx-blueprint-v1.js
+          node --check app/src/main/assets/apps/shared/amyfx-blueprint-hotfix-v1.js
+          node --check app/src/main/assets/app-version.js
+          node --check app/src/main/assets/update-checker.js
+          node --check app/src/main/assets/apps/mapping/js/scalper-entry-watch-v1.js
+          node --check app/src/main/assets/apps/mapping/js/scalper-shadow-state.js
+          node --check app/src/main/assets/apps/mapping/js/scalper-execution-authority.js
+          node --check app/src/main/assets/apps/mapping/js/scalper-execution-decision-bridge.js
+          node --check app/src/main/assets/apps/academy/assets/js/reading-history-v2.js
+          node --check supabase/functions/scalper-engine/candles.mjs
+          node --check supabase/functions/scalper-engine/pattern-gates.mjs
+          node --check supabase/functions/scalper-engine/drivers.mjs
+          node --check supabase/functions/scalper-engine/signals.mjs
+          node --check supabase/functions/scalper-engine/lifecycle.mjs
+          node --check supabase/functions/scalper-engine/engine.mjs
+          python3 -c "import ast, pathlib; ast.parse(pathlib.Path('tools/apply-blueprint-preview.py').read_text())"
+          node --test --test-force-exit tests/blueprint-preview-v1.test.mjs tests/blueprint-preview-stabilization.test.mjs
+
+      - name: Run full JavaScript regression
+        run: timeout 25m npm test
+
+      - name: Commit stabilized private Preview source checkpoint
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "fix(private): apply stabilized Preview source [skip ci]"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+          echo "AMYFX_SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Configure Preview identity and updater channel
+        run: |
+          set -euo pipefail
+          node tools/configure-preview-web-version.mjs "$AMYFX_VERSION_NAME" "$AMYFX_VERSION_CODE" "$AMYFX_UPDATE_MANIFEST_URL"
+          node --check app/src/main/assets/app-version.js
+          node --check app/src/main/assets/update-checker.js
+          grep -Fq "name: '$AMYFX_VERSION_NAME', code: $AMYFX_VERSION_CODE" app/src/main/assets/app-version.js
+          grep -Fq "window.AmyFXUpdateManifestUrl = '$AMYFX_UPDATE_MANIFEST_URL';" app/src/main/assets/app-version.js
+          grep -Fq 'Update Amy FX Preview Tersedia' app/src/main/assets/update-checker.js
+          grep -Fq 'announceNativeUpdate(latestCode, latestName);' app/src/main/assets/update-checker.js
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Restore permanent Preview signing key
+        id: signing-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: amy-fx-debug-keystore-v1
+
+      - name: Verify permanent Preview signing key
+        run: |
+          set -euo pipefail
+          test "${{ steps.signing-cache.outputs.cache-hit }}" = "true"
+          cp "$HOME/.android/debug.keystore" "$AMYFX_KEYSTORE_PATH"
+          actual="$(keytool -list -v -keystore "$AMYFX_KEYSTORE_PATH" -storepass "$AMYFX_KEYSTORE_PASSWORD" -alias "$AMYFX_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1)"
+          test "$actual" = "$AMYFX_SIGNING_CERT_SHA256"
+
+      - name: Android tests, lint, and signed build
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease --stacktrace --no-daemon --no-configuration-cache
+
+      - name: Verify Preview package, version, label, and signer
+        run: |
+          set -euo pipefail
+          APK='app/build/outputs/apk/release/app-release.apk'
+          AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
+          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          test -s "$APK"
+          "$AAPT" dump badging "$APK" | tee /tmp/preview-badging.txt
+          grep -Fq "package: name='com.amyelitesuite.learningpreview' versionCode='$AMYFX_VERSION_CODE' versionName='$AMYFX_VERSION_NAME'" /tmp/preview-badging.txt
+          grep -Fq "application-label:'Amy FX Preview'" /tmp/preview-badging.txt
+          "$APKSIGNER" verify --verbose "$APK"
+          cert_entry="$(unzip -Z1 "$APK" | grep -E '^META-INF/[^/]+\.(RSA|DSA|EC)$' | head -n1)"
+          test -n "$cert_entry"
+          unzip -p "$APK" "$cert_entry" > /tmp/amyfx-preview-cert
+          expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          actual="$(keytool -printcert -file /tmp/amyfx-preview-cert | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          test "$actual" = "$expected"
+          cp "$APK" AmyFX-Preview-latest.apk
+          sha256sum AmyFX-Preview-latest.apk | tee AmyFX-Preview-latest.apk.sha256
+
+      - name: Publish immutable signed private Preview release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $AMYFX_RELEASE_TAG already exists; refusing replacement."
+            exit 1
+          fi
+          cat > /tmp/amyfx-preview-release-notes.md <<NOTES
+          Amy FX Preview $AMYFX_VERSION_NAME — Amy-SMC-D Canonical Mapping.
+
+          - Mapping memakai Amy-SMC-D.pine blob d6e6d7c979dd5a852bddd9661bef0480caa2eb35 sebagai baseline semantik resmi.
+          - Replay berjalan sequential dari candle tertutup tanpa future candle, interpolation, atau synthetic candle.
+          - Dealing Range M5/M15 mempertahankan structural source 70/30 dan 60/40; H1 memakai previous 240 closed H1 bars 55/45.
+          - Context, fresh structural evidence, dan predictive event dipisahkan; Dealing Range tetap descriptive-only.
+          - Harga Twelve Data WebSocket tetap display-only dan tidak memicu kalkulasi ulang Mapping.
+          - Rencana Eksekusi, scanner, lifecycle, notifikasi, package, signer, dan data pengguna tetap dipertahankan sebagai consumer.
+          - Amy FX publik pada branch main tidak diubah.
+          NOTES
+          gh release create "$AMYFX_RELEASE_TAG" \
+            "AmyFX-Preview-latest.apk#AmyFX-Preview-latest.apk" \
+            "AmyFX-Preview-latest.apk.sha256#AmyFX-Preview-latest.apk.sha256" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$AMYFX_SOURCE_SHA" \
+            --prerelease \
+            --title "Amy FX Preview $AMYFX_VERSION_NAME — Amy-SMC-D Canonical Mapping" \
+            --notes-file /tmp/amyfx-preview-release-notes.md
+          gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Preview-latest.apk'
+
+      - name: Activate private Preview update channel
+        run: |
+          set -euo pipefail
+          export RELEASE_DATE="$(date -u +%F)"
+          export APK_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${AMYFX_RELEASE_TAG}/AmyFX-Preview-latest.apk"
+          python3 - <<'PY'
+          import json
+          import os
+          version_code = int(os.environ['AMYFX_VERSION_CODE'])
+          payload = {
+              'channel': 'amyfx-preview-blueprint-v1',
+              'latest_version_code': version_code,
+              'latest_version_name': os.environ['AMYFX_VERSION_NAME'],
+              'versionCode': version_code,
+              'version': os.environ['AMYFX_VERSION_NAME'],
+              'releaseDate': os.environ['RELEASE_DATE'],
+              'apk_url': os.environ['APK_URL'],
+              'downloadUrl': os.environ['APK_URL'],
+              'force_update': False,
+              'mandatory': False,
+              'enabled': True,
+              'release_notes': [
+                  'Mapping kini memakai Amy-SMC-D sebagai satu-satunya directional authority dari candle tertutup.',
+                  'Dealing Range M5/M15 memakai structural source 70/30 dan 60/40; H1 memakai previous 240 closed H1 bars 55/45.',
+                  'Context, fresh structural evidence, dan predictive event ditampilkan terpisah tanpa probabilitas live.',
+                  'Harga Twelve Data WebSocket tetap display-only dan tidak menghitung ulang Mapping.',
+                  'Rencana Eksekusi tetap consumer/read-only; package, signer, channel, dan data pengguna Preview tidak berubah.',
+                  'Amy FX publik pada branch main tidak diubah.'
+              ],
+              'changelog': [
+                  'Canonical Amy-SMC-D sequential replay engine',
+                  'Closed-candle and no-future data contract',
+                  'D pure-location Dealing Range profiles',
+                  'Descriptive, fresh-evidence, and predictive UI separation',
+                  'Display-only live WebSocket price isolation'
+              ]
+          }
+          with open('preview-update.json', 'w', encoding='utf-8') as handle:
+              json.dump(payload, handle, ensure_ascii=False, indent=2)
+              handle.write('\n')
+          PY
+          python3 -m json.tool preview-update.json >/dev/null
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add preview-update.json
+          git commit -m "release(preview): activate $AMYFX_VERSION_NAME update [skip ci]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Upload signed Preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.AMYFX_ARTIFACT_NAME }}
+          path: |
+            AmyFX-Preview-latest.apk
+            AmyFX-Preview-latest.apk.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Mark private Preview release success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='success' \
+            -f context='Amy FX Private Preview' \
+            -f description="$AMYFX_VERSION_NAME published; private update channel activated" \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+
+      - name: Mark private Preview release failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -f state='failure' \
+            -f context='Amy FX Private Preview' \
+            -f description='Private Preview build failed before update activation' \
+            -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'

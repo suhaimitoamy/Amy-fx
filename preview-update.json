@@ -1,0 +1,28 @@
+{
+  "channel": "amyfx-preview-blueprint-v1",
+  "latest_version_code": 940316,
+  "latest_version_name": "2.0.0-preview.316",
+  "versionCode": 940316,
+  "version": "2.0.0-preview.316",
+  "releaseDate": "2026-08-11",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.316/AmyFX-Preview-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-blueprint-preview-2.0.0-preview.316/AmyFX-Preview-latest.apk",
+  "force_update": false,
+  "mandatory": false,
+  "enabled": true,
+  "release_notes": [
+    "Mapping kini memakai Amy-SMC-D sebagai satu-satunya directional authority dari candle tertutup.",
+    "Dealing Range M5/M15 memakai structural source 70/30 dan 60/40; H1 memakai previous 240 closed H1 bars 55/45.",
+    "Context, fresh structural evidence, dan predictive event ditampilkan terpisah tanpa probabilitas live.",
+    "Harga Twelve Data WebSocket tetap display-only dan tidak menghitung ulang Mapping.",
+    "Rencana Eksekusi tetap consumer/read-only; package, signer, channel, dan data pengguna Preview tidak berubah.",
+    "Amy FX publik pada branch main tidak diubah."
+  ],
+  "changelog": [
+    "Canonical Amy-SMC-D sequential replay engine",
+    "Closed-candle and no-future data contract",
+    "D pure-location Dealing Range profiles",
+    "Descriptive, fresh-evidence, and predictive UI separation",
+    "Display-only live WebSocket price isolation"
+  ]
+}

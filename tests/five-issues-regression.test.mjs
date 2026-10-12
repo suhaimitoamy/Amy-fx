@@ -1,3 +1,5 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -6,7 +8,7 @@ import { execFileSync } from 'node:child_process';
 const read = path => fs.readFileSync(path, 'utf8');
 
 const readmePath = 'README.md';
-const indexPath = 'app/src/main/assets/apps/mapping/index.html';
+const indexPath = 'app/src/main/assets/apps/mapping/legacy-index.html';
 const fixScriptPath = 'app/src/main/assets/apps/mapping/js/analysis-ui-stability-v4.js';
 const marketIntentPath = 'app/src/main/assets/apps/mapping/js/market-intent-ui.js';
 const fixCssPath = 'app/src/main/assets/apps/mapping/css/five-issues-fix.css';
@@ -31,13 +33,13 @@ test('Mapping UI stability runtimes remain syntactically valid', () => {
   }
 });
 
-test('README documents one unified Amy FX production product', () => {
-  assert.match(readme, /Amy FX/);
-  assert.match(readme, /com\.amyelitesuite/);
-  assert.match(readme, /main\/update\.json/);
-  assert.match(readme, /`main` merupakan sumber aplikasi dan rilis produksi/);
-  assert.match(readme, /personal\/amyfx-private.*ruang pengembangan Amy FX Preview/s);
-  assert.doesNotMatch(readme, /Application ID:\*\* `com\.amyelitesuite\.learningpreview`/);
+test('README retains Preview lineage while declaring Amy FX Pro as the main release identity', () => {
+  assert.match(readme, /personal\/amyfx-private/);
+  assert.match(readme, /Amy FX Preview/);
+  assert.match(readme, /com\.amyelitesuite\.learningpreview/);
+  assert.match(readme, /Amy FX Pro/);
+  assert.match(readme, /2\.0\.0-pro\.316/);
+  assert.match(readme, /Amy-fx-pro\/main\/update\.json/);
 });
 
 test('Mapping loads stable UI coordination and no longer loads scroll restoration', () => {
@@ -75,8 +77,10 @@ test('analysis badge reports both closed-candle availability and provider delay 
 });
 
 test('historical reliability is excluded at the Market Intent source instead of removed after render', () => {
-  assert.match(marketIntent, /Konteks Market Lanjutan/);
-  assert.match(marketIntent, /Target & Skenario Harga/);
+  assert.match(marketIntent, /Context \/ Descriptive/);
+  assert.match(marketIntent, /Fresh Structural Evidence/);
+  assert.match(marketIntent, /Predictive \/ Event Signals/);
+  assert.doesNotMatch(marketIntent, /consumer\/read-only/);
   assert.doesNotMatch(marketIntent, /RELIABILITAS HISTORIS/);
   assert.doesNotMatch(marketIntent, /Performa Historis Model/);
   assert.doesNotMatch(fixes, /amy-outlook-backtest-note/);
@@ -109,17 +113,16 @@ test('issue-5 audit remains available in documentation but not injected into liv
   assert.doesNotMatch(marketIntent, /Akurasi arah close historis/);
 });
 
-test('source version and updater stay on the production channel', () => {
-  const identity = appVersion.match(/name: '(\d+\.\d+\.\d+)', code: (\d+)/);
-  assert.ok(identity, 'Production source identity is missing');
-  const [, sourceName, sourceCode] = identity;
+test('source version and updater stay on the Amy FX Pro channel', () => {
+  const identity = appVersion.match(/name: '(2\.0\.0-pro\.(\d+))', code: (95\d{4})/);
+  assert.ok(identity, 'Pro source identity is missing');
+  const [, sourceName, sourceSequence, sourceCode] = identity;
 
-  assert.equal(sourceName, '2.3.1');
-  assert.equal(Number(sourceCode), 59);
-  assert.match(appVersion, /main\/update\.json/);
-  assert.doesNotMatch(appVersion, /learningpreview|personal\/amyfx-private|preview-update\.json/);
-  assert.equal(Number(update.latest_version_code), 59);
-  assert.equal(update.latest_version_name, '2.3.1');
-  assert.match(update.apk_url || update.downloadUrl || '', /AmyFX-latest\.apk/);
-  assert.doesNotMatch(update.apk_url || update.downloadUrl || '', /AmyFX-Preview-latest\.apk/);
+  assert.equal(Number(sourceCode), 950000 + Number(sourceSequence));
+  assert.match(appVersion, /Amy-fx-pro\/main\/update\.json/);
+  assert.ok(Number(sourceCode) >= Number(update.latest_version_code));
+  assert.match(sourceName, /^2\.0\.0-pro\.\d+$/);
+  assert.ok(update.latest_version_code >= 950000);
+  assert.match(update.latest_version_name, /^2\.0\.0-pro\.\d+$/);
+  assert.match(update.apk_url || update.downloadUrl || '', /AmyFX-Pro-latest\.apk/);
 });

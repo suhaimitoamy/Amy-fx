@@ -2,7 +2,7 @@ name: Run Single API Repair PR
 
 on:
   pull_request:
-    branches: [main]
+    branches: [personal/amyfx-private]
     types: [opened, synchronize, reopened]
 
 permissions:
@@ -13,8 +13,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  apply-public-repair:
-    if: ${{ github.event.pull_request.head.ref == 'fix/market-pipeline-single-api-20260730' }}
+  apply-preview-repair:
+    if: ${{ github.event.pull_request.head.ref == 'fix/preview-market-pipeline-single-api-20260730' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -50,20 +50,17 @@ jobs:
           script = script[:scanner_start] + scanner_stub + script[scanner_end:]
           Path('/tmp/apply-single-api-fix.py').write_text(script, encoding='utf-8')
           PY
-          python3 /tmp/apply-single-api-fix.py
+          GITHUB_REF_NAME="${{ github.event.pull_request.head.ref }}" python3 /tmp/apply-single-api-fix.py
           python3 - <<'PY'
           from pathlib import Path
-          readme = Path('README.md')
-          readme.write_text(readme.read_text(encoding='utf-8').replace('Fitur Utama 2.0.1', 'Fitur Utama 2.0.2'), encoding='utf-8')
-          path = Path('tests/five-issues-regression.test.mjs')
-          text = path.read_text(encoding='utf-8')
-          text = text.replace('2\\.0\\.1', '2\\.0\\.2')
-          text = text.replace('public 2.0.1', 'public 2.0.2')
-          text = text.replace('code: 52', 'code: 53')
-          text = text.replace('<= 52', '<= 53')
-          text = text.replace('2\\.0\\.\\[01\\]', '2\\.0\\.\\[012\\]')
-          text = text.replace('2\\.0\\.\[01\]', '2\\.0\\.\[012\]')
-          path.write_text(text, encoding='utf-8')
+          for path in Path('tests').glob('*.mjs'):
+              text = path.read_text(encoding='utf-8')
+              next_text = (text
+                  .replace(r'2\.0\.0-preview\.292', r'2\.0\.0-preview\.293')
+                  .replace('2.0.0-preview.292', '2.0.0-preview.293')
+                  .replace('940292', '940293'))
+              if next_text != text:
+                  path.write_text(next_text, encoding='utf-8')
           PY
           cat > tests/market-single-api-freshness.test.mjs <<'TEST'
           import test from 'node:test';
@@ -99,7 +96,7 @@ jobs:
           node --check app/src/main/assets/apps/mapping/js/api/market-data.js
           node --test tests/market-single-api-freshness.test.mjs
           timeout 20m npm test
-      - name: Commit public repair
+      - name: Commit Preview repair
         shell: bash
         run: |
           set -euo pipefail
@@ -108,5 +105,5 @@ jobs:
           git checkout HEAD -- .github/workflows
           git add -A
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'fix: reject stale market data on one backend API [single-api-applied]'
+          git commit -m 'fix(private): reject stale market data on one backend API [single-api-applied]'
           git push origin "HEAD:${{ github.event.pull_request.head.ref }}"

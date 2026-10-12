@@ -1,3 +1,5 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -93,7 +95,7 @@ test('overlapping Mapping and Scalper requests abort stale work', async () => {
 });
 
 test('Mapping header is one fixed-size dot and legacy header fields stay hidden', async () => {
-  const html = await read('app/src/main/assets/apps/mapping/index.html');
+  const html = await read('app/src/main/assets/apps/mapping/legacy-index.html');
   const css = await read('app/src/main/assets/apps/mapping/css/style.css');
   const mappingCss = await read('app/src/main/assets/apps/mapping/css/mapping-v2.css');
   const live = await read('app/src/main/assets/apps/mapping/js/mapping-live-consistency-v1.js');
@@ -117,7 +119,7 @@ test('Mapping header is one fixed-size dot and legacy header fields stay hidden'
   assert.doesNotMatch(html, /id="top-wib"|id="top-wita"/);
 });
 
-test('Scalper backend persists entry before lifecycle evaluation and uses optimistic state writes', async () => {
+test('retired Scalper lifecycle stays in the archive while active server publishes context', async () => {
   const engine = await read('supabase/functions/scalper-engine/index.ts');
   const signals = await read('supabase/functions/scalper-engine/signals.mjs');
   const drivers = await read('supabase/functions/scalper-engine/drivers.mjs');
@@ -125,11 +127,9 @@ test('Scalper backend persists entry before lifecycle evaluation and uses optimi
   const lifecycle = await read('supabase/functions/scalper-engine/lifecycle.mjs');
   const api = await read('supabase/functions/scalper-setups/index.ts');
 
-  assert.match(engine, /activateCandidate\(setup,nextOpen\)/);
-  assert.match(engine, /revision:\s*`eq\.\$\{expectedRevision\}`/);
-  assert.match(engine, /updated_at:\s*`eq\.\$\{expected\.updated_at\}`/);
-  assert.match(engine, /status:\s*`eq\.\$\{expected\.status\}`/);
-  assert.match(engine, /if\s*\(\s*!saved\s*\)\s*continue/);
+  assert.match(engine, /buildMarketContext/);
+  assert.doesNotMatch(engine, /activateCandidate\(setup,nextOpen\)|evaluateScalperCandidates/);
+  assert.match(engine, /amyfx_market_context_events/);
   assert.match(signals, /detectMultiDriverCandidates/);
   assert.match(drivers, /stop_basis_label:'Structural Invalidation \+ ATR Buffer'/);
   assert.match(drivers, /buffer_atr:0\.18/);
@@ -140,4 +140,7 @@ test('Scalper backend persists entry before lifecycle evaluation and uses optimi
   assert.match(api, /lifecycleSequence/);
   assert.match(api, /sourceCandleTimestamp/);
   assert.match(api, /stopBasis/);
+  assert.match(api, /mode: "market_context"/);
+  assert.match(api, /engine_version=eq\.\$\{SIX_ENGINE_VERSION\}/);
+  assert.match(api, /WAITING_TRIGGER,WAITING_NEXT_OPEN,ACTIVE,BE_ACTIVE/);
 });

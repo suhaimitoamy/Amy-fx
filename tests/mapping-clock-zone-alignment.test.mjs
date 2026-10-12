@@ -1,3 +1,5 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -8,7 +10,7 @@ const zonesUrl = new URL('../app/src/main/assets/apps/mapping/js/zones/indicator
 const zoneUiUrl = new URL('../app/src/main/assets/apps/mapping/js/mapping-zone-sync.js', import.meta.url);
 const clockUrl = new URL('../app/src/main/assets/apps/mapping/js/clock-sync.js', import.meta.url);
 const renderUrl = new URL('../app/src/main/assets/apps/mapping/js/ui/ui-render.js', import.meta.url);
-const indexUrl = new URL('../app/src/main/assets/apps/mapping/index.html', import.meta.url);
+const indexUrl = new URL('../app/src/main/assets/apps/mapping/legacy-index.html', import.meta.url);
 
 const source = readFileSync(zonesUrl, 'utf8');
 const zones = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
@@ -96,11 +98,13 @@ test('Order Block display adapter uses validated body zone and keeps it availabl
   assert.equal(zones.zoneLiveStatus(bearish, 90), 'BELUM RETEST · DI ATAS HARGA');
 });
 
-test('zone UI uses nearest active zones instead of requiring live price inside zone', () => {
+test('zone adapter remains an execution-only consumer and does not patch Mapping from live price', () => {
   const ui = readFileSync(zoneUiUrl, 'utf8');
-  assert.match(ui, /nearestOrderBlocks/);
-  assert.match(ui, /nearestFairValueGaps/);
-  assert.match(ui, /Belum ada zona yang lolos filter konfirmasi Amy Concept Engine/);
-  assert.match(ui, /AMY_CONCEPT_ENGINE_V3/);
-  assert.doesNotMatch(ui, /price\s*>=\s*[^\n]+bottom\s*&&\s*price\s*<=\s*[^\n]+top/);
+  assert.match(ui, /\.mappingZones/);
+  assert.match(ui, /AMY_CONCEPT_ENGINE_V3_EXECUTION_SUPPORT/);
+  assert.match(ui, /directionalAuthority:\s*false/);
+  assert.match(ui, /mayOverrideMapping:\s*false/);
+  assert.doesNotMatch(ui, /setInterval\s*\(/);
+  assert.doesNotMatch(ui, /state\.price/);
+  assert.doesNotMatch(ui, /innerHTML\s*=/);
 });

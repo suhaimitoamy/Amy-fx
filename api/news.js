@@ -31,10 +31,14 @@ export default async function handler(req, res) {
       const central = await fetchJsonWithTimeout(
         `${SUPABASE_NEWS_FEED}?limit=${limit}`,
         { headers: { Accept: 'application/json' } },
-        9000
+        1500
       );
 
       if (Array.isArray(central?.news) && central.news.length > 0) {
+        central.news = await Promise.all(
+          central.news.map(normalizeNewsTranslation)
+        );
+
         res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
         return res.status(200).json({
           ...central,
@@ -48,7 +52,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const fallback = await scrapeTelegram(limit, !telegramOnly);
+    const fallback = await scrapeTelegram(limit, true);
     res.setHeader('Cache-Control', telegramOnly
       ? 'no-store'
       : 's-maxage=30, stale-while-revalidate=60');
@@ -120,13 +124,34 @@ async function translateToId(text) {
   try {
     const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=id&dt=t&q=${encodeURIComponent(text)}`;
     const response = await fetchWithTimeout(url, {}, 8000);
-    if (!response.ok) return text;
+    if (!response.ok) return '';
     const data = await response.json();
-    if (!Array.isArray(data?.[0])) return text;
-    return data[0].map(chunk => chunk?.[0] || '').join('').trim() || text;
+    if (!Array.isArray(data?.[0])) return '';
+    const translated = data[0].map(chunk => chunk?.[0] || '').join('').trim();
+    return translated === text.trim() && data[2] !== 'id' ? '' : translated;
   } catch (_) {
-    return text;
+    return '';
   }
+}
+
+const TRANSLATION_UNAVAILABLE = 'Terjemahan Bahasa Indonesia belum tersedia. Buka sumber untuk membaca berita asli.';
+
+async function normalizeNewsTranslation(item) {
+  if (!item || typeof item !== 'object') return item;
+  const text = typeof item.text === 'string' ? item.text : '';
+  const original = typeof item.textOriginal === 'string' && item.textOriginal.trim()
+    ? item.textOriginal : text;
+  if (!original.trim()) return { ...item, text: TRANSLATION_UNAVAILABLE };
+
+  const needsTranslation = !text.trim() || text.trim() === original.trim()
+    || text.trim() === TRANSLATION_UNAVAILABLE;
+  return {
+    ...item,
+    textOriginal: original,
+    text: needsTranslation
+      ? (await translateToId(original)) || TRANSLATION_UNAVAILABLE
+      : text
+  };
 }
 
 async function scrapeTelegram(limit, shouldTranslate = true) {
@@ -139,17 +164,28 @@ async function scrapeTelegram(limit, shouldTranslate = true) {
     impact: getNewsImpact(item.text),
     relevant: isRelevantNews(item.text),
     textOriginal: item.text,
-    text: shouldTranslate ? await translateToId(item.text) : item.text
+    text: shouldTranslate ? (await translateToId(item.text)) || TRANSLATION_UNAVAILABLE : item.text
   })));
 }
 
 function extractPosts(html) {
   const posts = [];
-  const msgRegex = /data-post="SM_News_24h\/(\d+)"[\s\S]*?<div class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>\s*(?:<div class="tgme_widget_message_author|<div class="tgme_widget_message_footer)/gi;
+  const postPattern = /data-post="SM_News_24h\/(\d+)"/g;
+  const indices = [];
+  let m;
+  while ((m = postPattern.exec(html)) !== null) {
+    indices.push({ id: m[1], index: m.index });
+  }
 
-  let match;
-  while ((match = msgRegex.exec(html)) !== null) {
-    const text = match[2]
+  for (let i = 0; i < indices.length; i++) {
+    const current = indices[i];
+    const nextIndex = (i + 1 < indices.length) ? indices[i + 1].index : html.length;
+    const postChunk = html.slice(current.index, nextIndex);
+
+    const textMatch = postChunk.match(/<div class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
+    if (!textMatch) continue;
+
+    const rawText = textMatch[1]
       .replace(/<br\s*\/?>/gi, '\n')
       .replace(/<[^>]+>/g, '')
       .replace(/&amp;/g, '&')
@@ -161,23 +197,19 @@ function extractPosts(html) {
       .replace(/\n{3,}/g, '\n\n')
       .trim();
 
-    if (text.length < 20) continue;
+    if (rawText.length < 20) continue;
+
+    const timeMatch = postChunk.match(/datetime="([^"]+)"/i);
+    const time = timeMatch ? timeMatch[1] : '';
+
     posts.push({
-      id: match[1],
-      text,
-      link: `https://telegram.me/${TELEGRAM_SOURCE}/${match[1]}`,
-      time: extractTime(html, match.index, msgRegex.lastIndex)
+      id: current.id,
+      text: rawText,
+      link: `https://telegram.me/${TELEGRAM_SOURCE}/${current.id}`,
+      time
     });
   }
   return posts;
-}
-
-function extractTime(html, start, end) {
-  const block = html.slice(start, Math.min(html.length, end + 1600));
-  const current = block.match(/datetime="([^"]+)"/);
-  if (current) return current[1];
-  const before = html.slice(Math.max(0, start - 700), start);
-  return before.match(/datetime="([^"]+)"/)?.[1] || '';
 }
 
 function filterGold(posts, isRelevantNews) {

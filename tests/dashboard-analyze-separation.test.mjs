@@ -16,35 +16,31 @@ function section(startMarker, endMarker) {
 test('Dashboard and Analyze use separate render functions', () => {
   assert.match(source, /function renderDashboardCard\(/);
   assert.match(source, /function renderAnalyzeCard\(/);
-  assert.match(source, /tab === 'Dashboard'[\s\S]*renderDashboardCard/);
-  assert.match(source, /renderAnalyzeCard\(result, validated, regime, router, liquidity\)/);
+  assert.match(source, /tab === 'Dashboard'\s*\? renderDashboardCard\(result\)\s*:\s*renderAnalyzeCard\(result\)/);
 });
 
 test('Dashboard contains only the three primary market outputs', () => {
   const dashboard = section('function renderDashboardCard(', 'function renderAnalyzeCard(');
-  assert.match(dashboard, /AMY FX · MARKET INTELLIGENCE/);
-  assert.match(dashboard, /Kondisi market saat ini/);
-  assert.match(dashboard, /marketOverviewMarkup\(validated, liquidity\)/);
-  assert.match(dashboard, /M15 CANDLE TERTUTUP/);
-  assert.doesNotMatch(dashboard, /Konteks Market Lanjutan/);
-  assert.doesNotMatch(dashboard, /Performa Historis Model/);
-  assert.doesNotMatch(dashboard, /strategy-engine-grid/);
-  assert.doesNotMatch(dashboard, /regime-probability-list/);
+  assert.match(dashboard, /Mapping candle tertutup/);
+  assert.match(dashboard, /marketOverviewMarkup\(d\)/);
+  assert.match(dashboard, /CLOSED CANDLE/);
+  assert.doesNotMatch(dashboard, /contextMarkup\(d\)/);
+  assert.doesNotMatch(dashboard, /freshMarkup\(d\)/);
+  assert.doesNotMatch(dashboard, /predictiveMarkup\(d\)/);
+  assert.doesNotMatch(dashboard, /confidence|probability/i);
 });
 
-test('Analyze presents closed-candle context and advanced scenario details without post-render historical blocks', () => {
-  const helper = section('function marketOverviewMarkup(', 'function targetMarkup(');
+test('Analyze separates D descriptive, fresh evidence, and predictive signals', () => {
+  const helper = section('function marketOverviewMarkup(', 'function renderDashboardCard(');
   const analyze = section('function renderAnalyzeCard(', 'function renderCard(');
-  assert.match(helper, /RINGKASAN MARKET/);
-  assert.match(helper, /Sumber candle M15 yang sudah close/);
-  assert.match(analyze, /Konteks Market Lanjutan/);
-  assert.match(analyze, /Target & Skenario Harga/);
-  assert.match(analyze, /professional-disclosure/);
-  assert.match(analyze, /scenarioMarkup\(result, router\)/);
-  assert.match(analyze, /bukan pada setiap tick harga live/);
-  assert.doesNotMatch(analyze, /RELIABILITAS HISTORIS/);
-  assert.doesNotMatch(analyze, /Performa Historis Model/);
-  assert.doesNotMatch(analyze, /<details class="professional-disclosure" open>/);
+  assert.match(helper, /Final Bias/);
+  assert.match(helper, /d\.predictive\.nextMove\.signal/);
+  assert.match(helper, /Dealing Range/);
+  assert.match(analyze, /contextMarkup\(d\)/);
+  assert.match(analyze, /freshMarkup\(d\)/);
+  assert.match(analyze, /predictiveMarkup\(d\)/);
+  assert.match(analyze, /execution.status/);
+  assert.doesNotMatch(analyze, /accuracy|confidence|probability/i);
 });
 
 test('Legacy focus and detail modes are not applied by Market Intent', () => {

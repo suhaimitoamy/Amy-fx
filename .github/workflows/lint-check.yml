@@ -23,6 +23,8 @@ concurrency:
 
 jobs:
   lint:
+    # One explicitly requested no-test release; other commits retain lint.
+    if: ${{ !contains(github.event.head_commit.message, '[release329-no-tests]') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -38,8 +40,11 @@ jobs:
           java-version: "17"
           cache: gradle
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4.0.4
+        with:
+          # SDK 'tools' package was removed upstream; only platform-tools is needed.
+          packages: platform-tools
 
       - name: Install Android SDK 35
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"

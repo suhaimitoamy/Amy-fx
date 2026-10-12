@@ -1,3 +1,4 @@
+import { REBUILD_VERSION, rebuiltGeometry } from './rebuilt-drivers.mjs';
 import { normalizeCandles } from './candles.mjs';
 
 const EPSILON = 1e-9;
@@ -17,6 +18,7 @@ const DRIVER_IDS = Object.freeze([
   'RETEST_BOS',
   'RANGE_EXPANSION',
   'AMD',
+  'DISCIPLINE_SCALPER',
 ]);
 
 const DEFAULT_DRIVER_SWITCHES = Object.freeze(Object.fromEntries(DRIVER_IDS.map(id => [id, true])));
@@ -309,6 +311,22 @@ export function evaluatePatternGate(candidate, rows, suppliedConfig = DEFAULT_PA
   }
   if (config.driver_enabled?.[driverId] !== true) {
     return { candidate: null, telemetry: telemetry(candidate, false, 'DRIVER_KILL_SWITCH', [`driver_enabled.${driverId}=false`], null, config) };
+  }
+
+  if (candidate?.quality?.rebuild_version === REBUILD_VERSION) {
+    const geometry = rebuiltGeometry(candidate);
+    const valid = candidate.quality.structural_confirmation === true && Boolean(geometry);
+    const accepted = valid ? { ...candidate, buffer_atr: .18, quality: { ...candidate.quality, pattern_gate: REBUILD_VERSION, reward_r_at_signal: geometry.reward_r } } : null;
+    return { candidate: accepted, telemetry: telemetry(candidate, valid, REBUILD_VERSION, valid ? [] : ['structural_risk_reward_invalid'], geometry, config) };
+  }
+
+  if (driverId === 'DISCIPLINE_SCALPER') {
+    const q=candidate.quality||{};
+    const entry=Number(q.planned_entry_price),target=Number(q.liquidity_target);
+    const stop=Number(candidate.stop_reference)+(candidate.direction==='BUY'?-1:1)*Number(candidate.atr_at_signal)*.18;
+    const valid=q.discipline_detector_passed===true&&['H4','H1','M15','M5'].includes(candidate.timeframe)&&Number.isFinite(stop)&&Number.isFinite(target)&&(candidate.direction==='BUY'?stop<entry&&target>entry:stop>entry&&target<entry);
+    const accepted=valid?{...candidate,buffer_atr:.18,quality:{...q,pattern_gate:'DISCIPLINE_RULES_V1',lifecycle_policy:'DISCIPLINE_LIQUIDITY_V1',break_even_enabled:false,max_hold_seconds:86400}}:null;
+    return {candidate:accepted,telemetry:telemetry(candidate,valid,'DISCIPLINE_RULES_V1',valid?[]:['invalid_liquidity_geometry'],null,config)};
   }
 
   const sourceOpenTime = candidate?.quality?.feature_candle_open_time || candidate?.signal_candle_open_time;

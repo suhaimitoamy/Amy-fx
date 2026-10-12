@@ -98,14 +98,14 @@ async function loadRuntime(runtime) {
   vm.runInNewContext(source, runtime.context, { filename: SOURCE_URL.pathname });
 }
 
-test('runtime replaces forecast percentage with an honest score label', async () => {
+test('runtime removes forecast percentage instead of presenting it as live probability', async () => {
   const runtime = buildRuntime();
   await loadRuntime(runtime);
 
   const item = runtime.window.AmyFXHonestyAudit.capture();
   assert.equal(
     runtime.window.state.result.directionDecision.status,
-    'BULLISH · VALIDATED FORECAST · SCORE 60/100'
+    'BULLISH · AMY-SMC-D · HISTORICAL REFERENCE ONLY'
   );
   assert.equal(item.directionDecision.status.includes('%'), false);
   assert.equal(

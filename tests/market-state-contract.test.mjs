@@ -1,3 +1,5 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
@@ -26,7 +28,7 @@ const hotfixSource = readFileSync(sourcePath(
   'amyfx-blueprint-hotfix-v1.js'
 ), 'utf8');
 const mappingIndexSource = readFileSync(sourcePath(
-  'app/src/main/assets/apps/mapping/index.html',
+  'app/src/main/assets/apps/mapping/legacy-index.html',
   'mapping-index.html'
 ), 'utf8');
 const intelIndexSource = readFileSync(sourcePath(
@@ -73,7 +75,7 @@ function createRuntime({ candleAt = Date.now() - 60_000 } = {}) {
     localStorage,
     sessionStorage,
     navigator: { onLine: true },
-    location: { pathname: '/apps/mapping/index.html' },
+    location: { pathname: '/apps/mapping/legacy-index.html' },
     document: { body: null },
     CustomEvent: class CustomEvent {
       constructor(type, init = {}) { this.type = type; this.detail = init.detail; }
@@ -239,7 +241,7 @@ test('Blueprint duplicate market listeners are registered only once', async () =
   };
   const sandbox = {
     window, document,
-    location: { pathname: '/apps/mapping/index.html' },
+    location: { pathname: '/apps/mapping/legacy-index.html' },
     localStorage: storage(),
     sessionStorage: storage(),
     CustomEvent: class {},
@@ -296,7 +298,7 @@ test('Blueprint context exposes separate market timestamps and canonical conflic
   };
   const sandbox = {
     window, document,
-    location: { pathname: '/apps/mapping/index.html' },
+    location: { pathname: '/apps/mapping/legacy-index.html' },
     localStorage: storage(),
     sessionStorage: storage(),
     CustomEvent: class {},

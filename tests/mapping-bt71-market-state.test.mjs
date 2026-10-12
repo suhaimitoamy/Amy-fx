@@ -68,13 +68,14 @@ test('BT7.1 invalidates displayed direction after protected swing breaks', () =>
   assert.equal(result.marketState.protectedSwingIntact, false);
 });
 
-test('concept analyzer wires objective Concept Structure into BT7.1 reconciliation', () => {
+test('concept analyzer no longer lets BT7.1 reconcile or override Amy-SMC-D Mapping', () => {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const source = fs.readFileSync(
     path.join(root, 'app/src/main/assets/apps/mapping/js/engine/concept-analyze.js'),
     'utf8'
   );
-  assert.match(source, /reconcileBt71MarketState/);
-  assert.match(source, /objectiveStructure:\s*marketConcepts\.structure/);
-  assert.match(source, /objectiveStructureSnapshot:\s*marketConcepts\.structureSnapshot/);
+  assert.doesNotMatch(source, /reconcileBt71MarketState/);
+  assert.match(source, /replayAmySmcD/);
+  assert.match(source, /mappingSource:\s*'AMY_SMC_D'/);
+  assert.match(source, /directionalAuthority:\s*true/);
 });

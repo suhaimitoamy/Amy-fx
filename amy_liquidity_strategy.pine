@@ -1,0 +1,173 @@
+//@version=5
+indicator("Amy Liquidity Sweep Strategy", overlay=true, max_lines_count=500, max_labels_count=500)
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STRATEGI: Liquidity Sweep + H4 Bias Filter
+// 
+// Entry Rules:
+//   - Monitor 4 level: PDH, PDL, Asia High, Asia Low
+//   - Sweep → reversal entry (sweep high = SHORT, sweep low = LONG)
+//   - Break → breakout entry (break high = LONG, break low = SHORT)
+//   - Filter: hanya entry searah H4 trend (close > EMA20 = bullish, close < EMA20 = bearish)
+//
+// SL/TP: $10/$10 (RR 1:1) - bisa diubah manual di alert/execution
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ───────────────────────────────────────────────────────────────────────────────
+// INPUTS
+// ───────────────────────────────────────────────────────────────────────────────
+
+// --- Liquidity Levels ---
+grpLevels = "Liquidity Levels"
+showPD = input.bool(true, "Show PDH/PDL", group=grpLevels)
+showAsia = input.bool(true, "Show Asia H/L", group=grpLevels)
+showDevAsia = input.bool(true, "Show Developing Asia H/L", group=grpLevels)
+pdColor = input.color(color.blue, "PDH/PDL Color", group=grpLevels)
+asiaColor = input.color(color.purple, "Asia H/L Color", group=grpLevels)
+devAsiaColor = input.color(color.gray, "Developing Asia Color", group=grpLevels)
+
+// --- Signals ---
+grpSignals = "Signals"
+showSweep = input.bool(true, "Show Sweep Signals", group=grpSignals)
+showBreak = input.bool(true, "Show Break Signals", group=grpSignals)
+showEntries = input.bool(true, "Show Entry Signals", group=grpSignals)
+
+// --- H4 Bias ---
+grpH4 = "H4 Bias"
+showH4 = input.bool(true, "Show H4 Bias Background", group=grpH4)
+h4BullColor = input.color(color.new(color.green, 92), "Bullish Background", group=grpH4)
+h4BearColor = input.color(color.new(color.red, 92), "Bearish Background", group=grpH4)
+h4EmaLen = input.int(20, "H4 EMA Length", minval=5, maxval=200, group=grpH4)
+
+// --- Asia Session (UTC) ---
+grpAsia = "Asia Session (UTC)"
+asiaStart = input.int(22, "Asia Start (UTC)", minval=0, maxval=23, group=grpAsia)
+asiaEnd = input.int(6, "Asia End (UTC)", minval=0, maxval=23, group=grpAsia)
+
+// --- Info Table ---
+grpTable = "Info Table"
+showInfoTable = input.bool(true, "Show Info Table", group=grpTable)
+
+// ───────────────────────────────────────────────────────────────────────────────
+// CALCULATIONS
+// ───────────────────────────────────────────────────────────────────────────────
+
+// --- Previous Day High/Low ---
+[pdh, pdl] = request.security(syminfo.tickerid, "D", [high[1], low[1]], lookahead=barmerge.lookahead_on)
+
+// --- H4 Trend (Close vs EMA20) ---
+[h4Close, h4Ema] = request.security(syminfo.tickerid, "240", [close, ta.ema(close, h4EmaLen)], lookahead=barmerge.lookahead_off)
+h4Bullish = h4Close > h4Ema
+h4Bearish = h4Close < h4Ema
+
+// --- Asia Session High/Low Tracking ---
+// Asia session: 22:00 UTC → 06:00 UTC (next day)
+var float asiaHigh = na
+var float asiaLow = na
+var bool asiaActive = false
+var float completedAsiaHigh = na
+var float completedAsiaLow = na
+
+isAsiaSession = (hour >= asiaStart) or (hour < asiaEnd)
+
+if isAsiaSession
+    if not asiaActive
+        asiaHigh := high
+        asiaLow := low
+        asiaActive := true
+    else
+        asiaHigh := math.max(asiaHigh, high)
+        asiaLow := math.min(asiaLow, low)
+else
+    if asiaActive
+        completedAsiaHigh := asiaHigh
+        completedAsiaLow := asiaLow
+        asiaActive := false
+
+// Reference levels (completed Asia session)
+ah = completedAsiaHigh
+al = completedAsiaLow
+
+// Developing levels (current Asia session)
+devAh = asiaActive ? asiaHigh : na
+devAl = asiaActive ? asiaLow : na
+
+// --- Sweep Detection ---
+// Sweep High: prev high >= level, current close < level
+sweepHigh = (high[1] >= pdh and close < pdh) or (high[1] >= ah and close < ah and not na(ah))
+// Sweep Low: prev low <= level, current close > level
+sweepLow = (low[1] <= pdl and close > pdl) or (low[1] <= al and close > al and not na(al))
+
+// --- Break Detection ---
+// Break High: close > level, prev close <= level
+breakHigh = (close > pdh and close[1] <= pdh) or (close > ah and close[1] <= ah and not na(ah))
+// Break Low: close < level, prev close >= level
+breakLow = (close < pdl and close[1] >= pdl) or (close < al and close[1] >= al and not na(al))
+
+// --- Entry Signals (H4 Bias Aligned) ---
+// LONG: Sweep Low (bullish H4) or Break High (bullish H4)
+longEntry = (sweepLow or breakHigh) and h4Bullish
+// SHORT: Sweep High (bearish H4) or Break Low (bearish H4)
+shortEntry = (sweepHigh or breakLow) and h4Bearish
+
+// ───────────────────────────────────────────────────────────────────────────────
+// PLOTTING
+// ───────────────────────────────────────────────────────────────────────────────
+
+// --- Liquidity Levels ---
+plot(showPD ? pdh : na, "PDH", color=pdColor, linewidth=2)
+plot(showPD ? pdl : na, "PDL", color=pdColor, linewidth=2)
+plot(showAsia ? ah : na, "Asia High", color=asiaColor, linewidth=2)
+plot(showAsia ? al : na, "Asia Low", color=asiaColor, linewidth=2)
+plot(showDevAsia ? devAh : na, "Dev Asia High", color=devAsiaColor, linewidth=1)
+plot(showDevAsia ? devAl : na, "Dev Asia Low", color=devAsiaColor, linewidth=1)
+
+// --- H4 Bias Background ---
+bgcolor(showH4 ? (h4Bullish ? h4BullColor : h4BearColor) : na, title="H4 Bias")
+
+// --- Sweep Signals ---
+plotshape(showSweep and sweepHigh, "Sweep High", shape.triangledown, location.abovebar, color.new(color.red, 0), size=size.small)
+plotshape(showSweep and sweepLow, "Sweep Low", shape.triangleup, location.belowbar, color.new(color.green, 0), size=size.small)
+
+// --- Break Signals ---
+plotshape(showBreak and breakHigh, "Break High", shape.circle, location.abovebar, color.new(color.teal, 0), size=size.tiny)
+plotshape(showBreak and breakLow, "Break Low", shape.circle, location.belowbar, color.new(color.maroon, 0), size=size.tiny)
+
+// --- Entry Signals ---
+plotshape(showEntries and longEntry, "Long Entry", shape.arrowup, location.belowbar, color.new(color.green, 0), size=size.normal, text="LONG")
+plotshape(showEntries and shortEntry, "Short Entry", shape.arrowdown, location.abovebar, color.new(color.red, 0), size=size.normal, text="SHORT")
+
+// ───────────────────────────────────────────────────────────────────────────────
+// INFO TABLE
+// ───────────────────────────────────────────────────────────────────────────────
+
+if showInfoTable and barstate.islast
+    var table infoTable = table.new(position.top_right, 2, 7, bgcolor=color.new(color.black, 80), border_width=1)
+    
+    h4Status = h4Bullish ? "🟢 BULLISH" : "🔴 BEARISH"
+    
+    table.cell(infoTable, 0, 0, "Level", text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 0, "Price", text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 0, 1, "PDH", text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 1, str.tostring(pdh, "#.##"), text_color=color.blue, text_size=size.small)
+    table.cell(infoTable, 0, 2, "PDL", text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 2, str.tostring(pdl, "#.##"), text_color=color.blue, text_size=size.small)
+    table.cell(infoTable, 0, 3, "Asia High", text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 3, str.tostring(ah, "#.##"), text_color=color.purple, text_size=size.small)
+    table.cell(infoTable, 0, 4, "Asia Low", text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 4, str.tostring(al, "#.##"), text_color=color.purple, text_size=size.small)
+    table.cell(infoTable, 0, 5, "H4 Trend", text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 5, h4Status, text_color=h4Bullish ? color.green : color.red, text_size=size.small)
+    table.cell(infoTable, 0, 6, "Price", text_color=color.white, text_size=size.small)
+    table.cell(infoTable, 1, 6, str.tostring(close, "#.##"), text_color=color.yellow, text_size=size.small)
+
+// ───────────────────────────────────────────────────────────────────────────────
+// ALERTS
+// ───────────────────────────────────────────────────────────────────────────────
+
+alertcondition(longEntry, "Long Entry", "Amy Strategy: LONG Entry Signal")
+alertcondition(shortEntry, "Short Entry", "Amy Strategy: SHORT Entry Signal")
+alertcondition(sweepHigh, "Sweep High", "Amy Strategy: Liquidity Sweep High")
+alertcondition(sweepLow, "Sweep Low", "Amy Strategy: Liquidity Sweep Low")
+alertcondition(breakHigh, "Break High", "Amy Strategy: Break High")
+alertcondition(breakLow, "Break Low", "Amy Strategy: Break Low")

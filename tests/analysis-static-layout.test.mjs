@@ -19,12 +19,15 @@ const updateManifest = JSON.parse(fs.readFileSync(
   'utf8'
 ));
 
-test('Analyze disclosures are forced open and cannot toggle closed', () => {
+test('Analyze shell stays static while D detail disclosures remain compact and interactive', () => {
   assert.match(stability, /details\.open = true/);
   assert.match(stability, /details\.removeAttribute\('name'\)/);
   assert.match(stability, /event\.preventDefault\(\)/);
   assert.match(stability, /if \(!details\.open\) details\.open = true/);
   assert.match(stability, /pointer-events: none/);
+  assert.match(stability, /isInteractiveMappingDisclosure/);
+  assert.match(stability, /matches\?\.\('\.professional-disclosure'\)/);
+  assert.match(stability, /if \(isInteractiveMappingDisclosure\(details\)\) return;/);
 });
 
 test('Analyze DOM is never reordered', () => {
@@ -43,19 +46,28 @@ test('Observers do not watch every nested mutation or every click', () => {
   assert.doesNotMatch(panels, /amyfx:scalper-state-change/);
 });
 
-test('production source identity is never behind the activated update manifest', () => {
-  const match = appVersion.match(/name:\s*'(\d+\.\d+\.\d+)'\s*,\s*code:\s*(\d+)/);
-  assert.ok(match, 'Production source identity must be readable');
+test('Pro source identity is never behind the activated Pro update manifest', () => {
+  const match = appVersion.match(/name:\s*'(2\.0\.0-pro\.(\d+))'\s*,\s*code:\s*(95\d{4})/);
+  assert.ok(match, 'Pro source identity must be readable');
 
-  const [, sourceName, sourceCodeText] = match;
+  const [, sourceName, sourceSequenceText, sourceCodeText] = match;
+  const sourceSequence = Number(sourceSequenceText);
   const sourceCode = Number(sourceCodeText);
   const publishedCode = Number(updateManifest.latest_version_code);
   const publishedName = String(updateManifest.latest_version_name || '');
+  const publishedMatch = publishedName.match(/^2\.0\.0-pro\.(\d+)$/);
 
-  assert.equal(sourceName, '2.3.1');
-  assert.equal(sourceCode, 59);
-  assert.ok(sourceCode >= publishedCode, 'Production source must not be older than update.json');
-  assert.ok(sourceCode - publishedCode <= 1, 'Pending source may be at most one version ahead of the active APK');
+  assert.ok(publishedMatch, 'Activated Pro manifest identity must be readable');
+  const publishedSequence = Number(publishedMatch[1]);
 
-  if (sourceCode === publishedCode) assert.equal(publishedName, sourceName);
+  assert.equal(sourceCode, 950000 + sourceSequence);
+  assert.equal(publishedCode, 950000 + publishedSequence);
+  assert.ok(sourceCode >= publishedCode, 'Pro source must not be older than the Pro update manifest');
+
+  if (sourceCode === publishedCode) {
+    assert.equal(sourceName, publishedName);
+  } else {
+    // Failed release candidates may be skipped; never publish a fake intermediate manifest.
+    assert.ok(sourceSequence > publishedSequence, 'Pending release must advance the published sequence');
+  }
 });

@@ -1,3 +1,5 @@
+// Legacy Mapping contract retained for the archived Pro336 page.
+// Production ICT workspace is covered by ict-workspace.test.mjs.
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -81,7 +83,7 @@ function repairRuntime() {
     document,
     localStorage,
     sessionStorage: storage(),
-    location: { pathname: "/apps/mapping/index.html" },
+    location: { pathname: "/apps/mapping/legacy-index.html" },
     CustomEvent: class CustomEvent { constructor(type, options = {}) { this.type = type; this.detail = options.detail; } },
     Intl,
     Date,
@@ -165,7 +167,7 @@ function handlerRuntime() {
   const sandbox = {
     window,
     document,
-    location: { pathname: "/apps/mapping/index.html" },
+    location: { pathname: "/apps/mapping/legacy-index.html" },
     CustomEvent: class CustomEvent { constructor(type, options = {}) { this.type = type; this.detail = options.detail; } },
     MutationObserver: undefined,
     URL,

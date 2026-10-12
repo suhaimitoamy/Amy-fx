@@ -6,12 +6,16 @@ function candle(time, open, high, low, close, seconds = 900) {
   return { open_time: time, close_time: time + seconds, open, high, low, close, is_closed: true };
 }
 
-test('registry contains ten independent BT6/BT6.1 plus AMD drivers and no IFVG', () => {
-  assert.equal(DRIVER_REGISTRY.length, 10);
+test('registry contains thirteen active Scalper drivers including ERR and SMR and no IFVG', () => {
+  assert.equal(DRIVER_REGISTRY.length, 13);
   assert.equal(DRIVER_REGISTRY.some(driver => driver.id.includes('IFVG')), false);
   assert.deepEqual(DRIVER_REGISTRY.find(driver => driver.id === 'FVG').timeframes, ['H4']);
   assert.deepEqual(DRIVER_REGISTRY.find(driver => driver.id === 'FALSE_BREAKOUT').timeframes, ['M15', 'H1', 'H4']);
   assert.deepEqual(DRIVER_REGISTRY.find(driver => driver.id === 'AMD').timeframes, ['M30', 'H1']);
+  assert.deepEqual(DRIVER_REGISTRY.find(driver => driver.id === 'EXPANSION_RANGE_REENTRY').timeframes, ['M15']);
+  assert.equal(DRIVER_REGISTRY.find(driver => driver.id === 'EXPANSION_RANGE_REENTRY').name, 'Expansion Range Re-entry');
+  assert.deepEqual(DRIVER_REGISTRY.find(driver => driver.id === 'SMR_FIRST_RETEST').timeframes, ['M5']);
+  assert.equal(DRIVER_REGISTRY.find(driver => driver.id === 'SMR_FIRST_RETEST').name, 'SMR / First Retest');
 });
 
 test('CRT H4 creates deterministic candidate from one-sided sweep reclaim', () => {
