@@ -1,5 +1,14 @@
 # Technical Decisions
 
+## 2026-10-12 — Peralihan Fokus Penuh ke Amy FX sebagai Aplikasi Pribadi Pengguna
+1. **Latar Belakang & Keputusan Pengguna:**
+   - Pengguna menetapkan bahwa mulai saat ini fokus pengembangan harian, koding, fitur baru, dan rilis aplikasi beralih 100% ke repositori pribadi **`Amy-fx`** (`/root/Amy-fx` dan `/sdcard/Download/Amy-fx`).
+   - `Amy-fx-pro` (`/root/Amy-fx-pro`) dipertahankan sebagai basis referensi / upstream template.
+2. **Implementasi & Paritas:**
+   - Seluruh kode dari Pro telah disalin 100% ke `Amy-fx` (Cockpit Mapping, Chart Gold ICT, Candle Replay multi-timeframe, 36 modul Academy, dan Vercel serverless).
+   - Keystore penandatanganan rilis permanen (`AMYFX_PRO_KEYSTORE_BASE64`) telah dikonfigurasi pada repositori `suhaimitoamy/Amy-fx` dan build rilis APK (`Amy FX Pro 2.0.0-pro.413`) telah berhasil diterbitkan via GitHub Actions.
+   - Server web lokal `tools/serve-local.mjs` di `Amy-fx` siap digunakan untuk pengujian cepat.
+
 ## 2026-10-12 — Neural Link Chat Auto-Healing, Timeout Shield & Complete Office Audit (Pro 425)
 
 1. **Akar Masalah "Neural Link Chat Error / Tidak Ada Chat":**
