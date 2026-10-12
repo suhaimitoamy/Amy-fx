@@ -216,7 +216,7 @@ async function getLocalCalendarData() {
   return localCalendarCache || [];
 }
 
-const server = http.createServer(async (req, res) => {
+const requestHandler = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', '*');
@@ -648,11 +648,13 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end('Server Error: ' + err.message);
   }
-});
+};
+
+const server = http.createServer(requestHandler);
 
 server.listen(PORT, HOST, () => {
   console.log('====================================================');
-  console.log('  AMY FX PRO — LOCAL WEB SERVER AKTIF');
+  console.log('  AMY FX — LOCAL WEB SERVER AKTIF');
   console.log('====================================================');
   console.log(`  > Akses Langsung di Browser:`);
   console.log(`    👉 http://localhost:${PORT}`);
@@ -665,4 +667,14 @@ server.listen(PORT, HOST, () => {
   console.log(`    - Market Intel     : http://localhost:${PORT}/apps/market-intel/`);
   console.log(`    - Academy          : http://localhost:${PORT}/apps/academy/`);
   console.log('====================================================');
+
+  const altPort = PORT === 8080 ? 8081 : 8080;
+  const altServer = http.createServer(requestHandler);
+  altServer.on('error', () => {});
+  altServer.listen(altPort, HOST, () => {
+    console.log(`  > Akses Mirror (Port Alternatif):`);
+    console.log(`    👉 http://localhost:${altPort}`);
+    console.log('====================================================');
+  });
 });
+
