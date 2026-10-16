@@ -113,16 +113,16 @@ test('issue-5 audit remains available in documentation but not injected into liv
   assert.doesNotMatch(marketIntent, /Akurasi arah close historis/);
 });
 
-test('source version and updater stay on the Amy FX Pro channel', () => {
-  const identity = appVersion.match(/name: '(2\.0\.0-pro\.(\d+))', code: (95\d{4})/);
-  assert.ok(identity, 'Pro source identity is missing');
+test('source version and updater stay on the Amy FX channel', () => {
+  const identity = appVersion.match(/name: '(2\.0\.0-amyfx\.(\d+))', code: (95\d{4})/);
+  assert.ok(identity, 'Amy FX source identity is missing');
   const [, sourceName, sourceSequence, sourceCode] = identity;
 
   assert.equal(Number(sourceCode), 950000 + Number(sourceSequence));
-  assert.match(appVersion, /Amy-fx-pro\/main\/update\.json/);
+  assert.match(appVersion, /Amy-fx\/main\/update\.json/);
   assert.ok(Number(sourceCode) >= Number(update.latest_version_code));
-  assert.match(sourceName, /^2\.0\.0-pro\.\d+$/);
+  assert.match(sourceName, /^2\.0\.0-amyfx\.\d+$/);
   assert.ok(update.latest_version_code >= 950000);
-  assert.match(update.latest_version_name, /^2\.0\.0-pro\.\d+$/);
-  assert.match(update.apk_url || update.downloadUrl || '', /AmyFX-Pro-latest\.apk/);
+  assert.match(update.latest_version_name, /^2\.0\.0-amyfx\.\d+$/);
+  assert.match(update.apk_url || update.downloadUrl || '', /AmyFX-latest\.apk/);
 });

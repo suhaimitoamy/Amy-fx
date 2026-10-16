@@ -172,7 +172,8 @@ export function renderLiveAssistant(amy,news=null,settings={},context=null){
   if(!root||!badgeEl||!primaryEl||!subEl)return;
 
   const ctx=context||(typeof window!=='undefined'?window.AmyMarketContext:null);
-  const isClosed=!isGoldMarketOpen()||ctx?.session==='PASAR TUTUP'||(typeof window!=='undefined'&&window.AmyMarketContext?.session==='PASAR TUTUP');
+  const marketOpen = typeof ctx?.isMarketOpen === 'boolean' ? ctx.isMarketOpen : isGoldMarketOpen(ctx?.nowSeconds);
+  const isClosed=!marketOpen||ctx?.session==='PASAR TUTUP'||(typeof window!=='undefined'&&window.AmyMarketContext?.session==='PASAR TUTUP');
 
   if(isClosed){
     badgeEl.textContent='PASAR TUTUP';

@@ -72,7 +72,7 @@ test('renderLiveAssistant produces non-generic SSL sweep notification with exact
     entry: { text: 'SSL swept di M5' }
   };
 
-  renderLiveAssistant(amy, null, { assistantNotif: true }, { session: 'LONDON' });
+  renderLiveAssistant(amy, null, { assistantNotif: true }, { session: 'LONDON', isMarketOpen: true });
 
   assert.equal(elements['assistant-badge'].textContent, 'SSL SWEPT');
   assert.equal(elements['assistant-primary-msg'].textContent, '💧 SSL @ 2642.50 Swept!');
@@ -108,7 +108,7 @@ test('detectLiquiditySweep and renderLiveAssistant handle BSL sweep', () => {
   assert.equal(sweep.extreme, 2667.10);
   assert.equal(sweep.side, 'SELL');
 
-  renderLiveAssistant(amy, null, { assistantNotif: true }, { session: 'LONDON' });
+  renderLiveAssistant(amy, null, { assistantNotif: true }, { session: 'LONDON', isMarketOpen: true });
 
   assert.equal(elements['assistant-badge'].textContent, 'BSL SWEPT');
   assert.equal(elements['assistant-primary-msg'].textContent, '💧 BSL @ 2665.30 Swept!');
