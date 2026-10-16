@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#070B12">
+  <title>Modul 05 — Ensiklopedia Lengkap PD Array (FVG, Order Block & Semua Block) — Amy FX Academy</title>
+  <script src="../../shared/amyfx-theme-controller.js" data-amyfx-theme-controller="v1"></script>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/glass.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+  <link rel="stylesheet" href="../../shared/amyfx-blueprint-v1.css" data-amyfx-blueprint-css="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-ui-tokens.css" data-amyfx-ui-tokens="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-theme.css" data-amyfx-theme="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-components.css" data-amyfx-components="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-ui-polish-pro348.css" data-amyfx-ui-polish="pro348">
+  <link rel="stylesheet" href="../../shared/amyfx-natural-ui-pro355.css" data-amyfx-natural-ui="pro355">
+  <link rel="stylesheet" href="../../shared/amyfx-obsidian-glass.css" data-amyfx-obsidian-glass="v1">
+</head>
+<body class="amyfx-module amyfx-module--academy">
+<script>requireLogin();</script>
+
+<header class="topbar hide-until-auth">
+  <nav class="nav">
+    <button type="button" class="nav-arrow-btn nav-arrow-left" id="amyfxNavBack" data-amyfx-nav="back" aria-label="Kembali ke Menu Utama">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+    </button>
+    <a class="brand" href="../index.html" style="white-space:nowrap; display:inline-flex; align-items:center; gap:10px;">
+      <span class="brand-mark" style="white-space:nowrap; width:auto; min-width:44px; height:38px; padding:0 10px; display:inline-flex; align-items:center; justify-content:center; font-weight:900; letter-spacing:0.04em;">AMY</span>
+      <span style="font-weight:800; letter-spacing:0.02em; white-space:nowrap;">Trading Academy</span>
+    </a>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button type="button" class="nav-arrow-btn nav-arrow-right" id="amyfxNavForward" data-amyfx-nav="forward" aria-label="Maju">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+    <div class="navlinks" id="navlinks">
+      <a href="../index.html">Beranda</a>
+      <a href="../daftar-materi.html">Daftar Materi</a>
+      <a href="../tentang.html">Tentang</a>
+      <a href="../glosarium/index.html">Glosarium</a>
+      <a href="../admin/index.html">Admin</a>
+    </div>
+  </nav>
+</header>
+<main class="container hide-until-auth">
+  <div class="breadcrumb" style="margin-bottom:16px;">
+    <a href="../index.html">Beranda</a> › <a href="../daftar-materi.html">Daftar Materi</a> › Modul 05
+  </div>
+
+  <section class="hero glass-hero" style="margin-bottom:28px;">
+    <div class="hero-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+        <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 12px; border-radius:99px; font-size:12px; font-weight:800; letter-spacing:1px;">
+          🧲 MODUL 05 • LIKUIDITAS & PD ARRAYS
+        </span>
+        <span style="font-size:13px; color:var(--muted,#94a3b8); font-weight:600;">
+          ⏱️ ~3 Jam • 🎓 4 SKS • 📄 30 Bab Lengkap
+        </span>
+      </div>
+      <h1 style="font-size:clamp(24px, 3.8vw, 36px); margin:8px 0 12px; color:#fff;">Modul 05 — Ensiklopedia Lengkap PD Array (FVG, Order Block & Semua Block)</h1>
+      <p style="color:var(--muted,#94a3b8); margin:0 0 20px; font-size:15px; max-width:720px; line-height:1.6;">
+        Penggabungan terbesar: seluruh materi FVG, Order Block, dan blok institusi dari 10+ modul disatukan secara komprehensif dari dasar hingga tingkat master.
+      </p>
+      <div style="display:flex; flex-wrap:wrap; gap:10px;">
+        <a class="btn primary sm" href="../daftar-materi.html">← Silabus Lengkap</a>
+        <a class="btn sm" href="../modul-04/index.html">← Modul 04</a>
+        <a class="btn sm" href="../modul-06/index.html">Modul 06 →</a>
+      </div>
+    </div>
+  </section>
+
+  <div id="submodulesList">
+    
+      <section class="panel" style="padding:24px; margin-bottom:28px; background:rgba(18,22,34,0.6); border:1px solid rgba(212,168,50,0.25); border-radius:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div>
+            <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 10px; border-radius:99px; font-size:11px; font-weight:800; letter-spacing:1px;">SUB-MODUL 5A</span>
+            <h3 style="margin:8px 0 4px; font-size:20px; color:#fff;">Masterclass Fair Value Gap (FVG) & Keluarga Imbalance</h3>
+            <div style="font-size:12px; color:#d4a832; font-weight:600;">Sumber: Bagian 05, 06, 09, 17, 20, 21, 24, 30 & 31</div>
+          </div>
+          <span style="font-size:12px; color:var(--muted,#888); background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:8px;">📄 13 Bab Pembahasan</span>
+        </div>
+        <p style="font-size:14px; color:var(--muted,#94a3b8); line-height:1.6; margin:8px 0 20px;">Konsep dasar BISI/SIBI, 3 syarat valid, Consequent Encroachment (50% CE), Inversion FVG (IFVG), Liquidity Void, Volume Imbalance (VI), BPR, NDOG/NWOG, hingga A+ FVG Setup.</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+          
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 01</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Anatomi 3-Candle Fair Value Gap (FVG): BISI dan SIBI</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Buyside Imbalance Sellside Inefficiency vs Sellside Imbalance Buyside Inefficiency.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-05-smart-money-concept/fair-value-gap.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 02</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Dua Fungsi FVG: Sebagai Magnet (DOL) vs Area Entry (POI)</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Kapan FVG ditargetkan untuk disentuh vs kapan FVG dijadikan tempat menekan order.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-06-ict-core/fvg-sebagai-entry-area.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 03</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Membedakan FVG Kuat vs FVG Lemah</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Filter mutu FVG: ukuran celah, kecepatan pergerakan, dan posisi dalam dealing range.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-17-fvg-masterclass/fvg-kuat-vs-fvg-lemah.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 04</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Consequent Encroachment (CE): 50% Titik Keseimbangan Kritis</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Garis pertahanan tengah FVG: jika ditembus bodi candle, narasi pengantaran harga berubah.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-17-fvg-masterclass/ce-consequent-encroachment.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 05</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Aturan Memilih: Entry Cepat, 50% CE, atau Full Fill</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Menentukan titik eksekusi optimal berdasarkan tingkat agresivitas momentum pasar.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-17-fvg-masterclass/ce-fvg-full-fill-dan-entry-cepat.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 06</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Inversion FVG (IFVG): Dinamika Kegagalan Menjadi Peluang</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Apa yang terjadi saat FVG ditembus bodi: FVG gagal bertransformasi menjadi support/resistance baru.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-20-idm-inducement-masterclass/inversion-fair-value-gap-ifvg-saat-support-menjadi-resistance.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 07</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Cara Kerja Inversion Entry Model</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Model eksekusi saat level ketidakseimbangan lama dihormati dari sisi sebaliknya.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-20-idm-inducement-masterclass/inversion-entry-model-memanfaatkan-kegagalan-menjadi-peluang.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 08</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Teknik Entry Presisi di IFVG</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Penempatan order limit, konfirmasi lilin pemicu, dan letak Stop Loss yang aman.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-21-ifvg-inversion-model/entry-di-ifvg.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 09</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Perbedaan FVG dengan Liquidity Void & Volume Imbalance</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Membedakan celah lilin tanpa transaksi (void) dengan celah antar bodi lilin (volume imbalance).</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-17-fvg-masterclass/liquidity-void-vs-volume-imbalance-vs-fvg.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 10</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Balanced Price Range (BPR): Tumpang Tindih Netralisasi Harga</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Dua FVG berlawanan arah yang saling tumpang tindih menciptakan zona netral kuat.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-31-ict-advanced-concepts/balanced-price-range-bpr.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 11</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">New Week Opening Gap (NWOG) & New Day Opening Gap (NDOG)</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Memanfaatkan celah pembukaan pasar harian dan mingguan sebagai POI dan DOL mandiri.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-31-ict-advanced-concepts/nwog-dan-ndog.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 12</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Standar Kelolosan Eksekusi: A+ FVG Setup</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Checklist lengkap kriteria penyaringan akhir sebelum mengeksekusi setup FVG.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-30-a-plus-setup-library/a-fvg-setup.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 13</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Standar Kelolosan Eksekusi: A+ IFVG Setup</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Checklist lengkap kriteria penyaringan akhir sebelum mengeksekusi setup Inversion FVG.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-30-a-plus-setup-library/a-ifvg-setup.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+        </div>
+      </section>
+
+      <section class="panel" style="padding:24px; margin-bottom:28px; background:rgba(18,22,34,0.6); border:1px solid rgba(212,168,50,0.25); border-radius:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div>
+            <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 10px; border-radius:99px; font-size:11px; font-weight:800; letter-spacing:1px;">SUB-MODUL 5B</span>
+            <h3 style="margin:8px 0 4px; font-size:20px; color:#fff;">Masterclass Order Block (OB) & Keluarga Block Lainnya</h3>
+            <div style="font-size:12px; color:#d4a832; font-weight:600;">Sumber: Bagian 05, 07, 09, 18, 19, 22, 30 & 31</div>
+          </div>
+          <span style="font-size:12px; color:var(--muted,#888); background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:8px;">📄 10 Bab Pembahasan</span>
+        </div>
+        <p style="font-size:14px; color:var(--muted,#94a3b8); line-height:1.6; margin:8px 0 20px;">Konsep dasar OB institusi, OB Valid vs Palsu, Body vs Wick, Mean Threshold (50%), Breaker Block, Mitigation Block, Rejection Block, Propulsion Block, Vacuum Block, dan Block Stacking.</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+          
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 01</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Order Block (OB) Institusional Sejati</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Bukan sekadar supply-demand ritel: jejak akumulasi pesanan bank sebelum ekspansi harga.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-05-smart-money-concept/order-block.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 02</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Ciri-Ciri OB Valid vs OB Palsu</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">4 syarat mutlak: didahului sweep likuiditas, memecah struktur, menyisakan FVG, dan berada di zona tepat.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-18-order-block-masterclass/ob-valid-vs-ob-palsu.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 03</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Menarik Garis di Bodi OB vs Ekor (Wick) OB</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Standar institusi: bodi candle memuat volume institusi riil sementara wick adalah reaksi likuiditas.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-18-order-block-masterclass/body-ob-vs-wick-ob.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 04</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Mean Threshold (MT): Titik Kritis 50% Bodi Order Block</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Batas toleransi maksimal: penutupan bodi lilin melewati 50% MT membatalkan keabsahan Order Block.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-18-order-block-masterclass/mean-threshold.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 05</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Breaker Block: Order Block Gagal yang Didahului Sweep</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Order block gagal yang telah memanen likuiditas sebelum ditembus: senjata pembalikan arah paling mematikan.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-05-smart-money-concept/breaker-block.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 06</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Mitigation Block: OB Gagal Tanpa Sapuan Likuiditas</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Karakteristik kegagalan swing (Failure Swing) saat harga tidak mampu menjangkau Old High/Low.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-05-smart-money-concept/mitigation-block.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 07</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Rejection Block: Ekor Panjang Penolakan Harga Ekstrem</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Area wick panjang di puncak/lembah tempat penolakan harga institusional terjadi.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-05-smart-money-concept/rejection-block.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 08</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Propulsion Block: Lilin Pendorong Re-akumulasi</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Order block yang masuk menguji order block sebelumnya dan segera memantul mendorong tren.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-05-smart-money-concept/propulsion-block.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 09</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Vacuum Block & Teknik Block Stacking</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Celah harga akibat event tak terduga serta seni menumpuk konfluensi beberapa blok institusi.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-22-block-advanced/block-stacking.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 10</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Standar Kelolosan Eksekusi: A+ Order Block Setup</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Checklist lengkap kriteria penyaringan akhir sebelum mengeksekusi setup Order Block.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-30-a-plus-setup-library/a-ob-setup.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+        </div>
+      </section>
+
+      <section class="panel" style="padding:24px; margin-bottom:28px; background:rgba(18,22,34,0.6); border:1px solid rgba(212,168,50,0.25); border-radius:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div>
+            <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 10px; border-radius:99px; font-size:11px; font-weight:800; letter-spacing:1px;">SUB-MODUL 5C</span>
+            <h3 style="margin:8px 0 4px; font-size:20px; color:#fff;">Seni Memilih Senjata (FVG vs OB vs OTE & Kombinasi Maut)</h3>
+            <div style="font-size:12px; color:#d4a832; font-weight:600;">Sumber: Bagian 06, 11, 17, 18, 19, 20, 21 & 23</div>
+          </div>
+          <span style="font-size:12px; color:var(--muted,#888); background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:8px;">📄 7 Bab Pembahasan</span>
+        </div>
+        <p style="font-size:14px; color:var(--muted,#94a3b8); line-height:1.6; margin:8px 0 20px;">Aturan jelas kapan FVG lebih kuat vs kapan OB lebih kuat, perbandingan OTE vs FVG vs OB, hierarki POI Utama vs Sekunder, Unicorn Model (Breaker + FVG), dan tanda kapan semua POI ditolak.</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+          
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 01</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Kapan Memilih FVG: Momentum Kencang & Mendesak ke Target</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Saat algoritma dalam mode ekspansi agresif, harga hanya akan menyentuh FVG tanpa sempat ke OB.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-30-a-plus-setup-library/kapan-fvg-lebih-kuat-daripada-ob-memilih-senjata-yang-tepat.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 02</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Kapan Memilih OB: Pasar Lambat & Butuh Mitigasi Mendalam</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Saat pasar mencari bahan bakar dalam atau bergerak santai dalam rentang dealing range yang lebar.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-30-a-plus-setup-library/kapan-ob-lebih-kuat-daripada-fvg-memilih-fondasi-yang-kokoh.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 03</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Perbandingan Komparatif: OTE vs FVG vs Order Block</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Tabel panduan memilih senjata eksekusi yang paling cocok dengan kepribadian dan kondisi chart.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-23-premium-discount-advanced/ote-vs-fvg-vs-ob.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 04</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Hierarki POI: Menyaring POI Utama vs POI Sekunder</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Memisahkan area entry dengan probabilitas tinggi dari area sekunder yang rawan ditembus.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-19-liquidity-masterclass/poi-utama-vs-poi-sekunder.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 05</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Kombinasi Maut: Order Block + FVG Overlap</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Tingkat presisi tertinggi: saat Order Block bersarang tepat di dalam atau berdampingan dengan FVG.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-06-ict-core/ob-fvg-combination-kombinasi-maut.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 06</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Unicorn Model: Breaker Block + FVG Overlap</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Salah satu setup paling dihormati dalam dunia ICT: perpaduan Breaker Block dan Inversion FVG.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-11-advanced-ict/unicorn-model.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 07</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Tanda-Tanda Kapan Semua POI Ditolak dan Wajib Diabaikan</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Mengenali saat algoritma sedang membatalkan skenario normal: jangan memaksakan entry.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-19-liquidity-masterclass/kapan-semua-poi-ditolak.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+        </div>
+      </section>
+  </div>
+
+  <nav class="module-nav-bottom" style="margin-top:40px; padding:20px; background:rgba(18,22,34,0.7); border:1px solid rgba(212,168,50,0.2); border-radius:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <a class="btn ghost sm" href="../modul-04/index.html">← Modul 04: Dealing Range, Premium/Discount & Optimal Trade Entry (OTE)</a>
+    <a class="btn primary sm" href="../daftar-materi.html">Daftar 10 Modul Master</a>
+    <a class="btn ghost sm" href="../modul-06/index.html">Modul 06: Daily Bias, Top-Down Analysis, Siklus Makro (IPDA) & SMT →</a>
+  </nav>
+</main>
+
+<footer class="footer hide-until-auth" style="margin-top:60px; padding:24px 0; border-top:1px solid var(--border); text-align:center; color:var(--muted,#888); font-size:13px;">
+  © 2026 Amy FX Academy. Sistem Kuliah Trading Institusional Murni ICT & Playbook XAUUSD Pro.
+</footer>
+  <script src="../../shared/amyfx-blueprint-v1.js" data-amyfx-blueprint-js="v1"></script>
+  <script src="../../shared/amyfx-blueprint-hotfix-v1.js" data-amyfx-blueprint-hotfix="v1"></script>
+  <script src="../../shared/amyfx-universal-nav.js"></script>
+  <script src="../../shared/amy-local-assistant.js" data-amy-local-assistant="v1"></script>
+  <script src="../../shared/amy-learning-reminder.js" data-amy-learning-reminder="v1"></script>
+  <script src="../../shared/amyfx-loading.js" data-amyfx-loading="v1"></script>
+</body>
+</html>

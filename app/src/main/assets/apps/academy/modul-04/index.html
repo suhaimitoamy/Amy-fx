@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#070B12">
+  <title>Modul 04 — Dealing Range, Premium/Discount & Optimal Trade Entry (OTE) — Amy FX Academy</title>
+  <script src="../../shared/amyfx-theme-controller.js" data-amyfx-theme-controller="v1"></script>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/glass.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+  <link rel="stylesheet" href="../../shared/amyfx-blueprint-v1.css" data-amyfx-blueprint-css="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-ui-tokens.css" data-amyfx-ui-tokens="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-theme.css" data-amyfx-theme="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-components.css" data-amyfx-components="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-ui-polish-pro348.css" data-amyfx-ui-polish="pro348">
+  <link rel="stylesheet" href="../../shared/amyfx-natural-ui-pro355.css" data-amyfx-natural-ui="pro355">
+  <link rel="stylesheet" href="../../shared/amyfx-obsidian-glass.css" data-amyfx-obsidian-glass="v1">
+</head>
+<body class="amyfx-module amyfx-module--academy">
+<script>requireLogin();</script>
+
+<header class="topbar hide-until-auth">
+  <nav class="nav">
+    <button type="button" class="nav-arrow-btn nav-arrow-left" id="amyfxNavBack" data-amyfx-nav="back" aria-label="Kembali ke Menu Utama">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+    </button>
+    <a class="brand" href="../index.html" style="white-space:nowrap; display:inline-flex; align-items:center; gap:10px;">
+      <span class="brand-mark" style="white-space:nowrap; width:auto; min-width:44px; height:38px; padding:0 10px; display:inline-flex; align-items:center; justify-content:center; font-weight:900; letter-spacing:0.04em;">AMY</span>
+      <span style="font-weight:800; letter-spacing:0.02em; white-space:nowrap;">Trading Academy</span>
+    </a>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button type="button" class="nav-arrow-btn nav-arrow-right" id="amyfxNavForward" data-amyfx-nav="forward" aria-label="Maju">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+    <div class="navlinks" id="navlinks">
+      <a href="../index.html">Beranda</a>
+      <a href="../daftar-materi.html">Daftar Materi</a>
+      <a href="../tentang.html">Tentang</a>
+      <a href="../glosarium/index.html">Glosarium</a>
+      <a href="../admin/index.html">Admin</a>
+    </div>
+  </nav>
+</header>
+<main class="container hide-until-auth">
+  <div class="breadcrumb" style="margin-bottom:16px;">
+    <a href="../index.html">Beranda</a> › <a href="../daftar-materi.html">Daftar Materi</a> › Modul 04
+  </div>
+
+  <section class="hero glass-hero" style="margin-bottom:28px;">
+    <div class="hero-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+        <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 12px; border-radius:99px; font-size:12px; font-weight:800; letter-spacing:1px;">
+          ⚖️ MODUL 04 • LIKUIDITAS & PD ARRAYS
+        </span>
+        <span style="font-size:13px; color:var(--muted,#94a3b8); font-weight:600;">
+          ⏱️ ~1 Jam 45 Menit • 🎓 2 SKS • 📄 15 Bab Lengkap
+        </span>
+      </div>
+      <h1 style="font-size:clamp(24px, 3.8vw, 36px); margin:8px 0 12px; color:#fff;">Modul 04 — Dealing Range, Premium/Discount & Optimal Trade Entry (OTE)</h1>
+      <p style="color:var(--muted,#94a3b8); margin:0 0 20px; font-size:15px; max-width:720px; line-height:1.6;">
+        Modul khusus untuk mengukur area harga "Murah" dan "Mahal" sebelum mencari titik masuk presisi.
+      </p>
+      <div style="display:flex; flex-wrap:wrap; gap:10px;">
+        <a class="btn primary sm" href="../daftar-materi.html">← Silabus Lengkap</a>
+        <a class="btn sm" href="../modul-03/index.html">← Modul 03</a>
+        <a class="btn sm" href="../modul-05/index.html">Modul 05 →</a>
+      </div>
+    </div>
+  </section>
+
+  <div id="submodulesList">
+    
+      <section class="panel" style="padding:24px; margin-bottom:28px; background:rgba(18,22,34,0.6); border:1px solid rgba(212,168,50,0.25); border-radius:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div>
+            <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 10px; border-radius:99px; font-size:11px; font-weight:800; letter-spacing:1px;">SUB-MODUL 4.1</span>
+            <h3 style="margin:8px 0 4px; font-size:20px; color:#fff;">Dealing Range & Zona Harga</h3>
+            <div style="font-size:12px; color:#d4a832; font-weight:600;">Sumber: Bagian 05 (SMC) & Bagian 23 (Premium Discount Advanced)</div>
+          </div>
+          <span style="font-size:12px; color:var(--muted,#888); background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:8px;">📄 6 Bab Pembahasan</span>
+        </div>
+        <p style="font-size:14px; color:var(--muted,#94a3b8); line-height:1.6; margin:8px 0 20px;">Pelajari konsep Premium (Mahal/Jual) dan Discount (Murah/Beli), cara menarik batas Dealing Range yang benar, pengenalan PD Array, serta penyelarasan HTF dan LTF Premium/Discount.</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+          
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 01</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Dealing Range: Membatasi Medan Operasional Harga</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Menentukan batas atas (Absolute High) dan batas bawah (Absolute Low) yang aktif.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-05-smart-money-concept/dealing-range.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 02</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Equilibrium (50%), Zona Premium, dan Zona Diskon</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Hukum dagang universal: beli hanya di harga diskon (<50%), jual hanya di harga premium (>50%).</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-05-smart-money-concept/premium-dan-discount.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 03</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Pengenalan Hierarki PD Arrays</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Matriks susunan instrumen harga institusional dari Mitigation, Breaker, OB hingga FVG.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-05-smart-money-concept/pd-array.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 04</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Equilibrium dan Pemilihan PD Array</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Memilih PD Array yang tepat di zona yang sesuai dengan bias harian.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-23-premium-discount-advanced/premium-discount-array.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 05</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Penyelarasan HTF dan LTF Premium/Discount</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Harmonisasi multi-timeframe: diskon di M15 harus berada dalam konteks diskon H1/H4.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-23-premium-discount-advanced/htf-dan-ltf-premium-discount.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 06</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Kapan Dealing Range Tidak Layak Dipakai</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Kondisi konsolidasi ketat dan sebelum berita besar di mana batas range menjadi tidak efektif.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-23-premium-discount-advanced/dealing-range-yang-benar.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+        </div>
+      </section>
+
+      <section class="panel" style="padding:24px; margin-bottom:28px; background:rgba(18,22,34,0.6); border:1px solid rgba(212,168,50,0.25); border-radius:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div>
+            <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 10px; border-radius:99px; font-size:11px; font-weight:800; letter-spacing:1px;">SUB-MODUL 4.2</span>
+            <h3 style="margin:8px 0 4px; font-size:20px; color:#fff;">Fibonacci ICT & Optimal Trade Entry / OTE</h3>
+            <div style="font-size:12px; color:#d4a832; font-weight:600;">Sumber: Bagian 09 (Entry Model), Bagian 26 (Gold Playbook) & Bagian 31 (ICT Advanced)</div>
+          </div>
+          <span style="font-size:12px; color:var(--muted,#888); background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:8px;">📄 9 Bab Pembahasan</span>
+        </div>
+        <p style="font-size:14px; color:var(--muted,#94a3b8); line-height:1.6; margin:8px 0 20px;">Kuasai pengaturan angka Fibonacci ICT (zona 0.62–0.79 / 0.705), penggunaan OTE sebagai area konfluensi pada Bullish & Bearish Model, penempatan SL dalam OTE, serta kondisi kapan OTE tidak dipakai.</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+          
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 01</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Pengaturan Angka Fibonacci ICT Murni</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Setting level 0.0, 0.50 (Equilibrium), 0.62, 0.705 (OTE Sweet Spot), dan 0.79.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-09-entry-model/fibonacci-ote.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 02</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Aplikasi Fibonacci ICT pada Karakter XAUUSD</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Penyesuaian tarikan swing pada Gold yang terkenal dengan wick panjang.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-26-xauusd-advanced-playbook/fibonacci-ict.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 03</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Optimal Trade Entry (OTE): Rasio Emas Institusi</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Menemukan titik masuk paling efisien dengan rasio Risk-Reward terbaik.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-26-xauusd-advanced-playbook/ote-optimal-trade-entry-menemukan-titik-masuk-paling-efisien.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 04</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">OTE sebagai Area Konfluensi Bullish Model</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Menggabungkan zona 70.5% diskon dengan Bullish FVG atau Bullish Order Block.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-26-xauusd-advanced-playbook/ote-dalam-bullish-model.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 05</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">OTE sebagai Area Konfluensi Bearish Model</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Menggabungkan zona 70.5% premium dengan Bearish FVG atau Bearish Breaker.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-26-xauusd-advanced-playbook/ote-dalam-bearish-model.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 06</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Penempatan Stop Loss Logis dalam Setup OTE</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Menempatkan Stop Loss di luar level invalidasi 100% atau swing extreme.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-26-xauusd-advanced-playbook/stop-loss-dalam-ote.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 07</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Kondisi Kapan OTE Tidak Boleh Digunakan</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Pasar runaway momentum tinggi di mana harga menolak mitigasi dalam.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-26-xauusd-advanced-playbook/kapan-ote-tidak-dipakai.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 08</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Optimal Trade Entry Lanjutan & Konfluensi Tambahan</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Penguatan setup OTE dengan konfirmasi waktu sesi Killzone New York.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-31-ict-advanced-concepts/optimal-trade-entry-ote.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 09</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Standard Deviation (STDV) Targeting untuk Proyeksi TP</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Menentukan target Take Profit objektif berbasis level ekstensi -1.0, -2.0, -2.5 STDV.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-26-xauusd-advanced-playbook/proyeksi-target-dengan-standard-deviation-fibonacci.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+        </div>
+      </section>
+  </div>
+
+  <nav class="module-nav-bottom" style="margin-top:40px; padding:20px; background:rgba(18,22,34,0.7); border:1px solid rgba(212,168,50,0.2); border-radius:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <a class="btn ghost sm" href="../modul-03/index.html">← Modul 03: Liquidity & Inducement (Bahan Bakar & Jebakan Pasar Lengkap)</a>
+    <a class="btn primary sm" href="../daftar-materi.html">Daftar 10 Modul Master</a>
+    <a class="btn ghost sm" href="../modul-05/index.html">Modul 05: Ensiklopedia Lengkap PD Array (FVG, Order Block & Semua Block) →</a>
+  </nav>
+</main>
+
+<footer class="footer hide-until-auth" style="margin-top:60px; padding:24px 0; border-top:1px solid var(--border); text-align:center; color:var(--muted,#888); font-size:13px;">
+  © 2026 Amy FX Academy. Sistem Kuliah Trading Institusional Murni ICT & Playbook XAUUSD Pro.
+</footer>
+  <script src="../../shared/amyfx-blueprint-v1.js" data-amyfx-blueprint-js="v1"></script>
+  <script src="../../shared/amyfx-blueprint-hotfix-v1.js" data-amyfx-blueprint-hotfix="v1"></script>
+  <script src="../../shared/amyfx-universal-nav.js"></script>
+  <script src="../../shared/amy-local-assistant.js" data-amy-local-assistant="v1"></script>
+  <script src="../../shared/amy-learning-reminder.js" data-amy-learning-reminder="v1"></script>
+  <script src="../../shared/amyfx-loading.js" data-amyfx-loading="v1"></script>
+</body>
+</html>

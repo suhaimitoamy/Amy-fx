@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#070B12">
+  <title>Modul 02 — Membaca Chart & Market Structure (Dari Nol sampai Advanced) — Amy FX Academy</title>
+  <script src="../../shared/amyfx-theme-controller.js" data-amyfx-theme-controller="v1"></script>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/glass.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+  <link rel="stylesheet" href="../../shared/amyfx-blueprint-v1.css" data-amyfx-blueprint-css="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-ui-tokens.css" data-amyfx-ui-tokens="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-theme.css" data-amyfx-theme="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-components.css" data-amyfx-components="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-ui-polish-pro348.css" data-amyfx-ui-polish="pro348">
+  <link rel="stylesheet" href="../../shared/amyfx-natural-ui-pro355.css" data-amyfx-natural-ui="pro355">
+  <link rel="stylesheet" href="../../shared/amyfx-obsidian-glass.css" data-amyfx-obsidian-glass="v1">
+</head>
+<body class="amyfx-module amyfx-module--academy">
+<script>requireLogin();</script>
+
+<header class="topbar hide-until-auth">
+  <nav class="nav">
+    <button type="button" class="nav-arrow-btn nav-arrow-left" id="amyfxNavBack" data-amyfx-nav="back" aria-label="Kembali ke Menu Utama">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+    </button>
+    <a class="brand" href="../index.html" style="white-space:nowrap; display:inline-flex; align-items:center; gap:10px;">
+      <span class="brand-mark" style="white-space:nowrap; width:auto; min-width:44px; height:38px; padding:0 10px; display:inline-flex; align-items:center; justify-content:center; font-weight:900; letter-spacing:0.04em;">AMY</span>
+      <span style="font-weight:800; letter-spacing:0.02em; white-space:nowrap;">Trading Academy</span>
+    </a>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button type="button" class="nav-arrow-btn nav-arrow-right" id="amyfxNavForward" data-amyfx-nav="forward" aria-label="Maju">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+    <div class="navlinks" id="navlinks">
+      <a href="../index.html">Beranda</a>
+      <a href="../daftar-materi.html">Daftar Materi</a>
+      <a href="../tentang.html">Tentang</a>
+      <a href="../glosarium/index.html">Glosarium</a>
+      <a href="../admin/index.html">Admin</a>
+    </div>
+  </nav>
+</header>
+<main class="container hide-until-auth">
+  <div class="breadcrumb" style="margin-bottom:16px;">
+    <a href="../index.html">Beranda</a> › <a href="../daftar-materi.html">Daftar Materi</a> › Modul 02
+  </div>
+
+  <section class="hero glass-hero" style="margin-bottom:28px;">
+    <div class="hero-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+        <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 12px; border-radius:99px; font-size:12px; font-weight:800; letter-spacing:1px;">
+          📈 MODUL 02 • FONDASI & STRUKTUR
+        </span>
+        <span style="font-size:13px; color:var(--muted,#94a3b8); font-weight:600;">
+          ⏱️ ~2 Jam • 🎓 3 SKS • 📄 27 Bab Lengkap
+        </span>
+      </div>
+      <h1 style="font-size:clamp(24px, 3.8vw, 36px); margin:8px 0 12px; color:#fff;">Modul 02 — Membaca Chart & Market Structure (Dari Nol sampai Advanced)</h1>
+      <p style="color:var(--muted,#94a3b8); margin:0 0 20px; font-size:15px; max-width:720px; line-height:1.6;">
+        Satukan semua ilmu tentang candlestick dan kerangka struktur pasar di sini agar kamu mahir membaca arah tren tanpa indikator lagging.
+      </p>
+      <div style="display:flex; flex-wrap:wrap; gap:10px;">
+        <a class="btn primary sm" href="../daftar-materi.html">← Silabus Lengkap</a>
+        <a class="btn sm" href="../modul-01/index.html">← Modul 01</a>
+        <a class="btn sm" href="../modul-03/index.html">Modul 03 →</a>
+      </div>
+    </div>
+  </section>
+
+  <div id="submodulesList">
+    
+      <section class="panel" style="padding:24px; margin-bottom:28px; background:rgba(18,22,34,0.6); border:1px solid rgba(212,168,50,0.25); border-radius:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div>
+            <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 10px; border-radius:99px; font-size:11px; font-weight:800; letter-spacing:1px;">SUB-MODUL 2.1</span>
+            <h3 style="margin:8px 0 4px; font-size:20px; color:#fff;">Anatomi Chart & Struktur Dasar</h3>
+            <div style="font-size:12px; color:#d4a832; font-weight:600;">Sumber: Bagian 02 (Membaca Chart)</div>
+          </div>
+          <span style="font-size:12px; color:var(--muted,#888); background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:8px;">📄 9 Bab Pembahasan</span>
+        </div>
+        <p style="font-size:14px; color:var(--muted,#94a3b8); line-height:1.6; margin:8px 0 20px;">Pelajari cara membaca chart, anatomi candlestick (OHLC, wick, body, momentum), konsep Timeframe & Fractal, cara menentukan Swing High dan Swing Low, membaca Trend, serta Market Structure Dasar.</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+          
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 01</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Mengenal Chart & Bahasa Visual Pasar</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Grafik harga sebagai rekaman visual jejak transaksi institusi.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-02-membaca-chart/apa-itu-chart.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 02</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Anatomi Candlestick Institusional: OHLC, Body vs Wick</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Makna harga pembukaan, tertinggi, terendah, dan penutupan.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-02-membaca-chart/candlestick-open-high-low-close.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 03</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Membaca Tekanan Bullish dan Bearish</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Identifikasi dominasi pembeli vs penjual pada formasi candlestick.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-02-membaca-chart/bullish-candle-dan-bearish-candle.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 04</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Wick, Body, dan Momentum Candlestick</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Mengapa bodi candlestick menceritakan fakta sementara sumbu menceritakan kebohongan.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-02-membaca-chart/wick-body-dan-momentum.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 05</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Fraktalitas Pasar: Harmoni Multi-Timeframe HTF ke LTF</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Prinsip fraktal: struktur timeframe kecil selalu tunduk pada timeframe besar.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-02-membaca-chart/timeframe-dan-fractal.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 06</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Swing High dan Swing Low Objektif: Fraktal 3 & 5 Candle</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Menentukan titik belok harga secara matematis tanpa menebak-nebak.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-02-membaca-chart/swing-high-dan-swing-low.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 07</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Mengidentifikasi Arah Tren Sejati</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Ciri-ciri Uptrend, Downtrend, dan fase Sideways yang wajib dihindari.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-02-membaca-chart/trend-uptrend-downtrend-sideways.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 08</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Support & Resistance Tradisional vs Logika Modern</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Membongkar mengapa garis support-resistance klasik sering ditembus (fakeout).</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-02-membaca-chart/support-dan-resistance.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 09</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Market Structure Dasar: Protected vs Targeted Levels</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Tingkat harga yang dilindungi algoritma vs tingkat harga yang diburu.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-02-membaca-chart/market-structure-dasar.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+        </div>
+      </section>
+
+      <section class="panel" style="padding:24px; margin-bottom:28px; background:rgba(18,22,34,0.6); border:1px solid rgba(212,168,50,0.25); border-radius:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div>
+            <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 10px; border-radius:99px; font-size:11px; font-weight:800; letter-spacing:1px;">SUB-MODUL 2.2</span>
+            <h3 style="margin:8px 0 4px; font-size:20px; color:#fff;">Siklus Pergerakan & Patahan Struktur Dasar</h3>
+            <div style="font-size:12px; color:#d4a832; font-weight:600;">Sumber: Bagian 03 (Fondasi Market) & Bagian 06 (ICT Core)</div>
+          </div>
+          <span style="font-size:12px; color:var(--muted,#888); background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:8px;">📄 9 Bab Pembahasan</span>
+        </div>
+        <p style="font-size:14px; color:var(--muted,#94a3b8); line-height:1.6; margin:8px 0 20px;">Kuasai 4 fase pasar (Expansion, Retracement, Reversal, Consolidation), larangan entry saat konsolidasi, syarat Displacement & Momentum, perbedaan BOS, CHoCH, dan MSS, serta konsep CISD (Change in State of Delivery).</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+          
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 01</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Mengapa Harga Bergerak: Algoritma vs Sentimen</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Pasar digerakkan oleh penawaran ulang harga (repricing), bukan hukum supply-demand retail.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-03-fondasi-market/harga-bergerak-karena-apa.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 02</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">4 Fase Siklus Pasar: Expansion, Retracement, Reversal, Consolidation</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Siklus abadi pergerakan harga dari akumulasi hingga distribusi.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-03-fondasi-market/market-cycle-siklus-market.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 03</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Larangan Entry Saat Pasar Konsolidasi</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Jebakan gergaji mesin (choppy market) dan perlunya menunggu ekspansi.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-03-fondasi-market/jangan-entry-saat-consolidation.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 04</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Anatomi Displacement: Tanda Tangan Partisipasi Institusional</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Lilin impulsif bodi besar dengan volume signifikan sebagai bukti intervensi bank.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-03-fondasi-market/displacement-dan-momentum.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 05</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Perbedaan BOS, CHoCH, dan MSS (Market Structure Shift)</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Pembersihan doktrin CHoCH retail: Break of Structure kelanjutan vs Shift pembalikan.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-03-fondasi-market/bos-choch-dan-mss.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 06</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Konsep CISD (Change in State of Delivery)</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Tanda awal algoritma mengubah mode pengantaran harga dari diskon ke premium atau sebaliknya.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-06-ict-core/change-in-state-of-delivery-cisd.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 07</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">CISD Bullish: Perubahan Menuju Pengantaran Naik</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Identifikasi candle down-close terakhir yang ditembus ke atas.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-06-ict-core/cisd-bullish.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 08</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">CISD Bearish: Perubahan Menuju Pengantaran Turun</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Identifikasi candle up-close terakhir yang ditembus ke bawah.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-06-ict-core/cisd-bearish.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 09</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Syarat Mutlak MSS Valid: Body Close & Displacement</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Menghindari false shift dengan konfirmasi penutupan bodi lilin di timeframe kunci.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-06-ict-core/mss-yang-valid.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+        </div>
+      </section>
+
+      <section class="panel" style="padding:24px; margin-bottom:28px; background:rgba(18,22,34,0.6); border:1px solid rgba(212,168,50,0.25); border-radius:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div>
+            <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 10px; border-radius:99px; font-size:11px; font-weight:800; letter-spacing:1px;">SUB-MODUL 2.3</span>
+            <h3 style="margin:8px 0 4px; font-size:20px; color:#fff;">Market Structure Lanjutan & Multi-Layer</h3>
+            <div style="font-size:12px; color:#d4a832; font-weight:600;">Sumber: Bagian 16 (Advanced Entry Logic) & Bagian 18 (Sweep & Delivery)</div>
+          </div>
+          <span style="font-size:12px; color:var(--muted,#888); background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:8px;">📄 9 Bab Pembahasan</span>
+        </div>
+        <p style="font-size:14px; color:var(--muted,#94a3b8); line-height:1.6; margin:8px 0 20px;">Langsung tuntaskan cara membaca Minor vs Major Structure, Internal vs External Structure, cara membedakan BOS/MSS Valid vs Palsu (False MSS), mengenali False Displacement, memahami Complex Pullback, menilai kesehatan tren (Continuation Leg vs Continuation Failure), serta kondisi No Trade saat struktur rusak.</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+          
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 01</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Minor vs Major Structure: Membaca Lapisan Tren</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Struktur internal timeframe kecil di dalam kerangka struktur mayor timeframe besar.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-16-advanced-entry-logic/minor-vs-major-structure.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 02</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Internal vs External Structure: Menghindari Lawan Arus</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Menentukan kapan pullback internal selesai dan kapan ekspansi eksternal dimulai.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-16-advanced-entry-logic/internal-vs-external-structure.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 03</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Valid MSS vs False MSS: Menyaring Patahan Palsu</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Kriteria objektif membedakan pembalikan arah sejati dengan manipulasi sapuan wick.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-16-advanced-entry-logic/valid-mss-vs-false-mss.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 04</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Mengenali False Displacement</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Candle panjang tanpa imbalance dan bodi tipis yang sering menipu trader breakout.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-18-order-block-masterclass/false-displacement.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 05</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Membaca Complex Pullback Tanpa Panik Mengubah Bias</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Navigasi koreksi harga yang berliku-liku tanpa terburu-buru mengira tren berbalik.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-16-advanced-entry-logic/complex-pullback.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 06</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Continuation Leg: Fase Dorongan Tren Sehat</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Ciri-ciri ekspansi yang masih memiliki bahan bakar likuiditas untuk melanjutkan perjalanan.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-18-order-block-masterclass/continuation-leg.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 07</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Continuation Failure: Tanda Awal Kelelahan Tren</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Kegagalan membentuk swing baru sebagai sinyal awal pembalikan arah atau mitigasi dalam.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-18-order-block-masterclass/continuation-failure.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 08</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Kondisi No Trade Saat Struktur Rusak</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Sikap profesional duduk diam saat struktur pasar tumpang tindih tanpa displacement.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-16-advanced-entry-logic/no-trade-karena-structure-rusak.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 09</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Checklist Komprehensif Advanced Market Structure</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Panduan verifikasi struktur langkah-demi-langkah sebelum merencanakan posisi.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-16-advanced-entry-logic/checklist-advanced-structure.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+        </div>
+      </section>
+  </div>
+
+  <nav class="module-nav-bottom" style="margin-top:40px; padding:20px; background:rgba(18,22,34,0.7); border:1px solid rgba(212,168,50,0.2); border-radius:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <a class="btn ghost sm" href="../modul-01/index.html">← Modul 01: Fondasi Trading, Setup Alat Kerja & Manajemen Risiko Awal</a>
+    <a class="btn primary sm" href="../daftar-materi.html">Daftar 10 Modul Master</a>
+    <a class="btn ghost sm" href="../modul-03/index.html">Modul 03: Liquidity & Inducement (Bahan Bakar & Jebakan Pasar Lengkap) →</a>
+  </nav>
+</main>
+
+<footer class="footer hide-until-auth" style="margin-top:60px; padding:24px 0; border-top:1px solid var(--border); text-align:center; color:var(--muted,#888); font-size:13px;">
+  © 2026 Amy FX Academy. Sistem Kuliah Trading Institusional Murni ICT & Playbook XAUUSD Pro.
+</footer>
+  <script src="../../shared/amyfx-blueprint-v1.js" data-amyfx-blueprint-js="v1"></script>
+  <script src="../../shared/amyfx-blueprint-hotfix-v1.js" data-amyfx-blueprint-hotfix="v1"></script>
+  <script src="../../shared/amyfx-universal-nav.js"></script>
+  <script src="../../shared/amy-local-assistant.js" data-amy-local-assistant="v1"></script>
+  <script src="../../shared/amy-learning-reminder.js" data-amy-learning-reminder="v1"></script>
+  <script src="../../shared/amyfx-loading.js" data-amyfx-loading="v1"></script>
+</body>
+</html>

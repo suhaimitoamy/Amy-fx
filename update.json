@@ -1,27 +1,23 @@
 {
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.414/AmyFX-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.415/AmyFX-latest.apk",
   "changelog": [
-    "Pemisahan Penuh Identitas Amy FX: Aplikasi Amy FX resmi mandiri dengan Application ID (com.amyelitesuite) terpisah dari Amy FX Pro, sehingga dapat terpasang berdampingan di perangkat.",
-    "Replay Multi-Timeframe Mulus: Perbaikan engine replay dan penyelarasan cursor sehingga perpindahan timeframe ke M5, M15, M30, H1, H4, dan D1 langsung memuat konteks lilin candle utuh tanpa terhambat.",
-    "Playback & Step Presisi: Tombol +1, +5, dan Putar memajukan lilin candle secara responsif dan akurat pada semua timeframe yang dipilih.",
-    "Label Pack & Indikator Timeframe Jelas: Label pack historis menampilkan dukungan penuh (M1–D1), strip OHLC menampilkan waktu lilin candle bucket terbuka yang sinkron, dan badge TF aktif disematkan.",
-    "Agregasi Candle Cepat & Ringan: Fast-path agregasi biner memangkas overhead pemrosesan data historis hingga 10x lebih cepat di perangkat."
+    "Restrukturisasi Kurikulum Master Terpadu: 10 Modul Tematik Terpadu menggabungkan seluruh 36 bagian materi dari nol sampai trader mandiri.",
+    "Zero Information Loss: Seluruh materi 222+ bab tersaji lengkap tanpa ringkasan, mencakup Fondasi, Market Structure, Likuiditas, Inducement, Dealing Range, PD Arrays (FVG & OB), Daily Bias, Waktu & Killzone, Model Entry, hingga Playbook Emas (XAUUSD).",
+    "Navigasi Modul Baru & Hub Terpadu: Beranda modul khusus dengan silabus interaktif, estimasi waktu, sub-modul terstruktur, dan tautan langsung ke setiap bab pembahasan."
   ],
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.414/AmyFX-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.415/AmyFX-latest.apk",
   "enabled": true,
   "force_update": false,
-  "latest_version_code": 950414,
-  "latest_version_name": "2.0.0-amyfx.414",
+  "latest_version_code": 950415,
+  "latest_version_name": "2.0.0-amyfx.415",
   "mandatory": false,
-  "releaseDate": "2026-10-16",
+  "releaseDate": "2026-10-17",
   "release_notes": [
-    "Pemisahan Penuh Identitas Amy FX: Aplikasi Amy FX resmi mandiri dengan Application ID (com.amyelitesuite) terpisah dari Amy FX Pro, sehingga dapat terpasang berdampingan di perangkat.",
-    "Replay Multi-Timeframe Mulus: Perbaikan engine replay dan penyelarasan cursor sehingga perpindahan timeframe ke M5, M15, M30, H1, H4, dan D1 langsung memuat konteks lilin candle utuh tanpa terhambat.",
-    "Playback & Step Presisi: Tombol +1, +5, dan Putar memajukan lilin candle secara responsif dan akurat pada semua timeframe yang dipilih.",
-    "Label Pack & Indikator Timeframe Jelas: Label pack historis menampilkan dukungan penuh (M1–D1), strip OHLC menampilkan waktu lilin candle bucket terbuka yang sinkron, dan badge TF aktif disematkan.",
-    "Agregasi Candle Cepat & Ringan: Fast-path agregasi biner memangkas overhead pemrosesan data historis hingga 10x lebih cepat di perangkat."
+    "Restrukturisasi Kurikulum Master Terpadu: 10 Modul Tematik Terpadu menggabungkan seluruh 36 bagian materi dari nol sampai trader mandiri.",
+    "Zero Information Loss: Seluruh materi 222+ bab tersaji lengkap tanpa ringkasan, mencakup Fondasi, Market Structure, Likuiditas, Inducement, Dealing Range, PD Arrays (FVG & OB), Daily Bias, Waktu & Killzone, Model Entry, hingga Playbook Emas (XAUUSD).",
+    "Navigasi Modul Baru & Hub Terpadu: Beranda modul khusus dengan silabus interaktif, estimasi waktu, sub-modul terstruktur, dan tautan langsung ke setiap bab pembahasan."
   ],
-  "version": "2.0.0-amyfx.414",
-  "versionCode": 950414,
-  "sha256": "eae71240c435114bb59569f7d2968dcd8b5dfa79a4ee0343475c26828c07b4c2"
+  "version": "2.0.0-amyfx.415",
+  "versionCode": 950415,
+  "sha256": "3cb0ceae28c30f40d62dc51e605d8f6dff4cebfab07ea24c9c7bf5be678eb17c"
 }

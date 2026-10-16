@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#070B12">
+  <title>Modul 09 — Alur Kerja Eksekusi, Filter No-Trade & Trade Management — Amy FX Academy</title>
+  <script src="../../shared/amyfx-theme-controller.js" data-amyfx-theme-controller="v1"></script>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/glass.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+  <link rel="stylesheet" href="../../shared/amyfx-blueprint-v1.css" data-amyfx-blueprint-css="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-ui-tokens.css" data-amyfx-ui-tokens="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-theme.css" data-amyfx-theme="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-components.css" data-amyfx-components="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-ui-polish-pro348.css" data-amyfx-ui-polish="pro348">
+  <link rel="stylesheet" href="../../shared/amyfx-natural-ui-pro355.css" data-amyfx-natural-ui="pro355">
+  <link rel="stylesheet" href="../../shared/amyfx-obsidian-glass.css" data-amyfx-obsidian-glass="v1">
+</head>
+<body class="amyfx-module amyfx-module--academy">
+<script>requireLogin();</script>
+
+<header class="topbar hide-until-auth">
+  <nav class="nav">
+    <button type="button" class="nav-arrow-btn nav-arrow-left" id="amyfxNavBack" data-amyfx-nav="back" aria-label="Kembali ke Menu Utama">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+    </button>
+    <a class="brand" href="../index.html" style="white-space:nowrap; display:inline-flex; align-items:center; gap:10px;">
+      <span class="brand-mark" style="white-space:nowrap; width:auto; min-width:44px; height:38px; padding:0 10px; display:inline-flex; align-items:center; justify-content:center; font-weight:900; letter-spacing:0.04em;">AMY</span>
+      <span style="font-weight:800; letter-spacing:0.02em; white-space:nowrap;">Trading Academy</span>
+    </a>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button type="button" class="nav-arrow-btn nav-arrow-right" id="amyfxNavForward" data-amyfx-nav="forward" aria-label="Maju">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+    <div class="navlinks" id="navlinks">
+      <a href="../index.html">Beranda</a>
+      <a href="../daftar-materi.html">Daftar Materi</a>
+      <a href="../tentang.html">Tentang</a>
+      <a href="../glosarium/index.html">Glosarium</a>
+      <a href="../admin/index.html">Admin</a>
+    </div>
+  </nav>
+</header>
+<main class="container hide-until-auth">
+  <div class="breadcrumb" style="margin-bottom:16px;">
+    <a href="../index.html">Beranda</a> › <a href="../daftar-materi.html">Daftar Materi</a> › Modul 09
+  </div>
+
+  <section class="hero glass-hero" style="margin-bottom:28px;">
+    <div class="hero-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+        <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 12px; border-radius:99px; font-size:12px; font-weight:800; letter-spacing:1px;">
+          🛡️ MODUL 09 • EKSEKUSI & PLAYBOOK
+        </span>
+        <span style="font-size:13px; color:var(--muted,#94a3b8); font-weight:600;">
+          ⏱️ ~2 Jam 30 Menit • 🎓 3 SKS • 📄 13 Bab Lengkap
+        </span>
+      </div>
+      <h1 style="font-size:clamp(24px, 3.8vw, 36px); margin:8px 0 12px; color:#fff;">Modul 09 — Alur Kerja Eksekusi, Filter No-Trade & Trade Management</h1>
+      <p style="color:var(--muted,#94a3b8); margin:0 0 20px; font-size:15px; max-width:720px; line-height:1.6;">
+        Jembatan antara teori dan eksekusi nyata: cara menyaring peluang berkualitas, mengelola posisi aktif, dan menghindari jebakan psikologis di market.
+      </p>
+      <div style="display:flex; flex-wrap:wrap; gap:10px;">
+        <a class="btn primary sm" href="../daftar-materi.html">← Silabus Lengkap</a>
+        <a class="btn sm" href="../modul-08/index.html">← Modul 08</a>
+        <a class="btn sm" href="../modul-10/index.html">Modul 10 →</a>
+      </div>
+    </div>
+  </section>
+
+  <div id="submodulesList">
+    
+      <section class="panel" style="padding:24px; margin-bottom:28px; background:rgba(18,22,34,0.6); border:1px solid rgba(212,168,50,0.25); border-radius:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div>
+            <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 10px; border-radius:99px; font-size:11px; font-weight:800; letter-spacing:1px;">SUB-MODUL 9.1</span>
+            <h3 style="margin:8px 0 4px; font-size:20px; color:#fff;">Alur Kerja Eksekusi Baku & Filter No-Trade</h3>
+            <div style="font-size:12px; color:#d4a832; font-weight:600;">Sumber: Bagian 24 Bab 6, Bagian 27 Bab 5, 7, 10, Bagian 28 & Bagian 30</div>
+          </div>
+          <span style="font-size:12px; color:var(--muted,#888); background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:8px;">📄 6 Bab Pembahasan</span>
+        </div>
+        <p style="font-size:14px; color:var(--muted,#94a3b8); line-height:1.6; margin:8px 0 20px;">Alur analisis baku (Context → Validasi → Trigger), Flowchart Entry, prinsip Do Not Chase, menyikapi Setup Hampir Valid, dan seni duduk diam.</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+          
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 01</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Alur Kerja Analisis Baku: Konteks → Validasi → Trigger</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Tiga gerbang wajib: tentukan narasi makro, validasi sweep likuiditas, eksekusi di lilin trigger.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-28-trade-management-advanced/menyusun-trading-rules-dan-alur-baca-dari-konsep-ke-keputusan.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 02</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Flowchart Pengambilan Keputusan Entry</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Bagan panduan visual: jika salah satu syarat tidak terpenuhi, langsung batalkan niat transaksi.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-28-trade-management-advanced/flowchart-entry.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 03</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Prinsip Do Not Chase: Dilarang Mengejar Harga</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Jika harga sudah terbang meninggalkan area entry tanpa menjemput ordermu, ikhlaskan tanpa kompromi.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-28-trade-management-advanced/do-not-chase-disiplin-menunggu-lokasi-yang-sehat.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 04</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Jebakan "Setup Hampir Valid": Bahaya Kompromi Aturan</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Mendekati valid sama sekali BUKAN valid; kompromi aturan adalah awal mula kehancuran akun.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-27-no-trade-advanced/setup-hampir-valid.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 05</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Seni Duduk Diam: Menunggu Peluang Berkualitas Tinggi</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Trader pro dibayar untuk kesabarannya menunggu momen tepat, bukan untuk frekuensi klik mouse.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-27-no-trade-advanced/kapan-tidak-trade-seni-menunggu-peluang-berkualitas.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 06</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Checklist Filter Terakhir Sebelum Menekan Tombol Order</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Verifikasi 30 detik terakhir: cek jarak SL, ukuran lot, waktu sesi, dan jadwal kalender berita.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-28-trade-management-advanced/checklist-sebelum-entry-filter-terakhir-sebelum-eksekusi.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+        </div>
+      </section>
+
+      <section class="panel" style="padding:24px; margin-bottom:28px; background:rgba(18,22,34,0.6); border:1px solid rgba(212,168,50,0.25); border-radius:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div>
+            <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 10px; border-radius:99px; font-size:11px; font-weight:800; letter-spacing:1px;">SUB-MODUL 9.2</span>
+            <h3 style="margin:8px 0 4px; font-size:20px; color:#fff;">Manajemen Posisi Aktif</h3>
+            <div style="font-size:12px; color:#d4a832; font-weight:600;">Sumber: Bagian 28 (Trade Management) & Bagian 29 (Backtest Advanced)</div>
+          </div>
+          <span style="font-size:12px; color:var(--muted,#888); background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:8px;">📄 7 Bab Pembahasan</span>
+        </div>
+        <p style="font-size:14px; color:var(--muted,#94a3b8); line-height:1.6; margin:8px 0 20px;">Skema Partial Take Profit, menggeser SL ke BE, menghindari BE Trap, aturan Scaling In / Scaling Out, serta membedakan Valid Win vs Invalid Win.</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+          
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 01</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Skema Partial Take Profit yang Terukur</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Ambil 50-70% profit di target pertama (IRL/liquidity terdekat) untuk mengamankan uang nyata.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-28-trade-management-advanced/partial-tp-dan-break-even.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 02</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Menggeser Stop Loss ke Breakeven (BE): Kapan Boleh & Kapan Tidak</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Jangan terburu-buru menggeser SL ke titik masuk sebelum harga membentuk struktur pelindung baru.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-28-trade-management-advanced/kapan-memindahkan-stop-loss-dan-kapan-tidak-seni-proteksi-modal.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 03</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Menghindari BE Trap: Bahaya Terkena Jarum Sebelum Terbang</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Mengapa terlalu cepat pasang BE justru membuatmu sering terkena stop out sebelum harga mencapai TP.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-28-trade-management-advanced/be-trap.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 04</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Aturan Scaling In (Pyramiding) & Scaling Out</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Menambah posisi hanya saat posisi pertama sudah aman profit dan struktur baru telah terkonfirmasi.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-28-trade-management-advanced/pyramiding-dan-scaling-in-position-strategi-agresif-yang-terukur.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 05</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Membedakan Valid Win vs Invalid Win</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Profit karena mematuhi SOP adalah kemenangan sejati; profit karena melanggar aturan adalah racun tertunda.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-28-trade-management-advanced/valid-win-dan-invalid-win.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 06</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Exit Objektif vs Exit Emosional</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Menutup posisi berdasarkan target struktur chart vs menutup posisi karena takut atau serakah.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-28-trade-management-advanced/bedanya-exit-objektif-vs-exit-emosional.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 07</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Checklist Pasca-Entry: Mengelola Posisi dengan Kepala Dingin</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Setelah order terpasang: pasang alert harga, tutup layar chart, dan biarkan probabilitas bekerja.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-28-trade-management-advanced/checklist-setelah-entry-mengelola-posisi-dengan-kepala-dingin.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+        </div>
+      </section>
+  </div>
+
+  <nav class="module-nav-bottom" style="margin-top:40px; padding:20px; background:rgba(18,22,34,0.7); border:1px solid rgba(212,168,50,0.2); border-radius:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <a class="btn ghost sm" href="../modul-08/index.html">← Modul 08: Model Entry Utuh & Playbook Khusus XAUUSD (Gold)</a>
+    <a class="btn primary sm" href="../daftar-materi.html">Daftar 10 Modul Master</a>
+    <a class="btn ghost sm" href="../modul-10/index.html">Modul 10: Psikologi Total, Backtesting, SOP 1-Halaman & Trader Mandiri / Prop Firm →</a>
+  </nav>
+</main>
+
+<footer class="footer hide-until-auth" style="margin-top:60px; padding:24px 0; border-top:1px solid var(--border); text-align:center; color:var(--muted,#888); font-size:13px;">
+  © 2026 Amy FX Academy. Sistem Kuliah Trading Institusional Murni ICT & Playbook XAUUSD Pro.
+</footer>
+  <script src="../../shared/amyfx-blueprint-v1.js" data-amyfx-blueprint-js="v1"></script>
+  <script src="../../shared/amyfx-blueprint-hotfix-v1.js" data-amyfx-blueprint-hotfix="v1"></script>
+  <script src="../../shared/amyfx-universal-nav.js"></script>
+  <script src="../../shared/amy-local-assistant.js" data-amy-local-assistant="v1"></script>
+  <script src="../../shared/amy-learning-reminder.js" data-amy-learning-reminder="v1"></script>
+  <script src="../../shared/amyfx-loading.js" data-amyfx-loading="v1"></script>
+</body>
+</html>

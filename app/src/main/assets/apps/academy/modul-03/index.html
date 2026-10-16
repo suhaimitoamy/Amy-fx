@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#070B12">
+  <title>Modul 03 — Liquidity & Inducement (Bahan Bakar & Jebakan Pasar Lengkap) — Amy FX Academy</title>
+  <script src="../../shared/amyfx-theme-controller.js" data-amyfx-theme-controller="v1"></script>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/glass.css">
+  <script>const ROOT_PATH='../';</script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+  <link rel="stylesheet" href="../../shared/amyfx-blueprint-v1.css" data-amyfx-blueprint-css="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-ui-tokens.css" data-amyfx-ui-tokens="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-theme.css" data-amyfx-theme="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-components.css" data-amyfx-components="v1">
+  <link rel="stylesheet" href="../../shared/amyfx-ui-polish-pro348.css" data-amyfx-ui-polish="pro348">
+  <link rel="stylesheet" href="../../shared/amyfx-natural-ui-pro355.css" data-amyfx-natural-ui="pro355">
+  <link rel="stylesheet" href="../../shared/amyfx-obsidian-glass.css" data-amyfx-obsidian-glass="v1">
+</head>
+<body class="amyfx-module amyfx-module--academy">
+<script>requireLogin();</script>
+
+<header class="topbar hide-until-auth">
+  <nav class="nav">
+    <button type="button" class="nav-arrow-btn nav-arrow-left" id="amyfxNavBack" data-amyfx-nav="back" aria-label="Kembali ke Menu Utama">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+    </button>
+    <a class="brand" href="../index.html" style="white-space:nowrap; display:inline-flex; align-items:center; gap:10px;">
+      <span class="brand-mark" style="white-space:nowrap; width:auto; min-width:44px; height:38px; padding:0 10px; display:inline-flex; align-items:center; justify-content:center; font-weight:900; letter-spacing:0.04em;">AMY</span>
+      <span style="font-weight:800; letter-spacing:0.02em; white-space:nowrap;">Trading Academy</span>
+    </a>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button type="button" class="nav-arrow-btn nav-arrow-right" id="amyfxNavForward" data-amyfx-nav="forward" aria-label="Maju">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+    <div class="navlinks" id="navlinks">
+      <a href="../index.html">Beranda</a>
+      <a href="../daftar-materi.html">Daftar Materi</a>
+      <a href="../tentang.html">Tentang</a>
+      <a href="../glosarium/index.html">Glosarium</a>
+      <a href="../admin/index.html">Admin</a>
+    </div>
+  </nav>
+</header>
+<main class="container hide-until-auth">
+  <div class="breadcrumb" style="margin-bottom:16px;">
+    <a href="../index.html">Beranda</a> › <a href="../daftar-materi.html">Daftar Materi</a> › Modul 03
+  </div>
+
+  <section class="hero glass-hero" style="margin-bottom:28px;">
+    <div class="hero-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+        <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 12px; border-radius:99px; font-size:12px; font-weight:800; letter-spacing:1px;">
+          💧 MODUL 03 • LIKUIDITAS & PD ARRAYS
+        </span>
+        <span style="font-size:13px; color:var(--muted,#94a3b8); font-weight:600;">
+          ⏱️ ~2 Jam 15 Menit • 🎓 3 SKS • 📄 29 Bab Lengkap
+        </span>
+      </div>
+      <h1 style="font-size:clamp(24px, 3.8vw, 36px); margin:8px 0 12px; color:#fff;">Modul 03 — Liquidity & Inducement (Bahan Bakar & Jebakan Pasar Lengkap)</h1>
+      <p style="color:var(--muted,#94a3b8); margin:0 0 20px; font-size:15px; max-width:720px; line-height:1.6;">
+        Setelah tahu struktur, satukan seluruh materi likuiditas agar kamu tahu ke mana harga bergerak dan di mana letak jebakan ritel.
+      </p>
+      <div style="display:flex; flex-wrap:wrap; gap:10px;">
+        <a class="btn primary sm" href="../daftar-materi.html">← Silabus Lengkap</a>
+        <a class="btn sm" href="../modul-02/index.html">← Modul 02</a>
+        <a class="btn sm" href="../modul-04/index.html">Modul 04 →</a>
+      </div>
+    </div>
+  </section>
+
+  <div id="submodulesList">
+    
+      <section class="panel" style="padding:24px; margin-bottom:28px; background:rgba(18,22,34,0.6); border:1px solid rgba(212,168,50,0.25); border-radius:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div>
+            <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 10px; border-radius:99px; font-size:11px; font-weight:800; letter-spacing:1px;">SUB-MODUL 3.1</span>
+            <h3 style="margin:8px 0 4px; font-size:20px; color:#fff;">Konsep Dasar Liquidity</h3>
+            <div style="font-size:12px; color:#d4a832; font-weight:600;">Sumber: Bagian 04 (Liquidity) & Bagian 05 (SMC)</div>
+          </div>
+          <span style="font-size:12px; color:var(--muted,#888); background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:8px;">📄 9 Bab Pembahasan</span>
+        </div>
+        <p style="font-size:14px; color:var(--muted,#94a3b8); line-height:1.6; margin:8px 0 20px;">Pahami perbedaan cara pikir Smart Money vs Retail, apa itu Liquidity, Buy-Side Liquidity (BSL) & Sell-Side Liquidity (SSL), Equal High/Low, Liquidity Pool, Stop Hunt / False Breakout, serta perbedaan mendasar Internal vs External Liquidity (IRL & ERL).</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+          
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 01</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Likuiditas sebagai Satu-Satunya Bahan Bakar Algoritma IPDA</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Harga tidak bergerak ke indikator; harga selalu bergerak memburu kumpulan Stop Loss.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-04-liquidity/apa-itu-liquidity.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 02</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Smart Money vs Retail: Perbedaan Cara Berpikir</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Retail mencari pola candlestick; institusi mencari tempat retail meletakkan modal proteksi.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-05-smart-money-concept/smart-money-vs-retail.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 03</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Buy-Side Liquidity (BSL): Kumpulan Buy Stop di Atas Puncak</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Memetakan area di atas Old Highs tempat retail memasang Stop Loss Sell & Buy Stop breakout.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-04-liquidity/buy-side-liquidity.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 04</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Sell-Side Liquidity (SSL): Kumpulan Sell Stop di Bawah Lembah</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Memetakan area di bawah Old Lows tempat retail memasang Stop Loss Buy & Sell Stop breakout.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-04-liquidity/sell-side-liquidity.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 05</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Equal Highs (EQH) dan Equal Lows (EQL): Magnet Likuiditas Terkuat</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Puncak kembar dan dasar kembar yang sengaja diciptakan untuk dipanen kemudian.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-04-liquidity/equal-high-dan-equal-low.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 06</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Memetakan Liquidity Pool Institusional</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Zona konsentrasi volume transaksi yang menjadi target algoritma pengantaran harga.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-04-liquidity/liquidity-pool.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 07</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Stop Hunt & False Breakout: Rekayasa Manipulasi</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Mekanisme sapuan cepat ekor lilin untuk memicu order pasar sebelum harga berbalik.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-05-smart-money-concept/stop-hunt-dan-false-breakout.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 08</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Internal Range Liquidity (IRL): Celah di Dalam Rentang</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Ketidakseimbangan harga (FVG) dan liquidity pool minor di dalam dealing range.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-04-liquidity/internal-liquidity.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 09</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">External Range Liquidity (ERL): Batas Luar Rentang</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Puncak tertinggi dan dasar terendah dealing range yang menjadi target akhir ekspansi.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-04-liquidity/external-liquidity.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+        </div>
+      </section>
+
+      <section class="panel" style="padding:24px; margin-bottom:28px; background:rgba(18,22,34,0.6); border:1px solid rgba(212,168,50,0.25); border-radius:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div>
+            <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 10px; border-radius:99px; font-size:11px; font-weight:800; letter-spacing:1px;">SUB-MODUL 3.2</span>
+            <h3 style="margin:8px 0 4px; font-size:20px; color:#fff;">Mekanika Sweep, Grab, dan Run</h3>
+            <div style="font-size:12px; color:#d4a832; font-weight:600;">Sumber: Bagian 04, Bagian 17 (FVG Masterclass) & Bagian 18 (Sweep & Delivery)</div>
+          </div>
+          <span style="font-size:12px; color:var(--muted,#888); background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:8px;">📄 8 Bab Pembahasan</span>
+        </div>
+        <p style="font-size:14px; color:var(--muted,#94a3b8); line-height:1.6; margin:8px 0 20px;">Pelajari tuntas perbedaan Liquidity Sweep, Liquidity Grab (reaksi awal setelah sapuan), dan Liquidity Run (saat harga terus berlari), ciri Sweep yang layak diikuti, Liquidity Run Valid vs Palsu, serta High Resistance vs Low Resistance Liquidity Run (HRLR vs LRLR).</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+          
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 01</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Mekanika Penuh: Sweep vs Grab vs Run</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Perbedaan mendasar antara sapuan likuiditas, reaksi tangkapan, dan dorongan lari.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-18-order-block-masterclass/sweep-vs-grab-vs-run.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 02</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Liquidity Sweep: Sapuan Cepat Ekor Lilin (Turtle Soup)</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Harga menyapu level kunci dengan wick lalu segera ditutup kembali ke dalam range.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-04-liquidity/liquidity-sweep.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 03</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Liquidity Grab: Reaksi Awal Pasca Sapuan</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Penolakan agresif sesaat setelah kumpulan likuiditas terserap oleh pesanan besar.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-18-order-block-masterclass/apa-itu-liquidity-grab-reaksi-awal-setelah-sapuan.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 04</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Ciri-Ciri Sweep yang Layak Diikuti</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Menyaring sapuan bermutu tinggi yang didukung waktu (Killzone) dan level HTF relevan.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-18-order-block-masterclass/sweep-yang-layak-diikuti.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 05</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Liquidity Run yang Valid: Ekspansi Sejati</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Harga bergerak ekspansif menembus level tanpa menoleh ke belakang menuju target berikutnya.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-17-fvg-masterclass/liquidity-run-yang-valid.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 06</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Liquidity Run Palsu: Jebakan Momentum Retel</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Pergerakan kencang semu yang dirancang untuk memancing trader FOMO sebelum berbalik.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-17-fvg-masterclass/liquidity-run-palsu.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 07</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">High Resistance (HRLR) vs Low Resistance Liquidity Run (LRLR)</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Lari likuiditas mulus tanpa rintangan swing vs lari berat berliku penuh jebakan.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-16-advanced-entry-logic/high-resistance-vs-low-resistance-liquidity-run-hrlr-vs-lrlr.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 08</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Displacement Setelah Sweep: Bukti Partisipasi Bank</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Lilin ekspansi tegas yang mengonfirmasi bahwa sapuan likuiditas bukan breakout sejati.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-18-order-block-masterclass/displacement-setelah-sweep.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+        </div>
+      </section>
+
+      <section class="panel" style="padding:24px; margin-bottom:28px; background:rgba(18,22,34,0.6); border:1px solid rgba(212,168,50,0.25); border-radius:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div>
+            <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 10px; border-radius:99px; font-size:11px; font-weight:800; letter-spacing:1px;">SUB-MODUL 3.3</span>
+            <h3 style="margin:8px 0 4px; font-size:20px; color:#fff;">Pemetaan Target Likuiditas Lanjutan</h3>
+            <div style="font-size:12px; color:#d4a832; font-weight:600;">Sumber: Bagian 17 (FVG Masterclass) & Bagian 19 (POI Selection)</div>
+          </div>
+          <span style="font-size:12px; color:var(--muted,#888); background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:8px;">📄 6 Bab Pembahasan</span>
+        </div>
+        <p style="font-size:14px; color:var(--muted,#94a3b8); line-height:1.6; margin:8px 0 20px;">Kuasai hubungan IRL ke ERL lanjutan, menentukan Draw on Liquidity (DOL) Prioritas, mengenali Weak High & Weak Low, membongkar jebakan Trendline Liquidity ritel, serta cara membuat Liquidity Map Sebelum Market Buka.</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+          
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 01</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Siklus Dinamis: Dari IRL ke ERL dan Sebaliknya</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Algoritma selalu berpindah secara siklis: dari FVG internal menuju eksternal High/Low.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-17-fvg-masterclass/irl-dan-erl-lanjutan.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 02</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Menentukan Draw on Liquidity (DOL) Prioritas</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Menemukan magnet utama ke mana harga pasti tertarik sebelum sesi trading selesai.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-17-fvg-masterclass/draw-on-liquidity-prioritas.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 03</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Mengenali Weak High & Weak Low</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Puncak atau lembah lemah yang terbentuk tanpa mengambil likuiditas sebelumnya sehingga pasti ditembus.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-17-fvg-masterclass/weak-high-dan-weak-low.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 04</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Membongkar Jebakan Trendline Liquidity Ritel</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Garis tren miring adalah sarang Stop Loss bertumpuk yang sangat disukai algoritma.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-17-fvg-masterclass/trendline-liquidity-dan-retail-patterns-membongkar-jebakan-pola-ritel.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 05</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Cara Membuat Liquidity Map Sebelum Market Buka</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">SOP menggambar peta likuiditas harian pada chart XAUUSD sebelum sesi dimulai.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-17-fvg-masterclass/liquidity-map-sebelum-market-buka.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 06</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Checklist Analisis Likuiditas Harian</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Daftar periksa verifikasi likuiditas sebelum mencari area entry (POI).</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-17-fvg-masterclass/checklist-liquidity-map.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+        </div>
+      </section>
+
+      <section class="panel" style="padding:24px; margin-bottom:28px; background:rgba(18,22,34,0.6); border:1px solid rgba(212,168,50,0.25); border-radius:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div>
+            <span class="badge" style="background:rgba(212,168,50,0.15); color:#d4a832; border:1px solid rgba(212,168,50,0.35); padding:4px 10px; border-radius:99px; font-size:11px; font-weight:800; letter-spacing:1px;">SUB-MODUL 3.4</span>
+            <h3 style="margin:8px 0 4px; font-size:20px; color:#fff;">Masterclass Inducement / IDM</h3>
+            <div style="font-size:12px; color:#d4a832; font-weight:600;">Sumber: Bagian 05 Bab 3, Bagian 16 Bab 9, Bagian 20 & Bagian 30 Bab 3</div>
+          </div>
+          <span style="font-size:12px; color:var(--muted,#888); background:rgba(0,0,0,0.3); padding:4px 10px; border-radius:8px;">📄 6 Bab Pembahasan</span>
+        </div>
+        <p style="font-size:14px; color:var(--muted,#94a3b8); line-height:1.6; margin:8px 0 20px;">Satukan semua materi Inducement (IDM) mulai dari definisi pancingan ritel, perbedaan IDM vs BOS, syarat wajib IDM Sebelum BOS, cara Entry Setelah IDM Tersapu, mengenali IDM yang Invalid, hingga kriteria A+ Liquidity dan IDM Setup.</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+          
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 01</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Definisi Pancingan Ritel (Inducement / IDM)</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Tingkat harga minor yang sengaja diciptakan untuk menggoda trader pemula masuk lebih awal.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-05-smart-money-concept/inducement.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 02</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Perbedaan Jelas IDM vs Break of Structure (BOS)</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Jangan terkecoh: menembus IDM bukan berarti tren berlanjut, melainkan baru mengambil napas.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-16-advanced-entry-logic/inducement-vs-break-of-structure-bos.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 03</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Syarat Wajib: IDM Harus Tersapu Sebelum BOS Valid</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Aturan validitas struktur: swing baru tidak diakui sebelum swing minor pertama disapu.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-20-idm-inducement-masterclass/idm-sebelum-bos.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 04</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Teknik Entry Presisi Setelah IDM Tersapu</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Titik masuk dengan konfluensi tinggi saat retail Stop Loss tersapu di area IDM.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-20-idm-inducement-masterclass/entry-setelah-idm-tersapu.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 05</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Mengenali IDM yang Invalid / Palsu</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Menghindari pancingan palsu yang terbentuk di luar dealing range yang sehat.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-20-idm-inducement-masterclass/idm-yang-invalid.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+
+        <article class="course-card" style="padding:18px 20px; background:rgba(20,24,38,0.7); border:1px solid rgba(212,168,50,0.22); border-radius:12px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, border-color 0.2s;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:11px; font-weight:800; color:#d4a832; letter-spacing:1px;">BAB 06</span>
+              <span style="font-size:11px; color:var(--muted,#888); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:99px;">Unabridged</span>
+            </div>
+            <h4 style="margin:0 0 8px; font-size:16px; line-height:1.4; color:#fff;">Kriteria Setup Peluru Utama: A+ Liquidity dan IDM Setup</h4>
+            <p style="font-size:13px; color:var(--muted,#94a3b8); line-height:1.6; margin:0 0 16px;">Standar emas kombinasi sapuan IDM dengan mitigasi ke area POI diskon/premium.</p>
+          </div>
+          <div>
+            <a class="btn primary sm" href="../bagian-30-a-plus-setup-library/a-liquidity-dan-idm-setup.html" style="width:100%; text-align:center; font-weight:700; padding:9px 14px; font-size:13px; text-decoration:none;">Buka Bab Lengkap →</a>
+          </div>
+        </article>
+        </div>
+      </section>
+  </div>
+
+  <nav class="module-nav-bottom" style="margin-top:40px; padding:20px; background:rgba(18,22,34,0.7); border:1px solid rgba(212,168,50,0.2); border-radius:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <a class="btn ghost sm" href="../modul-02/index.html">← Modul 02: Membaca Chart & Market Structure (Dari Nol sampai Advanced)</a>
+    <a class="btn primary sm" href="../daftar-materi.html">Daftar 10 Modul Master</a>
+    <a class="btn ghost sm" href="../modul-04/index.html">Modul 04: Dealing Range, Premium/Discount & Optimal Trade Entry (OTE) →</a>
+  </nav>
+</main>
+
+<footer class="footer hide-until-auth" style="margin-top:60px; padding:24px 0; border-top:1px solid var(--border); text-align:center; color:var(--muted,#888); font-size:13px;">
+  © 2026 Amy FX Academy. Sistem Kuliah Trading Institusional Murni ICT & Playbook XAUUSD Pro.
+</footer>
+  <script src="../../shared/amyfx-blueprint-v1.js" data-amyfx-blueprint-js="v1"></script>
+  <script src="../../shared/amyfx-blueprint-hotfix-v1.js" data-amyfx-blueprint-hotfix="v1"></script>
+  <script src="../../shared/amyfx-universal-nav.js"></script>
+  <script src="../../shared/amy-local-assistant.js" data-amy-local-assistant="v1"></script>
+  <script src="../../shared/amy-learning-reminder.js" data-amy-learning-reminder="v1"></script>
+  <script src="../../shared/amyfx-loading.js" data-amyfx-loading="v1"></script>
+</body>
+</html>

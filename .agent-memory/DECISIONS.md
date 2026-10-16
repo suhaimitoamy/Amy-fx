@@ -1,5 +1,30 @@
 # Technical Decisions
 
+## 2026-10-17 — Restrukturisasi Komprehensif Academy: 10 Modul Tematik Terpadu (Zero Information Loss) & Rilis 2.0.0-amyfx.415
+1. **Latar Belakang & Permintaan Pengguna:**
+   - Kurikulum asli Academy sebelumnya tersebar di 36 bagian dengan metode spiral (materi dasar diajarkan di awal, lalu diulang versi menengah dan advanced di belakang).
+   - Pengguna meminta agar kurikulum dirombak menjadi **10 Modul Tematik Terpadu** dari nol sampai menjadi trader mandiri.
+   - Syarat mutlak pengguna: **"tpi jangan ada yang di ringkas bisa"** (Zero Information Loss / Nol Ringkasan). Seluruh 222+ bab original dari ke-36 folder wajib dipertahankan utuh tanpa memotong penjelasan, angka, formula, atau diagram.
+2. **Arsitektur 10 Modul Tematik Terpadu:**
+   - **Modul 01:** Fondasi Trading, Setup Alat Kerja & Manajemen Risiko Awal (Bagian 01, 32, 12).
+   - **Modul 02:** Membaca Chart & Market Structure: Dari Nol sampai Advanced (Bagian 02, 03, 06, 16, 24).
+   - **Modul 03:** Liquidity & Inducement: Bahan Bakar & Jebakan Pasar Lengkap (Bagian 04, 05, 17, 18, 19, 20, 30).
+   - **Modul 04:** Dealing Range, Premium/Discount & Optimal Trade Entry / OTE (Bagian 05, 23, 26, 31).
+   - **Modul 05:** Ensiklopedia Lengkap PD Array: FVG, Order Block & Semua Block (Sub-Modul 5A FVG/IFVG/BPR, 5B OB/Breaker/Mitigation, 5C Hierarki & Unicorn).
+   - **Modul 06:** Daily Bias, Top-Down Analysis, Siklus Makro (IPDA) & SMT (Bagian 03, 06, 07, 08, 22, 27, 31).
+   - **Modul 07:** Waktu Trading, Sesi, Killzone & Macro Silver Bullet (Bagian 08, 21, 23, 25, 26, 30, 31).
+   - **Modul 08:** Model Entry Utuh & Playbook Khusus XAUUSD / Gold (Bagian 09, 10, 11, 16, 25, 26, 30, 31, 33).
+   - **Modul 09:** Alur Kerja Eksekusi, Filter No-Trade & Trade Management (Bagian 24, 27, 28, 29, 30).
+   - **Modul 10:** Psikologi Total, Backtesting, SOP 1-Halaman & Trader Mandiri / Prop Firm (Bagian 13, 14, 15, 28, 29, 34, 35, 36).
+3. **Implementasi & Zero Information Loss:**
+   - Memulihkan seluruh 582 bab HTML individual dari ke-36 direktori `bagian-XX` sehingga setiap tautan bab merujuk ke konten teks lengkap tanpa peringkasan sedikit pun.
+   - Menciptakan 10 hub direktori `modul-01/` s.d. `modul-10/` dengan UI glassmorphism profesional, breadcrumb, statistik SKS, estimasi waktu, rincian sub-modul, dan tautan langsung ke setiap bab pembahasan.
+   - Memperbarui `index.html` dan `daftar-materi.html` dengan grid 10 modul tematik, sistem filter kategori, dan mempertahankan laci kompatibilitas arsip (`legacy-archive-drawer` untuk `bagian-15`) agar semua unit test parity tetap lolos 100%.
+4. **Bump Versi Aplikasi:**
+   - Ditingkatkan ke `2.0.0-amyfx.415` (versionCode `950415`) pada `app/build.gradle.kts`, `app/src/main/assets/app-version.js`, `app/src/main/assets/update-checker.js`, `update.json`, dan `tests/pro348-ui-polish.test.mjs`.
+5. **Verifikasi:**
+   - Script validasi CI dan seluruh test suites lolos 100% tanpa regresi.
+
 ## 2026-10-16 — Pemisahan Penuh Identitas Aplikasi Amy FX (Mandiri vs Amy FX Pro)
 1. **Latar Belakang Masalah:**
    - APK yang diunduh dari repositori `Amy-fx` sebelumnya terpasang sebagai **"Amy FX Pro"** dan menimpa instalasi Amy FX Pro yang ada di ponsel Android pengguna.
