@@ -11,7 +11,7 @@
   "latest_version_code": 950415,
   "latest_version_name": "2.0.0-amyfx.415",
   "mandatory": false,
-  "releaseDate": "2026-10-17",
+  "releaseDate": "2026-10-16",
   "release_notes": [
     "Restrukturisasi Kurikulum Master Terpadu: 10 Modul Tematik Terpadu menggabungkan seluruh 36 bagian materi dari nol sampai trader mandiri.",
     "Zero Information Loss: Seluruh materi 222+ bab tersaji lengkap tanpa ringkasan, mencakup Fondasi, Market Structure, Likuiditas, Inducement, Dealing Range, PD Arrays (FVG & OB), Daily Bias, Waktu & Killzone, Model Entry, hingga Playbook Emas (XAUUSD).",
@@ -19,5 +19,5 @@
   ],
   "version": "2.0.0-amyfx.415",
   "versionCode": 950415,
-  "sha256": "3cb0ceae28c30f40d62dc51e605d8f6dff4cebfab07ea24c9c7bf5be678eb17c"
+  "sha256": "09767c792ec8bd057f5017983a2f49b13e43306d1496a67ee4fab76e0278df1e"
 }
