@@ -22,5 +22,6 @@
     "Agregasi Candle Cepat & Ringan: Fast-path agregasi biner memangkas overhead pemrosesan data historis hingga 10x lebih cepat di perangkat."
   ],
   "version": "2.0.0-amyfx.414",
-  "versionCode": 950414
+  "versionCode": 950414,
+  "sha256": "eae71240c435114bb59569f7d2968dcd8b5dfa79a4ee0343475c26828c07b4c2"
 }
