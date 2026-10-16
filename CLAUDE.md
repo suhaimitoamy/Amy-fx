@@ -195,3 +195,19 @@ When developing or modifying UI components for the **Amy FX** project, strictly 
 3. **Fisika Snappy Realistis:**
    - Lompatan cepat dan manusiawi (`jumpVelocity: 1.4`, `gravity: -0.16`, `fallGravity: -0.26`, `maxFallSpeed: -2.2`) menghilangkan efek mengambang di bulan.
    - Trampolin Quantum Launch Pad melontarkan dengan ketinggian proporsional (`vy = 3.6`) dan mendarat mantap.
+
+## Mentor Trading Privat 1-on-1, Twelve Data MCP & Pedagogical Guardrails (Pro 426)
+
+1. **Skill Global `mentor-trading-privat`:**
+   - Ditempatkan di `/root/.agents/skills/mentor-trading-privat/SKILL.md` (shared Akun 1 & Akun 2).
+   - Menghubungkan kurikulum materi Obsidian (`Amy_Trading_Academy_Vault`) dengan engine pasar riil.
+2. **Twelve Data MCP & Candle Builder Sync:**
+   - Server MCP mandiri di `/root/.agents/mcp-servers/twelvedata-server.mjs`.
+   - Konfigurasi di `/root/.gemini/config/mcp_config.json`.
+   - Mengambil data live dan otomatis menyimpan ke SQLite `/root/amy-market-data/xauusd_bot.sqlite`.
+   - Menyediakan tool analisis ICT lengkap: BSL, SSL, Sweeps, BOS, MSS/CHoCH, Active FVGs (CE 50%), dan Dealing Range.
+3. **Pedagogical Guardrails & Anti-Distraksi:**
+   - **Chunking Method:** Materi diajarkan per 2-3 segmen logis tanpa memangkas ilmu (Zero Information Loss).
+   - **On-Context Discipline (Pro 421):** AI fokus 100% pada pertanyaan user tanpa melempar opsi atau saran cabang yang tidak diminta.
+   - **True Level 0 Rule:** Dilarang menampilkan chart atau istilah teknikal jika mulai dari nol; wajib dari logika berdagang awam dan analogi fisik.
+   - **Real-World Gold Rules:** Menolak SL mikro $1 di Gold; menerapkan SL struktural di balik sweep dan TP ke DOL nyata dengan RR >= 1:2.

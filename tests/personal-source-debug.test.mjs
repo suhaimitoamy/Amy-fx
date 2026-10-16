@@ -4,21 +4,21 @@ import fs from 'node:fs';
 
 const read = path => fs.readFileSync(path, 'utf8');
 
-test('promoted source keeps immutable Amy FX Pro release identity', () => {
+test('source keeps immutable Amy FX release identity', () => {
   const gradle = read('app/build.gradle.kts');
   const version = read('app/src/main/assets/app-version.js');
   const updater = read('app/src/main/assets/update-checker.js');
-  const identity = version.match(/name: '(2\.0\.0-pro\.\d+)', code: (95\d{4})/);
-  assert.ok(identity, 'current Pro identity must be readable from app-version.js');
+  const identity = version.match(/name: '(2\.0\.0-amyfx\.\d+)', code: (95\d{4})/);
+  assert.ok(identity, 'current Amy FX identity must be readable from app-version.js');
   const [, versionName, versionCode] = identity;
 
-  assert.match(gradle, /com\.amyelitesuite\.learningpreview/);
-  assert.match(gradle, /Amy FX Pro/);
-  assert.match(gradle, /amyfxpreview/);
+  assert.match(gradle, /com\.amyelitesuite/);
+  assert.match(gradle, /Amy FX/);
+  assert.match(gradle, /amyfx/);
   assert.ok(gradle.includes(`?: "${versionName}"`));
   assert.ok(gradle.includes(`?: ${versionCode})`));
-  assert.match(version, /Amy-fx-pro\/main\/update\.json/);
-  assert.match(updater, /Amy-fx-pro\/main\/update\.json/);
+  assert.match(version, /Amy-fx\/main\/update\.json/);
+  assert.match(updater, /Amy-fx\/main\/update\.json/);
 });
 
 test('Mapping only blocks when its active timeframe is unavailable', () => {

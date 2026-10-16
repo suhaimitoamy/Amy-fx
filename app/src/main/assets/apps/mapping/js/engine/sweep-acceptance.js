@@ -25,13 +25,13 @@ export function classifySweepAcceptance({ amySmcD = null, sourceCandle = null } 
     const level = eventLevel(rawSweep);
     const close = number(candle?.close);
     const side = String(rawSweep?.side || rawSweep?.liquiditySide || rawSweep?.kind || '').toUpperCase();
-    const reclaimed = level == null || close == null
-      ? true
+    const reclaimed = (level == null || close == null)
+      ? false
       : side.includes('BSL') || side.includes('HIGH')
         ? close < level
         : side.includes('SSL') || side.includes('LOW')
           ? close > level
-          : true;
+          : false;
     return {
       state: reclaimed ? 'SWEEP_REJECTION' : 'SWEEP_UNCONFIRMED',
       label: reclaimed ? 'Sweep + Rejection' : 'Sweep belum reclaim',

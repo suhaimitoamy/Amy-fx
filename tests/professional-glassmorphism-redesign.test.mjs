@@ -70,8 +70,8 @@ test('loading and update presentation follow the redesign while native update no
   assert.match(loading, /Pemuatan membutuhkan waktu lebih lama/);
   assert.match(loading, /data-amyfx-loading-retry/);
   assert.doesNotMatch(loading, /\d+%/);
-  assert.match(updater, /Android\.showNotification\('Update Amy FX Pro Tersedia'/);
-  assert.match(updater, /Pembaruan Amy FX Pro Tersedia/);
+  assert.match(updater, /Android\.showNotification\('Update Amy FX Tersedia'/);
+  assert.match(updater, /Pembaruan Amy FX Tersedia/);
   assert.doesNotMatch(updater, />Update Amy FX Preview Tersedia</);
   assert.match(native, /fun setSystemUiTheme\(theme: String\?\)/);
 });

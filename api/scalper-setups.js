@@ -179,6 +179,12 @@ export default async function handler(req, res) {
             sl: driver.plan.stopLoss,
             target: actualTarget,
             tp1: actualTarget,
+            target2: driver.plan.tp2 || null,
+            tp2: driver.plan.tp2 || null,
+            realRr: driver.plan.rrReal || driver.rr,
+            limitEntry: driver.plan.entry,
+            marketEntry: driver.plan.marketEntry || actualEntry,
+            dualEntry: driver.plan.dualEntry || null,
             risk: actualRisk > 0 ? Math.round(actualRisk * 100) / 100 : 1.5,
             priority: isConfirmed ? 2 : (isLimitTriggered ? 2 : 3),
             note: isConfirmed

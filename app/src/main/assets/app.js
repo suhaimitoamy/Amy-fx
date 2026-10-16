@@ -1377,8 +1377,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <div id="learningReminderSettingsWrap" style="margin-top:14px; ${reminderConfig.enabled ? '' : 'display:none;'}">
           <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-top:1px solid var(--border-color);">
             <div>
-              <span style="display:block; font-size:12px; font-weight:750; color:var(--text-main);">Waktu Notifikasi</span>
-              <small style="color:var(--text-muted); font-size:11px;">Pilih jam pengingat muncul setiap hari</small>
+              <span style="display:block; font-size:12px; font-weight:750; color:var(--text-main);">Waktu Notifikasi (WITA)</span>
+              <small style="color:var(--text-muted); font-size:11px;">Pilih jam pengingat harian (WITA · UTC+8)</small>
             </div>
             <input type="time" id="learningReminderTimeInput" value="${escapeHtml(reminderConfig.time)}" style="border:1px solid var(--border-color); background:var(--surface-soft); color:var(--text-main); border-radius:8px; padding:6px 12px; font-size:14px; font-weight:700; font-family:monospace; outline:none;">
           </div>
@@ -1457,7 +1457,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('amy_learning_reminder_enabled', isChecked ? 'true' : 'false');
         localStorage.setItem('amy_learning_reminder_time', timeVal);
       }
-      showToast(`Jadwal pengingat disimpan: Setiap hari jam ${timeVal}`);
+      showToast(`Jadwal pengingat disimpan: Setiap hari jam ${timeVal} WITA`);
     });
 
     document.getElementById('testLearningReminderBtn')?.addEventListener('click', () => {

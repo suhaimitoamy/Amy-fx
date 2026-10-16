@@ -1,4 +1,4 @@
-name: Amy FX Pro Build and Release
+name: Amy FX Build and Release
 
 on:
   push:
@@ -22,15 +22,15 @@ permissions:
   contents: write
 
 concurrency:
-  group: amyfx-pro-release-${{ github.ref }}
+  group: amyfx-release-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  AMYFX_APPLICATION_ID: com.amyelitesuite.learningpreview
-  AMYFX_APP_LABEL: Amy FX Pro
-  AMYFX_URI_SCHEME: amyfxpreview
-  AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx-pro/main/update.json
-  AMYFX_KEYSTORE_PATH: /tmp/amyfx-pro-signing.keystore
+  AMYFX_APPLICATION_ID: com.amyelitesuite
+  AMYFX_APP_LABEL: Amy FX
+  AMYFX_URI_SCHEME: amyfx
+  AMYFX_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json
+  AMYFX_KEYSTORE_PATH: /tmp/amyfx-signing.keystore
   AMYFX_KEYSTORE_PASSWORD: android
   AMYFX_KEY_PASSWORD: android
   AMYFX_SIGNING_CERT_SHA256: "97:E0:B1:B6:F6:A1:B3:98:59:00:69:7F:97:63:51:B6:09:BD:BC:ED:19:07:FE:EC:90:49:EC:8F:D7:B5:02:32"
@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
-      - name: Checkout Amy FX Pro
+      - name: Checkout Amy FX
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -60,7 +60,7 @@ jobs:
           test -n "$version_name" && test -n "$version_code"
           echo "AMYFX_VERSION_NAME=$version_name" >> "$GITHUB_ENV"
           echo "AMYFX_VERSION_CODE=$version_code" >> "$GITHUB_ENV"
-          echo "AMYFX_RELEASE_TAG=amyfx-pro-$version_name" >> "$GITHUB_ENV"
+          echo "AMYFX_RELEASE_TAG=amyfx-$version_name" >> "$GITHUB_ENV"
           echo "Resolved source version: $version_name ($version_code)"
 
       - name: Validate source identity and JavaScript
@@ -88,13 +88,13 @@ jobs:
           const code = Number(process.env.AMYFX_VERSION_CODE);
           if (!app.includes(`name: '${name}', code: ${code}`)) throw new Error('app-version.js identity mismatch');
           if (!gradle.includes(`?: ${code})`) || !gradle.includes(`?: "${name}"`)) throw new Error('Gradle source identity mismatch');
-          if (!gradle.includes('com.amyelitesuite.learningpreview') || !gradle.includes('Amy FX Pro') || !gradle.includes('Amy-fx-pro/main/update.json')) throw new Error('Pro continuity identity mismatch');
+          if (!gradle.includes('com.amyelitesuite') || !gradle.includes('Amy FX') || !gradle.includes('Amy-fx/main/update.json')) throw new Error('Amy FX identity mismatch');
           const manifest = JSON.parse(fs.readFileSync('update.json', 'utf8'));
           const publishedCode = Number(manifest.latest_version_code ?? manifest.versionCode ?? 0);
           const publishedName = String(manifest.latest_version_name ?? manifest.version ?? '');
           if (!Number.isFinite(publishedCode) || publishedCode <= 0 || !publishedName) throw new Error('Invalid published update identity');
           if (publishedCode > code) throw new Error('Published update is newer than source');
-          const expected = `amyfx-pro-${publishedName}/AmyFX-Pro-latest.apk`;
+          const expected = `amyfx-${publishedName}/AmyFX-latest.apk`;
           if (!String(manifest.apk_url || manifest.downloadUrl || '').includes(expected)) throw new Error('Published APK URL/version mismatch');
           NODE
 
@@ -174,15 +174,15 @@ jobs:
           test -n "$apk" && test -s "$apk"
           aapt="$ANDROID_HOME/build-tools/35.0.0/aapt"
           apksigner="$ANDROID_HOME/build-tools/35.0.0/apksigner"
-          "$aapt" dump badging "$apk" | tee /tmp/amyfx-pro-badging.txt
-          grep -Fq "package: name='${AMYFX_APPLICATION_ID}' versionCode='${AMYFX_VERSION_CODE}' versionName='${AMYFX_VERSION_NAME}'" /tmp/amyfx-pro-badging.txt
-          grep -Fq "application-label:'${AMYFX_APP_LABEL}'" /tmp/amyfx-pro-badging.txt
-          "$apksigner" verify --verbose --print-certs "$apk" | tee /tmp/amyfx-pro-signing.txt
+          "$aapt" dump badging "$apk" | tee /tmp/amyfx-badging.txt
+          grep -Fq "package: name='${AMYFX_APPLICATION_ID}' versionCode='${AMYFX_VERSION_CODE}' versionName='${AMYFX_VERSION_NAME}'" /tmp/amyfx-badging.txt
+          grep -Fq "application-label:'${AMYFX_APP_LABEL}'" /tmp/amyfx-badging.txt
+          "$apksigner" verify --verbose --print-certs "$apk" | tee /tmp/amyfx-signing.txt
           expected="$(echo "$AMYFX_SIGNING_CERT_SHA256" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
-          actual="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/amyfx-pro-signing.txt | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          actual="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/amyfx-signing.txt | head -n1 | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           test "$actual" = "$expected"
-          cp "$apk" AmyFX-Pro-latest.apk
-          sha256sum AmyFX-Pro-latest.apk | tee AmyFX-Pro-latest.apk.sha256
+          cp "$apk" AmyFX-latest.apk
+          sha256sum AmyFX-latest.apk | tee AmyFX-latest.apk.sha256
 
       - name: Package Pro329 APK without additional verification
         if: env.AMYFX_VERSION_CODE == '950329'
@@ -190,52 +190,53 @@ jobs:
         run: |
           set -euo pipefail
           apk="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' | head -n1)"
-          cp "$apk" AmyFX-Pro-latest.apk
-          sha256sum AmyFX-Pro-latest.apk > AmyFX-Pro-latest.apk.sha256
+          cp "$apk" AmyFX-latest.apk
+          sha256sum AmyFX-latest.apk > AmyFX-latest.apk.sha256
           echo 'AMYFX_SIGNING_CERT_SHA256=not-rechecked-for-329' >> "$GITHUB_ENV"
 
-      - name: Publish Amy FX Pro release
+      - name: Publish Amy FX release
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
           cat > /tmp/release-notes.md <<NOTES
-          Amy FX Pro $AMYFX_VERSION_NAME
+          Amy FX $AMYFX_VERSION_NAME
 
+          - Aplikasi resmi mandiri Amy FX terpisah dari Amy FX Pro.
           - Mapping: enam driver kini memiliki evaluasi entry, invalidasi, target dan alasan menunggu dari backend.
           - OTE/CHoCH/Ensemble: anchor Fib nyata, konfirmasi M5 berurutan, quorum dua model searah dan target likuiditas terarah.
           - Lifecycle model: open setelah observasi, TP/SL, BE Adaptive, early exit Rapid, batas risiko Shield dan expiry.
           - Statistik: hasil simulasi dalam R bruto, BE/time exit, dan pengecualian outcome ambigu; skor bukan gate entry.
           NOTES
           if gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$AMYFX_RELEASE_TAG" AmyFX-Pro-latest.apk AmyFX-Pro-latest.apk.sha256 --repo "$GITHUB_REPOSITORY" --clobber
+            gh release upload "$AMYFX_RELEASE_TAG" AmyFX-latest.apk AmyFX-latest.apk.sha256 --repo "$GITHUB_REPOSITORY" --clobber
           else
-            gh release create "$AMYFX_RELEASE_TAG" AmyFX-Pro-latest.apk AmyFX-Pro-latest.apk.sha256 --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Amy FX Pro $AMYFX_VERSION_NAME" --notes-file /tmp/release-notes.md --latest
+            gh release create "$AMYFX_RELEASE_TAG" AmyFX-latest.apk AmyFX-latest.apk.sha256 --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Amy FX $AMYFX_VERSION_NAME" --notes-file /tmp/release-notes.md --latest
           fi
-          gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-Pro-latest.apk'
+          gh release view "$AMYFX_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'AmyFX-latest.apk'
 
       - name: Verify published APK endpoint
         if: env.AMYFX_VERSION_CODE != '950329'
         shell: bash
         run: |
           set -euo pipefail
-          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${AMYFX_RELEASE_TAG}/AmyFX-Pro-latest.apk"
-          curl -fL --retry 4 --retry-delay 3 -o /tmp/AmyFX-Pro-published.apk "$url"
-          test -s /tmp/AmyFX-Pro-published.apk
-          test "$(sha256sum /tmp/AmyFX-Pro-published.apk | awk '{print $1}')" = "$(sha256sum AmyFX-Pro-latest.apk | awk '{print $1}')"
+          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${AMYFX_RELEASE_TAG}/AmyFX-latest.apk"
+          curl -fL --retry 4 --retry-delay 3 -o /tmp/AmyFX-published.apk "$url"
+          test -s /tmp/AmyFX-published.apk
+          test "$(sha256sum /tmp/AmyFX-published.apk | awk '{print $1}')" = "$(sha256sum AmyFX-latest.apk | awk '{print $1}')"
 
       - name: Upload signed Pro artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Amy-FX-Pro-${{ env.AMYFX_VERSION_NAME }}-signed
+          name: Amy-FX-${{ env.AMYFX_VERSION_NAME }}-signed
           path: |
-            AmyFX-Pro-latest.apk
-            AmyFX-Pro-latest.apk.sha256
+            AmyFX-latest.apk
+            AmyFX-latest.apk.sha256
           if-no-files-found: error
           retention-days: 30
 
-      - name: Activate published Pro update
+      - name: Activate published update
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -253,13 +254,13 @@ jobs:
           path=pathlib.Path('update.json'); data=json.loads(path.read_text())
           if int(data.get('latest_version_code',0))>code:
               raise SystemExit('Refusing update manifest downgrade')
-          url='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/releases/download/'+os.environ['AMYFX_RELEASE_TAG']+'/AmyFX-Pro-latest.apk'
-          notes=data.get('changelog') or ['Market Intel: Menambahkan Tab ke-3 Sentimen The Fed', 'Penyeragaman tema visual Natural UI', 'Perlindungan gesture chart terhadap pull-to-refresh', 'Optimasi ukuran aset aplikasi']
-          data.update(latest_version_code=code,latest_version_name=name,versionCode=code,version=name,apk_url=url,downloadUrl=url,enabled=True,releaseDate=datetime.date.today().isoformat(),release_notes=notes,changelog=notes,sha256=hashlib.sha256(pathlib.Path('AmyFX-Pro-latest.apk').read_bytes()).hexdigest())
+          url='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/releases/download/'+os.environ['AMYFX_RELEASE_TAG']+'/AmyFX-latest.apk'
+          notes=data.get('changelog') or ['Pemisahan identitas mandiri Amy FX', 'Market Intel: Tab Sentimen The Fed', 'Penyeragaman tema visual Natural UI', 'Perlindungan gesture chart', 'Optimasi aset aplikasi']
+          data.update(latest_version_code=code,latest_version_name=name,versionCode=code,version=name,apk_url=url,downloadUrl=url,enabled=True,releaseDate=datetime.date.today().isoformat(),release_notes=notes,changelog=notes,sha256=hashlib.sha256(pathlib.Path('AmyFX-latest.apk').read_bytes()).hexdigest())
           path.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
           PYUPDATE
           git add update.json
           if ! git diff --cached --quiet; then
-            git commit -m "Activate published Amy FX Pro $AMYFX_VERSION_NAME"
+            git commit -m "Activate published Amy FX $AMYFX_VERSION_NAME"
             git push origin HEAD:main
           fi

@@ -92,7 +92,7 @@ function renderDriverSetups(c){
   const isClosed = c?.session === 'PASAR TUTUP' || !isMarketOpenNow();
   const e=currentDriverEvaluation(payload,c),items=c&&e&&!isClosed?(payload?.active||[]):[];
   if(summary)summary.textContent=isClosed?'Pasar tutup · Rencana driver nonaktif di akhir pekan.':!c?'Menunggu data server terkini.':!e?'Menunggu evaluasi driver.':items.length?`${items.length} rencana driver · evaluasi ${time(e.sourceTime)}`:'Belum ada trigger driver baru. Alasan tiap driver tersedia di Detail.';
-  root.innerHTML=isClosed?'<div class="empty-state">Pasar Gold tutup. Evaluasi driver akan aktif kembali saat pasar buka.</div>':items.map(s=>`<details class="inline-detail"><summary>${esc(s.driverName)} · ${esc(s.direction)} · ${['WAITING_TRIGGER','WAITING_NEXT_OPEN'].includes(s.status)?(s.status==='WAITING_TRIGGER'?'MENUNGGU LIMIT':'MENUNGGU OPEN'):(s.status==='ACTIVE'||driverSetupReady(s,c))?'AKTIF · SIMULASI':'WAIT · PERIKSA DATA / BERITA'}</summary><p>Entry ${number(s.entry)} · SL ${number(s.stopLoss)} · TP ${number(s.target)}</p><p>${['WAITING_TRIGGER','WAITING_NEXT_OPEN'].includes(s.status)?(s.status==='WAITING_TRIGGER'?'Limit Fib aktif setelah observasi; tunggu retest berikutnya.':'Entry acuan; harga final mengikuti open setelah observasi.'):'Harga milik posisi model; jangan mengejar entry yang sudah lewat.'}</p><button type="button" data-driver-plan="${esc(s.id)}">Tampilkan level di chart</button></details>`).join('');
+  root.innerHTML=isClosed?'<div class="empty-state">Pasar Gold tutup. Evaluasi driver akan aktif kembali saat pasar buka.</div>':items.map(s=>`<details class="inline-detail"><summary>${esc(s.driverName)} · ${esc(s.direction)} · ${['WAITING_TRIGGER','WAITING_NEXT_OPEN'].includes(s.status)?(s.status==='WAITING_TRIGGER'?'MENUNGGU LIMIT':'MENUNGGU OPEN'):(s.status==='ACTIVE'||driverSetupReady(s,c))?'AKTIF · SIMULASI':'WAIT · PERIKSA DATA / BERITA'}</summary><p>Entry ${number(s.entry)} · SL (Swing) ${number(s.stopLoss)} · TP1 ${number(s.target)}${s.target2?' · TP2 '+number(s.target2):''}</p><p>${['WAITING_TRIGGER','WAITING_NEXT_OPEN'].includes(s.status)?(s.status==='WAITING_TRIGGER'?'Limit Fib aktif setelah observasi; tunggu retest berikutnya.':'Entry acuan; harga final mengikuti open setelah observasi.'):'Harga milik posisi model; jangan mengejar entry yang sudah lewat.'}</p><button type="button" data-driver-plan="${esc(s.id)}">Tampilkan level di chart</button></details>`).join('');
   if (!isClosed) {
     try {
       const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('amyfx_notified_driver_plans') : null;
@@ -103,9 +103,9 @@ function renderDriverSetups(c){
         if (!notified[planKey]) {
           notified[planKey] = Date.now();
           hasNew = true;
-          const statusText = s.status === 'WAITING_TRIGGER' ? 'Rencana Limit' : (s.status === 'ARMED' ? 'Menunggu Retest' : (s.status === 'ACTIVE' ? 'Aktif' : s.status));
+          const statusText = s.status === 'WAITING_TRIGGER' ? 'Rencana Limit' : (s.status === 'WAITING_NEXT_OPEN' ? 'Siap Open Candle' : (s.status === 'ARMED' ? 'Menunggu Retest' : (s.status === 'ACTIVE' ? 'Aktif' : s.status)));
           const title = `⚡ Setup Driver: ${s.driverName || 'Gold'} (${s.direction})`;
-          const body = `${statusText} · Entry ${number(s.entry)} · SL ${number(s.stopLoss)} · TP ${number(s.target)}`;
+          const body = `${statusText} · Entry ${number(s.entry)} · SL ${number(s.stopLoss)} · TP ${number(s.target)}${s.target2?' · TP2 '+number(s.target2):''}`;
           if (window.Android?.showNotificationWithUrl) {
             window.Android.showNotificationWithUrl(title, body, `${location.href.split('#')[0]}#Dashboard`);
           }

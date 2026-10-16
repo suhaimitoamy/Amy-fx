@@ -99,5 +99,24 @@ test('AmyLearningReminder JS module handles configuration, recording, and notifi
   const notif = reminder.formatNotification();
   assert.match(notif.title, /Waktunya Tingkatkan Skill Trading-mu!/);
   assert.match(notif.message, /01 Bias Harian: Formasi Candlestick Daily/);
+  assert.match(notif.message, /WITA/);
   assert.equal(notif.url, 'https://appassets.androidplatform.net/assets/apps/academy/bagian-07/01.html');
+
+  // Test WITA timezone locking
+  assert.equal(reminder.WITA_TIMEZONE, 'Asia/Makassar');
+  assert.match(reminder.getWitaTimeHHMM(), /^\d{2}:\d{2}$/);
+  assert.match(reminder.getWitaDateString(), /^\d{4}-\d{2}-\d{2}$/);
+});
+
+test('LearningReminderWorker anchors all alarm calculations to Asia/Makassar (WITA)', () => {
+  assert.match(workerSource, /WITA_TIME_ZONE:\s*TimeZone\s*=\s*TimeZone\.getTimeZone\("Asia\/Makassar"\)/);
+  assert.match(workerSource, /Calendar\.getInstance\(WITA_TIME_ZONE\)/);
+  assert.match(workerSource, /gateKey = "learning_reminder\|\$witaDateKey"/);
+  assert.match(workerSource, /Jadwal: \$timeStr WITA/);
+});
+
+test('app.js Profile UI clearly indicates WITA timezone', () => {
+  assert.match(appJsSource, /Waktu Notifikasi \(WITA\)/);
+  assert.match(appJsSource, /WITA · UTC\+8/);
+  assert.match(appJsSource, /Jadwal pengingat disimpan: Setiap hari jam \$\{timeVal\} WITA/);
 });

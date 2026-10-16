@@ -12,17 +12,48 @@
   var DEFAULT_TIME = '20:00';
   var DEFAULT_TITLE = 'Fondasi ICT & Market Structure Dasar';
   var DEFAULT_URL = 'https://appassets.androidplatform.net/assets/apps/academy/index.html';
+  var WITA_TIMEZONE = 'Asia/Makassar';
+
+  function getWitaTimeHHMM() {
+    try {
+      var formatter = new Intl.DateTimeFormat('en-GB', {
+        timeZone: WITA_TIMEZONE,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+      return formatter.format(new Date());
+    } catch (_) {
+      var now = new Date();
+      var utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
+      var witaDate = new Date(utcMs + (8 * 3600000));
+      return String(witaDate.getHours()).padStart(2, '0') + ':' + String(witaDate.getMinutes()).padStart(2, '0');
+    }
+  }
+
+  function getWitaDateString() {
+    try {
+      var formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: WITA_TIMEZONE,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      return formatter.format(new Date());
+    } catch (_) {
+      var now = new Date();
+      var utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
+      var witaDate = new Date(utcMs + (8 * 3600000));
+      return witaDate.getFullYear() + '-' + String(witaDate.getMonth() + 1).padStart(2, '0') + '-' + String(witaDate.getDate()).padStart(2, '0');
+    }
+  }
 
   function getLocalTimeHHMM() {
-    var now = new Date();
-    var h = String(now.getHours()).padStart(2, '0');
-    var m = String(now.getMinutes()).padStart(2, '0');
-    return h + ':' + m;
+    return getWitaTimeHHMM();
   }
 
   function getLocalDateString() {
-    var now = new Date();
-    return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    return getWitaDateString();
   }
 
   function readJson(key, fallback) {
@@ -63,11 +94,12 @@
       if (lastTime) {
         try {
           lastTimeText = new Intl.DateTimeFormat('id-ID', {
+            timeZone: WITA_TIMEZONE,
             dateStyle: 'medium',
             timeStyle: 'short'
-          }).format(new Date(lastTime));
+          }).format(new Date(lastTime)) + ' WITA';
         } catch (_) {
-          lastTimeText = new Date(lastTime).toLocaleString('id-ID');
+          lastTimeText = new Date(lastTime).toLocaleString('id-ID') + ' WITA';
         }
       }
 
@@ -125,7 +157,7 @@
       var lessonTitle = customTitle || config.lastTitle || DEFAULT_TITLE;
       return {
         title: '📚 Waktunya Tingkatkan Skill Trading-mu!',
-        message: 'Materi terakhir yang kamu pelajari: "' + lessonTitle + '". Yuk lanjutkan belajar sekarang!',
+        message: 'Materi terakhir yang kamu pelajari: "' + lessonTitle + '". Yuk lanjutkan belajar sekarang! (Jadwal: ' + config.time + ' WITA)',
         url: config.lastUrl || DEFAULT_URL
       };
     },
@@ -197,7 +229,11 @@
           this._intervalId.unref();
         }
       }
-    }
+    },
+
+    WITA_TIMEZONE: WITA_TIMEZONE,
+    getWitaTimeHHMM: getWitaTimeHHMM,
+    getWitaDateString: getWitaDateString
   };
 
   global.AmyLearningReminder = AmyLearningReminder;

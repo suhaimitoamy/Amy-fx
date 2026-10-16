@@ -50,32 +50,31 @@ test('native secret vault never exposes a secret getter to WebView', async () =>
   for (const host of ['generativelanguage.googleapis.com', 'openrouter.ai', 'api.deepseek.com']) assert.match(bridge, new RegExp(host.replaceAll('.', '\\.')));
 });
 
-test('Pro release promotes Preview lineage into the Amy-fx-pro main channel', async () => {
+test('Amy FX release uses independent main channel', async () => {
   const workflow = await read('.github/workflows/build-apk.yml');
   const appVersion = await read('app/src/main/assets/app-version.js');
   const gradle = await read('app/build.gradle.kts');
-  const identity = appVersion.match(/name: '(2\.0\.0-pro\.(\d+))', code: (95\d{4})/);
-  assert.ok(identity, 'current Pro identity must be readable from app-version.js');
+  const identity = appVersion.match(/name: '(2\.0\.0-amyfx\.(\d+))', code: (95\d{4})/);
+  assert.ok(identity, 'current Amy FX identity must be readable from app-version.js');
 
   const [, versionName, sequenceText, versionCodeText] = identity;
   assert.equal(Number(versionCodeText), 950000 + Number(sequenceText));
-  assert.equal(versionName, `2.0.0-pro.${sequenceText}`);
+  assert.equal(versionName, `2.0.0-amyfx.${sequenceText}`);
   assert.match(gradle, new RegExp(`versionCode = .*\\?: ${versionCodeText}\\)`));
   assert.match(gradle, new RegExp(`versionName = .*\\?: "${versionName.replaceAll('.', '\\.') }"`));
 
   assert.match(workflow, /branches:\s*(?:\[main\]|\n\s*-\s*main)/);
-  assert.match(workflow, /com\.amyelitesuite\.learningpreview/);
-  assert.match(workflow, /Amy FX Pro/);
-  assert.match(workflow, /amyfxpreview/);
-  assert.match(workflow, /Amy-fx-pro\/main\/update\.json/);
+  assert.match(workflow, /com\.amyelitesuite/);
+  assert.match(workflow, /Amy FX/);
+  assert.match(workflow, /amyfx/);
+  assert.match(workflow, /Amy-fx\/main\/update\.json/);
   assert.match(workflow, /Resolve source version/);
   assert.match(workflow, /app-version\.js/);
   assert.match(workflow, /AMYFX_VERSION_NAME=\$version_name/);
   assert.match(workflow, /AMYFX_VERSION_CODE=\$version_code/);
-  assert.match(workflow, /AMYFX_RELEASE_TAG=amyfx-pro-\$version_name/);
+  assert.match(workflow, /AMYFX_RELEASE_TAG=amyfx-\$version_name/);
   assert.match(workflow, /gh release create/);
   assert.doesNotMatch(workflow, /git push origin (?:HEAD:)?personal\/amyfx-private/);
-  assert.doesNotMatch(workflow, /raw\.githubusercontent\.com\/suhaimitoamy\/Amy-fx\/main\/update\.json/);
 });
 
 test('blueprint assets are non-empty and syntax checked by Pro release gate', async () => {

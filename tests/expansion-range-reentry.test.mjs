@@ -55,8 +55,8 @@ test('Scalper Engine registers Expansion Range Re-entry V3 without drifting from
   assert.ok(fs.readFileSync(new URL('../supabase/functions/scalper-engine/rebuilt-lifecycle.mjs', import.meta.url), 'utf8').includes("from './discipline-lifecycle.mjs'"));
   assert.ok(fs.readFileSync(new URL('../supabase/functions/scalper-engine/discipline-lifecycle.mjs', import.meta.url), 'utf8').includes("from './expansion-range-lifecycle.mjs'"));
 
-  const identity = appVersion.match(/name: '(2\.0\.0-pro\.(\d+))', code: (95\d{4})/);
-  assert.ok(identity, 'current Pro identity must be readable from app-version.js');
+  const identity = appVersion.match(/name: '(2\.0\.0-amyfx\.(\d+))', code: (95\d{4})/);
+  assert.ok(identity, 'current Amy FX identity must be readable from app-version.js');
   const [, versionName, sequenceText, versionCodeText] = identity;
   assert.equal(Number(versionCodeText), 950000 + Number(sequenceText));
   assert.match(gradle, new RegExp(`versionCode = .*\\?: ${versionCodeText}\\)`));

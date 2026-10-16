@@ -19,13 +19,16 @@ export function setupView(setup,fresh,now=Date.now()){
   const recent=evaluated>0&&now-evaluated>=-30000&&now-evaluated<=(pending.has(setup.status)?timeframeSeconds+150:210)*1000;
   const expired=timestamp(setup.entryTimestamp||setup.entryCandleOpenTime)>0&&number(setup.maxHoldSeconds)&&now>timestamp(setup.entryTimestamp||setup.entryCandleOpenTime)+Number(setup.maxHoldSeconds)*1000;
   const actionable=fresh&&recent&&!expired&&geometry&&setup.recommendationStatus==='VALID'&&setup.status==='ACTIVE';
-  let label=terminal.has(setup.status)?setup.status.replaceAll('_',' '):pending.has(setup.status)?'MENUNGGU KONFIRMASI':active.has(setup.status)?'AKTIF DI SERVER':'STATUS BELUM DIKENAL';
-  let note=terminal.has(setup.status)?'Setup selesai. Level ini adalah catatan historis.':pending.has(setup.status)?'Tunggu trigger/open berikutnya; level belum menjadi entry aktif.':'Level milik setup server; bukan instruksi mengejar harga saat ini.';
+  let label=terminal.has(setup.status)?setup.status.replaceAll('_',' '):setup.status==='WAITING_TRIGGER'?'RENCANA LIMIT (PENDING)':setup.status==='WAITING_NEXT_OPEN'?'EKSEKUSI MARKET (OPEN CANDLE)':active.has(setup.status)?'AKTIF DI SERVER':'STATUS BELUM DIKENAL';
+  let note=terminal.has(setup.status)?'Setup selesai. Level ini adalah catatan historis.':setup.status==='WAITING_TRIGGER'?'Pasang limit di zona OTE; SL di bawah Swing Low/High M5.':setup.status==='WAITING_NEXT_OPEN'?'Konfirmasi displacement terpicu; siap eksekusi open candle berikutnya.':pending.has(setup.status)?'Tunggu trigger/open berikutnya; level belum menjadi entry aktif.':'Level milik setup server; bukan instruksi mengejar harga saat ini.';
   if(!terminal.has(setup.status)&&(!fresh||!recent||expired)){label='DATA TERLAMBAT · WAIT';note='Tunggu evaluasi server terbaru sebelum menggunakan level ini.';}
-  else if(actionable)label=`${direction} · SETUP AKTIF`;
+  else if(actionable)label=`${direction} · POSISI AKTIF`;
   else if(!geometry&&!terminal.has(setup.status))note='Entry, SL, atau target belum lengkap/valid. Tunggu pembaruan server.';
   else if(setup.recommendationStatus!=='VALID'&&!terminal.has(setup.status))note=`Status rekomendasi server: ${setup.recommendationStatus||'belum tersedia'}. Bukan entry baru.`;
-  return {...setup,direction,entry,sl,tp1,tp2,geometry,actionable,label,note,rr:geometry?Math.abs(tp2-entry)/Math.abs(entry-sl):null};
+  const marketEntry=number(setup.marketEntry);
+  const limitEntry=number(setup.limitEntry||setup.entry);
+  const target2=number(setup.target2||setup.tp2);
+  return {...setup,direction,entry,sl,tp1,tp2,target2,marketEntry,limitEntry,geometry,actionable,label,note,rr:geometry?Math.abs(tp2-entry)/Math.abs(entry-sl):null};
 }
 export function setupList(payload,fresh,now=Date.now()){
   const seen=new Set();return (Array.isArray(payload?.active)?payload.active:[]).filter(s=>s&&s.id&&!seen.has(s.id)&&seen.add(s.id)&&!terminal.has(s.status)&&s.symbol==='XAU/USD').map(s=>setupView(s,fresh,now));

@@ -24,18 +24,18 @@ function readProIdentity() {
   const version = source(versionUrl);
   const gradle = source(gradleUrl);
   const manifest = JSON.parse(source(manifestUrl));
-  const identity = version.match(/name:\s*'(2\.0\.0-pro\.(\d+))'\s*,\s*code:\s*(95\d{4})/);
+  const identity = version.match(/name:\s*'(2\.0\.0-amyfx\.(\d+))'\s*,\s*code:\s*(95\d{4})/);
 
-  assert.ok(identity, 'Pro source version name and code must be readable');
+  assert.ok(identity, 'Amy FX source version name and code must be readable');
   const [, versionName, sequenceText, versionCodeText] = identity;
   const sequence = Number(sequenceText);
   const versionCode = Number(versionCodeText);
 
-  assert.equal(versionCode, 950000 + sequence, 'Pro version code must match its sequence');
-  assert.match(gradle, /com\.amyelitesuite\.learningpreview/);
-  assert.match(gradle, /Amy FX Pro/);
-  assert.match(gradle, /amyfxpreview/);
-  assert.match(gradle, /Amy-fx-pro\/main\/update\.json/);
+  assert.equal(versionCode, 950000 + sequence, 'Amy FX version code must match its sequence');
+  assert.match(gradle, /com\.amyelitesuite/);
+  assert.match(gradle, /Amy FX/);
+  assert.match(gradle, /amyfx/);
+  assert.match(gradle, /Amy-fx\/main\/update\.json/);
   assert.ok(gradle.includes(`?: ${versionCode})`), 'Gradle versionCode must match app-version.js');
   assert.ok(gradle.includes(`?: "${versionName}"`), 'Gradle versionName must match app-version.js');
 
@@ -43,7 +43,7 @@ function readProIdentity() {
   assert.equal(manifest.latest_version_name, manifest.version);
   assert.ok(
     Number(manifest.latest_version_code) <= versionCode,
-    'The active Pro update manifest must never advertise a version newer than the source candidate'
+    'The active Amy FX update manifest must never advertise a version newer than the source candidate'
   );
   if (Number(manifest.latest_version_code) === versionCode) {
     assert.equal(manifest.latest_version_name, versionName);
@@ -57,16 +57,16 @@ test('version and update scripts remain syntactically valid', () => {
   assertSyntax(checkerUrl);
 });
 
-test('Pro source, Gradle, package lineage, channel, and active manifest remain consistent', () => {
+test('Amy FX source, Gradle, package lineage, channel, and active manifest remain consistent', () => {
   readProIdentity();
 });
 
-test('profile displays a clean Amy FX Pro version while retaining the Pro update channel', () => {
+test('profile displays a clean Amy FX version while retaining the Amy FX update channel', () => {
   const { version } = readProIdentity();
   const index = source(indexUrl);
-  assert.match(version, /Amy FX Pro · v\$\{displayVersionName\(VERSION\.name\)\}/);
-  assert.match(version, /replace\(\/-pro/);
-  assert.match(version, /Amy-fx-pro\/main\/update\.json/);
+  assert.match(version, /Amy FX · v\$\{displayVersionName\(VERSION\.name\)\}/);
+  assert.match(version, /replace\(\/-\(\?:preview\|pro\|amyfx\)/);
+  assert.match(version, /Amy-fx\/main\/update\.json/);
   assert.match(version, /Versi Aplikasi/);
   assert.match(version, /data-profile-action=\\?"version/);
   assert.match(version, /AmyFXUpdate\?\.checkNow/);

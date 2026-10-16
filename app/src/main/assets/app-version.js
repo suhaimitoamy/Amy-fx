@@ -1,14 +1,14 @@
-// Amy FX Pro — Gold market context; manual execution only.
+// Amy FX — Gold market context; manual execution only.
 (function () {
-  const VERSION = Object.freeze({ name: '2.0.0-pro.413', code: 950413 });
+  const VERSION = Object.freeze({ name: '2.0.0-amyfx.414', code: 950414 });
   window.AmyFXAppVersion = VERSION;
-  window.AmyFXUpdateManifestUrl = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx-pro/main/update.json';
+  window.AmyFXUpdateManifestUrl = 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json';
   function displayVersionName(name) {
-    return String(name || '').replace(/-pro(?:\.|-)?/i, ' · build ');
+    return String(name || '').replace(/-(?:preview|pro|amyfx)(?:\.|-)?/i, ' · build ');
   }
 
   function versionText() {
-    return `Amy FX Pro · v${displayVersionName(VERSION.name)}`;
+    return `Amy FX · v${displayVersionName(VERSION.name)}`;
   }
 
   function injectVersionRow() {
@@ -38,7 +38,7 @@
       window.AmyFXUpdate.checkNow({ announce: true });
       return;
     }
-    window.showToast?.(`Versi terpasang: Amy FX Pro v${displayVersionName(VERSION.name)} (${VERSION.code}). Pemeriksa update sedang dimuat.`);
+    window.showToast?.(`Versi terpasang: Amy FX v${displayVersionName(VERSION.name)} (${VERSION.code}). Pemeriksa update sedang dimuat.`);
     setTimeout(() => window.AmyFXUpdate?.checkNow?.({ announce: true }), 800);
   }
 

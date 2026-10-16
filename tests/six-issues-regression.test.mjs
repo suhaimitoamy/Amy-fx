@@ -148,22 +148,22 @@ test('Asia Range is anchored to New York and follows EDT EST automatically', () 
   assert.doesNotMatch(code, /const ASIA_END_HOUR = 14;/);
 });
 
-test('Pro source identity is current and no more than one signed build ahead of manifest', () => {
+test('Amy FX source identity is current and no more than one signed build ahead of manifest', () => {
   const appVersion = fs.readFileSync('app/src/main/assets/app-version.js', 'utf8');
   const manifest = JSON.parse(fs.readFileSync('update.json', 'utf8'));
-  const match = appVersion.match(/name:\s*'(2\.0\.0-pro\.(\d+))'\s*,\s*code:\s*(95\d{4})/);
-  assert.ok(match, 'Pro source identity must be readable');
+  const match = appVersion.match(/name:\s*'(2\.0\.0-amyfx\.(\d+))'\s*,\s*code:\s*(95\d{4})/);
+  assert.ok(match, 'Amy FX source identity must be readable');
 
   const [, sourceName, sourceSequenceText, sourceCodeText] = match;
   const sourceSequence = Number(sourceSequenceText);
   const sourceCode = Number(sourceCodeText);
   const publishedCode = Number(manifest.latest_version_code);
   const publishedName = String(manifest.latest_version_name || '');
-  const publishedMatch = publishedName.match(/^2\.0\.0-pro\.(\d+)$/);
+  const publishedMatch = publishedName.match(/^2\.0\.0-amyfx\.(\d+)$/);
 
-  assert.ok(publishedMatch, 'Activated Pro manifest identity must be readable');
+  assert.ok(publishedMatch, 'Activated Amy FX manifest identity must be readable');
   assert.equal(sourceCode, 950000 + sourceSequence);
   assert.ok(sourceCode >= publishedCode, 'Failed candidates may be skipped, but manifest downgrade is forbidden');
-  assert.match(sourceName, /^2\.0\.0-pro\.\d+$/);
-  assert.match(appVersion, /Amy-fx-pro\/main\/update\.json/);
+  assert.match(sourceName, /^2\.0\.0-amyfx\.\d+$/);
+  assert.match(appVersion, /Amy-fx\/main\/update\.json/);
 });

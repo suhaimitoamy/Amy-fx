@@ -1,5 +1,60 @@
 # Technical Decisions
 
+## 2026-10-16 — Pemisahan Penuh Identitas Aplikasi Amy FX (Mandiri vs Amy FX Pro)
+1. **Latar Belakang Masalah:**
+   - APK yang diunduh dari repositori `Amy-fx` sebelumnya terpasang sebagai **"Amy FX Pro"** dan menimpa instalasi Amy FX Pro yang ada di ponsel Android pengguna.
+   - Akar masalah: Meskipun repositori dipisah ke `Amy-fx`, file build (`app/build.gradle.kts`, `.github/workflows/build-apk.yml`, dan `app-version.js`) masih menggunakan konfigurasi lama:
+     - `applicationId`: `com.amyelitesuite.learningpreview` (sama persis dengan Amy FX Pro).
+     - `AMYFX_APP_LABEL`: `Amy FX Pro`.
+     - `AMYFX_URI_SCHEME`: `amyfxpreview`.
+     - Manifest update URL: masih mengarah ke repo `Amy-fx-pro`.
+2. **Solusi & Pemisahan Mutlak:**
+   - **Application ID Android:** Diubah menjadi `com.amyelitesuite` (terdaftar resmi di Firebase `google-services.json`), sehingga Android memperlakukannya sebagai **dua aplikasi yang 100% berbeda** dan dapat terpasang berdampingan di satu HP tanpa saling menimpa.
+   - **App Label:** Diubah menjadi `"Amy FX"`.
+   - **URI Scheme:** Diubah menjadi `amyfx`.
+   - **Update Channel & Manifest:** Diubah ke `https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json`.
+   - **Versi Rilis:** Ditetapkan ke `2.0.0-amyfx.414` (code `950414`).
+   - **Artifact & Tag:** Diarahkan ke tag `amyfx-$version_name` dengan nama asset `AmyFX-latest.apk`.
+   - **CI & Tests:** Workflow `build-apk.yml` serta seluruh regression suites (`production-release-identity`, `profile-version-update`, `stage5-hardening`, `personal-source-debug`, `pro348-ui-polish`, `six-issues-regression`, `native-updater`, `professional-glassmorphism-redesign`, `blueprint-preview-v1`, `expansion-range-reentry`) telah diselaraskan 100% dan lolos uji.
+
+## 2026-10-13 — Pembentukan Skill Mentor Trading Privat 1-on-1, Twelve Data MCP Integration & Pedagogical Guardrails (Pro 426)
+1. **Latar Belakang & Kebutuhan Pengguna:**
+   - Pengguna membutuhkan bimbingan trading mandiri murni (teknikal ICT/SMC & fundamental makroekonomi) tanpa membahas koding, backtest teknis, atau aplikasi.
+2. **Penciptaan Skill Global `mentor-trading-privat`:**
+   - Berlokasi di `/root/.agents/skills/mentor-trading-privat/SKILL.md` (shared untuk Akun 1 & Akun 2).
+   - Buku Pegangan Kurikulum: Vault Obsidian `/sdcard/Download/Obsidian/Amy_Trading_Academy_Vault/` (492 materi terstruktur).
+   - Tracker Progres: Terhubung ke `/root/amy-market-data/learning_progress.json` & `progress_tracker.py`.
+3. **Pemasangan Stdio Twelve Data MCP Server & Candle Builder Sync:**
+   - Script Server: `/root/.agents/mcp-servers/twelvedata-server.mjs`.
+   - Konfigurasi: `/root/.gemini/config/mcp_config.json`.
+   - Kemampuan: Real-time price, live candles fetch dengan auto-save ke SQLite `/root/amy-market-data/xauusd_bot.sqlite`, serta engine deteksi ICT Market Structure (BSL, SSL, Sweeps, BOS, MSS/CHoCH, Active FVGs dengan 50% CE, dan Dealing Range Premium/Discount).
+4. **Pedagogical Guardrails & Anti-Distraksi:**
+   - *Chunking Method:* Menyampaikan materi bertahap 2-3 segmen logis per topik tanpa memangkas ilmu (Zero Information Loss).
+   - *Anti-Halusinasi & Real-World Gold Rules:* Menolak Stop Loss mikro $1 di Gold; menerapkan SL struktural di balik sweep dan TP ke Draw on Liquidity nyata dengan RR >= 1:2.
+   - *Cross-Semester Thematic Synthesis:* Membedah 1 konsep secara mendalam dengan merangkum seluruh catatan terkait dari Semester 1, 2, dan 3 dalam 8 Pilar Keahlian.
+   - *True Level 0 Rule:* Dilarang menyodorkan chart atau jargon teknikal/institusional jika mulai dari nol; wajib dari logika manusia/pasar nyata.
+   - *On-Context Discipline:* Dilarang melempar saran topik baru atau menu bercabang di akhir respons. Dicatat permanen di `/root/GEMINI.md` (Seksi 10 & 11) dan `RULES.md` (Pro 421).
+
+## 2026-10-12 — Cockpit Mapping Professional Upgrade: Dual Entry Engine, Swing Stop Loss M5/M15 & Liquidity Targets
+1. **Latar Belakang & Keluhan Pengguna:**
+   - Aturan driver terlalu ketat: Terlalu banyak limit order menggantung (`WAITING_TRIGGER`) alih-alih eksekusi entry riil saat momentum kencang, menyebabkan setup terlewat.
+   - Stop Loss terlalu sempit dan kaku ($0.1$ ATR / ~20 sen) tanpa berpatokan pada Protected Swing Low/High M5/M15, sehingga mudah tersapu noise/spread wicks XAU/USD. TP dipatok kaku 0.8R alih-alih mengejar external liquidity pools (BSL/SSL).
+2. **Dual Entry Engine (Market Execution on Displacement vs OTE Limit on Retest):**
+   - Mengintegrasikan `Dual Entry` pada Six Drivers (`six-drivers.mjs`, `api/scalper-setups.js`):
+     - Jika konfirmasi displacement M5 terpicu (`isConfirmed`), status menjadi `ACTIVE` dengan `marketEntry` (harga close candle displacement) dan note: *Konfirmasi M5 close terpicu · Market Execution*.
+     - Jika harga belum konfirmasi tapi menyentuh level limit (`isLimitTriggered`), posisi berjalan otomatis.
+     - Jika sedang menunggu retrace, menyajikan rencana limit di zona OTE.
+3. **Stop Loss Berbasis Swing M5/M15 Institusional:**
+   - Stop loss buffer diperluas secara adaptif: `swingBuffer = Math.max(0.60, Math.min(1.50, event.atr * 0.25))` bersandar pada swing extreme pivots M5/M15.
+4. **TP2 Likuiditas Riil & R:R Proporsional:**
+   - TP1 mengunci target dasar model, TP2 mengejar target likuiditas eksternal nyata (BSL / SSL / PDH / PDL).
+   - Menghitung `realRr` dinamis berdasarkan jarak ke likuiditas pool.
+5. **Hardening Sweep Reclaim Fallback Logic:**
+   - Memperbaiki bug di `sweep-acceptance.js` di mana level/close bernilai null sebelumnya mengembalikan `reclaimed = true`. Kini di-fallback ke `false` (`SWEEP_UNCONFIRMED`) agar tidak memunculkan false signal rejection saat data unconfirmed.
+6. **Cockpit UI & Watch Card Hardening:**
+   - Memperbarui `scalper-entry-watch-v1.js`, `scalper-panel.js`, dan `scalper-model.js` dengan label status akurat, detail dual entry, serta penyesuaian label TP1 & TP2 Likuiditas.
+7. **Verifikasi:** 64 targeted unit tests PASS (4.3s) tanpa regresi. Disinkronkan ke upstream `Amy-fx-pro` dan `Amy-fX-pwa`.
+
 ## 2026-10-12 — Peralihan Fokus Penuh ke Amy FX sebagai Aplikasi Pribadi Pengguna
 1. **Latar Belakang & Keputusan Pengguna:**
    - Pengguna menetapkan bahwa mulai saat ini fokus pengembangan harian, koding, fitur baru, dan rilis aplikasi beralih 100% ke repositori pribadi **`Amy-fx`** (`/root/Amy-fx` dan `/sdcard/Download/Amy-fx`).

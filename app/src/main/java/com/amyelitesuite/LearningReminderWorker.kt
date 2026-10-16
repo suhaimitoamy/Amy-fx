@@ -20,6 +20,7 @@ import androidx.work.WorkerParameters
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Calendar
+import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 
 class LearningReminderWorker(
@@ -38,11 +39,14 @@ class LearningReminderWorker(
 
             val resolvedTitle = if (!lastTitle.isNullOrBlank()) lastTitle else DEFAULT_LESSON_TITLE
             val resolvedUrl = if (!lastUrl.isNullOrBlank()) lastUrl else DEFAULT_LESSON_URL
+            val timeStr = prefs.getString(KEY_TIME, DEFAULT_TIME) ?: DEFAULT_TIME
 
             val title = "📚 Waktunya Tingkatkan Skill Trading-mu!"
-            val message = "Materi terakhir yang kamu pelajari: \"$resolvedTitle\". Yuk lanjutkan belajar sekarang!"
+            val message = "Materi terakhir yang kamu pelajari: \"$resolvedTitle\". Yuk lanjutkan belajar sekarang! (Jadwal: $timeStr WITA)"
 
             showNotification(title, message, resolvedUrl)
+            // Re-anchor schedule strictly to WITA time
+            schedule(applicationContext)
             Result.success()
         } catch (error: Exception) {
             android.util.Log.w("AmyFX-LearningWorker", "Learning reminder failed", error)
@@ -53,7 +57,15 @@ class LearningReminderWorker(
     private fun showNotification(title: String, message: String, targetUrl: String) {
         if (!canPostNotifications()) return
 
-        val gateKey = "learning_reminder|" + (System.currentTimeMillis() / (1000 * 60 * 60 * 6))
+        val nowWita = Calendar.getInstance(WITA_TIME_ZONE)
+        val witaDateKey = String.format(
+            java.util.Locale.US,
+            "%04d-%02d-%02d",
+            nowWita.get(Calendar.YEAR),
+            nowWita.get(Calendar.MONTH) + 1,
+            nowWita.get(Calendar.DAY_OF_MONTH)
+        )
+        val gateKey = "learning_reminder|$witaDateKey"
         if (!AmyFxNotificationGate.shouldNotify(applicationContext, gateKey, System.currentTimeMillis())) {
             return
         }
@@ -133,6 +145,8 @@ class LearningReminderWorker(
         const val DEFAULT_LESSON_URL = "https://appassets.androidplatform.net/assets/apps/academy/index.html"
         const val DEFAULT_TIME = "20:00"
 
+        val WITA_TIME_ZONE: TimeZone = TimeZone.getTimeZone("Asia/Makassar")
+
         fun schedule(context: Context) {
             val workManager = WorkManager.getInstance(context)
             val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -148,8 +162,8 @@ class LearningReminderWorker(
             val targetHour = parts.getOrNull(0)?.toIntOrNull() ?: 20
             val targetMinute = parts.getOrNull(1)?.toIntOrNull() ?: 0
 
-            val now = Calendar.getInstance()
-            val target = Calendar.getInstance().apply {
+            val now = Calendar.getInstance(WITA_TIME_ZONE)
+            val target = Calendar.getInstance(WITA_TIME_ZONE).apply {
                 set(Calendar.HOUR_OF_DAY, targetHour)
                 set(Calendar.MINUTE, targetMinute)
                 set(Calendar.SECOND, 0)

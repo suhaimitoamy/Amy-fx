@@ -1,25 +1,26 @@
 {
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-pro-2.0.0-pro.413/AmyFX-Pro-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.414/AmyFX-latest.apk",
   "changelog": [
+    "Pemisahan Penuh Identitas Amy FX: Aplikasi Amy FX resmi mandiri dengan Application ID (com.amyelitesuite) terpisah dari Amy FX Pro, sehingga dapat terpasang berdampingan di perangkat.",
     "Replay Multi-Timeframe Mulus: Perbaikan engine replay dan penyelarasan cursor sehingga perpindahan timeframe ke M5, M15, M30, H1, H4, dan D1 langsung memuat konteks lilin candle utuh tanpa terhambat.",
     "Playback & Step Presisi: Tombol +1, +5, dan Putar memajukan lilin candle secara responsif dan akurat pada semua timeframe yang dipilih.",
     "Label Pack & Indikator Timeframe Jelas: Label pack historis menampilkan dukungan penuh (M1–D1), strip OHLC menampilkan waktu lilin candle bucket terbuka yang sinkron, dan badge TF aktif disematkan.",
     "Agregasi Candle Cepat & Ringan: Fast-path agregasi biner memangkas overhead pemrosesan data historis hingga 10x lebih cepat di perangkat."
   ],
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-pro-2.0.0-pro.413/AmyFX-Pro-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.414/AmyFX-latest.apk",
   "enabled": true,
   "force_update": false,
-  "latest_version_code": 950413,
-  "latest_version_name": "2.0.0-pro.413",
+  "latest_version_code": 950414,
+  "latest_version_name": "2.0.0-amyfx.414",
   "mandatory": false,
-  "releaseDate": "2026-10-12",
+  "releaseDate": "2026-10-16",
   "release_notes": [
+    "Pemisahan Penuh Identitas Amy FX: Aplikasi Amy FX resmi mandiri dengan Application ID (com.amyelitesuite) terpisah dari Amy FX Pro, sehingga dapat terpasang berdampingan di perangkat.",
     "Replay Multi-Timeframe Mulus: Perbaikan engine replay dan penyelarasan cursor sehingga perpindahan timeframe ke M5, M15, M30, H1, H4, dan D1 langsung memuat konteks lilin candle utuh tanpa terhambat.",
     "Playback & Step Presisi: Tombol +1, +5, dan Putar memajukan lilin candle secara responsif dan akurat pada semua timeframe yang dipilih.",
     "Label Pack & Indikator Timeframe Jelas: Label pack historis menampilkan dukungan penuh (M1–D1), strip OHLC menampilkan waktu lilin candle bucket terbuka yang sinkron, dan badge TF aktif disematkan.",
     "Agregasi Candle Cepat & Ringan: Fast-path agregasi biner memangkas overhead pemrosesan data historis hingga 10x lebih cepat di perangkat."
   ],
-  "sha256": "1de221c11315c8907e86239c43ffcc0a7b486f74afe0ec2c429857ce207330df",
-  "version": "2.0.0-pro.413",
-  "versionCode": 950413
+  "version": "2.0.0-amyfx.414",
+  "versionCode": 950414
 }

@@ -80,15 +80,20 @@ function witaTime(value) {
 function instruction(setup) {
   if(setup?.driverId==='DISCIPLINE_SCALPER')return setup.status==='WAITING_TRIGGER'?'Menunggu retest level liquidity setelah konfirmasi.':`Discipline Scalper ${setup.status} · target liquidity, SL tetap tanpa breakeven.`;
   if (!setup) return '';
-  if (setup.status === 'WAITING_TRIGGER') return 'Menunggu syarat trigger driver terpenuhi pada candle yang sudah close.';
-  if (setup.status === 'WAITING_NEXT_OPEN' || setup.status === 'ENTRY_READY') return 'Menunggu open live berikutnya untuk mengunci entry, Stop Loss, TP1, dan TP2.';
-  if (setup.status === 'ACTIVE' && setup.tp1Hit === true) return `${driver(setup)} ${timeframe(setup)} sudah mencapai TP1 +10 poin. Stop Loss tetap pada level awal; menunggu TP2 +20 poin.`;
-  if (setup.status === 'ACTIVE') return `${driver(setup)} ${timeframe(setup)} aktif dalam simulasi Scalper Engine. Target tetap TP1 +10 dan TP2 +20 poin; tanpa perpindahan breakeven otomatis.`;
-  if (setup.status === 'BE_ACTIVE') return 'Status breakeven ini berasal dari lifecycle engine lama dan hanya ditampilkan sebagai riwayat.';
+  if (setup.status === 'WAITING_TRIGGER') {
+    if (setup.marketEntry && setup.entry && Math.abs(setup.marketEntry - setup.entry) > 0.05) {
+      return `Rencana Limit di ${price(setup.entry)} (atau eksekusi market terkonfirmasi di ${price(setup.marketEntry)}). SL Swing di ${price(setup.stopLoss)}.`;
+    }
+    return `Pasang limit order di ${price(setup.entry)}. Menunggu retest zona OTE; SL Swing di ${price(setup.stopLoss)}.`;
+  }
+  if (setup.status === 'WAITING_NEXT_OPEN' || setup.status === 'ENTRY_READY') return `Konfirmasi displacement M5 terpicu. Siap eksekusi pada open live berikutnya di sekitar ${price(setup.marketEntry || setup.entry)}. SL Swing di ${price(setup.stopLoss)}.`;
+  if (setup.status === 'ACTIVE' && setup.tp1Hit === true) return `${driver(setup)} ${timeframe(setup)} sudah mencapai TP1 (${price(setup.tp1)}). Stop Loss aman; target TP2 Likuiditas (${price(setup.tp2 || setup.target)}).`;
+  if (setup.status === 'ACTIVE') return `${driver(setup)} ${timeframe(setup)} posisi aktif. Target TP1 ${price(setup.tp1)} dan TP2 Likuiditas ${price(setup.tp2 || setup.target)}.`;
+  if (setup.status === 'BE_ACTIVE') return 'Status breakeven aktif pada entry; posisi aman bebas risiko.';
   if (setup.status === 'TIME_EXIT') return `Batas waktu setup selesai. Hasil simulasi ${resultR(setup.resultR)}.`;
-  if (setup.status === 'TP_HIT') return 'TP2 tercapai pada simulasi Scalper Engine.';
-  if (setup.status === 'SL_HIT') return 'Setup simulasi selesai terkena Stop Loss.';
-  if (setup.status === 'BE_HIT') return 'Setup simulasi selesai di breakeven.';
+  if (setup.status === 'TP_HIT') return `Target TP (${price(setup.exitPrice || setup.target)}) tercapai penuh.`;
+  if (setup.status === 'SL_HIT') return `Setup selesai terkena Stop Loss di ${price(setup.exitPrice || setup.stopLoss)}.`;
+  if (setup.status === 'BE_HIT') return 'Setup selesai di Breakeven (0.00R).';
   if (setup.status === 'INVALIDATED') return setup.invalidationReason || 'Setup batal karena kondisi invalidasi driver terpenuhi.';
   return status(setup.status);
 }
@@ -226,8 +231,10 @@ function card(payload, availability, error = '') {
       ? 'DATA BELUM TERSEDIA'
       : 'MENUNGGU SETUP';
   const badge = availabilityLabel || (setup ? status(setup.status) : 'MENUNGGU SETUP');
+  const tp1Label = setup?.driverId === 'DISCIPLINE_SCALPER' ? '—' : (setup?.tp1 != null ? 'TP1' : 'TP1 +10');
+  const tp2Label = setup?.driverId === 'DISCIPLINE_SCALPER' ? 'TP Likuiditas' : (setup?.tp2 != null ? 'TP2 Likuiditas' : 'TP2 +20');
   const levels = setup?.entry != null
-    ? `<div class="scalper-level-grid"><div><small>Entry</small><strong>${price(setup.entry)}</strong></div><div><small>Stop Loss</small><strong>${price(setup.stopLoss)}</strong></div><div><small>${setup.driverId==='DISCIPLINE_SCALPER'?'—':'TP1 +10'}</small><strong>${price(setup.tp1 ?? setup.breakEvenTrigger)}</strong></div><div><small>${setup.driverId==='DISCIPLINE_SCALPER'?'TP liquidity':'TP2 +20'}</small><strong>${price(setup.tp2 ?? setup.target)}</strong></div></div>`
+    ? `<div class="scalper-level-grid"><div><small>Entry</small><strong>${price(setup.entry)}</strong></div><div><small>Stop Loss</small><strong>${price(setup.stopLoss)}</strong></div><div><small>${tp1Label}</small><strong>${price(setup.tp1 ?? setup.breakEvenTrigger)}</strong></div><div><small>${tp2Label}</small><strong>${price(setup.tp2 ?? setup.target)}</strong></div></div>`
     : '';
   const stopBasis = setup?.stopBasis
     ? `<div class="scalper-stop-basis"><small>Dasar SL</small><strong>${esc(setup.stopBasis)}</strong></div>`
