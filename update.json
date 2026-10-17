@@ -1,9 +1,10 @@
 {
   "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.415/AmyFX-latest.apk",
   "changelog": [
-    "Restrukturisasi Kurikulum Master Terpadu: 10 Modul Tematik Terpadu menggabungkan seluruh 36 bagian materi dari nol sampai trader mandiri.",
-    "Zero Information Loss: Seluruh materi 222+ bab tersaji lengkap tanpa ringkasan, mencakup Fondasi, Market Structure, Likuiditas, Inducement, Dealing Range, PD Arrays (FVG & OB), Daily Bias, Waktu & Killzone, Model Entry, hingga Playbook Emas (XAUUSD).",
-    "Navigasi Modul Baru & Hub Terpadu: Beranda modul khusus dengan silabus interaktif, estimasi waktu, sub-modul terstruktur, dan tautan langsung ke setiap bab pembahasan."
+    "Perbaikan Notifikasi Alarm Belajar: Integrasi exact AlarmManager (WITA) dengan Doze mode wakeup dan filter waktu ±15 menit dari jam yang disetel pengguna untuk mencegah alarm muncul dini.",
+    "Limit Notifikasi Harian: Alarm belajar dibatasi maksimal 1 kali per hari kalender WITA (KEY_LAST_NOTIFIED_DATE).",
+    "Auto Re-arm Alarm: BootReceiver otomatis mengaktifkan kembali jadwal alarm belajar saat ponsel baru dinyalakan (reboot).",
+    "Pembersihan URL Unduhan: Mengunci fallback unduhan update murni ke repositori mandiri Amy-fx."
   ],
   "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.415/AmyFX-latest.apk",
   "enabled": true,
@@ -11,11 +12,12 @@
   "latest_version_code": 950415,
   "latest_version_name": "2.0.0-amyfx.415",
   "mandatory": false,
-  "releaseDate": "2026-10-16",
+  "releaseDate": "2026-10-17",
   "release_notes": [
-    "Restrukturisasi Kurikulum Master Terpadu: 10 Modul Tematik Terpadu menggabungkan seluruh 36 bagian materi dari nol sampai trader mandiri.",
-    "Zero Information Loss: Seluruh materi 222+ bab tersaji lengkap tanpa ringkasan, mencakup Fondasi, Market Structure, Likuiditas, Inducement, Dealing Range, PD Arrays (FVG & OB), Daily Bias, Waktu & Killzone, Model Entry, hingga Playbook Emas (XAUUSD).",
-    "Navigasi Modul Baru & Hub Terpadu: Beranda modul khusus dengan silabus interaktif, estimasi waktu, sub-modul terstruktur, dan tautan langsung ke setiap bab pembahasan."
+    "Perbaikan Notifikasi Alarm Belajar: Integrasi exact AlarmManager (WITA) dengan Doze mode wakeup dan filter waktu ±15 menit dari jam yang disetel pengguna untuk mencegah alarm muncul dini.",
+    "Limit Notifikasi Harian: Alarm belajar dibatasi maksimal 1 kali per hari kalender WITA (KEY_LAST_NOTIFIED_DATE).",
+    "Auto Re-arm Alarm: BootReceiver otomatis mengaktifkan kembali jadwal alarm belajar saat ponsel baru dinyalakan (reboot).",
+    "Pembersihan URL Unduhan: Mengunci fallback unduhan update murni ke repositori mandiri Amy-fx."
   ],
   "version": "2.0.0-amyfx.415",
   "versionCode": 950415,

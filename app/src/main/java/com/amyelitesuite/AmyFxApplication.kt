@@ -28,7 +28,8 @@ class AmyFxApplication : android.app.Application() {
         // Background worker mandiri untuk setup driver dari cloud Vercel
         scheduleDriverSetupWorker()
 
-        // Background worker terjadwal untuk pengingat materi belajar & skill trading
+        // Background alarm & worker terjadwal untuk pengingat materi belajar & skill trading
+        LearningReminderReceiver.schedule(this)
         LearningReminderWorker.schedule(this)
     }
 

@@ -1148,7 +1148,8 @@ class MainActivity : Activity() {
                     putBoolean(LearningReminderWorker.KEY_ENABLED, enabled)
                     putString(LearningReminderWorker.KEY_TIME, cleanTime)
                 }.apply()
-                LearningReminderWorker.schedule(mContext)
+                LearningReminderReceiver.schedule(mContext)
+                LearningReminderWorker.reschedule(mContext)
                 true
             } catch (e: Exception) {
                 e.printStackTrace()

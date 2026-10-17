@@ -30,6 +30,14 @@ class BootReceiver : BroadcastReceiver() {
             .apply()
 
         Log.d("AmyFX", "Legacy local Mapping scanner remains disabled")
+
+        // Re-arm daily learning reminder alarm
+        try {
+            LearningReminderReceiver.schedule(context)
+            LearningReminderWorker.schedule(context)
+        } catch (e: Exception) {
+            Log.w("AmyFX", "Failed to re-arm learning reminder on boot", e)
+        }
     }
 
     companion object {

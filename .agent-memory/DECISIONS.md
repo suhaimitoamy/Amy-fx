@@ -1,5 +1,20 @@
 # Technical Decisions
 
+## 2026-10-17 — Perbaikan Notifikasi Alarm Belajar (Pencegahan Notifikasi Dini & Sinkronisasi AlarmManager)
+1. **Latar Belakang & Gejala:**
+   - Pengguna menyetel pengingat belajar harian pada jam 20:00 WITA ("Waktunya tingkatkan skill trading-mu").
+   - Notifikasi tiba-tiba muncul di status bar ponsel pada jam 13:41 WITA (siang hari, 6 jam 19 menit lebih awal).
+2. **Akar Masalah (Root Cause):**
+   - Sebelumnya, penjadwalan hanya mengandalkan `WorkManager` dengan `PeriodicWorkRequest(24, TimeUnit.HOURS)` dan kebijakan `ExistingPeriodicWorkPolicy.UPDATE` di `LearningReminderWorker.schedule`.
+   - Di Android, `WorkManager` dirancang untuk *deferrable background batch*, bukan jam weker/alarm presisi. Setiap kali aplikasi dibuka atau sistem Android melakukan maintenance, WorkManager mengevaluasi periodic work dan dapat langsung menjalankan `doWork()`.
+   - `LearningReminderWorker.doWork()` sebelumnya sama sekali tidak memvalidasi jam berjalan terhadap jam target. Begitu `doWork()` terpanggil pada 13:41 WITA, notifikasi langsung ditembakkan tanpa validasi waktu.
+3. **Solusi Berlapis (Multi-Layer Protection):**
+   - **Layer 1 (Exact AlarmManager):** Dibuat [`LearningReminderReceiver`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/LearningReminderReceiver.kt) (BroadcastReceiver) dengan `AlarmManager.setExactAndAllowWhileIdle` / `setAndAllowWhileIdle`. Ini menjamin ponsel bangun dan memicu alarm tepat di menit target tanpa terpengaruh Doze mode.
+   - **Layer 2 (Strict Time Window Guard di Worker & Receiver):** Menambahkan filter toleransi ±15 menit (`diffMinutes <= 15`). Jika worker atau receiver terbangun di luar jendela waktu (seperti 13:41 alih-alih 20:00), eksekusi langsung dibatalkan (discard), di-reschedule, dan dilarang memunculkan notifikasi apapun.
+   - **Layer 3 (Once-Per-Day Date Guard):** Menyimpan `KEY_LAST_NOTIFIED_DATE = YYYY-MM-DD` (WITA). Notifikasi hanya diizinkan muncul maksimal 1 kali per hari kalender WITA.
+   - **Layer 4 (WorkManager Policy):** Mengubah kebijakan startup di `LearningReminderWorker.schedule` menjadi `ExistingPeriodicWorkPolicy.KEEP` agar WorkManager tidak me-reset interval atau menembak worker prematur saat aplikasi dibuka. Reschedule hanya dipanggil via `LearningReminderWorker.reschedule` ketika pengguna mengubah jam di profil.
+   - **Layer 5 (Boot & Update Resilience):** Menghubungkan [`BootReceiver`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/BootReceiver.kt) untuk memasang ulang alarm otomatis saat perangkat baru dinyalakan (`ACTION_BOOT_COMPLETED`).
+
 ## 2026-10-17 — Restrukturisasi Komprehensif Academy: 10 Modul Tematik Terpadu (Zero Information Loss) & Rilis 2.0.0-amyfx.415
 1. **Latar Belakang & Permintaan Pengguna:**
    - Kurikulum asli Academy sebelumnya tersebar di 36 bagian dengan metode spiral (materi dasar diajarkan di awal, lalu diulang versi menengah dan advanced di belakang).

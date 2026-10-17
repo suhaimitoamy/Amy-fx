@@ -1,7 +1,7 @@
 (function () {
-  const VERSION = window.AmyFXAppVersion || { name: '2.0.0-amyfx.415', code: 950415 };
-  const CURRENT_VERSION_CODE = Number(VERSION.code) || 950415;
-  const CURRENT_VERSION_NAME = String(VERSION.name || '2.0.0-amyfx.415');
+  const VERSION = window.AmyFXAppVersion || { name: '2.0.0-amyfx.416', code: 950416 };
+  const CURRENT_VERSION_CODE = Number(VERSION.code) || 950416;
+  const CURRENT_VERSION_NAME = String(VERSION.name || '2.0.0-amyfx.416');
   const UPDATE_URL = window.AmyFXUpdateManifestUrl
     || 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json';
   const CHECK_INTERVAL_MS = 15 * 60 * 1000;
@@ -248,7 +248,7 @@
     }
 
     function startDownload() {
-      const downloadUrl = data.apk_url || data.downloadUrl || 'https://github.com/suhaimitoamy/Amy-fx-pro/releases/latest';
+      const downloadUrl = data.apk_url || data.downloadUrl || 'https://github.com/suhaimitoamy/Amy-fx/releases/latest';
       status.style.color = '#ddd';
       if (hasNativeUpdater()) {
         nativeUi = {

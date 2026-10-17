@@ -78,6 +78,15 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".LearningReminderReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.amyelitesuite.action.TRIGGER_LEARNING_REMINDER" />
+            </intent-filter>
+        </receiver>
+
         <service
             android:name=".ScannerService"
             android:exported="false"

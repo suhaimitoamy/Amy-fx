@@ -34,17 +34,59 @@ class LearningReminderWorker(
             val enabled = prefs.getBoolean(KEY_ENABLED, true)
             if (!enabled) return@withContext Result.success()
 
+            val timeStr = prefs.getString(KEY_TIME, DEFAULT_TIME) ?: DEFAULT_TIME
+            val parts = timeStr.split(":")
+            val targetHour = parts.getOrNull(0)?.toIntOrNull() ?: 20
+            val targetMinute = parts.getOrNull(1)?.toIntOrNull() ?: 0
+
+            val nowWita = Calendar.getInstance(WITA_TIME_ZONE)
+            val currentHour = nowWita.get(Calendar.HOUR_OF_DAY)
+            val currentMinute = nowWita.get(Calendar.MINUTE)
+            val currentMinutesOfDay = currentHour * 60 + currentMinute
+            val targetMinutesOfDay = targetHour * 60 + targetMinute
+            val diffMinutes = Math.abs(currentMinutesOfDay - targetMinutesOfDay)
+
+            // STRICT TIME-WINDOW GUARD:
+            // WorkManager periodic jobs can wake up during system maintenance or app launch (e.g. at 13:41).
+            // Reject any execution that is not within 15 minutes of the user-configured WITA time.
+            if (diffMinutes > 15 && diffMinutes < (24 * 60 - 15)) {
+                android.util.Log.w(
+                    "AmyFX-LearningWorker",
+                    "Ignored premature worker trigger: current time is %02d:%02d WITA, scheduled for %s WITA (diff: %d min). Rescheduling.".format(
+                        currentHour, currentMinute, timeStr, diffMinutes
+                    )
+                )
+                schedule(applicationContext)
+                return@withContext Result.success()
+            }
+
+            // ONCE-PER-DAY DATE GUARD:
+            val witaDateKey = String.format(
+                java.util.Locale.US,
+                "%04d-%02d-%02d",
+                nowWita.get(Calendar.YEAR),
+                nowWita.get(Calendar.MONTH) + 1,
+                nowWita.get(Calendar.DAY_OF_MONTH)
+            )
+            val lastNotifiedDate = prefs.getString(KEY_LAST_NOTIFIED_DATE, null)
+            if (lastNotifiedDate == witaDateKey) {
+                android.util.Log.d("AmyFX-LearningWorker", "Already notified today for $witaDateKey. Skipping.")
+                schedule(applicationContext)
+                return@withContext Result.success()
+            }
+
             val lastTitle = prefs.getString(KEY_LAST_TITLE, null)?.trim()
             val lastUrl = prefs.getString(KEY_LAST_URL, null)?.trim()
 
             val resolvedTitle = if (!lastTitle.isNullOrBlank()) lastTitle else DEFAULT_LESSON_TITLE
             val resolvedUrl = if (!lastUrl.isNullOrBlank()) lastUrl else DEFAULT_LESSON_URL
-            val timeStr = prefs.getString(KEY_TIME, DEFAULT_TIME) ?: DEFAULT_TIME
 
             val title = "📚 Waktunya Tingkatkan Skill Trading-mu!"
             val message = "Materi terakhir yang kamu pelajari: \"$resolvedTitle\". Yuk lanjutkan belajar sekarang! (Jadwal: $timeStr WITA)"
 
             showNotification(title, message, resolvedUrl)
+            prefs.edit().putString(KEY_LAST_NOTIFIED_DATE, witaDateKey).apply()
+
             // Re-anchor schedule strictly to WITA time
             schedule(applicationContext)
             Result.success()
@@ -139,6 +181,7 @@ class LearningReminderWorker(
         const val KEY_LAST_URL = "last_studied_url"
         const val KEY_LAST_SECTION = "last_studied_section"
         const val KEY_LAST_TIME = "last_studied_time"
+        const val KEY_LAST_NOTIFIED_DATE = "last_notified_date"
         const val NOTIFICATION_ID = 88219
 
         const val DEFAULT_LESSON_TITLE = "Fondasi ICT & Market Structure Dasar"
@@ -147,13 +190,17 @@ class LearningReminderWorker(
 
         val WITA_TIME_ZONE: TimeZone = TimeZone.getTimeZone("Asia/Makassar")
 
-        fun schedule(context: Context) {
+        fun schedule(context: Context, forceReenqueue: Boolean = false) {
             val workManager = WorkManager.getInstance(context)
             val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             val enabled = prefs.getBoolean(KEY_ENABLED, true)
 
+            // Keep the exact AlarmManager daily trigger in sync
+            LearningReminderReceiver.schedule(context)
+
             if (!enabled) {
                 workManager.cancelUniqueWork(UNIQUE_WORK_NAME)
+                LearningReminderReceiver.cancel(context)
                 return
             }
 
@@ -180,11 +227,21 @@ class LearningReminderWorker(
                 .setInitialDelay(initialDelayMs, TimeUnit.MILLISECONDS)
                 .build()
 
+            val policy = if (forceReenqueue) {
+                ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE
+            } else {
+                ExistingPeriodicWorkPolicy.KEEP
+            }
+
             workManager.enqueueUniquePeriodicWork(
                 UNIQUE_WORK_NAME,
-                ExistingPeriodicWorkPolicy.UPDATE,
+                policy,
                 request
             )
+        }
+
+        fun reschedule(context: Context) {
+            schedule(context, forceReenqueue = true)
         }
     }
 }

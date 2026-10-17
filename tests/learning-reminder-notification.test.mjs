@@ -10,6 +10,9 @@ const workerSource = readFileSync(new URL('../app/src/main/java/com/amyelitesuit
 const jsSource = readFileSync(new URL('../app/src/main/assets/apps/shared/amy-learning-reminder.js', import.meta.url), 'utf8');
 const appJsSource = readFileSync(new URL('../app/src/main/assets/app.js', import.meta.url), 'utf8');
 const readingHistorySource = readFileSync(new URL('../app/src/main/assets/apps/academy/assets/js/reading-history-v2.js', import.meta.url), 'utf8');
+const receiverSource = readFileSync(new URL('../app/src/main/java/com/amyelitesuite/LearningReminderReceiver.kt', import.meta.url), 'utf8');
+const bootSource = readFileSync(new URL('../app/src/main/java/com/amyelitesuite/BootReceiver.kt', import.meta.url), 'utf8');
+const manifestSource = readFileSync(new URL('../app/src/main/AndroidManifest.xml', import.meta.url), 'utf8');
 
 test('AmyFxNotificationGate routes learning keywords to Academy', () => {
   assert.match(gateSource, /t\.contains\("belajar"\)/);
@@ -119,4 +122,30 @@ test('app.js Profile UI clearly indicates WITA timezone', () => {
   assert.match(appJsSource, /Waktu Notifikasi \(WITA\)/);
   assert.match(appJsSource, /WITA · UTC\+8/);
   assert.match(appJsSource, /Jadwal pengingat disimpan: Setiap hari jam \$\{timeVal\} WITA/);
+});
+
+test('LearningReminderWorker strictly rejects premature execution (e.g. 13:41 when scheduled for 20:00)', () => {
+  assert.match(workerSource, /diffMinutes\s*>\s*15/);
+  assert.match(workerSource, /Ignored premature worker trigger/);
+  assert.match(workerSource, /KEY_LAST_NOTIFIED_DATE/);
+  assert.match(workerSource, /Already notified today/);
+  assert.match(workerSource, /ExistingPeriodicWorkPolicy\.KEEP/);
+  assert.match(workerSource, /ExistingPeriodicWorkPolicy\.CANCEL_AND_REENQUEUE/);
+});
+
+test('LearningReminderReceiver provides exact AlarmManager scheduling with Doze mode wakeup', () => {
+  assert.match(receiverSource, /class LearningReminderReceiver : BroadcastReceiver/);
+  assert.match(receiverSource, /ACTION_TRIGGER_REMINDER = "com\.amyelitesuite\.action\.TRIGGER_LEARNING_REMINDER"/);
+  assert.match(receiverSource, /alarmManager(\.|\?\.)setExactAndAllowWhileIdle/);
+  assert.match(receiverSource, /alarmManager(\.|\?\.)setAndAllowWhileIdle/);
+  assert.match(receiverSource, /diffMinutes\s*>\s*15/);
+  assert.match(receiverSource, /Spurious alarm trigger/);
+  assert.match(manifestSource, /android:name="\.LearningReminderReceiver"/);
+});
+
+test('BootReceiver and MainActivity re-arm and synchronize both AlarmManager and WorkManager', () => {
+  assert.match(bootSource, /LearningReminderReceiver\.schedule\(context\)/);
+  assert.match(bootSource, /LearningReminderWorker\.schedule\(context\)/);
+  assert.match(mainActivitySource, /LearningReminderReceiver\.schedule\(mContext\)/);
+  assert.match(mainActivitySource, /LearningReminderWorker\.reschedule\(mContext\)/);
 });

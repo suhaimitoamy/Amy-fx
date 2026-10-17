@@ -211,3 +211,16 @@ When developing or modifying UI components for the **Amy FX** project, strictly 
    - **On-Context Discipline (Pro 421):** AI fokus 100% pada pertanyaan user tanpa melempar opsi atau saran cabang yang tidak diminta.
    - **True Level 0 Rule:** Dilarang menampilkan chart atau istilah teknikal jika mulai dari nol; wajib dari logika berdagang awam dan analogi fisik.
    - **Real-World Gold Rules:** Menolak SL mikro $1 di Gold; menerapkan SL struktural di balik sweep dan TP ke DOL nyata dengan RR >= 1:2.
+
+## Academy Learning Reminder & Alarm Guardrails (Pro 427)
+
+1. **Exact-Time Native Alarm (`AlarmManager`):**
+   - Pengingat belajar harian di [`LearningReminderReceiver`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/LearningReminderReceiver.kt) menggunakan `AlarmManager.setExactAndAllowWhileIdle` / `setAndAllowWhileIdle` pada timezone WITA (`Asia/Makassar`).
+   - Mencegah pergeseran waktu akibat Doze mode Android atau optimasi baterai.
+2. **Strict Time-Window Guard (±15 Menit):**
+   - Baik di [`LearningReminderWorker`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/LearningReminderWorker.kt) maupun [`LearningReminderReceiver`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/LearningReminderReceiver.kt), notifikasi hanya diizinkan muncul jika waktu sekarang berada dalam rentang toleransi ±15 menit dari jam yang disetel pengguna (misal 20:00 WITA).
+   - Menolak dan membuang (discard) eksekusi prematur (seperti 13:41 WITA saat WorkManager mengevaluasi periodic work saat app baru dibuka).
+3. **Once-Per-Day Date Guard (`KEY_LAST_NOTIFIED_DATE`):**
+   - Notifikasi hanya dapat dikirim maksimal 1 kali per hari kalender WITA (`YYYY-MM-DD`).
+4. **Boot Resilience:**
+   - [`BootReceiver`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/BootReceiver.kt) secara otomatis mengaktifkan ulang alarm saat perangkat reboot (`ACTION_BOOT_COMPLETED`).
