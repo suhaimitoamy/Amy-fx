@@ -1,16 +1,16 @@
 {
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.415/AmyFX-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.416/AmyFX-latest.apk",
   "changelog": [
     "Perbaikan Notifikasi Alarm Belajar: Integrasi exact AlarmManager (WITA) dengan Doze mode wakeup dan filter waktu ±15 menit dari jam yang disetel pengguna untuk mencegah alarm muncul dini.",
     "Limit Notifikasi Harian: Alarm belajar dibatasi maksimal 1 kali per hari kalender WITA (KEY_LAST_NOTIFIED_DATE).",
     "Auto Re-arm Alarm: BootReceiver otomatis mengaktifkan kembali jadwal alarm belajar saat ponsel baru dinyalakan (reboot).",
     "Pembersihan URL Unduhan: Mengunci fallback unduhan update murni ke repositori mandiri Amy-fx."
   ],
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.415/AmyFX-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.416/AmyFX-latest.apk",
   "enabled": true,
   "force_update": false,
-  "latest_version_code": 950415,
-  "latest_version_name": "2.0.0-amyfx.415",
+  "latest_version_code": 950416,
+  "latest_version_name": "2.0.0-amyfx.416",
   "mandatory": false,
   "releaseDate": "2026-10-17",
   "release_notes": [
@@ -19,7 +19,7 @@
     "Auto Re-arm Alarm: BootReceiver otomatis mengaktifkan kembali jadwal alarm belajar saat ponsel baru dinyalakan (reboot).",
     "Pembersihan URL Unduhan: Mengunci fallback unduhan update murni ke repositori mandiri Amy-fx."
   ],
-  "version": "2.0.0-amyfx.415",
-  "versionCode": 950415,
-  "sha256": "09767c792ec8bd057f5017983a2f49b13e43306d1496a67ee4fab76e0278df1e"
+  "version": "2.0.0-amyfx.416",
+  "versionCode": 950416,
+  "sha256": "9e0e55e94c3cdba223a9c675b8e448ee7107c7e2eff6c23f16eb321748e7b31f"
 }
