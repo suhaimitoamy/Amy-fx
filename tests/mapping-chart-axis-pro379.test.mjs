@@ -71,3 +71,64 @@ test('ICT overlay canvas has pointer-events none to not block price scale intera
   const canvasSource=readFileSync('app/src/main/assets/apps/mapping/js/ict-workspace/ict-canvas.js','utf8');
   assert.match(canvasSource,/canvas\.style\.pointerEvents\s*=\s*['"]none['"]/);
 });
+
+test('Item 2.35: Auto-Clamping Bounded Y-Axis Visualizer clamps outlier ranges and hides distant levels',()=>{
+  let seriesOptions = null, createdLines = [];
+  const chart = {
+    applyOptions(){}, priceScale:()=>({applyOptions(){}}),
+    addCandlestickSeries: options => {
+      seriesOptions = options;
+      return {
+        setData(){}, setMarkers(){},
+        createPriceLine: line => { createdLines.push(line); return line; },
+        removePriceLine(){}
+      };
+    },
+    timeScale:()=>({fitContent(){}}), remove(){}
+  };
+  const context = {
+    window: { LightweightCharts: { createChart: () => chart }, addEventListener(){}, removeEventListener(){} },
+    document: { documentElement: { dataset: {} } },
+    createIctCanvas: () => ({ update(){}, invalidate(){}, destroy(){} })
+  };
+  const source = readFileSync('app/src/main/assets/apps/mapping/js/ict-workspace/chart-view.js','utf8')
+    .replace(/^import .*;\n/gm,'').replace('export function','function');
+  vm.runInNewContext(source, context);
+  const view = context.createPriceChart({});
+
+  // 1. Verify autoscaleInfoProvider clamps wide ranges
+  assert.equal(typeof seriesOptions.autoscaleInfoProvider, 'function');
+  const normalScale = seriesOptions.autoscaleInfoProvider(() => ({
+    priceRange: { minValue: 2640, maxValue: 2660 }, margins: { above: 0.1, below: 0.1 }
+  }));
+  assert.equal(normalScale.priceRange.minValue, 2640);
+  assert.equal(normalScale.priceRange.maxValue, 2660);
+
+  // Anomaly spike range (span = 200 > 70)
+  const clampedScale = seriesOptions.autoscaleInfoProvider(() => ({
+    priceRange: { minValue: 2500, maxValue: 2700 }, margins: { above: 0.1, below: 0.1 }
+  }));
+  assert.equal(clampedScale.priceRange.maxValue - clampedScale.priceRange.minValue, 70);
+  assert.equal(clampedScale.priceRange.minValue, 2565);
+  assert.equal(clampedScale.priceRange.maxValue, 2635);
+
+  // 2. Verify levels >$35 away from last price ($2650) are excluded
+  const candles = [{ time: 100, open: 2648, high: 2652, low: 2647, close: 2650 }];
+  view.draw({
+    tf: 'M15',
+    candles,
+    plan: {
+      entry: 2652, // within $35 -> included
+      sl: 2645,    // within $35 -> included
+      tp1: 2660,   // within $35 -> included
+      tp: 2750     // >$35 away -> excluded by auto-clamping filter
+    }
+  });
+
+  const titles = createdLines.map(l => l.title);
+  assert.ok(titles.includes('ENTRY'));
+  assert.ok(titles.includes('SL'));
+  assert.ok(titles.includes('TP1'));
+  assert.ok(!titles.includes('TARGET'), 'Target >$35 away must be clamped out');
+});
+

@@ -6,7 +6,23 @@ export function createPriceChart(element,{touchAxes=false}={}) {
     timeScale:{timeVisible:true},rightPriceScale:{minimumWidth:65,autoScale:true},
     handleScale:{pinch:true,mouseWheel:true,axisPressedMouseMove:{time:true,price:true},axisDoubleClickReset:{time:true,price:true}},
     handleScroll:{vertTouchDrag:touchAxes,horzTouchDrag:true,pressedMouseMove:true,mouseWheel:true}});
-  const series=chart.addCandlestickSeries({upColor:'#65d5b1',downColor:'#ff8f9b',borderVisible:false,wickUpColor:'#65d5b1',wickDownColor:'#ff8f9b'});
+  const series=chart.addCandlestickSeries({
+    upColor:'#65d5b1',downColor:'#ff8f9b',borderVisible:false,wickUpColor:'#65d5b1',wickDownColor:'#ff8f9b',
+    autoscaleInfoProvider:(original)=>{
+      const res=original?original():null;
+      if(!res||!res.priceRange)return res;
+      let min=res.priceRange.minValue, max=res.priceRange.maxValue;
+      if(!Number.isFinite(min)||!Number.isFinite(max)||min>=max)return res;
+      // Item 2.35: Auto-Clamping Bounded Y-Axis Visualizer (clamping extreme spikes to preserve candlestick body/wick anatomy)
+      const maxSpan=70; // Gold M15/M5 normal trading boundary (+-$35)
+      if(max-min>maxSpan){
+        const mid=(min+max)/2;
+        min=mid-maxSpan/2;
+        max=mid+maxSpan/2;
+      }
+      return {priceRange:{minValue:min,maxValue:max},margins:res.margins};
+    }
+  });
   let ict=null;
   let key='',lines=[],indicatorLines=[],rightBars=null;
   function theme(){
@@ -44,7 +60,7 @@ export function createPriceChart(element,{touchAxes=false}={}) {
             const value=field==='area.low'?plan.area.low:field==='area.high'?plan.area.high:field==='area.ce'?plan.area?.ce:plan[field];
             if(Number.isFinite(value)){
               const lastPrice=result.candles?.at(-1)?.close;
-              if(lastPrice&&Math.abs(value-lastPrice)>lastPrice*0.25)continue;
+              if(lastPrice&&Math.abs(value-lastPrice)>35)continue;
               lines.push(series.createPriceLine({price:value,title,color,lineWidth:1,lineStyle,axisLabelVisible:true}));
             }
           }
@@ -62,7 +78,7 @@ export function createPriceChart(element,{touchAxes=false}={}) {
           const lastPrice=result.candles?.at(-1)?.close;
           for(const it of items){
             if(Number.isFinite(it.value)){
-              if(lastPrice&&Math.abs(it.value-lastPrice)>lastPrice*0.25)continue;
+              if(lastPrice&&Math.abs(it.value-lastPrice)>35)continue;
               lines.push(series.createPriceLine({price:it.value,title:it.title,color:it.color,lineWidth:1,lineStyle:it.lineStyle,axisLabelVisible:true}));
             }
           }
@@ -72,7 +88,7 @@ export function createPriceChart(element,{touchAxes=false}={}) {
       indicatorLines.forEach(line=>{try{series.removePriceLine(line);}catch(_){}});indicatorLines=[];
       if(presentation&&typeof series.createPriceLine==='function'&&indicators?.keyLevels){
         const kl=indicators.keyLevels,lastPrice=result.candles?.at(-1)?.close;
-        const valid=v=>Number.isFinite(v)&&(!lastPrice||Math.abs(v-lastPrice)<=lastPrice*0.25);
+        const valid=v=>Number.isFinite(v)&&(!lastPrice||Math.abs(v-lastPrice)<=35);
         if(valid(kl.pdh))indicatorLines.push(series.createPriceLine({price:kl.pdh,title:'PDH',color:'#f97316',lineWidth:1,lineStyle:2,axisLabelVisible:true}));
         if(valid(kl.pdl))indicatorLines.push(series.createPriceLine({price:kl.pdl,title:'PDL',color:'#3b82f6',lineWidth:1,lineStyle:2,axisLabelVisible:true}));
         if(valid(kl.pwh))indicatorLines.push(series.createPriceLine({price:kl.pwh,title:'PWH',color:'#d946ef',lineWidth:1,lineStyle:1,axisLabelVisible:true}));

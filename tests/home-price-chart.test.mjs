@@ -11,6 +11,7 @@ function mount(loader){
   const context={window:{...eventTarget},document:{hidden:false,...eventTarget},Date,AbortController,
     setTimeout:(f,ms)=>{timers.set(++serial,{f,ms});return serial;},clearTimeout:id=>timers.delete(id),
     loadCandles:loader,analyze:r=>({...r,sourceTime:r.candles.at(-1)?.time||null,fresh:!r.degraded,plan:null}),
+    updateDealingRangeBadge:()=>{},
     createPriceChart:()=>({draw:r=>draws.push(r),reset(){},destroy(){destroyed++;}})};
   const code=read('home-price-chart.js').replace(/^import .*;\n/gm,'').replace('export function','function');
   vm.runInNewContext(code,context);const dispose=context.window.AmyHomeChart.mount({querySelector:id=>node(id.slice(1))});
@@ -61,7 +62,7 @@ test('shared chart renders actual candles and levels; teardown releases theme li
   view.destroy();assert.equal(deleted,true);assert.equal(events.size,0);
 });
 test('home mount/dispose lifecycle runs through actual navigation and menus remain available',()=>{
-  const listeners={},nav={},main={innerHTML:'',querySelector:()=>({})};let mounted=0,disposed=0;
+  const listeners={},nav={},main={innerHTML:'',querySelector:()=>({addEventListener(){},removeEventListener(){}})};let mounted=0,disposed=0;
   const context={document:{addEventListener:(n,f)=>(listeners[n]??=[]).push(f),getElementById:id=>id==='main-content'?main:null,
     querySelectorAll:()=>['beranda','proyek','koleksi','profil'].map(target=>({dataset:{target},classList:{toggle(){}},addEventListener:(_,f)=>nav[target]=f}))},
     localStorage:{getItem:()=>null,setItem(){}},fetch:()=>new Promise(()=>{}),addEventListener(){},setInterval(){},setTimeout(){},console,location:{},

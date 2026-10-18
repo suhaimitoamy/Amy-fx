@@ -2348,11 +2348,15 @@
 
 ---
 
-### 2.35. [DYNAMIC SCALE PRESERVATION] Auto-Clamping Bounded Y-Axis Visualizer di Chart Gold & Peta Harga
+### 2.35. [DYNAMIC SCALE PRESERVATION] Auto-Clamping Bounded Y-Axis Visualizer di Chart Gold & Peta Harga — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Beta & Agen Alpha
 - **Konsep & Nilai untuk Trader:**  
   1. *Perlindungan Proporsi Candlestick:* Mengintegrasikan filter pembatas dinamis (*auto-clamping boundary*) pada sumbu harga vertikal canvas Lightweight Charts. Jika ada level likuiditas atau indikator yang jatuh jauh di luar batas wajar (misal anomali level berjarak >$35 dari harga pasar), sistem secara otomatis menyembunyikan level ekstrem tersebut dari skala autoscale sumbu Y.  
   2. *Kejelasan Visual Mutlak:* Candlestick M15 dan M5 selalu mempertahankan tinggi anatomi proporsional dan mudah dibaca (body dan wick tampak jelas), menghindarkan trader dari grafik yang mendadak gepeng saat terjadi spike indikator.
+- **Implementasi & Audit Reviewer:**
+  - `chart-view.js`: Mengonfigurasi `autoscaleInfoProvider` pada candlestick series dengan auto-clamping span $70 (+-$35 dari midpoint) serta filter ketat batas jarak level $35 dari harga live pasar.
+  - Paritas 100% Beranda & Cockpit Mapping otomatis terwujud via modul bersama `createPriceChart`.
+  - Targeted unit tests: `tests/mapping-chart-axis-pro379.test.mjs` (6/6 lulus 100%) dan `tests/home-price-chart.test.mjs` (6/6 lulus 100%).
 
 ---
 
@@ -2449,7 +2453,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.69. Zero-Heap String Allocation pada Parser CSV di `data-provider.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.70. Reset `dbPromise = null` Saat Error Upgrade DB di `storage.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.34. Zero-Allocation Fast Metadatareader untuk Impor ZIP/CSV Raksasa** | P0 (Kinerja & Storage) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.35. Auto-Clamping Bounded Y-Axis Visualizer di Chart Gold** | P0 (Estetika & Skala) | ~6 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.35. Auto-Clamping Bounded Y-Axis Visualizer di Chart Gold** | P0 (Estetika & Skala) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.65. Koreksi Inversi Logika `plan.entry` di `advisor-panel.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.66. Tunda `revokeObjectURL` Cegah Abort Ekspor CSV di `journal-export.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.67. Denominator Dinamis Progres 10 Modul di `apps/academy/main.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
