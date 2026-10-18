@@ -1042,6 +1042,7 @@
     return;
   }
   ```
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Invariant filter pasar libur (`isWeekendClosure`, `isGoldMarketOpen`, `filterCandles`) diterapkan pada `home-price-chart.js`. Status `home-chart-source` kini 100% identik dengan Cockpit Mapping (`Pasar Tutup (Akhir Pekan) · Candle Terakhir: ... WITA`), candle sintetis/flat akhir pekan disaring, dan interval polling akhir pekan diturunkan menjadi 300s (5 menit). 6/6 unit test lolos di `tests/home-price-chart.test.mjs`.
 
 ---
 
@@ -2485,7 +2486,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.47. Pasang Guard Equality & Batasi Target MutationObserver di `amyfx-home-data-integration-v1.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.48. Union Set Keys pada Ekspor CSV Jurnal Cegah Kehilangan Field di `journal-export.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.49. Resolusi Dinamis Endpoint `ENDPOINT` & Filter Weekend di `scalper-model.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
-| 🐛 **Debugging** | **1.44. Terapkan `isWeekendClosure` & Hentikan Polling Akhir Pekan di `home-price-chart.js`** | P0 (Kritis) | ~5 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.44. Terapkan `isWeekendClosure` & Hentikan Polling Akhir Pekan di `home-price-chart.js`** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.45. Eliminasi Lookahead Path Bias pada Fractal Evaluator di `advisor-panel.js`** | P0 (Kritis) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.46. Perbaiki Spurious Immediate Alert & Persistensi `lastCheckedPrice` di `price-alert-manager.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.41. Batalkan Registrasi Plan Jika Harga Sudah Lewat TP1 di `trade-lifecycle-tracker.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |

@@ -2,6 +2,56 @@ import {analyze} from './apps/mapping/js/ict-workspace/engine.js';
 import {loadCandles} from './apps/mapping/js/ict-workspace/data.js';
 import {createPriceChart} from './apps/mapping/js/ict-workspace/chart-view.js';
 
+function isWeekendClosure(timeSec) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York', hourCycle: 'h23', hour: '2-digit', minute: '2-digit', weekday: 'short'
+    }).formatToParts(new Date(timeSec * 1000));
+    const values = Object.fromEntries(parts.map(x => [x.type, x.value]));
+    const weekday = values.weekday, hour = Number(values.hour) + Number(values.minute) / 60;
+    if (weekday === 'Sat') return true;
+    if (weekday === 'Sun') return hour < 17;
+    if (weekday === 'Fri') return hour >= 17;
+    return false;
+  } catch (_) {
+    const d = new Date(timeSec * 1000), day = d.getUTCDay();
+    return day === 6 || day === 0;
+  }
+}
+
+function isGoldMarketOpen(nowSeconds = Math.floor(Date.now() / 1000)) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York', hourCycle: 'h23', hour: '2-digit', minute: '2-digit', weekday: 'short'
+    }).formatToParts(new Date(nowSeconds * 1000));
+    const values = Object.fromEntries(parts.map(x => [x.type, x.value]));
+    const weekday = values.weekday, hour = Number(values.hour) + Number(values.minute) / 60;
+    if (weekday === 'Sat') return false;
+    if (weekday === 'Sun') return hour >= 17;
+    if (weekday === 'Fri') return hour < 17;
+    if (hour >= 17 && hour < 18) return false;
+    return true;
+  } catch (_) {
+    const d = new Date(nowSeconds * 1000), day = d.getUTCDay();
+    return day !== 0 && day !== 6;
+  }
+}
+
+function toTimestamp(time) {
+  if (typeof time === 'number') return time;
+  const ms = new Date(time).getTime();
+  return Number.isFinite(ms) ? Math.floor(ms / 1000) : 0;
+}
+
+function filterCandles(values, closed) {
+  if (!closed || !Array.isArray(values)) return values || [];
+  return values.filter(c => {
+    if (c?.amyfxSyntheticCurrent || c?.synthetic) return false;
+    const t = toTimestamp(c.time ?? c.datetime ?? c.open_time);
+    return !isWeekendClosure(t);
+  });
+}
+
 export function mountHomeChart(root) {
   const $=id=>root.querySelector('#'+id);
   let view=null,raw=null,controller=null,timer=null,generation=0,disposed=false;
@@ -9,11 +59,27 @@ export function mountHomeChart(root) {
   catch { $('home-price-chart').textContent='Chart tidak tersedia. Coba muat ulang aplikasi.';return ()=>{}; }
   function render(degraded=false){
     const tf=$('home-chart-tf').value;
-    const result=analyze({...raw,candles:raw?.candles||[],context:raw?.context||[],tf,now:Date.now()/1000,degraded:degraded||raw?.degraded||false});
+    const closed=!isGoldMarketOpen(Date.now()/1000);
+    const safeCandles=filterCandles(raw?.candles||[],closed);
+    const safeContext=filterCandles(raw?.context||[],closed);
+    const result=analyze({...raw,candles:safeCandles,context:safeContext,tf,now:Date.now()/1000,degraded:degraded||raw?.degraded||false});
     view.draw(result);
     const last=result.candles.at(-1);
     $('home-chart-price').textContent=last?last.close.toFixed(2):'—';
-    $('home-chart-source').textContent=last?`${tf} · Candle ${new Date(result.sourceTime*1000).toLocaleString('id-ID',{timeZone:'Asia/Makassar',hour12:false})} WITA · ${result.fresh?'Candle terkini':'Referensi lama / data terlambat'}`:'Belum ada candle. Periksa koneksi lalu tekan Perbarui.';
+    if($('home-chart-source')){
+      if(!last){
+        $('home-chart-source').textContent='Belum ada candle. Periksa koneksi lalu tekan Perbarui.';
+      }else{
+        const timeStr=new Date((result.sourceTime||last.time)*1000).toLocaleString('id-ID',{timeZone:'Asia/Makassar',hour12:false});
+        if(closed){
+          const isWeekend=isWeekendClosure(Date.now()/1000);
+          const statusText=isWeekend?'Pasar Tutup (Akhir Pekan)':'Pasar Tutup';
+          $('home-chart-source').textContent=`${tf} · ${statusText} · Candle Terakhir: ${timeStr} WITA · ${result.fresh?'Data Terkini':'Referensi lama / data terlambat'}`;
+        }else{
+          $('home-chart-source').textContent=`${tf} · Candle ${timeStr} WITA · ${result.fresh?'Candle terkini':'Referensi lama / data terlambat'}`;
+        }
+      }
+    }
     if($('home-chart-note'))$('home-chart-note').textContent=result.plan?'Level entry, SL dan target: model ICT lokal, bukan setup Scalper server.':'';
   }
   function stop(){generation++;controller?.abort();clearTimeout(timer);}
@@ -27,7 +93,10 @@ export function mountHomeChart(root) {
     try {
       const [entry,context]=await Promise.all([loadCandles(tf,request.signal),loadCandles('H1',request.signal)]);
       if(disposed||id!==generation)return;
-      const next={candles:entry.candles,context:context.candles,tf,degraded:entry.degraded||context.degraded};
+      const closed=!isGoldMarketOpen(Date.now()/1000);
+      const safeEntryCandles=filterCandles(entry.candles,closed);
+      const safeContextCandles=filterCandles(context.candles,closed);
+      const next={candles:safeEntryCandles,context:safeContextCandles,tf,degraded:entry.degraded||context.degraded};
       const result=analyze({...next,now:Date.now()/1000});
       const previous=raw?analyze({...raw,now:Date.now()/1000}):null;
       if(!result.candles.length||(previous&&result.sourceTime<previous.sourceTime))throw Error('Candle tidak lengkap atau lebih lama');
@@ -38,7 +107,13 @@ export function mountHomeChart(root) {
       render(true);$('home-chart-error').textContent='Pembaruan gagal. Data sebelumnya hanya referensi lama.';
     } finally {
       clearTimeout(timeout);
-      if(!disposed&&id===generation){$('home-chart-refresh').disabled=false;if(!document.hidden)timer=setTimeout(refresh,60000);}
+      if(!disposed&&id===generation){
+        $('home-chart-refresh').disabled=false;
+        if(!document.hidden){
+          const interval=isGoldMarketOpen(Date.now()/1000)?60000:300000;
+          timer=setTimeout(refresh,interval);
+        }
+      }
     }
   }
   function change(){stop();raw=null;view.reset();render();refresh();}
@@ -55,4 +130,4 @@ export function mountHomeChart(root) {
     window.removeEventListener('pagehide',stop);window.removeEventListener('pageshow',pageshow);
   };
 }
-window.AmyHomeChart={mount:mountHomeChart};
+window.AmyHomeChart={mount:mountHomeChart,isWeekendClosure,isGoldMarketOpen,filterCandles};
