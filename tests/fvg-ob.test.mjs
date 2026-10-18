@@ -78,7 +78,7 @@ test('Order Block requires the immediate opposite origin and a 2× mean-body dis
   };
   const zones = detectOrderBlockConcepts(values, structure, { htfCandles: {}, currentPrice: 102.8 });
   assert.equal(zones.length, 1);
-  assert.equal(zones[0].bottom, 100.2);
+  assert.equal(zones[0].bottom, 100.5);
   assert.equal(zones[0].top, 101);
   assert.equal(zones[0].originIndex, 21);
   assert.equal(zones[0].availableIndex, 22);

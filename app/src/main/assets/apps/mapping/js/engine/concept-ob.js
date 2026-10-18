@@ -46,12 +46,8 @@ export function detectOrderBlockConcepts(candles, structureSnapshot, {
     const origin = values[originIndex];
     const breakCandle = values[breakIndex];
     const localAtr = Math.max(conceptAtrAtClean(values, breakIndex), 0.0000001);
-    const bottom = useBody
-      ? direction === 'BULLISH' ? origin.low : origin.open
-      : origin.low;
-    const top = useBody
-      ? direction === 'BULLISH' ? origin.open : origin.high
-      : origin.high;
+    const bottom = useBody ? Math.min(origin.open, origin.close) : origin.low;
+    const top = useBody ? Math.max(origin.open, origin.close) : origin.high;
     const widthAtr = (top - bottom) / localAtr;
     if (widthAtr < CONCEPT_THRESHOLDS.obMinWidthAtr
       || widthAtr > CONCEPT_THRESHOLDS.obMaxWidthAtr) continue;
