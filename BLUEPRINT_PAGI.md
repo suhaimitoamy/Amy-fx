@@ -2297,6 +2297,7 @@
 - **Konsep & Nilai untuk Trader:**  
   1. *Pencegahan Pembatalan Prematur Setup A+:* Jika target likuiditas terdekat (`targets[0]`) hanya berjarak sempit sehingga rasio Risk-Reward kurang dari 1:2.0, engine tidak lagi langsung membuang setup FVG, melainkan memindai target eksternal berikutnya (`targets.find(t => (t.level - entry)/risk >= 2.0)` atau level swing PDH/PWH).  
   2. *Dual-Target Playbook:* Menampilkan target internal terdekat sebagai "TP1 (Skimming / BE Trigger)" dan target eksternal $\ge 2R$ sebagai "TP2 (Runner Target)", memungkinkan trader menangkap ekspansi tren besar tanpa terganjal batas kaku satu target.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Dynamic fallback target $\ge 2R$ aktif di `engine.js` (`analyze()`); `plan` kini mengekspos target dual `tp1` (skimming) dan `tp2` (runner $\ge 2R$), mencegah setup valid dibuang prematur saat target terdekat sempit. Pengujian unit 19/19 lolos di `tests/ict-workspace.test.mjs`.
 
 ---
 
@@ -2466,7 +2467,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.56. Perbaiki Offset UTC `Z` Kalender Ekonomi di `api/calendar.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.57. Cegah Setup London Hangus Prematur di Sesi 'OUTSIDE' `engine.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.58. Pre-Check Weekend Sebelum Eksekusi HTTP di `DriverSetupSyncWorker.kt`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.26. Dynamic Liquidity Target Fallback ($\ge 2R$) di Engine ICT** | P0 (Akurasi Sinyal) | ~7 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.26. Dynamic Liquidity Target Fallback ($\ge 2R$) di Engine ICT** | P0 (Akurasi Sinyal) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.27. Economic Event Countdown Badge di Header Cockpit** | P0 (Proteksi Modal) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.53. Fingerprint $O(1)$ Gantikan `JSON.stringify` di Render Chart `chart-view.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.54. Normalisasi Case-Insensitive Hasil Trade di `journal-analytics.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |

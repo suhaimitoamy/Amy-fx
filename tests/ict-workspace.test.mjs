@@ -167,12 +167,28 @@ test('mirrored SELL setup follows the same rules; no one-sided suppression',()=>
  assert.equal(result.signal,'SELL');assert.ok(result.plan.sl>result.plan.entry);
  assert.equal(result.plan.tp,170);assert.ok(result.plan.rr>=MODEL.minRR);
 });
-test('no FVG and insufficient nearest-target reward both stay WAIT',()=>{
+test('no FVG and insufficient all-targets reward both stay WAIT; dynamic fallback selects >= 2R target',()=>{
  const {cs,hs}=scenario();
  const noGap=cs.map(c=>({...c}));noGap[noGap.length-1].low=99;
  assert.equal(analyze({candles:noGap,context:hs,tf:'M5',now:t+310}).plan,null);
+
+ // When all liquidity targets are < 2R, setup correctly stays WAIT
  const closeTarget=cs.map(c=>({...c}));closeTarget[20].high=115;
  assert.equal(analyze({candles:closeTarget,context:hs,tf:'M5',now:t+310}).plan,null);
+
+ // Item 2.26: When nearest target is < 2R but higher target >= 2R exists, fallback selects higher target
+ const fallbackTarget=cs.map(c=>({...c}));
+ fallbackTarget[23]=bar(fallbackTarget[23].time,100,102,98,100);
+ fallbackTarget[24]=bar(fallbackTarget[24].time,100,102,98,100);
+ fallbackTarget[25]=bar(fallbackTarget[25].time,100,114,98,100); // 114 is < 2R from entry 104
+ fallbackTarget[26]=bar(fallbackTarget[26].time,100,102,98,100);
+ fallbackTarget[27]=bar(fallbackTarget[27].time,100,102,98,100);
+ const fallbackPlan=analyze({candles:fallbackTarget,context:hs,tf:'M5',now:t+310}).plan;
+ assert.ok(fallbackPlan, 'Dynamic fallback should recover setup using external target');
+ assert.equal(fallbackPlan.tp, 130);
+ assert.equal(fallbackPlan.tp1, 114);
+ assert.equal(fallbackPlan.tp2, 130);
+ assert.ok(fallbackPlan.rr >= MODEL.minRR);
 });
 
 test('calculateNextGenIndicators returns safe defaults on empty or partial inputs', () => {

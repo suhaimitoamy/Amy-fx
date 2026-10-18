@@ -151,13 +151,19 @@ export function analyze({ candles, context, tf='M15', now=Date.now()/1000, degra
             const risk=buy?entry-sl:sl-entry;
             const targets=levels.filter(l=>!l.used && l.kind===(buy?'high':'low') && (buy?l.level>entry:l.level<entry))
               .sort((x,y)=>Math.abs(x.level-entry)-Math.abs(y.level-entry));
-            const tp=targets[0]?.level, rr=(buy?tp-entry:entry-tp)/risk;
+            const nearestTarget=targets[0]?.level;
+            const validTarget=targets.find(t=>{
+              const r=(buy?t.level-entry:entry-t.level)/risk;
+              return Number.isFinite(r) && r>=MODEL.minRR;
+            }) || targets[0];
+            const tp=validTarget?.level, rr=(buy?tp-entry:entry-tp)/risk;
+            const tp1=nearestTarget, tp2=validTarget?.level;
             const location=bias.midpoint!=null && entry>=bias.low && entry<=bias.high && (buy?entry<=bias.midpoint:entry>=bias.midpoint);
             const contextFresh=closedContext.length>=30 && c.time+duration-(closedContext.at(-1)?.time+3600)<=3600+120;
             if (risk>0 && Number.isFinite(rr) && rr>=MODEL.minRR && location && contextFresh &&
                 !['OUTSIDE','CLOSED'].includes(session(c.time+duration))) {
               plan={ id:`${MODEL.id}:${tf}:${sweep.time}:${c.time}`, direction:sweep.direction,status:'PENDING',
-                createdAt:c.time,createdIndex:i,entry,sl,tp,risk,rr,fvg:{low:lo,high:hi},
+                createdAt:c.time,createdIndex:i,entry,sl,tp,tp1,tp2,risk,rr,fvg:{low:lo,high:hi},
                 sweep:{time:sweep.time,level:sweep.level,extreme:sweep.extreme},
                 mss:{time:sweep.mssTime,level:sweep.breakLevel}, contextBreak:bias.lastBreak };
               reason='FVG valid. Menunggu retest candle berikutnya; belum ada fill.';
