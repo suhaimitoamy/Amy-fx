@@ -54,16 +54,25 @@
   }
 
   function cleanTitle() {
-    var heading = document.querySelector('.article h1, .article-layout h1, main h1');
+    var heading = document.querySelector('.article h1, .article-layout h1, .hero-card h1, .lesson-content h1, main h1, h1');
     var title = heading && heading.textContent ? heading.textContent.trim() : '';
     if (title) return title;
-    return String(document.title || 'Materi Trading').replace(/\s+[—|-]\s+Tutorial Trading.*$/i, '').trim();
+    return String(document.title || 'Materi Trading')
+      .replace(/\s+[—|-]\s+Tutorial Trading.*$/i, '')
+      .replace(/\s+[—|-]\s+Amy FX Academy.*$/i, '')
+      .trim();
   }
 
   function sectionLabel(path) {
     var eyebrow = document.querySelector('.article .eyebrow, .article-layout .eyebrow, .lesson-content .eyebrow');
     if (eyebrow && eyebrow.textContent.trim()) return eyebrow.textContent.trim();
     if (/^backtest-learning\/lesson\.html\?lesson=\d{2}$/i.test(String(path || ''))) return 'ICT Berbasis Backtest';
+    var matchModul = String(path || '').match(/modul-(\d+)/i);
+    if (matchModul) {
+      var badge = document.querySelector('.badge');
+      if (badge && badge.textContent.trim()) return badge.textContent.trim();
+      return 'Modul ' + matchModul[1] + ' — Tematik Terpadu';
+    }
     var match = String(path || '').match(/bagian-(\d+)-([^/]+)/i);
     if (!match) return 'Amy FX Academy';
     return 'Bagian ' + match[1] + ' — ' + match[2].replace(/-/g, ' ');
@@ -71,8 +80,10 @@
 
   function isLessonPage(path) {
     if (/^backtest-learning\/lesson\.html\?lesson=\d{2}$/i.test(String(path || ''))) return true;
-    if (!/bagian-\d+[^/]+\/.+\.html$/i.test(String(path || ''))) return false;
-    return Boolean(document.querySelector('.article, .article-layout'));
+    if (/(?:bagian-\d+[^/]+|modul-\d+[^/]*)\/.+\.html$/i.test(String(path || ''))) {
+      return Boolean(document.querySelector('.article, .article-layout, .hero-card, .course-card, .lesson-content, main'));
+    }
+    return false;
   }
 
   function currentHeading() {
@@ -107,7 +118,7 @@
       progress: progress,
       headingIndex: heading ? heading.index : null,
       headingText: heading ? heading.text : null,
-      namespace: /^backtest-learning\//i.test(path) ? 'ict-backtest' : 'academy-main',
+      namespace: /^backtest-learning\//i.test(path) ? 'ict-backtest' : (/^modul-/i.test(path) ? 'modul-tematik' : 'academy-main'),
       status: priorPosition.completed || progress >= 95 ? 'completed' : (progress > 0 ? 'reading' : 'unread'),
       completed: Boolean(priorPosition.completed || progress >= 95),
       updatedAt: Date.now()

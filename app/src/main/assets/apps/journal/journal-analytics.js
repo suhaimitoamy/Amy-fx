@@ -32,24 +32,52 @@ window.AmyJournalAnalytics = {
   },
   equity(entries){
     let balance = 0;
+    let balanceR = 0;
+    let balanceMoney = 0;
     const rawList = Array.isArray(entries) ? entries : [];
     const list = rawList.map(x => ({ entry: x, result: normalizeResult(x.result) }))
                         .filter(x => x.result !== null);
+    
+    const entryTime = (e) => {
+      const raw = e?.entryTime || e?.exitTime || e?.analysisTime || e?.date || e?.createdAt || e?.timestamp;
+      const t = raw ? new Date(raw).getTime() : 0;
+      return Number.isFinite(t) ? t : 0;
+    };
+    list.sort((a, b) => entryTime(a.entry) - entryTime(b.entry));
+
     const hasMoney = list.some(x => {
       const e = x.entry;
       const m = e.pnlMoney != null && e.pnlMoney !== '' ? Number(e.pnlMoney) : ((Number(e.profit)||0) - (Number(e.loss)||0));
       return Number.isFinite(m) && m !== 0;
     });
+
     return list.map(x => {
       const e = x.entry;
       const explicitMoney = e.pnlMoney != null && e.pnlMoney !== '' ? Number(e.pnlMoney) : null;
       const calcMoney = (e.profit || e.loss) ? ((Number(e.profit)||0) - (Number(e.loss)||0)) : null;
       const moneyVal = explicitMoney != null && Number.isFinite(explicitMoney) ? explicitMoney : (calcMoney != null && Number.isFinite(calcMoney) ? calcMoney : null);
-      const delta = (hasMoney && moneyVal != null)
-        ? moneyVal
-        : (x.result === 'Win' ? Number(e.riskReward || 2) : x.result === 'Loss' ? -1 : 0);
+      
+      const deltaR = x.result === 'Win' ? Number(e.riskReward || 2) : x.result === 'Loss' ? -1 : 0;
+      const deltaMoney = moneyVal != null ? moneyVal : 0;
+      
+      balanceR += deltaR;
+      balanceMoney += deltaMoney;
+
+      const delta = (hasMoney && moneyVal != null) ? moneyVal : deltaR;
       balance += delta;
-      return {time:e.analysisTime || e.createdAt || new Date().toISOString(), balance, unit: hasMoney ? '$' : 'R'};
+
+      const timeIso = e.analysisTime || e.createdAt || e.date || new Date().toISOString();
+      return {
+        time: timeIso,
+        balance,
+        balanceR,
+        balanceMoney,
+        delta,
+        deltaR,
+        deltaMoney,
+        unit: hasMoney ? '$' : 'R',
+        hasMoney
+      };
     });
   },
   renderEquitySVG(entries){
@@ -57,7 +85,7 @@ window.AmyJournalAnalytics = {
     if (!data.length) {
       return '<div style="padding:20px;text-align:center;color:var(--muted,#888);font-size:13px;">Belum ada data trade tertutup untuk kurva equity.</div>';
     }
-    const unit = data[0]?.unit || 'R';
+    const lastPoint = data[data.length - 1];
     const values = [0, ...data.map(d => d.balance)];
     const minVal = Math.min(...values);
     const maxVal = Math.max(...values);
@@ -81,11 +109,15 @@ window.AmyJournalAnalytics = {
 
     const areaPoints = `${padding},${height - padding} ${points.join(' ')} ${width - padding},${height - padding}`;
 
+    const rLabel = `${lastPoint.balanceR >= 0 ? '+' : ''}${lastPoint.balanceR.toFixed(2)} R`;
+    const moneyLabel = lastPoint.hasMoney ? `${lastPoint.balanceMoney >= 0 ? '+$' : '-$'}${Math.abs(lastPoint.balanceMoney).toFixed(2)}` : null;
+    const badgeText = moneyLabel ? `${rLabel} · ${moneyLabel}` : rLabel;
+
     return `
       <div style="background:var(--surface-soft, rgba(255,255,255,0.03));border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <span style="font-size:13px;font-weight:700;color:var(--gold,#d4a832);">EQUITY GROWTH CURVE (${unit === '$' ? 'REAL' : 'R-MULTIPLE'})</span>
-          <span style="font-size:13px;font-weight:700;color:${strokeColor};">${values[values.length-1] >= 0 ? '+' : ''}${values[values.length-1].toFixed(2)} ${unit}</span>
+          <span style="font-size:13px;font-weight:700;color:var(--gold,#d4a832);">EQUITY GROWTH CURVE (${lastPoint.hasMoney ? 'CHRONOLOGICAL REAL &amp; R' : 'CHRONOLOGICAL R-MULTIPLE'})</span>
+          <span style="font-size:13px;font-weight:700;color:${strokeColor};">${badgeText}</span>
         </div>
         <svg viewBox="0 0 ${width} ${height}" style="width:100%;height:auto;overflow:visible;">
           <polygon points="${areaPoints}" fill="${fillColor}" />

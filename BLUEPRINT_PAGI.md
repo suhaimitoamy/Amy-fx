@@ -2230,10 +2230,15 @@
 ---
 
 ### 2.16. [LEARNING & ANALYTICS] Integrated Learning Journey & Chronological Equity Engine
+- **Status:** [x] SELESAI & LOLOS AUDIT REVIEWER
 - **Diusulkan oleh:** Agen Beta, Agen Delta & Agen Gamma
 - **Konsep & Nilai untuk Trader:**  
   1. *Sinkronisasi Otomatis Progres Belajar ke Lockscreen:* Memastikan bahwa setiap materi 10 Modul Tematik Terpadu yang dibaca trader otomatis tersinkronisasi ke SharedPreferences Android. Saat alarm pengingat harian berdering di HP pada jam 20:00 WITA, notifikasi akan menyebutkan nama materi yang sedang dipelajari secara akurat, lengkap dengan link langsung kembali ke bab tersebut.  
   2. *Kurva Pertumbuhan Akun Presisi Interaktif:* Mengurutkan seluruh transaksi secara kronologis sebelum menggambar grafik kurva modal (Equity Curve). Trader dapat melihat pertumbuhan modal secara runut dari waktu ke waktu, lengkap dengan visualisasi R-multiple dan nilai moneter riil ($).
+- **Implementasi & Verifikasi:**
+  - `app/src/main/assets/apps/academy/assets/js/reading-history-v2.js`: Perluasan dukungan 10 Modul Tematik Terpadu (`modul-01` s.d. `modul-10`), penangkapan judul & badge, serta sinkronisasi otomatis ke native Android `recordLastStudiedLesson`.
+  - `app/src/main/assets/apps/journal/journal-analytics.js`: Pengurutan kronologis transaksi (`entryTime`) dan pelacakan kurva pertumbuhan modal ganda (R-multiple dan Real $).
+  - Targeted unit tests: `tests/learning-and-equity-engine.test.mjs` (14/14 tes lulus 100%).
 
 ---
 
@@ -2560,7 +2565,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.11. Multi-Tiered Intelligent Caching di `api/twelvedata.js`** | P0 (Efisiensi Kuota) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.13. Tombol "Pasang Alarm Target Harga" di Header Chart Beranda** | P0 (Paritas 100%) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.15. Throttled State Persistence & Clean Sweep Acceptance Engine** | P0 (Kinerja & Logika) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.16. Integrated Learning Journey & Chronological Equity Engine** | P0 (Edukasi & Analitik) | ~8 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.16. Integrated Learning Journey & Chronological Equity Engine** | P0 (Edukasi & Analitik) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.17. Realistic Order Lifecycle & Missed Setup Simulator di Replay Engine** | P0 (Akurasi Latihan) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.18. Standalone Embedded Fractal Twin Matcher (Zero-Python Engine)** | P0 (Otonomi AI) | ~10 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.10. Rhythmic Haptic Feedback & Native Sound Bridge di `WebAppInterface`** | P1 (Sangat Keren) | ~8 menit | [ ] Setuju / [ ] Tunda |
