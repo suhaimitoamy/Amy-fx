@@ -2218,10 +2218,14 @@
 ---
 
 ### 2.15. [LOGIC & PERSISTENCE] Throttled State Persistence & Clean Sweep Acceptance Engine
+- **Status:** [x] SELESAI & LOLOS AUDIT REVIEWER
 - **Diusulkan oleh:** Agen Epsilon & Agen Beta
 - **Konsep & Nilai untuk Trader:**  
   1. *Hemat Baterai & Umur Memori Ponsel:* Membatasi persistensi state entry watch ke `localStorage` hanya saat terjadi perubahan signature state riil atau ditahan dengan buffer interval minimum 3 detik jika candle sedang fluktuatif. Menghapus 4.800 penulisan flash storage per jam menjadi nol saat pasar sepi.  
   2. *Normalisasi Likuiditas Multiformat:* Menjamin engine pengambil keputusan (Decision Engine) di Cockpit Mapping mampu memproses format label likuiditas dari semua varian skrip ICT (`BUY`, `SELL`, `BSL`, `SSL`, `BUY_SIDE`, `SELL_SIDE`, `PDH`, `PDL`, `PWH`, `PWL`), sehingga tidak ada lagi sinyal sweep rejection valid yang macet di status `SWEEP_UNCONFIRMED`.
+- **Implementasi & Verifikasi:**
+  - `app/src/main/assets/apps/mapping/js/engine/sweep-acceptance.js`: Normalisasi likuiditas multiformat (`PDH`, `PWH`, `EQH`, `PDL`, `PWL`, `EQL`, `BUY_SIDE`, `SELL_SIDE`) dan helper `createThrottledStatePersister`.
+  - Targeted unit tests: `tests/sweep-acceptance-multiformat.test.mjs` (8/8 lulus 100%).
 
 ---
 
@@ -2555,7 +2559,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.7. Mini-Badge Status Dealing Range di Header Chart Gold** | P0 (Sangat Informatif) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.11. Multi-Tiered Intelligent Caching di `api/twelvedata.js`** | P0 (Efisiensi Kuota) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.13. Tombol "Pasang Alarm Target Harga" di Header Chart Beranda** | P0 (Paritas 100%) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.15. Throttled State Persistence & Clean Sweep Acceptance Engine** | P0 (Kinerja & Logika) | ~7 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.15. Throttled State Persistence & Clean Sweep Acceptance Engine** | P0 (Kinerja & Logika) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.16. Integrated Learning Journey & Chronological Equity Engine** | P0 (Edukasi & Analitik) | ~8 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.17. Realistic Order Lifecycle & Missed Setup Simulator di Replay Engine** | P0 (Akurasi Latihan) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.18. Standalone Embedded Fractal Twin Matcher (Zero-Python Engine)** | P0 (Otonomi AI) | ~10 menit | [ ] Setuju / [ ] Tunda |

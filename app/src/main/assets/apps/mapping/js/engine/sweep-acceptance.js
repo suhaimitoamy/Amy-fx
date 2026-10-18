@@ -3,10 +3,12 @@ function number(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function directionOf(event) {
+function directionOf(event, isBsl = false, isSsl = false) {
   const value = event?.direction ?? event?.dir ?? event?.directionValue;
-  if (value === 1 || String(value).toUpperCase().includes('BULL')) return 'BULLISH';
-  if (value === -1 || String(value).toUpperCase().includes('BEAR')) return 'BEARISH';
+  if (value === 1 || String(value).toUpperCase().includes('BULL') || String(value).toUpperCase() === 'BUY') return 'BULLISH';
+  if (value === -1 || String(value).toUpperCase().includes('BEAR') || String(value).toUpperCase() === 'SELL') return 'BEARISH';
+  if (isBsl) return 'BEARISH';
+  if (isSsl) return 'BULLISH';
   return 'NEUTRAL';
 }
 
@@ -24,9 +26,9 @@ export function classifySweepAcceptance({ amySmcD = null, sourceCandle = null } 
   if (rawSweep) {
     const level = eventLevel(rawSweep);
     const close = number(candle?.close);
-    const side = String(rawSweep?.side || rawSweep?.liquiditySide || rawSweep?.kind || rawSweep?.type || '').toUpperCase();
-    const isBsl = side.includes('BSL') || side.includes('HIGH') || side === 'BUY' || side.includes('BUY_SIDE');
-    const isSsl = side.includes('SSL') || side.includes('LOW') || side === 'SELL' || side.includes('SELL_SIDE');
+    const side = String(rawSweep?.side || rawSweep?.liquiditySide || rawSweep?.kind || rawSweep?.type || rawSweep?.label || rawSweep?.pool || '').toUpperCase();
+    const isBsl = side.includes('BSL') || side.includes('HIGH') || side === 'BUY' || side.includes('BUY_SIDE') || side.includes('PDH') || side.includes('PWH') || side.includes('EQH');
+    const isSsl = side.includes('SSL') || side.includes('LOW') || side === 'SELL' || side.includes('SELL_SIDE') || side.includes('PDL') || side.includes('PWL') || side.includes('EQL');
     const reclaimed = (level == null || close == null)
       ? false
       : isBsl
@@ -37,7 +39,7 @@ export function classifySweepAcceptance({ amySmcD = null, sourceCandle = null } 
     return {
       state: reclaimed ? 'SWEEP_REJECTION' : 'SWEEP_UNCONFIRMED',
       label: reclaimed ? 'Sweep + Rejection' : 'Sweep belum reclaim',
-      direction: directionOf(rawSweep),
+      direction: directionOf(rawSweep, isBsl, isSsl),
       level,
       authority: 'CONTEXT_ONLY',
       entryAuthority: false,
@@ -76,3 +78,67 @@ export function classifySweepAcceptance({ amySmcD = null, sourceCandle = null } 
     summary: 'Belum ada sweep/rejection atau break/acceptance baru. Context struktur dan level tetap aktif.'
   };
 }
+
+export function createThrottledStatePersister(storageKey, minIntervalMs = 3000, storage = (typeof localStorage !== 'undefined' ? localStorage : null)) {
+  let lastPersistTime = 0;
+  let lastSavedSignature = '';
+  let pendingTimer = null;
+  let pendingValue = null;
+
+  function flush() {
+    if (pendingTimer) {
+      clearTimeout(pendingTimer);
+      pendingTimer = null;
+    }
+    if (pendingValue !== null) {
+      const val = pendingValue;
+      pendingValue = null;
+      try {
+        storage?.setItem(storageKey, JSON.stringify(val));
+        lastPersistTime = Date.now();
+      } catch (_) {}
+    }
+  }
+
+  function save(value, signature, immediate = false) {
+    if (!value) return false;
+    const sig = signature !== undefined ? signature : JSON.stringify(value);
+    if (sig === lastSavedSignature) {
+      return false;
+    }
+    lastSavedSignature = sig;
+    pendingValue = value;
+
+    const now = Date.now();
+    const elapsed = now - lastPersistTime;
+
+    if (immediate || elapsed >= minIntervalMs) {
+      flush();
+      return true;
+    }
+
+    if (!pendingTimer) {
+      pendingTimer = setTimeout(() => {
+        flush();
+      }, minIntervalMs - elapsed);
+    }
+    return false;
+  }
+
+  function cancel() {
+    if (pendingTimer) {
+      clearTimeout(pendingTimer);
+      pendingTimer = null;
+    }
+    pendingValue = null;
+  }
+
+  return {
+    save,
+    flush,
+    cancel,
+    getLastSavedSignature: () => lastSavedSignature,
+    getLastPersistTime: () => lastPersistTime
+  };
+}
+
