@@ -299,7 +299,7 @@
       var link = card.querySelector('a');
       if (!link) return;
       var href = link.getAttribute('href');
-      var folderMatch = href.match(/bagian-\d+[^/]+/);
+      var folderMatch = href.match(/(?:bagian-\d+|modul-\d+)[^/]*/);
       if (folderMatch) {
         var folder = folderMatch[0];
         var badge = document.createElement('span');
@@ -335,13 +335,14 @@
     var pBar = document.getElementById('academyProgressBar');
     var pText = document.getElementById('academyProgressText');
     if (pBar && pText) {
-      var totalBagian = 35;
+      var totalBagian = (courseCards && courseCards.length) ? courseCards.length : 10;
       var count = Math.min(totalBagian, readSet.length);
       var pct = Math.min(100, Math.round((count / totalBagian) * 100));
       pBar.style.width = pct + '%';
-      pText.textContent = 'Menyelesaikan ' + count + ' dari ' + totalBagian + ' Pertemuan (' + pct + '%)';
+      pText.textContent = 'Menyelesaikan ' + count + ' dari ' + totalBagian + ' Modul (' + pct + '%)';
     }
   }
+  if (typeof window !== 'undefined') window.updateCourseProgress = updateCourseProgress;
 
   function initAcademySearch() {
     var sInput = document.getElementById('academySearchInput');
