@@ -2252,11 +2252,16 @@
 
 ---
 
-### 2.24. [DECISION CONFIRMATION] Visual Rejection Candle Body Filter di Mini-Card Signal Assistant V3
+### 2.24. [DECISION CONFIRMATION] Visual Rejection Candle Body Filter di Mini-Card Signal Assistant V3 — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Epsilon & Agen Beta
 - **Konsep & Nilai untuk Trader:**  
   1. *Konfirmasi Rejection Mutlak:* Menambahkan pill status visual pada kartu Assistant V3: `[ ⚖️ Menunggu Rejection Close ]` atau `[ 🎯 Reclaimed Valid ]`. Sinyal sweep tidak langsung menyala sebagai setup siap eksekusi hingga candle M15/M5 benar-benar ditutup dengan body kembali ke dalam level likuiditas (bukan ditutup tembus / invalidasi).  
   2. *Grafis Garis Sweep Dinamis:* Menampilkan garis horizontal putus-putus berkedip halus pada level likuiditas yang tersapu di canvas chart, memudahkan trader membedakan apakah harga sedang menembus (*breakout*) atau sedang mengambil likuiditas untuk berbalik arah (*turtle soup / stop hunt*).
+- **Implementasi & Audit Reviewer:**
+  - `apps/mapping/index.html` & `css/ict-workspace.css`: Menambahkan elemen `#plan-rejection-pill` di dalam `.plan-status-bar` kartu Assistant V3 serta styling `.pill-warning` (latar kuning/amber transparan dengan border kontras).
+  - `ict-presentation.js`: Mengontrol visibilitas dan teks pill status (`[ 🎯 Reclaimed Valid ]` vs `[ ⚖️ Menunggu Rejection Close ]`) sesuai konfirmasi penutupan candle sweep.
+  - `ict-canvas.js`: Menambahkan garis horizontal putus-putus (`setLineDash([5, 3])`) pada level likuiditas yang tersapu beserta label rejection dinamis di canvas chart.
+  - Targeted unit tests: `tests/mapping-rejection-filter.test.mjs` (3/3 lulus 100%).
 
 ---
 
@@ -2504,7 +2509,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.50. Validasi Usia TTL 48 Jam Cache Lilin Offline di `data.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.51. Form Validasi Jurnal: Dukungan Single TP & Skor 0 di `journal-schema.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.52. Perbaiki Regex Progres 10 Modul Tematik di `apps/academy/main.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.24. Visual Rejection Candle Body Filter di Mini-Card Signal Assistant V3** | P0 (Integritas Sinyal) | ~6 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.24. Visual Rejection Candle Body Filter di Mini-Card Signal Assistant V3** | P0 (Integritas Sinyal) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.25. Local K-NN Cosine Similarity Matcher di WebView Android (Offline)** | P0 (Otonomi AI) | ~10 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.22. Pre-Trade Confluence Checklist 4-Poin di Cockpit Mapping** | P0 (Proteksi Mental) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.23. Auto-Resume Bookmark Cursor di Practice Replay Engine** | P1 (Sangat Praktis) | ~5 menit | [ ] Setuju / [ ] Tunda |

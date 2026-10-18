@@ -340,6 +340,11 @@ body.amyfx-module--ict #gold-chart-workspace #chart{width:100%;min-width:0;heigh
   color: #94a3b8;
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
+.pill-warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
 .plan-math-zone {
   font-size: 11px;
   color: var(--amy-accent, #F5C451);

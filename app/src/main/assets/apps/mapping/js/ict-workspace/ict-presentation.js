@@ -381,6 +381,7 @@ export function renderEntryAssistantPlan(amy,context=null){
   const ast=amy?.assistant||null,plan=ast?.plan||amy?.plan||null;
   const badgeEl=document.getElementById('plan-signal-badge');
   const antiChaseEl=document.getElementById('plan-anti-chase-pill');
+  const rejectionEl=document.getElementById('plan-rejection-pill');
   const mathZoneEl=document.getElementById('plan-math-zone');
   const pullbackEl=document.getElementById('plan-pullback-notice');
   const entryVal=document.getElementById('plan-entry-val');
@@ -396,6 +397,7 @@ export function renderEntryAssistantPlan(amy,context=null){
   if(!plan){
     if(badgeEl){badgeEl.textContent='MENUNGGU KONFIRMASI';badgeEl.className='plan-badge badge-neutral';}
     if(antiChaseEl){antiChaseEl.textContent='STANDBY';antiChaseEl.className='anti-chase-pill pill-neutral';}
+    if(rejectionEl)rejectionEl.style.display='none';
     if(mathZoneEl)mathZoneEl.textContent=`Math Zone: ${ast?.mathZone||'Menunggu zona terkonfirmasi'}`;
     if(pullbackEl)pullbackEl.style.display='none';
     if(entryVal)entryVal.textContent='—';
@@ -423,6 +425,23 @@ export function renderEntryAssistantPlan(amy,context=null){
       antiChaseEl.textContent='MISSED: Harga sudah menjauh dari entry';antiChaseEl.className='anti-chase-pill pill-missed';
     }else{
       antiChaseEl.textContent='STANDBY';antiChaseEl.className='anti-chase-pill pill-neutral';
+    }
+  }
+
+  // Visual Rejection Candle Body Filter (Item 2.24)
+  const sweepInfo=ast?.sweep||plan?.sweep||amy?.sweep||null;
+  const rejectionState=ast?.rejectionState||plan?.rejectionState||(ast?.reclaimed?'SWEEP_REJECTION':(ast?.waitingRejectionClose?'SWEEP_UNCONFIRMED':null));
+  if(rejectionEl){
+    if(rejectionState==='SWEEP_REJECTION'||ast?.reclaimed===true||plan?.reclaimed===true){
+      rejectionEl.style.display='inline-block';
+      rejectionEl.textContent='🎯 Reclaimed Valid';
+      rejectionEl.className='anti-chase-pill pill-ready';
+    }else if(rejectionState==='SWEEP_UNCONFIRMED'||ast?.waitingRejectionClose||(sweepInfo&&!ast?.reclaimed)){
+      rejectionEl.style.display='inline-block';
+      rejectionEl.textContent='⚖️ Menunggu Rejection Close';
+      rejectionEl.className='anti-chase-pill pill-warning';
+    }else{
+      rejectionEl.style.display='none';
     }
   }
   if(mathZoneEl)mathZoneEl.textContent=`Math Zone: ${ast?.mathZone||'Fibo OTE / SNR / POI'}`;

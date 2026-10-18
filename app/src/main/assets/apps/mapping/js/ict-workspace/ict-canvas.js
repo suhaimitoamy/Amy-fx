@@ -239,7 +239,7 @@ export function createIctCanvas(element, chart, series) {
       label(`SSL ${ssl.level.toFixed(2)}`, Math.max(4, Math.min(xx + 4, plotRight - 90)), yy - 3, '#22c55e');
     }
 
-    // 7. Sweep Markers ('×' for BSL/SSL, '◆' for Asia)
+    // 7. Sweep Markers ('×' for BSL/SSL, '◆' for Asia) & Dynamic Sweep Line (Item 2.24)
     for (const sw of indicators?.liquidity?.sweeps || []) {
       const xx = x(sw.time), yy = y(sw.price);
       if (xx == null || yy == null || xx < 0 || xx > plotRight) continue;
@@ -249,6 +249,22 @@ export function createIctCanvas(element, chart, series) {
       const offset = sw.side === 'BUY' ? -4 : (fontSize + 4);
       ctx.fillText(sw.symbol, xx, yy + offset);
       ctx.textAlign = 'left';
+
+      // Grafis Garis Sweep Dinamis: garis horizontal putus-putus berkedip halus pada level likuiditas yang tersapu
+      const sweepLevel = Number(sw.level ?? sw.price);
+      const syy = y(sweepLevel);
+      if (syy != null) {
+        ctx.setLineDash([5, 3]);
+        ctx.strokeStyle = sw.color || '#f59e0b';
+        ctx.lineWidth = s.lineWidth || 1;
+        ctx.beginPath();
+        ctx.moveTo(xx, syy);
+        ctx.lineTo(lineRight, syy);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        const tag = sw.reclaimed ? '🎯 Reclaimed Valid' : '⚖️ Menunggu Rejection Close';
+        label(`${sw.label || 'SWEEP'} ${tag}`, Math.max(4, Math.min(xx + 8, plotRight - 110)), syy - 3, sw.color || '#f59e0b');
+      }
     }
 
     // 8. Infinite/Horizontal Key Levels on Canvas (renders clean labels directly on chart)
