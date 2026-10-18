@@ -62,16 +62,18 @@ export default async function handler(req, res) {
     const host = req?.headers?.host || (process.env.VERCEL_URL ? process.env.VERCEL_URL : 'amy-fx.vercel.app');
     const protocol = host.startsWith('localhost') || host.startsWith('127.') || host.startsWith('10.') || host.startsWith('192.') ? 'http' : 'https';
     const baseUrl = `${protocol}://${host}`;
-    const [res15, res5, res60, calRes] = await Promise.all([
+    const [res15, res5, res60, resD1, calRes] = await Promise.all([
       fetchWithAbort(`${baseUrl}/api/twelvedata?symbol=XAU/USD&interval=15min&outputsize=60`),
       fetchWithAbort(`${baseUrl}/api/twelvedata?symbol=XAU/USD&interval=5min&outputsize=60`),
       fetchWithAbort(`${baseUrl}/api/twelvedata?symbol=XAU/USD&interval=1h&outputsize=60`),
+      fetchWithAbort(`${baseUrl}/api/twelvedata?symbol=XAU/USD&interval=1day&outputsize=10`),
       fetchWithAbort(`${baseUrl}/api/calendar`)
     ]);
 
     const m15 = convertCandles(res15?.values || res15, 900);
     const m5 = convertCandles(res5?.values || res5, 300);
     const h1 = convertCandles(res60?.values || res60, 3600);
+    const d1 = convertCandles(resD1?.values || resD1, 86400);
 
     // Jika TwelveData gagal / rate limit (429) dan candle tidak lengkap, gunakan cachePayload jika ada
     if ((!m15.length || !h1.length) && cachePayload) {
@@ -89,8 +91,8 @@ export default async function handler(req, res) {
     const calendar = Array.isArray(calRes) ? calRes : (Array.isArray(calRes?.events) ? calRes.events : []);
     const nowSec = Math.floor(now / 1000);
 
-    const context = buildMarketContext({ h1, m15, m5, calendar, nowSeconds: nowSec });
-    const driverEvaluation = evaluateSixDrivers({ m15, m5, h1, context, nowSeconds: nowSec });
+    const context = buildMarketContext({ h1, m15, m5, d1, calendar, nowSeconds: nowSec });
+    const driverEvaluation = evaluateSixDrivers({ m15, m5, h1, d1, context, nowSeconds: nowSec });
 
     const isMarketClosed = context.session === 'PASAR TUTUP' || !isGoldMarketOpen(nowSec);
     const active = [];
