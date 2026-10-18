@@ -1,4 +1,4 @@
-const CACHE_NAME = 'xauusd-ict-v2';
+const CACHE_NAME = 'xauusd-ict-v3';
 const ASSETS = [
   '/',
   '/index.html',
@@ -23,7 +23,20 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
-  if (e.request.url.includes('twelvedata.com')) return;
+  const url = e.request.url;
+  if (
+    url.includes('/api/') ||
+    url.includes('twelvedata.com') ||
+    url.includes('supabase.co') ||
+    url.includes('timestamp=') ||
+    url.includes('_t=') ||
+    url.includes('?t=') ||
+    url.includes('&t=') ||
+    url.includes('?_=') ||
+    url.includes('&_=')
+  ) {
+    return;
+  }
 
   e.respondWith(
     caches.match(e.request).then((response) => {
