@@ -1,17 +1,27 @@
+function normalizeResult(res) {
+  const s = String(res || '').trim().toUpperCase();
+  if (s === 'WIN') return 'Win';
+  if (s === 'LOSS') return 'Loss';
+  if (s === 'BREAKEVEN' || s === 'BE') return 'Breakeven';
+  return null;
+}
+
 window.AmyJournalAnalytics = {
+  normalizeResult,
   analyze(entries){
     const list = Array.isArray(entries) ? entries : [];
-    const closed = list.filter(x => ['Win','Loss','Breakeven'].includes(x.result));
+    const closed = list.map(x => ({ entry: x, result: normalizeResult(x.result) }))
+                       .filter(x => x.result !== null);
     const wins = closed.filter(x => x.result === 'Win').length;
     const losses = closed.filter(x => x.result === 'Loss').length;
     const winRate = closed.length ? (wins / closed.length) * 100 : 0;
-    const rrValues = closed.map(x => Number(x.riskReward)).filter(Number.isFinite);
+    const rrValues = closed.map(x => Number(x.entry.riskReward)).filter(Number.isFinite);
     const avgRR = rrValues.length ? rrValues.reduce((a,b)=>a+b,0)/rrValues.length : 0;
     const bySetup = {};
     const bySession = {};
     closed.forEach(x => {
-      const setup = x.setupType || 'Unknown';
-      const session = x.session || 'Unknown';
+      const setup = x.entry.setupType || 'Unknown';
+      const session = x.entry.session || 'Unknown';
       bySetup[setup] = bySetup[setup] || {total:0,win:0,loss:0};
       bySession[session] = bySession[session] || {total:0,win:0,loss:0};
       bySetup[setup].total++; bySession[session].total++;
@@ -22,20 +32,24 @@ window.AmyJournalAnalytics = {
   },
   equity(entries){
     let balance = 0;
-    const list = (Array.isArray(entries)?entries:[]).filter(x => ['Win','Loss','Breakeven'].includes(x.result));
+    const rawList = Array.isArray(entries) ? entries : [];
+    const list = rawList.map(x => ({ entry: x, result: normalizeResult(x.result) }))
+                        .filter(x => x.result !== null);
     const hasMoney = list.some(x => {
-      const m = x.pnlMoney != null && x.pnlMoney !== '' ? Number(x.pnlMoney) : ((Number(x.profit)||0) - (Number(x.loss)||0));
+      const e = x.entry;
+      const m = e.pnlMoney != null && e.pnlMoney !== '' ? Number(e.pnlMoney) : ((Number(e.profit)||0) - (Number(e.loss)||0));
       return Number.isFinite(m) && m !== 0;
     });
     return list.map(x => {
-      const explicitMoney = x.pnlMoney != null && x.pnlMoney !== '' ? Number(x.pnlMoney) : null;
-      const calcMoney = (x.profit || x.loss) ? ((Number(x.profit)||0) - (Number(x.loss)||0)) : null;
+      const e = x.entry;
+      const explicitMoney = e.pnlMoney != null && e.pnlMoney !== '' ? Number(e.pnlMoney) : null;
+      const calcMoney = (e.profit || e.loss) ? ((Number(e.profit)||0) - (Number(e.loss)||0)) : null;
       const moneyVal = explicitMoney != null && Number.isFinite(explicitMoney) ? explicitMoney : (calcMoney != null && Number.isFinite(calcMoney) ? calcMoney : null);
       const delta = (hasMoney && moneyVal != null)
         ? moneyVal
-        : (x.result === 'Win' ? Number(x.riskReward || 2) : x.result === 'Loss' ? -1 : 0);
+        : (x.result === 'Win' ? Number(e.riskReward || 2) : x.result === 'Loss' ? -1 : 0);
       balance += delta;
-      return {time:x.analysisTime || x.createdAt || new Date().toISOString(), balance, unit: hasMoney ? '$' : 'R'};
+      return {time:e.analysisTime || e.createdAt || new Date().toISOString(), balance, unit: hasMoney ? '$' : 'R'};
     });
   },
   renderEquitySVG(entries){

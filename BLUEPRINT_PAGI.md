@@ -1275,6 +1275,7 @@
     return null;
   }
   ```
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Normalisasi `normalizeResult` diterapkan di `analyze` & `equity` (`journal-analytics.js`); seluruh varian kapitalisasi dan singkatan (WIN/win, LOSS/loss, BREAKEVEN/be) terdata akurat. Pengujian unit lolos di `tests/journal-analytics.test.mjs`.
 
 ---
 
@@ -2464,7 +2465,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.26. Dynamic Liquidity Target Fallback ($\ge 2R$) di Engine ICT** | P0 (Akurasi Sinyal) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.27. Economic Event Countdown Badge di Header Cockpit** | P0 (Proteksi Modal) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.53. Fingerprint $O(1)$ Gantikan `JSON.stringify` di Render Chart `chart-view.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.54. Normalisasi Case-Insensitive Hasil Trade di `journal-analytics.js`** | P0 (Kritis) | ~3 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.54. Normalisasi Case-Insensitive Hasil Trade di `journal-analytics.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.55. Margin Toleransi Timeout 25s di SSE & OkHttp Bridge `TwelveDataPriceBridge.kt`** | P0 (Kritis) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.50. Validasi Usia TTL 48 Jam Cache Lilin Offline di `data.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.51. Form Validasi Jurnal: Dukungan Single TP & Skor 0 di `journal-schema.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
