@@ -1251,6 +1251,7 @@
   const last = result.candles.at(-1);
   const next = `${result.tf}:${result.candles.length}:${first?.time}:${first?.close}:${last?.time}:${last?.close}`;
   ```
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Mengganti `JSON.stringify` 300 candle ($O(N)$ ~15 KB per frame) dengan fingerprint $O(1)$. Mengeliminasi micro-stuttering dan GC churn pada ARM64. Pengujian unit lolos di `tests/home-price-chart.test.mjs`.
 
 ---
 
@@ -2462,7 +2463,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.58. Pre-Check Weekend Sebelum Eksekusi HTTP di `DriverSetupSyncWorker.kt`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.26. Dynamic Liquidity Target Fallback ($\ge 2R$) di Engine ICT** | P0 (Akurasi Sinyal) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.27. Economic Event Countdown Badge di Header Cockpit** | P0 (Proteksi Modal) | ~6 menit | [ ] Setuju / [ ] Tunda |
-| 🐛 **Debugging** | **1.53. Fingerprint $O(1)$ Gantikan `JSON.stringify` di Render Chart `chart-view.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.53. Fingerprint $O(1)$ Gantikan `JSON.stringify` di Render Chart `chart-view.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.54. Normalisasi Case-Insensitive Hasil Trade di `journal-analytics.js`** | P0 (Kritis) | ~3 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.55. Margin Toleransi Timeout 25s di SSE & OkHttp Bridge `TwelveDataPriceBridge.kt`** | P0 (Kritis) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.50. Validasi Usia TTL 48 Jam Cache Lilin Offline di `data.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |

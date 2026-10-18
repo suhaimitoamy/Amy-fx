@@ -18,7 +18,9 @@ export function createPriceChart(element,{touchAxes=false}={}) {
   theme();window.addEventListener('amyfx:theme-change',theme);
   return {
     draw(result,plan=result.plan,presentation=null){
-      const next=result.tf+JSON.stringify(result.candles);
+      const cs=result.candles||[];
+      const first=cs[0], last=cs[cs.length-1];
+      const next=`${result.tf}:${cs.length}:${first?.time}:${first?.close}:${last?.time}:${last?.open}:${last?.high}:${last?.low}:${last?.close}`;
       if(next!==key){const initial=!key;series.setData(result.candles);key=result.candles.length?next:'';if(initial&&result.candles.length)chart.timeScale().fitContent();}
       if(presentation&&!ict)ict=createIctCanvas(element,chart,series);
       if(presentation&&rightBars!==presentation.settings?.rightBars){rightBars=presentation.settings.rightBars;chart.applyOptions({timeScale:{rightOffset:rightBars}});}

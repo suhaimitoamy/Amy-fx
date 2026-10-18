@@ -53,6 +53,10 @@ test('shared chart renders actual candles and levels; teardown releases theme li
   const view=context.createPriceChart({}),candles=[{time:1,open:100,high:102,low:99,close:101}];
   view.draw({tf:'M5',candles,plan:{entry:100,sl:95,tp:110}});assert.equal(data[0],candles);assert.equal(fit,1);assert.equal(lines.length,3);
   view.draw({tf:'M5',candles,plan:null});assert.equal(data.length,1);assert.equal(removed.length,3);
+  // Item 1.53: Verify price tick updates candle without full JSON stringification
+  assert.ok(!read('apps/mapping/js/ict-workspace/chart-view.js').includes('JSON.stringify(result.candles)'));
+  const updatedCandles=[{time:1,open:100,high:103,low:99,close:102}];
+  view.draw({tf:'M5',candles:updatedCandles,plan:null});assert.equal(data.length,2);assert.equal(fit,1);
   view.reset();view.draw({tf:'M15',candles:[],plan:null});view.draw({tf:'M15',candles,plan:null});assert.equal(fit,2);
   view.destroy();assert.equal(deleted,true);assert.equal(events.size,0);
 });
