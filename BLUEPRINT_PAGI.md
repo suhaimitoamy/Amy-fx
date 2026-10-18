@@ -1144,6 +1144,7 @@
     return [allKeys.join(','), ...entries.map(row => allKeys.map(k => esc(row[k])).join(','))].join('\n');
   }
   ```
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. `toCsv()` di `journal-export.js` kini menghimpun seluruh kunci (*union set*) dari seluruh entri trade secara dinamis via `Array.from(new Set(entries.flatMap(...)))`. Seluruh kolom opsional seperti `setupScore`, `reflection`, `screenshotUrl`, `takeProfit2`, dan `exitPrice` tetap terjaga utuh tanpa risiko terpotong. 4/4 unit test lolos di `tests/journal-export.test.mjs`.
 
 ---
 
@@ -2482,7 +2483,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.22. Pre-Trade Confluence Checklist 4-Poin di Cockpit Mapping** | P0 (Proteksi Mental) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.23. Auto-Resume Bookmark Cursor di Practice Replay Engine** | P1 (Sangat Praktis) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.47. Pasang Guard Equality & Batasi Target MutationObserver di `amyfx-home-data-integration-v1.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.48. Union Set Keys pada Ekspor CSV Jurnal Cegah Kehilangan Field di `journal-export.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.48. Union Set Keys pada Ekspor CSV Jurnal Cegah Kehilangan Field di `journal-export.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.49. Resolusi Dinamis Endpoint `ENDPOINT` & Filter Weekend di `scalper-model.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.44. Terapkan `isWeekendClosure` & Hentikan Polling Akhir Pekan di `home-price-chart.js`** | P0 (Kritis) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.45. Eliminasi Lookahead Path Bias pada Fractal Evaluator di `advisor-panel.js`** | P0 (Kritis) | ~6 menit | [ ] Setuju / [ ] Tunda |

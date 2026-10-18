@@ -1,8 +1,9 @@
 window.AmyJournalExport = {
   toCsv(entries){
-    const keys = Object.keys((entries && entries[0]) || {});
-    const esc = v => `"${String(v ?? '').replace(/"/g,'""')}"`;
-    return [keys.join(','), ...(entries||[]).map(row => keys.map(k => esc(row[k])).join(','))].join('\n');
+    if (!Array.isArray(entries) || !entries.length) return '';
+    const keys = Array.from(new Set(entries.flatMap(e => Object.keys(e || {}))));
+    const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    return [keys.join(','), ...entries.map(row => keys.map(k => esc(row?.[k])).join(','))].join('\n');
   },
   downloadCsv(entries, filename='amyfx-journal.csv'){
     const csv = this.toCsv(entries);
