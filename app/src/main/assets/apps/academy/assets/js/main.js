@@ -279,10 +279,13 @@
 
         try {
           var readSet = JSON.parse(localStorage.getItem('amy_read_topics') || '[]');
-          var folderMatch = url.match(/bagian-\d+[^/]+/);
+          var folderMatch = url.match(/(?:modul|bagian)-\d+[^/]*/i);
           if (folderMatch && readSet.indexOf(folderMatch[0]) === -1) {
             readSet.push(folderMatch[0]);
             localStorage.setItem('amy_read_topics', JSON.stringify(readSet));
+          }
+          if (folderMatch && window.Android && typeof window.Android.recordLastStudiedLesson === 'function') {
+            window.Android.recordLastStudiedLesson(folderMatch[0], title);
           }
         } catch(e) {}
       }
@@ -299,7 +302,7 @@
       var link = card.querySelector('a');
       if (!link) return;
       var href = link.getAttribute('href');
-      var folderMatch = href.match(/(?:bagian-\d+|modul-\d+)[^/]*/);
+      var folderMatch = href.match(/(?:modul|bagian)-\d+[^/]*/i);
       if (folderMatch) {
         var folder = folderMatch[0];
         var badge = document.createElement('span');
@@ -342,7 +345,10 @@
       pText.textContent = 'Menyelesaikan ' + count + ' dari ' + totalBagian + ' Modul (' + pct + '%)';
     }
   }
-  if (typeof window !== 'undefined') window.updateCourseProgress = updateCourseProgress;
+  if (typeof window !== 'undefined') {
+    window.updateCourseProgress = updateCourseProgress;
+    window.trackReadingProgress = trackReadingProgress;
+  }
 
   function initAcademySearch() {
     var sInput = document.getElementById('academySearchInput');

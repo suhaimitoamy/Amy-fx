@@ -1234,6 +1234,7 @@
   var folderMatch = href.match(/(?:modul|bagian)-\d+[^/]+/i);
   ```
   Serta integrasikan dengan native Android bridge `window.Android?.recordLastStudiedLesson?.(folder, title)` untuk pengingat lockscreen.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Regex di `trackReadingProgress` dan `updateCourseProgress` diperluas ke `(?:modul|bagian)-\d+[^/]*` (case-insensitive) dan terintegrasi dengan bridge `recordLastStudiedLesson`. Pengujian unit 4/4 lolos di `tests/academy-progress-denominator.test.mjs`.
 
 ---
 
@@ -2472,7 +2473,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.55. Margin Toleransi Timeout 25s di SSE & OkHttp Bridge `TwelveDataPriceBridge.kt`** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.50. Validasi Usia TTL 48 Jam Cache Lilin Offline di `data.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.51. Form Validasi Jurnal: Dukungan Single TP & Skor 0 di `journal-schema.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.52. Perbaiki Regex Progres 10 Modul Tematik di `apps/academy/main.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.52. Perbaiki Regex Progres 10 Modul Tematik di `apps/academy/main.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.24. Visual Rejection Candle Body Filter di Mini-Card Signal Assistant V3** | P0 (Integritas Sinyal) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.25. Local K-NN Cosine Similarity Matcher di WebView Android (Offline)** | P0 (Otonomi AI) | ~10 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.22. Pre-Trade Confluence Checklist 4-Poin di Cockpit Mapping** | P0 (Proteksi Mental) | ~6 menit | [ ] Setuju / [ ] Tunda |
