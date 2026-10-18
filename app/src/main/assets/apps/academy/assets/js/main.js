@@ -280,12 +280,13 @@
         try {
           var readSet = JSON.parse(localStorage.getItem('amy_read_topics') || '[]');
           var folderMatch = url.match(/(?:modul|bagian)-\d+[^/]*/i);
+          var folderName = folderMatch ? folderMatch[0] : '';
           if (folderMatch && readSet.indexOf(folderMatch[0]) === -1) {
             readSet.push(folderMatch[0]);
             localStorage.setItem('amy_read_topics', JSON.stringify(readSet));
           }
-          if (folderMatch && window.Android && typeof window.Android.recordLastStudiedLesson === 'function') {
-            window.Android.recordLastStudiedLesson(folderMatch[0], title);
+          if (window.Android && typeof window.Android.recordLastStudiedLesson === 'function') {
+            window.Android.recordLastStudiedLesson(title, url, folderName);
           }
         } catch(e) {}
       }

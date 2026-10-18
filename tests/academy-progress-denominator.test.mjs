@@ -120,7 +120,7 @@ test('trackReadingProgress records both modul-xx and bagian-xx folders and notif
   const env = setupEnvironment({ cardCount: 10, readTopics: [] });
   const recorded = [];
   env.context.window.Android = {
-    recordLastStudiedLesson: (folder, title) => recorded.push({ folder, title })
+    recordLastStudiedLesson: (title, url, folder) => recorded.push({ title, url, folder })
   };
 
   // Mock reading modul-01 article

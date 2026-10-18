@@ -1152,6 +1152,21 @@ class MainActivity : Activity() {
         }
 
         @JavascriptInterface
+        fun recordLastStudiedLesson(folderOrTitle: String?, titleOrUrl: String?) {
+            try {
+                if (folderOrTitle != null && titleOrUrl != null) {
+                    if (folderOrTitle.contains("modul-") || folderOrTitle.contains("bagian-")) {
+                        recordLastStudiedLesson(titleOrUrl, "", folderOrTitle)
+                    } else {
+                        recordLastStudiedLesson(folderOrTitle, titleOrUrl, "")
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        @JavascriptInterface
         fun saveLearningReminderConfig(enabled: Boolean, timeOfDay: String?): Boolean {
             return try {
                 val cleanTime = timeOfDay?.trim()?.takeIf { it.matches(Regex("^\\d{1,2}:\\d{2}$")) } ?: "20:00"
