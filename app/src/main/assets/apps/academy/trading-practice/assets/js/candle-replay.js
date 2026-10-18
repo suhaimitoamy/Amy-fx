@@ -70,6 +70,7 @@
       var evidence = trade.outcomeEvidence;
       var label = trade.bias === 'WAIT' ? 'WAIT · tidak entry' :
         (trade.result === 'WIN' ? 'TP tercapai' : trade.result === 'LOSS' ? 'SL tercapai' :
+        trade.result === 'MISSED' ? 'Order batal · TP tercapai sebelum entry' :
         trade.entryStatus === 'ACTIVE' ? 'Aktif · menunggu SL/TP' : 'Menunggu entry tersentuh');
       var detail = '';
       if (evidence) {
@@ -80,7 +81,7 @@
       } else if (trade.result !== 'OPEN') {
         detail = '<p>Catatan lama: bukti candle belum tersimpan.</p>';
       }
-      var tone = trade.result === 'WIN' ? 'result-win' : trade.result === 'LOSS' ? 'result-loss' : 'result-open';
+      var tone = trade.result === 'WIN' ? 'result-win' : trade.result === 'LOSS' ? 'result-loss' : trade.result === 'MISSED' ? 'result-missed' : 'result-open';
       return '<article class="replay-history-item"><strong>' + escapeHtml(trade.bias) + ' · ' + escapeHtml(trade.timeframe) +
         ' · ' + escapeHtml(core.formatWita(trade.tradeTime, true)) + '</strong>' +
         '<p class="' + tone + '">' + label + '</p>' +

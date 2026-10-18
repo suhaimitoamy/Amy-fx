@@ -2496,7 +2496,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.38. Endpoint `/api/fractal-audit` di Vercel & Client Fallback di APK** | P0 (Kritis) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.39. Ganti Label Tombol FAB "CS" Menjadi "AMY" / "AI" di `amy-local-assistant.js`** | P1 (Sedang) | ~3 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.40. Fleksibilitas Format Warna Hex (#RGB/#RGBA) di `drawing-core.js`** | P1 (Sedang) | ~3 menit | [ ] Setuju / [ ] Tunda |
-| 🐛 **Debugging** | **1.35. Batalkan Order Practice Jika TP Tersentuh Lebih Dulu (`MISSED` Trap)** | P0 (Kritis) | ~5 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.35. Batalkan Order Practice Jika TP Tersentuh Lebih Dulu (`MISSED` Trap)** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.36. Resolusi Dinamis `API_BASE` Localhost/LAN di `market-intel/app.js`** | P1 (Sedang) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.37. Sorting Kronologis Ascending Kalender Ekonomi di `market-intel/app.js`** | P1 (Sedang) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.32. Perbaiki Regex Progres 10 Modul & Bridge Native di `main.js`** | P0 (Kritis) | ~5 menit | [ ] Setuju / [ ] Tunda |

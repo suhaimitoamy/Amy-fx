@@ -132,15 +132,22 @@ test('switching timeframe updates original-timeframe positions only in the match
   assert.equal((await rt.ctx.AmyPracticeStorage.getTrade('decision-other-pack')).result, 'OPEN');
 });
 
-test('later evaluation must not apply a pre-fill target to an already activated position', () => {
+test('later evaluation must not apply a pre-fill target to an already activated position, and expires pending order as MISSED if TP hit before entry', () => {
   const rt = runtime();
   const trade = rt.ctx.AmyPracticeTrades.create({ bias: 'BUY', entry:100, stopLoss:98, takeProfit:102, currentPrice:101, tradeTime:60 });
   const preFill = candle(120,101,103,102);
   const fill = candle(180,99,101);
-  const active = rt.ctx.AmyPracticeTrades.evaluate(trade, [preFill,fill]);
-  assert.equal(active.entryStatus, 'ACTIVE');
-  assert.equal(active.result, 'OPEN');
-  const next = rt.ctx.AmyPracticeTrades.evaluate(active, [preFill,fill,candle(240,99,101)]);
+
+  // Item 1.35: Pending order expires as MISSED when target is hit before entry fill
+  const missedTrade = rt.ctx.AmyPracticeTrades.evaluate(trade, [preFill,fill]);
+  assert.equal(missedTrade.entryStatus, 'EXPIRED_TARGET_HIT_FIRST');
+  assert.equal(missedTrade.result, 'MISSED');
+  assert.equal(missedTrade.resolution, 'TARGET_HIT_BEFORE_FILL');
+  assert.equal(missedTrade.outcomeEvidence.type, 'MISSED');
+
+  // Evaluasi pada posisi yang SUDAH aktif sebelumnya tidak boleh menerapkan candle sebelum aktivasi
+  const activatedTrade = { ...trade, entryStatus: 'ACTIVE', entryActivatedAt: 180 };
+  const next = rt.ctx.AmyPracticeTrades.evaluate(activatedTrade, [preFill,fill,candle(240,99,101)]);
   assert.equal(next.result, 'OPEN');
 });
 

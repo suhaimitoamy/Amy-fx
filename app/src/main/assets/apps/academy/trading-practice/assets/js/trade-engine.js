@@ -95,6 +95,19 @@
     for (var i = 0; i < sequence.length; i += 1) {
       var candle = sequence[i];
       if (next.entryStatus !== 'ACTIVE') {
+        if (touched(candle, next.takeProfit)) {
+          next.result = 'MISSED';
+          next.entryStatus = 'EXPIRED_TARGET_HIT_FIRST';
+          next.r = 0;
+          next.closedAt = candle.time;
+          next.resolution = 'TARGET_HIT_BEFORE_FILL';
+          next.outcomeEvidence = {
+            type: 'MISSED', level: Number(next.takeProfit), candleTime: candle.time,
+            candleHigh: Number(candle.high), candleLow: Number(candle.low),
+            ambiguous: false
+          };
+          break;
+        }
         if (!touched(candle, next.entry)) continue;
         next.entryStatus = 'ACTIVE';
         next.entryActivatedAt = candle.time;
