@@ -45,6 +45,34 @@
     return { bias: bias, entry: entry, stopLoss: stopLoss, takeProfit: takeProfit };
   }
 
+  function calculateExecutionFriction(bias, entryPrice, candle, options) {
+    if (!Number.isFinite(entryPrice)) return { fillPrice: entryPrice, spreadPips: 0, slippagePips: 0, frictionCost: 0 };
+    var candleRange = (candle && Number.isFinite(candle.high) && Number.isFinite(candle.low))
+      ? (Number(candle.high) - Number(candle.low))
+      : 2.0;
+    var isVolatile = candleRange > 4.0;
+    var baseSpreadPips = isVolatile ? 4.5 : 2.0; // 2.0 pips ($0.20) in calm market, 4.5 pips ($0.45) in volatile market
+    var spreadPoints = baseSpreadPips * 0.10;
+
+    var isMarket = options && options.isMarket;
+    var slippagePips = isMarket ? ((candleRange > 6.0 ? 1.5 : 0.5) * (options.slippageFactor !== undefined ? options.slippageFactor : 1.0)) : 0;
+    var slippagePoints = slippagePips * 0.10;
+
+    var fillPrice = entryPrice;
+    if (bias === 'BUY') {
+      fillPrice = Math.round((entryPrice + (spreadPoints / 2) + slippagePoints) * 100) / 100;
+    } else if (bias === 'SELL') {
+      fillPrice = Math.round((entryPrice - (spreadPoints / 2) - slippagePoints) * 100) / 100;
+    }
+
+    return {
+      fillPrice: fillPrice,
+      spreadPips: baseSpreadPips,
+      slippagePips: slippagePips,
+      frictionCost: Math.round(Math.abs(fillPrice - entryPrice) * 100) / 100
+    };
+  }
+
   function create(input) {
     var geometry = validate(input);
     var currentPrice = core.finite(input.currentPrice);
@@ -52,6 +80,9 @@
     var activeAtSave = geometry.bias !== 'WAIT' && isMarket;
     var tradeTime = Number(input.tradeTime);
     if (!Number.isFinite(tradeTime)) throw new Error('Timestamp keputusan tidak valid. Tunggu sampai cursor replay siap.');
+    var friction = activeAtSave
+      ? calculateExecutionFriction(geometry.bias, geometry.entry, input.currentCandle, { isMarket: true, slippageFactor: input.slippageFactor })
+      : { fillPrice: geometry.entry, spreadPips: 0, slippagePips: 0, frictionCost: 0 };
     return {
       id: input.id || (input.lockDecision ? decisionId(input) : root.AmyPracticeStorage.identifier('trade')),
       symbol: String(input.symbol || 'XAUUSD').toUpperCase(),
@@ -65,6 +96,10 @@
       lockedAt: input.lockDecision ? Number(input.lockedAt || Date.now()) : null,
       bias: geometry.bias,
       entry: geometry.entry,
+      fillPrice: friction.fillPrice,
+      spreadPips: friction.spreadPips,
+      slippagePips: friction.slippagePips,
+      frictionCost: friction.frictionCost,
       stopLoss: geometry.stopLoss,
       takeProfit: geometry.takeProfit,
       result: geometry.bias === 'WAIT' ? 'OPEN' : 'OPEN',
@@ -159,7 +194,10 @@
       }
       if (targetHit) {
         next.result = 'WIN';
-        next.r = Number(next.plannedR || 0);
+        var entryForR = Number.isFinite(next.fillPrice) ? next.fillPrice : next.entry;
+        var riskAmount = Math.abs(entryForR - next.stopLoss);
+        var rewardAmount = Math.abs(next.takeProfit - entryForR);
+        next.r = (riskAmount > 0) ? Math.round((rewardAmount / riskAmount) * 100) / 100 : Number(next.plannedR || 0);
         next.closedAt = candle.time;
         next.resolution = 'TP_HIT';
         next.outcomeEvidence = {
@@ -175,5 +213,5 @@
     return next;
   }
 
-  root.AmyPracticeTrades = Object.freeze({ create: create, validate: validate, evaluate: evaluate, plannedR: plannedR, decisionId: decisionId });
+  root.AmyPracticeTrades = Object.freeze({ create: create, validate: validate, evaluate: evaluate, plannedR: plannedR, decisionId: decisionId, calculateExecutionFriction: calculateExecutionFriction });
 })(typeof window !== 'undefined' ? window : globalThis);

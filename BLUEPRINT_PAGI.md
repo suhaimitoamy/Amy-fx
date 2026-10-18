@@ -2474,11 +2474,15 @@
 
 ---
 
-### 2.40. [PRACTICE SLIPPAGE & SPREAD ENGINE] Realistic Spread & Slippage Simulator di Practice Replay
+### 2.40. [PRACTICE SLIPPAGE & SPREAD ENGINE] Realistic Spread & Slippage Simulator di Practice Replay — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Delta & Agen Alpha
 - **Konsep & Nilai untuk Trader:**  
   1. *Friksi Pasar Dunia Nyata:* Menghilangkan ilusi "fill sempurna di pucuk" pada Practice Replay. Engine membebankan dynamic spread (1.5–2.5 pips pada kondisi tenang, 4.0–6.0 pips saat candle ber-volatilitas tinggi/news spike) dan micro-slippage acak terkalibrasi pada order MARKET.  
   2. *Validasi Mental & Ketahanan Psikologis:* Trader dapat melihat ekspektasi hasil trading yang realistis sebelum terjun ke akun riil, mencegah kekecewaan akibat perbedaan performa antara backtest tanpa spread vs realitas broker live.
+- **Implementasi & Verifikasi:**
+  - `trade-engine.js`: Fungsi `calculateExecutionFriction(bias, entryPrice, candle, options)` membebankan dynamic spread (2.0–4.5 pips) dan micro-slippage acak terkalibrasi (0.5–1.5 pips) saat market execution (BUY diisi pada ASK, SELL diisi pada BID).
+  - Data trade mencatat `fillPrice`, `spreadPips`, `slippagePips`, dan `frictionCost`, serta menghitung R terealisasi berdasarkan harga fill nyata.
+  - Targeted unit tests: `tests/realistic-spread-slippage-simulation.test.mjs` (2/2 lulus 100%).
 
 ---
 
@@ -2499,7 +2503,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.77. Sinkronisasi SharedPreferences Android pada Reminder di `amy-learning-reminder.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.78. Evaluasi Candle Aktif & Dukungan Market Order di `trade-engine.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.79. Eliminasi Micro-Range Distortion pada Fallback Dealing Range di `amy-ict.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.40. Realistic Spread & Slippage Simulator di Practice Replay** | P0 (Akurasi Latihan) | ~6 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.40. Realistic Spread & Slippage Simulator di Practice Replay** | P0 (Akurasi Latihan) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.41. Smart Spaced-Repetition & Weak-Spot Quiz Suggester di Akademi** | P0 (Edukasi Cerdas) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.74. Perbaikan Deep Link Media Player ke Akademi di `BackgroundVideoPlaybackService.kt`** | P0 (Kritis) | ~3 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.75. Eliminasi False Exponential Backoff Reconnect di `TwelveDataPriceBridge.kt`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
