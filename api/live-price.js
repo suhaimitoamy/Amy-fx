@@ -37,7 +37,7 @@ export default async function handler(req, res) {
       if (upstream.readyState === WebSocket.OPEN) upstream.send(JSON.stringify({ action: 'heartbeat' }));
     }, 10000);
     // Reconnect before the configured function deadline; never invent a quote.
-    const lifetime = setTimeout(finish, 22000);
+    const lifetime = setTimeout(finish, 20000);
     res.on('close', finish);
     upstream.addEventListener('open', () => {
       if (ended) return;

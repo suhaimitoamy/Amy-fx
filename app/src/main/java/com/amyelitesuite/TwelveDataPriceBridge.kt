@@ -48,9 +48,10 @@ class TwelveDataPriceBridge(
         emitStatus("CONNECTING", "Menghubungkan harga live.")
         current.enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                reconnect(currentGeneration, current)
+                reconnect(currentGeneration, current, false)
             }
             override fun onResponse(call: Call, response: Response) {
+                var graceful = false
                 try {
                     response.use {
                         if (!it.isSuccessful || it.header("Content-Type")?.startsWith("text/event-stream") != true) {
@@ -75,11 +76,12 @@ class TwelveDataPriceBridge(
                                 }
                             }
                         }
+                        graceful = isCurrent(currentGeneration)
                     }
                 } catch (_: Exception) {
                     // Only a generic status is exposed; transport details are not credentials.
                 } finally {
-                    reconnect(currentGeneration, current)
+                    reconnect(currentGeneration, current, graceful)
                 }
             }
         })
@@ -87,11 +89,14 @@ class TwelveDataPriceBridge(
     }
 
     @Synchronized
-    private fun reconnect(expected: Long, current: Call) {
+    private fun reconnect(expected: Long, current: Call, graceful: Boolean = false) {
         if (!isCurrent(expected) || call !== current) return
         call = null
-        emitStatus("CLOSED", "Menyambungkan ulang harga live.", expected)
-        val delay = minOf(2000L shl minOf(reconnectAttempt++, 4), 30000L)
+        if (!graceful) {
+            emitStatus("CLOSED", "Menyambungkan ulang harga live.", expected)
+        }
+        val delay = if (graceful) 0L else minOf(2000L shl minOf(reconnectAttempt++, 4), 30000L)
+        if (graceful) reconnectAttempt = 0
         handler.postDelayed({ if (isCurrent(expected)) connect() }, delay)
     }
 

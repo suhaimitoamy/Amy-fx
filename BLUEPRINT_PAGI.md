@@ -318,6 +318,7 @@
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   - Ubah `readTimeout` OkHttp di `TwelveDataPriceBridge.kt` menjadi **35 detik** (memberi toleransi 10 detik dari batas lifetime serverless).
   - Atau turunkan `lifetime` di `api/live-price.js` menjadi **20 detik**, sehingga Vercel selalu menutup koneksi secara normal terlebih dahulu, dan OkHttp dapat langsung menyambung kembali dengan jeda nol (0 ms) tanpa penalti backoff.
+- **Status Implementasi:** [x] SELESAI & LOLOS AUDIT REVIEWER (Vercel lifetime diset ke 20s, OkHttp readTimeout 35s, graceful zero-delay reconnect 0ms tanpa exponential backoff saat normal stream rotation; unit test lolos di `tests/live-price-timeout-regression.test.mjs`).
 
 ---
 
@@ -2519,7 +2520,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.15. Perbaikan Deep Linking Rute Notifikasi di `MainActivity`** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.17. Matikan Disk I/O SharedPreferences Tiap 500ms Saat Video Paused** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.8. Perbaikan Download CSV Jurnal Terkorupsi Menjadi PDF** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.10. Perbaikan Race Condition Live Price Timeout 25s di OkHttp** | P0 (Kritis) | ~6 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.10. Perbaikan Race Condition Live Price Timeout 25s di OkHttp** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.11. Perbaikan Alarm Target Harga Mati di Beranda (`index.html`)** | P0 (Kritis) | ~8 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.13. Guard Weekend Anti-Spam di `DriverSetupSyncWorker` (Hemat Baterai)** | P0 (Kritis) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.1. Perbaikan D1 Liquidity Gap di `scalper-setups.js`** | P0 (Tinggi) | ~10 menit | [ ] Setuju / [ ] Tunda |
