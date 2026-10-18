@@ -2506,7 +2506,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.30. Normalisasi String `side` di `sweep-acceptance.js` (Cegah Deadlock Sweep)** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.31. Pelacakan `brokenSwings` di `MappingLogicCore.kt` (Hilangkan Duplikasi BOS)** | P1 (Sedang) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.26. Perbaikan Target PDH/PDL pada Engine 6 Drivers (Fetch D1)** | P0 (Kritis) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.23. Perbaikan Override TTL 30s di `api/twelvedata.js` (Cegah Limit 429)** | P0 (Kritis) | ~6 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.23. Perbaikan Override TTL 30s di `api/twelvedata.js` (Cegah Limit 429)** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.24. Toleransi Drift Jam 5 Menit di Stream Live Price OkHttp/Vercel** | P0 (Kritis) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.19. Pengecualian `/api/` pada Cache-First `sw.js` (Cegah Setup Basi)** | P0 (Kritis) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.20. Fallback Teks Asli Berita & Filter Notifikasi Kosong** | P0 (Kritis) | ~6 menit | [ ] Setuju / [ ] Tunda |

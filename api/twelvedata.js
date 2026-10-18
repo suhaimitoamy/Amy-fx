@@ -7,7 +7,7 @@ const MAX_OUTPUT_SIZE = 5_000;
 const MEMORY_CACHE_LIMIT = 40;
 const SHARED_M1_OUTPUT_SIZE = 300;
 
-const CACHE_TTL_SECONDS = Object.freeze({
+export const CACHE_TTL_SECONDS = Object.freeze({
   '1min': 55,
   '5min': 240,
   '15min': 600,
@@ -137,7 +137,8 @@ export default async function handler(req, res) {
     return res.redirect(307, canonicalM1Url(symbol));
   }
 
-  const ttl = ttlSeconds(interval);
+  const configuredTtl = CACHE_TTL_SECONDS[interval] || 60;
+  const ttl = interval === '1min' || interval === '5min' ? ttlSeconds(interval) : configuredTtl;
   const key = cacheKey(symbol, interval, requestedOutputSize);
   const fresh = readCache(key);
   if (fresh) {
