@@ -2368,11 +2368,14 @@
 
 ---
 
-### 2.38. [CASCADING TARGET LIQUIDITY] Multi-Timeframe High-Watermark Liquidity Ladder di 6-Driver Engine
+### 2.38. [CASCADING TARGET LIQUIDITY] Multi-Timeframe High-Watermark Liquidity Ladder di 6-Driver Engine — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Delta & Agen Alpha
 - **Konsep & Nilai untuk Trader:**  
   1. *Eliminasi 'WAITING_TARGET' Saat Trending Kuat:* Mengintegrasikan ladder likuiditas berjenjang (*cascading target liquidity*) dari M15 ke H1 dan D1. Ketika pasar bergerak dalam tren kuat (*runaway trend / all-time high*) dan swing lokal M15 telah habis terlewati, model secara dinamis mengambil target H1 BSL/SSL dan level proyeksi Fibonacci eksternal, memastikan peluang trading tidak gugur sia-sia.  
   2. *Take-Profit Berjenjang Dinamis (TP1, TP2, TP3):* Menyediakan target rasional yang terkonfirmasi oleh data grafik riil (TP1: 0.8R - 1.3R berbasis liquidity terdekat, TP2: H1 Key Level, TP3: PDH/PDL), memberikan trader fleksibilitas partial profit taking yang matematis dan presisi.
+- **Implementasi & Verifikasi:**
+  - `six-drivers.mjs`: Mengintegrasikan `fibExtTarget` (1.272 Fibonacci expansion) sebagai fallback likuiditas dinamis saat seluruh swing lokal tersapu, menyusun ladder TP1 (Base R), TP2 (Key Liquidity), dan TP3 (Expansion), serta mengekspornya ke candidates dan plan.
+  - Targeted unit tests: `tests/scalper-setups-d1-pdh-pdl.test.mjs` (5/5 lulus 100%) dan 31 tes regresi driver.
 
 ---
 
@@ -2421,7 +2424,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.74. Perbaikan Deep Link Media Player ke Akademi di `BackgroundVideoPlaybackService.kt`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.75. Eliminasi False Exponential Backoff Reconnect di `TwelveDataPriceBridge.kt`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.76. Inklusi Pivots H1 pada Target Likuiditas di `six-drivers.mjs`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.38. Multi-Timeframe High-Watermark Liquidity Ladder di 6-Driver Engine** | P0 (Akurasi Target) | ~6 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.38. Multi-Timeframe High-Watermark Liquidity Ladder di 6-Driver Engine** | P0 (Akurasi Target) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.39. Seamless Lockscreen Player with Resume-to-Lesson Deep Linking di Akademi** | P0 (Pengalaman Belajar) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.71. Koreksi Lilin Displacement FVG (`middle`) di `concept-fvg.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.72. Perbaikan Geometri Simetris Order Block di `concept-ob.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |

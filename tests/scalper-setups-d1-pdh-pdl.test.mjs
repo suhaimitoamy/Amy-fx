@@ -193,3 +193,15 @@ test('Item 1.76: targetsAt in six-drivers.mjs includes H1 pivots to prevent fals
   );
 });
 
+test('Item 2.38: Multi-Timeframe High-Watermark Liquidity Ladder produces TP1, TP2, TP3 and ladder in plan', () => {
+  const source = fs.readFileSync('lib/scalper-engine/six-drivers.mjs', 'utf8');
+  assert.match(source, /fibExtTarget\s*=\s*round\(entry\s*\+\s*event\.sign/);
+  assert.match(source, /label:\s*'FIB_EXT_1272'/);
+  assert.match(source, /const tp3Target\s*=\s*round\(/);
+  assert.match(source, /label:\s*'TP1 \(Base R\)'/);
+  assert.match(source, /label:\s*'TP2 \(Key Liquidity\)'/);
+  assert.match(source, /label:\s*'TP3 \(Expansion\)'/);
+  assert.match(source, /tp3:\s*tp3Target/);
+  assert.match(source, /liquidity_ladder:\s*ladder/);
+});
+
