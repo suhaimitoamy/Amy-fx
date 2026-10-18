@@ -96,8 +96,14 @@ test('Supabase feed normalizes missing translations and retries failures', async
   for (mode of ['429', 'network', 'malformed', 'unchanged']) {
     items = [{ id: '1', text: original, textOriginal: original }];
     const failed = await request();
-    assert.equal(failed[0].text, unavailable);
+    assert.equal(failed[0].text, original, 'translation failure must fall back to original text');
     assert.equal(failed[0].textOriginal, original);
+  }
+  // When both text and textOriginal are empty, fallback to unavailable placeholder
+  for (mode of ['429', 'network', 'malformed', 'unchanged']) {
+    items = [{ id: '1', text: '', textOriginal: '' }];
+    const failed = await request();
+    assert.equal(failed[0].text, unavailable, 'empty news falls back to unavailable placeholder');
   }
   items = [{ id: '1', text: unavailable, textOriginal: original }];
   mode = 'success';

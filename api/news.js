@@ -145,12 +145,11 @@ async function normalizeNewsTranslation(item) {
 
   const needsTranslation = !text.trim() || text.trim() === original.trim()
     || text.trim() === TRANSLATION_UNAVAILABLE;
+  const translated = needsTranslation ? await translateToId(original) : text;
   return {
     ...item,
     textOriginal: original,
-    text: needsTranslation
-      ? (await translateToId(original)) || TRANSLATION_UNAVAILABLE
-      : text
+    text: translated || original || TRANSLATION_UNAVAILABLE
   };
 }
 
@@ -159,13 +158,16 @@ async function scrapeTelegram(limit, shouldTranslate = true) {
   const html = await fetchTelegramHtml();
   const latest = sortNewestFirst(extractPosts(html)).slice(0, limit);
 
-  return Promise.all(latest.map(async item => ({
-    ...item,
-    impact: getNewsImpact(item.text),
-    relevant: isRelevantNews(item.text),
-    textOriginal: item.text,
-    text: shouldTranslate ? (await translateToId(item.text)) || TRANSLATION_UNAVAILABLE : item.text
-  })));
+  return Promise.all(latest.map(async item => {
+    const translated = shouldTranslate ? await translateToId(item.text) : '';
+    return {
+      ...item,
+      impact: getNewsImpact(item.text),
+      relevant: isRelevantNews(item.text),
+      textOriginal: item.text,
+      text: translated || item.text || TRANSLATION_UNAVAILABLE
+    };
+  }));
 }
 
 function extractPosts(html) {

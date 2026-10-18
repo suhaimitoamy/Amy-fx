@@ -73,16 +73,21 @@ class NewsSyncWorker(
                 val storedId = storedIdStr.toLongOrNull() ?: 0L
 
                 if (latestRelevant != null && latestRelevantId > storedId) {
-                    val body = latestRelevant.optString("text").ifBlank {
-                        latestRelevant.optString("textOriginal", "Berita baru XAU/USD tersedia.")
-                    }.take(MAX_NEWS_BODY)
-                    val impact = latestRelevant.optString("impact")
-                    val title = if (impact.equals("high", ignoreCase = true)) {
-                        "🚨 Breaking News Penting XAU/USD"
-                    } else {
-                        "📰 Breaking News XAU/USD"
+                    val rawText = latestRelevant.optString("text").trim()
+                    val textOriginal = latestRelevant.optString("textOriginal").trim()
+                    val isPlaceholder = rawText.startsWith("Terjemahan Bahasa Indonesia belum tersedia", ignoreCase = true)
+                    val candidate = if (isPlaceholder || rawText.isBlank()) textOriginal else rawText
+                    val body = candidate.take(MAX_NEWS_BODY).trim()
+
+                    if (body.isNotBlank() && !body.startsWith("Terjemahan Bahasa Indonesia belum tersedia", ignoreCase = true)) {
+                        val impact = latestRelevant.optString("impact")
+                        val title = if (impact.equals("high", ignoreCase = true)) {
+                            "🚨 Breaking News Penting XAU/USD"
+                        } else {
+                            "📰 Breaking News XAU/USD"
+                        }
+                        showNewsNotification(title, body, latestRelevantId.toString())
                     }
-                    showNewsNotification(title, body, latestRelevantId.toString())
                 }
 
                 if (highestId > storedId) {

@@ -484,6 +484,7 @@
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   1. Di `api/news.js`: Jika translasi gagal, prioritaskan teks asli bahasa Inggris (`original`), jangan pernah menimpa teks berita dengan teks placeholder jika teks asli ada.
   2. Di `NewsSyncWorker.kt`: Tambahkan filter guard agar string yang diawali/berisi `"Terjemahan Bahasa Indonesia belum tersedia"` diabaikan dan fallback ke `textOriginal`.
+- **Status Implementasi:** [x] SELESAI & LOLOS AUDIT REVIEWER (Translasi gagal otomatis fallback ke teks asli bahasa Inggris di `api/news.js`; `NewsSyncWorker.kt` menyaring placeholder dan mengabaikan notifikasi kosong; 24 regression unit tests lolos di `tests/news-routing-regression.test.mjs`).
 
 ---
 
@@ -2511,7 +2512,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.23. Perbaikan Override TTL 30s di `api/twelvedata.js` (Cegah Limit 429)** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.24. Toleransi Drift Jam 5 Menit di Stream Live Price OkHttp/Vercel** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.19. Pengecualian `/api/` pada Cache-First `sw.js` (Cegah Setup Basi)** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.20. Fallback Teks Asli Berita & Filter Notifikasi Kosong** | P0 (Kritis) | ~6 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.20. Fallback Teks Asli Berita & Filter Notifikasi Kosong** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.15. Perbaikan Deep Linking Rute Notifikasi di `MainActivity`** | P0 (Kritis) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.17. Matikan Disk I/O SharedPreferences Tiap 500ms Saat Video Paused** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.8. Perbaikan Download CSV Jurnal Terkorupsi Menjadi PDF** | P0 (Kritis) | ~6 menit | [ ] Setuju / [ ] Tunda |
