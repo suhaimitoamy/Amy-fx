@@ -164,14 +164,25 @@
     try {
       const prepared = await prepareNativeSource(item, video);
       if (!prepared) throw new Error("Sumber video belum dapat diputar oleh Android.");
-      const started = window.Android.playBackgroundVideo(
-        prepared.source,
-        key,
-        item.title || item.mediaName || "Video Trading",
-        String(positionMs),
-        loop,
-        prepared.tempPath || ""
-      );
+      const targetUrl = item.lessonUrl || window.location.href;
+      const started = (typeof window.Android.playBackgroundVideoWithTarget === "function")
+        ? window.Android.playBackgroundVideoWithTarget(
+            prepared.source,
+            key,
+            item.title || item.mediaName || "Video Trading",
+            String(positionMs),
+            loop,
+            prepared.tempPath || "",
+            targetUrl
+          )
+        : window.Android.playBackgroundVideo(
+            prepared.source,
+            key,
+            item.title || item.mediaName || "Video Trading",
+            String(positionMs),
+            loop,
+            prepared.tempPath || ""
+          );
       if (!started) throw new Error("Service pemutar latar belakang gagal dimulai.");
       video.pause();
       updateStatus(video, reason === "manual" ? "Diputar di latar belakang" : "Tetap diputar di latar belakang");

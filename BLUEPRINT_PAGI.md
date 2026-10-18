@@ -2379,11 +2379,15 @@
 
 ---
 
-### 2.39. [SEAMLESS VIDEO RESUME] Seamless Lockscreen Player with Resume-to-Lesson Deep Linking di Modul Video Akademi
+### 2.39. [SEAMLESS VIDEO RESUME] Seamless Lockscreen Player with Resume-to-Lesson Deep Linking di Modul Video Akademi — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Gamma & Agen Beta
 - **Konsep & Nilai untuk Trader:**  
   1. *Navigasi Otomatis Kembali ke Pelajaran yang Benar:* Menghubungkan metadata video aktif (`lesson_id`, `module_id`, `video_title`) dari pemutar Akademi ke Android MediaSession notification. Ketika trader menyentuh bar pemutar di lockscreen atau notification drawer, aplikasi langsung kembali ke `apps/academy/index.html#lesson-X`.  
   2. *Zero-Loss Playback Continuity:* Trader dapat mendengarkan audio masterclass sembari mencatat jurnal atau memantau chart gold, dan kembali ke video materi tepat di detik terakhir tanpa kehilangan progres pembelajaran.
+- **Implementasi & Verifikasi:**
+  - `app/src/main/assets/apps/shared/amy-academy-video-bridge.js`: Menghubungkan pemutaran video Akademi dengan Android MediaSession foreground service, mengelola event lifecycle `visibilitychange`/`pageshow`, dan menyematkan deep link `targetUrl` kembali ke materi terkait.
+  - `app/src/main/assets/apps/journal/background-video.js`: Menambahkan dukungan `playBackgroundVideoWithTarget`.
+  - Targeted unit tests: `tests/academy-lockscreen-video-bridge.test.mjs` (4/4 lulus 100%).
 
 ---
 
@@ -2425,7 +2429,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.75. Eliminasi False Exponential Backoff Reconnect di `TwelveDataPriceBridge.kt`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.76. Inklusi Pivots H1 pada Target Likuiditas di `six-drivers.mjs`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.38. Multi-Timeframe High-Watermark Liquidity Ladder di 6-Driver Engine** | P0 (Akurasi Target) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.39. Seamless Lockscreen Player with Resume-to-Lesson Deep Linking di Akademi** | P0 (Pengalaman Belajar) | ~6 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.39. Seamless Lockscreen Player with Resume-to-Lesson Deep Linking di Akademi** | P0 (Pengalaman Belajar) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.71. Koreksi Lilin Displacement FVG (`middle`) di `concept-fvg.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.72. Perbaikan Geometri Simetris Order Block di `concept-ob.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.73. Penyelarasan Kursor Ganti TF Replay di `replay-engine.js`** | P0 (Kritis) | ~3 menit | [x] DITOLAK REVIEWER (MENCEGAH REGRESI) |
