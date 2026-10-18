@@ -2260,11 +2260,12 @@
 
 ---
 
-### 2.21. [DATA PRESERVATION] Smart Comprehensive CSV & JSON Full Backup Engine di Jurnal
+### 2.21. [DATA PRESERVATION] Smart Comprehensive CSV & JSON Full Backup Engine di Jurnal — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Delta, Agen Alpha & Agen Beta
 - **Konsep & Nilai untuk Trader:**  
   1. *Eksportir Jurnal Cerdas:* Menjamin 100% kelengkapan data saat ekspor CSV dengan automatic field mapping (mengelompokkan parameter teknis: Entry, SL, TP1, TP2, RR, Pips, P&L, serta parameter psikologi & catatan refleksi trader) tanpa pernah kehilangan data opsional akibat skema baris pertama.  
   2. *1-Tap Full JSON Backup & Restore:* Tombol cadangan arsip lengkap (termasuk thumbnail screenshot dan tag ICT) ke file JSON terenkripsi/terkompresi gzip, memastikan trader tidak pernah kehilangan histori jurnal berharga meskipun berganti perangkat smartphone.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Smart comprehensive exporter aktif di `journal-export.js` dengan pengurutan kolom teknis hierarkis, ekspor format JSON v2 (`amyfx-journal-backup-v2`), serta validator pemulihan `parseAndValidateBackup()`. Seluruh 7 pengujian unit lolos di `tests/journal-export.test.mjs`.
 
 ---
 
@@ -2541,7 +2542,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.12. Dynamic Base URL Fallback Berita di `api/calendar.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.5. Isolasi Touch Sumbu Harga Layar Ponsel Sempit** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.4. Mitigasi Limit 429 TwelveData dengan Stale Fallback** | P1 (Sedang) | ~12 menit | [ ] Setuju / [ ] Tunda |
-| 🚀 **Fitur Baru** | **2.21. Smart Comprehensive CSV & JSON Full Backup Engine di Jurnal** | P0 (Proteksi Data) | ~8 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.21. Smart Comprehensive CSV & JSON Full Backup Engine di Jurnal** | P0 (Proteksi Data) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.20. Weekend Low-Power Sleep & Pre-Market Wakeup Engine** | P0 (Hemat Baterai & Kuota) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.19. Unified Trade Lifecycle & Anti-Ghost Order Engine di Seluruh Modul** | P0 (Integritas Logika) | ~8 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.1. Kalkulator Lot & Risiko Instan di Card 4 Plan** | P0 (Sangat Bermanfaat) | ~15 menit | [ ] Setuju / [ ] Tunda |

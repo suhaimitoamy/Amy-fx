@@ -134,3 +134,94 @@ test('downloadCsv dispatches download asynchronously and delays URL revocation b
   assert.equal(env.revokedUrls.length, 1);
   assert.equal(env.revokedUrls[0], clicked.href);
 });
+
+test('Item 2.21: toCsv orders columns hierarchically by technical group while retaining custom fields', () => {
+  const { exportUtil } = setupEnvironment();
+  const entries = [
+    {
+      customIndicator: 'EMA200',
+      pnlMoney: 150,
+      id: 'JRN-1',
+      setupType: 'FVG Sweep',
+      pair: 'XAU/USD',
+      actualEntryPrice: 2650.5
+    }
+  ];
+
+  const keys = exportUtil.getOrderedKeys(entries);
+  assert.equal(keys[0], 'id');
+  assert.equal(keys[1], 'pair');
+  assert.equal(keys[2], 'setupType');
+  assert.equal(keys[3], 'actualEntryPrice');
+  assert.equal(keys[4], 'pnlMoney');
+  assert.equal(keys[5], 'customIndicator'); // Custom user field appended after standard keys
+
+  const csv = exportUtil.toCsv(entries);
+  assert.ok(csv.startsWith('id,pair,setupType,actualEntryPrice,pnlMoney,customIndicator'));
+});
+
+test('Item 2.21: toJsonBackup and downloadJsonBackup produce v2 schema backup and dispatch download', () => {
+  const env = setupEnvironment();
+  const entries = [
+    { id: 'JRN-1', pair: 'XAU/USD', result: 'WIN', pnlMoney: 250 },
+    { id: 'JRN-2', pair: 'XAU/USD', result: 'BE', pnlMoney: 0 }
+  ];
+
+  const jsonStr = env.exportUtil.toJsonBackup(entries, { note: 'Offline backup' });
+  const parsed = JSON.parse(jsonStr);
+  assert.equal(parsed.schemaVersion, 'amyfx-journal-backup-v2');
+  assert.equal(parsed.app, 'Amy FX Pro Journal');
+  assert.equal(parsed.totalEntries, 2);
+  assert.equal(parsed.metadata.note, 'Offline backup');
+  assert.equal(parsed.entries.length, 2);
+
+  // Test downloadJsonBackup
+  env.exportUtil.downloadJsonBackup(entries, 'backup-test.json');
+  const clicked = env.getClickedElement();
+  assert.ok(clicked);
+  assert.equal(clicked.download, 'backup-test.json');
+  assert.ok(clicked.href.startsWith('blob:http://localhost/'));
+});
+
+test('Item 2.21: parseAndValidateBackup validates v2 schema, legacy formats, and rejects invalid payloads', () => {
+  const { exportUtil } = setupEnvironment();
+
+  // 1. Valid v2 backup
+  const v2Payload = JSON.stringify({
+    schemaVersion: 'amyfx-journal-backup-v2',
+    exportedAt: '2026-10-18T12:00:00Z',
+    entries: [{ id: '1', pair: 'XAU/USD' }, { id: '2', pair: 'XAU/USD' }]
+  });
+  const res1 = exportUtil.parseAndValidateBackup(v2Payload);
+  assert.equal(res1.ok, true);
+  assert.equal(res1.count, 2);
+  assert.equal(res1.schemaVersion, 'amyfx-journal-backup-v2');
+
+  // 2. Legacy backup with journals array
+  const legacyPayload = JSON.stringify({
+    journals: [{ id: 'leg-1' }]
+  });
+  const res2 = exportUtil.parseAndValidateBackup(legacyPayload);
+  assert.equal(res2.ok, true);
+  assert.equal(res2.count, 1);
+  assert.equal(res2.schemaVersion, 'legacy-v1');
+
+  // 3. Raw array backup
+  const rawArray = JSON.stringify([{ id: 'arr-1' }, { id: 'arr-2' }, { id: 'arr-3' }]);
+  const res3 = exportUtil.parseAndValidateBackup(rawArray);
+  assert.equal(res3.ok, true);
+  assert.equal(res3.count, 3);
+
+  // 4. Invalid corrupted payload
+  const corrupted = '{ invalid json !! }';
+  const res4 = exportUtil.parseAndValidateBackup(corrupted);
+  assert.equal(res4.ok, false);
+  assert.ok(res4.error.includes('Gagal mem-parsing'));
+
+  // 5. Object missing entries/journals
+  const missingData = JSON.stringify({ version: 1, foo: 'bar' });
+  const res5 = exportUtil.parseAndValidateBackup(missingData);
+  assert.equal(res5.ok, false);
+  assert.ok(res5.error.includes('tidak mengandung daftar entri'));
+});
+
