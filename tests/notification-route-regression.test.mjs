@@ -16,3 +16,12 @@ test('notifikasi tanpa URL memakai tujuan modul hasil routing', () => {
   assert.match(activity, /normalizeLocalUrl\(url\)[\s\S]*\?: AmyFxNotificationGate\.routeUrl\(route\)/);
   assert.match(activity, /putExtra\("target_url", routedUrl\)/);
 });
+
+test('applyAmyFxRoute permits modern notification routes', () => {
+  const routes = ['Mapping', 'MarketIntel', 'Academy', 'Practice', 'Journal', 'Dashboard', 'Analyze', 'Setups', 'History', 'Settings'];
+  for (const route of routes) {
+    assert.match(activity, new RegExp(`"${route}"`), `applyAmyFxRoute must support ${route}`);
+  }
+});
+
+

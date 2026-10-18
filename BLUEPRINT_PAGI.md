@@ -413,6 +413,7 @@
       else -> return
   }
   ```
+- **Status Implementasi:** [x] SELESAI & LOLOS AUDIT REVIEWER (Whitelist rute di `MainActivity.kt` telah diperluas untuk mencakup `"Mapping"`, `"MarketIntel"`, `"Academy"`, `"Practice"`, dan `"Journal"`; unit test lolos di `tests/notification-route-regression.test.mjs`).
 
 ---
 
@@ -2513,7 +2514,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.24. Toleransi Drift Jam 5 Menit di Stream Live Price OkHttp/Vercel** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.19. Pengecualian `/api/` pada Cache-First `sw.js` (Cegah Setup Basi)** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.20. Fallback Teks Asli Berita & Filter Notifikasi Kosong** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.15. Perbaikan Deep Linking Rute Notifikasi di `MainActivity`** | P0 (Kritis) | ~5 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.15. Perbaikan Deep Linking Rute Notifikasi di `MainActivity`** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.17. Matikan Disk I/O SharedPreferences Tiap 500ms Saat Video Paused** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.8. Perbaikan Download CSV Jurnal Terkorupsi Menjadi PDF** | P0 (Kritis) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.10. Perbaikan Race Condition Live Price Timeout 25s di OkHttp** | P0 (Kritis) | ~6 menit | [ ] Setuju / [ ] Tunda |

@@ -660,7 +660,8 @@ class MainActivity : Activity() {
 
     private fun applyAmyFxRoute(route: String?) {
         val safeRoute = when (route) {
-            "Dashboard", "Analyze", "Setups", "History", "Settings" -> route
+            "Dashboard", "Analyze", "Setups", "History", "Settings",
+            "Mapping", "MarketIntel", "Academy", "Practice", "Journal" -> route
             else -> return
         }
         if (!::webView.isInitialized) return
