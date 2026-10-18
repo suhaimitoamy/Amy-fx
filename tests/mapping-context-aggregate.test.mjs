@@ -100,6 +100,48 @@ test('Sweep vs Acceptance reports context without opening an entry', () => {
   assert.equal(state.authority, 'CONTEXT_ONLY');
 });
 
+test('Item 1.30: classifySweepAcceptance correctly normalizes BUY and SELL side strings to trigger SWEEP_REJECTION', () => {
+  // Test BUY side (Buy-Side Liquidity swept, closed back down below level -> SWEEP_REJECTION)
+  const bslBuySide = classifySweepAcceptance({
+    amySmcD: {
+      sourceCandle: { close: 2648.50 },
+      descriptive: { liquidity: { rawSweep: { side: 'BUY', level: 2650.00, direction: 'BEARISH' } } },
+      predictive: {}
+    }
+  });
+  assert.equal(bslBuySide.state, 'SWEEP_REJECTION', 'side: BUY with close < level must be SWEEP_REJECTION');
+
+  // Test SELL side (Sell-Side Liquidity swept, closed back up above level -> SWEEP_REJECTION)
+  const sslSellSide = classifySweepAcceptance({
+    amySmcD: {
+      sourceCandle: { close: 2642.00 },
+      descriptive: { liquidity: { rawSweep: { side: 'SELL', level: 2640.00, direction: 'BULLISH' } } },
+      predictive: {}
+    }
+  });
+  assert.equal(sslSellSide.state, 'SWEEP_REJECTION', 'side: SELL with close > level must be SWEEP_REJECTION');
+
+  // Test type: BSL_SWEEP from amy-smc-d-engine without side property
+  const bslTypeOnly = classifySweepAcceptance({
+    amySmcD: {
+      sourceCandle: { close: 2648.00 },
+      descriptive: { liquidity: { rawSweep: { type: 'BSL_SWEEP', level: 2650.00, direction: 'BEARISH' } } },
+      predictive: {}
+    }
+  });
+  assert.equal(bslTypeOnly.state, 'SWEEP_REJECTION', 'type: BSL_SWEEP with close < level must be SWEEP_REJECTION');
+
+  // Test unconfirmed sweep (close still beyond level)
+  const unconfirmed = classifySweepAcceptance({
+    amySmcD: {
+      sourceCandle: { close: 2652.00 },
+      descriptive: { liquidity: { rawSweep: { side: 'BUY', level: 2650.00, direction: 'BEARISH' } } },
+      predictive: {}
+    }
+  });
+  assert.equal(unconfirmed.state, 'SWEEP_UNCONFIRMED', 'side: BUY with close > level must be SWEEP_UNCONFIRMED');
+});
+
 test('same-completed-bar SMT produces bullish divergence when XAU sweeps low and DXY fails inverse high', () => {
   const base = 1_700_000_000;
   const xau = [

@@ -24,12 +24,14 @@ export function classifySweepAcceptance({ amySmcD = null, sourceCandle = null } 
   if (rawSweep) {
     const level = eventLevel(rawSweep);
     const close = number(candle?.close);
-    const side = String(rawSweep?.side || rawSweep?.liquiditySide || rawSweep?.kind || '').toUpperCase();
+    const side = String(rawSweep?.side || rawSweep?.liquiditySide || rawSweep?.kind || rawSweep?.type || '').toUpperCase();
+    const isBsl = side.includes('BSL') || side.includes('HIGH') || side === 'BUY' || side.includes('BUY_SIDE');
+    const isSsl = side.includes('SSL') || side.includes('LOW') || side === 'SELL' || side.includes('SELL_SIDE');
     const reclaimed = (level == null || close == null)
       ? false
-      : side.includes('BSL') || side.includes('HIGH')
+      : isBsl
         ? close < level
-        : side.includes('SSL') || side.includes('LOW')
+        : isSsl
           ? close > level
           : false;
     return {
