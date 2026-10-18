@@ -341,7 +341,7 @@
 
 ---
 
-### 1.12. [API CALENDAR] Hardcoded Origin pada Fallback Berita Kalender (`api/calendar.js`)
+### 1.12. [API CALENDAR] Hardcoded Origin pada Fallback Berita Kalender (`api/calendar.js`) — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`api/calendar.js`](file:///root/Amy-fx/api/calendar.js#L38)
 - **Akar Masalah (Temuan Agen Alpha):**
   Pada bagian fallback kalender makro:
@@ -351,6 +351,10 @@
   Pemanggilan menggunakan URL mutlak yang di-hardcode ke domain produksi Vercel. Pada lingkungan lokal (Termux localhost:8080) atau branch preview baru, request ini memicu traffic eksternal yang tidak perlu dan rentan gagal jika terjadi jeda koneksi internet publik.
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   Gunakan resolusi host dinamis seperti yang sudah diterapkan di `scalper-setups.js` (`const baseUrl = protocol + '://' + host`), sehingga pada lingkungan lokal request tetap diarahkan ke endpoint lokal.
+- **Implementasi & Verifikasi:**
+  - `api/calendar.js`: Mengekspor helper `resolveBaseUrl(req)` yang mendeteksi host/port secara dinamis (localhost, loopback, LAN IP -> `http://`, production & preview branch Vercel -> `https://`, serta menghormati `x-forwarded-proto`).
+  - Fallback request berita kalender menggunakan `${baseUrl}/api/news?limit=25` dengan timeout 5s, dan secondary fallback ke cloud endpoint jika lokal news offline.
+  - Targeted unit tests: `tests/calendar-dynamic-origin.test.mjs` (3/3 lulus 100%).
 
 ---
 
@@ -2574,7 +2578,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.9. Hilangkan Layar Berkedip (Flicker) Ganti TF di Beranda** | P1 (Sedang) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.6. Chunking Yielding Ekstraksi ZIP di `data-provider.js`** | P1 (Sedang) | ~10 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.2. Dual-Source Fallback Dataset 8 Tahun di `candles.js`** | P1 (Sedang) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.12. Dynamic Base URL Fallback Berita di `api/calendar.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.12. Dynamic Base URL Fallback Berita di `api/calendar.js`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.5. Isolasi Touch Sumbu Harga Layar Ponsel Sempit** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.4. Mitigasi Limit 429 TwelveData dengan Stale Fallback** | P1 (Sedang) | ~12 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.21. Smart Comprehensive CSV & JSON Full Backup Engine di Jurnal** | P0 (Proteksi Data) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |

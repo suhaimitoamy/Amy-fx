@@ -1,3 +1,10 @@
+export function resolveBaseUrl(req) {
+  const forwardedProto = req?.headers?.['x-forwarded-proto'];
+  const host = req?.headers?.host || (process.env.VERCEL_URL ? process.env.VERCEL_URL : 'amy-fx.vercel.app');
+  const protocol = forwardedProto || (host.startsWith('localhost') || host.startsWith('127.') || host.startsWith('10.') || host.startsWith('192.') ? 'http' : 'https');
+  return `${protocol}://${host}`;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -35,8 +42,29 @@ export default async function handler(req, res) {
 
   // 2. Fallback: Parse macro calendar events from live news feed
   try {
-    const newsRes = await fetch('https://amy-fx.vercel.app/api/news?limit=25');
-    if (newsRes.ok) {
+    const baseUrl = resolveBaseUrl(req);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    let newsRes = null;
+    try {
+      newsRes = await fetch(`${baseUrl}/api/news?limit=25`, {
+        signal: controller.signal,
+        headers: { 'Accept': 'application/json' }
+      });
+    } catch (_) {
+      if (baseUrl.includes('localhost') || baseUrl.includes('127.')) {
+        try {
+          newsRes = await fetch('https://amy-fx.vercel.app/api/news?limit=25', {
+            signal: controller.signal,
+            headers: { 'Accept': 'application/json' }
+          });
+        } catch (_) {}
+      }
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (newsRes && newsRes.ok) {
       const json = await newsRes.json();
       const events = [];
       const regex = /([A-Z]{3})\s*\|\s*([^\n\r]+)[\s\S]*?(?:Waktu|Time)\s*:\s*([^\n\r]+)[\s\S]*?(?:Efek|Effects?)\s*:\s*([^\n\r]+)[\s\S]*?(?:Sebelumnya|Previously)\s*:\s*([^\n\r]+)[\s\S]*?(?:Perkiraan|Forecast)\s*:\s*([^\n\r_]+)/gi;
