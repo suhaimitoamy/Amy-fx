@@ -2252,11 +2252,12 @@
 
 ---
 
-### 2.20. [SMART WEEKEND MODE] Weekend Low-Power Sleep & Pre-Market Wakeup Engine
+### 2.20. [SMART WEEKEND MODE] Weekend Low-Power Sleep & Pre-Market Wakeup Engine — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Alpha, Agen Gamma & Agen Beta
 - **Konsep & Nilai untuk Trader:**  
   1. *Otomatisasi Zero-Poll Weekend Sleep:* Saat pasar XAU/USD tutup (Jumat 17:00 NY), seluruh loop interval polling (Chart Beranda, Cockpit Mapping, Driver Sync Worker) otomatis masuk ke mode *Deep Sleep* (0 request per jam). Menghemat baterai smartphone trader hingga 15% dan mengeliminasi pemborosan kuota API TwelveData.  
   2. *Pre-Market Wakeup & Warming:* Tepat pada Minggu 16:55 NY (5 menit sebelum open Sydney/Asia), engine secara otonom bangun untuk memvalidasi token, menyambungkan koneksi stream harga, dan mengunduh kalender ekonomi minggu depan. Saat trader membuka ponsel di Senin pagi, seluruh analitik pasar langsung siap saji seketika (*zero-latency instant readiness*).
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Smart weekend power state aktif di `SessionClock.kt` (`MarketPowerMode.DEEP_SLEEP`, `PRE_MARKET_WARMUP`, `MARKET_OPEN`, `millisUntilPreMarketWakeup()`), `market-context.mjs`, serta `ict-presentation.js`. Unit test lolos 6/6 di `tests/market-closed-notification-suppression.test.mjs`.
 
 ---
 
@@ -2543,7 +2544,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.5. Isolasi Touch Sumbu Harga Layar Ponsel Sempit** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.4. Mitigasi Limit 429 TwelveData dengan Stale Fallback** | P1 (Sedang) | ~12 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.21. Smart Comprehensive CSV & JSON Full Backup Engine di Jurnal** | P0 (Proteksi Data) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.20. Weekend Low-Power Sleep & Pre-Market Wakeup Engine** | P0 (Hemat Baterai & Kuota) | ~7 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.20. Weekend Low-Power Sleep & Pre-Market Wakeup Engine** | P0 (Hemat Baterai & Kuota) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.19. Unified Trade Lifecycle & Anti-Ghost Order Engine di Seluruh Modul** | P0 (Integritas Logika) | ~8 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.1. Kalkulator Lot & Risiko Instan di Card 4 Plan** | P0 (Sangat Bermanfaat) | ~15 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.7. Mini-Badge Status Dealing Range di Header Chart Gold** | P0 (Sangat Informatif) | ~6 menit | [ ] Setuju / [ ] Tunda |

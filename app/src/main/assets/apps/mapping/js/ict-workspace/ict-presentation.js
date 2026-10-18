@@ -65,6 +65,30 @@ export function isGoldMarketOpen(nowSeconds = Math.floor(Date.now() / 1000)) {
     return day !== 0 && day !== 6;
   }
 }
+
+export function isPreMarketWarming(nowSeconds = Math.floor(Date.now() / 1000)) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York',
+      hourCycle: 'h23',
+      hour: '2-digit',
+      minute: '2-digit',
+      weekday: 'short'
+    }).formatToParts(new Date(nowSeconds * 1000));
+    const values = Object.fromEntries(parts.map(x => [x.type, x.value]));
+    const hour = Number(values.hour) + Number(values.minute) / 60;
+    return values.weekday === 'Sun' && hour >= 16.9166 && hour < 17;
+  } catch (_) {
+    return false;
+  }
+}
+
+export function getMarketPowerState(nowSeconds = Math.floor(Date.now() / 1000)) {
+  if (isGoldMarketOpen(nowSeconds)) return 'MARKET_OPEN';
+  if (isPreMarketWarming(nowSeconds)) return 'PRE_MARKET_WARMUP';
+  return 'DEEP_SLEEP';
+}
+
 export function detectLiquiditySweep(amy, context = null) {
   if (!amy) return null;
   const d = amy.dashboard;
