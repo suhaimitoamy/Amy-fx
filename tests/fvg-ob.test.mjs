@@ -36,6 +36,23 @@ test('FVG needs a 1.2× previous-20-body displacement and a 0.15–0.75 ATR gap'
   assert.ok(zones[0].widthAtr <= 0.75);
 });
 
+test('FVG identifies Candle 2 (middle) displacement with Candle 3 gap confirmation (Pine Script parity)', () => {
+  const values = Array.from({ length: 20 }, (_, index) =>
+    candle(100, 100.5, 99.5, index % 2 ? 99.9 : 100.1, index)
+  );
+  values.push(candle(100, 100.5, 99.5, 100.1, 20)); // Candle 1 (origin): high 100.5
+  values.push(candle(100.2, 102.5, 100.1, 102.3, 21)); // Candle 2 (middle displacement): body 2.1
+  values.push(candle(102.3, 102.4, 100.8, 101.5, 22)); // Candle 3 (confirmation): low 100.8 > 100.5
+  const zones = detectFvgConcepts(values, { currentPrice: 101.5 });
+  assert.equal(zones.length, 1);
+  assert.equal(zones[0].direction, 'BULLISH');
+  assert.equal(zones[0].bottom, 100.5);
+  assert.equal(zones[0].top, 100.8);
+  assert.equal(zones[0].displacementIndex, 21);
+  assert.equal(zones[0].originIndex, 20);
+  assert.equal(zones[0].availableIndex, 22);
+});
+
 test('full wick mitigation is preserved as terminal history and does not self-convert', () => {
   const values = filteredFvgSeed();
   values.push(candle(101, 101.1, 100.4, 100.6, 23));

@@ -40,21 +40,44 @@ export function detectFvgConcepts(candles, {
     const third = values[index];
     if (!first || !middle || !third) continue;
 
-    // Amy Market Context Final confirms the gap on the third candle and
-    // compares that closed candle with the preceding 20-body baseline.
-    const body = Math.abs(third.close - third.open);
+    // Pine Script parity (AMY_ICT_NextGen.pine line 633):
+    // In ICT standard, Candle 2 (middle) is the primary displacement candle creating the imbalance.
+    // Candle 3 (third) confirms the gap (third.low > first.high for bullish, third.high < first.low for bearish).
+    // Backward compatibility: also accept Candle 3 displacement if present.
+    const middleBody = Math.abs(middle.close - middle.open);
+    const thirdBody = Math.abs(third.close - third.open);
+    const middleRange = Math.max(middle.high - middle.low, 0.0000001);
+    const thirdRange = Math.max(third.high - third.low, 0.0000001);
     const meanBody = averageConceptBody(
+      values,
+      index - 2,
+      CONCEPT_THRESHOLDS.fvgBodyLength
+    ) || averageConceptBody(
       values,
       index - 1,
       CONCEPT_THRESHOLDS.fvgBodyLength
     );
-    const range = Math.max(third.high - third.low, 0.0000001);
-    const bodyRatio = body / range;
-    const displacement = meanBody > 0
-      && body >= meanBody * CONCEPT_THRESHOLDS.fvgBodyMeanMultiplier;
-    const bullish = displacement && third.close > third.open && third.low > first.high;
-    const bearish = displacement && third.close < third.open && third.high < first.low;
+
+    const middleDisplacement = meanBody > 0
+      && middleBody >= meanBody * CONCEPT_THRESHOLDS.fvgBodyMeanMultiplier;
+    const thirdDisplacement = meanBody > 0
+      && thirdBody >= meanBody * CONCEPT_THRESHOLDS.fvgBodyMeanMultiplier;
+
+    const bullishMiddle = middleDisplacement && middle.close > middle.open && third.low > first.high;
+    const bullishThird = thirdDisplacement && third.close > third.open && third.low > first.high;
+    const bullish = bullishMiddle || bullishThird;
+
+    const bearishMiddle = middleDisplacement && middle.close < middle.open && third.high < first.low;
+    const bearishThird = thirdDisplacement && third.close < third.open && third.high < first.low;
+    const bearish = bearishMiddle || bearishThird;
+
     if (!bullish && !bearish) continue;
+
+    const isMiddleDisplaced = bullish ? bullishMiddle : bearishMiddle;
+    const body = isMiddleDisplaced ? middleBody : thirdBody;
+    const range = isMiddleDisplaced ? middleRange : thirdRange;
+    const bodyRatio = body / range;
+    const displacementIndex = isMiddleDisplaced ? (index - 1) : index;
 
     const direction = bullish ? 'BULLISH' : 'BEARISH';
     const bottom = bullish ? first.high : third.high;
@@ -72,7 +95,7 @@ export function detectFvgConcepts(candles, {
       top,
       mid: (bottom + top) / 2,
       originIndex: index - 2,
-      displacementIndex: index,
+      displacementIndex,
       availableIndex: index,
       createdAt: third.time,
       localAtr,
