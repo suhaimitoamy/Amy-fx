@@ -2265,11 +2265,15 @@
 
 ---
 
-### 2.25. [OFFLINE FRACTAL ENGINE] Local K-NN Cosine Similarity Matcher di WebView Android
+### 2.25. [OFFLINE FRACTAL ENGINE] Local K-NN Cosine Similarity Matcher di WebView Android — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Alpha, Agen Delta & Agen Gamma
 - **Konsep & Nilai untuk Trader:**  
   1. *Otonomi Fraktal 100% Offline:* Memindahkan kalkulasi pencocokan pola fraktal 8 tahun langsung ke modul JavaScript mandiri (`lib/fractal-engine/fractal-matcher.mjs`). Tidak lagi memerlukan eksekusi Python lokal atau server Termux, sehingga fitur Fractal Advisor dapat berjalan mulus langsung di WebView smartphone pengguna dalam mode pesawat (*airplane mode*).  
   2. *Proyeksi Return & Probabilitas Real-Time:* Menghasilkan kartu proyeksi 8 bar ke depan lengkap dengan skor kemiripan (*similarity score* $\ge 85\%$) dan proyeksi jalur harga probabilitas tertinggi.
+- **Implementasi & Audit Reviewer:**
+  - `lib/fractal-engine/fractal-matcher.mjs`: Modul pencocokan fraktal K-NN mandiri berbasis Z-score normalization dan dot-product cosine similarity dengan dataset arketipe 8 tahun (2019–2026), fungsi proyeksi return 8-bar (`projectNormalizedReturns`), dan evaluasi metrik advisory tanpa server/Python.
+  - `advisor-panel.js`: Menjalankan evaluasi fraktal client-side di WebView Android via `computeFractalTwinMatches` dan render visual kartu advisor secara live.
+  - Targeted unit tests: `tests/standalone-fractal-matcher.test.mjs` (4/4 lulus 100%) dan `tests/advisor-fractal-lookahead-bias.test.mjs` (2/2 lulus 100%).
 
 ---
 
@@ -2510,7 +2514,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.51. Form Validasi Jurnal: Dukungan Single TP & Skor 0 di `journal-schema.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.52. Perbaiki Regex Progres 10 Modul Tematik di `apps/academy/main.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.24. Visual Rejection Candle Body Filter di Mini-Card Signal Assistant V3** | P0 (Integritas Sinyal) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.25. Local K-NN Cosine Similarity Matcher di WebView Android (Offline)** | P0 (Otonomi AI) | ~10 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.25. Local K-NN Cosine Similarity Matcher di WebView Android (Offline)** | P0 (Otonomi AI) | ~10 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.22. Pre-Trade Confluence Checklist 4-Poin di Cockpit Mapping** | P0 (Proteksi Mental) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.23. Auto-Resume Bookmark Cursor di Practice Replay Engine** | P1 (Sangat Praktis) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.47. Pasang Guard Equality & Batasi Target MutationObserver di `amyfx-home-data-integration-v1.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
