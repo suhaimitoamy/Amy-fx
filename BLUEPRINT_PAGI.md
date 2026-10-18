@@ -2179,7 +2179,7 @@
 
 ---
 
-### 2.11. [CACHE SCALING] Multi-Tiered Intelligent Caching di `api/twelvedata.js` (Hemat Kuota 90%)
+### 2.11. [CACHE SCALING] Multi-Tiered Intelligent Caching di `api/twelvedata.js` (Hemat Kuota 90%) — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Alpha & Agen Gamma
 - **Konsep & Nilai untuk Trader:**  
   Memulihkan arsitektur caching bertingkat `CACHE_TTL_SECONDS` untuk timeframe menengah dan tinggi di serverless Vercel:
@@ -2188,6 +2188,7 @@
   - D1: Cache 4 jam (14400s)
   - W1: Cache 12 jam (43200s)  
   Dengan strategi ini, 90% permintaan candle disajikan instan (5ms) langsung dari in-memory cache Vercel (*MEMORY_HIT*), melindungi kuota gratis TwelveData API dari lonjakan traffic dan mengeliminasi error HTTP 429 Rate Limit.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Arsitektur multi-tier caching aktif di `api/twelvedata.js` dengan `CACHE_TTL_SECONDS` (M15: 600s, H1: 1800s, D1: 14400s, W1: 43200s), penyajian `MEMORY_HIT` (5ms) tanpa clamping 30s untuk timeframe menengah/tinggi. Unit test targeted lolos 3/3 di `tests/twelvedata-cache-ttl.test.mjs`.
 
 ---
 
@@ -2551,7 +2552,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.19. Unified Trade Lifecycle & Anti-Ghost Order Engine di Seluruh Modul** | P0 (Integritas Logika) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.1. Kalkulator Lot & Risiko Instan di Card 4 Plan** | P0 (Sangat Bermanfaat) | ~15 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.7. Mini-Badge Status Dealing Range di Header Chart Gold** | P0 (Sangat Informatif) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.11. Multi-Tiered Intelligent Caching di `api/twelvedata.js`** | P0 (Efisiensi Kuota) | ~8 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.11. Multi-Tiered Intelligent Caching di `api/twelvedata.js`** | P0 (Efisiensi Kuota) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.13. Tombol "Pasang Alarm Target Harga" di Header Chart Beranda** | P0 (Paritas 100%) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.15. Throttled State Persistence & Clean Sweep Acceptance Engine** | P0 (Kinerja & Logika) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.16. Integrated Learning Journey & Chronological Equity Engine** | P0 (Edukasi & Analitik) | ~8 menit | [ ] Setuju / [ ] Tunda |
