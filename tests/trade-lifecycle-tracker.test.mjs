@@ -35,6 +35,7 @@ globalThis.document = {
 };
 
 // Import module
+const tradeLifecycleTracker = await import('../app/src/main/assets/apps/mapping/js/ict-workspace/trade-lifecycle-tracker.js');
 const {
   loadTradeHistory,
   saveTradeHistory,
@@ -42,8 +43,9 @@ const {
   updatePrice,
   computeWinRateStats,
   renderLifecycleArchive,
+  UNIFIED_TRADE_STATES,
   STORAGE_KEY
-} = await import('../app/src/main/assets/apps/mapping/js/ict-workspace/trade-lifecycle-tracker.js');
+} = tradeLifecycleTracker;
 
 test('Trade Lifecycle Tracker: ARMED -> ACTIVE -> TP & SL Flow', async (t) => {
   localStorage.clear();
@@ -317,6 +319,38 @@ test('Trade Lifecycle Tracker: ARMED -> ACTIVE -> TP & SL Flow', async (t) => {
     updatedSell = history.find(t => t.id === sellTrade.id);
     assert.equal(updatedSell.status, 'MISSED', 'Status order MISSED tidak boleh berubah menjadi ACTIVE_RUNNING saat entry tersentuh belakangan');
   });
+
+  await t.test('10. Item 2.19: UNIFIED_TRADE_STATES dan rendering badge MISSED & CANCELLED di Arsip', () => {
+    const { UNIFIED_TRADE_STATES } = tradeLifecycleTracker;
+    assert.ok(UNIFIED_TRADE_STATES, 'UNIFIED_TRADE_STATES harus diekspor');
+    assert.equal(UNIFIED_TRADE_STATES.ARMED_LIMIT, 'ARMED_LIMIT');
+    assert.equal(UNIFIED_TRADE_STATES.ACTIVE_RUNNING, 'ACTIVE_RUNNING');
+    assert.equal(UNIFIED_TRADE_STATES.CLOSED_TP, 'CLOSED_TP');
+    assert.equal(UNIFIED_TRADE_STATES.CLOSED_SL, 'CLOSED_SL');
+    assert.equal(UNIFIED_TRADE_STATES.MISSED, 'MISSED');
+    assert.equal(UNIFIED_TRADE_STATES.CANCELLED_GAP, 'CANCELLED_GAP');
+    assert.equal(UNIFIED_TRADE_STATES.CANCELLED, 'CANCELLED');
+
+    // Uji render archive dengan entri MISSED dan CANCELLED
+    const mockContainer = {
+      innerHTML: '',
+      querySelectorAll: () => []
+    };
+
+    saveTradeHistory([
+      { id: 't1', side: 'BUY', status: 'CLOSED_TP', entry: 2650, sl: 2640, tp1: 2660, profitPoints: 10, closedAt: Date.now() },
+      { id: 't2', side: 'SELL', status: 'MISSED', entry: 2680, sl: 2690, tp1: 2670, profitPoints: 0, cancelReason: 'TP1 reached before Entry fill', closedAt: Date.now() },
+      { id: 't3', side: 'BUY', status: 'CANCELLED_GAP', entry: 2640, sl: 2630, tp1: 2650, profitPoints: 0, cancelReason: 'Gapped through SL', closedAt: Date.now() }
+    ]);
+
+    renderLifecycleArchive(mockContainer);
+    assert.ok(mockContainer.innerHTML.includes('closed-outcome-badge tp'), 'Badge TP harus ada');
+    assert.ok(mockContainer.innerHTML.includes('closed-outcome-badge missed'), 'Badge MISSED harus ada');
+    assert.ok(mockContainer.innerHTML.includes('MISSED (TP Duluan)'), 'Teks MISSED (TP Duluan) harus tampil');
+    assert.ok(mockContainer.innerHTML.includes('closed-outcome-badge cancelled'), 'Badge CANCELLED harus ada');
+    assert.ok(mockContainer.innerHTML.includes('CANCELLED (Gap SL)'), 'Teks CANCELLED (Gap SL) harus tampil');
+  });
 });
+
 
 

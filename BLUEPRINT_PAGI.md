@@ -2244,11 +2244,12 @@
 
 ---
 
-### 2.19. [STATE INTEGRITY] Unified Trade Lifecycle & Anti-Ghost Order Engine di Seluruh Ekosistem Amy FX
+### 2.19. [STATE INTEGRITY] Unified Trade Lifecycle & Anti-Ghost Order Engine di Seluruh Ekosistem Amy FX — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Epsilon, Agen Delta & Agen Alpha
 - **Konsep & Nilai untuk Trader:**  
-  1. *Unifikasi State Machine Lintas Modul:* Menyelaraskan siklus status pesanan (`ARMED_LIMIT`, `ACTIVE_RUNNING`, `CLOSED_TP`, `CLOSED_SL`, `MISSED`, `CANCELLED_GAP`) di seluruh subsistem aplikasi: Cockpit Mapping Assistant V3, Practice Replay Engine, dan Jurnal Otomatis.  
+  1. *Unifikasi State Machine Lintas Modul:* Menyelaraskan siklus status pesanan (`ARMED_LIMIT`, `ACTIVE_RUNNING`, `CLOSED_TP`, `CLOSED_SL`, `MISSED`, `CANCELLED_GAP`, `CANCELLED`) di seluruh subsistem aplikasi: Cockpit Mapping Assistant V3, Practice Replay Engine, dan Jurnal Otomatis.  
   2. *Eliminasi Total "Order Hantu":* Menjamin bahwa setup yang target TP-nya sudah tersentuh lebih dulu tidak akan pernah berubah menjadi order tertahan yang mengecoh trader saat harga berbalik arah. Sinyal yang kadaluarsa atau melompati target langsung ditandai dengan badge `[ ⏳ MISSED ]` secara instan, menjaga akurasi statistik winrate dan mencegah kerugian akibat trade basi.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. State machine `UNIFIED_TRADE_STATES` dibakukan di `trade-lifecycle-tracker.js`, badge visual `.closed-outcome-badge.missed` dan `.closed-outcome-badge.cancelled` aktif di render arsip, serta proteksi gap TP/SL duluan aktif di `trade-engine.js`. Unit test lolos 11/11 di `tests/trade-lifecycle-tracker.test.mjs` dan 22/22 di `tests/trading-practice-replay.test.mjs`.
 
 ---
 
@@ -2545,7 +2546,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.4. Mitigasi Limit 429 TwelveData dengan Stale Fallback** | P1 (Sedang) | ~12 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.21. Smart Comprehensive CSV & JSON Full Backup Engine di Jurnal** | P0 (Proteksi Data) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.20. Weekend Low-Power Sleep & Pre-Market Wakeup Engine** | P0 (Hemat Baterai & Kuota) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.19. Unified Trade Lifecycle & Anti-Ghost Order Engine di Seluruh Modul** | P0 (Integritas Logika) | ~8 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.19. Unified Trade Lifecycle & Anti-Ghost Order Engine di Seluruh Modul** | P0 (Integritas Logika) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.1. Kalkulator Lot & Risiko Instan di Card 4 Plan** | P0 (Sangat Bermanfaat) | ~15 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.7. Mini-Badge Status Dealing Range di Header Chart Gold** | P0 (Sangat Informatif) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.11. Multi-Tiered Intelligent Caching di `api/twelvedata.js`** | P0 (Efisiensi Kuota) | ~8 menit | [ ] Setuju / [ ] Tunda |
