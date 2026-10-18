@@ -572,4 +572,48 @@ test('Item 2.37: Multi-timeframe synced playback projects cursor and retrieves M
   assert.equal(mtfContext.M5.candles[0].lastSourceTime, 180);
 });
 
+test('Item 2.30: synthesizeNyCloseD1 aggregates 17:00 NY Close D1 and derives PDH, PDL, and True Day Range', () => {
+  const core = context.AmyPracticeCore;
+  // Sunday July 5, 2026: 18:00 NY (22:00 UTC) -> 1783375200
+  // Monday July 6, 2026: 10:00 NY (14:00 UTC) -> 1783432800
+  // Monday July 6, 2026: 18:00 NY (22:00 UTC) -> Tuesday trading day! 1783461600
+  // Tuesday July 7, 2026: 10:00 NY (14:00 UTC) -> 1783519200
+  const candles = [
+    // Sunday open bar (Sunday 18:00 NY)
+    { time: 1783375200, open: 2650.0, high: 2655.0, low: 2648.0, close: 2652.0 },
+    // Monday day bar (Monday 10:00 NY)
+    { time: 1783432800, open: 2652.0, high: 2665.0, low: 2645.0, close: 2660.0 },
+    // Monday evening bar (Monday 18:00 NY = start of Tuesday trading day)
+    { time: 1783461600, open: 2660.0, high: 2670.0, low: 2658.0, close: 2668.0 },
+    // Tuesday day bar (Tuesday 10:00 NY)
+    { time: 1783519200, open: 2668.0, high: 2675.0, low: 2662.0, close: 2672.0 }
+  ];
+
+  const d1Bars = core.synthesizeNyCloseD1(candles);
+  // Must merge Sunday + Monday into Monday trading bar (bar 0), and Mon evening + Tue into Tuesday bar (bar 1)
+  assert.equal(d1Bars.length, 2, 'Sunday open must merge with Monday into exactly 1 institutional trading day');
+
+  // Monday Trading Day Bar
+  const monday = d1Bars[0];
+  assert.equal(monday.open, 2650.0);
+  assert.equal(monday.high, 2665.0);
+  assert.equal(monday.low, 2645.0);
+  assert.equal(monday.close, 2660.0);
+  assert.equal(monday.pdh, null, 'First day has no previous day');
+  assert.equal(monday.trueDayRange, 20.0); // 2665 - 2645 = 20
+  assert.equal(monday.equilibrium, 2655.0); // (2665 + 2645) / 2 = 2655
+
+  // Tuesday Trading Day Bar
+  const tuesday = d1Bars[1];
+  assert.equal(tuesday.open, 2660.0);
+  assert.equal(tuesday.high, 2675.0);
+  assert.equal(tuesday.low, 2658.0);
+  assert.equal(tuesday.close, 2672.0);
+  assert.equal(tuesday.pdh, 2665.0, 'Tuesday PDH must match Monday high');
+  assert.equal(tuesday.pdl, 2645.0, 'Tuesday PDL must match Monday low');
+  assert.equal(tuesday.trueDayRange, 17.0); // 2675 - 2658 = 17
+  assert.equal(tuesday.equilibrium, 2666.5);
+});
+
+
 

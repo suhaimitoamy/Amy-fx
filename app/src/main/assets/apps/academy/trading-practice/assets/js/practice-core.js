@@ -91,6 +91,46 @@
     return TIMEFRAME_SECONDS[String(timeframe || '').toUpperCase()] || null;
   }
 
+  function nyTradingDayBucket(timestampSec) {
+    try {
+      var d = new Date(timestampSec * 1000);
+      var parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false
+      }).formatToParts(d);
+      var vals = {};
+      for (var p = 0; p < parts.length; p += 1) vals[parts[p].type] = parts[p].value;
+      var nyYear = parseInt(vals.year, 10);
+      var nyMonth = parseInt(vals.month, 10);
+      var nyDay = parseInt(vals.day, 10);
+      var nyHour = parseInt(vals.hour, 10);
+
+      var startYear = nyYear;
+      var startMonth = nyMonth;
+      var startDay = nyHour >= 17 ? nyDay : nyDay - 1;
+
+      var tempDate = new Date(Date.UTC(startYear, startMonth - 1, startDay, 17, 0, 0));
+      var guess = tempDate.getTime();
+      for (var attempt = 0; attempt < 3; attempt += 1) {
+        var chkParts = new Intl.DateTimeFormat('en-US', {
+          timeZone: 'America/New_York',
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', hour12: false
+        }).formatToParts(new Date(guess));
+        var chkVals = {};
+        for (var c = 0; c < chkParts.length; c += 1) chkVals[chkParts[c].type] = chkParts[c].value;
+        var diffMin = (17 * 60) - (parseInt(chkVals.hour, 10) * 60 + parseInt(chkVals.minute, 10));
+        if (diffMin === 0) break;
+        guess += diffMin * 60000;
+      }
+      return Math.floor(guess / 1000);
+    } catch (_) {
+      var off = 17 * 3600;
+      return Math.floor((timestampSec - off) / 86400) * 86400 + off;
+    }
+  }
+
   function aggregateCandles(items, targetTimeframe, options) {
     options = options || {};
     var targetSeconds = timeframeSeconds(targetTimeframe);
@@ -121,10 +161,14 @@
 
     var output = [];
     var current = null;
-    var offset = String(targetTimeframe || '').toUpperCase() === 'D1' ? 17 * 3600 : 0;
+    var isD1 = String(targetTimeframe || '').toUpperCase() === 'D1';
+    var useNyDst = isD1 && options.nyCloseDst === true;
+    var offset = isD1 ? 17 * 3600 : 0;
     for (var i = 0; i < normalized.length; i += 1) {
       var candle = normalized[i];
-      var bucket = Math.floor((candle.time - offset) / targetSeconds) * targetSeconds + offset;
+      var bucket = useNyDst
+        ? nyTradingDayBucket(candle.time)
+        : (Math.floor((candle.time - offset) / targetSeconds) * targetSeconds + offset);
       if (!current || current.time !== bucket) {
         if (current) output.push(current);
         current = {
@@ -146,6 +190,29 @@
     }
     if (current) output.push(current);
     return output;
+  }
+
+  function synthesizeNyCloseD1(items, options) {
+    var opts = Object.assign({}, options, { nyCloseDst: true });
+    var d1Bars = aggregateCandles(items, 'D1', opts);
+    var synthesized = [];
+    for (var i = 0; i < d1Bars.length; i += 1) {
+      var bar = d1Bars[i];
+      var prev = i > 0 ? d1Bars[i - 1] : null;
+      var pdh = prev ? prev.high : null;
+      var pdl = prev ? prev.low : null;
+      var tdr = Number((bar.high - bar.low).toFixed(2));
+      var eq = Number(((bar.high + bar.low) / 2).toFixed(2));
+      synthesized.push(Object.assign({}, bar, {
+        pdh: pdh,
+        pdl: pdl,
+        previousDayHigh: pdh,
+        previousDayLow: pdl,
+        trueDayRange: tdr,
+        equilibrium: eq
+      }));
+    }
+    return synthesized;
   }
 
   function visibleCandles(items, cursor, timeframe, sourceTimeframe, options) {
@@ -309,6 +376,8 @@
     parseCsv: parseCsv,
     formatWita: formatWita,
     price: price,
-    TickAggregator: TickAggregator
+    TickAggregator: TickAggregator,
+    nyTradingDayBucket: nyTradingDayBucket,
+    synthesizeNyCloseD1: synthesizeNyCloseD1
   });
 })(typeof window !== 'undefined' ? window : globalThis);

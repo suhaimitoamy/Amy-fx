@@ -2303,11 +2303,15 @@
 
 ---
 
-### 2.30. [PRACTICE REPLAY ENGINE] New York Close D1 Synthesizer di Practice Engine
+### 2.30. [PRACTICE REPLAY ENGINE] New York Close D1 Synthesizer di Practice Engine — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Alpha & Agen Delta
 - **Konsep & Nilai untuk Trader:**  
   1. *Standar Emas Charting Institusional:* Mengintegrasikan mesin agregasi lilin pintar yang secara otomatis menyelaraskan penutupan hari (Day Close) tepat pada pukul 17:00 New York (NY Close / 21:00/22:00 UTC), menghilangkan lilin cacat 6 hari seminggu.  
   2. *Presisi PDH/PDL & True Day Range:* Menghasilkan level Previous Day High (PDH), Previous Day Low (PDL), dan True Day Range 100% identik dengan terminal institusional Bloomberg dan TradingView, memberikan pengalaman latihan backtest yang kredibel bagi trader di Practice Replay.
+- **Implementasi & Audit Reviewer:**
+  - `practice-core.js`: Menambahkan `nyTradingDayBucket` dan `synthesizeNyCloseD1` untuk menyelaraskan candle D1 ke jam tutup 17:00 New York secara DST-aware (EDT/EST) serta menurunkan metrik institusional PDH, PDL, True Day Range, dan Equilibrium.
+  - Sesi pembukaan hari Minggu (Sunday open) otomatis dilebur ke dalam trading bar hari Senin tanpa menciptakan candle cacat ke-6.
+  - Targeted unit tests: `tests/trading-practice-replay.test.mjs` (24/24 lulus 100%).
 
 ---
 
@@ -2470,7 +2474,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.62. Koreksi Offset 17:00 NY Close D1 Candle di `practice-core.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.63. Eliminasi `force: true` Spam Manifest Update di `update-checker.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.64. Rebrand Layar Kunci PIN Jurnal & Cegah DOM Leak di `apps/journal/app.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.30. New York Close D1 Synthesizer di Practice Engine** | P0 (Akurasi Charting) | ~6 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.30. New York Close D1 Synthesizer di Practice Engine** | P0 (Akurasi Charting) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.31. Biometric Fingerprint & Face Unlock Bridge untuk Jurnal Trading** | P0 (Privasi & Keamanan) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.59. Sinkronisasi Kueri Store `items.v2` di `amy-local-assistant.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.60. Native Sound Alert Bridge di `MainActivity.kt` & `price-alert-manager.js`** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
