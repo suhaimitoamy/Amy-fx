@@ -95,6 +95,11 @@ export function evaluateZoneLifecycle(candles, zone, {
     localAtr: zone.localAtr
   });
 
+  const ceLevel = zone.mid ?? ((bottom + top) / 2);
+  let ceTouched = false;
+  let ceTouchIndex = -1;
+  let ceRespect = false;
+
   const originalEnd = accepted.breakIndex >= 0 ? accepted.breakIndex : values.length;
   for (let index = startIndex; index < originalEnd; index += 1) {
     const candle = values[index];
@@ -106,6 +111,16 @@ export function evaluateZoneLifecycle(candles, zone, {
       && rejectionClose(candle, originalDirection, bottom, top)) {
       confirmedIndex = index;
     }
+    const touchedCe = originalDirection === 'BULLISH'
+      ? (candle.low <= ceLevel && candle.low >= bottom)
+      : (candle.high >= ceLevel && candle.high <= top);
+    if (touchedCe) {
+      ceTouched = true;
+      if (ceTouchIndex < 0) ceTouchIndex = index;
+      if (originalDirection === 'BULLISH' ? candle.close >= ceLevel : candle.close <= ceLevel) {
+        ceRespect = true;
+      }
+    }
   }
 
   if (accepted.breakIndex < 0) {
@@ -116,8 +131,28 @@ export function evaluateZoneLifecycle(candles, zone, {
         : touchIndex >= 0
           ? 'TESTING'
           : 'DETECTED';
+
+    let mitigationState = 'UNMITIGATED';
+    if (fullMitigationIndex >= 0) {
+      mitigationState = 'FULLY_MITIGATED';
+    } else if (ceTouched) {
+      mitigationState = 'CE_TOUCHED';
+    } else if (touchIndex >= 0) {
+      mitigationState = 'PARTIALLY_MITIGATED';
+    }
+
+    const ceSignal = Boolean(ceTouched && ceRespect && status !== 'MITIGATED');
+    const ceSignalText = ceSignal ? '[ 🎯 FVG 50% CE Retest Valid ]' : null;
+
     const output = {
       ...zone,
+      ceLevel,
+      ceTouched,
+      ceTouchIndex,
+      ceRespect,
+      ceSignal,
+      ceSignalText,
+      mitigationState,
       touchIndex,
       confirmedIndex,
       fullMitigationIndex,
@@ -147,6 +182,13 @@ export function evaluateZoneLifecycle(candles, zone, {
   if (retestIndex < 0 || inverseConfirmedIndex < 0) {
     return {
       ...zone,
+      ceLevel,
+      ceTouched,
+      ceTouchIndex,
+      ceRespect,
+      ceSignal: false,
+      ceSignalText: null,
+      mitigationState: 'INVERTED',
       touchIndex,
       confirmedIndex,
       fullMitigationIndex,
@@ -166,6 +208,13 @@ export function evaluateZoneLifecycle(candles, zone, {
     : 'BREAKER_CONFIRMED_REACTION';
   const output = {
     ...zone,
+    ceLevel,
+    ceTouched,
+    ceTouchIndex,
+    ceRespect,
+    ceSignal: false,
+    ceSignalText: null,
+    mitigationState: 'INVERTED',
     originalKind: zone.kind,
     originalDirection,
     originalStatus: 'ACCEPTED_BROKEN',
