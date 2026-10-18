@@ -2243,10 +2243,16 @@
 ---
 
 ### 2.17. [PRACTICE FIDELITY] Realistic Order Lifecycle & Missed Setup Simulator di Replay Engine
+- **Status:** [x] SELESAI & LOLOS AUDIT REVIEWER
 - **Diusulkan oleh:** Agen Delta, Agen Epsilon & Agen Beta
 - **Konsep & Nilai untuk Trader:**  
   1. *Deteksi Setup Batal / MISSED yang Realistis:* Pada simulasi replay, jika harga mencapai target TP sebelum menyentuh limit entry, status otomatis diubah menjadi `MISSED` (`r: 0`). Trader tidak lagi dirugikan oleh trade basi yang kelak berbalik menyentuh entry dan SL berhari-hari kemudian.  
   2. *Badge Status Bersih di Histori:* Histori backtest menampilkan badge khusus `[ ⏳ MISSED ]` berwarna abu-abu elegan, membedakan analisa yang tepat arah namun tidak terjemput dari trade yang benar-benar mengalami kerugian riil (`[ 🔴 LOSS ]`).
+- **Implementasi & Verifikasi:**
+  - `app/src/main/assets/apps/academy/trading-practice/assets/js/trade-engine.js`: Deteksi setup batal / target tercapai sebelum fill (`MISSED`, `r: 0`, `TARGET_HIT_BEFORE_FILL`).
+  - `app/src/main/assets/apps/academy/trading-practice/assets/js/backtest-history.js`: Pemetaan `result-missed` dan badge khusus `[ ⏳ MISSED ]` dengan detail bukti candle.
+  - `app/src/main/assets/apps/academy/trading-practice/assets/css/practice.css`: Styling visual `.result-missed` dan `.badge-missed`.
+  - Targeted unit tests: `tests/realistic-order-lifecycle.test.mjs` (14/14 tes lulus 100%).
 
 ---
 
@@ -2566,7 +2572,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.13. Tombol "Pasang Alarm Target Harga" di Header Chart Beranda** | P0 (Paritas 100%) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.15. Throttled State Persistence & Clean Sweep Acceptance Engine** | P0 (Kinerja & Logika) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.16. Integrated Learning Journey & Chronological Equity Engine** | P0 (Edukasi & Analitik) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.17. Realistic Order Lifecycle & Missed Setup Simulator di Replay Engine** | P0 (Akurasi Latihan) | ~7 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.17. Realistic Order Lifecycle & Missed Setup Simulator di Replay Engine** | P0 (Akurasi Latihan) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.18. Standalone Embedded Fractal Twin Matcher (Zero-Python Engine)** | P0 (Otonomi AI) | ~10 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.10. Rhythmic Haptic Feedback & Native Sound Bridge di `WebAppInterface`** | P1 (Sangat Keren) | ~8 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.12. Bundled Audio Resource Bel Emas Offline di Android App** | P1 (Praktis & Instan) | ~5 menit | [ ] Setuju / [ ] Tunda |

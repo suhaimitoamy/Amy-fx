@@ -100,7 +100,10 @@
           next.entryStatus = 'ACTIVE';
           next.entryActivatedAt = candle.time;
         } else {
-          if (touched(candle, next.takeProfit)) {
+          var targetHitBeforeEntry = (next.bias === 'BUY' && Number(candle.high) >= Number(next.takeProfit)) ||
+                                     (next.bias === 'SELL' && Number(candle.low) <= Number(next.takeProfit)) ||
+                                     touched(candle, next.takeProfit);
+          if (targetHitBeforeEntry) {
             next.result = 'MISSED';
             next.entryStatus = 'EXPIRED_TARGET_HIT_FIRST';
             next.r = 0;
@@ -113,7 +116,10 @@
             };
             break;
           }
-          if (touched(candle, next.stopLoss)) {
+          var slHitBeforeEntry = (next.bias === 'BUY' && Number(candle.low) <= Number(next.stopLoss)) ||
+                                 (next.bias === 'SELL' && Number(candle.high) >= Number(next.stopLoss)) ||
+                                 touched(candle, next.stopLoss);
+          if (slHitBeforeEntry) {
             next.result = 'CANCELLED';
             next.entryStatus = 'CANCELLED_GAP_SL';
             next.r = 0;

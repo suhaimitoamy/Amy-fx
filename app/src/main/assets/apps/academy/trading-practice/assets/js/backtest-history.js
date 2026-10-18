@@ -7,7 +7,12 @@
   function esc(value) {
     var node = document.createElement('span'); node.textContent = String(value == null ? '' : value); return node.innerHTML;
   }
-  function resultClass(result) { return result === 'WIN' ? 'result-win' : (result === 'LOSS' ? 'result-loss' : 'result-open'); }
+  function resultClass(result) {
+    if (result === 'WIN') return 'result-win';
+    if (result === 'LOSS') return 'result-loss';
+    if (result === 'MISSED') return 'result-missed';
+    return 'result-open';
+  }
   function level(value) { return value == null ? '—' : core.price(value); }
   function rValue(value) { return value == null ? '—' : Number(value).toFixed(2) + 'R'; }
   function decision(trade) {
@@ -15,6 +20,12 @@
   }
   function outcome(trade) {
     var evidence = trade && trade.outcomeEvidence;
+    if (trade.result === 'MISSED') {
+      var missedDetail = evidence
+        ? 'Target TP ' + level(evidence.level) + ' tercapai sebelum entry · candle ' + core.formatWita(evidence.candleTime, true)
+        : 'Target TP tercapai sebelum limit entry tersentuh';
+      return '<span class="badge-missed">[ ⏳ MISSED ]</span><small class="history-evidence">' + esc(missedDetail) + '</small>';
+    }
     if (!evidence || !['SL', 'TP'].includes(evidence.type)) return esc(trade.result);
     var label = evidence.type + ' tersentuh';
     var detail = 'Level ' + level(evidence.level) + ' · candle ' + core.formatWita(evidence.candleTime, true) +
