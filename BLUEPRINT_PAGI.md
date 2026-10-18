@@ -573,7 +573,7 @@
 
 ---
 
-### 1.25. [SQLITE LOCK CHURN] Query `DELETE` Beruntun Tanpa Throttling di `CandleStore.upsertAll()`
+### 1.25. [SQLITE LOCK CHURN] Query `DELETE` Beruntun Tanpa Throttling di `CandleStore.upsertAll()` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/java/com/amyelitesuite/CandleStore.kt`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/CandleStore.kt#L59-L72) & [`CandleStore.kt#L135-L142`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/CandleStore.kt#L135-L142)
 - **Akar Masalah (Temuan Agen Gamma):**
   Di dalam `CandleStore.kt`, method `cleanupExpiredCandles()` dipanggil langsung di baris 71 setiap kali `upsertAll(candles)` dieksekusi. Method tersebut menjalankan dua query `DELETE` besar melintasi seluruh database SQLite `amy_market_data.sqlite` untuk membersihkan lilin >90 hari dan >365 hari.  
@@ -586,6 +586,10 @@
       lastCleanupMillis = System.currentTimeMillis()
   }
   ```
+- **Implementasi & Verifikasi:**
+  - `CandleStore.kt`: Menambahkan konstanta `CLEANUP_INTERVAL_MILLIS = 24L * 60L * 60L * 1000L` dan variabel `@Volatile var lastCleanupMillis: Long = 0L`.
+  - Method `cleanupExpiredCandles(nowSeconds, force)` menerapkan guard throttle: keluar seketika (`return`) jika belum lewat 24 jam dari cleanup sebelumnya, kecuali dipanggil dengan flag `force = true`.
+  - Targeted unit tests: `tests/candlestore-cleanup-throttling.test.mjs` (3/3 lulus 100%).
 
 ---
 
@@ -2569,7 +2573,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.7. Bridge Native Intent `openPdfDocument` di `MainActivity`** | P0 (Tinggi) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.27. Kompresi WebP Wallpaper Kustom (Cegah `QuotaExceededError`)** | P1 (Sedang) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.28. Validasi Kadaluarsa Cache Offline Lilin di `apps/mapping/data.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
-| 🐛 **Debugging** | **1.25. Throttling Query `DELETE` 24 Jam di `CandleStore.upsertAll()`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.25. Throttling Query `DELETE` 24 Jam di `CandleStore.upsertAll()`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.21. Fingerprint $O(1)$ Menggantikan `JSON.stringify` di `ict-canvas.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.22. Hapus I/O Disk Redundan `startBackgroundScanner` di `MainActivity`** | P1 (Sedang) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.18. Prefetch Buffer Lilin Playback 5x di `replay-engine.js`** | P1 (Sedang) | ~8 menit | [ ] Setuju / [ ] Tunda |

@@ -132,13 +132,18 @@ class CandleStore(private val context: Context) : SQLiteOpenHelper(context, DATA
         )
     }
 
-    fun cleanupExpiredCandles(nowSeconds: Long = System.currentTimeMillis() / 1000L) {
+    fun cleanupExpiredCandles(nowSeconds: Long = System.currentTimeMillis() / 1000L, force: Boolean = false) {
+        val nowMillis = nowSeconds * 1000L
+        if (!force && (nowMillis - lastCleanupMillis < CLEANUP_INTERVAL_MILLIS)) {
+            return
+        }
         val db = writableDatabase
         val day = 24L * 60L * 60L
         val shortTfCutoff = nowSeconds - (90L * day)
         val longTfCutoff = nowSeconds - (365L * day)
         db.delete("candles", "timeframe IN (?, ?, ?, ?) AND open_time < ?", arrayOf("M1", "M5", "M15", "M30", shortTfCutoff.toString()))
         db.delete("candles", "timeframe IN (?, ?, ?) AND open_time < ?", arrayOf("H1", "H4", "D1", longTfCutoff.toString()))
+        lastCleanupMillis = nowMillis
     }
 
     fun clearCache() {
@@ -168,5 +173,8 @@ class CandleStore(private val context: Context) : SQLiteOpenHelper(context, DATA
     companion object {
         private const val DATABASE_NAME = "amy_market_data.sqlite"
         private const val DATABASE_VERSION = 2
+        const val CLEANUP_INTERVAL_MILLIS = 24L * 60L * 60L * 1000L
+        @Volatile
+        var lastCleanupMillis: Long = 0L
     }
 }
