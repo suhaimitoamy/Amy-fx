@@ -16,7 +16,7 @@
   function journals() {
     return new Promise(resolve=>{
       let done=false,db;const finish=v=>{if(done)return;done=true;clearTimeout(timer);db?.close();resolve(v);};
-      const fallback=()=>finish({rows:list(read('tradingLibraryManager.journals.v1',[])),fallback:true});
+      const fallback=()=>finish({rows:list(read('tradingLibraryManager.journals.v1',read('tradingLibraryManager.items.v1',[]))),fallback:true});
       const timer=setTimeout(fallback,1800);
       try{
         const req=root.indexedDB.open('tradingLibraryManager.files');
@@ -25,8 +25,23 @@
         req.onsuccess=()=>{
           db=req.result;if(done){db.close();return;}
           if(!db.objectStoreNames.contains('metadata')){fallback();return;}
-          const r=db.transaction('metadata','readonly').objectStore('metadata').get('journals.v2');
-          r.onsuccess=()=>Array.isArray(r.result?.value)?finish({rows:r.result.value,fallback:false}):fallback();r.onerror=fallback;
+          const store=db.transaction('metadata','readonly').objectStore('metadata');
+          const checkItems=()=>{
+            const rItems=store.get('items.v2');
+            rItems.onsuccess=()=>{
+              const iRows=rItems.result?.value;
+              if(Array.isArray(iRows)&&iRows.length)finish({rows:iRows,fallback:false});
+              else fallback();
+            };
+            rItems.onerror=fallback;
+          };
+          const rJournals=store.get('journals.v2');
+          rJournals.onsuccess=()=>{
+            const jRows=rJournals.result?.value;
+            if(Array.isArray(jRows)&&jRows.length)finish({rows:jRows,fallback:false});
+            else checkItems();
+          };
+          rJournals.onerror=checkItems;
         };
       }catch{fallback();}
     });

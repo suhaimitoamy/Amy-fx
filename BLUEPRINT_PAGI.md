@@ -1379,6 +1379,14 @@
     }
   };
   ```
+- **Status:** [x] SELESAI & LOLOS AUDIT REVIEWER
+- **Catatan Audit Reviewer Guard:**
+  - Implementasi resolusi bertingkat cerdas pada `journals()` di [`apps/shared/amy-local-assistant.js`](file:///root/Amy-fx/app/src/main/assets/apps/shared/amy-local-assistant.js#L19-L43):
+    1. Membaca `journals.v2` terlebih dahulu (prioritas utama modul Jurnal Trading modern).
+    2. Jika `journals.v2` kosong/tidak ada, otomatis fallback membaca `items.v2` (kompatibilitas riwayat transaksi warisan).
+    3. Jika IndexedDB tidak tersedia, fallback membaca `tradingLibraryManager.journals.v1` dan `tradingLibraryManager.items.v1` di localStorage.
+  - Reviewer Guard mencegah regresi di mana membaca `items.v2` tanpa memeriksa `journals.v2` terlebih dahulu akan menimpa data P/L transaksi trading dengan file PDF/media library.
+  - Pengujian targeted `node --test tests/local-assistant.test.mjs` (15/15 pass) dan `node --check` 100% valid tanpa regresi.
 
 ---
 
@@ -2427,7 +2435,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.64. Rebrand Layar Kunci PIN Jurnal & Cegah DOM Leak di `apps/journal/app.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.30. New York Close D1 Synthesizer di Practice Engine** | P0 (Akurasi Charting) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.31. Biometric Fingerprint & Face Unlock Bridge untuk Jurnal Trading** | P0 (Privasi & Keamanan) | ~7 menit | [ ] Setuju / [ ] Tunda |
-| 🐛 **Debugging** | **1.59. Sinkronisasi Kueri Store `items.v2` di `amy-local-assistant.js`** | P0 (Kritis) | ~3 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.59. Sinkronisasi Kueri Store `items.v2` di `amy-local-assistant.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.60. Native Sound Alert Bridge di `MainActivity.kt` & `price-alert-manager.js`** | P0 (Kritis) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.61. Fallback `JSZip` untuk WebView Lawas di `zip-reader.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.28. Native Sound Alert Bridge & Ringtone Emas Kustom di Android** | P0 (Reliabilitas Audio) | ~6 menit | [ ] Setuju / [ ] Tunda |
