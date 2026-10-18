@@ -162,17 +162,38 @@
       </ul>
     </div>
 
+    <!-- Pre-Trade Confluence Checklist 4-Poin (Item 2.22) -->
+    <div id="plan-pretrade-checklist-box" class="plan-reasons-box" style="margin-top:12px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:10px 12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h3 style="font-size:11.5px; margin:0; text-transform:uppercase; color:var(--amy-accent,#F5C451); letter-spacing:0.05em; font-weight:800;">
+          🛡️ Pre-Trade Confluence Checklist
+        </h3>
+        <span id="pretrade-checklist-score" style="font-size:11px; font-weight:800; color:#94a3b8; background:rgba(255,255,255,0.08); padding:2px 6px; border-radius:4px;">0/4 Kriteria</span>
+      </div>
+      <div id="pretrade-checklist-items" style="display:grid; grid-template-columns:1fr; gap:6px; font-size:11px; color:#cbd5e1;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="chk-pretrade-session"> <span>Sesi Aktif: London / NY Killzone</span></label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="chk-pretrade-zone"> <span>Zona OTE / Dealing Range Terkonfirmasi</span></label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="chk-pretrade-liquidity"> <span>Validasi Likuiditas: Sweep BSL/SSL &amp; Rejection</span></label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="chk-pretrade-rr"> <span>Rasio Risk-to-Reward &ge; 1:2.0</span></label>
+      </div>
+    </div>
+
     <!-- Action Button -->
-    <div class="plan-actions" style="display:flex; gap:8px;">
-      <button type="button" id="btn-show-plan-chart" class="btn-show-plan-chart" style="flex:1;">
-        📈 Tampilkan Level di Chart
+    <div class="plan-actions" style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
+      <button type="button" id="btn-take-trade" class="btn-show-plan-chart" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#94a3b8; font-weight:800; opacity:0.6; cursor:not-allowed;" disabled title="Ambil Setup setelah lolos minimal 3/4 checklist pre-trade">
+        🛡️ Ambil Trade (0/4)
       </button>
-      <button type="button" id="btn-open-lot-calc" class="btn-show-plan-chart" style="background:rgba(245,196,81,0.15); border-color:rgba(245,196,81,0.4); color:#F5C451; width:auto; padding:0 14px;" title="Kalkulator Lot & Risiko Instan">
-        ⚡ Hitung Lot
-      </button>
-      <button type="button" id="btn-plan-price-alert" class="btn-show-plan-chart" style="background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.2); color:#fff; width:auto; padding:0 14px;" title="Pasang Alarm Target Entry/TP">
-        🔔 Alarm Level
-      </button>
+      <div style="display:flex; gap:8px;">
+        <button type="button" id="btn-show-plan-chart" class="btn-show-plan-chart" style="flex:1;">
+          📈 Tampilkan Level di Chart
+        </button>
+        <button type="button" id="btn-open-lot-calc" class="btn-show-plan-chart" style="background:rgba(245,196,81,0.15); border-color:rgba(245,196,81,0.4); color:#F5C451; width:auto; padding:0 14px;" title="Kalkulator Lot & Risiko Instan">
+          ⚡ Hitung Lot
+        </button>
+        <button type="button" id="btn-plan-price-alert" class="btn-show-plan-chart" style="background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.2); color:#fff; width:auto; padding:0 14px;" title="Pasang Alarm Target Entry/TP">
+          🔔 Alarm Level
+        </button>
+      </div>
     </div>
 
     <!-- Hidden compatibility elements for legacy trading plan selectors -->

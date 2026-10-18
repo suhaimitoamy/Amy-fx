@@ -467,6 +467,74 @@ export function renderEntryAssistantPlan(amy,context=null){
     reasonsEl.innerHTML=items.map(r=>`<li>${esc(r)}</li>`).join('');
   }
 
+  // Pre-Trade Confluence Checklist 4-Poin (Item 2.22)
+  const chkSession=document.getElementById('chk-pretrade-session');
+  const chkZone=document.getElementById('chk-pretrade-zone');
+  const chkLiq=document.getElementById('chk-pretrade-liquidity');
+  const chkRR=document.getElementById('chk-pretrade-rr');
+  const scoreEl=document.getElementById('pretrade-checklist-score');
+  const btnTakeTrade=document.getElementById('btn-take-trade');
+
+  const sessionText=String(amy?.session||ast?.session||plan?.session||'').toUpperCase();
+  const cSession=sessionText.includes('LONDON')||sessionText.includes('NEW_YORK')||sessionText.includes('NY')||sessionText.includes('KILLZONE')||(new Date().getUTCHours()+8>=14&&new Date().getUTCHours()+8<=23);
+  const mathZoneText=String(ast?.mathZone||plan?.zone||'').toUpperCase();
+  const cZone=mathZoneText.includes('OTE')||mathZoneText.includes('DISCOUNT')||mathZoneText.includes('PREMIUM')||mathZoneText.includes('FIBO')||Boolean(plan?.entry);
+  const cLiq=Boolean(ast?.reclaimed||ast?.rejectionState==='SWEEP_REJECTION'||ast?.sweep||plan?.sweep);
+  const cRR=Number(plan?.rr2||plan?.rr||plan?.rr1||0)>=2.0;
+
+  if(chkSession)chkSession.checked=cSession;
+  if(chkZone)chkZone.checked=cZone;
+  if(chkLiq)chkLiq.checked=cLiq;
+  if(chkRR)chkRR.checked=cRR;
+
+  const updatePreTradeUI=()=>{
+    const s1=Boolean(chkSession?.checked);
+    const s2=Boolean(chkZone?.checked);
+    const s3=Boolean(chkLiq?.checked);
+    const s4=Boolean(chkRR?.checked);
+    const currentScore=[s1,s2,s3,s4].filter(Boolean).length;
+    if(scoreEl)scoreEl.textContent=`${currentScore}/4 Kriteria`;
+
+    if(btnTakeTrade){
+      if(currentScore>=3){
+        btnTakeTrade.disabled=false;
+        btnTakeTrade.style.background='linear-gradient(135deg, #059669 0%, #10b981 100%)';
+        btnTakeTrade.style.color='#ffffff';
+        btnTakeTrade.style.border='1px solid #34d399';
+        btnTakeTrade.style.boxShadow='0 0 16px rgba(16,185,129,0.4)';
+        btnTakeTrade.style.opacity='1';
+        btnTakeTrade.style.cursor='pointer';
+        btnTakeTrade.textContent=`🚀 Ambil Trade (${currentScore}/4 Aman)`;
+        btnTakeTrade.onclick=()=>{
+          try{
+            localStorage.setItem('amy_pretrade_selected_setup',JSON.stringify({
+              time:Date.now(),
+              plan,
+              checklist:{session:s1,zone:s2,liquidity:s3,rr:s4,score:currentScore}
+            }));
+            if(window.Android?.triggerHaptic)window.Android.triggerHaptic(50);
+            window.location.href='../journal/index.html?prefill=1';
+          }catch(_){}
+        };
+      }else{
+        btnTakeTrade.disabled=true;
+        btnTakeTrade.style.background='rgba(255,255,255,0.06)';
+        btnTakeTrade.style.color='#94a3b8';
+        btnTakeTrade.style.border='1px solid rgba(255,255,255,0.15)';
+        btnTakeTrade.style.boxShadow='none';
+        btnTakeTrade.style.opacity='0.6';
+        btnTakeTrade.style.cursor='not-allowed';
+        btnTakeTrade.textContent=`🛡️ Ambil Trade (${currentScore}/4)`;
+        btnTakeTrade.onclick=null;
+      }
+    }
+  };
+
+  [chkSession,chkZone,chkLiq,chkRR].forEach(chk=>{
+    if(chk)chk.onchange=updatePreTradeUI;
+  });
+  updatePreTradeUI();
+
   if(btnChart){
     btnChart.disabled=false;btnChart.style.opacity='1';
     btnChart.onclick=()=>{
