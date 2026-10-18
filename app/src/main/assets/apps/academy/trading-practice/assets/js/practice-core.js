@@ -178,10 +178,16 @@
   }
 
   function parseCsv(text) {
-    var rows = String(text || '').replace(/^\uFEFF/, '').trim().split(/\r?\n/);
-    if (rows.length < 2) return [];
-    var delimiter = rows[0].indexOf(';') >= 0 ? ';' : (rows[0].indexOf('\t') >= 0 ? '\t' : ',');
-    var headers = rows.shift().split(delimiter).map(function (value) { return value.trim().toLowerCase(); });
+    var str = String(text || '').replace(/^\uFEFF/, '').trim();
+    if (!str) return [];
+    var len = str.length;
+    var firstNl = str.indexOf('\n');
+    if (firstNl < 0) return [];
+    var headerLine = str.slice(0, firstNl).trim();
+    if (!headerLine) return [];
+
+    var delimiter = headerLine.indexOf(';') >= 0 ? ';' : (headerLine.indexOf('\t') >= 0 ? '\t' : ',');
+    var headers = headerLine.split(delimiter).map(function (value) { return value.trim().toLowerCase(); });
     function indexOf(names) {
       for (var i = 0; i < names.length; i += 1) {
         var index = headers.indexOf(names[i]);
@@ -199,16 +205,27 @@
     if (Object.keys(indexes).some(function (key) { return indexes[key] < 0; })) {
       throw new Error('CSV wajib memiliki kolom datetime/time, open, high, low, close.');
     }
-    return normalizeCandles(rows.map(function (row) {
-      var cells = row.split(delimiter);
-      return {
-        time: cells[indexes.time],
-        open: cells[indexes.open],
-        high: cells[indexes.high],
-        low: cells[indexes.low],
-        close: cells[indexes.close]
-      };
-    }));
+
+    var candles = [];
+    var pos = firstNl + 1;
+    while (pos < len) {
+      var nextNl = str.indexOf('\n', pos);
+      var end = nextNl < 0 ? len : nextNl;
+      var line = str.slice(pos, end).trim();
+      if (line.length > 0) {
+        var cells = line.split(delimiter);
+        candles.push({
+          time: cells[indexes.time],
+          open: cells[indexes.open],
+          high: cells[indexes.high],
+          low: cells[indexes.low],
+          close: cells[indexes.close]
+        });
+      }
+      if (nextNl < 0) break;
+      pos = nextNl + 1;
+    }
+    return normalizeCandles(candles);
   }
 
   function formatWita(timestamp, includeDate) {

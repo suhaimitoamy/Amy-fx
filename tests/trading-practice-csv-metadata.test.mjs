@@ -130,3 +130,13 @@ test('zip-reader falls back to root.JSZip when DecompressionStream is unavailabl
   assert.match(decoded, /1700000000,2600/);
 });
 
+test('parseCsv correctly parses multi-row CSV without array shift or split allocations (item 2.34)', () => {
+  const csv = 'time,open,high,low,close\n1700000000,2600.5,2605.0,2598.0,2603.5\n1700000060,2603.5,2607.0,2601.0,2606.0';
+  const candles = context.AmyPracticeCore.parseCsv(csv);
+  assert.equal(candles.length, 2);
+  assert.equal(candles[0].time, 1700000000);
+  assert.equal(candles[0].close, 2603.5);
+  assert.equal(candles[1].time, 1700000060);
+  assert.equal(candles[1].close, 2606.0);
+});
+

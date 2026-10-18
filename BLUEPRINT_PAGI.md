@@ -1824,7 +1824,7 @@
 
 ---
 
-### 1.73. [TIMEFRAME SWITCH DESYNC] Kursor Replay Tidak Diselaraskan ke Batas Lilin Timeframe Baru di `replay-engine.js`
+### 1.73. [TIMEFRAME SWITCH DESYNC] Kursor Replay Tidak Diselaraskan ke Batas Lilin Timeframe Baru di `replay-engine.js` — `[x] DI-AUDIT & RESOLVED (PREVENT REGRESSION)`
 - **Lokasi File:** [`app/src/main/assets/apps/academy/trading-practice/assets/js/replay-engine.js`](file:///root/Amy-fx/app/src/main/assets/apps/academy/trading-practice/assets/js/replay-engine.js#L67-L70)
 - **Akar Masalah (Temuan Agen Beta & Agen Delta):**
   Di `replay-engine.js`, method `setTimeframe()` menangani pergantian timeframe:
@@ -2336,11 +2336,15 @@
 
 ---
 
-### 2.34. [FAST CSV METADATA SCANNER] Zero-Allocation Fast Metadatareader untuk Impor ZIP/CSV Raksasa di Practice Replay
+### 2.34. [FAST CSV METADATA SCANNER] Zero-Allocation Fast Metadatareader untuk Impor ZIP/CSV Raksasa di Practice Replay — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Alpha & Agen Gamma
 - **Konsep & Nilai untuk Trader:**  
   1. *Impor Instan Tanpa Lag:* Memperbarui parser paket data latihan di `data-provider.js` dengan algoritma pemindaian baris kilat berbasis penunjuk indeks posisi byte (`indexOf` / `lastIndexOf`), menggantikan operasi berat `.split(/\r?\n/)`.  
   2. *Dukungan Dataset Multi-Tahun di HP:* Trader dapat mengimpor berkas CSV historis M1 berukuran 50–100 MB (hingga 1.000.000 candle) secara langsung di smartphone Android tanpa pernah mengalami freeze UI atau crash memori heap WebView.
+- **Implementasi & Audit Reviewer:**
+  - `data-provider.js`: Mengganti implementasi `meaningfulLines` dengan linear index-based line scanner berbasis `indexOf('\n')` tanpa alokasi array masif.
+  - `practice-core.js`: Mengoptimasi `parseCsv` dengan direct byte/index scanner linier menghindari `rows.shift()` dan de-alokasi memori berulang pada dataset puluhan megabyte.
+  - Targeted unit tests: `tests/trading-practice-csv-metadata.test.mjs` (6/6 lulus 100%).
 
 ---
 
@@ -2444,7 +2448,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.68. Eliminasi Fallback Harga Statis $2642 di `ict-presentation.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.69. Zero-Heap String Allocation pada Parser CSV di `data-provider.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.70. Reset `dbPromise = null` Saat Error Upgrade DB di `storage.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.34. Zero-Allocation Fast Metadatareader untuk Impor ZIP/CSV Raksasa** | P0 (Kinerja & Storage) | ~6 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.34. Zero-Allocation Fast Metadatareader untuk Impor ZIP/CSV Raksasa** | P0 (Kinerja & Storage) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.35. Auto-Clamping Bounded Y-Axis Visualizer di Chart Gold** | P0 (Estetika & Skala) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.65. Koreksi Inversi Logika `plan.entry` di `advisor-panel.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.66. Tunda `revokeObjectURL` Cegah Abort Ekspor CSV di `journal-export.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |

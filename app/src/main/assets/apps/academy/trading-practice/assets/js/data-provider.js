@@ -99,7 +99,19 @@
   }
 
   function meaningfulLines(text) {
-    return compatibleCsv(text).split(/\r?\n/).filter(function (line) { return line.trim() !== ''; });
+    var clean = compatibleCsv(text);
+    var lines = [];
+    var start = 0;
+    var len = clean.length;
+    while (start < len) {
+      var nextNl = clean.indexOf('\n', start);
+      var end = nextNl < 0 ? len : nextNl;
+      var line = clean.slice(start, end).trim();
+      if (line.length > 0) lines.push(line);
+      if (nextNl < 0) break;
+      start = nextNl + 1;
+    }
+    return lines;
   }
 
   function metadataFromCsv(text) {
