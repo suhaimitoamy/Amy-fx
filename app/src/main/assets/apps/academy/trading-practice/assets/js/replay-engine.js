@@ -164,6 +164,43 @@
 
   ReplayController.prototype.destroy = function () { this.pause(); this.requestSequence += 1; };
 
+  ReplayController.prototype.projectTimeframeCursor = function (targetTimeframe) {
+    if (this.cursor == null) return null;
+    var sec = core.timeframeSeconds ? core.timeframeSeconds(targetTimeframe) : null;
+    if (!sec) return { currentCursor: this.cursor, targetTimeframe: String(targetTimeframe).toUpperCase() };
+    var offset = String(targetTimeframe).toUpperCase() === 'D1' ? 17 * 3600 : 0;
+    var bucket = Math.floor((this.cursor - offset) / sec) * sec + offset;
+    return {
+      currentCursor: this.cursor,
+      targetTimeframe: String(targetTimeframe).toUpperCase(),
+      candleOpenTime: bucket,
+      candleCloseTime: bucket + sec,
+      intraCandleElapsedSec: Math.max(0, this.cursor - bucket)
+    };
+  };
+
+  ReplayController.prototype.getMultiTimeframeContext = async function (timeframes) {
+    var tfs = Array.isArray(timeframes) && timeframes.length ? timeframes : ['D1', 'H1', 'M15', 'M5'];
+    var currentCursor = this.cursor;
+    var results = {};
+    for (var i = 0; i < tfs.length; i++) {
+      var tf = tfs[i];
+      var data = await this.provider.getCandles({
+        timeframe: tf,
+        cursor: currentCursor,
+        sourceId: this.sourceId,
+        playbackSessionId: this.playbackSessionId
+      });
+      results[tf] = {
+        timeframe: tf,
+        cursor: currentCursor,
+        candles: (data && data.candles) || [],
+        latestCandle: (data && data.candles && data.candles[data.candles.length - 1]) || null
+      };
+    }
+    return results;
+  };
+
   root.AmyReplayEngine = Object.freeze({ ReplayController: ReplayController, lowerBound: lowerBound });
 })(typeof window !== 'undefined' ? window : globalThis);
 

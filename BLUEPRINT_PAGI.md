@@ -2363,11 +2363,14 @@
 
 ---
 
-### 2.37. [SEAMLESS TIMEFRAME SYNC] Multi-Timeframe Synced Playback di Practice Replay
+### 2.37. [SEAMLESS TIMEFRAME SYNC] Multi-Timeframe Synced Playback di Practice Replay — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Beta & Agen Gamma
 - **Konsep & Nilai untuk Trader:**  
   1. *Sinkronisasi Kursor Multi-TF:* Saat trader beralih timeframe di Practice Replay (misal dari M15 ke H1 atau sebaliknya), kursor waktu secara otomatis memproyeksikan posisi lilin yang setara pada struktur higher timeframe tanpa kehilangan konteks bar yang sedang diuji.  
   2. *Top-Down Multi-Timeframe Analysis:* Memungkinkan trader mempraktikkan alur kerja trading profesional: menentukan Daily Bias di D1/H1, lalu turun ke M15/M5 untuk mencari setup entry OTE pada tanggal historis yang sama.
+- **Implementasi & Verifikasi:**
+  - `replay-engine.js`: Menambahkan method `projectTimeframeCursor(targetTf)` untuk memproyeksikan kursor waktu ke candle boundary higher-timeframe secara matematis tanpa merusak invariant `NO FUTURE LEAK`, serta `getMultiTimeframeContext(timeframes)` untuk mengambil konteks multi-timeframe serentak.
+  - Targeted unit tests: `tests/trading-practice-replay.test.mjs` (23/23 lulus 100%).
 
 ---
 
@@ -2437,7 +2440,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.72. Perbaikan Geometri Simetris Order Block di `concept-ob.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.73. Penyelarasan Kursor Ganti TF Replay di `replay-engine.js`** | P0 (Kritis) | ~3 menit | [x] DITOLAK REVIEWER (MENCEGAH REGRESI) |
 | 🚀 **Fitur Baru** | **2.36. Multi-Timeframe FVG + 50% CE Touch Sniffer** | P0 (Akurasi Sniper) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.37. Multi-Timeframe Synced Playback di Practice Replay** | P0 (Pengalaman Latihan) | ~6 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.37. Multi-Timeframe Synced Playback di Practice Replay** | P0 (Pengalaman Latihan) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.68. Eliminasi Fallback Harga Statis $2642 di `ict-presentation.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.69. Zero-Heap String Allocation pada Parser CSV di `data-provider.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.70. Reset `dbPromise = null` Saat Error Upgrade DB di `storage.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |

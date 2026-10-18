@@ -533,3 +533,43 @@ test('D1 aggregation uses NY 17:00 close offset to merge Sunday session into Mon
   assert.equal(visible[0].lastSourceTime, sunday1700 + 17 * 3600);
 });
 
+test('Item 2.37: Multi-timeframe synced playback projects cursor and retrieves MTF context', async () => {
+  const core = context.AmyPracticeCore;
+  const provider = {
+    async getTimeline({ timeframe }) {
+      return core.aggregateCandles(minuteCandles, timeframe, { sourceTimeframe: 'M1' }).map(c => c.lastSourceTime ?? c.time);
+    },
+    async getCandles({ timeframe, cursor }) {
+      return {
+        source: 'test',
+        candles: core.visibleCandles(minuteCandles, cursor, timeframe, 'M1')
+      };
+    }
+  };
+  const controller = new context.AmyReplayEngine.ReplayController({ provider, timeframe: 'M1' });
+  await controller.start(180);
+
+  // Test projectTimeframeCursor for H1 (3600s) and M5 (300s)
+  const projectionH1 = controller.projectTimeframeCursor('H1');
+  assert.equal(projectionH1.targetTimeframe, 'H1');
+  assert.equal(projectionH1.candleOpenTime, 0);
+  assert.equal(projectionH1.candleCloseTime, 3600);
+  assert.equal(projectionH1.intraCandleElapsedSec, 180);
+
+  const projectionM5 = controller.projectTimeframeCursor('M5');
+  assert.equal(projectionM5.targetTimeframe, 'M5');
+  assert.equal(projectionM5.candleOpenTime, 0);
+  assert.equal(projectionM5.candleCloseTime, 300);
+  assert.equal(projectionM5.intraCandleElapsedSec, 180);
+
+  // Test getMultiTimeframeContext
+  const mtfContext = await controller.getMultiTimeframeContext(['M1', 'M5']);
+  assert.ok(mtfContext.M1);
+  assert.ok(mtfContext.M5);
+  assert.equal(mtfContext.M1.cursor, 180);
+  assert.equal(mtfContext.M5.cursor, 180);
+  assert.equal(mtfContext.M5.candles.length, 1);
+  assert.equal(mtfContext.M5.candles[0].lastSourceTime, 180);
+});
+
+
