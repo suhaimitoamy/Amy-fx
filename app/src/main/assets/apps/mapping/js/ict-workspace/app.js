@@ -189,6 +189,11 @@ $('btn-custom-price-alert')?.addEventListener('click',()=>{
     window.AmyPriceAlertManager.openAddAlertDialog();
   }
 });
+$('btn-chart-custom-price-alert')?.addEventListener('click',()=>{
+  if(typeof window.AmyPriceAlertManager?.openAddAlertDialog==='function'){
+    window.AmyPriceAlertManager.openAddAlertDialog();
+  }
+});
 $('btn-plan-price-alert')?.addEventListener('click',()=>{
   const plan=driverPlan||context?.amy?.assistant?.plan||context?.amy?.plan;
   const prefill=plan?.entry||null;

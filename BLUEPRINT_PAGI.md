@@ -2200,11 +2200,12 @@
 
 ---
 
-### 2.13. [PARITAS GOLD CHART] Tombol "Pasang Alarm Target Harga" di Header Chart Beranda
+### 2.13. [PARITAS GOLD CHART] Tombol "Pasang Alarm Target Harga" di Header Chart Beranda — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Beta & Agen Delta
 - **Konsep & Nilai untuk Trader:**  
   Menyempurnakan paritas 100% antara Card Peta Harga Beranda (`index.html`) dan Card Chart Gold Cockpit Mapping (`apps/mapping/index.html`) sesuai Invariant #1.  
   Saat ini, tombol `[ 🔔 Pasang Alarm ]` hanya tersedia di Cockpit Mapping. Dengan menambahkan tombol ini ke header Kartu 2 Beranda (berdampingan dengan switch M15/M5 dan harga live), trader dapat memasang alarm harga seketika tanpa harus membuka menu Mapping terlebih dahulu.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Tombol `[ 🔔 Pasang Alarm ]` disematkan di controls Peta Harga Beranda (`home-chart-alert`) dan controls Chart Gold Cockpit Mapping (`btn-chart-custom-price-alert`), memicu modal `AmyPriceAlertManager.openAddAlertDialog()` dengan paritas 100%. Unit test targeted lolos 2/2 di `tests/home-chart-alert-button.test.mjs`.
 
 ---
 
@@ -2553,7 +2554,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.1. Kalkulator Lot & Risiko Instan di Card 4 Plan** | P0 (Sangat Bermanfaat) | ~15 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.7. Mini-Badge Status Dealing Range di Header Chart Gold** | P0 (Sangat Informatif) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.11. Multi-Tiered Intelligent Caching di `api/twelvedata.js`** | P0 (Efisiensi Kuota) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.13. Tombol "Pasang Alarm Target Harga" di Header Chart Beranda** | P0 (Paritas 100%) | ~6 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.13. Tombol "Pasang Alarm Target Harga" di Header Chart Beranda** | P0 (Paritas 100%) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.15. Throttled State Persistence & Clean Sweep Acceptance Engine** | P0 (Kinerja & Logika) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.16. Integrated Learning Journey & Chronological Equity Engine** | P0 (Edukasi & Analitik) | ~8 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.17. Realistic Order Lifecycle & Missed Setup Simulator di Replay Engine** | P0 (Akurasi Latihan) | ~7 menit | [ ] Setuju / [ ] Tunda |

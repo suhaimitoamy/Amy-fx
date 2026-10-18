@@ -224,11 +224,16 @@ document.addEventListener('DOMContentLoaded', () => {
     setActive('beranda');
     mainContent.innerHTML = `<section class="home-price-panel" aria-label="Peta harga XAU/USD">
       <div class="section-heading"><h2>Peta harga · XAU/USD</h2><div style="display:flex; align-items:center; gap:8px;"><span id="home-chart-dealing-range-badge" class="dr-badge dr-neutral" title="Status Dealing Range (ICT)">EQUILIBRIUM 50% · NETRAL ⚪</span><strong id="home-chart-price">—</strong></div></div>
-      <div class="home-chart-controls"><label>Timeframe <select id="home-chart-tf"><option value="M15">M15</option><option value="M5">M5</option></select></label><button type="button" id="home-chart-refresh">Perbarui</button></div>
+      <div class="home-chart-controls"><label>Timeframe <select id="home-chart-tf"><option value="M15">M15</option><option value="M5">M5</option></select></label><button type="button" id="home-chart-refresh">Perbarui</button><button type="button" id="home-chart-alert" title="Pasang Alarm Target Harga">🔔 Pasang Alarm</button></div>
       <p id="home-chart-source" role="status">Memuat candle tertutup…</p><p id="home-chart-error" role="alert"></p>
       <div id="home-price-chart" aria-label="Chart candlestick XAU/USD dengan level model ICT"></div>
       <p id="home-chart-note"></p>
     </section><div class="section-heading"><h2>Menu Utama</h2></div><div class="quick-grid slide-up">${projects.map(item => quickCard(item)).join('')}</div>`;
+    mainContent.querySelector('#home-chart-alert')?.addEventListener('click', () => {
+      if (typeof window.AmyPriceAlertManager?.openAddAlertDialog === 'function') {
+        window.AmyPriceAlertManager.openAddAlertDialog();
+      }
+    });
     if(window.AmyHomeChart)disposeHomeChart=window.AmyHomeChart.mount(mainContent.querySelector('.home-price-panel'));
   }
 
