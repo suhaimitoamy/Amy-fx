@@ -1977,7 +1977,7 @@
 
 ---
 
-### 1.77. [STALE PRECEDENCE LOCKOUT] SharedPreferences Android Diabaikan oleh Data Usang Reminder Belajar di `amy-learning-reminder.js`
+### 1.77. [STALE PRECEDENCE LOCKOUT] SharedPreferences Android Diabaikan oleh Data Usang Reminder Belajar di `amy-learning-reminder.js` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/assets/apps/shared/amy-learning-reminder.js`](file:///root/Amy-fx/app/src/main/assets/apps/shared/amy-learning-reminder.js#L77-L91) & [`app/src/main/java/com/amyelitesuite/MainActivity.kt`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/MainActivity.kt#L1126-L1136)
 - **Akar Masalah (Temuan Agen Gamma & Agen Beta):**
   Di `amy-learning-reminder.js`, fungsi `getConfig()` membaca data materi terakhir:
@@ -2015,6 +2015,9 @@
     } catch (_) {}
   }
   ```
+- **Implementasi & Verifikasi:**
+  - `amy-learning-reminder.js`: Menggunakan perbandingan timestamp `nativeTime >= lastTime || !lastTitle` sehingga pelajaran yang baru saja dipelajari via native Intent langsung mengupdate notifikasi harian dan mengabaikan cache lokal lama.
+  - Targeted unit tests: `tests/learning-reminder-sync.test.mjs` (2/2 lulus 100%).
 
 ---
 
@@ -2490,7 +2493,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 
 | Kategori | Item Rencana | Prioritas | Estimasi Waktu | Status ACC Pengguna |
 | :--- | :--- | :---: | :---: | :---: |
-| 🐛 **Debugging** | **1.77. Sinkronisasi SharedPreferences Android pada Reminder di `amy-learning-reminder.js`** | P0 (Kritis) | ~3 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.77. Sinkronisasi SharedPreferences Android pada Reminder di `amy-learning-reminder.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.78. Evaluasi Candle Aktif & Dukungan Market Order di `trade-engine.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.79. Eliminasi Micro-Range Distortion pada Fallback Dealing Range di `amy-ict.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.40. Realistic Spread & Slippage Simulator di Practice Replay** | P0 (Akurasi Latihan) | ~6 menit | [ ] Setuju / [ ] Tunda |

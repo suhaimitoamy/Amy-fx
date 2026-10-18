@@ -85,8 +85,14 @@
           var nativeConfig = JSON.parse(global.Android.getLearningReminderConfig() || '{}');
           if (nativeConfig.enabled !== undefined) enabled = Boolean(nativeConfig.enabled);
           if (nativeConfig.time) time = nativeConfig.time;
-          if (nativeConfig.lastTitle && !lastTitle) lastTitle = nativeConfig.lastTitle;
-          if (nativeConfig.lastUrl && (!lastUrl || lastUrl === DEFAULT_URL)) lastUrl = nativeConfig.lastUrl;
+          var nativeTime = Number(nativeConfig.lastTime || nativeConfig.timestamp || 0);
+          if (nativeConfig.lastTitle && (nativeTime >= lastTime || !lastTitle)) {
+            lastTitle = nativeConfig.lastTitle;
+            if (nativeTime) lastTime = nativeTime;
+          }
+          if (nativeConfig.lastUrl && (nativeTime >= lastTime || !lastUrl || lastUrl === DEFAULT_URL)) {
+            lastUrl = nativeConfig.lastUrl;
+          }
         } catch (_) {}
       }
 
