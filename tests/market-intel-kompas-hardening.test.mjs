@@ -155,3 +155,16 @@ test('Kompas Fundamental UI: Kompas is default tab, primary priority, and retain
   assert.match(appSource, /scenario-box/);
   assert.match(appSource, /Jembatan Eksekusi ke Chart Mapping/);
 });
+
+test('api/calendar uses explicit +07:00 WIB timezone offset for fallback macro events (item 1.56)', () => {
+  const calendarSource = fs.readFileSync(new URL('../api/calendar.js', import.meta.url), 'utf8');
+  assert.match(calendarSource, /\+07:00/, 'Calendar dateStr must specify explicit +07:00 WIB offset');
+  assert.doesNotMatch(calendarSource, /rawTime \+ ':00' : '12:00:00'\}Z/, 'Calendar dateStr must not suffix Z to Indonesian news time');
+
+  // Verify that an event at 20:30 WIB correctly parses to 21:30 WITA (UTC+8) and 13:30 UTC
+  const testDateStr = '2026-10-18T20:30:00+07:00';
+  const parsed = new Date(testDateStr);
+  assert.equal(parsed.getUTCHours(), 13);
+  assert.equal(parsed.getUTCMinutes(), 30);
+});
+

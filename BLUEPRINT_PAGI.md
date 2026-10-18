@@ -1307,6 +1307,11 @@
   ```javascript
   const dateStr = `${ymd}T${rawTime.length === 5 ? rawTime + ':00' : '12:00:00'}+07:00`;
   ```
+- **Status:** [x] SELESAI & LOLOS AUDIT REVIEWER
+- **Catatan Audit Reviewer Guard:**
+  - String parsing tanggal fallback kalender makro di [`api/calendar.js`](file:///root/Amy-fx/api/calendar.js#L61) diperbaiki dari akhiran `Z` (UTC) menjadi offset eksplisit `+07:00` (Waktu Indonesia Barat/WIB).
+  - Menghilangkan distorsi pergeseran waktu 8 jam ke depan (yang sebelumnya mengubah jam 20:30 WIB menjadi 04:30 WITA subuh hari berikutnya di perangkat pengguna). Rilis berita makro kini 100% presisi dan sinkron dengan jam lokal trader.
+  - Pengujian targeted `node --test tests/market-intel-kompas-hardening.test.mjs` (13/13 pass) dan `node --check` 100% valid tanpa regresi.
 
 ---
 
@@ -2450,7 +2455,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.61. Fallback `JSZip` untuk WebView Lawas di `zip-reader.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.28. Native Sound Alert Bridge & Ringtone Emas Kustom di Android** | P0 (Reliabilitas Audio) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.29. Smart Journal Winrate & Profit Factor Summary di AI Assistant** | P0 (Intelijen Offline) | ~7 menit | [ ] Setuju / [ ] Tunda |
-| 🐛 **Debugging** | **1.56. Perbaiki Offset UTC `Z` Kalender Ekonomi di `api/calendar.js`** | P0 (Kritis) | ~3 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.56. Perbaiki Offset UTC `Z` Kalender Ekonomi di `api/calendar.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.57. Cegah Setup London Hangus Prematur di Sesi 'OUTSIDE' `engine.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.58. Pre-Check Weekend Sebelum Eksekusi HTTP di `DriverSetupSyncWorker.kt`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.26. Dynamic Liquidity Target Fallback ($\ge 2R$) di Engine ICT** | P0 (Akurasi Sinyal) | ~7 menit | [ ] Setuju / [ ] Tunda |

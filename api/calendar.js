@@ -58,7 +58,7 @@ export default async function handler(req, res) {
 
           const baseDate = item.time ? new Date(item.time) : new Date();
           const ymd = !isNaN(baseDate.getTime()) ? baseDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-          const dateStr = `${ymd}T${rawTime.length === 5 ? rawTime + ':00' : '12:00:00'}Z`;
+          const dateStr = `${ymd}T${rawTime.length === 5 ? rawTime + ':00' : '12:00:00'}+07:00`;
 
           events.push({
             title: rawTitle,
