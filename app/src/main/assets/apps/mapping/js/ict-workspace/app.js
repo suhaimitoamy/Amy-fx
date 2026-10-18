@@ -5,12 +5,17 @@ import {createPriceChart} from './chart-view.js';
 import {mountDisplay,renderAmy,loadDisplay,isGoldMarketOpen} from './ict-presentation.js';
 import {mountEconomicEventBanner} from './economic-countdown.js';
 import {updateDealingRangeBadge} from './dealing-range-badge.js';
+import {updateCockpitSessionPill} from '../engine/market-session-clock.js';
 const $=id=>document.getElementById(id);
 let context=null,display=null,driverPlan=null;
 let chart=null,controller=null,generation=0,timer=null,overlay=null,raw=null;
 try{chart=createPriceChart($('chart'),{touchAxes:true});}catch{$('chart').textContent='Peta harga belum tersedia. Bukti struktur tetap dapat dibaca.';}
 const fullscreen=mountChartFullscreen(chart);
 try{mountEconomicEventBanner();}catch(_){}
+try{
+  updateCockpitSessionPill('cockpit-session-pill');
+  setInterval(()=>updateCockpitSessionPill('cockpit-session-pill'),30000);
+}catch(_){}
 $('chart-auto-price')?.addEventListener('click',()=>chart?.autoPrice());
 display=mountDisplay(next=>{display=next;renderAmy(context?.amy,display,context?.news,context);draw();});
 // A cached trade plan from the previous application version must not be served as current context.

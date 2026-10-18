@@ -204,3 +204,111 @@ export const EXECUTION_SESSION_CONFIG = Object.freeze({
   london: SESSION_DEFINITIONS.LONDON,
   newYork: SESSION_DEFINITIONS.NEW_YORK
 });
+
+function formatDuration(ms) {
+  const totalMinutes = Math.max(0, Math.floor(ms / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0) return `${hours}j ${minutes}m`;
+  return `${minutes}m`;
+}
+
+export function sessionCountdownPill(value = Date.now()) {
+  const timestamp = timestampMs(value);
+  if (!Number.isFinite(timestamp)) {
+    return {
+      text: '[ ⏳ Memuat Sesi... ]',
+      activeSession: 'UNKNOWN',
+      status: 'OFFLINE'
+    };
+  }
+
+  const london = sessionDetail(SESSION_DEFINITIONS.LONDON, timestamp);
+  const newYork = sessionDetail(SESSION_DEFINITIONS.NEW_YORK, timestamp);
+
+  // 1. Active sessions
+  if (london.active) {
+    const remaining = Math.max(0, london.end - timestamp);
+    return {
+      text: `[ 🇬🇧 London Killzone Aktif (Sisa ${formatDuration(remaining)}) ]`,
+      activeSession: 'LONDON',
+      status: 'ACTIVE',
+      season: london.season,
+      witaTime: `${london.witaStart}–${london.witaEnd} WITA`,
+      remainingMs: remaining
+    };
+  }
+
+  if (newYork.active) {
+    const remaining = Math.max(0, newYork.end - timestamp);
+    return {
+      text: `[ 🇺🇸 New York Sesi Aktif (Sisa ${formatDuration(remaining)}) ]`,
+      activeSession: 'NEW_YORK',
+      status: 'ACTIVE',
+      season: newYork.season,
+      witaTime: `${newYork.witaStart}–${newYork.witaEnd} WITA`,
+      remainingMs: remaining
+    };
+  }
+
+  // 2. Upcoming / countdown to next session
+  if (timestamp < london.start) {
+    const msUntil = london.start - timestamp;
+    return {
+      text: `[ 🇬🇧 Menuju London Open dalam ${formatDuration(msUntil)} (${london.witaStart} WITA) ]`,
+      activeSession: 'OFF_SESSION',
+      status: 'UPCOMING',
+      nextSession: 'LONDON',
+      season: london.season,
+      targetTime: london.witaStart,
+      remainingMs: msUntil
+    };
+  }
+
+  if (timestamp < newYork.start) {
+    const msUntil = newYork.start - timestamp;
+    return {
+      text: `[ 🇺🇸 Menuju NY Open dalam ${formatDuration(msUntil)} (${newYork.witaStart} WITA) ]`,
+      activeSession: 'OFF_SESSION',
+      status: 'UPCOMING',
+      nextSession: 'NEW_YORK',
+      season: newYork.season,
+      targetTime: newYork.witaStart,
+      remainingMs: msUntil
+    };
+  }
+
+  const tomorrowTimestamp = timestamp + 24 * 3600 * 1000;
+  const tomorrowLondon = sessionDetail(SESSION_DEFINITIONS.LONDON, tomorrowTimestamp);
+  const msUntilTomorrow = Math.max(0, tomorrowLondon.start - timestamp);
+
+  return {
+    text: `[ 🇬🇧 Menuju London Open dalam ${formatDuration(msUntilTomorrow)} (${tomorrowLondon.witaStart} WITA) ]`,
+    activeSession: 'OFF_SESSION',
+    status: 'UPCOMING',
+    nextSession: 'LONDON',
+    season: tomorrowLondon.season,
+    targetTime: tomorrowLondon.witaStart,
+    remainingMs: msUntilTomorrow
+  };
+}
+
+export function updateCockpitSessionPill(element, timestamp = Date.now()) {
+  const pillEl = typeof element === 'string' ? (typeof document !== 'undefined' ? document.getElementById(element) : null) : element;
+  if (!pillEl) return null;
+  const info = sessionCountdownPill(timestamp);
+  pillEl.textContent = info.text;
+  if (info.status === 'ACTIVE') {
+    pillEl.className = 'cockpit-session-pill session-active';
+    pillEl.style.color = '#22C55E';
+    pillEl.style.borderColor = 'rgba(34,197,94,0.4)';
+    pillEl.style.background = 'rgba(34,197,94,0.12)';
+  } else {
+    pillEl.className = 'cockpit-session-pill session-upcoming';
+    pillEl.style.color = 'var(--amy-accent,#F5C451)';
+    pillEl.style.borderColor = 'rgba(245,196,81,0.3)';
+    pillEl.style.background = 'rgba(245,196,81,0.1)';
+  }
+  return info;
+}
+

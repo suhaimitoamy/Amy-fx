@@ -2331,12 +2331,16 @@
 
 ---
 
-### 2.33. [SMART SESSION PILL] Dynamic DST-Aware Session Countdown & Next Killzone Pill di Header Cockpit
+### 2.33. [SMART SESSION PILL] Dynamic DST-Aware Session Countdown & Next Killzone Pill di Header Cockpit — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Alpha & Agen Beta
 - **Konsep & Nilai untuk Trader:**  
   1. *Navigasi Jam Sesi Intuitif:* Menempatkan pill status dinamis di header Cockpit Mapping yang membaca `market-session-clock.js`:  
      `[ 🇬🇧 London Killzone Aktif (Sisa 1j 42m) ]` atau `[ 🇺🇸 Menuju NY Open dalam 35m (19:30 WITA) ]`  
   2. *Sinkronisasi Otomatis Musim Panas/Dingin (DST):* Secara otomatis menyesuaikan pergantian jam Daylight Saving Time (EDT vs EST di New York, BST vs GMT di London) tanpa perlu konfigurasi manual, memastikan trader selalu bersiap tepat waktu di awal pergerakan likuiditas besar institusional.
+- **Implementasi & Audit Reviewer:**
+  - `market-session-clock.js`: Menambahkan `sessionCountdownPill` dan `updateCockpitSessionPill` untuk menghitung sisa waktu sesi aktif atau hitung mundur menuju killzone berikutnya secara DST-aware (EDT/EST, BST/GMT).
+  - `apps/mapping/index.html` & `app.js`: Menambahkan elemen `#cockpit-session-pill` di header Cockpit dan memperbarui statusnya secara berkala tiap 30 detik.
+  - Targeted unit tests: `tests/market-session-clock.test.mjs` (4/4 lulus 100%).
 
 ---
 
@@ -2462,7 +2466,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.66. Tunda `revokeObjectURL` Cegah Abort Ekspor CSV di `journal-export.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.67. Denominator Dinamis Progres 10 Modul di `apps/academy/main.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.32. Instant CSV Backup Restore & Reconciliation di Jurnal Trading** | P0 (Proteksi Data) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.33. Dynamic DST-Aware Session Countdown & Killzone Pill di Header Cockpit** | P0 (Disiplin Waktu) | ~6 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.33. Dynamic DST-Aware Session Countdown & Killzone Pill di Header Cockpit** | P0 (Disiplin Waktu) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.62. Koreksi Offset 17:00 NY Close D1 Candle di `practice-core.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.63. Eliminasi `force: true` Spam Manifest Update di `update-checker.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.64. Rebrand Layar Kunci PIN Jurnal & Cegah DOM Leak di `apps/journal/app.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |

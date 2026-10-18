@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import {
   executionSessionAllowed,
   executionSessionRequirement,
-  executionSessionState
+  executionSessionState,
+  sessionCountdownPill,
+  updateCockpitSessionPill
 } from '../app/src/main/assets/apps/mapping/js/engine/market-session-clock.js';
 
 test('London gate follows BST and GMT while shifting WITA automatically', () => {
@@ -36,3 +38,35 @@ test('off-session timestamp remains rejected and NONE remains allowed', () => {
   assert.equal(executionSessionAllowed(timestamp, 'LONDON_OR_NEW_YORK'), false);
   assert.equal(executionSessionAllowed(timestamp, 'NONE'), true);
 });
+
+test('Item 2.33: sessionCountdownPill computes dynamic active and countdown pills with DST awareness', () => {
+  // 1. Summer London active (e.g. 08:00 UTC = 09:00 BST = 16:00 WITA)
+  const londonActive = Date.parse('2026-07-01T08:00:00Z');
+  const pill1 = sessionCountdownPill(londonActive);
+  assert.equal(pill1.status, 'ACTIVE');
+  assert.equal(pill1.activeSession, 'LONDON');
+  assert.match(pill1.text, /🇬🇧 London Killzone Aktif \(Sisa 2j 0m\)/);
+
+  // 2. Countdown to New York Open (e.g. 11:00 UTC = 19:00 WITA, NY open is 11:30 UTC / 19:30 WITA)
+  const preNY = Date.parse('2026-07-01T11:00:00Z');
+  const pill2 = sessionCountdownPill(preNY);
+  assert.equal(pill2.status, 'UPCOMING');
+  assert.equal(pill2.nextSession, 'NEW_YORK');
+  assert.match(pill2.text, /🇺🇸 Menuju NY Open dalam 30m \(19:30 WITA\)/);
+
+  // 3. Summer New York active (e.g. 13:00 UTC = 09:00 EDT = 21:00 WITA)
+  const nyActive = Date.parse('2026-07-01T13:00:00Z');
+  const pill3 = sessionCountdownPill(nyActive);
+  assert.equal(pill3.status, 'ACTIVE');
+  assert.equal(pill3.activeSession, 'NEW_YORK');
+  assert.match(pill3.text, /🇺🇸 New York Sesi Aktif/);
+
+  // 4. Test updateCockpitSessionPill on a mock DOM element
+  const mockElement = { textContent: '', className: '', style: {} };
+  const updated = updateCockpitSessionPill(mockElement, londonActive);
+  assert.ok(updated);
+  assert.match(mockElement.textContent, /London Killzone Aktif/);
+  assert.equal(mockElement.className, 'cockpit-session-pill session-active');
+  assert.equal(mockElement.style.color, '#22C55E');
+});
+
