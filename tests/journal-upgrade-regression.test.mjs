@@ -120,3 +120,34 @@ test('journal upgrade keeps reliability, draft, export, and trade-plan features'
   assert.match(css, /\.amy-journal-extended/);
   assert.match(css, /\.amy-journal-extra-strip/);
 });
+
+test('PIN lock overlay is rebranded to AMY FX and enforces DOM isolation (item 1.64)', () => {
+  const appJs = fs.readFileSync(
+    new URL('../app/src/main/assets/apps/journal/app.js', import.meta.url),
+    'utf8'
+  );
+  const journalCss = fs.readFileSync(
+    new URL('../app/src/main/assets/apps/journal/style.css', import.meta.url),
+    'utf8'
+  );
+
+  // 1. Must not contain legacy TL mark
+  assert.doesNotMatch(appJs, /<div class="brand-mark">TL<\/div>/, 'Legacy TL branding mark must be eliminated');
+
+  // 2. Must contain AMY FX brand mark and lock badge
+  assert.match(appJs, /<div class="brand-mark"[^>]*>AMY FX<\/div>/, 'Must display AMY FX branding in PIN lock');
+  assert.match(appJs, /🔒/, 'Must display lock badge icon');
+
+  // 3. Must apply is-locked class to document.body and style.css must hide .app-shell
+  assert.match(appJs, /document\.body\.classList\.add\("is-locked"\)/);
+  assert.match(appJs, /document\.body\.classList\.remove\("is-locked"\)/);
+  assert.match(journalCss, /body\.is-locked \.app-shell\s*\{\s*display:\s*none !important;\s*\}/);
+
+  // 4. In boot(), enforcePinLock must be awaited before loadItems and render
+  const pinLockIdx = appJs.indexOf('await enforcePinLock()');
+  const loadItemsIdx = appJs.indexOf('loadItems()');
+  const renderIdx = appJs.indexOf('render()');
+  assert.ok(pinLockIdx > 0 && pinLockIdx < loadItemsIdx, 'enforcePinLock must be awaited before loadItems');
+  assert.ok(loadItemsIdx < renderIdx, 'loadItems must precede render');
+});
+

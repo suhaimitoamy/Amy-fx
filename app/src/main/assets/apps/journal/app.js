@@ -5575,14 +5575,17 @@ async function clearLocalPin() {
 async function enforcePinLock() {
   const savedHash = localStorage.getItem(PIN_KEY);
   if (!savedHash) return;
-  document.body.append(makeLockOverlay());
+  document.body.classList.add("is-locked");
+  const overlay = makeLockOverlay();
+  document.body.append(overlay);
   return new Promise((resolve) => {
-    const input = document.querySelector("#pinUnlockInput");
-    const message = document.querySelector("#pinUnlockMessage");
-    const button = document.querySelector("#pinUnlockBtn");
+    const input = overlay.querySelector("#pinUnlockInput");
+    const message = overlay.querySelector("#pinUnlockMessage");
+    const button = overlay.querySelector("#pinUnlockBtn");
     const unlock = async () => {
       if (await hashText(input.value) === savedHash) {
-        document.querySelector(".pin-lock")?.remove();
+        document.body.classList.remove("is-locked");
+        overlay.remove();
         resolve();
       } else {
         message.textContent = "PIN salah.";
@@ -5592,7 +5595,7 @@ async function enforcePinLock() {
     };
     button.addEventListener("click", unlock);
     input.addEventListener("keydown", (event) => { if (event.key === "Enter") unlock(); });
-    input.focus();
+    setTimeout(() => input.focus(), 50);
   });
 }
 
@@ -5601,10 +5604,12 @@ function makeLockOverlay() {
   overlay.className = "pin-lock";
   overlay.innerHTML = `
     <div class="pin-card">
-      <div class="brand-mark">TL</div>
-      <h2>Masukkan PIN</h2>
-      <input id="pinUnlockInput" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN">
-      <button id="pinUnlockBtn" class="primary-button" type="button">Buka</button>
+      <div class="brand-mark" style="width:52px;height:52px;font-size:12px;font-weight:900;letter-spacing:0.5px;margin:0 auto 4px auto;" aria-label="Amy FX">AMY FX</div>
+      <div style="font-size: 28px; line-height: 1; margin: 4px 0 2px 0;" aria-hidden="true">🔒</div>
+      <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--text, #fff); margin: 0;">Masukkan PIN</h2>
+      <p style="font-size: 12px; color: var(--muted-strong, rgba(255,255,255,0.6)); margin: 0 0 4px 0;">Jurnal Trading Terproteksi</p>
+      <input id="pinUnlockInput" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN Keamanan">
+      <button id="pinUnlockBtn" class="primary-button" type="button">Buka Kunci</button>
       <p id="pinUnlockMessage"></p>
     </div>`;
   return overlay;

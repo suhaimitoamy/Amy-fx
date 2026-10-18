@@ -1481,6 +1481,11 @@
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   1. Rebrand header visual menjadi `<div class="brand-mark">AMY FX</div>` dengan badge gembok emas modern.
   2. Tahan pemanggilan `loadItems()` dan perenderan DOM hingga Promise `enforcePinLock()` berhasil diselesaikan (`resolve()`), memastikan DOM tetap kosong sebelum PIN benar-benar valid.
+- **Status:** [x] SELESAI & LOLOS AUDIT REVIEWER
+- **Catatan Audit Reviewer Guard:**
+  - Visual PIN Lock di `makeLockOverlay()` [`apps/journal/app.js`](file:///root/Amy-fx/app/src/main/assets/apps/journal/app.js#L5601-L5615) telah 100% direbrand ke `AMY FX` dengan icon gembok modern, menghapus sisa branding legacy `TL`.
+  - Isolasi DOM diimplementasikan dengan menambahkan kelas `is-locked` ke `document.body` saat PIN aktif, dan aturan CSS `body.is-locked .app-shell { display: none !important; }` di `style.css` memastikan tidak ada kebocoran visual maupun DOM catatan jurnal sebelum pengguna berhasil memasukkan PIN.
+  - Pengujian targeted `node --test tests/journal-upgrade-regression.test.mjs` (5/5 pass) dan `node --check` 100% valid tanpa regresi.
 
 ---
 
@@ -2419,7 +2424,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.33. Dynamic DST-Aware Session Countdown & Killzone Pill di Header Cockpit** | P0 (Disiplin Waktu) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.62. Koreksi Offset 17:00 NY Close D1 Candle di `practice-core.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.63. Eliminasi `force: true` Spam Manifest Update di `update-checker.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.64. Rebrand Layar Kunci PIN Jurnal & Cegah DOM Leak di `apps/journal/app.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.64. Rebrand Layar Kunci PIN Jurnal & Cegah DOM Leak di `apps/journal/app.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.30. New York Close D1 Synthesizer di Practice Engine** | P0 (Akurasi Charting) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.31. Biometric Fingerprint & Face Unlock Bridge untuk Jurnal Trading** | P0 (Privasi & Keamanan) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.59. Sinkronisasi Kueri Store `items.v2` di `amy-local-assistant.js`** | P0 (Kritis) | ~3 menit | [ ] Setuju / [ ] Tunda |

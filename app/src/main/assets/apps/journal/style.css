@@ -1941,6 +1941,10 @@ body.is-video-feed-open {
   color: var(--muted-strong);
 }
 
+body.is-locked .app-shell {
+  display: none !important;
+}
+
 .pin-lock {
   position: fixed;
   inset: 0;
