@@ -33,6 +33,10 @@ class DriverSetupSyncWorker(
         .build()
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        if (!AmyFxNotificationGate.isGoldMarketOpen(System.currentTimeMillis())) {
+            android.util.Log.d("AmyFX-DriverWorker", "Market closed (weekend/closure), skipping HTTP driver setup sync.")
+            return@withContext Result.success()
+        }
         try {
             val request = Request.Builder()
                 .url(SETUPS_URL)

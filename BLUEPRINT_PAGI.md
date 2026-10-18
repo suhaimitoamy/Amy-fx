@@ -1354,6 +1354,7 @@
       return@withContext Result.success()
   }
   ```
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Guard `isGoldMarketOpen()` ditempatkan di baris awal `doWork()`; mencegah 192x panggilan HTTP kosong per akhir pekan dan menghemat daya baterai. Pengujian unit lolos di `tests/market-closed-notification-suppression.test.mjs`.
 
 ---
 
@@ -2458,7 +2459,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.29. Smart Journal Winrate & Profit Factor Summary di AI Assistant** | P0 (Intelijen Offline) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.56. Perbaiki Offset UTC `Z` Kalender Ekonomi di `api/calendar.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.57. Cegah Setup London Hangus Prematur di Sesi 'OUTSIDE' `engine.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.58. Pre-Check Weekend Sebelum Eksekusi HTTP di `DriverSetupSyncWorker.kt`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.58. Pre-Check Weekend Sebelum Eksekusi HTTP di `DriverSetupSyncWorker.kt`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.26. Dynamic Liquidity Target Fallback ($\ge 2R$) di Engine ICT** | P0 (Akurasi Sinyal) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.27. Economic Event Countdown Badge di Header Cockpit** | P0 (Proteksi Modal) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.53. Fingerprint $O(1)$ Gantikan `JSON.stringify` di Render Chart `chart-view.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |

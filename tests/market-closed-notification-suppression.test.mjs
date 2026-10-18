@@ -196,4 +196,13 @@ test('AmyFxNotificationGate code guarantees strict market closure silence', asyn
   const workerCode = fs.readFileSync('app/src/main/java/com/amyelitesuite/DriverSetupSyncWorker.kt', 'utf8');
   assert.ok(workerCode.includes('isGoldMarketOpen'));
   assert.ok(workerCode.includes('PASAR TUTUP'));
+
+  // Item 1.58: Pre-check weekend before HTTP execution in doWork()
+  const doWorkIndex = workerCode.indexOf('override suspend fun doWork()');
+  const gateCheckIndex = workerCode.indexOf('if (!AmyFxNotificationGate.isGoldMarketOpen', doWorkIndex);
+  const requestBuilderIndex = workerCode.indexOf('Request.Builder()', doWorkIndex);
+  assert.ok(doWorkIndex !== -1, 'doWork must exist');
+  assert.ok(gateCheckIndex !== -1, 'Pre-check isGoldMarketOpen must exist in doWork()');
+  assert.ok(requestBuilderIndex !== -1, 'Request.Builder must exist in doWork()');
+  assert.ok(gateCheckIndex < requestBuilderIndex, 'Pre-check isGoldMarketOpen must occur before Request.Builder() in doWork()');
 });
