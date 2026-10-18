@@ -66,7 +66,7 @@ class TwelveDataPriceBridge(
                             val price = payload.optDouble("price", Double.NaN)
                             val timestamp = payload.optLong("timestamp", 0)
                             val age = System.currentTimeMillis() - timestamp
-                            if (!price.isFinite() || price <= 0 || timestamp <= 0 || age > 45000 || age < -60000) continue
+                            if (!price.isFinite() || price <= 0 || timestamp <= 0 || age > 300_000 || age < -300_000) continue
                             synchronized(this@TwelveDataPriceBridge) {
                                 if (isCurrent(currentGeneration) && timestamp >= lastTimestamp) {
                                     lastTimestamp = timestamp

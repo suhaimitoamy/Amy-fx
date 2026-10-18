@@ -549,6 +549,7 @@
   Akibatnya, SEMUA tick harga live yang masuk dibuang diam-diam oleh instruksi `continue`, menyebabkan badge live price di Card 2 Beranda membeku permanen padahal koneksi SSE server dalam status hijau sehat.
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   Longgarkan batas latency menjadi 5 menit (`age > 300_000 || age < -300_000`) untuk toleransi perbedaan jam perangkat pengguna, dan gunakan monotonicity check berbasis `timestamp >= lastTimestamp` alih-alih ketergantungan ketat pada jam lokal HP.
+- **Status Implementasi:** [x] SELESAI & LOLOS AUDIT REVIEWER (Toleransi diperluas ke 5 menit `300_000ms`, unit test clock drift lolos di `tests/live-price-relay.test.mjs`).
 
 ---
 
@@ -2507,7 +2508,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.31. Pelacakan `brokenSwings` di `MappingLogicCore.kt` (Hilangkan Duplikasi BOS)** | P1 (Sedang) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.26. Perbaikan Target PDH/PDL pada Engine 6 Drivers (Fetch D1)** | P0 (Kritis) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.23. Perbaikan Override TTL 30s di `api/twelvedata.js` (Cegah Limit 429)** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.24. Toleransi Drift Jam 5 Menit di Stream Live Price OkHttp/Vercel** | P0 (Kritis) | ~5 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.24. Toleransi Drift Jam 5 Menit di Stream Live Price OkHttp/Vercel** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.19. Pengecualian `/api/` pada Cache-First `sw.js` (Cegah Setup Basi)** | P0 (Kritis) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.20. Fallback Teks Asli Berita & Filter Notifikasi Kosong** | P0 (Kritis) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.15. Perbaikan Deep Linking Rute Notifikasi di `MainActivity`** | P0 (Kritis) | ~5 menit | [ ] Setuju / [ ] Tunda |
