@@ -187,7 +187,7 @@
 
 ---
 
-### 1.2. [RESILIENSI] Hardcoded Upstream URL di `api/candles.js`
+### 1.2. [RESILIENSI] Hardcoded Upstream URL di `api/candles.js` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`api/candles.js`](file:///root/Amy-fx/api/candles.js#L4)
 - **Akar Masalah (Temuan Agen Gamma):**
   Konstanta basis GitHub Release masih mengarah ke repositori lama:
@@ -197,6 +197,10 @@
   Sesuai Invariant Aturan 9, fokus utama telah beralih ke repositori pribadi `Amy-fx`. Jika repositori `Amy-fx-pro` diubah visibilitasnya atau mengalami reorganisasi rilis, endpoint proxy streaming candle 8 tahun di Replay akan mengalami kegagalan 502/404.
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   Buat fallback bertingkat (*dual-source fallback*): coba unduh dari rilis dataset `Amy-fx` terlebih dahulu, jika 404 otomatis fallback ke rilis `Amy-fx-pro`, dengan cache immutable 1 tahun di CDN Vercel.
+- **Implementasi & Verifikasi:**
+  - `api/candles.js`: Mengganti konstanta tunggal dengan `DATASET_RELEASE_BASES` (prioritas 1: `suhaimitoamy/Amy-fx`, prioritas 2: `suhaimitoamy/Amy-fx-pro`).
+  - Fungsi `fetchDualSource`: Otomatis mengalirkan unduhan dari `Amy-fx` terlebih dahulu, lalu fallback elegan ke `Amy-fx-pro` bila 404/gagal, serta menyematkan header `X-AmyFX-Dataset-Source`.
+  - Targeted unit tests: `tests/candles-dual-source-fallback.test.mjs` (3/3 lulus 100%).
 
 ---
 
@@ -2569,7 +2573,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.16. Persistensi Status Accordion `<details open>` di Mapping** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.9. Hilangkan Layar Berkedip (Flicker) Ganti TF di Beranda** | P1 (Sedang) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.6. Chunking Yielding Ekstraksi ZIP di `data-provider.js`** | P1 (Sedang) | ~10 menit | [ ] Setuju / [ ] Tunda |
-| 🐛 **Debugging** | **1.2. Dual-Source Fallback Dataset 8 Tahun di `candles.js`** | P1 (Sedang) | ~8 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.2. Dual-Source Fallback Dataset 8 Tahun di `candles.js`** | P1 (Sedang) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.12. Dynamic Base URL Fallback Berita di `api/calendar.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.5. Isolasi Touch Sumbu Harga Layar Ponsel Sempit** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.4. Mitigasi Limit 429 TwelveData dengan Stale Fallback** | P1 (Sedang) | ~12 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
