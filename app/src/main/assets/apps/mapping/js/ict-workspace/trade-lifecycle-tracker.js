@@ -207,6 +207,15 @@ export function updatePrice(price, high = null, low = null, timestamp = null) {
       let triggered = false;
 
       if (trade.side === 'BUY') {
+        const touchHigh = high != null && Number.isFinite(high) ? high : price;
+        if (touchHigh >= trade.tp1) {
+          trade.status = 'MISSED';
+          trade.cancelReason = 'TP1 reached before Entry fill';
+          trade.closedAt = timestamp ? (timestamp > 1e11 ? timestamp : timestamp * 1000) : Date.now();
+          changed = true;
+          continue;
+        }
+
         const touchLow = low != null && Number.isFinite(low) ? low : price;
         if (touchLow <= trade.entry) {
           // Validasi tidak langsung tembus SL
@@ -220,6 +229,15 @@ export function updatePrice(price, high = null, low = null, timestamp = null) {
         }
       } else {
         // SELL
+        const touchLow = low != null && Number.isFinite(low) ? low : price;
+        if (touchLow <= trade.tp1) {
+          trade.status = 'MISSED';
+          trade.cancelReason = 'TP1 reached before Entry fill';
+          trade.closedAt = timestamp ? (timestamp > 1e11 ? timestamp : timestamp * 1000) : Date.now();
+          changed = true;
+          continue;
+        }
+
         const touchHigh = high != null && Number.isFinite(high) ? high : price;
         if (touchHigh >= trade.entry) {
           if (touchHigh >= trade.sl) {

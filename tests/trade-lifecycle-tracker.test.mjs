@@ -259,5 +259,64 @@ test('Trade Lifecycle Tracker: ARMED -> ACTIVE -> TP & SL Flow', async (t) => {
     const rejectedSellBeyondTp = trackAssistantPlan(sellPlanStale, 2680.20);
     assert.equal(rejectedSellBeyondTp, null, 'Plan SELL harus ditolak jika harga saat registrasi sudah melampaui TP1');
   });
+
+  await t.test('9. Item 1.42: Guard MISSED ketika harga menyentuh TP1 sebelum Entry tersentuh pada status ARMED_LIMIT (BUY/SELL)', () => {
+    // 1. Kasus BUY: Pending limit di 2750, TP1 di 2765. Harga dari 2755 langsung meroket ke 2766 tanpa jemput entry.
+    const buyArmed = {
+      side: 'BUY',
+      entry: 2750.00,
+      sl: 2740.00,
+      tp1: 2765.00,
+      signalName: 'BUY LIMIT (Missed setup test)'
+    };
+    const buyTrade = trackAssistantPlan(buyArmed, 2755.00);
+    assert.ok(buyTrade, 'Order BUY harus berhasil didaftarkan');
+    assert.equal(buyTrade.status, 'ARMED_LIMIT');
+
+    // Harga melesat ke 2766 (high 2766.50, low 2754.00 > entry 2750.00)
+    updatePrice(2766.00, 2766.50, 2754.00);
+
+    let history = loadTradeHistory();
+    let updatedBuy = history.find(t => t.id === buyTrade.id);
+    assert.ok(updatedBuy);
+    assert.equal(updatedBuy.status, 'MISSED', 'Status order BUY harus bertransisi ke MISSED');
+    assert.equal(updatedBuy.cancelReason, 'TP1 reached before Entry fill');
+    assert.ok(updatedBuy.closedAt != null, 'closedAt harus tercatat');
+
+    // Saat harga kemudian retrace turun ke 2748 (di bawah entry), order tidak boleh aktif
+    updatePrice(2748.00, 2752.00, 2748.00);
+    history = loadTradeHistory();
+    updatedBuy = history.find(t => t.id === buyTrade.id);
+    assert.equal(updatedBuy.status, 'MISSED', 'Status order MISSED tidak boleh berubah menjadi ACTIVE_RUNNING saat entry tersentuh belakangan');
+
+    // 2. Kasus SELL: Pending limit di 2780, TP1 di 2765. Harga dari 2775 langsung anjlok ke 2764 tanpa jemput entry.
+    const sellArmed = {
+      side: 'SELL',
+      entry: 2780.00,
+      sl: 2790.00,
+      tp1: 2765.00,
+      signalName: 'SELL LIMIT (Missed setup test)'
+    };
+    const sellTrade = trackAssistantPlan(sellArmed, 2775.00);
+    assert.ok(sellTrade, 'Order SELL harus berhasil didaftarkan');
+    assert.equal(sellTrade.status, 'ARMED_LIMIT');
+
+    // Harga anjlok ke 2764 (high 2776.00 < entry 2780.00, low 2764.00 <= TP1 2765.00)
+    updatePrice(2764.00, 2776.00, 2764.00);
+
+    history = loadTradeHistory();
+    let updatedSell = history.find(t => t.id === sellTrade.id);
+    assert.ok(updatedSell);
+    assert.equal(updatedSell.status, 'MISSED', 'Status order SELL harus bertransisi ke MISSED');
+    assert.equal(updatedSell.cancelReason, 'TP1 reached before Entry fill');
+    assert.ok(updatedSell.closedAt != null, 'closedAt harus tercatat');
+
+    // Saat harga kemudian rally naik ke 2782 (di atas entry), order tidak boleh aktif
+    updatePrice(2782.00, 2785.00, 2778.00);
+    history = loadTradeHistory();
+    updatedSell = history.find(t => t.id === sellTrade.id);
+    assert.equal(updatedSell.status, 'MISSED', 'Status order MISSED tidak boleh berubah menjadi ACTIVE_RUNNING saat entry tersentuh belakangan');
+  });
 });
+
 
