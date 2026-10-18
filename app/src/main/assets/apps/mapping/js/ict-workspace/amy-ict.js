@@ -452,9 +452,13 @@ export function entryAssistantV3(d, candlesLTF=[], levels={}, pivots={}, options
 
   const dashRangeHigh = (finite(d.rangeHigh) && finite(d.rangeLow)) ? Math.max(d.rangeHigh, d.rangeLow) : null;
   const dashRangeLow = (finite(d.rangeHigh) && finite(d.rangeLow)) ? Math.min(d.rangeHigh, d.rangeLow) : null;
-  const autoRangeHigh = dashRangeHigh ?? resistance;
-  const autoRangeLow = dashRangeLow ?? support;
-  const autoRangeSize = (autoRangeHigh != null && autoRangeLow != null) ? Math.max(autoRangeHigh - autoRangeLow, s.tick) : null;
+  const structRangeHigh = lastHigh ?? levels?.pdh ?? d.pdh ?? resistance;
+  const structRangeLow = lastLow ?? levels?.pdl ?? d.pdl ?? support;
+  const autoRangeHigh = dashRangeHigh ?? structRangeHigh;
+  const autoRangeLow = dashRangeLow ?? structRangeLow;
+  const minRange = Math.max(Number(d.atr || curAtr || 0) * 2.5, 6.0);
+  const rawRange = (autoRangeHigh != null && autoRangeLow != null) ? (autoRangeHigh - autoRangeLow) : 0;
+  const autoRangeSize = rawRange >= minRange ? rawRange : null;
 
   const fibA = Math.min(s.fibShallow, s.fibDeep);
   const fibB = Math.max(s.fibShallow, s.fibDeep);
