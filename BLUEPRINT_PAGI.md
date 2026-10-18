@@ -1117,6 +1117,7 @@
   }
   ```
   Serta batasi target observer hanya pada kontainer spesifik `.stats-grid` daripada memantau seluruh `document.body`.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Guard equality dipasang pada `mappingTarget` dan `journalTarget` di `amyfx-home-data-integration-v1.js`, target MutationObserver dipersempit ke `.stats-grid` dengan filter self-mutation textContent, serta MutationObserver di `profile-system-settings-v1.js` otomatis disconnect setelah panel diinjeksi. Churn loop IndexedDB setiap frame berhasil dihentikan total. 4/4 test lolos di `tests/home-mutation-churn-guard.test.mjs`.
 
 ---
 
@@ -2480,7 +2481,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.25. Local K-NN Cosine Similarity Matcher di WebView Android (Offline)** | P0 (Otonomi AI) | ~10 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.22. Pre-Trade Confluence Checklist 4-Poin di Cockpit Mapping** | P0 (Proteksi Mental) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.23. Auto-Resume Bookmark Cursor di Practice Replay Engine** | P1 (Sangat Praktis) | ~5 menit | [ ] Setuju / [ ] Tunda |
-| 🐛 **Debugging** | **1.47. Pasang Guard Equality & Batasi Target MutationObserver di `amyfx-home-data-integration-v1.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.47. Pasang Guard Equality & Batasi Target MutationObserver di `amyfx-home-data-integration-v1.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.48. Union Set Keys pada Ekspor CSV Jurnal Cegah Kehilangan Field di `journal-export.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.49. Resolusi Dinamis Endpoint `ENDPOINT` & Filter Weekend di `scalper-model.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.44. Terapkan `isWeekendClosure` & Hentikan Polling Akhir Pekan di `home-price-chart.js`** | P0 (Kritis) | ~5 menit | [ ] Setuju / [ ] Tunda |

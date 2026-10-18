@@ -54,7 +54,7 @@
     const currentPreset = colors.preset || '';
 
     const prevTitle = selector.previousElementSibling;
-    if (prevTitle && prevTitle.classList.contains('profile-section-title')) {
+    if (prevTitle && prevTitle.classList.contains('profile-section-title') && prevTitle.textContent !== 'Tampilan & Gaya Kaca') {
       prevTitle.textContent = 'Tampilan & Gaya Kaca';
     }
 
@@ -323,7 +323,16 @@
   });
 
   const main = document.getElementById('main-content');
-  if (main) new MutationObserver(injectSettings).observe(main, { childList: true, subtree: true });
+  if (main) {
+    const observer = new MutationObserver(() => {
+      if (document.querySelector('[data-amyfx-color-settings]')) {
+        observer.disconnect();
+        return;
+      }
+      injectSettings();
+    });
+    observer.observe(main, { childList: true, subtree: true });
+  }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', injectSettings, { once: true });

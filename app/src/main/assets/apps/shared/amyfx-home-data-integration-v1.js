@@ -163,8 +163,8 @@
     const library = Number(metadata.library) || 0;
     const mappingTarget = statValue("Analisis Mapping");
     const journalTarget = statValue("Catatan Jurnal");
-    if (mappingTarget) mappingTarget.textContent = String(analyses);
-    if (journalTarget) journalTarget.textContent = String(journals);
+    if (mappingTarget && mappingTarget.textContent !== String(analyses)) mappingTarget.textContent = String(analyses);
+    if (journalTarget && journalTarget.textContent !== String(journals)) journalTarget.textContent = String(journals);
     publish(analyses, journals, library);
   }
 
@@ -181,8 +181,17 @@
 
   function boot() {
     schedule();
-    const target = document.getElementById("main-content") || document.body;
-    if (target) new MutationObserver(schedule).observe(target, { childList: true, subtree: true });
+    const statsGrid = document.querySelector(".stats-grid");
+    const target = statsGrid || document.getElementById("main-content") || document.body;
+    if (target) {
+      new MutationObserver(mutations => {
+        const isSelf = mutations.every(m => {
+          const t = m.target;
+          return t?.nodeType === 3 && (t.parentElement?.matches?.(".stat-card strong") || t.parentElement?.closest?.(".stat-card"));
+        });
+        if (!isSelf) schedule();
+      }).observe(target, { childList: true, subtree: true });
+    }
     window.addEventListener("focus", schedule);
     window.addEventListener("storage", event => {
       if (!event.key || ["amy_mapping_analyses", LEGACY_JOURNAL_KEY, LEGACY_ITEMS_KEY].includes(event.key)) schedule();
