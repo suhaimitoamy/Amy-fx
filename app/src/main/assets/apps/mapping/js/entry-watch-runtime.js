@@ -391,10 +391,10 @@ function persistAndRender(state, watch, forecast) {
   const signature = signatureOf(watch, forecast);
   attachToResult(state, watch, forecast);
   previous = watch;
-  writeJson(STORAGE_KEY, watch);
-  syncScanner(watch);
   if (signature !== lastSignature) {
     lastSignature = signature;
+    writeJson(STORAGE_KEY, watch);
+    syncScanner(watch);
     sendNotification(watch);
     try { window.render?.(); } catch (_) {}
   }
