@@ -256,17 +256,38 @@ class MainActivity : Activity() {
         webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
             if (url.startsWith("blob:")) {
                 webView.evaluateJavascript("""
-                    fetch('$url')
-                        .then(res => res.blob())
-                        .then(blob => {
-                            var reader = new FileReader();
-                            reader.readAsDataURL(blob);
-                            reader.onloadend = function() {
-                                Android.saveBlob(reader.result, 'Trading_Report_${System.currentTimeMillis()}.pdf');
-                            }
-                        });
+                    (function() {
+                        try {
+                            var targetUrl = '$url';
+                            var anchor = document.querySelector('a[href="' + targetUrl + '"]');
+                            var filename = (anchor && anchor.getAttribute('download')) || '';
+                            fetch(targetUrl)
+                                .then(function(res) { return res.blob(); })
+                                .then(function(blob) {
+                                    var ext = '';
+                                    if (blob.type.indexOf('csv') !== -1) ext = '.csv';
+                                    else if (blob.type.indexOf('json') !== -1) ext = '.json';
+                                    else if (blob.type.indexOf('pdf') !== -1) ext = '.pdf';
+                                    else if (blob.type.indexOf('zip') !== -1) ext = '.zip';
+                                    else if (blob.type.indexOf('png') !== -1) ext = '.png';
+                                    else if (blob.type.indexOf('jpeg') !== -1 || blob.type.indexOf('jpg') !== -1) ext = '.jpg';
+                                    else ext = '.bin';
+
+                                    if (!filename) {
+                                        filename = 'Trading_Export_' + Date.now() + ext;
+                                    } else if (filename.indexOf('.') === -1 && ext) {
+                                        filename = filename + ext;
+                                    }
+                                    var reader = new FileReader();
+                                    reader.readAsDataURL(blob);
+                                    reader.onloadend = function() {
+                                        Android.saveBlob(reader.result, filename);
+                                    };
+                                });
+                        } catch (e) {}
+                    })();
                 """.trimIndent(), null)
-                Toast.makeText(this, "Generating PDF...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Mengunduh file...", Toast.LENGTH_SHORT).show()
             } else if (url.startsWith("http")) {
                 try {
                     val request = DownloadManager.Request(Uri.parse(url))
@@ -1287,13 +1308,23 @@ class MainActivity : Activity() {
                 val cleanBase64 = base64Data.replaceFirst("^data:.*?;base64,".toRegex(), "")
                 val fileAsBytes = Base64.decode(cleanBase64, 0)
 
-                val os = openDownloadOutputStream(filename, "application/pdf") ?: throw IllegalStateException("Gagal membuat file")
+                val mimeType = when {
+                    filename.endsWith(".csv", ignoreCase = true) -> "text/csv"
+                    filename.endsWith(".json", ignoreCase = true) -> "application/json"
+                    filename.endsWith(".pdf", ignoreCase = true) -> "application/pdf"
+                    filename.endsWith(".zip", ignoreCase = true) -> "application/zip"
+                    filename.endsWith(".png", ignoreCase = true) -> "image/png"
+                    filename.endsWith(".jpg", ignoreCase = true) || filename.endsWith(".jpeg", ignoreCase = true) -> "image/jpeg"
+                    else -> "application/octet-stream"
+                }
+
+                val os = openDownloadOutputStream(filename, mimeType) ?: throw IllegalStateException("Gagal membuat file")
                 os.write(fileAsBytes)
                 os.flush()
                 os.close()
 
                 (mContext as Activity).runOnUiThread {
-                    Toast.makeText(mContext, "File tersimpan di folder Download", Toast.LENGTH_LONG).show()
+                    Toast.makeText(mContext, "File tersimpan: $filename", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 (mContext as Activity).runOnUiThread {

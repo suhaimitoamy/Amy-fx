@@ -292,6 +292,7 @@
      - `.json` -> `application/json`
      - `.pdf` -> `application/pdf`
      - `.zip` -> `application/zip`
+- **Status Implementasi:** [x] SELESAI & LOLOS AUDIT REVIEWER (Ekstraksi nama file asli dari anchor/blob type, MIME dinamis `.csv`, `.json`, `.pdf`, `.zip`, `.png`, `.jpg`; unit test lolos di `tests/native-download-mime.test.mjs`).
 
 ---
 
@@ -2517,7 +2518,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.20. Fallback Teks Asli Berita & Filter Notifikasi Kosong** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.15. Perbaikan Deep Linking Rute Notifikasi di `MainActivity`** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.17. Matikan Disk I/O SharedPreferences Tiap 500ms Saat Video Paused** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.8. Perbaikan Download CSV Jurnal Terkorupsi Menjadi PDF** | P0 (Kritis) | ~6 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.8. Perbaikan Download CSV Jurnal Terkorupsi Menjadi PDF** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.10. Perbaikan Race Condition Live Price Timeout 25s di OkHttp** | P0 (Kritis) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.11. Perbaikan Alarm Target Harga Mati di Beranda (`index.html`)** | P0 (Kritis) | ~8 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.13. Guard Weekend Anti-Spam di `DriverSetupSyncWorker` (Hemat Baterai)** | P0 (Kritis) | ~6 menit | [ ] Setuju / [ ] Tunda |
