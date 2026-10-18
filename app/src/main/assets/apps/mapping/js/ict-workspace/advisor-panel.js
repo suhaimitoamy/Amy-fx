@@ -63,23 +63,23 @@
 
   // Live price resolver
   function getLivePrice(ctx, candles) {
-    if (ctx?.amy?.assistant?.plan?.entry && Number(ctx.amy.assistant.plan.entry) > 0) {
-      return Number(ctx.amy.assistant.plan.entry);
+    if (typeof window !== 'undefined' && window.amyfxCurrentPrice && Number(window.amyfxCurrentPrice) > 0) {
+      return Number(window.amyfxCurrentPrice);
     }
-    if (ctx?.primary?.entry && Number(ctx.primary.entry) > 0) {
-      return Number(ctx.primary.entry);
+    const chartPriceEl = typeof document !== 'undefined' ? document.getElementById('chart-price') : null;
+    if (chartPriceEl) {
+      const p = parseFloat(chartPriceEl.textContent.replace(/[^0-9.]/g, ''));
+      if (Number.isFinite(p) && p > 0) return p;
     }
     if (candles?.length) {
       const last = candles.at(-1);
       if (last?.close && Number(last.close) > 0) return Number(last.close);
     }
-    if (typeof window !== 'undefined' && window.amyfxCurrentPrice && Number(window.amyfxCurrentPrice) > 0) {
-      return Number(window.amyfxCurrentPrice);
+    if (ctx?.amy?.assistant?.plan?.entry && Number(ctx.amy.assistant.plan.entry) > 0) {
+      return Number(ctx.amy.assistant.plan.entry);
     }
-    const chartPriceEl = document.getElementById('chart-price');
-    if (chartPriceEl) {
-      const p = parseFloat(chartPriceEl.textContent.replace(/[^0-9.]/g, ''));
-      if (Number.isFinite(p) && p > 0) return p;
+    if (ctx?.primary?.entry && Number(ctx.primary.entry) > 0) {
+      return Number(ctx.primary.entry);
     }
     return 2650.0;
   }
@@ -713,10 +713,18 @@
 
   // Auto-bind context listeners early if DOM ready
   if (typeof window !== 'undefined') {
-    window.addEventListener('amyfx:market-context', () => {
-      const advPanel = document.getElementById('Advisor');
-      if (advPanel && !advPanel.hidden) runAudit();
-    });
+    if (typeof window.addEventListener === 'function') {
+      window.addEventListener('amyfx:market-context', () => {
+        const advPanel = document.getElementById('Advisor');
+        if (advPanel && !advPanel.hidden) runAudit();
+      });
+    }
+
+    window.AmyAdvisorPanel = {
+      getLivePrice,
+      calculateATR,
+      runAudit: () => runAudit()
+    };
   }
 
 })();
