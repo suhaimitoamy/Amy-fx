@@ -96,12 +96,13 @@ test('native updater owns download progress while browser remains a legacy fallb
   assert.match(checker, /hasNativeUpdater\(\)/);
 });
 
-test('cancel never persists dismissal of a newer version', () => {
+test('cancel never persists dismissal of a newer version and throttles resume checks without force', () => {
   const checker = source(checkerUrl);
   assert.doesNotMatch(checker, /localStorage\.setItem\(['"]amy_fx_update_dismissed_version/);
   assert.doesNotMatch(checker, /localStorage\.setItem\(['"]amy_fx_update_last_check/);
   assert.match(checker, /localStorage\.removeItem\('amy_fx_update_dismissed_version'\)/);
   assert.match(checker, /visibilitychange/);
-  assert.match(checker, /checkUpdate\(\{ force: true \}\)/);
+  assert.match(checker, /RESUME_COOLDOWN/);
+  assert.match(checker, /checkUpdate\(\{ force: false \}\)/);
   assert.match(checker, /window\.AmyFXUpdate/);
 });

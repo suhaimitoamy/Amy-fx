@@ -1465,6 +1465,11 @@
     setTimeout(() => checkUpdate({ force: false }), RESUME_DELAY_MS);
   }
   ```
+- **Status:** [x] SELESAI & LOLOS AUDIT REVIEWER
+- **Catatan Audit Reviewer Guard:**
+  - Penerapan `RESUME_COOLDOWN = 10 * 60 * 1000` (10 menit) dan penggantian flag `force: true` menjadi `force: false` pada event `visibilitychange` dan `pageshow` di [`update-checker.js`](file:///root/Amy-fx/app/src/main/assets/update-checker.js#L354-L368) berhasil menghentikan spam request manifest raw GitHub saat trader sering berpindah aplikasi.
+  - Opsi manual `checkNow()` tetap mempertahankan `force: true` untuk kenyamanan pengguna saat ingin mengecek versi secara instan.
+  - Pengujian targeted `node --test tests/native-updater.test.mjs tests/profile-version-update-regression.test.mjs` (13/13 pass) dan `tests/professional-glassmorphism-redesign.test.mjs` (5/5 pass) lulus 100%.
 
 ---
 
@@ -2413,7 +2418,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.32. Instant CSV Backup Restore & Reconciliation di Jurnal Trading** | P0 (Proteksi Data) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.33. Dynamic DST-Aware Session Countdown & Killzone Pill di Header Cockpit** | P0 (Disiplin Waktu) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.62. Koreksi Offset 17:00 NY Close D1 Candle di `practice-core.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.63. Eliminasi `force: true` Spam Manifest Update di `update-checker.js`** | P0 (Kritis) | ~3 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.63. Eliminasi `force: true` Spam Manifest Update di `update-checker.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.64. Rebrand Layar Kunci PIN Jurnal & Cegah DOM Leak di `apps/journal/app.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.30. New York Close D1 Synthesizer di Practice Engine** | P0 (Akurasi Charting) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.31. Biometric Fingerprint & Face Unlock Bridge untuk Jurnal Trading** | P0 (Privasi & Keamanan) | ~7 menit | [ ] Setuju / [ ] Tunda |

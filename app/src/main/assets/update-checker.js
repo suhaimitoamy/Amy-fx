@@ -6,6 +6,7 @@
     || 'https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json';
   const CHECK_INTERVAL_MS = 15 * 60 * 1000;
   const RESUME_DELAY_MS = 900;
+  const RESUME_COOLDOWN = 10 * 60 * 1000;
 
   let lastCheckAt = 0;
   let hiddenAt = 0;
@@ -353,13 +354,19 @@
       hiddenAt = Date.now();
       return;
     }
-    const wasAway = hiddenAt && Date.now() - hiddenAt > 1200;
+    const now = Date.now();
+    const wasAway = hiddenAt && now - hiddenAt > 1200;
     hiddenAt = 0;
-    if (wasAway) setTimeout(() => checkUpdate({ force: true }), RESUME_DELAY_MS);
+    if (wasAway && now - lastCheckAt > RESUME_COOLDOWN) {
+      setTimeout(() => checkUpdate({ force: false }), RESUME_DELAY_MS);
+    }
   });
 
   window.addEventListener('pageshow', event => {
-    if (event.persisted) setTimeout(() => checkUpdate({ force: true }), RESUME_DELAY_MS);
+    const now = Date.now();
+    if (event.persisted && now - lastCheckAt > RESUME_COOLDOWN) {
+      setTimeout(() => checkUpdate({ force: false }), RESUME_DELAY_MS);
+    }
   });
 
   if (document.readyState === 'loading') {
