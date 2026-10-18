@@ -22,7 +22,7 @@ class TwelveDataPriceBridge(
     private val handler = Handler(Looper.getMainLooper())
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(25, TimeUnit.SECONDS)
+        .readTimeout(35, TimeUnit.SECONDS)
         .retryOnConnectionFailure(true)
         .build()
     @Volatile private var call: Call? = null

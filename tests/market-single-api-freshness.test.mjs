@@ -20,6 +20,9 @@ test('live quote uses one native Twelve Data WebSocket while Mapping keeps REST 
   assert.match(relay, /process\.env\.TWELVEDATA_API_KEY/);
   assert.match(relay, /new WebSocket/);
 
+  // Item 1.55: 13s tolerance margin prevents race condition and freeze on rotation
+  assert.match(relay, /setTimeout\(finish,\s*22000\)/);
+  assert.match(bridge, /\.readTimeout\(35,\s*TimeUnit\.SECONDS\)/);
 });
 test('duplicate candle keys collapse before Supabase upsert', () => {
   const rows = dedupeCandleRows([

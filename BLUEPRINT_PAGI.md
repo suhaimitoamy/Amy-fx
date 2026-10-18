@@ -1291,6 +1291,7 @@
   - Di `api/live-price.js`: turunkan lifetime koneksi server menjadi 22 detik.
   - Di `TwelveDataPriceBridge.kt`: naikkan `readTimeout` OkHttp menjadi 35 detik.  
   Dengan selisih 13 detik, stream selalu tertutup secara rapi (*graceful EOF*) sebelum batas waktu client tercapai, menghilangkan freeze reconnect.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Toleransi margin 13 detik (server 22s, OkHttp 35s) aktif; eliminasi race condition timeout dan freezing reconnect live price. Pengujian unit lolos di `tests/market-single-api-freshness.test.mjs` dan `tests/live-price-relay.test.mjs`.
 
 ---
 
@@ -2466,7 +2467,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.27. Economic Event Countdown Badge di Header Cockpit** | P0 (Proteksi Modal) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.53. Fingerprint $O(1)$ Gantikan `JSON.stringify` di Render Chart `chart-view.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.54. Normalisasi Case-Insensitive Hasil Trade di `journal-analytics.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.55. Margin Toleransi Timeout 25s di SSE & OkHttp Bridge `TwelveDataPriceBridge.kt`** | P0 (Kritis) | ~5 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.55. Margin Toleransi Timeout 25s di SSE & OkHttp Bridge `TwelveDataPriceBridge.kt`** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.50. Validasi Usia TTL 48 Jam Cache Lilin Offline di `data.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.51. Form Validasi Jurnal: Dukungan Single TP & Skor 0 di `journal-schema.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.52. Perbaiki Regex Progres 10 Modul Tematik di `apps/academy/main.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
