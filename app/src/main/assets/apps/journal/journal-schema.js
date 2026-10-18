@@ -1,5 +1,5 @@
 window.AmyJournalSchema = {
-  requiredFields: ['analysisTime','pair','timeframe','htfBias','setupType','entryArea','stopLoss','takeProfit2','setupScore'],
+  requiredFields: ['analysisTime','pair','timeframe','htfBias','setupType','entryArea','stopLoss','setupScore'],
   emptyEntry(){
     return {
       id: 'JRN-' + Date.now(),
@@ -34,7 +34,14 @@ window.AmyJournalSchema = {
     };
   },
   validate(entry){
-    const missing = this.requiredFields.filter(k => !entry[k]);
+    const required = ['analysisTime', 'pair', 'timeframe', 'htfBias', 'setupType', 'entryArea', 'stopLoss'];
+    const missing = required.filter(k => entry[k] === undefined || entry[k] === null || String(entry[k]).trim() === '');
+    const hasTp = (entry.takeProfit1 !== undefined && entry.takeProfit1 !== null && String(entry.takeProfit1).trim() !== '') ||
+                  (entry.takeProfit2 !== undefined && entry.takeProfit2 !== null && String(entry.takeProfit2).trim() !== '');
+    if (!hasTp) missing.push('takeProfit1 / takeProfit2');
+    if (entry.setupScore === undefined || entry.setupScore === null || String(entry.setupScore).trim() === '') {
+      missing.push('setupScore');
+    }
     return {ok: missing.length === 0, missing};
   },
   computeRR(entry){

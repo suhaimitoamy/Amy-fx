@@ -1208,6 +1208,7 @@
     return { ok: missing.length === 0, missing };
   }
   ```
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. `journal-schema.js` kini mengizinkan scalping single TP (`takeProfit1` tanpa `takeProfit2`) serta menerima nilai evaluasi `setupScore: 0` tanpa ditolak. Pengujian unit 5/5 lolos di `tests/journal-schema.test.mjs`.
 
 ---
 
@@ -2470,7 +2471,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.54. Normalisasi Case-Insensitive Hasil Trade di `journal-analytics.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.55. Margin Toleransi Timeout 25s di SSE & OkHttp Bridge `TwelveDataPriceBridge.kt`** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.50. Validasi Usia TTL 48 Jam Cache Lilin Offline di `data.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.51. Form Validasi Jurnal: Dukungan Single TP & Skor 0 di `journal-schema.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.51. Form Validasi Jurnal: Dukungan Single TP & Skor 0 di `journal-schema.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.52. Perbaiki Regex Progres 10 Modul Tematik di `apps/academy/main.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.24. Visual Rejection Candle Body Filter di Mini-Card Signal Assistant V3** | P0 (Integritas Sinyal) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.25. Local K-NN Cosine Similarity Matcher di WebView Android (Offline)** | P0 (Otonomi AI) | ~10 menit | [ ] Setuju / [ ] Tunda |
