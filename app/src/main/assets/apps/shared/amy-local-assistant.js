@@ -50,7 +50,7 @@
     const found=[];
     if(/\b(harga|price|mapping|market|xau|gold|emas|sinyal|signal|bias|arah|entry|setup|stop loss|target|sl|tp)\b/.test(q))found.push('mapping');
     if(/\b(news|berita|kabar|headline|ekonomi)\b/.test(q))found.push('news');
-    if(/\b(jurnal|journal|transaksi|profit|rugi|winrate|win rate|performa|evaluasi|kesalahan|emosi|disiplin)\b/.test(q))found.push('journal');
+    if(/\b(jurnal|journal|transaksi|profit|rugi|winrate|win rate|performa|evaluasi|kesalahan|emosi|disiplin|psikologi|fomo|overtrade|revenge)\b/.test(q))found.push('journal');
     if(/\b(belajar|baca|bacaan|membaca|pelajari|academy|akademi|tutorial|progres|progress|latihan|soal|skor|nilai|materi|pelajaran)\b/.test(q))found.push('academy');
     // Personal trade questions use Journal, unless Mapping is explicitly named.
     if(found.includes('journal')&&!/mapping|harga|market|xau|gold|emas|sinyal|signal|bias|arah/.test(q))return found.filter(id=>id!=='mapping');
@@ -98,15 +98,68 @@
   function journal(q,data){
     const rows=data.rows; if(!rows.length)return `Belum ada jurnal yang dapat dibaca.${data.fallback?' Penyimpanan utama kosong/tidak tersedia; cache lokal juga kosong.':''}`;
     const win=rows.filter(r=>norm(r.result)==='win').length,loss=rows.filter(r=>norm(r.result)==='loss').length,be=rows.filter(r=>['be','break even','breakeven'].includes(norm(r.result))).length;
-    const profit=rows.reduce((s,r)=>s+(Number(r.profit)||0),0),lossAmount=rows.reduce((s,r)=>s+(Number(r.loss)||0),0),completed=win+loss+be;
-    let text=`Jurnal: ${rows.length} transaksi; ${win} win, ${loss} loss, ${be} BE, ${rows.length-completed} belum selesai/lainnya. Win rate ${completed?number(win/completed*100)+'%':'belum tersedia'} (win / transaksi selesai, termasuk BE).\nTotal profit tercatat ${number(profit)}, loss ${number(lossAmount)}, selisih ${number(profit-lossAmount)} dalam satuan input jurnal.`;
+    const profit=rows.reduce((s,r)=>s+(Number(r.profit)||(Number(r.pnlMoney)>0?Number(r.pnlMoney):0)||0),0);
+    const lossAmount=rows.reduce((s,r)=>s+(Number(r.loss)||(Number(r.pnlMoney)<0?Math.abs(Number(r.pnlMoney)):0)||0),0);
+    const netPips=rows.reduce((s,r)=>s+(Number(r.pnlPips||r.pips)||0),0);
+    const completed=win+loss+be;
+    const profitFactor=lossAmount>0?number(profit/lossAmount):(profit>0?'Infinity (tanpa loss)':'1.00');
+    const avgWin=win>0?profit/win:0;
+    const avgLoss=loss>0?lossAmount/loss:0;
+    const winLossRatio=avgLoss>0?number(avgWin/avgLoss):'-';
+
+    const hourProfits={};
+    rows.forEach(r=>{
+      const t = r.actualEntryTime || r.analysisTime || r.date || r.createdAt;
+      if(t){
+        const d = new Date(t);
+        if(!isNaN(d.getTime())){
+          const h = (d.getUTCHours() + 8) % 24; // WITA
+          const p = Number(r.profit)||(Number(r.pnlMoney)>0?Number(r.pnlMoney):0)||0;
+          hourProfits[h] = (hourProfits[h] || 0) + p;
+        }
+      }
+    });
+    let bestHour = null, maxHProfit = -Infinity;
+    for(const [h, p] of Object.entries(hourProfits)){
+      if(p > maxHProfit && p > 0){
+        maxHProfit = p;
+        bestHour = h;
+      }
+    }
+    const bestHourStr = bestHour !== null ? `${String(bestHour).padStart(2,'0')}:00 WITA` : 'belum ada data jam';
+
+    let text=`Jurnal: ${rows.length} transaksi; ${win} win, ${loss} loss, ${be} BE, ${rows.length-completed} belum selesai/lainnya. Win rate ${completed?number(win/completed*100)+'%':'belum tersedia'} (win / transaksi selesai, termasuk BE).\nTotal profit tercatat ${number(profit)}, loss ${number(lossAmount)}, selisih ${number(profit-lossAmount)} dalam satuan input jurnal.`+
+      `\n• Profit Factor: ${profitFactor} | Net Pips: ${number(netPips)}`+
+      `\n• Rata-rata Win vs Loss: ${number(avgWin)} / ${number(avgLoss)} (Rasio: ${winLossRatio})`+
+      `\n• Jam Paling Menguntungkan: ${bestHourStr}`;
+
+    const isEmotionQuery = /emosi|psikologi|mental|fomo|overtrade|revenge|disiplin/.test(q);
+    const emotionTags = [];
+    rows.forEach(r=>{
+      const rawText = [r.emotion, r.mistake, r.mistakes, r.notes, r.evaluation].filter(Boolean).join(' ').toLowerCase();
+      if(/fomo/.test(rawText)) emotionTags.push('FOMO');
+      if(/overtrade|over trading/.test(rawText)) emotionTags.push('Overtrade');
+      if(/revenge/.test(rawText)) emotionTags.push('Revenge Trading');
+      if(/takut|fear/.test(rawText)) emotionTags.push('Fear of Loss');
+      if(/serakah|greed/.test(rawText)) emotionTags.push('Greed');
+      if(/geser sl|lebar sl|tanpa sl/.test(rawText)) emotionTags.push('Pelanggaran SL');
+    });
+
+    if(isEmotionQuery || emotionTags.length > 0){
+      const counts = {};
+      emotionTags.forEach(t => counts[t] = (counts[t] || 0) + 1);
+      const tagSummary = Object.entries(counts).map(([k,v])=>`${k} (${v}x)`).join(', ') || 'tidak ada catatan emosi negatif terdeteksi';
+      text += `\n\n🧠 Refleksi Emosi & Disiplin: ${tagSummary}.\n`+
+        `Saran Disiplin: Patuhi SOP ICT dengan sabar. Jangan entry tanpa konfirmasi MSS + FVG di Killzone, dan batasi risiko maksimal 1-2% per setup.`;
+    }
+
     if(data.fallback)text+='\nSumber: cache lokal; penyimpanan utama tidak tersedia.';
     let sorted=rows.slice().sort((a,b)=>String(b.date||b.createdAt||'').localeCompare(String(a.date||a.createdAt||'')));
     const date=q.match(/\b20\d{2} \d{2} \d{2}\b/);if(date)sorted=sorted.filter(r=>r.date===date[0].replaceAll(' ','-'));
     if(/loss|rugi|kalah/.test(q))sorted=sorted.filter(r=>norm(r.result)==='loss');
-    if(/win|menang/.test(q)&&!/rate/.test(q))sorted=sorted.filter(r=>norm(r.result)==='win');
+    if(/win|menang/.test(q)&&!/rate|rasio/.test(q))sorted=sorted.filter(r=>norm(r.result)==='win');
     const fields=/evaluasi|kesalahan|emosi|disiplin|review|pelajaran/.test(q)?['evaluation','mistakes','lessons','emotion']:['setup'];
-    text+='\n'+sorted.slice(0,5).map(r=>`${r.date||''} · ${r.title||'Jurnal'} · ${r.market||''} · ${r.result||''}\n`+fields.map(f=>r[f]?`${({evaluation:'Evaluasi',mistakes:'Kesalahan',lessons:'Pelajaran',emotion:'Emosi',setup:'Setup'})[f]}: ${String(r[f]).slice(0,800)}`:'').filter(Boolean).join('\n')).join('\n');
+    text+='\n'+sorted.slice(0,5).map(r=>`${r.date||''} · ${r.title||r.pair||'Jurnal'} · ${r.market||r.timeframe||''} · ${r.result||''}\n`+fields.map(f=>r[f]?`${({evaluation:'Evaluasi',mistakes:'Kesalahan',lessons:'Pelajaran',emotion:'Emosi',setup:'Setup'})[f]}: ${String(r[f]).slice(0,800)}`:'').filter(Boolean).join('\n')).join('\n');
     return text;
   }
   function academy(){

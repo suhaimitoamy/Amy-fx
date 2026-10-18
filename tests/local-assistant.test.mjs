@@ -68,3 +68,51 @@ test('IndexedDB query falls back from journals.v2 to items.v2 for assistant jour
   assert.match(res.text, /Total profit tercatat 250/);
 });
 
+test('Smart Journal Winrate, Profit Factor, Best Hour, and Emotional Reflection Summary (item 2.29)', async () => {
+  const journalEntries = [
+    {
+      result: 'Win',
+      profit: 300,
+      pnlPips: 30,
+      actualEntryTime: '2026-10-18T12:30:00Z', // 20:30 WITA
+      pair: 'XAU/USD',
+      emotion: 'Disiplin menunggu MSS'
+    },
+    {
+      result: 'Loss',
+      loss: 100,
+      pnlPips: -10,
+      actualEntryTime: '2026-10-18T06:00:00Z', // 14:00 WITA
+      pair: 'XAU/USD',
+      emotion: 'FOMO kejar candle hijau'
+    },
+    {
+      result: 'Win',
+      profit: 200,
+      pnlPips: 20,
+      actualEntryTime: '2026-10-18T13:00:00Z', // 21:00 WITA
+      pair: 'XAU/USD',
+      mistake: 'Sedikit Overtrade tapi masih TP'
+    }
+  ];
+
+  const c = runtime({
+    'tradingLibraryManager.journals.v1': JSON.stringify(journalEntries)
+  });
+
+  // Test intent and profit factor metrics
+  const evalRes = await c.AmyLocalAssistant.ask('evaluasi performa jurnal saya');
+  assert.match(evalRes.text, /Profit Factor:\s*5/); // 500 / 100 = 5
+  assert.match(evalRes.text, /Net Pips:\s*40/); // 30 - 10 + 20 = 40
+  assert.match(evalRes.text, /Jam Paling Menguntungkan:\s*20:00 WITA/); // best hour
+  assert.match(evalRes.text, /Rasio:\s*2,5/); // avgWin (250) / avgLoss (100) = 2.5
+
+  // Test emotion reflection intent
+  const emotionRes = await c.AmyLocalAssistant.ask('bagaimana emosi trading saya?');
+  assert.match(emotionRes.text, /Refleksi Emosi & Disiplin/);
+  assert.match(emotionRes.text, /FOMO \(1x\)/);
+  assert.match(emotionRes.text, /Overtrade \(1x\)/);
+  assert.match(emotionRes.text, /Saran Disiplin/);
+});
+
+
