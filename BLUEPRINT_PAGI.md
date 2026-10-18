@@ -1876,56 +1876,14 @@
 
 ---
 
-### 1.76. [TARGET LIQUIDITY BLINDSPOT] Ketiadaan Pivots H1 pada Target Likuiditas di `six-drivers.mjs` Memicu False 'WAITING_TARGET' Lockout
-- **Lokasi File:** [`lib/scalper-engine/six-drivers.mjs`](file:///root/Amy-fx/lib/scalper-engine/six-drivers.mjs#L89-L94, #L130-L135, #L176-L188)
+### 1.76. [TARGET LIQUIDITY BLINDSPOT] Ketiadaan Pivots H1 pada Target Likuiditas di `six-drivers.mjs` Memicu False 'WAITING_TARGET' Lockout — `[x] SELESAI & LOLOS AUDIT REVIEWER`
+- **Lokasi File:** [`lib/scalper-engine/six-drivers.mjs`](file:///root/Amy-fx/lib/scalper-engine/six-drivers.mjs#L89-L94, #L130-L135, #L176-L188) & [`supabase/functions/scalper-engine/six-drivers.mjs`](file:///root/Amy-fx/supabase/functions/scalper-engine/six-drivers.mjs)
 - **Akar Masalah (Temuan Agen Delta & Agen Epsilon):**
-  Di `six-drivers.mjs#L130`, array lilin `H1` sudah dibersihkan secara presisi:
-  ```javascript
-  const M=sixClosed(m15,900,nowSeconds),T=sixClosed(m5,300,nowSeconds),D=sixClosed(d1,86400,nowSeconds),H=sixClosed(h1,3600,nowSeconds);
-  ```
-  Namun, pada pemanggilan `targetsAt()` di baris 135:
-  ```javascript
-  const levels=targetsAt(M,executionCandles,D,nowSeconds);
-  ```
-  Parameter `H` sama sekali tidak disertakan!  
-  Di dalam fungsi `targetsAt(M, T, D, now)`:
-  ```javascript
-  function targetsAt(M,T,D,now) {
-    const p=sixPivots(M),list=[];
-    for(const [key,side]of [['highs','BUY'],['lows','SELL']])for(const x of p[key].slice(-30))list.push({level:x.price,side,sourceTime:x.confirmedAt,label:key==='highs'?'BSL':'SSL'});
-    const day=D.at(-1);if(day)list.push({level:day.high,side:'BUY',sourceTime:day.close_time,label:'PDH'},{level:day.low,side:'SELL',sourceTime:day.close_time,label:'PDL'});
-    return list.filter(x=>x.sourceTime<=now&&![...M,...T].some(c=>c.close_time>x.sourceTime&&(x.side==='BUY'?c.high>=x.level:c.low<=x.level)));
-  }
-  ```
-  Sumber likuiditas hanya membaca 30 swing lokal M15 dan PDH/PDL dari D1 kemarin.  
-  Saat terjadi tren ekspansi atau breakout kuat di mana harga telah menyapu seluruh 30 swing M15 lokal (misal Gold reli $30+ dan PDH sudah terlampaui), `levels` menjadi kosong (`[]`).  
-  Akibatnya, `liquidity` bernilai `undefined`, `targetOk` mengevaluasi `false`, dan kondisi baris 188 mengunci driver:
-  ```javascript
-  if(!targetOk&& !['INVALIDATED','EXPIRED'].includes(view.state)){
-    view.state='WAITING_TARGET';
-    view.reason='Target model belum memiliki ruang ke likuiditas aktif searah.';
-  }
-  ```
-  Sistem gagal menerbitkan setup valid (*false rejection*) hanya karena ketiadaan data target swing H1 yang lebih tinggi.
-- **Rancangan Solusi (Draft Solusi untuk ACC):**
-  Sertakan `H` ke dalam fungsi `targetsAt(M, T, D, H, now)` dan ambil swing H1 (`sixPivots(H, 2)`):
-  ```javascript
-  function targetsAt(M, T, D, H = [], now) {
-    const p = sixPivots(M), list = [];
-    for (const [key, side] of [['highs', 'BUY'], ['lows', 'SELL']]) {
-      for (const x of p[key].slice(-30)) list.push({ level: x.price, side, sourceTime: x.confirmedAt, label: key === 'highs' ? 'BSL' : 'SSL' });
-    }
-    if (H.length >= 10) {
-      const pH = sixPivots(H, 2);
-      for (const [key, side] of [['highs', 'BUY'], ['lows', 'SELL']]) {
-        for (const x of pH[key].slice(-20)) list.push({ level: x.price, side, sourceTime: x.confirmedAt, label: key === 'highs' ? 'H1_BSL' : 'H1_SSL' });
-      }
-    }
-    const day = D.at(-1);
-    if (day) list.push({ level: day.high, side: 'BUY', sourceTime: day.close_time, label: 'PDH' }, { level: day.low, side: 'SELL', sourceTime: day.close_time, label: 'PDL' });
-    return list.filter(x => x.sourceTime <= now && ![...M, ...T].some(c => c.close_time > x.sourceTime && (x.side === 'BUY' ? c.high >= x.level : c.low <= x.level)));
-  }
-  ```
+  Di `six-drivers.mjs`, fungsi `targetsAt(M, T, D, now)` awalnya tidak menerima array lilin `H1`. Saat harga mengalami ekspansi atau tren kuat yang telah menyapu seluruh swing lokal M15 dan PDH/PDL, target likuiditas bernilai kosong sehingga memicu status `WAITING_TARGET` semu (*false lockout*).
+- **Implementasi & Verifikasi:**
+  - `six-drivers.mjs`: Menambahkan parameter `H = []` pada `targetsAt(M, T, D, H, now)` dan mengekstraksi swing pivots H1 (`sixPivots(H, 2)`) dengan label `H1_BSL` dan `H1_SSL`.
+  - Sinkronisasi byte-identical ke `supabase/functions/scalper-engine/six-drivers.mjs`.
+  - Targeted unit tests: `tests/scalper-setups-d1-pdh-pdl.test.mjs` (4/4 lulus 100%) dan seluruh 30 tes regresi six-driver.
 
 ---
 
@@ -2462,7 +2420,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.41. Smart Spaced-Repetition & Weak-Spot Quiz Suggester di Akademi** | P0 (Edukasi Cerdas) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.74. Perbaikan Deep Link Media Player ke Akademi di `BackgroundVideoPlaybackService.kt`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.75. Eliminasi False Exponential Backoff Reconnect di `TwelveDataPriceBridge.kt`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.76. Inklusi Pivots H1 pada Target Likuiditas di `six-drivers.mjs`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.76. Inklusi Pivots H1 pada Target Likuiditas di `six-drivers.mjs`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.38. Multi-Timeframe High-Watermark Liquidity Ladder di 6-Driver Engine** | P0 (Akurasi Target) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.39. Seamless Lockscreen Player with Resume-to-Lesson Deep Linking di Akademi** | P0 (Pengalaman Belajar) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.71. Koreksi Lilin Displacement FVG (`middle`) di `concept-fvg.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |

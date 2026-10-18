@@ -86,9 +86,13 @@ function emaTrend(rows,end) {
   for(const c of part.slice(1)){prev=ema;ema+=(c.close-ema)*2/21;}
   return part.at(-1).close>ema&&ema>prev?1:part.at(-1).close<ema&&ema<prev?-1:0;
 }
-function targetsAt(M,T,D,now) {
+function targetsAt(M,T,D,H=[],now) {
   const p=sixPivots(M),list=[];
   for(const [key,side]of [['highs','BUY'],['lows','SELL']])for(const x of p[key].slice(-30))list.push({level:x.price,side,sourceTime:x.confirmedAt,label:key==='highs'?'BSL':'SSL'});
+  if(Array.isArray(H)&&H.length>=10){
+    const pH=sixPivots(H,2);
+    for(const [key,side]of [['highs','BUY'],['lows','SELL']])for(const x of pH[key].slice(-20))list.push({level:x.price,side,sourceTime:x.confirmedAt,label:key==='highs'?'H1_BSL':'H1_SSL'});
+  }
   const day=D.at(-1);if(day)list.push({level:day.high,side:'BUY',sourceTime:day.close_time,label:'PDH'},{level:day.low,side:'SELL',sourceTime:day.close_time,label:'PDL'});
   return list.filter(x=>x.sourceTime<=now&&![...M,...T].some(c=>c.close_time>x.sourceTime&&(x.side==='BUY'?c.high>=x.level:c.low<=x.level)));
 }
@@ -132,7 +136,7 @@ export function evaluateSixDrivers({m15=[],m5=[],h1=[],d1=[],context,nowSeconds=
   const last=executionCandles.at(-1),fresh=context?.fresh===true&&M.length>=30&&last&&nowSeconds-last.close_time<=2100;
   const result={version:SIX_ENGINE_VERSION,ruleVersion:SIX_RULE_VERSION,generatedAt:nowSeconds,sourceTime:last?.close_time??null,fresh:Boolean(fresh),drivers:[],candidates:[]};
   const struct=sixStructure(M),events=struct.events.filter(e=>e.time>=nowSeconds-7200).reverse();
-  const levels=targetsAt(M,executionCandles,D,nowSeconds),bias=context?.amy?.dashboard?.biasDir??struct.bias;
+  const levels=targetsAt(M,executionCandles,D,H,nowSeconds),bias=context?.amy?.dashboard?.biasDir??struct.bias;
   const safe=['SAFE','UPCOMING','MEDIUM_ALERT'].includes(context?.news?.status);
   const prepared=new Map();
   for(const driver of SIX_DRIVERS.filter(d=>d.mode!=='ENSEMBLE')) {

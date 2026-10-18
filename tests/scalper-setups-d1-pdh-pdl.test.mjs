@@ -169,3 +169,27 @@ test('Item 1.1: buildMarketContext synthesizes D1 from H1 when d1 is omitted, cl
   assert.ok(pdl, 'PDL must be present in liquidity levels even when d1 input is omitted');
 });
 
+test('Item 1.76: targetsAt in six-drivers.mjs includes H1 pivots to prevent false WAITING_TARGET lockout', () => {
+  const source = fs.readFileSync('lib/scalper-engine/six-drivers.mjs', 'utf8');
+  assert.match(
+    source,
+    /function targetsAt\(M,\s*T,\s*D,\s*H\s*=\s*\[\],\s*now\)/,
+    'targetsAt must accept H candles'
+  );
+  assert.match(
+    source,
+    /const pH\s*=\s*sixPivots\(H,\s*2\)/,
+    'targetsAt must extract swing pivots from H1'
+  );
+  assert.match(
+    source,
+    /label:\s*key\s*===\s*'highs'\s*\?\s*'H1_BSL'\s*:\s*'H1_SSL'/,
+    'targetsAt must label H1 targets as H1_BSL and H1_SSL'
+  );
+  assert.match(
+    source,
+    /const levels\s*=\s*targetsAt\(M,\s*executionCandles,\s*D,\s*H,\s*nowSeconds\)/,
+    'evaluateSixDrivers must pass H to targetsAt'
+  );
+});
+
