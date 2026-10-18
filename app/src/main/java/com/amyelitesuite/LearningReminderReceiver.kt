@@ -181,22 +181,36 @@ class LearningReminderReceiver : BroadcastReceiver() {
             )
 
             try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        if (alarmManager.canScheduleExactAlarms()) {
-                            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, target.timeInMillis, pendingIntent)
-                        } else {
-                            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, target.timeInMillis, pendingIntent)
-                        }
-                    } else {
-                        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, target.timeInMillis, pendingIntent)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    val canExact = try {
+                        alarmManager.canScheduleExactAlarms()
+                    } catch (_: SecurityException) {
+                        false
                     }
+                    if (canExact) {
+                        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, target.timeInMillis, pendingIntent)
+                    } else {
+                        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, target.timeInMillis, pendingIntent)
+                    }
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, target.timeInMillis, pendingIntent)
                 } else {
                     alarmManager.setExact(AlarmManager.RTC_WAKEUP, target.timeInMillis, pendingIntent)
                 }
                 Log.d("AmyFX-ReminderReceiver", "Alarm scheduled for %s WITA at epoch %d".format(timeStr, target.timeInMillis))
+            } catch (se: SecurityException) {
+                Log.w("AmyFX-ReminderReceiver", "SecurityException scheduling exact alarm (Android 13/14+ permission revoked), falling back to inexact alarm", se)
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, target.timeInMillis, pendingIntent)
+                    } else {
+                        alarmManager.set(AlarmManager.RTC_WAKEUP, target.timeInMillis, pendingIntent)
+                    }
+                } catch (fallbackEx: Exception) {
+                    Log.e("AmyFX-ReminderReceiver", "Failed to schedule inexact fallback alarm", fallbackEx)
+                }
             } catch (e: Exception) {
-                Log.w("AmyFX-ReminderReceiver", "Failed to schedule exact alarm, falling back", e)
+                Log.w("AmyFX-ReminderReceiver", "Failed to schedule alarm, falling back", e)
                 try {
                     alarmManager.set(AlarmManager.RTC_WAKEUP, target.timeInMillis, pendingIntent)
                 } catch (_: Exception) {}

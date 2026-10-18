@@ -133,13 +133,16 @@ test('LearningReminderWorker strictly rejects premature execution (e.g. 13:41 wh
   assert.match(workerSource, /ExistingPeriodicWorkPolicy\.CANCEL_AND_REENQUEUE/);
 });
 
-test('LearningReminderReceiver provides exact AlarmManager scheduling with Doze mode wakeup', () => {
-  assert.match(receiverSource, /class LearningReminderReceiver : BroadcastReceiver/);
-  assert.match(receiverSource, /ACTION_TRIGGER_REMINDER = "com\.amyelitesuite\.action\.TRIGGER_LEARNING_REMINDER"/);
-  assert.match(receiverSource, /alarmManager(\.|\?\.)setExactAndAllowWhileIdle/);
-  assert.match(receiverSource, /alarmManager(\.|\?\.)setAndAllowWhileIdle/);
-  assert.match(receiverSource, /diffMinutes\s*>\s*15/);
-  assert.match(receiverSource, /Spurious alarm trigger/);
+test('LearningReminderReceiver provides exact AlarmManager scheduling with Doze mode wakeup and SecurityException guard', () => {
+  const currentReceiverSource = readFileSync(new URL('../app/src/main/java/com/amyelitesuite/LearningReminderReceiver.kt', import.meta.url), 'utf8');
+  assert.match(currentReceiverSource, /class LearningReminderReceiver : BroadcastReceiver/);
+  assert.match(currentReceiverSource, /ACTION_TRIGGER_REMINDER = "com\.amyelitesuite\.action\.TRIGGER_LEARNING_REMINDER"/);
+  assert.match(currentReceiverSource, /alarmManager(\.|\?\.)setExactAndAllowWhileIdle/);
+  assert.match(currentReceiverSource, /alarmManager(\.|\?\.)setAndAllowWhileIdle/);
+  assert.match(currentReceiverSource, /canScheduleExactAlarms/);
+  assert.match(currentReceiverSource, /catch\s*\(\w*:\s*SecurityException\)/);
+  assert.match(currentReceiverSource, /diffMinutes\s*>\s*15/);
+  assert.match(currentReceiverSource, /Spurious alarm trigger/);
   assert.match(manifestSource, /android:name="\.LearningReminderReceiver"/);
 });
 
