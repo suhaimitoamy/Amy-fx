@@ -1009,8 +1009,25 @@ class MainActivity : Activity() {
             loop: Boolean,
             tempPath: String
         ): Boolean {
+            val callerUrl = if (::webView.isInitialized) webView.url else null
+            return playBackgroundVideoWithTarget(source, sourceKey, title, positionMsText, loop, tempPath, callerUrl)
+        }
+
+        @JavascriptInterface
+        fun playBackgroundVideoWithTarget(
+            source: String,
+            sourceKey: String,
+            title: String,
+            positionMsText: String,
+            loop: Boolean,
+            tempPath: String,
+            targetUrl: String?
+        ): Boolean {
             if (source.isBlank()) return false
             return try {
+                val resolvedTarget = targetUrl?.takeIf { it.isNotBlank() }
+                    ?: (if (::webView.isInitialized) webView.url else null)
+                    ?: BackgroundVideoPlaybackService.DEFAULT_TARGET_URL
                 val intent = Intent(mContext, BackgroundVideoPlaybackService::class.java).apply {
                     action = BackgroundVideoPlaybackService.ACTION_PLAY
                     putExtra(BackgroundVideoPlaybackService.EXTRA_SOURCE, source)
@@ -1019,6 +1036,7 @@ class MainActivity : Activity() {
                     putExtra(BackgroundVideoPlaybackService.EXTRA_POSITION_MS, positionMsText.toLongOrNull() ?: 0L)
                     putExtra(BackgroundVideoPlaybackService.EXTRA_LOOP, loop)
                     putExtra(BackgroundVideoPlaybackService.EXTRA_TEMP_PATH, tempPath)
+                    putExtra(BackgroundVideoPlaybackService.EXTRA_TARGET_URL, resolvedTarget)
                 }
                 ContextCompat.startForegroundService(mContext, intent)
                 true

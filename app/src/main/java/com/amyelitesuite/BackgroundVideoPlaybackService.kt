@@ -31,6 +31,8 @@ class BackgroundVideoPlaybackService : MediaSessionService() {
         const val EXTRA_POSITION_MS = "position_ms"
         const val EXTRA_LOOP = "loop"
         const val EXTRA_TEMP_PATH = "temp_path"
+        const val EXTRA_TARGET_URL = "target_url"
+        const val DEFAULT_TARGET_URL = "https://appassets.androidplatform.net/assets/apps/academy/index.html"
 
         const val STATE_PREFS = "AmyBackgroundVideoState"
         const val STATE_ACTIVE = "active"
@@ -51,6 +53,7 @@ class BackgroundVideoPlaybackService : MediaSessionService() {
     private var currentTitle = ""
     private var currentTempPath: String? = null
     private var currentLoop = true
+    private var currentTargetUrl = DEFAULT_TARGET_URL
     private var lastError = ""
 
     private val stateTicker = object : Runnable {
@@ -60,6 +63,20 @@ class BackgroundVideoPlaybackService : MediaSessionService() {
                 mainHandler.postDelayed(this, 500L)
             }
         }
+    }
+
+    private fun updateSessionActivity() {
+        val openAppIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_TARGET_URL, currentTargetUrl)
+        }
+        val sessionActivity = PendingIntent.getActivity(
+            this,
+            4701,
+            openAppIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        mediaSession?.setSessionActivity(sessionActivity)
     }
 
     override fun onCreate() {
@@ -99,7 +116,7 @@ class BackgroundVideoPlaybackService : MediaSessionService() {
 
         val openAppIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra("target_url", "https://appassets.androidplatform.net/assets/apps/journal/index.html")
+            putExtra(EXTRA_TARGET_URL, currentTargetUrl)
         }
         val sessionActivity = PendingIntent.getActivity(
             this,
@@ -153,6 +170,11 @@ class BackgroundVideoPlaybackService : MediaSessionService() {
         currentTitle = intent.getStringExtra(EXTRA_TITLE).orEmpty().ifBlank { "Video Trading" }
         currentTempPath = nextTempPath
         currentLoop = intent.getBooleanExtra(EXTRA_LOOP, true)
+        val incomingTargetUrl = intent.getStringExtra(EXTRA_TARGET_URL)?.takeIf { it.isNotBlank() }
+        if (!incomingTargetUrl.isNullOrBlank() && incomingTargetUrl != currentTargetUrl) {
+            currentTargetUrl = incomingTargetUrl
+            updateSessionActivity()
+        }
         lastError = ""
 
         val uri = when {

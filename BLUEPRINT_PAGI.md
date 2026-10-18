@@ -1855,26 +1855,14 @@
 
 ---
 
-### 1.74. [MISDIRECTED MEDIA INTENT] Deep Link Notifikasi Media Player Tersasar ke Modul Jurnal di `BackgroundVideoPlaybackService.kt`
+### 1.74. [MISDIRECTED MEDIA INTENT] Deep Link Notifikasi Media Player Tersasar ke Modul Jurnal di `BackgroundVideoPlaybackService.kt` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/java/com/amyelitesuite/BackgroundVideoPlaybackService.kt`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/BackgroundVideoPlaybackService.kt#L92-L101) & [`app/src/main/java/com/amyelitesuite/MainActivity.kt`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/MainActivity.kt#L940-L948)
 - **Akar Masalah (Temuan Agen Gamma & Agen Beta):**
-  Di `BackgroundVideoPlaybackService.kt`, konfigurasi `MediaSession` saat service dibuat mengikat `openAppIntent`:
-  ```kotlin
-  val openAppIntent = Intent(this, MainActivity::class.java).apply {
-      flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-      putExtra("target_url", "https://appassets.androidplatform.net/assets/apps/journal/index.html")
-  }
-  ```
-  Nilai `target_url` di-hardcode ke modul Jurnal Trading (`apps/journal/index.html`). Padahal seluruh pemutaran video trading dan masterclass di Amy FX berasal dari Modul Akademi (`apps/academy/index.html`) atau video analitik practice.  
-  Ketika trader mendengarkan audio/video masterclass sambil membuka aplikasi lain atau saat layar terkunci (lockscreen), mengetuk notifikasi MediaSession di Android status bar justru melempar pengguna ke Jurnal Trading, merusak konteks belajar dan memutus navigasi materi yang sedang disimak.
-- **Rancangan Solusi (Draft Solusi untuk ACC):**
-  1. Di `BackgroundVideoPlaybackService.kt`, tambahkan konstanta `EXTRA_TARGET_URL = "target_url"` dan simpan `currentTargetUrl`:
-  ```kotlin
-  const val EXTRA_TARGET_URL = "target_url"
-  private var currentTargetUrl = "https://appassets.androidplatform.net/assets/apps/academy/index.html"
-  ```
-  2. Perbarui `openAppIntent` agar membaca `currentTargetUrl` atau gunakan getter dinamis pada `sessionActivity`.
-  3. Di `MainActivity.kt#L940-L948`, teruskan URL halaman pemanggil aktif (`webView.url` atau extra khusus) ke `intent.putExtra(BackgroundVideoPlaybackService.EXTRA_TARGET_URL, callerUrl)`.
+  Di `BackgroundVideoPlaybackService.kt`, konfigurasi `MediaSession` saat service dibuat mengikat `openAppIntent` dengan `target_url` hardcode ke modul Jurnal Trading (`apps/journal/index.html`).
+- **Implementasi & Verifikasi:**
+  - `BackgroundVideoPlaybackService.kt`: Menambahkan konstanta `EXTRA_TARGET_URL`, `DEFAULT_TARGET_URL` (mengarah ke `apps/academy/index.html`), serta method `updateSessionActivity()` untuk memperbarui deep link secara dinamis saat video baru diputar.
+  - `MainActivity.kt`: Menambahkan getter dinamis URL pemanggil (`webView.url`) dan overload `playBackgroundVideoWithTarget` sehingga deep link selalu membawa trader kembali ke materi yang sedang disimak.
+  - Targeted unit tests: `tests/background-video-playback-regression.test.mjs` (6/6 lulus 100%).
 
 ---
 
@@ -2508,7 +2496,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.79. Eliminasi Micro-Range Distortion pada Fallback Dealing Range di `amy-ict.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.40. Realistic Spread & Slippage Simulator di Practice Replay** | P0 (Akurasi Latihan) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.41. Smart Spaced-Repetition & Weak-Spot Quiz Suggester di Akademi** | P0 (Edukasi Cerdas) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.74. Perbaikan Deep Link Media Player ke Akademi di `BackgroundVideoPlaybackService.kt`** | P0 (Kritis) | ~3 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.74. Perbaikan Deep Link Media Player ke Akademi di `BackgroundVideoPlaybackService.kt`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.75. Eliminasi False Exponential Backoff Reconnect di `TwelveDataPriceBridge.kt`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.76. Inklusi Pivots H1 pada Target Likuiditas di `six-drivers.mjs`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.38. Multi-Timeframe High-Watermark Liquidity Ladder di 6-Driver Engine** | P0 (Akurasi Target) | ~6 menit | [ ] Setuju / [ ] Tunda |
