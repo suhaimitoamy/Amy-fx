@@ -23,6 +23,8 @@ globalThis.window = {
     notifications: [],
     haptics: [],
     soundPlayedCount: 0,
+    playGoldChimeCount: 0,
+    lastSoundType: null,
     showNotificationWithUrl(title, message, url) {
       this.notifications.push({ title, message, url });
     },
@@ -32,8 +34,12 @@ globalThis.window = {
     triggerHaptic(ms) {
       this.haptics.push(ms);
     },
-    playNotificationSound() {
+    playGoldChime() {
+      this.playGoldChimeCount += 1;
+    },
+    playNotificationSound(type = 'default') {
       this.soundPlayedCount += 1;
+      this.lastSoundType = type;
     }
   },
   amyfxCurrentPrice: 4280.50
@@ -371,6 +377,18 @@ test('PriceAlertManager: playAlertBeep delegates to native Android.playNotificat
 test('PriceAlertManager: loaded in index.html (Beranda) to prevent silent alert failure (item 1.11)', () => {
   const indexHtml = fs.readFileSync('app/src/main/assets/index.html', 'utf8');
   assert.match(indexHtml, /<script type="module" src="apps\/mapping\/js\/ict-workspace\/price-alert-manager\.js"><\/script>/, 'index.html must load price-alert-manager.js module');
+});
+
+test('PriceAlertManager: playAlertBeep prioritizes native Android.playGoldChime and soundType (item 2.28)', () => {
+  const initialGold = window.Android.playGoldChimeCount;
+  playAlertBeep('gold');
+  assert.equal(window.Android.playGoldChimeCount, initialGold + 1, 'playAlertBeep("gold") must call playGoldChime');
+
+  // Verify MainActivity.kt defines playGoldChime and playNotificationSound overload
+  const mainActivity = fs.readFileSync('app/src/main/java/com/amyelitesuite/MainActivity.kt', 'utf8');
+  assert.match(mainActivity, /@JavascriptInterface\s+fun playGoldChime\(\)/, 'MainActivity.kt must expose playGoldChime');
+  assert.match(mainActivity, /@JavascriptInterface\s+fun playNotificationSound\(soundType:\s*String\?\)/, 'MainActivity.kt must support soundType overload');
+  assert.match(mainActivity, /ToneGenerator/, 'MainActivity.kt must use ToneGenerator for gold chime');
 });
 
 

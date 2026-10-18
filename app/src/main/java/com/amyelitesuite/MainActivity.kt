@@ -836,13 +836,39 @@ class MainActivity : Activity() {
 
         @JavascriptInterface
         fun playNotificationSound() {
+            playNotificationSound("default")
+        }
+
+        @JavascriptInterface
+        fun playNotificationSound(soundType: String?) {
             try {
+                if (soundType == "gold" || soundType == "crystal") {
+                    playGoldChime()
+                    return
+                }
                 val notificationUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
                     ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
                 val ringtone = RingtoneManager.getRingtone(mContext, notificationUri)
                 ringtone?.play()
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+        }
+
+        @JavascriptInterface
+        fun playGoldChime() {
+            try {
+                val toneGen = android.media.ToneGenerator(android.media.AudioManager.STREAM_NOTIFICATION, 100)
+                toneGen.startTone(android.media.ToneGenerator.TONE_PROP_BEEP2, 350)
+            } catch (e: Exception) {
+                try {
+                    val notificationUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                        ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                    val ringtone = RingtoneManager.getRingtone(mContext, notificationUri)
+                    ringtone?.play()
+                } catch (err: Exception) {
+                    err.printStackTrace()
+                }
             }
         }
 

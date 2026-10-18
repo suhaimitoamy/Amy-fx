@@ -215,11 +215,15 @@ export function clearAlerts(mode = 'all') {
 /**
  * Play a clear, high-fidelity 2-tone melodic notification chime via Web Audio API
  */
-export function playAlertBeep() {
+export function playAlertBeep(soundType = 'default') {
   if (typeof window === 'undefined') return;
   try {
+    if (soundType === 'gold' && typeof window.Android?.playGoldChime === 'function') {
+      window.Android.playGoldChime();
+      return;
+    }
     if (typeof window.Android?.playNotificationSound === 'function') {
-      window.Android.playNotificationSound();
+      window.Android.playNotificationSound(soundType);
       return;
     }
   } catch (_) {}
