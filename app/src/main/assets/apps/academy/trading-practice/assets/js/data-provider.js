@@ -3,7 +3,9 @@
   'use strict';
 
   if (root.AmyPracticeData) return;
-  var scriptUrl = document.currentScript && document.currentScript.src ? document.currentScript.src : location.href;
+  var scriptUrl = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src)
+    ? document.currentScript.src
+    : (typeof location !== 'undefined' ? location.href : 'http://localhost/');
   var sampleUrl = new URL('../data/xauusd-m1-sample.json', scriptUrl).href;
   var core = root.AmyPracticeCore;
   var storage = root.AmyPracticeStorage;
@@ -101,12 +103,60 @@
   }
 
   function metadataFromCsv(text) {
-    var lines = meaningfulLines(text);
-    if (lines.length < 3) throw new Error('CSV harus berisi header dan minimal 2 candle.');
-    var first = core.parseCsv(lines[0] + '\n' + lines[1]);
-    var last = core.parseCsv(lines[0] + '\n' + lines[lines.length - 1]);
+    var clean = compatibleCsv(text).trim();
+    if (!clean) throw new Error('CSV harus berisi header dan minimal 2 candle.');
+
+    var firstNl = clean.indexOf('\n');
+    if (firstNl < 0) throw new Error('CSV harus berisi header dan minimal 2 candle.');
+
+    var header = clean.slice(0, firstNl).trim();
+    var firstLine = null;
+    var lineStart = firstNl + 1;
+    var lineEnd = clean.indexOf('\n', lineStart);
+
+    while (lineStart < clean.length) {
+      var candidateEnd = lineEnd < 0 ? clean.length : lineEnd;
+      var candidate = clean.slice(lineStart, candidateEnd).trim();
+      if (candidate.length > 0) {
+        firstLine = candidate;
+        break;
+      }
+      if (lineEnd < 0) break;
+      lineStart = lineEnd + 1;
+      lineEnd = clean.indexOf('\n', lineStart);
+    }
+
+    var lastNl = clean.lastIndexOf('\n');
+    var lastLine = clean.slice(lastNl + 1).trim();
+
+    if (!firstLine || !lastLine || lastNl <= firstNl) {
+      throw new Error('CSV harus berisi header dan minimal 2 candle.');
+    }
+
+    var first = core.parseCsv(header + '\n' + firstLine);
+    var last = core.parseCsv(header + '\n' + lastLine);
     if (!first.length || !last.length) throw new Error('CSV tidak memiliki candle OHLC valid.');
-    return { start: first[0].time, end: last[last.length - 1].time, rowCount: lines.length - 1 };
+
+    var rowCount = 0;
+    var prevPos = firstNl;
+    var nextPos = clean.indexOf('\n', prevPos + 1);
+    while (prevPos !== -1) {
+      var end = nextPos === -1 ? clean.length : nextPos;
+      var hasContent = false;
+      for (var i = prevPos + 1; i < end; i += 1) {
+        if (clean.charCodeAt(i) > 32) {
+          hasContent = true;
+          break;
+        }
+      }
+      if (hasContent) rowCount += 1;
+      prevPos = nextPos;
+      if (nextPos !== -1) nextPos = clean.indexOf('\n', nextPos + 1);
+    }
+
+    if (rowCount < 2) throw new Error('CSV harus berisi header dan minimal 2 candle.');
+
+    return { start: first[0].time, end: last[last.length - 1].time, rowCount: rowCount };
   }
 
   function metadataFromJson(text) {
