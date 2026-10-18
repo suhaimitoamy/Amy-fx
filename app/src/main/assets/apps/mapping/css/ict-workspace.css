@@ -430,3 +430,97 @@ body.amyfx-module--ict #gold-chart-workspace #chart{width:100%;min-width:0;heigh
   opacity: 0.92;
   transform: translateY(-1px);
 }
+
+/* Item 2.27: Economic Event Countdown & No-Trade Window Banner */
+.economic-event-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: calc(100% - 32px);
+  margin: 0 auto 12px;
+  padding: 8px 14px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: amy-banner-pulse 2.5s ease-in-out infinite;
+  transition: all 0.25s ease;
+}
+
+@keyframes amy-banner-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.88; transform: scale(0.995); }
+}
+
+.economic-event-banner.is-no-trade {
+  background: rgba(239, 68, 68, 0.16);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  color: #fca5a5;
+  box-shadow: 0 4px 18px rgba(239, 68, 68, 0.25);
+}
+
+.economic-event-banner.is-upcoming {
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #fde68a;
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.2);
+}
+
+.economic-event-banner .banner-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  animation: amy-dot-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes amy-dot-ping {
+  0% { transform: scale(0.9); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+  100% { transform: scale(0.9); opacity: 1; }
+}
+
+.economic-event-banner .dot-critical {
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+}
+
+.economic-event-banner .dot-warning {
+  background: #f59e0b;
+  box-shadow: 0 0 8px #f59e0b;
+}
+
+.economic-event-banner .banner-badge {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.economic-event-banner .badge-critical {
+  background: rgba(239, 68, 68, 0.3);
+  color: #fecaca;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.economic-event-banner .badge-warning {
+  background: rgba(245, 158, 11, 0.3);
+  color: #fef08a;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+}
+
+.economic-event-banner .banner-message {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
