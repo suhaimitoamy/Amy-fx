@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderHome() {
     setActive('beranda');
     mainContent.innerHTML = `<section class="home-price-panel" aria-label="Peta harga XAU/USD">
-      <div class="section-heading"><h2>Peta harga · XAU/USD</h2><strong id="home-chart-price">—</strong></div>
+      <div class="section-heading"><h2>Peta harga · XAU/USD</h2><div style="display:flex; align-items:center; gap:8px;"><span id="home-chart-dealing-range-badge" class="dr-badge dr-neutral" title="Status Dealing Range (ICT)">EQUILIBRIUM 50% · NETRAL ⚪</span><strong id="home-chart-price">—</strong></div></div>
       <div class="home-chart-controls"><label>Timeframe <select id="home-chart-tf"><option value="M15">M15</option><option value="M5">M5</option></select></label><button type="button" id="home-chart-refresh">Perbarui</button></div>
       <p id="home-chart-source" role="status">Memuat candle tertutup…</p><p id="home-chart-error" role="alert"></p>
       <div id="home-price-chart" aria-label="Chart candlestick XAU/USD dengan level model ICT"></div>

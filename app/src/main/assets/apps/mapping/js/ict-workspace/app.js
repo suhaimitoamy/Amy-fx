@@ -4,6 +4,7 @@ import {normalize,analyze,timestamp} from './engine.js';
 import {createPriceChart} from './chart-view.js';
 import {mountDisplay,renderAmy,loadDisplay,isGoldMarketOpen} from './ict-presentation.js';
 import {mountEconomicEventBanner} from './economic-countdown.js';
+import {updateDealingRangeBadge} from './dealing-range-badge.js';
 const $=id=>document.getElementById(id);
 let context=null,display=null,driverPlan=null;
 let chart=null,controller=null,generation=0,timer=null,overlay=null,raw=null;
@@ -79,6 +80,10 @@ function draw(degraded=false){
   chart?.draw(result,activePlan,presentation);
   const last=result.candles.at(-1);
   if($('chart-price'))$('chart-price').textContent=last?last.close.toFixed(2):'—';
+  const dr = context?.m15?.dealingRange || context?.amy?.levels?.dealingRange || context?.dealingRange;
+  if(last&&$('chart-dealing-range-badge')){
+    updateDealingRangeBadge($('chart-dealing-range-badge'), last.close, dr);
+  }
   if(last&&Number.isFinite(last.close)&&typeof window.AmyPriceAlertManager?.checkPrice==='function'){
     window.AmyPriceAlertManager.checkPrice(last.close);
   }
@@ -102,7 +107,13 @@ window.addEventListener('amyfx:driver-plan',event=>{driverPlan=event.detail||nul
 window.addEventListener('amyfx:assistant-plan',event=>{driverPlan=event.detail||null;draw();});
 window.addEventListener('amyfx:driver-setups',event=>{if(driverPlan){const s=(event.detail||[]).find(s=>s.id===driverPlan.id);driverPlan=s?{id:s.id,entry:s.entry,sl:s.stopLoss,tp:s.target,label:s.driverName}:null;draw();}});
 window.addEventListener('amyfx:market-context',event=>{context=event.detail;window.amyfxLastContext=context;if(!context)driverPlan=null;renderAmy(context?.amy,display,context?.news,context);const scenario=context?.primary;
-  overlay=scenario?.area?{area:scenario.area,invalidation:scenario.invalidation,target:scenario.target}:null;draw();});
+  overlay=scenario?.area?{area:scenario.area,invalidation:scenario.invalidation,target:scenario.target}:null;
+  const currentDr = context?.m15?.dealingRange || context?.amy?.levels?.dealingRange || context?.dealingRange;
+  const currentPrice = parseFloat($('chart-price')?.textContent) || 0;
+  if($('chart-dealing-range-badge') && currentPrice > 0){
+    updateDealingRangeBadge($('chart-dealing-range-badge'), currentPrice, currentDr);
+  }
+  draw();});
 function getStoredCandles(timeframe){
   try{
     if(typeof localStorage==='undefined')return null;

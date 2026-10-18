@@ -1,6 +1,7 @@
 import {analyze} from './apps/mapping/js/ict-workspace/engine.js';
 import {loadCandles} from './apps/mapping/js/ict-workspace/data.js';
 import {createPriceChart} from './apps/mapping/js/ict-workspace/chart-view.js';
+import {updateDealingRangeBadge} from './apps/mapping/js/ict-workspace/dealing-range-badge.js';
 
 function isWeekendClosure(timeSec) {
   try {
@@ -66,6 +67,10 @@ export function mountHomeChart(root) {
     view.draw(result);
     const last=result.candles.at(-1);
     $('home-chart-price').textContent=last?last.close.toFixed(2):'—';
+    if($('home-chart-dealing-range-badge')){
+      const dr = window.amyfxLastContext?.m15?.dealingRange || window.amyfxLastContext?.amy?.levels?.dealingRange || window.amyfxLastContext?.dealingRange;
+      if(last) updateDealingRangeBadge($('home-chart-dealing-range-badge'), last.close, dr);
+    }
     if($('home-chart-source')){
       if(!last){
         $('home-chart-source').textContent='Belum ada candle. Periksa koneksi lalu tekan Perbarui.';

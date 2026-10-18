@@ -63,7 +63,13 @@
     </div>
   </article>
   <article class="price-map gold-price-panel"><section id="gold-chart-workspace" aria-label="Chart Gold XAU/USD">
-    <div class="section-heading chart-heading"><h2>Chart Gold · XAU/USD</h2><strong id="chart-price">—</strong></div>
+    <div class="section-heading chart-heading">
+      <h2>Chart Gold · XAU/USD</h2>
+      <div class="chart-price-wrap" style="display:flex; align-items:center; gap:8px;">
+        <span id="chart-dealing-range-badge" class="dr-badge dr-neutral" title="Status Dealing Range (ICT)">EQUILIBRIUM 50% · NETRAL ⚪</span>
+        <strong id="chart-price">—</strong>
+      </div>
+    </div>
     <div class="gold-chart-controls"><label>Timeframe <select id="timeframe"><option value="M15">M15</option><option value="M5">M5</option></select></label><button type="button" id="refresh">Perbarui</button><button type="button" id="chart-fullscreen" aria-label="Buka fullscreen Chart Gold" aria-pressed="false">⛶ Fullscreen</button></div>
     <p id="source" role="status">Memuat candle tertutup…</p><p id="chart-error" role="alert"></p>
     <div id="chart" aria-label="Chart candlestick XAU/USD dengan level model ICT"></div>
