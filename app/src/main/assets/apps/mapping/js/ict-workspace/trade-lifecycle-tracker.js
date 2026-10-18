@@ -127,6 +127,10 @@ export function trackAssistantPlan(plan, priceOverride = null) {
 
   if (currentPrice != null && Number.isFinite(currentPrice)) {
     if (side === 'BUY') {
+      // Jika harga saat ini sudah mencapai atau melampaui TP1, setup sudah usang/tercapai
+      if (currentPrice >= tp1) {
+        return null;
+      }
       // Jika harga saat ini sudah mencapai atau menyentuh entry (tapi belum tembus SL)
       if (currentPrice <= entry && currentPrice > sl) {
         initialStatus = 'ACTIVE_RUNNING';
@@ -137,6 +141,10 @@ export function trackAssistantPlan(plan, priceOverride = null) {
       }
     } else {
       // SELL
+      // Jika harga saat ini sudah mencapai atau melampaui TP1, setup sudah usang/tercapai
+      if (currentPrice <= tp1) {
+        return null;
+      }
       if (currentPrice >= entry && currentPrice < sl) {
         initialStatus = 'ACTIVE_RUNNING';
         triggeredAt = Date.now();

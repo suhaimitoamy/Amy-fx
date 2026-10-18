@@ -2490,7 +2490,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.44. Terapkan `isWeekendClosure` & Hentikan Polling Akhir Pekan di `home-price-chart.js`** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.45. Eliminasi Lookahead Path Bias pada Fractal Evaluator di `advisor-panel.js`** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.46. Perbaiki Spurious Immediate Alert & Persistensi `lastCheckedPrice` di `price-alert-manager.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
-| 🐛 **Debugging** | **1.41. Batalkan Registrasi Plan Jika Harga Sudah Lewat TP1 di `trade-lifecycle-tracker.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.41. Batalkan Registrasi Plan Jika Harga Sudah Lewat TP1 di `trade-lifecycle-tracker.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.42. Guard `MISSED` Saat TP1 Tersentuh Sebelum Entry di `trade-lifecycle-tracker.js`** | P0 (Kritis) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.43. Eliminasi Memory Leak Context Activity & Stop Ticker di Background Services** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.38. Endpoint `/api/fractal-audit` di Vercel & Client Fallback di APK** | P0 (Kritis) | ~6 menit | [ ] Setuju / [ ] Tunda |

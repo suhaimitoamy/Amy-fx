@@ -227,4 +227,37 @@ test('Trade Lifecycle Tracker: ARMED -> ACTIVE -> TP & SL Flow', async (t) => {
     assert.equal(updated.status, 'ACTIVE_RUNNING', 'Status driver harus beralih ke ACTIVE_RUNNING saat limit tersentuh');
     assert.ok(notificationsSent.some(n => n.title.includes('2640.00 Aktif!')), 'Notifikasi trigger driver harus dikirim');
   });
+
+  await t.test('8. Item 1.41: Menolak registrasi plan baru jika harga saat registrasi sudah melampaui TP1 (BUY/SELL)', () => {
+    const buyPlanStale = {
+      side: 'BUY',
+      entry: 2700.00,
+      sl: 2690.00,
+      tp1: 2715.00,
+      signalName: 'BUY ENTRY (Stale TP reached)'
+    };
+
+    // Kasus 1: Harga saat registrasi sudah menyentuh / melebihi TP1 BUY (2715.00 atau 2720.00)
+    const rejectedBuyAtTp = trackAssistantPlan(buyPlanStale, 2715.00);
+    assert.equal(rejectedBuyAtTp, null, 'Plan BUY harus ditolak jika harga saat registrasi sudah mencapai TP1');
+
+    const rejectedBuyBeyondTp = trackAssistantPlan(buyPlanStale, 2720.50);
+    assert.equal(rejectedBuyBeyondTp, null, 'Plan BUY harus ditolak jika harga saat registrasi sudah melampaui TP1');
+
+    const sellPlanStale = {
+      side: 'SELL',
+      entry: 2700.00,
+      sl: 2710.00,
+      tp1: 2685.00,
+      signalName: 'SELL ENTRY (Stale TP reached)'
+    };
+
+    // Kasus 2: Harga saat registrasi sudah menyentuh / melebihi TP1 SELL (2685.00 atau 2680.00)
+    const rejectedSellAtTp = trackAssistantPlan(sellPlanStale, 2685.00);
+    assert.equal(rejectedSellAtTp, null, 'Plan SELL harus ditolak jika harga saat registrasi sudah mencapai TP1');
+
+    const rejectedSellBeyondTp = trackAssistantPlan(sellPlanStale, 2680.20);
+    assert.equal(rejectedSellBeyondTp, null, 'Plan SELL harus ditolak jika harga saat registrasi sudah melampaui TP1');
+  });
 });
+
