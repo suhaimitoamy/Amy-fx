@@ -185,10 +185,15 @@
       speedMs: replay.speedMs,
       sourceId: payload.sourceId
     });
+    try {
+      localStorage.setItem('amy_replay_last_cursor_' + payload.sourceId, String(payload.cursor));
+      localStorage.setItem('amy_practice_last_cursor_' + payload.sourceId, String(payload.cursor));
+    } catch (_) {}
     outcomeQueue = outcomeQueue.catch(function () {}).then(function () { return updateOutcomes(payload); });
     await outcomeQueue;
     await renderHistory();
     if (latestPayload === payload) await syncDecisionState(payload);
+    updateResumeButton();
   }
 
   async function move(count) {
@@ -323,6 +328,33 @@
     });
   }
 
+  function updateResumeButton() {
+    var resumeBtn = ui.byId('btnResumeReplay');
+    if (!resumeBtn) return;
+    var currentSource = provider.selectedSourceId();
+    var savedCursor = localStorage.getItem('amy_replay_last_cursor_' + currentSource) ||
+                      localStorage.getItem('amy_practice_last_cursor_' + currentSource);
+    var savedNum = Number(savedCursor);
+    if (savedNum && replay && savedNum !== replay.cursor && replay.timeline.indexOf(savedNum) !== -1) {
+      resumeBtn.style.display = 'inline-flex';
+      var barIdx = replay.timeline.indexOf(savedNum) + 1;
+      resumeBtn.innerHTML = '<span>📍 Lanjutkan (' + core.formatWita(savedNum, false) + ' · Bar ' + barIdx + ')</span>';
+      resumeBtn.onclick = async function () {
+        resumeBtn.disabled = true;
+        try {
+          await replay.seek(savedNum);
+          resumeBtn.style.display = 'none';
+        } catch (e) {
+          ui.status('replayStatus', e.message, true);
+        } finally {
+          resumeBtn.disabled = false;
+        }
+      };
+    } else {
+      resumeBtn.style.display = 'none';
+    }
+  }
+
   async function changeSource(value) {
     playing = false;
     ui.text('playPause', 'Putar');
@@ -340,6 +372,7 @@
         chart.resize();
         if (chart.chart && chart.chart.timeScale) chart.chart.timeScale().fitContent();
       }
+      updateResumeButton();
     }
     catch (error) { ui.status('replayStatus', error.message, true); }
   }
@@ -427,6 +460,7 @@
         chart.resize();
         if (chart.chart && chart.chart.timeScale) chart.chart.timeScale().fitContent();
       }
+      updateResumeButton();
     } catch (error) {
       ui.status('replayStatus', error.message, true);
     }

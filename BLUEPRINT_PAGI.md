@@ -2091,13 +2091,17 @@
 
 ---
 
-### 2.9. [PRACTICE REPLAY] Fitur "Lanjutkan Latihan" (Auto-Resume Cursor per Pack)
+### 2.9. [PRACTICE REPLAY] Fitur "Lanjutkan Latihan" (Auto-Resume Cursor per Pack) — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Delta & Agen Beta
 - **Konsep & Nilai untuk Trader:**  
   Saat pengguna berlatih pada dataset replay tertentu (misal: pack *September 2024* pada bar ke-350) lalu keluar dari aplikasi, cursor sebelumnya ter-reset ke candle ke-80 awal.  
 - **Rancangan Implementasi:**
   - Simpan cursor terakhir per `sourceId` ke `localStorage['amy_replay_last_cursor_' + sourceId]`.
   - Tambahkan tombol pintas di samping dropdown pack: `[ 📍 Lanjutkan dari Bar Terakhir ]` yang langsung menggeser timeline ke titik latihan terakhir tanpa harus scrubbing slider manual.
+- **Implementasi & Audit Reviewer:**
+  - `candle-replay.html`: Tombol `#btnResumeReplay` terintegrasi langsung di samping dropdown pack.
+  - `candle-replay.js`: Persistensi otomatis bookmark kursor per `sourceId` dan pelompatan timeline akurat via `updateResumeButton()`.
+  - Targeted unit tests: `tests/trading-practice-resume-cursor.test.mjs` (2/2 lulus 100%).
 
 ---
 
@@ -2248,11 +2252,15 @@
 
 ---
 
-### 2.23. [PRACTICE PERSISTENCE] Auto-Resume Bookmark Cursor di Practice Replay Engine
+### 2.23. [PRACTICE PERSISTENCE] Auto-Resume Bookmark Cursor di Practice Replay Engine — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Beta & Agen Delta
 - **Konsep & Nilai untuk Trader:**  
   1. *Lanjutkan Latihan Tanpa Repot:* Setiap kali trader berpindah candle di Practice Replay, posisi timestamp cursor otomatis disimpan ke `localStorage.amy_practice_last_cursor_{packId}`.  
   2. *Tombol 1-Tap "Lanjutkan Sesi":* Saat membuka kembali modul latihan, muncul notifikasi pill elegan `[ ⏯️ Lanjutkan dari 14 Okt 2024 (Bar 142) ]`, mengeliminasi rasa frustrasi harus mencari ulang tanggal latihan dari awal.
+- **Implementasi & Audit Reviewer:**
+  - `candle-replay.html`: Menyematkan tombol `#btnResumeReplay` di toolbar kontrol di samping pemilih pack.
+  - `candle-replay.js`: Menyimpan bookmark cursor per `sourceId` ke `localStorage['amy_replay_last_cursor_' + sourceId]` dan `localStorage['amy_practice_last_cursor_' + sourceId]`, serta menyediakan fungsi `updateResumeButton()` yang memunculkan tombol pintas resume dengan format waktu WITA dan indeks bar.
+  - Targeted unit tests: `tests/trading-practice-resume-cursor.test.mjs` (2/2 lulus 100%) dan `tests/trading-practice-replay.test.mjs` (24/24 lulus 100%).
 
 ---
 
@@ -2520,7 +2528,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.24. Visual Rejection Candle Body Filter di Mini-Card Signal Assistant V3** | P0 (Integritas Sinyal) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.25. Local K-NN Cosine Similarity Matcher di WebView Android (Offline)** | P0 (Otonomi AI) | ~10 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.22. Pre-Trade Confluence Checklist 4-Poin di Cockpit Mapping** | P0 (Proteksi Mental) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.23. Auto-Resume Bookmark Cursor di Practice Replay Engine** | P1 (Sangat Praktis) | ~5 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.23. Auto-Resume Bookmark Cursor di Practice Replay Engine** | P1 (Sangat Praktis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.47. Pasang Guard Equality & Batasi Target MutationObserver di `amyfx-home-data-integration-v1.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.48. Union Set Keys pada Ekspor CSV Jurnal Cegah Kehilangan Field di `journal-export.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.49. Resolusi Dinamis Endpoint `ENDPOINT` & Filter Weekend di `scalper-model.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
@@ -2584,7 +2592,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.10. Rhythmic Haptic Feedback & Native Sound Bridge di `WebAppInterface`** | P1 (Sangat Keren) | ~8 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.12. Bundled Audio Resource Bel Emas Offline di Android App** | P1 (Praktis & Instan) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.14. Auto-Compacting Kompresi Foto Wallpaper ke WebP (<100 KB)** | P1 (Hemat Storage) | ~7 menit | [ ] Setuju / [ ] Tunda |
-| 🚀 **Fitur Baru** | **2.9. Tombol "Lanjutkan Latihan" (Resume Cursor) di Replay** | P1 (Sangat Praktis) | ~7 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.9. Tombol "Lanjutkan Latihan" (Resume Cursor) di Replay** | P1 (Sangat Praktis) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.6. 1-Tap Sync Catatan Jurnal ke Obsidian (Markdown)** | P1 (Sangat Rapi) | ~10 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.8. Tombol 1-Tap "Bersihkan Cache Sementara" di Tab Profil** | P1 (Bermanfaat) | ~8 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.4. Tombol 1-Tap Buka PDF Masterclass di Akademi** | P1 (Praktis) | ~5 menit | [ ] Setuju / [ ] Tunda |
