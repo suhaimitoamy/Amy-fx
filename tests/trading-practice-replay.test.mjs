@@ -494,3 +494,42 @@ test('switching timeframe from default initial position yields full candle conte
   const m30Start = await freshM30.start();
   assert.ok(m30Start.candles.length >= 80, `Expected at least 80 M30 candles on fresh start, got ${m30Start.candles.length}`);
 });
+
+test('D1 aggregation uses NY 17:00 close offset to merge Sunday session into Monday daily bar (item 1.62)', () => {
+  const core = context.AmyPracticeCore;
+  // Choose a base day aligned to NY 17:00 (multiple of 86400 + 17*3600)
+  // Let base = 86400 * 1000 + 17 * 3600 = 86461200
+  const sunday1700 = 86400 * 1000 + 17 * 3600;
+  
+  // Create 3 candles:
+  // 1. Sunday 18:00 (1 hour after open)
+  // 2. Monday 10:00 (next calendar day UTC)
+  // 3. Monday 18:00 (next trading day NY)
+  const candles = [
+    { time: sunday1700 + 3600, open: 2600, high: 2610, low: 2595, close: 2605 },
+    { time: sunday1700 + 17 * 3600, open: 2605, high: 2620, low: 2600, close: 2615 },
+    { time: sunday1700 + 86400 + 3600, open: 2615, high: 2630, low: 2610, close: 2625 }
+  ];
+
+  const d1Candles = core.aggregateCandles(candles, 'D1');
+  // First two candles fall in the same D1 bar [sunday1700, sunday1700 + 86400)
+  assert.equal(d1Candles.length, 2, 'Sunday + Monday session must merge into 1 daily bar, not 2 separate bars');
+  assert.equal(d1Candles[0].time, sunday1700);
+  assert.equal(d1Candles[0].open, 2600);
+  assert.equal(d1Candles[0].high, 2620);
+  assert.equal(d1Candles[0].low, 2595);
+  assert.equal(d1Candles[0].close, 2615);
+  assert.equal(d1Candles[0].sourceCount, 2);
+
+  // Second D1 candle starts at next day 17:00
+  assert.equal(d1Candles[1].time, sunday1700 + 86400);
+  assert.equal(d1Candles[1].open, 2615);
+  assert.equal(d1Candles[1].high, 2630);
+
+  // Verify visibleCandles invariant holds with cursor
+  const visible = core.visibleCandles(candles, sunday1700 + 17 * 3600, 'D1');
+  assert.equal(visible.length, 1);
+  assert.equal(visible[0].time, sunday1700);
+  assert.equal(visible[0].lastSourceTime, sunday1700 + 17 * 3600);
+});
+

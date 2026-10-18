@@ -121,9 +121,10 @@
 
     var output = [];
     var current = null;
+    var offset = String(targetTimeframe || '').toUpperCase() === 'D1' ? 17 * 3600 : 0;
     for (var i = 0; i < normalized.length; i += 1) {
       var candle = normalized[i];
-      var bucket = Math.floor(candle.time / targetSeconds) * targetSeconds;
+      var bucket = Math.floor((candle.time - offset) / targetSeconds) * targetSeconds + offset;
       if (!current || current.time !== bucket) {
         if (current) output.push(current);
         current = {
@@ -243,6 +244,7 @@
     if (!seconds) throw new Error('Timeframe live tidak didukung.');
     this.timeframe = timeframe;
     this.seconds = seconds;
+    this.offset = String(timeframe || '').toUpperCase() === 'D1' ? 17 * 3600 : 0;
     this.current = null;
   };
 
@@ -252,7 +254,7 @@
       this.current = null;
       return false;
     }
-    candle.time = Math.floor(candle.time / this.seconds) * this.seconds;
+    candle.time = Math.floor((candle.time - this.offset) / this.seconds) * this.seconds + this.offset;
     this.current = candle;
     return true;
   };
@@ -261,7 +263,7 @@
     var tickPrice = finite(tick && tick.price);
     var tickTime = parseTime(tick && tick.timestamp);
     if (tickPrice == null || tickTime == null || tickPrice <= 0) return null;
-    var bucket = Math.floor(tickTime / this.seconds) * this.seconds;
+    var bucket = Math.floor((tickTime - this.offset) / this.seconds) * this.seconds + this.offset;
     if (this.current && bucket < this.current.time) return null;
     var closed = null;
     if (!this.current || this.current.time !== bucket) {
