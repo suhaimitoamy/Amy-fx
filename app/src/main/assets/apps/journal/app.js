@@ -5362,6 +5362,44 @@ async function importBackup(event) {
   if (restoreLabel) restoreLabel.textContent = 'Membaca backup...';
 
   try {
+    // Item 2.32: Direct CSV / JSON instant restore & reconciliation
+    if (file.name.toLowerCase().endsWith('.csv') || file.type.includes('csv')) {
+      const text = await file.text();
+      const entries = (typeof AmyJournalExport !== 'undefined' && AmyJournalExport.parseCsv)
+        ? AmyJournalExport.parseCsv(text)
+        : [];
+      if (!entries.length) throw new Error('File CSV kosong atau tidak memiliki format baris data jurnal valid.');
+      const reconciled = (typeof AmyJournalExport !== 'undefined' && AmyJournalExport.reconcileJournals)
+        ? AmyJournalExport.reconcileJournals(state.journals || [], entries)
+        : { added: entries, skippedCount: 0, merged: [...(state.journals || []), ...entries] };
+      state.journals = reconciled.merged;
+      await saveJournals(state.journals, { throwOnError: true });
+      if (typeof render === 'function') render();
+      if (typeof showToast === 'function') {
+        showToast(`Berhasil memulihkan ${reconciled.added.length} jurnal (${reconciled.skippedCount} duplikat dilewati).`);
+      }
+      return;
+    }
+
+    if (file.name.toLowerCase().endsWith('.json') || file.type.includes('json')) {
+      const text = await file.text();
+      const parsed = (typeof AmyJournalExport !== 'undefined' && AmyJournalExport.parseAndValidateBackup)
+        ? AmyJournalExport.parseAndValidateBackup(text)
+        : { ok: true, entries: JSON.parse(text) };
+      if (!parsed.ok) throw new Error(parsed.error);
+      const entries = parsed.entries || [];
+      const reconciled = (typeof AmyJournalExport !== 'undefined' && AmyJournalExport.reconcileJournals)
+        ? AmyJournalExport.reconcileJournals(state.journals || [], entries)
+        : { added: entries, skippedCount: 0, merged: [...(state.journals || []), ...entries] };
+      state.journals = reconciled.merged;
+      await saveJournals(state.journals, { throwOnError: true });
+      if (typeof render === 'function') render();
+      if (typeof showToast === 'function') {
+        showToast(`Berhasil memulihkan ${reconciled.added.length} jurnal (${reconciled.skippedCount} duplikat dilewati).`);
+      }
+      return;
+    }
+
     const archive = await openBackupArchive(file);
     const dataEntry = archive.entries.find((entry) => entry.name === 'data.json');
     if (!dataEntry) throw new Error('data.json tidak ditemukan di dalam backup.');

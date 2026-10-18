@@ -225,3 +225,53 @@ test('Item 2.21: parseAndValidateBackup validates v2 schema, legacy formats, and
   assert.ok(res5.error.includes('tidak mengandung daftar entri'));
 });
 
+test('Item 2.32: parseCsv parses complex CSV with quotes, commas, and multiline text', () => {
+  const { exportUtil } = setupEnvironment();
+  const csv = 'id,pair,entryArea,stopLoss,planNote\n' +
+    '"JRN-1","XAU/USD","2650.50","2645.00","Wait for M5 rejection, enter on 50% CE"\n' +
+    '"JRN-2","EUR/USD","1.0850","1.0820","Standard ""Turtle Soup"" liquidity sweep"';
+
+  const entries = exportUtil.parseCsv(csv);
+  assert.equal(entries.length, 2);
+  assert.equal(entries[0].id, 'JRN-1');
+  assert.equal(entries[0].pair, 'XAU/USD');
+  assert.equal(entries[0].planNote, 'Wait for M5 rejection, enter on 50% CE');
+  assert.equal(entries[1].id, 'JRN-2');
+  assert.equal(entries[1].planNote, 'Standard "Turtle Soup" liquidity sweep');
+});
+
+test('Item 2.32: computeFingerprint generates deterministic transaction signature', () => {
+  const { exportUtil } = setupEnvironment();
+  const entryA = { actualEntryTime: '2026-10-18T14:30:00Z', pair: 'XAU/USD', actualEntryPrice: 2650.5, stopLoss: 2645.0 };
+  const entryB = { actualEntryTime: '2026-10-18T14:30:00Z', symbol: 'xauusd', actualEntryPrice: '2650.500', stopLoss: '2645' };
+
+  const fpA = exportUtil.computeFingerprint(entryA);
+  const fpB = exportUtil.computeFingerprint(entryB);
+  assert.equal(fpA, fpB);
+  assert.equal(fpA, '2026-10-18T14:30:00Z::XAUUSD::2650.50::2645.00');
+});
+
+test('Item 2.32: reconcileJournals skips duplicate entries and adds only new ones', () => {
+  const { exportUtil } = setupEnvironment();
+  const existing = [
+    { id: 'JRN-101', date: '2026-10-18', pair: 'XAU/USD', entryArea: 2650, stopLoss: 2645 }
+  ];
+
+  const imported = [
+    // Duplicate by exact id
+    { id: 'JRN-101', date: '2026-10-18', pair: 'XAU/USD', entryArea: 2650, stopLoss: 2645 },
+    // Duplicate by fingerprint
+    { id: 'JRN-999', date: '2026-10-18', pair: 'XAU/USD', entryArea: 2650, stopLoss: 2645 },
+    // Truly new entry
+    { id: 'JRN-202', date: '2026-10-19', pair: 'XAU/USD', entryArea: 2660, stopLoss: 2655, setupType: 'FVG' }
+  ];
+
+  const result = exportUtil.reconcileJournals(existing, imported);
+  assert.equal(result.totalImported, 3);
+  assert.equal(result.skippedCount, 2);
+  assert.equal(result.added.length, 1);
+  assert.equal(result.added[0].id, 'JRN-202');
+  assert.equal(result.merged.length, 2);
+});
+
+

@@ -104,6 +104,123 @@ const AmyJournalExport = {
     } catch (e) {
       return { ok: false, error: `Gagal mem-parsing file backup JSON: ${e.message}` };
     }
+  },
+
+  parseCsv(csvString) {
+    if (!csvString || typeof csvString !== 'string') return [];
+    const text = csvString.replace(/^\uFEFF/, '').trim();
+    if (!text) return [];
+
+    const rows = [];
+    let currentRow = [];
+    let currentField = '';
+    let insideQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const nextChar = text[i + 1];
+
+      if (char === '"') {
+        if (insideQuotes && nextChar === '"') {
+          currentField += '"';
+          i++;
+        } else {
+          insideQuotes = !insideQuotes;
+        }
+      } else if (char === ',' && !insideQuotes) {
+        currentRow.push(currentField);
+        currentField = '';
+      } else if ((char === '\r' || char === '\n') && !insideQuotes) {
+        if (char === '\r' && nextChar === '\n') i++;
+        currentRow.push(currentField);
+        currentField = '';
+        if (currentRow.some(cell => cell.trim().length > 0)) {
+          rows.push(currentRow);
+        }
+        currentRow = [];
+      } else {
+        currentField += char;
+      }
+    }
+    if (currentField.length > 0 || currentRow.length > 0) {
+      currentRow.push(currentField);
+      if (currentRow.some(cell => cell.trim().length > 0)) {
+        rows.push(currentRow);
+      }
+    }
+
+    if (rows.length < 2) return [];
+    const headers = rows[0].map(h => h.trim());
+    const entries = [];
+
+    for (let r = 1; r < rows.length; r++) {
+      const row = rows[r];
+      const entry = {};
+      for (let c = 0; c < headers.length; c++) {
+        const key = headers[c];
+        if (key) {
+          entry[key] = row[c] !== undefined ? row[c] : '';
+        }
+      }
+      entries.push(entry);
+    }
+    return entries;
+  },
+
+  computeFingerprint(entry) {
+    if (!entry || typeof entry !== 'object') return '';
+    const time = String(entry.actualEntryTime || entry.date || entry.createdAt || entry.analysisTime || '').trim();
+    const sym = String(entry.pair || entry.symbol || 'XAU/USD').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const entryPrice = Number(entry.actualEntryPrice || entry.entryArea || entry.entry || 0).toFixed(2);
+    const sl = Number(entry.stopLoss || entry.sl || 0).toFixed(2);
+    return `${time}::${sym}::${entryPrice}::${sl}`;
+  },
+
+  reconcileJournals(existingJournals, importedEntries) {
+    const existing = Array.isArray(existingJournals) ? existingJournals : [];
+    const incoming = Array.isArray(importedEntries) ? importedEntries : [];
+
+    const existingIds = new Set(existing.map(j => j && j.id).filter(Boolean));
+    const existingFps = new Set(existing.map(j => this.computeFingerprint(j)).filter(Boolean));
+
+    const added = [];
+    let skippedCount = 0;
+
+    for (const raw of incoming) {
+      if (!raw || typeof raw !== 'object') {
+        skippedCount++;
+        continue;
+      }
+      const entry = { ...raw };
+      const fp = this.computeFingerprint(entry);
+
+      const isDuplicate = (entry.id && existingIds.has(entry.id)) || (fp && existingFps.has(fp));
+      if (isDuplicate) {
+        skippedCount++;
+        continue;
+      }
+
+      if (!entry.id) {
+        entry.id = 'JRN-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+      }
+      if (!entry.createdAt) {
+        entry.createdAt = Date.now();
+      }
+      if (!entry.updatedAt) {
+        entry.updatedAt = Date.now();
+      }
+
+      existingIds.add(entry.id);
+      if (fp) existingFps.add(fp);
+      added.push(entry);
+    }
+
+    return {
+      added,
+      skippedCount,
+      totalImported: incoming.length,
+      merged: [...existing, ...added]
+    };
   }
 };
 

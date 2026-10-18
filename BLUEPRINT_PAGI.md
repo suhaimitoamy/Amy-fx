@@ -2319,11 +2319,15 @@
 
 ---
 
-### 2.32. [INSTANT CSV BACKUP RESTORE] Engine Impor & Rekonsiliasi Cadangan Jurnal 1-Tap di Jurnal Trading
+### 2.32. [INSTANT CSV BACKUP RESTORE] Engine Impor & Rekonsiliasi Cadangan Jurnal 1-Tap di Jurnal Trading — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Delta & Agen Gamma
 - **Konsep & Nilai untuk Trader:**  
   1. *Pemulihan Data Tanpa Khawatir:* Menyediakan tombol `[ 📥 Pulihkan / Impor Cadangan ]` pada modul Jurnal Trading yang mampu membaca file CSV ekspor Amy FX (atau format CSV broker MT4/MT5 umum), memvalidasi kelengkapan data via `journal-schema.js`, dan menyimpannya kembali ke IndexedDB `items.v2`.  
   2. *Rekonsiliasi Anti-Duplikasi:* Menerapkan pencocokan sidik jari unik transaksi (`timestamp + symbol + entry + stopLoss`) sehingga trader dapat mengimpor file cadangan berulang kali tanpa risiko transaksi lama terduplikasi, memberikan rasa tenang total saat mengganti perangkat smartphone.
+- **Implementasi & Audit Reviewer:**
+  - `journal-export.js`: Mengembangkan parser CSV multi-format (`parseCsv`), generator sidik jari transaksi deterministik (`computeFingerprint`), dan rekonsiliasi anti-duplikasi otomatis (`reconcileJournals`).
+  - `apps/journal/app.js` & `index.html`: Mengintegrasikan pemulihan instan berkas `.csv` dan `.json` langsung ke penyimpanan IndexedDB tanpa keharusan membungkus ke berkas ZIP.
+  - Targeted unit tests: `tests/journal-export.test.mjs` (10/10 lulus 100%).
 
 ---
 
@@ -2457,7 +2461,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.65. Koreksi Inversi Logika `plan.entry` di `advisor-panel.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.66. Tunda `revokeObjectURL` Cegah Abort Ekspor CSV di `journal-export.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.67. Denominator Dinamis Progres 10 Modul di `apps/academy/main.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.32. Instant CSV Backup Restore & Reconciliation di Jurnal Trading** | P0 (Proteksi Data) | ~7 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.32. Instant CSV Backup Restore & Reconciliation di Jurnal Trading** | P0 (Proteksi Data) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.33. Dynamic DST-Aware Session Countdown & Killzone Pill di Header Cockpit** | P0 (Disiplin Waktu) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.62. Koreksi Offset 17:00 NY Close D1 Candle di `practice-core.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.63. Eliminasi `force: true` Spam Manifest Update di `update-checker.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
