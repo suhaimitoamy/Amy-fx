@@ -7,10 +7,13 @@ window.AmyJournalExport = {
   downloadCsv(entries, filename='amyfx-journal.csv'){
     const csv = this.toCsv(entries);
     const blob = new Blob([csv], {type:'text/csv'});
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
+    a.href = url;
     a.download = filename;
     a.click();
-    URL.revokeObjectURL(a.href);
+    setTimeout(() => {
+      try { URL.revokeObjectURL(url); } catch (_) {}
+    }, 15000);
   }
 };
