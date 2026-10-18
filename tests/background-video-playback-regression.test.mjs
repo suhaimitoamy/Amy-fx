@@ -32,6 +32,12 @@ test("native player handles loop, audio focus, noisy audio and persistent state"
   assert.match(service, /ACTION_STOP/);
 });
 
+test("stateTicker is paused when video is not playing to avoid disk thrashing", () => {
+  assert.match(service, /player\.isPlaying/);
+  assert.match(service, /mainHandler\.removeCallbacks\(stateTicker\)/);
+});
+
+
 test("IndexedDB video transfer is chunked, ordered and size validated", () => {
   assert.match(journal, /const CHUNK_SIZE = 512 \* 1024/);
   assert.match(journal, /blob\.slice\(/);

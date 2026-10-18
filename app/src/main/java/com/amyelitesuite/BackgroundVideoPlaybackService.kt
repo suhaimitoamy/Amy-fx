@@ -55,8 +55,10 @@ class BackgroundVideoPlaybackService : MediaSessionService() {
 
     private val stateTicker = object : Runnable {
         override fun run() {
-            publishState()
-            mainHandler.postDelayed(this, 500L)
+            if (::player.isInitialized && player.isPlaying) {
+                publishState()
+                mainHandler.postDelayed(this, 500L)
+            }
         }
     }
 
@@ -74,7 +76,13 @@ class BackgroundVideoPlaybackService : MediaSessionService() {
             setWakeMode(C.WAKE_MODE_LOCAL)
             repeatMode = Player.REPEAT_MODE_ONE
             addListener(object : Player.Listener {
-                override fun onIsPlayingChanged(isPlaying: Boolean) = publishState()
+                override fun onIsPlayingChanged(isPlaying: Boolean) {
+                    publishState()
+                    mainHandler.removeCallbacks(stateTicker)
+                    if (isPlaying) {
+                        mainHandler.postDelayed(stateTicker, 500L)
+                    }
+                }
                 override fun onPlaybackStateChanged(playbackState: Int) = publishState()
                 override fun onPositionDiscontinuity(
                     oldPosition: Player.PositionInfo,
@@ -105,7 +113,9 @@ class BackgroundVideoPlaybackService : MediaSessionService() {
             .build()
 
         publishState()
-        mainHandler.post(stateTicker)
+        if (::player.isInitialized && player.isPlaying) {
+            mainHandler.post(stateTicker)
+        }
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
