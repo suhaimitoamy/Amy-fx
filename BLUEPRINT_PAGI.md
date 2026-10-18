@@ -328,6 +328,7 @@
   Skrip `price-alert-manager.js` (1.255 baris yang berisi logika pemantauan target harga real-time dan audio chime) saat ini hanya di-load di Cockpit Mapping. Ketika trader sedang melihat Beranda (`index.html`), event listener `amyfx:twelvedata-price` tidak terdaftar. Jika harga menyentuh target saat user berada di Beranda, alarm **sama sekali tidak berbunyi**.
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   Muat modul `price-alert-manager.js` secara global di Beranda (`index.html`) atau integrasikan pendeteksi alarm langsung ke level Kotlin Android di `TwelveDataPriceBridge.kt` agar notifikasi alarm harga tetap berbunyi aktif di layar manapun pengguna berada.
+- **Status Implementasi:** [x] SELESAI & LOLOS AUDIT REVIEWER (`price-alert-manager.js` dimuat sebagai modul ES di Beranda `index.html`, mengaktifkan pemantauan harga dan audio chime otomatis di Beranda; unit test lolos di `tests/price-alert-manager.test.mjs`).
 
 ---
 
@@ -2521,7 +2522,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.17. Matikan Disk I/O SharedPreferences Tiap 500ms Saat Video Paused** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.8. Perbaikan Download CSV Jurnal Terkorupsi Menjadi PDF** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.10. Perbaikan Race Condition Live Price Timeout 25s di OkHttp** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.11. Perbaikan Alarm Target Harga Mati di Beranda (`index.html`)** | P0 (Kritis) | ~8 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.11. Perbaikan Alarm Target Harga Mati di Beranda (`index.html`)** | P0 (Kritis) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.13. Guard Weekend Anti-Spam di `DriverSetupSyncWorker` (Hemat Baterai)** | P0 (Kritis) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.1. Perbaikan D1 Liquidity Gap di `scalper-setups.js`** | P0 (Tinggi) | ~10 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.3. Guard `SecurityException` Android 14 Exact Alarm** | P0 (Tinggi) | ~5 menit | [ ] Setuju / [ ] Tunda |

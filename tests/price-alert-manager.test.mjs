@@ -368,4 +368,10 @@ test('PriceAlertManager: playAlertBeep delegates to native Android.playNotificat
   assert.match(mainActivity, /RingtoneManager\.getDefaultUri/, 'MainActivity.kt must use RingtoneManager');
 });
 
+test('PriceAlertManager: loaded in index.html (Beranda) to prevent silent alert failure (item 1.11)', () => {
+  const indexHtml = fs.readFileSync('app/src/main/assets/index.html', 'utf8');
+  assert.match(indexHtml, /<script type="module" src="apps\/mapping\/js\/ict-workspace\/price-alert-manager\.js"><\/script>/, 'index.html must load price-alert-manager.js module');
+});
+
+
 
