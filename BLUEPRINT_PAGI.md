@@ -1175,7 +1175,7 @@
 
 ---
 
-### 1.49. [OFFLINE ARCHITECTURE] URL Hardcoded `https://amy-fx.vercel.app` di `scalper-model.js` Melumpuhkan Mock Driver di Local Preview
+### 1.49. [OFFLINE ARCHITECTURE] URL Hardcoded `https://amy-fx.vercel.app` di `scalper-model.js` Melumpuhkan Mock Driver di Local Preview — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/assets/apps/mapping/js/ict-workspace/scalper-model.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/ict-workspace/scalper-model.js#L2) & [`app/src/main/assets/apps/mapping/js/ict-workspace/scalper-panel.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/ict-workspace/scalper-panel.js#L24)
 - **Akar Masalah (Temuan Agen Alpha & Agen Gamma):**
   1. Di `scalper-model.js`, baris 2 mengunci endpoint: `export const ENDPOINT = 'https://amy-fx.vercel.app/api/scalper-setups';`. Padahal server lokal `tools/serve-local.mjs` di port 8080 telah mendukung endpoint `/api/scalper-setups` lokal secara penuh. Akibat hardcoding ini, pengujian Cockpit Mapping dan Turnamen Driver secara offline di Termux selalu gagal memuat setup karena memaksa request keluar ke internet.  
@@ -1184,9 +1184,10 @@
   1. Gunakan resolusi origin dinamis:
      ```javascript
      const isLocal = typeof location !== 'undefined' && /^(localhost|127\.|10\.|192\.168\.)/.test(location.hostname);
-     export const ENDPOINT = isLocal ? '/api/scalper-setups' : 'https://amy-fx.vercel.app/api/scalper-setups';
+     export const ENDPOINT = isLocal ? `${location.origin}/api/scalper-setups` : 'https://amy-fx.vercel.app/api/scalper-setups';
      ```
   2. Integrasikan pengecekan `isWeekendClosure` sebelum menjadwalkan interval refresh 30s.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. `scalper-model.js` telah mengadopsi resolusi origin dinamis sehingga lingkungan localhost/preview Termux langsung memanggil `/api/scalper-setups` lokal tanpa keluar ke internet. `scalper-panel.js` mengintegrasikan `isWeekendClosure()` yang menahan polling 30s saat sesi libur akhir pekan (Jumat 17:00 NY s.d. Minggu 17:00 NY) ke interval pasif 15 menit. 3/3 targeted unit test lolos di `tests/scalper-model-endpoint-weekend.test.mjs`.
 
 ---
 
@@ -2531,7 +2532,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.23. Auto-Resume Bookmark Cursor di Practice Replay Engine** | P1 (Sangat Praktis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.47. Pasang Guard Equality & Batasi Target MutationObserver di `amyfx-home-data-integration-v1.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.48. Union Set Keys pada Ekspor CSV Jurnal Cegah Kehilangan Field di `journal-export.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.49. Resolusi Dinamis Endpoint `ENDPOINT` & Filter Weekend di `scalper-model.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.49. Resolusi Dinamis Endpoint `ENDPOINT` & Filter Weekend di `scalper-model.js`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.44. Terapkan `isWeekendClosure` & Hentikan Polling Akhir Pekan di `home-price-chart.js`** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.45. Eliminasi Lookahead Path Bias pada Fractal Evaluator di `advisor-panel.js`** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.46. Perbaiki Spurious Immediate Alert & Persistensi `lastCheckedPrice` di `price-alert-manager.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |

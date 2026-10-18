@@ -49,6 +49,8 @@ export function toggleMarkup(id){
   return `<button type="button" role="switch" aria-checked="${on}" aria-label="Aktifkan metode ${id}" data-method-toggle="${id}" style="border:0;border-radius:18px;padding:7px 14px;background:${on?'#15803d':'#64748b'};color:white">${on?'ON':'OFF'}</button><small style="display:block">${on?'ON':'OFF · DISABLED'}</small>`;
 }
 export function methodControls(){return `<section class="card"><h2>Metode perangkat ini</h2><p data-method-sync role="status">${message}</p>${METHODS.map(d=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:10px"><span>${d.name.replaceAll('&','&amp;')}</span><span>${toggleMarkup(d.id)}</span></div>`).join('')}</section>`;}
-document.addEventListener('click',event=>{const button=event.target.closest('[data-method-toggle]');if(!button)return;event.stopPropagation();toggleMethod(button.dataset.methodToggle);},true);
-window.addEventListener('online',()=>{ready=null;void initializeMethods();});
-window.addEventListener('storage',event=>{if(event.key===KEY)emit();});
+if(typeof document!=='undefined')document.addEventListener('click',event=>{const button=event.target.closest('[data-method-toggle]');if(!button)return;event.stopPropagation();toggleMethod(button.dataset.methodToggle);},true);
+if(typeof window!=='undefined'){
+  window.addEventListener('online',()=>{ready=null;void initializeMethods();});
+  window.addEventListener('storage',event=>{if(event.key===KEY)emit();});
+}

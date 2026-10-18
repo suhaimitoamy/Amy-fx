@@ -21,7 +21,32 @@ function render(){
   const requested=payload?.selected;
   $('scalper-requested').innerHTML=requested&&!items.some(s=>s.id===requested.id)?`<h3>Setup dari notifikasi</h3>${card(setupView(requested,fresh))}`:'';
 }
-function schedule(){clearTimeout(timer);if(!document.hidden)timer=setTimeout(refresh,30000);}
+export function isWeekendClosure(timeSec = Date.now() / 1000) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York', hourCycle: 'h23', hour: '2-digit', minute: '2-digit', weekday: 'short'
+    }).formatToParts(new Date(timeSec * 1000));
+    const values = Object.fromEntries(parts.map(x => [x.type, x.value]));
+    const weekday = values.weekday, hour = Number(values.hour) + Number(values.minute) / 60;
+    if (weekday === 'Sat') return true;
+    if (weekday === 'Sun') return hour < 17;
+    if (weekday === 'Fri') return hour >= 17;
+    return false;
+  } catch (_) {
+    const d = new Date(timeSec * 1000), day = d.getUTCDay();
+    return day === 6 || day === 0;
+  }
+}
+
+function schedule() {
+  clearTimeout(timer);
+  if (isWeekendClosure()) {
+    // Pasar libur akhir pekan: hindari polling spam 30s ke server (Item 1.49)
+    if (!document.hidden) timer = setTimeout(refresh, 900000);
+    return;
+  }
+  if (!document.hidden) timer = setTimeout(refresh, 30000);
+}
 async function refresh(){
   const id=++generation;controller?.abort();controller=new AbortController();const request=controller;
   const timeout=setTimeout(()=>request.abort(),15000);$('scalper-refresh').disabled=true;
@@ -33,18 +58,20 @@ async function refresh(){
   }catch{if(id!==generation)return;failed=true;render();}
   finally{clearTimeout(timeout);if(id===generation){$('scalper-refresh').disabled=false;schedule();}}
 }
-$('scalper-refresh').addEventListener('click',refresh);
-$('scalper-setups').addEventListener('click',event=>{const button=event.target.closest('[data-scalper-select]');if(!button)return;selectedId=button.dataset.scalperSelect;render();$('chart').scrollIntoView({behavior:'smooth',block:'center'});});
-$('scalper-filter').addEventListener('change',event=>{filter=event.target.value;render();});
-$('scalper-clear').addEventListener('click',()=>{selectedId='';render();});
-$('scalper-methods').innerHTML=methodControls();
-window.addEventListener('amy-method-toggles',()=>{$('scalper-methods').innerHTML=methodControls();});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){generation++;controller?.abort();clearTimeout(timer);}else{render();refresh();}});
-window.addEventListener('pagehide',()=>{generation++;controller?.abort();clearTimeout(timer);});
-window.addEventListener('pageshow',event=>{if(event.persisted)refresh();});
-window.addEventListener('online',refresh);
-window.addEventListener('offline',()=>{failed=true;render();});
-window.addEventListener('hashchange',()=>{route();refresh();});
-route();render();refresh();
-// Reuse existing per-device preferences; do not wait on them to render the page.
-void initializeMethods().then(refresh);
+if(typeof window!=='undefined'&&typeof document!=='undefined'){
+  $('scalper-refresh')?.addEventListener('click',refresh);
+  $('scalper-setups')?.addEventListener('click',event=>{const button=event.target.closest('[data-scalper-select]');if(!button)return;selectedId=button.dataset.scalperSelect;render();$('chart')?.scrollIntoView({behavior:'smooth',block:'center'});});
+  $('scalper-filter')?.addEventListener('change',event=>{filter=event.target.value;render();});
+  $('scalper-clear')?.addEventListener('click',()=>{selectedId='';render();});
+  if($('scalper-methods'))$('scalper-methods').innerHTML=methodControls();
+  window.addEventListener('amy-method-toggles',()=>{if($('scalper-methods'))$('scalper-methods').innerHTML=methodControls();});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){generation++;controller?.abort();clearTimeout(timer);}else{render();refresh();}});
+  window.addEventListener('pagehide',()=>{generation++;controller?.abort();clearTimeout(timer);});
+  window.addEventListener('pageshow',event=>{if(event.persisted)refresh();});
+  window.addEventListener('online',refresh);
+  window.addEventListener('offline',()=>{failed=true;render();});
+  window.addEventListener('hashchange',()=>{route();refresh();});
+  route();render();refresh();
+  // Reuse existing per-device preferences; do not wait on them to render the page.
+  void initializeMethods().then(refresh);
+}
