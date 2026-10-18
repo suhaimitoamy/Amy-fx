@@ -390,6 +390,46 @@ test('PriceAlertManager: playAlertBeep prioritizes native Android.playGoldChime 
   assert.match(mainActivity, /@JavascriptInterface\s+fun playNotificationSound\(soundType:\s*String\?\)/, 'MainActivity.kt must support soundType overload');
   assert.match(mainActivity, /ToneGenerator/, 'MainActivity.kt must use ToneGenerator for gold chime');
 });
+test('PriceAlertManager: eliminates spurious immediate trigger when target equals current price (item 1.46)', () => {
+  localStorage.clear();
+  window.Android.notifications = [];
+  setPreviousPrice(null);
 
+  // User adds alert at 2650.00 while current price is 2650.00
+  const alert = addAlert(2650.00, { currentPrice: 2650.00 });
+  assert.equal(alert.status, 'ACTIVE');
+  assert.equal(alert.lastCheckedPrice, 2650.00);
 
+  // Tick 1 at 2650.00 -> should NOT fire immediately (spurious trigger prevented)
+  const fired1 = checkPrice(2650.00);
+  assert.equal(fired1, false);
+  assert.equal(getAlerts()[0].status, 'ACTIVE');
+  assert.equal(window.Android.notifications.length, 0);
 
+  // Tick 2 price moves slightly down to 2649.50
+  const fired2 = checkPrice(2649.50);
+  assert.equal(fired2, false);
+  assert.equal(getAlerts()[0].status, 'ACTIVE');
+
+  // Tick 3 price crosses back above 2650.00 to 2650.50 -> NOW fires!
+  const fired3 = checkPrice(2650.50);
+  assert.equal(fired3, true);
+  assert.equal(getAlerts()[0].status, 'TRIGGERED');
+  assert.equal(window.Android.notifications.length, 1);
+});
+
+test('PriceAlertManager: persists lastCheckedPrice to localStorage during ticks (item 1.46)', () => {
+  localStorage.clear();
+  setPreviousPrice(null);
+
+  // Create alert at 2700.00 when price is 2650.00
+  addAlert(2700.00, { currentPrice: 2650.00 });
+  assert.equal(getAlerts()[0].lastCheckedPrice, 2650.00);
+
+  // Tick to 2660.00
+  checkPrice(2660.00);
+
+  // Check that localStorage persisted the updated lastCheckedPrice
+  const reloaded = JSON.parse(localStorage.getItem('amyfx_custom_price_alerts'));
+  assert.equal(reloaded[0].lastCheckedPrice, 2660.00, 'lastCheckedPrice must be saved to localStorage');
+});

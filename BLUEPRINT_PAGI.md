@@ -1111,7 +1111,7 @@
 
 ---
 
-### 1.46. [ALERT RACE & PERSISTENCE] Pemicuan Instan Spurious Saat Harga Identik & Hilangnya `lastCheckedPrice` di `price-alert-manager.js`
+### 1.46. [ALERT RACE & PERSISTENCE] Pemicuan Instan Spurious Saat Harga Identik & Hilangnya `lastCheckedPrice` di `price-alert-manager.js` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/assets/apps/mapping/js/ict-workspace/price-alert-manager.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/ict-workspace/price-alert-manager.js#L112-L125) & [`#L820-L847`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/ict-workspace/price-alert-manager.js#L820-L847)
 - **Akar Masalah (Temuan Agen Gamma & Agen Epsilon):**
   1. *Spurious Instant Trigger:* Ketika trader memasang alarm pada harga saat ini (misal harga 2650.00 dan target disetel 2650.00), evaluasi `p <= target && current >= target` langsung bernilai `true` pada tick pertama (0ms setelah dibuat), membunyikan alarm dan menonaktifkan alert secara instan tanpa ada pergerakan menembus (*cross*).
@@ -1119,6 +1119,7 @@
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   1. Ubah logika deteksi crossing menjadi strictly directional (`p < target && current >= target` untuk `CROSS_ABOVE`, dan `p > target && current <= target` untuk `CROSS_BELOW`).
   2. Simpan `lastCheckedPrice` secara berkala dengan throttling cerdas ke `localStorage`, serta tambahkan guard selisih waktu/toleransi gap harga saat inisialisasi.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Logika pemicuan alert diubah menjadi strictly directional (`p < target && current >= target` untuk `CROSS_ABOVE` dan sebaliknya untuk `CROSS_BELOW`), mengeliminasi alarm palsu instan saat target sama dengan harga berjalan. `lastCheckedPrice` diinisialisasi saat pembuatan alert dan dipersistensikan secara throttled ke `localStorage` saat tick harga berjalan serta saat event `beforeunload`. Seluruh 21/21 unit test lolos di `tests/price-alert-manager.test.mjs`.
 
 ---
 
@@ -2535,7 +2536,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.49. Resolusi Dinamis Endpoint `ENDPOINT` & Filter Weekend di `scalper-model.js`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.44. Terapkan `isWeekendClosure` & Hentikan Polling Akhir Pekan di `home-price-chart.js`** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.45. Eliminasi Lookahead Path Bias pada Fractal Evaluator di `advisor-panel.js`** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.46. Perbaiki Spurious Immediate Alert & Persistensi `lastCheckedPrice` di `price-alert-manager.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.46. Perbaiki Spurious Immediate Alert & Persistensi `lastCheckedPrice` di `price-alert-manager.js`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.41. Batalkan Registrasi Plan Jika Harga Sudah Lewat TP1 di `trade-lifecycle-tracker.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.42. Guard `MISSED` Saat TP1 Tersentuh Sebelum Entry di `trade-lifecycle-tracker.js`** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.43. Eliminasi Memory Leak Context Activity & Stop Ticker di Background Services** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
