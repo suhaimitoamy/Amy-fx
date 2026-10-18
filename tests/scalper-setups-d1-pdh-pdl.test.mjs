@@ -98,3 +98,74 @@ test('Item 1.26: evaluateSixDrivers with D1 candles successfully populates PDH a
     assert.notEqual(driver.state, 'ERROR');
   }
 });
+
+test('Item 1.1: buildMarketContext synthesizes D1 from H1 when d1 is omitted, closing liquidity gap', async () => {
+  const { buildMarketContext, synthesizeD1FromH1 } = await import('../lib/scalper-engine/market-context.mjs');
+  const now = 1_700_000_000;
+
+  // 48 closed H1 candles spanning 2 full days
+  const h1 = [];
+  for (let i = 48; i >= 1; i--) {
+    const t = now - i * 3600;
+    h1.push({
+      open_time: t,
+      close_time: t + 3600,
+      open: 2640.00,
+      high: i > 24 ? 2670.00 : 2655.00,
+      low: i > 24 ? 2620.00 : 2635.00,
+      close: 2648.00,
+      is_closed: true
+    });
+  }
+
+  // Verify direct synthesis
+  const synthesized = synthesizeD1FromH1(h1, now);
+  assert.ok(synthesized.length >= 1, 'synthesizeD1FromH1 must generate at least 1 D1 candle');
+  assert.ok(synthesized[0].open_time < synthesized[0].close_time);
+  assert.ok(synthesized[0].high >= synthesized[0].low);
+
+  // 60 closed M15 candles
+  const m15 = [];
+  for (let i = 60; i >= 1; i--) {
+    const t = now - i * 900;
+    m15.push({
+      open_time: t,
+      close_time: t + 900,
+      open: 2645.00,
+      high: 2650.00,
+      low: 2642.00,
+      close: 2648.00,
+      is_closed: true
+    });
+  }
+
+  // 40 closed M5 candles
+  const m5 = [];
+  for (let i = 40; i >= 1; i--) {
+    const t = now - i * 300;
+    m5.push({
+      open_time: t,
+      close_time: t + 300,
+      open: 2646.00,
+      high: 2649.00,
+      low: 2644.00,
+      close: 2648.00,
+      is_closed: true
+    });
+  }
+
+  // Call buildMarketContext WITHOUT passing d1
+  const ctx = buildMarketContext({
+    h1,
+    m15,
+    m5,
+    nowSeconds: now
+  });
+
+  assert.ok(ctx.source.D1 !== null, 'source.D1 must be populated via fallback synthesis');
+  const pdh = ctx.liquidity.find(l => l.label === 'PDH');
+  const pdl = ctx.liquidity.find(l => l.label === 'PDL');
+  assert.ok(pdh, 'PDH must be present in liquidity levels even when d1 input is omitted');
+  assert.ok(pdl, 'PDL must be present in liquidity levels even when d1 input is omitted');
+});
+

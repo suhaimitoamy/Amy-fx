@@ -173,7 +173,7 @@
 
 ## 🐛 BAGIAN 1: AUDIT & DAFTAR DEBUGGING (Apa yang Perlu Diperbaiki)
 
-### 1.1. [KRUSIAL] D1 Liquidity Gap di Vercel API `api/scalper-setups.js`
+### 1.1. [KRUSIAL] D1 Liquidity Gap di Vercel API `api/scalper-setups.js` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`api/scalper-setups.js`](file:///root/Amy-fx/api/scalper-setups.js#L65-L75) & [`lib/scalper-engine/market-context.mjs`](file:///root/Amy-fx/lib/scalper-engine/market-context.mjs#L849)
 - **Akar Masalah (Temuan Agen Alpha):**
   Di `api/scalper-setups.js`, pemanggilan `buildMarketContext` hanya mengoper `{ h1, m15, m5, calendar, nowSeconds }` tanpa menyertakan `d1`.  
@@ -2524,7 +2524,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.10. Perbaikan Race Condition Live Price Timeout 25s di OkHttp** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.11. Perbaikan Alarm Target Harga Mati di Beranda (`index.html`)** | P0 (Kritis) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.13. Guard Weekend Anti-Spam di `DriverSetupSyncWorker` (Hemat Baterai)** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.1. Perbaikan D1 Liquidity Gap di `scalper-setups.js`** | P0 (Tinggi) | ~10 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.1. Perbaikan D1 Liquidity Gap di `scalper-setups.js`** | P0 (Tinggi) | ~10 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.3. Guard `SecurityException` Android 14 Exact Alarm** | P0 (Tinggi) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.7. Bridge Native Intent `openPdfDocument` di `MainActivity`** | P0 (Tinggi) | ~8 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.27. Kompresi WebP Wallpaper Kustom (Cegah `QuotaExceededError`)** | P1 (Sedang) | ~7 menit | [ ] Setuju / [ ] Tunda |

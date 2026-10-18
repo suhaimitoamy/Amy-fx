@@ -1,4 +1,4 @@
-import { buildMarketContext, isGoldMarketOpen } from '../lib/scalper-engine/market-context.mjs';
+import { buildMarketContext, isGoldMarketOpen, synthesizeD1FromH1 } from '../lib/scalper-engine/market-context.mjs';
 import { evaluateSixDrivers, SIX_ENGINE_VERSION } from '../lib/scalper-engine/six-drivers.mjs';
 
 let cachePayload = null;
@@ -73,7 +73,10 @@ export default async function handler(req, res) {
     const m15 = convertCandles(res15?.values || res15, 900);
     const m5 = convertCandles(res5?.values || res5, 300);
     const h1 = convertCandles(res60?.values || res60, 3600);
-    const d1 = convertCandles(resD1?.values || resD1, 86400);
+    let d1 = convertCandles(resD1?.values || resD1, 86400);
+    if ((!d1 || !d1.length) && h1 && h1.length >= 12) {
+      d1 = synthesizeD1FromH1(h1);
+    }
 
     // Jika TwelveData gagal / rate limit (429) dan candle tidak lengkap, gunakan cachePayload jika ada
     if ((!m15.length || !h1.length) && cachePayload) {
