@@ -204,3 +204,16 @@ test('DriverSetupSyncWorker code audit verifies numeric sweep formatting and no 
   assert.ok(workerCode.includes('SSL'));
   assert.ok(workerCode.includes('BSL'));
 });
+
+test('detectLiquiditySweep uses dynamic active candle/market price instead of hardcoded 2642.50/2665.30', () => {
+  const amyDynamic = {
+    currentPrice: 2750.50,
+    candle: { high: 2755.00, low: 2748.00, close: 2752.00 },
+    entry: { text: 'SSL swept di M5' }
+  };
+  const sweep = detectLiquiditySweep(amyDynamic);
+  assert.ok(sweep);
+  assert.equal(sweep.name, 'SSL');
+  assert.equal(sweep.level, 2748.00, 'Must fall back to active candle.low, not hardcoded 2642.50');
+  assert.notEqual(sweep.level, 2642.50);
+});

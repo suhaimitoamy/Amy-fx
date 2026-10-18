@@ -138,15 +138,19 @@ export function detectLiquiditySweep(amy, context = null) {
     lines.some(l => /bsl.*swept/i.test(l)) ||
     liqList.some(l => l.label === 'BSL' && /swept/i.test(l.status));
 
+  const marketPrice = num(amy?.currentPrice) || num(amy?.price) || (typeof window !== 'undefined' ? (num(window.amyfxCurrentPrice) || num(window.currentPrice)) : null) || 0;
+  const defaultSsl = c ? c.low : marketPrice;
+  const defaultBsl = c ? c.high : marketPrice;
+
   if (hasSslSweep) {
-    const lvl = (dSweepDir === 1 && dSweepPrice) || (trgSweepDir === 1 && trgSweptPrice) || sslLevel || (c ? c.low : 2642.50);
-    const ext = (dSweepDir === 1 && dSweepExtreme) || (trgSweepDir === 1 && trgSweepExtreme) || (c && c.low < lvl ? c.low : lvl - 1.70);
+    const lvl = (dSweepDir === 1 && dSweepPrice) || (trgSweepDir === 1 && trgSweptPrice) || sslLevel || defaultSsl;
+    const ext = (dSweepDir === 1 && dSweepExtreme) || (trgSweepDir === 1 && trgSweepExtreme) || (c && c.low < lvl ? c.low : (lvl ? lvl - 1.70 : 0));
     return { name: 'SSL', level: lvl, extreme: ext, side: 'BUY' };
   }
 
   if (hasBslSweep) {
-    const lvl = (dSweepDir === -1 && dSweepPrice) || (trgSweepDir === -1 && trgSweptPrice) || bslLevel || (c ? c.high : 2665.30);
-    const ext = (dSweepDir === -1 && dSweepExtreme) || (trgSweepDir === -1 && trgSweepExtreme) || (c && c.high > lvl ? c.high : lvl + 1.70);
+    const lvl = (dSweepDir === -1 && dSweepPrice) || (trgSweepDir === -1 && trgSweptPrice) || bslLevel || defaultBsl;
+    const ext = (dSweepDir === -1 && dSweepExtreme) || (trgSweepDir === -1 && trgSweepExtreme) || (c && c.high > lvl ? c.high : (lvl ? lvl + 1.70 : 0));
     return { name: 'BSL', level: lvl, extreme: ext, side: 'SELL' };
   }
 
@@ -154,8 +158,8 @@ export function detectLiquiditySweep(amy, context = null) {
   if (lines.some(l => l.toLowerCase().includes('swept'))) {
     const isSsl = lines.some(l => /ssl/i.test(l));
     const name = isSsl ? 'SSL' : 'BSL';
-    const lvl = isSsl ? (sslLevel || (c ? c.low : 2642.50)) : (bslLevel || (c ? c.high : 2665.30));
-    const ext = isSsl ? (c && c.low < lvl ? c.low : lvl - 1.70) : (c && c.high > lvl ? c.high : lvl + 1.70);
+    const lvl = isSsl ? (sslLevel || defaultSsl) : (bslLevel || defaultBsl);
+    const ext = isSsl ? (c && c.low < lvl ? c.low : (lvl ? lvl - 1.70 : 0)) : (c && c.high > lvl ? c.high : (lvl ? lvl + 1.70 : 0));
     return { name, level: lvl, extreme: ext, side: isSsl ? 'BUY' : 'SELL' };
   }
 
