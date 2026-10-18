@@ -773,6 +773,18 @@ class MainActivity : Activity() {
         }
 
         @JavascriptInterface
+        fun playNotificationSound() {
+            try {
+                val notificationUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                val ringtone = RingtoneManager.getRingtone(mContext, notificationUri)
+                ringtone?.play()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        @JavascriptInterface
         fun startBackgroundScanner(apiKey: String?, bsl: String?, ssl: String?) {
             try {
                 if (!this@MainActivity.hasRequiredPermissions()) {

@@ -1410,6 +1410,11 @@
     playAlertBeep();
   }
   ```
+- **Status:** [x] SELESAI & LOLOS AUDIT REVIEWER
+- **Catatan Audit Reviewer Guard:**
+  - Jembatan native `@JavascriptInterface fun playNotificationSound()` ditambahkan pada [`app/src/main/java/com/amyelitesuite/MainActivity.kt`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/MainActivity.kt#L775-L786) menggunakan `RingtoneManager` Android.
+  - [`price-alert-manager.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/ict-workspace/price-alert-manager.js#L218-L226) diintegrasikan untuk memanggil `window.Android.playNotificationSound()` secara mulus, melewati blokir Autoplay Policy WebView saat background tick menembus target harga tanpa user touch gesture. Web Audio API tetap menjadi fallback saat di browser desktop.
+  - Pengujian targeted `node --test tests/price-alert-manager.test.mjs` (17/17 pass) dan `node --check` 100% valid tanpa regresi.
 
 ---
 
@@ -2436,7 +2441,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.30. New York Close D1 Synthesizer di Practice Engine** | P0 (Akurasi Charting) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.31. Biometric Fingerprint & Face Unlock Bridge untuk Jurnal Trading** | P0 (Privasi & Keamanan) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.59. Sinkronisasi Kueri Store `items.v2` di `amy-local-assistant.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.60. Native Sound Alert Bridge di `MainActivity.kt` & `price-alert-manager.js`** | P0 (Kritis) | ~5 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.60. Native Sound Alert Bridge di `MainActivity.kt` & `price-alert-manager.js`** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.61. Fallback `JSZip` untuk WebView Lawas di `zip-reader.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.28. Native Sound Alert Bridge & Ringtone Emas Kustom di Android** | P0 (Reliabilitas Audio) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.29. Smart Journal Winrate & Profit Factor Summary di AI Assistant** | P0 (Intelijen Offline) | ~7 menit | [ ] Setuju / [ ] Tunda |

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 
 // Setup Mock DOM and Browser Environment for Node environment testing
 const storage = new Map();
@@ -21,6 +22,7 @@ globalThis.window = {
   Android: {
     notifications: [],
     haptics: [],
+    soundPlayedCount: 0,
     showNotificationWithUrl(title, message, url) {
       this.notifications.push({ title, message, url });
     },
@@ -29,6 +31,9 @@ globalThis.window = {
     },
     triggerHaptic(ms) {
       this.haptics.push(ms);
+    },
+    playNotificationSound() {
+      this.soundPlayedCount += 1;
     }
   },
   amyfxCurrentPrice: 4280.50
@@ -51,7 +56,8 @@ import {
   checkIctIntrabarSweeps,
   clearIctCooldowns,
   getIctCooldowns,
-  isGoldMarketOpen
+  isGoldMarketOpen,
+  playAlertBeep
 } from '../app/src/main/assets/apps/mapping/js/ict-workspace/price-alert-manager.js';
 
 test('PriceAlertManager: getCurrentLivePrice retrieves configured live price', () => {
@@ -350,4 +356,16 @@ test('PriceAlertManager: checkPrice integrates live ICT sweeps even without manu
   assert.equal(window.Android.notifications.length, 1);
   assert.ok(window.Android.notifications[0].title.includes('PDH'));
 });
+
+test('PriceAlertManager: playAlertBeep delegates to native Android.playNotificationSound when available (item 1.60)', () => {
+  const initialCount = window.Android.soundPlayedCount;
+  playAlertBeep();
+  assert.equal(window.Android.soundPlayedCount, initialCount + 1, 'playAlertBeep must delegate to Android.playNotificationSound');
+
+  // Verify MainActivity.kt defines @JavascriptInterface fun playNotificationSound()
+  const mainActivity = fs.readFileSync('app/src/main/java/com/amyelitesuite/MainActivity.kt', 'utf8');
+  assert.match(mainActivity, /@JavascriptInterface\s+fun playNotificationSound\(\)/, 'MainActivity.kt must expose playNotificationSound bridge');
+  assert.match(mainActivity, /RingtoneManager\.getDefaultUri/, 'MainActivity.kt must use RingtoneManager');
+});
+
 

@@ -218,6 +218,12 @@ export function clearAlerts(mode = 'all') {
 export function playAlertBeep() {
   if (typeof window === 'undefined') return;
   try {
+    if (typeof window.Android?.playNotificationSound === 'function') {
+      window.Android.playNotificationSound();
+      return;
+    }
+  } catch (_) {}
+  try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return;
     if (!audioCtx) audioCtx = new AudioCtx();
