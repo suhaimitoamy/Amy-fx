@@ -258,6 +258,59 @@ test('IndexedDB write resolves only after the transaction commit event', async (
   assert.equal(resolved, true);
 });
 
+test('IndexedDB error or block resets dbPromise to allow subsequent connection retry', async () => {
+  let openAttempts = 0;
+  let shouldFail = true;
+  const requests = [];
+  const indexedDB = {
+    open() {
+      openAttempts++;
+      const req = {};
+      requests.push(req);
+      queueMicrotask(() => {
+        if (shouldFail) {
+          req.error = new Error('Transient DB failure');
+          if (req.onerror) req.onerror();
+        } else {
+          req.result = {
+            objectStoreNames: { contains: () => true },
+            transaction() {
+              const tx = {
+                objectStore() {
+                  return { put() { return {}; } };
+                }
+              };
+              queueMicrotask(() => { if (tx.oncomplete) tx.oncomplete(); });
+              return tx;
+            }
+          };
+          if (req.onsuccess) req.onsuccess();
+        }
+      });
+      return req;
+    }
+  };
+  const runtime = { console, indexedDB, Blob, localStorage: { getItem: () => null, setItem() {} }, setTimeout, clearTimeout, queueMicrotask };
+  runtime.globalThis = runtime;
+  vm.createContext(runtime);
+  const run = name => vm.runInContext(readFileSync(new URL(name, base), 'utf8'), runtime, { filename: name });
+  run('practice-core.js');
+  run('storage.js');
+
+  // First call should fail and reject
+  await assert.rejects(
+    () => runtime.AmyPracticeStorage.saveHistoricalPack({ id: 'pack-retry' }, new Blob(['data'])),
+    /Transient DB failure/
+  );
+  assert.equal(openAttempts, 1);
+
+  // Subsequent call after recovering should trigger a new open attempt instead of permanent rejection
+  shouldFail = false;
+  const result = await runtime.AmyPracticeStorage.saveHistoricalPack({ id: 'pack-retry' }, new Blob(['data']));
+  assert.equal(openAttempts, 2, 'Subsequent call must retry indexedDB.open() rather than caching failed promise');
+  assert.equal(result.id, 'pack-retry');
+});
+
 test('fallback trade remains readable and newer outcomes win over stale IndexedDB records', async () => {
   const shared = new Map();
   let primary;

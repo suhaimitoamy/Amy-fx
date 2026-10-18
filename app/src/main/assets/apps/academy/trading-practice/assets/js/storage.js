@@ -49,9 +49,25 @@
         }
         if (!db.objectStoreNames.contains(STORES.packFiles)) db.createObjectStore(STORES.packFiles, { keyPath: 'id' });
       };
-      request.onsuccess = function () { resolve(request.result); };
-      request.onerror = function () { reject(request.error || new Error('IndexedDB gagal dibuka')); };
-      request.onblocked = function () { reject(new Error('Upgrade database Practice terblokir. Tutup halaman Practice lain lalu coba lagi.')); };
+      request.onsuccess = function () {
+        var db = request.result;
+        if (db) {
+          db.onclose = function () { dbPromise = null; };
+          db.onversionchange = function () {
+            try { db.close(); } catch (_) {}
+            dbPromise = null;
+          };
+        }
+        resolve(db);
+      };
+      request.onerror = function () {
+        dbPromise = null;
+        reject(request.error || new Error('IndexedDB gagal dibuka'));
+      };
+      request.onblocked = function () {
+        dbPromise = null;
+        reject(new Error('Upgrade database Practice terblokir. Tutup halaman Practice lain lalu coba lagi.'));
+      };
     });
     return dbPromise;
   }
