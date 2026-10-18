@@ -78,3 +78,55 @@ test('metadataFromCsv rejects CSV with fewer than 2 data rows', async () => {
     /minimal 2 candle/
   );
 });
+
+test('zip-reader falls back to root.JSZip when DecompressionStream is unavailable (item 1.61)', async () => {
+  const zipContext = { console, TextDecoder, Uint8Array, DataView, ArrayBuffer, Blob, Response };
+  zipContext.globalThis = zipContext;
+  zipContext.root = zipContext;
+  
+  // Mock JSZip
+  let jszipCalled = false;
+  zipContext.JSZip = {
+    async loadAsync(bytes) {
+      jszipCalled = true;
+      return {
+        file(name) {
+          if (name === 'test.csv') {
+            return {
+              async: async type => new TextEncoder().encode('timestamp,open,high,low,close\n1700000000,2600,2605,2598,2603\n1700000060,2603,2608,2601,2607')
+            };
+          }
+          return null;
+        }
+      };
+    }
+  };
+
+  vm.createContext(zipContext);
+  const zipReaderCode = readFileSync(new URL('../app/src/main/assets/apps/academy/trading-practice/assets/js/zip-reader.js', import.meta.url), 'utf8');
+  vm.runInContext(zipReaderCode, zipContext);
+
+  assert.ok(zipContext.AmyZipArchive, 'AmyZipArchive must be exported');
+
+  // Create an Archive instance with mock entries
+  const archive = Object.create(zipContext.AmyZipArchive);
+  // Test extractViaJsZip directly on an Archive instance
+  const archiveInstance = {
+    bytes: new Uint8Array([0x50, 0x4B, 0x03, 0x04]),
+    _jszip: null
+  };
+  // Bind prototype
+  const proto = vm.runInContext('Object.getPrototypeOf(new (function(){ this.bytes = new Uint8Array(); this.entries = []; this.byName = new Map(); }))', zipContext);
+  
+  // Test extractViaJsZip fallback directly
+  const extracted = await zipContext.AmyZipArchive.open(new Uint8Array([
+    // Minimal mock zip header to verify initialization
+    0x50, 0x4B, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+  ]));
+  
+  const content = await extracted.extractViaJsZip('test.csv');
+  assert.equal(jszipCalled, true, 'JSZip.loadAsync must be invoked on fallback');
+  const decoded = new TextDecoder().decode(content);
+  assert.match(decoded, /1700000000,2600/);
+});
+

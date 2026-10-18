@@ -96,6 +96,42 @@
     return null;
   };
 
+  async function ensureJsZip() {
+    if (root.JSZip && typeof root.JSZip.loadAsync === 'function') return root.JSZip;
+    if (typeof document !== 'undefined' && typeof document.createElement === 'function') {
+      try {
+        await new Promise(function (resolve, reject) {
+          var script = document.createElement('script');
+          script.src = '../../journal/jszip.min.js';
+          script.onload = resolve;
+          script.onerror = function () {
+            var script2 = document.createElement('script');
+            script2.src = '/apps/journal/jszip.min.js';
+            script2.onload = resolve;
+            script2.onerror = reject;
+            document.head.appendChild(script2);
+          };
+          document.head.appendChild(script);
+        });
+        if (root.JSZip) return root.JSZip;
+      } catch (_) {}
+    }
+    return root.JSZip || null;
+  }
+
+  Archive.prototype.extractViaJsZip = async function (entryName) {
+    if (!this._jszip) {
+      var jszip = await ensureJsZip();
+      if (!jszip || typeof jszip.loadAsync !== 'function') {
+        throw new Error('JSZip tidak tersedia untuk dekompresi fallback.');
+      }
+      this._jszip = await jszip.loadAsync(this.bytes);
+    }
+    var file = this._jszip.file(entryName);
+    if (!file) throw new Error('Entry ZIP tidak ditemukan di JSZip: ' + entryName);
+    return await file.async('uint8array');
+  };
+
   Archive.prototype.extract = async function (entryOrName) {
     var entry = typeof entryOrName === 'string' ? this.byName.get(entryOrName) : entryOrName;
     if (!entry || entry.directory) throw new Error('Entry ZIP tidak ditemukan.');
@@ -113,8 +149,23 @@
     var compressed = this.bytes.subarray(start, end);
     var output;
     if (entry.method === 0) output = compressed.slice();
-    else if (entry.method === 8) output = await inflateRaw(compressed);
-    else throw new Error('Metode kompresi ZIP ' + entry.method + ' belum didukung.');
+    else if (entry.method === 8) {
+      if (typeof root.DecompressionStream === 'function') {
+        try {
+          output = await inflateRaw(compressed);
+        } catch (streamErr) {
+          if (root.JSZip || typeof document !== 'undefined') {
+            output = await this.extractViaJsZip(entry.name);
+          } else {
+            throw streamErr;
+          }
+        }
+      } else if (root.JSZip || typeof document !== 'undefined') {
+        output = await this.extractViaJsZip(entry.name);
+      } else {
+        throw new Error('WebView ini belum mendukung decompression ZIP. Perbarui Android System WebView atau impor CSV/JSON.');
+      }
+    } else throw new Error('Metode kompresi ZIP ' + entry.method + ' belum didukung.');
     if (entry.uncompressedSize && output.length !== entry.uncompressedSize) {
       throw new Error('ZIP rusak: ukuran hasil ekstraksi tidak cocok untuk ' + entry.name + '.');
     }

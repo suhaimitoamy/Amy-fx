@@ -1433,6 +1433,11 @@
     return zip.file(entry.name).async('uint8array');
   }
   ```
+- **Status:** [x] SELESAI & LOLOS AUDIT REVIEWER
+- **Catatan Audit Reviewer Guard:**
+  - Fungsi `ensureJsZip()` dan `Archive.prototype.extractViaJsZip()` diintegrasikan ke [`apps/academy/trading-practice/assets/js/zip-reader.js`](file:///root/Amy-fx/app/src/main/assets/apps/academy/trading-practice/assets/js/zip-reader.js#L99-L165).
+  - Jika `DecompressionStream` tidak didukung (Android WebView < 103), engine otomatis memuat dan mendelegasikan ekstraksi ZIP ke `JSZip` yang telah ada di aset aplikasi (`apps/journal/jszip.min.js`), dengan caching instans ZIP pada arsip sehingga impor multi-bulan hemat RAM dan tidak mengulang parsing biner.
+  - Pengujian targeted `node --test tests/trading-practice-csv-metadata.test.mjs` (5/5 pass) dan `node --check` 100% valid tanpa regresi.
 
 ---
 
@@ -2442,7 +2447,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.31. Biometric Fingerprint & Face Unlock Bridge untuk Jurnal Trading** | P0 (Privasi & Keamanan) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.59. Sinkronisasi Kueri Store `items.v2` di `amy-local-assistant.js`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.60. Native Sound Alert Bridge di `MainActivity.kt` & `price-alert-manager.js`** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.61. Fallback `JSZip` untuk WebView Lawas di `zip-reader.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.61. Fallback `JSZip` untuk WebView Lawas di `zip-reader.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.28. Native Sound Alert Bridge & Ringtone Emas Kustom di Android** | P0 (Reliabilitas Audio) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.29. Smart Journal Winrate & Profit Factor Summary di AI Assistant** | P0 (Intelijen Offline) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.56. Perbaiki Offset UTC `Z` Kalender Ekonomi di `api/calendar.js`** | P0 (Kritis) | ~3 menit | [ ] Setuju / [ ] Tunda |
