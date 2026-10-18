@@ -43,6 +43,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.webkit.WebViewAssetLoader
 import java.io.File
@@ -735,6 +736,45 @@ class MainActivity : Activity() {
             (mContext as Activity).runOnUiThread {
                 Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show()
             }
+        }
+
+        @JavascriptInterface
+        fun openPdfDocument(filePath: String?) {
+            (mContext as Activity).runOnUiThread {
+                try {
+                    val rawPath = filePath?.trim()
+                    if (rawPath.isNullOrEmpty()) {
+                        Toast.makeText(mContext, "Jalur file PDF tidak valid", Toast.LENGTH_SHORT).show()
+                        return@runOnUiThread
+                    }
+                    val file = File(rawPath)
+                    if (!file.exists()) {
+                        Toast.makeText(mContext, "File PDF tidak ditemukan: ${file.name}", Toast.LENGTH_SHORT).show()
+                        return@runOnUiThread
+                    }
+                    val uri = FileProvider.getUriForFile(
+                        mContext,
+                        "${mContext.packageName}.fileprovider",
+                        file
+                    )
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        setDataAndType(uri, "application/pdf")
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    val chooser = Intent.createChooser(intent, "Buka Dokumen PDF Amy FX")
+                    chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    mContext.startActivity(chooser)
+                } catch (e: Exception) {
+                    android.util.Log.e("AmyFX-MainActivity", "Gagal membuka PDF via Intent", e)
+                    Toast.makeText(mContext, "Gagal membuka PDF: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun openPdf(filePath: String?) {
+            openPdfDocument(filePath)
         }
 
         @JavascriptInterface

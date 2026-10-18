@@ -245,7 +245,7 @@
 
 ---
 
-### 1.7. [BRIDGE KOTLIN] Ketiadaan Native Intent PDF Handler di `WebAppInterface`
+### 1.7. [BRIDGE KOTLIN] Ketiadaan Native Intent PDF Handler di `WebAppInterface` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/java/com/amyelitesuite/MainActivity.kt`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/MainActivity.kt#L686-L770)
 - **Akar Masalah (Temuan Agen Gamma):**
   Di `MainActivity.kt`, class `WebAppInterface` belum menyediakan method `@JavascriptInterface` untuk meluncurkan pembaca PDF eksternal via Intent Android. Jika tombol "Buka PDF Masterclass" di web ditekan, WebView mencoba membuka file via navigasi URL standar (`file:///sdcard/...`), yang di Android 11+ (API 30+) langsung diblokir oleh kebijakan keamanan *Scoped Storage* (`FileUriExposedException`).
@@ -2526,7 +2526,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.13. Guard Weekend Anti-Spam di `DriverSetupSyncWorker` (Hemat Baterai)** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.1. Perbaikan D1 Liquidity Gap di `scalper-setups.js`** | P0 (Tinggi) | ~10 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.3. Guard `SecurityException` Android 14 Exact Alarm** | P0 (Tinggi) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.7. Bridge Native Intent `openPdfDocument` di `MainActivity`** | P0 (Tinggi) | ~8 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.7. Bridge Native Intent `openPdfDocument` di `MainActivity`** | P0 (Tinggi) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.27. Kompresi WebP Wallpaper Kustom (Cegah `QuotaExceededError`)** | P1 (Sedang) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.28. Validasi Kadaluarsa Cache Offline Lilin di `apps/mapping/data.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.25. Throttling Query `DELETE` 24 Jam di `CandleStore.upsertAll()`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
