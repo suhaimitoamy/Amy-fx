@@ -2018,7 +2018,7 @@
 
 ---
 
-### 1.78. [IMMEDIATE CANDLE BLINDSPOT] Blindspot Evaluasi Candle Aktif dan Toleransi Epsilon Ketat pada Market Order di `trade-engine.js`
+### 1.78. [IMMEDIATE CANDLE BLINDSPOT] Blindspot Evaluasi Candle Aktif dan Toleransi Epsilon Ketat pada Market Order di `trade-engine.js` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/assets/apps/academy/trading-practice/assets/js/trade-engine.js`](file:///root/Amy-fx/app/src/main/assets/apps/academy/trading-practice/assets/js/trade-engine.js#L51, #L94-L101)
 - **Akar Masalah (Temuan Agen Delta & Agen Epsilon):**
   1. Pada `AmyPracticeTrades.evaluate(record, candles)`:
@@ -2047,6 +2047,10 @@
            (record.entryActivatedAt == null || candle.time >= Number(record.entryActivatedAt));
   });
   ```
+- **Implementasi & Verifikasi:**
+  - `trade-engine.js`: Mendukung flag eksplisit `orderType: 'MARKET'` dan toleransi realistis 0.25 poin pada market order auto-activation, serta mengekspor properti `orderType`.
+  - Fungsi `evaluate()`: Memeriksa `next.entryStatus === 'ACTIVE'`, mengevaluasi candle mulai dari `candle.time >= minTime` sehingga intra-bar TP/SL langsung terdeteksi pada bar keputusan tanpa jeda bar berikutnya. Pending limit order tetap mempertahankan filter `candle.time > next.tradeTime` (zero-lookahead).
+  - Targeted unit tests: `tests/market-order-immediate-evaluation.test.mjs` (3/3 lulus 100%) dan `tests/realistic-order-lifecycle.test.mjs` (3/3 lulus 100%).
 
 ---
 
@@ -2487,7 +2491,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | Kategori | Item Rencana | Prioritas | Estimasi Waktu | Status ACC Pengguna |
 | :--- | :--- | :---: | :---: | :---: |
 | 🐛 **Debugging** | **1.77. Sinkronisasi SharedPreferences Android pada Reminder di `amy-learning-reminder.js`** | P0 (Kritis) | ~3 menit | [ ] Setuju / [ ] Tunda |
-| 🐛 **Debugging** | **1.78. Evaluasi Candle Aktif & Dukungan Market Order di `trade-engine.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.78. Evaluasi Candle Aktif & Dukungan Market Order di `trade-engine.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.79. Eliminasi Micro-Range Distortion pada Fallback Dealing Range di `amy-ict.js`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.40. Realistic Spread & Slippage Simulator di Practice Replay** | P0 (Akurasi Latihan) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.41. Smart Spaced-Repetition & Weak-Spot Quiz Suggester di Akademi** | P0 (Edukasi Cerdas) | ~6 menit | [ ] Setuju / [ ] Tunda |

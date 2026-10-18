@@ -48,7 +48,8 @@
   function create(input) {
     var geometry = validate(input);
     var currentPrice = core.finite(input.currentPrice);
-    var activeAtSave = geometry.bias !== 'WAIT' && currentPrice != null && Math.abs(currentPrice - geometry.entry) <= 0.000001;
+    var isMarket = input.orderType === 'MARKET' || (currentPrice != null && Math.abs(currentPrice - geometry.entry) <= 0.25);
+    var activeAtSave = geometry.bias !== 'WAIT' && isMarket;
     var tradeTime = Number(input.tradeTime);
     if (!Number.isFinite(tradeTime)) throw new Error('Timestamp keputusan tidak valid. Tunggu sampai cursor replay siap.');
     return {
@@ -58,6 +59,7 @@
       replayStartTime: Number(input.replayStartTime || input.tradeTime),
       tradeTime: tradeTime,
       decisionCandleTime: tradeTime,
+      orderType: input.orderType || (activeAtSave ? 'MARKET' : 'LIMIT'),
       sourceId: String(input.sourceId || ''),
       locked: Boolean(input.lockDecision),
       lockedAt: input.lockDecision ? Number(input.lockedAt || Date.now()) : null,
@@ -91,7 +93,13 @@
       delete next.closedAt;
       delete next.resolution;
     }
-    var sequence = core.normalizeCandles(candles).filter(function (candle) { return candle.time > Number(record.tradeTime || 0) && (record.entryActivatedAt == null || candle.time >= Number(record.entryActivatedAt)); });
+    var sequence = core.normalizeCandles(candles).filter(function (candle) {
+      if (next.entryStatus === 'ACTIVE') {
+        var minTime = Number(next.entryActivatedAt || next.tradeTime || 0);
+        return candle.time >= minTime;
+      }
+      return candle.time > Number(next.tradeTime || 0);
+    });
     for (var i = 0; i < sequence.length; i += 1) {
       var candle = sequence[i];
       if (next.entryStatus !== 'ACTIVE') {
