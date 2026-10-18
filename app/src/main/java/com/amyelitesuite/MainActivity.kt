@@ -1391,6 +1391,66 @@ class MainActivity : Activity() {
             }
         }
 
+        @JavascriptInterface
+        fun isBiometricAvailable(): Boolean {
+            return try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val biometricManager = mContext.getSystemService(android.hardware.biometrics.BiometricManager::class.java)
+                    biometricManager?.canAuthenticate() == android.hardware.biometrics.BiometricManager.BIOMETRIC_SUCCESS
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    val fingerprintManager = mContext.getSystemService(android.hardware.fingerprint.FingerprintManager::class.java)
+                    fingerprintManager?.isHardwareDetected == true && fingerprintManager.hasEnrolledFingerprints()
+                } else {
+                    false
+                }
+            } catch (_: Throwable) {
+                false
+            }
+        }
+
+        @JavascriptInterface
+        fun authenticateBiometric(title: String, subtitle: String, callbackJs: String) {
+            val act = mContext as? Activity ?: return
+            act.runOnUiThread {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        val cancellationSignal = android.os.CancellationSignal()
+                        val prompt = android.hardware.biometrics.BiometricPrompt.Builder(act)
+                            .setTitle(title.ifBlank { "Buka Kunci Jurnal Amy FX" })
+                            .setSubtitle(subtitle.ifBlank { "Sentuh sensor sidik jari atau gunakan pengenalan wajah" })
+                            .setNegativeButton("Gunakan PIN", act.mainExecutor, { _, _ ->
+                                webView.evaluateJavascript("$callbackJs(false, 'USE_PIN')", null)
+                            })
+                            .build()
+
+                        prompt.authenticate(cancellationSignal, act.mainExecutor,
+                            object : android.hardware.biometrics.BiometricPrompt.AuthenticationCallback() {
+                                override fun onAuthenticationSucceeded(result: android.hardware.biometrics.BiometricPrompt.AuthenticationResult?) {
+                                    super.onAuthenticationSucceeded(result)
+                                    webView.evaluateJavascript("$callbackJs(true, null)", null)
+                                }
+
+                                override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
+                                    super.onAuthenticationError(errorCode, errString)
+                                    val safeErr = errString?.toString()?.replace("'", "\\'") ?: "Error"
+                                    webView.evaluateJavascript("$callbackJs(false, '$safeErr')", null)
+                                }
+
+                                override fun onAuthenticationFailed() {
+                                    super.onAuthenticationFailed()
+                                    webView.evaluateJavascript("if (typeof window.onBiometricFailed === 'function') window.onBiometricFailed();", null)
+                                }
+                            })
+                    } else {
+                        webView.evaluateJavascript("$callbackJs(false, 'BIOMETRIC_UNSUPPORTED')", null)
+                    }
+                } catch (e: Throwable) {
+                    val safeErr = e.message?.replace("'", "\\'") ?: "Exception"
+                    webView.evaluateJavascript("$callbackJs(false, '$safeErr')", null)
+                }
+            }
+        }
+
         private fun openDownloadOutputStream(filename: String, mimeType: String): OutputStream? {
             val safeName = filename.replace(Regex("[\\/:*?\"<>|]"), "_").ifBlank { "Amy_FX_File_${System.currentTimeMillis()}" }
             return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

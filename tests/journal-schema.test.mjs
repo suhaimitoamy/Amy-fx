@@ -95,3 +95,34 @@ test('computeRR calculates correct risk reward using TP1 or TP2', () => {
   const rr2 = schema.computeRR({ actualEntryPrice: '2650.00', stopLoss: '2640.00', takeProfit2: '2670.00' });
   assert.equal(rr2, '2.00');
 });
+
+test('Item 2.31: Biometric Fingerprint & Face Unlock Bridge and Zero-DOM Leak Invariant', () => {
+  // 1. Verify MainActivity.kt has @JavascriptInterface methods for Biometric authentication
+  const mainActivitySource = fs.readFileSync(
+    new URL('../app/src/main/java/com/amyelitesuite/MainActivity.kt', import.meta.url),
+    'utf8'
+  );
+  assert.match(mainActivitySource, /fun isBiometricAvailable\(\):\s*Boolean/);
+  assert.match(mainActivitySource, /fun authenticateBiometric\(title:\s*String,\s*subtitle:\s*String,\s*callbackJs:\s*String\)/);
+  assert.match(mainActivitySource, /BiometricPrompt\.Builder/);
+
+  // 2. Verify journal app.js has biometric unlock UI and bridge invocation
+  const journalAppSource = fs.readFileSync(
+    new URL('../app/src/main/assets/apps/journal/app.js', import.meta.url),
+    'utf8'
+  );
+  assert.match(journalAppSource, /id="biometricUnlockBtn"/);
+  assert.match(journalAppSource, /window\.Android\.isBiometricAvailable/);
+  assert.match(journalAppSource, /window\.Android\.authenticateBiometric/);
+  assert.match(journalAppSource, /window\.onBiometricAuthResult/);
+
+  // 3. Verify zero-DOM leak invariant: loadItems and loadJournals occur only AFTER enforcePinLock
+  const bootIndex = journalAppSource.indexOf('async function boot()');
+  assert.ok(bootIndex > 0);
+  const lockIndex = journalAppSource.indexOf('await enforcePinLock()', bootIndex);
+  const loadItemsIndex = journalAppSource.indexOf('loadItems()', bootIndex);
+  const loadJournalsIndex = journalAppSource.indexOf('loadJournals()', bootIndex);
+  assert.ok(lockIndex < loadItemsIndex, 'enforcePinLock must precede loadItems to prevent DOM/memory leaks');
+  assert.ok(lockIndex < loadJournalsIndex, 'enforcePinLock must precede loadJournals to prevent DOM/memory leaks');
+});
+

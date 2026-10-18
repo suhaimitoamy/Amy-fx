@@ -5620,6 +5620,8 @@ async function enforcePinLock() {
     const input = overlay.querySelector("#pinUnlockInput");
     const message = overlay.querySelector("#pinUnlockMessage");
     const button = overlay.querySelector("#pinUnlockBtn");
+    const bioBtn = overlay.querySelector("#biometricUnlockBtn");
+
     const unlock = async () => {
       if (await hashText(input.value) === savedHash) {
         document.body.classList.remove("is-locked");
@@ -5633,6 +5635,33 @@ async function enforcePinLock() {
     };
     button.addEventListener("click", unlock);
     input.addEventListener("keydown", (event) => { if (event.key === "Enter") unlock(); });
+
+    // Item 2.31: Biometric Fingerprint & Face Unlock Bridge
+    const hasBiometric = Boolean(window.Android && typeof window.Android.isBiometricAvailable === 'function' && window.Android.isBiometricAvailable());
+    const triggerBiometric = () => {
+      if (!window.Android?.authenticateBiometric) return;
+      window.onBiometricAuthResult = (success, error) => {
+        if (success) {
+          document.body.classList.remove("is-locked");
+          overlay.remove();
+          resolve();
+        } else if (error && error !== 'USE_PIN' && error !== 'CANCELLED') {
+          message.textContent = error;
+        }
+      };
+      window.Android.authenticateBiometric(
+        "Buka Kunci Jurnal Amy FX",
+        "Sentuh sensor sidik jari atau gunakan pengenalan wajah",
+        "window.onBiometricAuthResult"
+      );
+    };
+
+    if (hasBiometric && bioBtn) {
+      bioBtn.style.display = "block";
+      bioBtn.addEventListener("click", triggerBiometric);
+      setTimeout(triggerBiometric, 300);
+    }
+
     setTimeout(() => input.focus(), 50);
   });
 }
@@ -5648,6 +5677,9 @@ function makeLockOverlay() {
       <p style="font-size: 12px; color: var(--muted-strong, rgba(255,255,255,0.6)); margin: 0 0 4px 0;">Jurnal Trading Terproteksi</p>
       <input id="pinUnlockInput" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN Keamanan">
       <button id="pinUnlockBtn" class="primary-button" type="button">Buka Kunci</button>
+      <button id="biometricUnlockBtn" class="ghost-button" type="button" style="display:none; width:100%; margin-top:8px; font-size:12px; font-weight:700; color:var(--amy-accent,#F5C451); border:1px solid rgba(245,196,81,0.3); background:rgba(245,196,81,0.08); border-radius:8px; padding:10px; cursor:pointer;">
+        👆 Buka dengan Sidik Jari / Wajah
+      </button>
       <p id="pinUnlockMessage"></p>
     </div>`;
   return overlay;

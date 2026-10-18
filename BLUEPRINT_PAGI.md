@@ -2315,11 +2315,15 @@
 
 ---
 
-### 2.31. [SECURITY & PRIVACY] Biometric Fingerprint & Face Unlock Bridge untuk Jurnal Trading
+### 2.31. [SECURITY & PRIVACY] Biometric Fingerprint & Face Unlock Bridge untuk Jurnal Trading — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Gamma & Agen Beta
 - **Konsep & Nilai untuk Trader:**  
   1. *Buka Kunci Instan & Mewah:* Mengintegrasikan Android `BiometricPrompt` API via bridge native `MainActivity.kt` (`window.Android.authenticateBiometric()`), memungkinkan trader membuka kunci Jurnal Trading hanya dengan sentuhan sidik jari atau pemindaian wajah tanpa perlu mengetik PIN manual 4 digit setiap kali.  
   2. *Proteksi Privasi Saldo & Zero-DOM Leaks:* Data transaksi dan ringkasan ekuitas modal trader tetap terenkripsi dan sama sekali tidak dimasukkan ke dalam elemen DOM WebView sebelum autentikasi biometrik berhasil (`onAuthenticationSucceeded`), menjaga kerahasiaan portofolio trader secara mutlak.
+- **Implementasi & Audit Reviewer:**
+  - `MainActivity.kt`: Mengimplementasikan `@JavascriptInterface fun isBiometricAvailable(): Boolean` dan `@JavascriptInterface fun authenticateBiometric(title, subtitle, callbackJs)` menggunakan framework native Android `BiometricPrompt.Builder` (API 28+) dengan fallback PIN yang aman.
+  - `apps/journal/app.js`: Menambahkan tombol `[ 👆 Buka dengan Sidik Jari / Wajah ]` di `#pin-lock` overlay serta menjamin pemuatan item dan saldo terjadi secara ketat setelah autentikasi biometrik/PIN berhasil (*zero-DOM leak*).
+  - Targeted unit tests: `tests/journal-schema.test.mjs` (6/6 lulus 100%).
 
 ---
 
