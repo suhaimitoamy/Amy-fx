@@ -197,6 +197,7 @@ class BackgroundVideoPlaybackService : MediaSessionService() {
     }
 
     private fun stopPlaybackAndService() {
+        mainHandler.removeCallbacks(stateTicker)
         player.stop()
         player.clearMediaItems()
         cleanupTempFile(currentTempPath)

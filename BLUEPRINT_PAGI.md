@@ -1016,7 +1016,7 @@
 
 ---
 
-### 1.43. [ANDROID LIFECYCLE & MEMORY] Potensi Memory Leak Activity Context & Unstopped Ticker di `MainActivity.kt` & `BackgroundVideoPlaybackService.kt`
+### 1.43. [ANDROID LIFECYCLE & MEMORY] Potensi Memory Leak Activity Context & Unstopped Ticker di `MainActivity.kt` & `BackgroundVideoPlaybackService.kt` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/java/com/amyelitesuite/MainActivity.kt`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/MainActivity.kt#L328-L332) & [`app/src/main/java/com/amyelitesuite/BackgroundVideoPlaybackService.kt`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/BackgroundVideoPlaybackService.kt#L167-L177)
 - **Akar Masalah (Temuan Agen Gamma):**
   1. Di `MainActivity.kt#onDestroy()`:
@@ -1045,6 +1045,7 @@
      ```
   2. Di `BackgroundVideoPlaybackService.stopPlaybackAndService()`:
      Tambahkan `mainHandler.removeCallbacks(stateTicker)` sebelum `stopSelf()`.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Seluruh JavascriptInterface (`Android`, `AmyLivePrice`, `AmyNativeAIRepair`, `AmyNativeAI`) dilepas secara bersih di `MainActivity.onDestroy()`, WebView dilepas dari parent ViewGroup dan dihancurkan (`webView.destroy()`), serta `mainHandler.removeCallbacks(stateTicker)` dipanggil sebelum `stopSelf()` di `BackgroundVideoPlaybackService`. 2/2 targeted unit test lolos di `tests/android-lifecycle-memory.test.mjs`.
 
 ---
 
@@ -2539,7 +2540,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.46. Perbaiki Spurious Immediate Alert & Persistensi `lastCheckedPrice` di `price-alert-manager.js`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.41. Batalkan Registrasi Plan Jika Harga Sudah Lewat TP1 di `trade-lifecycle-tracker.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.42. Guard `MISSED` Saat TP1 Tersentuh Sebelum Entry di `trade-lifecycle-tracker.js`** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.43. Eliminasi Memory Leak Context Activity & Stop Ticker di Background Services** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.43. Eliminasi Memory Leak Context Activity & Stop Ticker di Background Services** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.38. Endpoint `/api/fractal-audit` di Vercel & Client Fallback di APK** | P0 (Kritis) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.39. Ganti Label Tombol FAB "CS" Menjadi "AMY" / "AI" di `amy-local-assistant.js`** | P1 (Sedang) | ~3 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.40. Fleksibilitas Format Warna Hex (#RGB/#RGBA) di `drawing-core.js`** | P1 (Sedang) | ~3 menit | [ ] Setuju / [ ] Tunda |

@@ -349,7 +349,15 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         if (::twelveDataPriceBridge.isInitialized) twelveDataPriceBridge.close()
-        if (::webView.isInitialized) webView.removeJavascriptInterface("AmyLivePrice")
+        if (::webView.isInitialized) {
+            (webView.parent as? android.view.ViewGroup)?.removeView(webView)
+            webView.stopLoading()
+            webView.removeJavascriptInterface("Android")
+            webView.removeJavascriptInterface("AmyLivePrice")
+            webView.removeJavascriptInterface("AmyNativeAIRepair")
+            webView.removeJavascriptInterface("AmyNativeAI")
+            webView.destroy()
+        }
         super.onDestroy()
     }
 
