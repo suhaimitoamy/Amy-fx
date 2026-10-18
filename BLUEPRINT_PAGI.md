@@ -2061,7 +2061,7 @@
 
 ## 🚀 BAGIAN 2: ROADMAP PENGEMBANGAN FITUR (Apa yang Perlu Dikembangkan)
 
-### 2.1. [FITUR UTAMA] Kalkulator Risiko & Ukuran Lot Instan di Card 4 Plan
+### 2.1. [FITUR UTAMA] Kalkulator Risiko & Ukuran Lot Instan di Card 4 Plan — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Delta & Agen Beta
 - **Konsep & Nilai untuk Trader:**  
   Saat Amy Entry Assistant V3 menerbitkan sinyal (contoh: *BUY ENTRY 2648.50, SL 2642.00, TP1 2658.00, TP2 2670.00*), trader pemula maupun pro sering kesulitan menghitung lot ideal secara cepat. Kesalahan hitung lot adalah penyebab #1 modal cepat habis (Margin Call).
@@ -2077,6 +2077,7 @@
     - Chip Persen Risiko Instan: `[ 0.5% ]` `[ 1.0% ]` `[ 2.0% ]` `[ Custom ]`.
     - Kotak input Saldo Modal (tersimpan otomatis di `localStorage.amy_account_balance`).
     - Kartu hasil hijau/merah glowing Bloomberg-style dengan tulisan tebal monospace.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Modul mandiri `app/src/main/assets/apps/mapping/js/ict-workspace/lot-calculator.js` aktif dengan formula matematis presisi Gold (1 pip = $10 per 1.00 lot, floor 0.01 lot, batas minimum 0.01). Tombol interaktif `[ ⚡ Hitung Lot ]` aktif di Card 4 Plan status bar dan actions bar dengan modal Bloomberg-style dan sinkronisasi `localStorage.amy_account_balance`. Unit test lolos 6/6 di `tests/lot-calculator.test.mjs`.
 
 ---
 
@@ -2547,7 +2548,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.21. Smart Comprehensive CSV & JSON Full Backup Engine di Jurnal** | P0 (Proteksi Data) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.20. Weekend Low-Power Sleep & Pre-Market Wakeup Engine** | P0 (Hemat Baterai & Kuota) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.19. Unified Trade Lifecycle & Anti-Ghost Order Engine di Seluruh Modul** | P0 (Integritas Logika) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.1. Kalkulator Lot & Risiko Instan di Card 4 Plan** | P0 (Sangat Bermanfaat) | ~15 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.1. Kalkulator Lot & Risiko Instan di Card 4 Plan** | P0 (Sangat Bermanfaat) | ~15 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.7. Mini-Badge Status Dealing Range di Header Chart Gold** | P0 (Sangat Informatif) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.11. Multi-Tiered Intelligent Caching di `api/twelvedata.js`** | P0 (Efisiensi Kuota) | ~8 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.13. Tombol "Pasang Alarm Target Harga" di Header Chart Beranda** | P0 (Paritas 100%) | ~6 menit | [ ] Setuju / [ ] Tunda |

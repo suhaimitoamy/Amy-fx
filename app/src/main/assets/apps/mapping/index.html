@@ -112,6 +112,7 @@
     <div class="plan-status-bar">
       <span id="plan-anti-chase-pill" class="anti-chase-pill pill-neutral">STANDBY</span>
       <span id="plan-math-zone" class="plan-math-zone">Math Zone: —</span>
+      <button type="button" id="btn-quick-lot-calc" class="btn-lot-calc-pill" title="Hitung Lot & Risiko">⚡ Hitung Lot</button>
     </div>
 
     <!-- Pullback Notice (Shown only if signal is Pullback) -->
@@ -157,6 +158,9 @@
     <div class="plan-actions" style="display:flex; gap:8px;">
       <button type="button" id="btn-show-plan-chart" class="btn-show-plan-chart" style="flex:1;">
         📈 Tampilkan Level di Chart
+      </button>
+      <button type="button" id="btn-open-lot-calc" class="btn-show-plan-chart" style="background:rgba(245,196,81,0.15); border-color:rgba(245,196,81,0.4); color:#F5C451; width:auto; padding:0 14px;" title="Kalkulator Lot & Risiko Instan">
+        ⚡ Hitung Lot
       </button>
       <button type="button" id="btn-plan-price-alert" class="btn-show-plan-chart" style="background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.2); color:#fff; width:auto; padding:0 14px;" title="Pasang Alarm Target Entry/TP">
         🔔 Alarm Level
@@ -358,6 +362,7 @@
 <script src="js/notification-route-sync.js"></script>
 <script type="module" src="js/ict-workspace/price-alert-manager.js"></script>
 <script type="module" src="js/ict-workspace/trade-lifecycle-tracker.js"></script>
+<script type="module" src="js/ict-workspace/lot-calculator.js"></script>
 <script type="module" src="js/ict-workspace/app.js"></script>
 <script type="module" src="js/ict-workspace/context-panel.js"></script>
 <script src="js/ict-workspace/advisor-panel.js"></script>
