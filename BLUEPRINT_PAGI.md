@@ -2486,11 +2486,14 @@
 
 ---
 
-### 2.41. [ADAPTIVE LEARNING HABIT] Smart Spaced-Repetition & Weak-Spot Quiz Suggester di Modul Akademi
+### 2.41. [ADAPTIVE LEARNING HABIT] Smart Spaced-Repetition & Weak-Spot Quiz Suggester di Modul Akademi — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Beta & Agen Gamma
 - **Konsep & Nilai untuk Trader:**  
   1. *Rekomendasi Cerdas Berbasis Kelemahan Jurnal:* Mengintegrasikan catatan kesalahan jurnal (seperti *"Moved SL"*, *"Early Exit"*, *"FOMO"*) dengan materi kurikulum Akademi. Kartu rekomendasi di Beranda Akademi dan notifikasi pengingat malam menyodorkan modul remedial yang spesifik menjawab problem trader tersebut.  
   2. *Kuis Pengingat Kilat 3-Soal:* Setiap menyelesaikan sesi replay atau membaca modul, mini-kuis 3 pertanyaan muncul secara ringan untuk memastikan prinsip-prinsip ICT (Dealing Range, CE 50%, Invalidation Level) melekat kuat dalam memori jangka panjang (*spaced repetition*).
+- **Implementasi & Verifikasi:**
+  - `lib/weak-spot-quiz-suggester.mjs` & `app/src/main/assets/apps/academy/assets/js/weak-spot-suggester.js`: Memetakan pola kesalahan jurnal ke kategori & tautan materi remedial, serta menghasilkan kuis 3-soal terarah dan spaced-repetition rotation.
+  - Targeted unit tests: `tests/spaced-repetition-quiz-suggester.test.mjs` (4/4 lulus 100%).
 
 ---
 
@@ -2504,7 +2507,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.78. Evaluasi Candle Aktif & Dukungan Market Order di `trade-engine.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.79. Eliminasi Micro-Range Distortion pada Fallback Dealing Range di `amy-ict.js`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.40. Realistic Spread & Slippage Simulator di Practice Replay** | P0 (Akurasi Latihan) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.41. Smart Spaced-Repetition & Weak-Spot Quiz Suggester di Akademi** | P0 (Edukasi Cerdas) | ~6 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.41. Smart Spaced-Repetition & Weak-Spot Quiz Suggester di Akademi** | P0 (Edukasi Cerdas) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.74. Perbaikan Deep Link Media Player ke Akademi di `BackgroundVideoPlaybackService.kt`** | P0 (Kritis) | ~3 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.75. Eliminasi False Exponential Backoff Reconnect di `TwelveDataPriceBridge.kt`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.76. Inklusi Pivots H1 pada Target Likuiditas di `six-drivers.mjs`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
