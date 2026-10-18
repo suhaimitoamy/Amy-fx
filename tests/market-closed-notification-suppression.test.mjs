@@ -197,12 +197,16 @@ test('AmyFxNotificationGate code guarantees strict market closure silence', asyn
   assert.ok(workerCode.includes('isGoldMarketOpen'));
   assert.ok(workerCode.includes('PASAR TUTUP'));
 
-  // Item 1.58: Pre-check weekend before HTTP execution in doWork()
+  // Item 1.58 & 1.13: Pre-check weekend before HTTP execution in doWork()
   const doWorkIndex = workerCode.indexOf('override suspend fun doWork()');
   const gateCheckIndex = workerCode.indexOf('if (!AmyFxNotificationGate.isGoldMarketOpen', doWorkIndex);
   const requestBuilderIndex = workerCode.indexOf('Request.Builder()', doWorkIndex);
   assert.ok(doWorkIndex !== -1, 'doWork must exist');
   assert.ok(gateCheckIndex !== -1, 'Pre-check isGoldMarketOpen must exist in doWork()');
+  assert.ok(workerCode.includes('SessionClock.isGoldMarketOpen()'), 'doWork must call SessionClock.isGoldMarketOpen()');
   assert.ok(requestBuilderIndex !== -1, 'Request.Builder must exist in doWork()');
   assert.ok(gateCheckIndex < requestBuilderIndex, 'Pre-check isGoldMarketOpen must occur before Request.Builder() in doWork()');
+
+  const clockCode = fs.readFileSync('app/src/main/java/com/amyelitesuite/SessionClock.kt', 'utf8');
+  assert.ok(clockCode.includes('fun isGoldMarketOpen'), 'SessionClock must implement isGoldMarketOpen');
 });

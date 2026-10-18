@@ -33,7 +33,7 @@ class DriverSetupSyncWorker(
         .build()
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        if (!AmyFxNotificationGate.isGoldMarketOpen(System.currentTimeMillis())) {
+        if (!AmyFxNotificationGate.isGoldMarketOpen(System.currentTimeMillis()) || !SessionClock.isGoldMarketOpen()) {
             android.util.Log.d("AmyFX-DriverWorker", "Market closed (weekend/closure), skipping HTTP driver setup sync.")
             return@withContext Result.success()
         }
