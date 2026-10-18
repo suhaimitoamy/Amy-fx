@@ -114,5 +114,9 @@ test('Smart Journal Winrate, Profit Factor, Best Hour, and Emotional Reflection 
   assert.match(emotionRes.text, /Overtrade \(1x\)/);
   assert.match(emotionRes.text, /Saran Disiplin/);
 });
-
-
+test('Local Assistant: FAB button displays AMY label and accessibility aria-label (item 1.39)', () => {
+  const code = fs.readFileSync('app/src/main/assets/apps/shared/amy-local-assistant.js', 'utf8');
+  assert.match(code, /<button id="amy-local-fab" type="button" aria-label="Buka Asisten Amy">/);
+  assert.match(code, /<span>AMY<\/span>/);
+  assert.doesNotMatch(code, /<span>CS<\/span>/, 'CS label must be removed to avoid confusion with Customer Service');
+});
