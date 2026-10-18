@@ -63,6 +63,42 @@ test('provider rejects errors and preserves staleness metadata',async()=>{
  const got=await loadCandles('M5',null,response({values:[bar(t)],source:'stale-cache'}));
  assert.equal(got.degraded,true);assert.deepEqual(got.candles,[bar(t)]);
 });
+
+test('offline cache fallback validates 48-hour TTL age and sets isExpired metadata', async () => {
+ const originalLocal = globalThis.localStorage;
+ try {
+   const store = new Map();
+   globalThis.localStorage = {
+     getItem: k => store.get(k) ?? null,
+     setItem: (k, v) => store.set(k, String(v))
+   };
+   const failingFetcher = async () => ({ ok: false, status: 500 });
+   const now = Date.now();
+
+   // 1. Fresh cache (2 hours old) -> degraded: true, isExpired: false
+   store.set('amyfx.mapping.candles.M5', JSON.stringify({
+     time: now - (2 * 3600 * 1000),
+     values: [bar(t)]
+   }));
+   const freshCache = await loadCandles('M5', null, failingFetcher);
+   assert.equal(freshCache.degraded, true);
+   assert.equal(freshCache.isExpired, false);
+   assert.ok(freshCache.staleAgeMs >= 2 * 3600 * 1000);
+
+   // 2. Expired cache (72 hours old) -> degraded: true, isExpired: true
+   store.set('amyfx.mapping.candles.M5', JSON.stringify({
+     time: now - (72 * 3600 * 1000),
+     values: [bar(t)]
+   }));
+   const expiredCache = await loadCandles('M5', null, failingFetcher);
+   assert.equal(expiredCache.degraded, true);
+   assert.equal(expiredCache.isExpired, true);
+   assert.ok(expiredCache.staleAgeMs >= 72 * 3600 * 1000);
+ } finally {
+   if (originalLocal === undefined) delete globalThis.localStorage;
+   else globalThis.localStorage = originalLocal;
+ }
+});
 test('production page has one market context authority, complete local assets and accessible navigation',()=>{
  const html=readFileSync(root+'index.html','utf8');
  const app=readFileSync(root+'js/ict-workspace/app.js','utf8');

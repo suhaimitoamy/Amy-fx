@@ -1,3 +1,25 @@
+function getOfflineCache(cacheKey){
+  try{
+    if(typeof localStorage!=='undefined'){
+      const cached=localStorage.getItem(cacheKey);
+      if(cached){
+        const parsed=JSON.parse(cached);
+        if(Array.isArray(parsed.values)&&parsed.values.length>0){
+          const MAX_OFFLINE_CACHE_MS=48*3600*1000;
+          const age=Date.now()-(parsed.time||0);
+          return {
+            candles:parsed.values,
+            degraded:true,
+            staleAgeMs:age,
+            isExpired:age>MAX_OFFLINE_CACHE_MS
+          };
+        }
+      }
+    }
+  }catch(_){}
+  return null;
+}
+
 export const PROXY='https://amy-fx.vercel.app/api/twelvedata';
 export async function loadCandles(tf, signal, fetcher=fetch) {
   const interval={M1:'1min',M5:'5min',M15:'15min',H1:'1h'}[tf];
@@ -6,8 +28,18 @@ export async function loadCandles(tf, signal, fetcher=fetch) {
   const cacheKey=`amyfx.mapping.candles.${tf}`;
 
   if(fetcher!==fetch){
-    const response=await fetcher(`${PROXY}?${query}`,{signal,cache:'no-store'});
-    if (!response.ok) throw new Error(`Sumber candle ${tf}: HTTP ${response.status}`);
+    let response;
+    try{
+      response=await fetcher(`${PROXY}?${query}`,{signal,cache:'no-store'});
+    }catch(e){
+      if(e.name==='AbortError')throw e;
+      response={ok:false,status:500};
+    }
+    if (!response.ok) {
+      const offline=getOfflineCache(cacheKey);
+      if(offline)return offline;
+      throw new Error(`Sumber candle ${tf}: HTTP ${response.status}`);
+    }
     const data=await response.json();
     if(data.status==='error'||!Array.isArray(data.values)||!data.values.length) throw new Error(`Candle ${tf} tidak tersedia`);
     return {candles:data.values,degraded:/stale|degraded/i.test(`${data.source||''} ${data.amyfxCacheState||''}`)};
@@ -41,17 +73,8 @@ export async function loadCandles(tf, signal, fetcher=fetch) {
     }
   }
 
-  try{
-    if(typeof localStorage!=='undefined'){
-      const cached=localStorage.getItem(cacheKey);
-      if(cached){
-        const parsed=JSON.parse(cached);
-        if(Array.isArray(parsed.values)&&parsed.values.length>0){
-          return {candles:parsed.values,degraded:true};
-        }
-      }
-    }
-  }catch(_){}
+  const offline=getOfflineCache(cacheKey);
+  if(offline)return offline;
 
   try{
     if(typeof window!=='undefined'&&window.AmyMarketContext?.amy?.chartCandles?.[tf]){
