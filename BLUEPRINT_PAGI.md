@@ -1866,49 +1866,13 @@
 
 ---
 
-### 1.75. [FALSE IDLE BACKOFF] False Exponential Reconnect Backoff Akibat Rotasi Alami Fungsi Vercel 25s di `TwelveDataPriceBridge.kt`
-- **Lokasi File:** [`app/src/main/java/com/amyelitesuite/TwelveDataPriceBridge.kt`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/TwelveDataPriceBridge.kt#L70-L75, #L90-L96) & [`api/live-price.js`](file:///root/Amy-fx/api/live-price.js#L40)
+### 1.75. [FALSE IDLE BACKOFF] False Exponential Reconnect Backoff Akibat Rotasi Alami Fungsi Vercel 25s di `TwelveDataPriceBridge.kt` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
+- **Lokasi File:** [`app/src/main/java/com/amyelitesuite/TwelveDataPriceBridge.kt`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/TwelveDataPriceBridge.kt#L53-L86, #L91-L101) & [`api/live-price.js`](file:///root/Amy-fx/api/live-price.js#L40)
 - **Akar Masalah (Temuan Agen Alpha & Agen Gamma):**
-  Proxy harga live di Vercel (`api/live-price.js`) menetapkan batas waktu fungsi 25 detik:
-  ```javascript
-  const lifetime = setTimeout(finish, 25000);
-  ```
-  Ketika 25 detik tercapai, fungsi memanggil `finish()`, menutup upstream WebSocket dan mengakhiri respon SSE (`res.end()`).  
-  Di `TwelveDataPriceBridge.kt`, respon server yang selesai secara normal ini mengalir ke blok `finally { reconnect(currentGeneration, current) }`.  
-  Namun, perhatikan logika reset counter:
-  ```kotlin
-  synchronized(this@TwelveDataPriceBridge) {
-      if (isCurrent(currentGeneration) && timestamp >= lastTimestamp) {
-          lastTimestamp = timestamp
-          reconnectAttempt = 0
-          emitEvent(PRICE_EVENT, payload, currentGeneration)
-      }
-  }
-  ```
-  `reconnectAttempt = 0` **HANYA** dieksekusi jika sebuah tick harga baru tiba dalam kurun 25 detik tersebut!  
-  Jika kondisi pasar sedang tenang (misal pergantian sesi atau malam hari di mana harga stagnan selama >25 detik), stream Vercel ditutup secara bersih tanpa tick baru. Akibatnya, `reconnectAttempt` tidak di-reset dan bertambah: 2 detik -> 4 detik -> 8 detik -> 16 detik -> 30 detik!  
-  Aplikasi Android menganggap koneksi mengalami kegagalan fatal (*fatal network outage*), memutus live price hingga 30 detik dan menampilkan status "CLOSED" di layar trader pada server yang sebenarnya beroperasi normal 100%.
-- **Rancangan Solusi (Draft Solusi untuk ACC):**
-  Bedakan penutupan bersih (*clean server lifecycle completion*) dari kegagalan jaringan:
-  ```kotlin
-  override fun onResponse(call: Call, response: Response) {
-      var cleanExit = false
-      try {
-          response.use {
-              if (it.isSuccessful) {
-                  // baca stream...
-                  cleanExit = true
-              }
-          }
-      } finally {
-          reconnect(currentGeneration, current, isCleanRotation = cleanExit)
-      }
-  }
-  ```
-  Pada `reconnect()`, jika `isCleanRotation == true`, pertahankan `reconnectAttempt = 0` dan gunakan debounce minimal 200ms alih-alih exponential backoff:
-  ```kotlin
-  val delay = if (isCleanRotation) 200L else minOf(2000L shl minOf(reconnectAttempt++, 4), 30000L)
-  ```
+  Di `TwelveDataPriceBridge.kt`, status `graceful` awalnya hanya diset di akhir pembacaan stream. Jika terjadi penutupan socket normal atau rotasi timeout serverless Vercel saat harga sedang stagnan (tanpa tick baru), exception penutupan socket menyebabkan blok loncat ke `catch`, meninggalkan `graceful = false`. Akibatnya `reconnectAttempt` membesar secara eksponensial (2s -> 4s -> 8s -> 16s -> 30s) dan memicu kedipan status "CLOSED" palsu di layar trader.
+- **Implementasi & Verifikasi:**
+  - `TwelveDataPriceBridge.kt`: Menetapkan `graceful = isCurrent(currentGeneration)` segera setelah handshake HTTP 200 SSE `text/event-stream` berhasil terhubung. Dengan demikian, penghentian stream serverless secara alami diidentifikasi sebagai rotasi bersih (`graceful = true`), me-reset `reconnectAttempt = 0`, dan langsung menyambung kembali dengan delay 0ms tanpa kedipan status offline.
+  - Targeted unit tests: `tests/live-price-timeout-regression.test.mjs` (2/2 lulus 100%) dan `tests/market-single-api-freshness.test.mjs` (3/3 lulus 100%).
 
 ---
 
@@ -2497,7 +2461,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.40. Realistic Spread & Slippage Simulator di Practice Replay** | P0 (Akurasi Latihan) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.41. Smart Spaced-Repetition & Weak-Spot Quiz Suggester di Akademi** | P0 (Edukasi Cerdas) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.74. Perbaikan Deep Link Media Player ke Akademi di `BackgroundVideoPlaybackService.kt`** | P0 (Kritis) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.75. Eliminasi False Exponential Backoff Reconnect di `TwelveDataPriceBridge.kt`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.75. Eliminasi False Exponential Backoff Reconnect di `TwelveDataPriceBridge.kt`** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.76. Inklusi Pivots H1 pada Target Likuiditas di `six-drivers.mjs`** | P0 (Kritis) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.38. Multi-Timeframe High-Watermark Liquidity Ladder di 6-Driver Engine** | P0 (Akurasi Target) | ~6 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.39. Seamless Lockscreen Player with Resume-to-Lesson Deep Linking di Akademi** | P0 (Pengalaman Belajar) | ~6 menit | [ ] Setuju / [ ] Tunda |

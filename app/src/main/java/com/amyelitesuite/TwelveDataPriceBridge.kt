@@ -58,6 +58,7 @@ class TwelveDataPriceBridge(
                             emitStatus("ERROR", "Sumber harga server belum tersedia.", currentGeneration)
                             return@use
                         }
+                        graceful = isCurrent(currentGeneration)
                         val source = it.body?.source() ?: return@use
                         while (isCurrent(currentGeneration) && !source.exhausted()) {
                             val line = source.readUtf8Line() ?: break
@@ -76,7 +77,6 @@ class TwelveDataPriceBridge(
                                 }
                             }
                         }
-                        graceful = isCurrent(currentGeneration)
                     }
                 } catch (_: Exception) {
                     // Only a generic status is exposed; transport details are not credentials.
