@@ -217,13 +217,18 @@
 
 ---
 
-### 1.4. [DATA FEED] Rate-Limit 429 TwelveData & Cold Start Handling
-- **Lokasi File:** [`api/twelvedata.js`](file:///root/Amy-fx/api/twelvedata.js#L145-L160) & [`api/scalper-setups.js`](file:///root/Amy-fx/api/scalper-setups.js#L77-L87)
+### 1.4. [DATA FEED] Rate-Limit 429 TwelveData & Cold Start Handling — `[x] SELESAI & LOLOS AUDIT REVIEWER`
+- **Lokasi File:** [`api/twelvedata.js`](file:///root/Amy-fx/api/twelvedata.js#L145-L160), [`lib/market-candle-store.mjs`](file:///root/Amy-fx/lib/market-candle-store.mjs), & [`lib/market-snapshot-offline.json`](file:///root/Amy-fx/lib/market-snapshot-offline.json)
 - **Akar Masalah (Temuan Agen Alpha):**
   TwelveData tier gratis memiliki limit 8 request/menit. Jika pengguna membuka aplikasi bertepatan dengan cold start serverless Vercel dan sinkronisasi background worker Android, permintaan M15, M5, H1 secara serentak berpotensi memicu kode HTTP 429 (Rate Limit Exceeded).
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   - Implementasikan jitter backoff dan *shared staggered fetch* pada level proxy.
   - Sediakan file snapshot JSON fallback lokal (`market-snapshot-offline.json`) yang diperbarui setiap request sukses, sehingga jika terjadi 429, aplikasi tetap menampilkan data terakhir secara elegan dengan badge info `Mode Hemat Data (Cached)` alih-alih layar blank/error.
+- **Implementasi & Verifikasi:**
+  - `lib/market-snapshot-offline.json`: Bundled snapshot data lilin XAU/USD (M1, M5, M15, H1, H4, D1).
+  - `lib/market-candle-store.mjs`: `readBundledSnapshot` untuk cold-start seed fallback, `staggeredFetchProviderCandles` dengan jitter 20-70ms & gap minimum 150ms untuk mitigasi burst 429, serta auto-sync update snapshot saat fetch sukses.
+  - `api/twelvedata.js`: `readSnapshotFallback` menyajikan snapshot offline dengan status 200, header `X-AmyFX-Market-Cache: STALE_FALLBACK`, `rateLimited: true`, dan warning deskriptif saat upstream limit tercapai.
+  - Targeted unit tests: `tests/twelvedata-429-fallback.test.mjs` (3/3 lulus 100%).
 
 ---
 
@@ -2567,7 +2572,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.2. Dual-Source Fallback Dataset 8 Tahun di `candles.js`** | P1 (Sedang) | ~8 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.12. Dynamic Base URL Fallback Berita di `api/calendar.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.5. Isolasi Touch Sumbu Harga Layar Ponsel Sempit** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
-| 🐛 **Debugging** | **1.4. Mitigasi Limit 429 TwelveData dengan Stale Fallback** | P1 (Sedang) | ~12 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.4. Mitigasi Limit 429 TwelveData dengan Stale Fallback** | P1 (Sedang) | ~12 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.21. Smart Comprehensive CSV & JSON Full Backup Engine di Jurnal** | P0 (Proteksi Data) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.20. Weekend Low-Power Sleep & Pre-Market Wakeup Engine** | P0 (Hemat Baterai & Kuota) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.19. Unified Trade Lifecycle & Anti-Ghost Order Engine di Seluruh Modul** | P0 (Integritas Logika) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
