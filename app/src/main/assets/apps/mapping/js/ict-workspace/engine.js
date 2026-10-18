@@ -75,7 +75,7 @@ export function advance(plan, candle, index, duration) {
   const target=buy ? candle.high>=p.tp : candle.low<=p.tp;
   if (p.status==='PENDING') {
     if (candle.time<=p.createdAt) return p;
-    if (index-p.createdIndex>MODEL.expiryBars || ['OUTSIDE','CLOSED'].includes(session(candle.time))) {
+    if (index-p.createdIndex>MODEL.expiryBars || session(candle.time) === 'CLOSED') {
       return {...p,status:'EXPIRED',endedAt:candle.time};
     }
     // A gap through the stop/target cannot be interpreted as a normal limit fill.

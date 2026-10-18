@@ -42,7 +42,8 @@ test('ambiguous and gap execution never fabricate wins',()=>{
 });
 test('pending expiry, session end and time exit are explicit',()=>{
  assert.equal(advance(plan,bar(t+300),13,300).status,'EXPIRED');
- assert.equal(advance(plan,bar(Date.parse('2026-09-08T14:00:00Z')/1000),1,300).status,'EXPIRED');
+ assert.equal(advance(plan,bar(Date.parse('2026-09-12T14:00:00Z')/1000),1,300).status,'EXPIRED');
+ assert.equal(advance(plan,bar(Date.parse('2026-09-08T14:00:00Z')/1000,105,106,104,105),1,300).status,'PENDING');
  assert.equal(advance({...plan,status:'ACTIVE',filledAt:t,fillIndex:0},bar(t+300,101,103,99,102),48,300).status,'TIME_EXIT');
 });
 test('missing history returns WAIT without invented levels',()=>{
