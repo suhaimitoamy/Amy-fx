@@ -1496,6 +1496,51 @@ class MainActivity : Activity() {
         }
 
         @JavascriptInterface
+        fun clearAppCache(): String {
+            var freedBytes = 0L
+            try {
+                val updatesDir = File(mContext.cacheDir, "updates")
+                if (updatesDir.exists()) {
+                    updatesDir.walkBottomUp().forEach { file ->
+                        if (file.isFile) {
+                            freedBytes += file.length()
+                            file.delete()
+                        } else if (file != updatesDir) {
+                            file.delete()
+                        }
+                    }
+                }
+
+                val videoDir = File(mContext.cacheDir, "background-video")
+                if (videoDir.exists()) {
+                    videoDir.walkBottomUp().forEach { file ->
+                        if (file.isFile) {
+                            freedBytes += file.length()
+                            file.delete()
+                        } else if (file != videoDir) {
+                            file.delete()
+                        }
+                    }
+                }
+
+                mContext.cacheDir.listFiles()?.forEach { file ->
+                    if (file.isFile && (file.name.endsWith(".part") || file.name.endsWith(".tmp") || file.name.startsWith("Trading_Report_"))) {
+                        freedBytes += file.length()
+                        file.delete()
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            val freedMb = String.format(java.util.Locale.US, "%.1f", freedBytes / (1024.0 * 1024.0))
+            (mContext as Activity).runOnUiThread {
+                Toast.makeText(mContext, "Berhasil membebaskan $freedMb MB ruang penyimpanan!", Toast.LENGTH_LONG).show()
+            }
+            return freedMb
+        }
+
+        @JavascriptInterface
         fun isBiometricAvailable(): Boolean {
             return try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

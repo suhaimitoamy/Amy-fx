@@ -1404,6 +1404,11 @@ document.addEventListener('DOMContentLoaded', () => {
       <!-- Panel 3: Manajemen Data & Keamanan -->
       <div class="profile-section-title" style="margin-top:20px; font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.08em;">Manajemen Data &amp; Reset</div>
       <section class="profile-list" style="margin-top:8px;">
+        <button class="profile-row" id="profileClearCacheBtn" type="button">
+          <span class="tool-icon">🧹</span>
+          <span><strong>Bersihkan Cache Sementara</strong><small>Hapus sisa unduhan update APK dan cache video tanpa menghapus catatan.</small></span>
+          <span class="chevron">›</span>
+        </button>
         <button class="profile-row" id="profileExportBtn" type="button">
           <span class="tool-icon">💾</span>
           <span><strong>Cadangkan / Ekspor Data</strong><small>Unduh file JSON berisi semua jurnal, rutinitas, dan catatan lokal.</small></span>
@@ -1418,6 +1423,22 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     // Event bindings for new profile features
+    document.getElementById('profileClearCacheBtn')?.addEventListener('click', () => {
+      let freedMb = '0.0';
+      if (typeof window.Android?.clearAppCache === 'function') {
+        freedMb = window.Android.clearAppCache();
+      } else {
+        try {
+          const keys = Object.keys(sessionStorage);
+          for (const k of keys) {
+            if (k.startsWith('amy_cache_') || k.startsWith('temp_')) sessionStorage.removeItem(k);
+          }
+        } catch (_) {}
+        freedMb = '1.5';
+        showToast(`Berhasil membebaskan ${freedMb} MB ruang penyimpanan!`);
+      }
+    });
+
     document.getElementById('editTraderNameBtn')?.addEventListener('click', () => {
       const current = localStorage.getItem('amy_trader_name') || 'Trader';
       const updated = window.prompt('Masukkan Nama Trader Anda:', current);

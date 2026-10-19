@@ -2108,14 +2108,14 @@
 
 ---
 
-### 2.8. [STORAGE CLEANUP] Fitur 1-Tap "Bersihkan Cache Sementara" di Tab Profil
+### 2.8. [STORAGE CLEANUP] Fitur 1-Tap "Bersihkan Cache Sementara" di Tab Profil — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Gamma & Agen Delta
 - **Konsep & Nilai untuk Trader:**  
   Seiring berjalannya waktu, ponsel pengguna menimbun file sisa unduhan parsial update APK (`.part`), cache thumbnail video, dan snapshot replay lama.  
-- **Rancangan Implementasi:**
-  - Tambahkan kartu pemeliharaan di tab Profil: `[ 🧹 Bersihkan Cache Aplikasi ]`.
-  - Menghapus folder `cacheDir/updates/` dan `cacheDir/background-video/` secara aman tanpa menyentuh data database histori transaksi atau catatan jurnal pengguna.
-  - Menampilkan toast elegan: *"Berhasil membebaskan X MB ruang penyimpanan!"*.
+- **Implementasi & Audit Reviewer:**
+  - `MainActivity.kt`: Implementasi method bridge `@JavascriptInterface fun clearAppCache(): String` yang membersihkan folder `cacheDir/updates/` dan `cacheDir/background-video/` serta file sisa `.part`/`.tmp` secara aman tanpa menyentuh database atau catatan jurnal.
+  - `app/src/main/assets/app.js`: Menyematkan tombol `#profileClearCacheBtn` `[ 🧹 Bersihkan Cache Sementara ]` di panel Manajemen Data & Reset pada tab Profil, memanggil bridge native dan menampilkan toast umpan balik pembebasan ruang penyimpanan dalam megabyte (MB).
+  - Targeted unit tests: `tests/profile-cache-cleaner.test.mjs` (2/2 lulus 100%).
 
 ---
 
@@ -2628,7 +2628,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.14. Auto-Compacting Kompresi Foto Wallpaper ke WebP (<100 KB)** | P1 (Hemat Storage) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.9. Tombol "Lanjutkan Latihan" (Resume Cursor) di Replay** | P1 (Sangat Praktis) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.6. 1-Tap Sync Catatan Jurnal ke Obsidian (Markdown)** | P1 (Sangat Rapi) | ~10 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.8. Tombol 1-Tap "Bersihkan Cache Sementara" di Tab Profil** | P1 (Bermanfaat) | ~8 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.8. Tombol 1-Tap "Bersihkan Cache Sementara" di Tab Profil** | P1 (Bermanfaat) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.4. Tombol 1-Tap Buka PDF Masterclass di Akademi** | P1 (Praktis) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.3. Notifikasi Suara Chime Emas Kustom untuk Grade A+** | P1 (Keren & Fungsional) | ~10 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.2. Statistik Performa Replay Trader di IndexedDB** | P2 (Lanjutan) | ~20 menit | [ ] Setuju / [ ] Tunda |
