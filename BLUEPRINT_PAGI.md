@@ -506,8 +506,8 @@
 
 ---
 
-### 1.21. [CANVAS BOTTLENECK] Serialisasi `JSON.stringify(candles)` Setiap Frame Animasi di `ict-canvas.js`
-- **Lokasi File:** [`app/src/main/assets/apps/mapping/js/ict-workspace/ict-canvas.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/ict-workspace/ict-canvas.js#L51-L57)
+### 1.21. [CANVAS BOTTLENECK] Serialisasi `JSON.stringify(candles)` Setiap Frame Animasi di `ict-canvas.js` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
+- **Lokasi File:** [`app/src/main/assets/apps/mapping/js/ict-workspace/ict-canvas.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/ict-workspace/ict-canvas.js#L16-L58)
 - **Akar Masalah (Temuan Agen Beta & Gamma):**
   Di dalam fungsi `paint()` yang berjalan di dalam `requestAnimationFrame` (60 hingga 120 FPS pada layar HP refresh rate tinggi), baris 51 mengevaluasi:
   ```javascript
@@ -522,6 +522,7 @@
   const key = `${tf}:${candles.length}:${firstC?.time || 0}:${lastC?.time || 0}:${lastC?.close || 0}`;
   ```
   Hal ini memangkas overhead alokasi memori dari 5 MB/detik menjadi 0 bytes, menghasilkan interaksi zoom/pan yang mulus 60 FPS tanpa lonjakan drop frame.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Mengimplementasikan fungsi `getCandlesFingerprint(tf, candles)` dengan kompleksitas $O(1)$ yang menghitung fingerprint dari panjang lilin, boundary waktu candle pertama/terakhir, dan harga penutupan terakhir tanpa alokasi serialisasi JSON. 3/3 unit test lolos di `tests/ict-canvas-fingerprint.test.mjs`.
 
 ---
 
@@ -2581,7 +2582,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.27. Kompresi WebP Wallpaper Kustom (Cegah `QuotaExceededError`)** | P1 (Sedang) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.28. Validasi Kadaluarsa Cache Offline Lilin di `apps/mapping/data.js`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.25. Throttling Query `DELETE` 24 Jam di `CandleStore.upsertAll()`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.21. Fingerprint $O(1)$ Menggantikan `JSON.stringify` di `ict-canvas.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.21. Fingerprint $O(1)$ Menggantikan `JSON.stringify` di `ict-canvas.js`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.22. Hapus I/O Disk Redundan `startBackgroundScanner` di `MainActivity`** | P1 (Sedang) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.18. Prefetch Buffer Lilin Playback 5x di `replay-engine.js`** | P1 (Sedang) | ~8 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.14. Validasi Checksum SHA-256 APK di `NativeAppUpdater`** | P1 (Sedang) | ~7 menit | [ ] Setuju / [ ] Tunda |

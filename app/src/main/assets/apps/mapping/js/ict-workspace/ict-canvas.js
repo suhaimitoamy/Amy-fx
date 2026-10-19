@@ -13,6 +13,16 @@ const COLORS = {
   BPR: '#d9e68a'
 };
 
+export function getCandlesFingerprint(tf, candles) {
+  if (!candles || !candles.length) return '';
+  const firstC = candles[0];
+  const lastC = candles[candles.length - 1];
+  const t0 = firstC?.time ?? firstC?.datetime ?? 0;
+  const t1 = lastC?.time ?? lastC?.datetime ?? 0;
+  const c1 = lastC?.close ?? 0;
+  return `${tf}:${candles.length}:${t0}:${t1}:${c1}`;
+}
+
 export function createIctCanvas(element, chart, series) {
   const canvas = document.createElement('canvas');
   canvas.className = 'ict-overlay';
@@ -48,7 +58,7 @@ export function createIctCanvas(element, chart, series) {
     const plotRight = Math.max(0, w - chart.priceScale('right').width());
     const plotBottom = Math.max(0, h - chart.timeScale().height());
 
-    const key = tf + JSON.stringify(candles);
+    const key = getCandlesFingerprint(tf, candles);
     if (key !== visualKey || !indicators) {
       visualKey = key;
       indicators = state.indicators || calculateNextGenIndicators(candles, {
