@@ -236,12 +236,13 @@
 
 ---
 
-### 1.5. [TOUCH GESTURE] Konflik Vertikal Scroll vs Sumbu Skala Harga di Layar Kecil
-- **Lokasi File:** [`apps/mapping/js/ict-workspace/nextgen-indicators.js`](file:///root/Amy-fx/apps/mapping/index.html) & [`index.html`](file:///root/Amy-fx/index.html)
+### 1.5. [TOUCH GESTURE] Konflik Vertikal Scroll vs Sumbu Skala Harga di Layar Kecil — `[x] SELESAI & LOLOS AUDIT REVIEWER`
+- **Lokasi File:** [`app/src/main/assets/styles.css`](file:///root/Amy-fx/app/src/main/assets/styles.css#L1-L22) & [`app/src/main/assets/apps/mapping/css/ict-workspace.css`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/css/ict-workspace.css#L85-L105)
 - **Akar Masalah (Temuan Agen Beta):**
   Fitur drag vertikal sumbu harga (`axisPressedMouseMove: { price: true }`, `vertTouchDrag: true`) pada ponsel dengan lebar layar sempit (<375px) terkadang mendeteksi sentuhan jari pengguna yang ingin scroll halaman ke bawah sebagai perintah pinch/zoom harga, menyebabkan halaman terasa "tersangkut" saat disentuh di dekat batas kanan layar.
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   Pasang isolasi CSS `touch-action: pan-y` pada kontainer induk glassmorphism, dan batasi zona sentuh `touch-action: none` khusus hanya pada area kanvas sumbu harga selebar 45px di sisi paling kanan chart.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Menerapkan isolasi CSS `touch-action: pan-y` pada `.home-price-panel`, `article.gold-price-panel`, dan root chart container, serta membatasi `touch-action: none !important` khusus hanya pada kolom sel/kanvas skala harga kanan. Mengeliminasi gesture tersangkut saat scroll vertikal di layar sempit. Unit test lolos di `tests/touch-gesture-isolation.test.mjs`.
 
 ---
 
@@ -2597,7 +2598,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.6. Chunking Yielding Ekstraksi ZIP di `data-provider.js`** | P1 (Sedang) | ~10 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.2. Dual-Source Fallback Dataset 8 Tahun di `candles.js`** | P1 (Sedang) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.12. Dynamic Base URL Fallback Berita di `api/calendar.js`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.5. Isolasi Touch Sumbu Harga Layar Ponsel Sempit** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.5. Isolasi Touch Sumbu Harga Layar Ponsel Sempit** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.4. Mitigasi Limit 429 TwelveData dengan Stale Fallback** | P1 (Sedang) | ~12 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.21. Smart Comprehensive CSV & JSON Full Backup Engine di Jurnal** | P0 (Proteksi Data) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.20. Weekend Low-Power Sleep & Pre-Market Wakeup Engine** | P0 (Hemat Baterai & Kuota) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |

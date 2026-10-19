@@ -10,13 +10,16 @@
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   overflow: hidden;
   transition: transform 0.2s ease, border-color 0.2s ease;
+  touch-action: pan-y;
 }
 .home-price-panel .section-heading{flex-wrap:wrap;gap:8px}
 .home-price-panel p{font-size:12px;line-height:1.5;margin:8px 0;overflow-wrap:anywhere}
 .home-chart-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .home-chart-controls button,.home-chart-controls select{min-height:42px;padding:8px 14px;color:var(--text-main);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:12px;backdrop-filter:blur(10px);font-weight:700;cursor:pointer}
 .home-chart-controls button:hover{border-color:var(--primary-gold);color:var(--primary-gold)}
-#home-price-chart{width:100%;height:340px;min-width:0}
+#home-price-chart{width:100%;height:340px;min-width:0;touch-action:pan-y}
+#home-price-chart tr:first-child td:last-child,
+#home-price-chart tr:first-child td:last-child canvas{touch-action:none!important}
 #home-chart-error:empty{display:none}
 #home-chart-error{color:#ef4444}
 
