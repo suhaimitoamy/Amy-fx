@@ -645,3 +645,23 @@ if (!window.amyHapticListenerAdded) {
   script.onerror=function(){window.__amyLearningBridgeLoaderV1=false;};
   document.head.appendChild(script);
 })();
+
+/* AMY_MASTERCLASS_PDF_BRIDGE */
+(function setupMasterclassPdfOpener() {
+  if (window.__amyMasterclassPdfOpenerLoaded) return;
+  window.__amyMasterclassPdfOpenerLoaded = true;
+
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.open-masterclass-pdf-btn, [data-pdf-filename]');
+    if (!btn) return;
+    e.preventDefault();
+    var pdfName = btn.getAttribute('data-pdf-filename') || 'Amy FX Academy - Modul 01 [Fondasi Pasar].pdf';
+    if (window.Android && typeof window.Android.openPdfDocument === 'function') {
+      window.Android.openPdfDocument(pdfName);
+    } else if (window.Android && typeof window.Android.openPdf === 'function') {
+      window.Android.openPdf(pdfName);
+    } else {
+      window.open('/sdcard/Download/' + encodeURIComponent(pdfName), '_blank');
+    }
+  });
+})();

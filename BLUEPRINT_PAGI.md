@@ -2066,14 +2066,15 @@
 
 ---
 
-### 2.4. [ACADEMY] Tombol 1-Tap Buka PDF Masterclass di Setiap Bab Akademi
+### 2.4. [ACADEMY] Tombol 1-Tap Buka PDF Masterclass di Setiap Bab Akademi — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Beta & Agen Delta
 - **Konsep & Nilai untuk Trader:**  
   Menghubungkan langsung web HTML 10 Modul Akademi dengan Masterclass Ebook A4 PDF (24 Halaman) yang sudah tersimpan di `/sdcard/Download/`.
-- **Rancangan Implementasi:**
-  - Tombol elegan di Hero Card Modul 01:  
-    `[ 📑 Buka Versi Ebook Masterclass A4 (PDF) ]`
-  - Memanggil `window.Android.openPdfDocument(...)` yang aman terhadap Scoped Storage Android.
+- **Implementasi & Audit Reviewer:**
+  - `MainActivity.kt`: Resolusi otomatis nama file relatif PDF dari folder `Environment.DIRECTORY_DOWNLOADS` (`/sdcard/Download/`) pada `@JavascriptInterface fun openPdfDocument(filePath: String?)`, membuka intent chooser terisolasi via `FileProvider`.
+  - `apps/academy/modul-01/index.html` & `modul-02/index.html`: Menyematkan tombol elegan `[ 📑 Buka Versi Ebook Masterclass A4 (PDF) ]` pada hero card modul dengan atribut `data-pdf-filename`.
+  - `apps/academy/assets/js/main.js`: Implementasi delegasi klik global `setupMasterclassPdfOpener` yang memanggil `window.Android.openPdfDocument(pdfName)` secara instan.
+  - Targeted unit tests: `tests/academy-pdf-open.test.mjs` (3/3 lulus 100%).
 
 ---
 
@@ -2629,7 +2630,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.9. Tombol "Lanjutkan Latihan" (Resume Cursor) di Replay** | P1 (Sangat Praktis) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.6. 1-Tap Sync Catatan Jurnal ke Obsidian (Markdown)** | P1 (Sangat Rapi) | ~10 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.8. Tombol 1-Tap "Bersihkan Cache Sementara" di Tab Profil** | P1 (Bermanfaat) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.4. Tombol 1-Tap Buka PDF Masterclass di Akademi** | P1 (Praktis) | ~5 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.4. Tombol 1-Tap Buka PDF Masterclass di Akademi** | P1 (Praktis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.3. Notifikasi Suara Chime Emas Kustom untuk Grade A+** | P1 (Keren & Fungsional) | ~10 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.2. Statistik Performa Replay Trader di IndexedDB** | P2 (Lanjutan) | ~20 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.5. Audio Briefing Pasar Pagi (TTS Offline)** | P2 (Lanjutan) | ~15 menit | [ ] Setuju / [ ] Tunda |

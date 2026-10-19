@@ -775,7 +775,14 @@ class MainActivity : Activity() {
                         Toast.makeText(mContext, "Jalur file PDF tidak valid", Toast.LENGTH_SHORT).show()
                         return@runOnUiThread
                     }
-                    val file = File(rawPath)
+                    val initialFile = File(rawPath)
+                    val file = if (initialFile.exists()) {
+                        initialFile
+                    } else {
+                        val downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                        val inDownloads = File(downloads, rawPath)
+                        if (inDownloads.exists()) inDownloads else initialFile
+                    }
                     if (!file.exists()) {
                         Toast.makeText(mContext, "File PDF tidak ditemukan: ${file.name}", Toast.LENGTH_SHORT).show()
                         return@runOnUiThread
