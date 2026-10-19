@@ -45,8 +45,10 @@
 
   function normalizeStyle(style) {
     style = style || {};
+    var colorStr = String(style.color || '').trim();
+    var isValidColor = /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(colorStr) || /^(rgb|hsl)a?\(/.test(colorStr);
     return {
-      color: /^#[0-9a-f]{6}$/i.test(style.color || '') ? style.color : null,
+      color: isValidColor ? colorStr : null,
       width: Number.isFinite(Number(style.width)) ? Math.max(1, Math.min(8, Number(style.width))) : 2,
       opacity: style.opacity != null && Number.isFinite(Number(style.opacity)) ? Math.max(.1, Math.min(1, Number(style.opacity))) : 1
     };

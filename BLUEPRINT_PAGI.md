@@ -904,7 +904,7 @@
 
 ---
 
-### 1.40. [CANVAS DRAWING] Validasi Warna Hex Kaku di `drawing-core.js` Menolak Format `#RGB` & `#RRGGBBAA`
+### 1.40. [CANVAS DRAWING] Validasi Warna Hex Kaku di `drawing-core.js` Menolak Format `#RGB` & `#RRGGBBAA` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/assets/apps/academy/trading-practice/assets/js/drawing-core.js`](file:///root/Amy-fx/app/src/main/assets/apps/academy/trading-practice/assets/js/drawing-core.js#L49)
 - **Akar Masalah (Temuan Agen Beta & Agen Delta):**
   Fungsi penstandaran style gambar:
@@ -925,6 +925,7 @@
   ```javascript
   color: /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(style.color || '') || /^(rgb|hsl)a?\(/.test(style.color || '') ? style.color : null,
   ```
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Validasi warna pada `normalizeStyle` di `drawing-core.js` diperluas mendukung hex 3-digit (`#fff`), 6-digit (`#22C55E`), 8-digit ber-alpha (`#f5c45180`), serta fungsi CSS `rgba()` dan `hsla()`. 2/2 targeted unit test lolos di `tests/drawing-core-style.test.mjs`.
 
 ---
 
@@ -2545,7 +2546,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.43. Eliminasi Memory Leak Context Activity & Stop Ticker di Background Services** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.38. Endpoint `/api/fractal-audit` di Vercel & Client Fallback di APK** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.39. Ganti Label Tombol FAB "CS" Menjadi "AMY" / "AI" di `amy-local-assistant.js`** | P1 (Sedang) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.40. Fleksibilitas Format Warna Hex (#RGB/#RGBA) di `drawing-core.js`** | P1 (Sedang) | ~3 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.40. Fleksibilitas Format Warna Hex (#RGB/#RGBA) di `drawing-core.js`** | P1 (Sedang) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.35. Batalkan Order Practice Jika TP Tersentuh Lebih Dulu (`MISSED` Trap)** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.36. Resolusi Dinamis `API_BASE` Localhost/LAN di `market-intel/app.js`** | P1 (Sedang) | ~4 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.37. Sorting Kronologis Ascending Kalender Ekonomi di `market-intel/app.js`** | P1 (Sedang) | ~4 menit | [ ] Setuju / [ ] Tunda |
