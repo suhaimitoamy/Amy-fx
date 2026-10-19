@@ -434,12 +434,13 @@
 
 ---
 
-### 1.16. [UI STATE RESET] Status Accordion `<details open>` Me-reset Tertutup Saat Tick Refresh di Mapping
-- **Lokasi File:** [`apps/mapping/js/ict-workspace/nextgen-indicators.js`](file:///root/Amy-fx/apps/mapping/index.html)
+### 1.16. [UI STATE RESET] Status Accordion `<details open>` Me-reset Tertutup Saat Tick Refresh di Mapping — `[x] SELESAI & LOLOS AUDIT REVIEWER`
+- **Lokasi File:** [`app/src/main/assets/apps/mapping/js/ict-workspace/details-persistence.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/ict-workspace/details-persistence.js) & [`app.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/ict-workspace/app.js)
 - **Akar Masalah (Temuan Agen Beta):**
   Di Cockpit Mapping, terdapat beberapa accordion informasi (Detail Narasi, Level Likuiditas, Model Setup). Ketika pengguna sedang membaca detail sebuah accordion yang dibuka, tibanya tick harga baru atau re-render candle dapat merombak elemen DOM kontainer, menyebabkan accordion yang sedang dibaca otomatis tertutup kembali (*auto-collapse*), mengganggu konsentrasi trader.
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   Pasang listener ringan pada elemen `<details>` untuk menyimpan ID accordion yang terbuka ke `sessionStorage['amy_mapping_open_details']`, dan pulihkan atribut `open` secara otomatis saat re-render DOM berlangsung.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Membuat modul `details-persistence.js` dengan listener event `toggle` global yang mempersistensikan set accordion aktif ke `sessionStorage['amy_mapping_open_details']`, dipadukan dengan `MutationObserver` yang memulihkan atribut `open = true` secara otomatis saat tick harga merombak container DOM. Unit test lolos di `tests/mapping-details-persistence.test.mjs`.
 
 ---
 
@@ -2589,7 +2590,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.22. Hapus I/O Disk Redundan `startBackgroundScanner` di `MainActivity`** | P1 (Sedang) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.18. Prefetch Buffer Lilin Playback 5x di `replay-engine.js`** | P1 (Sedang) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.14. Validasi Checksum SHA-256 APK di `NativeAppUpdater`** | P1 (Sedang) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.16. Persistensi Status Accordion `<details open>` di Mapping** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.16. Persistensi Status Accordion `<details open>` di Mapping** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.9. Hilangkan Layar Berkedip (Flicker) Ganti TF di Beranda** | P1 (Sedang) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.6. Chunking Yielding Ekstraksi ZIP di `data-provider.js`** | P1 (Sedang) | ~10 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.2. Dual-Source Fallback Dataset 8 Tahun di `candles.js`** | P1 (Sedang) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |

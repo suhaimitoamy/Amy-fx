@@ -6,6 +6,7 @@ import {mountDisplay,renderAmy,loadDisplay,isGoldMarketOpen} from './ict-present
 import {mountEconomicEventBanner} from './economic-countdown.js';
 import {updateDealingRangeBadge} from './dealing-range-badge.js';
 import {updateCockpitSessionPill} from '../engine/market-session-clock.js';
+import {initDetailsPersistence} from './details-persistence.js';
 const $=id=>document.getElementById(id);
 let context=null,display=null,driverPlan=null;
 let chart=null,controller=null,generation=0,timer=null,overlay=null,raw=null;
@@ -253,4 +254,6 @@ if(initialStored&&initialStored.length>0){
   const closed=!isGoldMarketOpen(Date.now()/1000);
   raw={candles:filterCandles(initialStored,closed),context:filterCandles(getStoredCandles('H1')||[],closed),tf:$('timeframe')?.value||'M15',degraded:true};
 }
+initDetailsPersistence();
 draw();refresh();
+
