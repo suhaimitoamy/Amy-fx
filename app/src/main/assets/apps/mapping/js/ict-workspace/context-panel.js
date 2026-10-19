@@ -165,6 +165,22 @@ function render(){
   setTxt('m15-range',c.m15?.poi?`${number(c.m15.poi.low)}–${number(c.m15.poi.high)}`:'Menunggu area M15');
   setTxt('m15-control',id(c.m15?.control||'BALANCED'));
   const aPlus = c.execution?.aPlusReady === true && c.execution?.status === 'READY TO REVIEW' && c.confluence?.score >= 75;
+  if (aPlus) {
+    const lastAPlusKey = `amy_last_aplus_${c.execution?.setupId || c.source?.M15 || 'current'}`;
+    try {
+      if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(lastAPlusKey) !== 'notified') {
+        sessionStorage.setItem(lastAPlusKey, 'notified');
+        if (typeof window.Android?.playNativeChime === 'function') {
+          window.Android.playNativeChime('GOLD_A_PLUS');
+        } else if (typeof window.Android?.playGoldChime === 'function') {
+          window.Android.playGoldChime();
+        }
+        if (typeof window.Android?.triggerPatternHaptic === 'function') {
+          window.Android.triggerPatternHaptic('TARGET');
+        }
+      }
+    } catch {}
+  }
   setTxt('m15-risk',aPlus?`🟢 Grade A+${drLoc}: Bukti lengkap${confScore}`:c.m15?.opposingControl?`H1 berlawanan · konteks tambahan${drLoc}${confScore}`:`BIAS M15${drLoc} · BELUM A+${confScore}`);
   const confStatus=id(confObj?.status||'WAITING');
   const confEvidence=confObj?.sweep?`Sweep ${number(confObj.sweep.level)} · MSS ${number(confObj.mss?.level)}`:'Menunggu sweep atau respons POI dan konfirmasi struktur M15.';

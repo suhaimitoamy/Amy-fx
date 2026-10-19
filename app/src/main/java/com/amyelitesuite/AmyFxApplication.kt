@@ -74,6 +74,27 @@ class AmyFxApplication : android.app.Application() {
             setShowBadge(true)
         }
         manager.createNotificationChannel(learningChannel)
+
+        val goldAudioAttributes = android.media.AudioAttributes.Builder()
+            .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION_EVENT)
+            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+        val goldSoundUri = android.net.Uri.parse("android.resource://$packageName/${R.raw.amy_gold_chime}")
+
+        val goldChannel = NotificationChannel(
+            GOLD_SIGNAL_CHANNEL_ID,
+            "Amy FX Sinyal Emas A+",
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = "Notifikasi khusus sinyal Grade A+ dengan denting bel emas kristal"
+            enableVibration(true)
+            vibrationPattern = longArrayOf(0, 80, 50, 80, 50, 120)
+            enableLights(true)
+            lightColor = Color.rgb(255, 215, 0)
+            setShowBadge(true)
+            setSound(goldSoundUri, goldAudioAttributes)
+        }
+        manager.createNotificationChannel(goldChannel)
     }
 
     private fun scheduleNewsFallback() {
@@ -122,6 +143,7 @@ class AmyFxApplication : android.app.Application() {
         const val NEWS_CHANNEL_ID = "amy_news_v2"
         const val SCALPER_CHANNEL_ID = "amy_scalper_v1"
         const val MARKET_CONTEXT_CHANNEL_ID = "amy_market_context_v1"
+        const val GOLD_SIGNAL_CHANNEL_ID = "amy_gold_signal_channel"
         const val LEARNING_REMINDER_CHANNEL_ID = "amy_learning_reminder_v1"
         const val PREVIEW_APPLICATION_ID = "com.amyelitesuite.learningpreview"
     }

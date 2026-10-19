@@ -399,6 +399,26 @@ class MainActivity : Activity() {
             }
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             nm.createNotificationChannel(channel)
+
+            val goldAudioAttributes = android.media.AudioAttributes.Builder()
+                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION_EVENT)
+                .build()
+            val goldSoundUri = android.net.Uri.parse("android.resource://$packageName/${R.raw.amy_gold_chime}")
+            val goldChannel = NotificationChannel(
+                AmyFxApplication.GOLD_SIGNAL_CHANNEL_ID,
+                "Amy FX Sinyal Emas A+",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifikasi khusus sinyal Grade A+ dengan denting bel emas kristal"
+                enableLights(true)
+                lightColor = Color.rgb(255, 215, 0)
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 80, 50, 80, 50, 120)
+                setShowBadge(true)
+                setSound(goldSoundUri, goldAudioAttributes)
+            }
+            nm.createNotificationChannel(goldChannel)
         }
     }
 
@@ -848,6 +868,27 @@ class MainActivity : Activity() {
         }
 
         @JavascriptInterface
+        fun triggerPatternHaptic(patternType: String?) {
+            try {
+                val vibrator = mContext.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
+                val pattern = when (patternType?.uppercase()?.trim()) {
+                    "REJECTION", "FVG", "TOUCH" -> longArrayOf(0, 50, 40, 60)
+                    "BREAK", "MSS", "BOS" -> longArrayOf(0, 100, 60, 150)
+                    "TARGET", "TP", "SL", "GOLD_A_PLUS" -> longArrayOf(0, 80, 50, 80, 50, 120)
+                    else -> longArrayOf(0, 40)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator.vibrate(android.os.VibrationEffect.createWaveform(pattern, -1))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(pattern, -1)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        @JavascriptInterface
         fun playNotificationSound() {
             playNotificationSound("default")
         }
@@ -855,8 +896,8 @@ class MainActivity : Activity() {
         @JavascriptInterface
         fun playNotificationSound(soundType: String?) {
             try {
-                if (soundType == "gold" || soundType == "crystal") {
-                    playGoldChime()
+                if (soundType == "gold" || soundType == "crystal" || soundType == "GOLD_A_PLUS") {
+                    playNativeChime(soundType)
                     return
                 }
                 val notificationUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
@@ -869,7 +910,37 @@ class MainActivity : Activity() {
         }
 
         @JavascriptInterface
+        fun playNativeChime(chimeType: String?) {
+            try {
+                val mp = android.media.MediaPlayer.create(mContext, R.raw.amy_gold_chime)
+                if (mp != null) {
+                    mp.setOnCompletionListener { it.release() }
+                    mp.start()
+                    return
+                }
+            } catch (e: Exception) {
+                // Fallback
+            }
+            playGoldChime()
+        }
+
+        @JavascriptInterface
+        fun playChime(soundType: String?) {
+            playNativeChime(soundType)
+        }
+
+        @JavascriptInterface
         fun playGoldChime() {
+            try {
+                val mp = android.media.MediaPlayer.create(mContext, R.raw.amy_gold_chime)
+                if (mp != null) {
+                    mp.setOnCompletionListener { it.release() }
+                    mp.start()
+                    return
+                }
+            } catch (e: Exception) {
+                // Fallback
+            }
             try {
                 val toneGen = android.media.ToneGenerator(android.media.AudioManager.STREAM_NOTIFICATION, 100)
                 toneGen.startTone(android.media.ToneGenerator.TONE_PROP_BEEP2, 350)

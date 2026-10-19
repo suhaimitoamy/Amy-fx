@@ -229,6 +229,10 @@ export function clearAlerts(mode = 'all') {
 export function playAlertBeep(soundType = 'default') {
   if (typeof window === 'undefined') return;
   try {
+    if (typeof window.Android?.playNativeChime === 'function') {
+      window.Android.playNativeChime(soundType);
+      return;
+    }
     if (soundType === 'gold' && typeof window.Android?.playGoldChime === 'function') {
       window.Android.playGoldChime();
       return;
@@ -278,9 +282,13 @@ export function playAlertBeep(soundType = 'default') {
 /**
  * Trigger vibration / haptic feedback on Android or modern browser
  */
-export function triggerHapticFeedback() {
+export function triggerHapticFeedback(patternType = 'TOUCH') {
   if (typeof window === 'undefined') return;
   try {
+    if (typeof window.Android?.triggerPatternHaptic === 'function') {
+      window.Android.triggerPatternHaptic(patternType);
+      return;
+    }
     if (window.Android?.triggerHaptic) {
       window.Android.triggerHaptic(18);
     } else if (typeof navigator !== 'undefined' && navigator.vibrate) {

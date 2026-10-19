@@ -430,7 +430,12 @@ class DriverSetupSyncWorker(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(applicationContext, AmyFxApplication.MARKET_CONTEXT_CHANNEL_ID)
+        val isAPlus = title.contains("A+", ignoreCase = true) ||
+            body.contains("Grade A+", ignoreCase = true) ||
+            body.contains("A+ Setup", ignoreCase = true)
+        val channelId = if (isAPlus) AmyFxApplication.GOLD_SIGNAL_CHANNEL_ID else AmyFxApplication.MARKET_CONTEXT_CHANNEL_ID
+
+        val notification = NotificationCompat.Builder(applicationContext, channelId)
             .setSmallIcon(R.drawable.ic_stat_amy_fx)
             .setContentTitle(title)
             .setContentText(body)
@@ -462,6 +467,28 @@ class DriverSetupSyncWorker(
             setShowBadge(true)
         }
         manager.createNotificationChannel(channel)
+
+        try {
+            val goldAudioAttributes = android.media.AudioAttributes.Builder()
+                .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION_EVENT)
+                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            val goldSoundUri = android.net.Uri.parse("android.resource://${applicationContext.packageName}/${R.raw.amy_gold_chime}")
+            val goldChannel = NotificationChannel(
+                AmyFxApplication.GOLD_SIGNAL_CHANNEL_ID,
+                "Amy FX Sinyal Emas A+",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifikasi khusus sinyal Grade A+ dengan denting bel emas kristal"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 80, 50, 80, 50, 120)
+                enableLights(true)
+                lightColor = Color.rgb(255, 215, 0)
+                setShowBadge(true)
+                setSound(goldSoundUri, goldAudioAttributes)
+            }
+            manager.createNotificationChannel(goldChannel)
+        } catch (_: Exception) {}
     }
 
     private fun canPostNotifications(): Boolean {
