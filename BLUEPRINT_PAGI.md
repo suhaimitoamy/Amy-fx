@@ -464,12 +464,13 @@
 
 ---
 
-### 1.18. [REPLAY PERFORMANCE] Stuttering Frame Playback 5x di Candle Replay Tanpa Prefetch Buffer
-- **Lokasi File:** [`app/src/main/assets/apps/academy/trading-practice/assets/js/replay-engine.js`](file:///root/Amy-fx/app/src/main/assets/apps/academy/trading-practice/assets/js/replay-engine.js#L143-L150)
+### 1.18. [REPLAY PERFORMANCE] Stuttering Frame Playback 5x di Candle Replay Tanpa Prefetch Buffer — `[x] SELESAI & LOLOS AUDIT REVIEWER`
+- **Lokasi File:** [`app/src/main/assets/apps/academy/trading-practice/assets/js/replay-engine.js`](file:///root/Amy-fx/app/src/main/assets/apps/academy/trading-practice/assets/js/replay-engine.js#L110-L165)
 - **Akar Masalah (Temuan Agen Delta & Alpha):**
   Saat pengguna mengaktifkan mode putar otomatis (Play) pada kecepatan tertinggi (5x / interval 180ms), setiap pergeseran lilin `move(1)` memicu query IndexedDB asinkron baru ke tabel candle. Jika performa I/O memori HP sedang sibuk, query IndexedDB memakan waktu >120ms sehingga terjadi penumpukan request (`movePending = true`) yang menyebabkan animasi candlestick melompat-lompat dan tidak mulus (frame stuttering).
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   Implementasikan *prefetch buffer window* di `replay-engine.js`: ketika `play()` dimulai, muat 30 candle berikutnya ke dalam buffer array lokal di memori JavaScript. Perpindahan bar pada 5x cukup mengambil dari array buffer tersebut tanpa memanggil IndexedDB di setiap frame, menghasilkan pergerakan lilin 60 FPS yang luar biasa mulus.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Mengimplementasikan `prefetchWindow(30)` dan `prefetchBuffer` pada `ReplayController` di mana `emit` langsung mengonsumsi lilin dari memory buffer tanpa query I/O IndexedDB per frame pada playback cepat. Buffer otomatis diisi ulang saat menipis (<10) dan dibersihkan saat pause/seek/timeframe switch. Unit test lolos di `tests/replay-prefetch-buffer.test.mjs`.
 
 ---
 
@@ -2585,7 +2586,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.25. Throttling Query `DELETE` 24 Jam di `CandleStore.upsertAll()`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.21. Fingerprint $O(1)$ Menggantikan `JSON.stringify` di `ict-canvas.js`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.22. Hapus I/O Disk Redundan `startBackgroundScanner` di `MainActivity`** | P1 (Sedang) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.18. Prefetch Buffer Lilin Playback 5x di `replay-engine.js`** | P1 (Sedang) | ~8 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.18. Prefetch Buffer Lilin Playback 5x di `replay-engine.js`** | P1 (Sedang) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.14. Validasi Checksum SHA-256 APK di `NativeAppUpdater`** | P1 (Sedang) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.16. Persistensi Status Accordion `<details open>` di Mapping** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.9. Hilangkan Layar Berkedip (Flicker) Ganti TF di Beranda** | P1 (Sedang) | ~7 menit | [ ] Setuju / [ ] Tunda |

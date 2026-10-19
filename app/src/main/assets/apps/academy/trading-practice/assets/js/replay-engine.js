@@ -30,6 +30,8 @@
     this.movePending = false;
     this.speedMs = Number(options.speedMs || 900);
     this.isDefaultInitial = true;
+    this.prefetchBuffer = new Map();
+    this.isPrefetching = false;
     this.onChange = typeof options.onChange === 'function' ? options.onChange : function () {};
     this.onEnd = typeof options.onEnd === 'function' ? options.onEnd : function () {};
   }
@@ -108,17 +110,61 @@
     return this.emit('seek', previous);
   };
 
+  ReplayController.prototype.prefetchWindow = async function (count) {
+    if (this.isPrefetching || !this.timeline || !this.timeline.length || this.cursor == null) return;
+    this.isPrefetching = true;
+    try {
+      var countToFetch = count || 30;
+      var insertion = lowerBound(this.timeline, this.cursor);
+      var currentIndex = this.timeline[insertion] === this.cursor ? insertion : insertion - 1;
+      var tf = this.timeframe;
+      var src = this.sourceId;
+      var sym = this.symbol || 'XAUUSD';
+
+      for (var i = 1; i <= countToFetch; i++) {
+        var nextIdx = currentIndex + i;
+        if (nextIdx >= this.timeline.length) break;
+        var nextCursor = this.timeline[nextIdx];
+        var key = sym + ':' + tf + ':' + src + ':' + nextCursor;
+        if (this.prefetchBuffer.has(key)) continue;
+
+        try {
+          var res = await this.provider.getCandles({
+            symbol: sym,
+            timeframe: tf,
+            sourceId: src,
+            cursor: nextCursor
+          });
+          if (this.timeframe !== tf || this.sourceId !== src) break;
+          this.prefetchBuffer.set(key, res);
+        } catch (_) {
+          break;
+        }
+      }
+    } finally {
+      this.isPrefetching = false;
+    }
+  };
+
   ReplayController.prototype.emit = async function (reason, previousCursor) {
     var sequence = ++this.requestSequence;
     var cursor = this.cursor;
     var timeframe = this.timeframe;
     var sourceId = this.sourceId;
-    var result = await this.provider.getCandles({
-      symbol: this.symbol,
-      timeframe: this.timeframe,
-      sourceId: this.sourceId,
-      cursor: cursor
-    });
+    var key = (this.symbol || 'XAUUSD') + ':' + timeframe + ':' + sourceId + ':' + cursor;
+
+    var result;
+    if (this.prefetchBuffer && this.prefetchBuffer.has(key)) {
+      result = this.prefetchBuffer.get(key);
+      this.prefetchBuffer.delete(key);
+    } else {
+      result = await this.provider.getCandles({
+        symbol: this.symbol,
+        timeframe: this.timeframe,
+        sourceId: this.sourceId,
+        cursor: cursor
+      });
+    }
     if (sequence !== this.requestSequence || cursor !== this.cursor || timeframe !== this.timeframe || sourceId !== this.sourceId) return null;
     this.sourceId = result.sourceId || this.sourceId;
     if (result.candles.some(function (candle) { return candle.time > this.cursor || Number(candle.lastSourceTime || candle.time) > this.cursor; }, this)) {
@@ -143,16 +189,23 @@
   ReplayController.prototype.play = function () {
     var self = this;
     if (self.playTimer) return;
+    self.prefetchWindow(30);
     self.playTimer = setInterval(function () {
       if (self.movePending) return;
       self.movePending = true;
-      self.move(1).catch(function () { self.pause(); self.onEnd(); }).finally(function () { self.movePending = false; });
+      self.move(1).catch(function () { self.pause(); self.onEnd(); }).finally(function () {
+        self.movePending = false;
+        if (self.prefetchBuffer && self.prefetchBuffer.size < 10) {
+          self.prefetchWindow(30);
+        }
+      });
     }, self.speedMs);
   };
 
   ReplayController.prototype.pause = function () {
     if (this.playTimer) clearInterval(this.playTimer);
     this.playTimer = null;
+    if (this.prefetchBuffer) this.prefetchBuffer.clear();
   };
 
   ReplayController.prototype.setSpeed = function (milliseconds) {
