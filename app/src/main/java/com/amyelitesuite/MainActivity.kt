@@ -967,6 +967,9 @@ class MainActivity : Activity() {
         fun startBackgroundScanner(apiKey: String?, bsl: String?, ssl: String?) {
             // ScannerService is a retired compatibility stub.
             // Redundant SharedPreferences writes and service launches removed to eliminate flash wear and CPU wakeups.
+            try {
+                SecurePrefs.remove(mContext, "api_key")
+            } catch (_: Exception) {}
         }
 
         @JavascriptInterface
