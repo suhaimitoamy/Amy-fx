@@ -1535,24 +1535,27 @@ document.addEventListener('DOMContentLoaded', () => {
       reader.onload = e => {
         const img = new Image();
         img.onload = () => {
-          const maxDim = 1280;
-          let w = img.width;
-          let h = img.height;
-          if (w > maxDim || h > maxDim) {
-            if (w > h) {
-              h = Math.round((h * maxDim) / w);
-              w = maxDim;
-            } else {
-              w = Math.round((w * maxDim) / h);
-              h = maxDim;
-            }
-          }
-          const canvas = document.createElement('canvas');
-          canvas.width = w;
-          canvas.height = h;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, w, h);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+          const dataUrl = (window.AmyFXTheme && typeof window.AmyFXTheme.compressWallpaper === 'function')
+            ? window.AmyFXTheme.compressWallpaper(img, 1080, 720, 0.75)
+            : (() => {
+                const maxWidth = 1080;
+                const maxHeight = 720;
+                let w = img.width;
+                let h = img.height;
+                if (w > maxWidth || h > maxHeight) {
+                  const ratio = Math.min(maxWidth / w, maxHeight / h);
+                  w = Math.round(w * ratio);
+                  h = Math.round(h * ratio);
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                let u = '';
+                try { u = canvas.toDataURL('image/webp', 0.75); } catch (_) {}
+                return (u && u.startsWith('data:image/webp')) ? u : canvas.toDataURL('image/jpeg', 0.72);
+              })();
 
           const currentDim = dimSlider ? Number(dimSlider.value) : 50;
           const currentBlur = blurSlider ? Number(blurSlider.value) : 20;

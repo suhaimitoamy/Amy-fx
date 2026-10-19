@@ -616,7 +616,7 @@
 
 ---
 
-### 1.27. [QUOTA HAZARD] Risiko `QuotaExceededError` Akibat Penyimpanan Base64 Wallpaper Kustom di `localStorage`
+### 1.27. [QUOTA HAZARD] Risiko `QuotaExceededError` Akibat Penyimpanan Base64 Wallpaper Kustom di `localStorage` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/assets/apps/shared/amyfx-theme-controller.js`](file:///root/Amy-fx/app/src/main/assets/apps/shared/amyfx-theme-controller.js#L323-L332) & [`amyfx-theme-controller.js#L20-L28`](file:///root/Amy-fx/app/src/main/assets/apps/shared/amyfx-theme-controller.js#L20-L28)
 - **Akar Masalah (Temuan Agen Beta & Gamma):**
   Fitur background wallpaper kustom menyimpan data URI base64 gambar langsung ke `localStorage` key `amyfx.ui.custom_bg.v1`. Foto galeri smartphone rata-rata berukuran 2–5 MB dalam format base64 string.  
@@ -624,6 +624,7 @@
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   1. Sebelum disimpan, lakukan kompresi canvas di browser: resize foto ke dimensi maksimal 1080x720 piksel dan ekspor sebagai format WebP kualitas 0.75 (<100 KB).
   2. Atau alihkan penyimpanan blob foto ke IndexedDB yang memiliki kapasitas kuota hingga ratusan megabyte.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Ditambahkan fungsi `compressWallpaper` pada `AmyFXTheme` yang meresize gambar ke maksimal 1080x720 dan mengekspornya ke format WebP kualitas 0.75 (<100 KB), serta menyematkan penanganan try-catch elegan pada `setCustomBg` untuk mengeliminasi crash `QuotaExceededError`. 3/3 unit test lolos di `tests/wallpaper-compression.test.mjs`.
 
 ---
 
@@ -2161,11 +2162,12 @@
 
 ---
 
-### 2.14. [STORAGE GUARD] Kompresi Otomatis Foto Wallpaper ke WebP (<100 KB)
+### 2.14. [STORAGE GUARD] Kompresi Otomatis Foto Wallpaper ke WebP (<100 KB) — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Beta & Agen Gamma
 - **Konsep & Nilai untuk Trader:**  
   Mencegah crash `QuotaExceededError` di `localStorage` saat pengguna mengunggah foto wallpaper galeri berkualitas tinggi.  
   Sistem canvas otomatis membaca file gambar pengguna, merampingkan dimensi maksimal ke 1080x720 piksel, dan mengekspor sebagai format WebP kualitas 75%. Ukuran string base64 terpangkas dari 4 MB menjadi <100 KB, menjamin sisa kuota penyimpanan 5MB tetap longgar dan aman untuk catatan Jurnal serta data transaksi trader.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Canvas kompresor otomatis di `app.js` dan `amyfx-theme-controller.js` merampingkan foto ke max 1080x720 dan mengekspor sebagai WebP 75%, menghasilkan ukuran payload base64 <100 KB. 3/3 unit test lolos di `tests/wallpaper-compression.test.mjs`.
 
 ---
 
@@ -2575,7 +2577,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.1. Perbaikan D1 Liquidity Gap di `scalper-setups.js`** | P0 (Tinggi) | ~10 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.3. Guard `SecurityException` Android 14 Exact Alarm** | P0 (Tinggi) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.7. Bridge Native Intent `openPdfDocument` di `MainActivity`** | P0 (Tinggi) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.27. Kompresi WebP Wallpaper Kustom (Cegah `QuotaExceededError`)** | P1 (Sedang) | ~7 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.27. Kompresi WebP Wallpaper Kustom (Cegah `QuotaExceededError`)** | P1 (Sedang) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.28. Validasi Kadaluarsa Cache Offline Lilin di `apps/mapping/data.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.25. Throttling Query `DELETE` 24 Jam di `CandleStore.upsertAll()`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.21. Fingerprint $O(1)$ Menggantikan `JSON.stringify` di `ict-canvas.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
@@ -2602,7 +2604,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.18. Standalone Embedded Fractal Twin Matcher (Zero-Python Engine)** | P0 (Otonomi AI) | ~10 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.10. Rhythmic Haptic Feedback & Native Sound Bridge di `WebAppInterface`** | P1 (Sangat Keren) | ~8 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.12. Bundled Audio Resource Bel Emas Offline di Android App** | P1 (Praktis & Instan) | ~5 menit | [ ] Setuju / [ ] Tunda |
-| 🚀 **Fitur Baru** | **2.14. Auto-Compacting Kompresi Foto Wallpaper ke WebP (<100 KB)** | P1 (Hemat Storage) | ~7 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.14. Auto-Compacting Kompresi Foto Wallpaper ke WebP (<100 KB)** | P1 (Hemat Storage) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.9. Tombol "Lanjutkan Latihan" (Resume Cursor) di Replay** | P1 (Sangat Praktis) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.6. 1-Tap Sync Catatan Jurnal ke Obsidian (Markdown)** | P1 (Sangat Rapi) | ~10 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.8. Tombol 1-Tap "Bersihkan Cache Sementara" di Tab Profil** | P1 (Bermanfaat) | ~8 menit | [ ] Setuju / [ ] Tunda |

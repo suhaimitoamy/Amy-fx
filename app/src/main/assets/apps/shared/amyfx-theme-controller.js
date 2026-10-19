@@ -314,18 +314,49 @@
   applyCustomBg(readCustomBg());
   updateThemeColor(root.dataset.amyfxTheme);
 
+  function compressWallpaper(img, maxWidth = 1080, maxHeight = 720, quality = 0.75) {
+    if (typeof document === 'undefined') return null;
+    let w = img.width || img.naturalWidth || 1080;
+    let h = img.height || img.naturalHeight || 720;
+    if (w > maxWidth || h > maxHeight) {
+      const ratio = Math.min(maxWidth / w, maxHeight / h);
+      w = Math.round(w * ratio);
+      h = Math.round(h * ratio);
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (ctx && typeof ctx.drawImage === 'function') {
+      ctx.drawImage(img, 0, 0, w, h);
+    }
+    let dataUrl = '';
+    try {
+      dataUrl = canvas.toDataURL('image/webp', quality);
+    } catch (_) {}
+    if (!dataUrl || !dataUrl.startsWith('data:image/webp')) {
+      dataUrl = canvas.toDataURL('image/jpeg', Math.max(0.7, quality - 0.05));
+    }
+    return dataUrl;
+  }
+
   window.AmyFXTheme = Object.freeze({
     key: STORAGE_KEY,
     get preference() { return preference; },
     get resolved() { return resolvedTheme(preference); },
     get colors() { return Object.freeze({ ...customColors }); },
     get customBg() { return readCustomBg(); },
+    compressWallpaper,
     setCustomBg(bgData) {
       if (!bgData || !bgData.image) {
         try { localStorage.removeItem(BG_STORAGE_KEY); } catch (_) {}
         applyCustomBg(null);
       } else {
-        try { localStorage.setItem(BG_STORAGE_KEY, JSON.stringify(bgData)); } catch (_) {}
+        try {
+          localStorage.setItem(BG_STORAGE_KEY, JSON.stringify(bgData));
+        } catch (err) {
+          console.warn('[Theme] QuotaExceededError when saving custom wallpaper:', err);
+        }
         applyCustomBg(bgData);
       }
       return bgData;
