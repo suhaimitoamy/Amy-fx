@@ -312,3 +312,12 @@ export function updateCockpitSessionPill(element, timestamp = Date.now()) {
   return info;
 }
 
+export function startCockpitSessionPill(element = 'cockpit-session-pill', intervalMs = 30000) {
+  updateCockpitSessionPill(element);
+  if (typeof setInterval !== 'undefined' && intervalMs > 0) {
+    return setInterval(() => updateCockpitSessionPill(element), intervalMs);
+  }
+  return null;
+}
+
+
