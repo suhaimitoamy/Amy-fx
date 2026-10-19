@@ -119,15 +119,25 @@ window.addEventListener('amyfx:market-context',event=>{context=event.detail;wind
     updateDealingRangeBadge($('chart-dealing-range-badge'), currentPrice, currentDr);
   }
   draw();});
-function getStoredCandles(timeframe){
+function getStoredCandlesInfo(timeframe){
   try{
     if(typeof localStorage==='undefined')return null;
     const rawData=localStorage.getItem(`amyfx.mapping.candles.${timeframe}`);
     if(!rawData)return null;
     const parsed=JSON.parse(rawData);
-    if(Array.isArray(parsed?.values)&&parsed.values.length>0)return parsed.values;
+    if(Array.isArray(parsed?.values)&&parsed.values.length>0){
+      const age=Date.now()-(parsed.time||0);
+      return {
+        candles:parsed.values,
+        time:parsed.time||0,
+        outdated:age>48*3600*1000
+      };
+    }
   }catch(_){}
   return null;
+}
+function getStoredCandles(timeframe){
+  return getStoredCandlesInfo(timeframe)?.candles||null;
 }
 function getRefreshInterval(tf){
   if(!isGoldMarketOpen(Date.now()/1000))return 300000;
@@ -148,7 +158,7 @@ function schedule(){
 async function refresh(){
   const id=++generation;controller?.abort();controller=new AbortController();const request=controller;
   const timeout=setTimeout(()=>request.abort(),35000),tf=$('timeframe').value;
-  $('refresh').disabled=true;if($('chart-error'))$('chart-error').textContent='';
+  $('refresh').disabled=true;if($('chart-error')){ $('chart-error').textContent=''; $('chart-error').style.color=''; }
   if(raw)draw();
   try{
     const [response,h1Context]=await Promise.all([
@@ -165,18 +175,34 @@ async function refresh(){
     if(!result.candles.length||(previous&&result.sourceTime<previous.sourceTime))throw Error('Candle tidak lengkap atau lebih lama');
     raw=next;window.amyfxLastCandles=candles;
     draw();
+    if(response.outdated||response.isExpired){
+      if($('chart-error')){
+        const dateStr=response.cachedTime?new Date(response.cachedTime).toLocaleDateString('id-ID'):'Lampau';
+        $('chart-error').textContent=`Mode Offline: Menampilkan data arsip (${dateStr}). Hubungkan internet untuk aksi harga terkini.`;
+        $('chart-error').style.color='#f59e0b';
+      }
+    }
   }catch{
     if(id!==generation)return;
+    const storedInfo=getStoredCandlesInfo(tf);
     if(!raw||!raw.candles?.length){
-      const cachedTf=getStoredCandles(tf);
-      if(cachedTf&&cachedTf.length>0){
+      if(storedInfo?.candles&&storedInfo.candles.length>0){
         const closed=!isGoldMarketOpen(Date.now()/1000);
-        raw={candles:filterCandles(cachedTf,closed),context:filterCandles(getStoredCandles('H1')||[],closed),tf,degraded:true};
+        raw={candles:filterCandles(storedInfo.candles,closed),context:filterCandles(getStoredCandles('H1')||[],closed),tf,degraded:true};
       }
     }
     if(raw)raw.degraded=true;
     draw(true);
-    if($('chart-error'))$('chart-error').textContent='Pembaruan gagal. Menggunakan data cache lokal.';
+    if($('chart-error')){
+      if(storedInfo?.outdated){
+        const dateStr=storedInfo.time?new Date(storedInfo.time).toLocaleDateString('id-ID'):'Lampau';
+        $('chart-error').textContent=`Mode Offline: Menampilkan data arsip (${dateStr}). Hubungkan internet untuk aksi harga terkini.`;
+        $('chart-error').style.color='#f59e0b';
+      }else{
+        $('chart-error').textContent='Pembaruan gagal. Menggunakan data cache lokal.';
+        $('chart-error').style.color='';
+      }
+    }
   }finally{clearTimeout(timeout);if(id===generation){$('refresh').disabled=false;schedule();}}
 }
 window.setTab=name=>{

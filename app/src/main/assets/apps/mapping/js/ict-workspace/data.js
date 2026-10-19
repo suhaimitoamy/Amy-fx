@@ -1,4 +1,4 @@
-function getOfflineCache(cacheKey){
+export function getOfflineCache(cacheKey){
   try{
     if(typeof localStorage!=='undefined'){
       const cached=localStorage.getItem(cacheKey);
@@ -7,11 +7,14 @@ function getOfflineCache(cacheKey){
         if(Array.isArray(parsed.values)&&parsed.values.length>0){
           const MAX_OFFLINE_CACHE_MS=48*3600*1000;
           const age=Date.now()-(parsed.time||0);
+          const isExpired=age>MAX_OFFLINE_CACHE_MS;
           return {
             candles:parsed.values,
             degraded:true,
             staleAgeMs:age,
-            isExpired:age>MAX_OFFLINE_CACHE_MS
+            isExpired,
+            outdated:isExpired,
+            cachedTime:parsed.time||0
           };
         }
       }

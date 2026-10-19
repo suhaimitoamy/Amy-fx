@@ -628,14 +628,15 @@
 
 ---
 
-### 1.28. [OFFLINE INTEGRITY] Ketiadaan Batas Waktu Kadaluarsa Cache Lilin Offline di `apps/mapping/data.js`
-- **Lokasi File:** [`app/src/main/assets/apps/mapping/js/ict-workspace/data.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/ict-workspace/data.js#L44-L54)
+### 1.28. [OFFLINE INTEGRITY] Ketiadaan Batas Waktu Kadaluarsa Cache Lilin Offline di `apps/mapping/data.js` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
+- **Lokasi File:** [`app/src/main/assets/apps/mapping/js/ict-workspace/data.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/ict-workspace/data.js#L44-L54) & [`app.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/ict-workspace/app.js)
 - **Akar Masalah (Temuan Agen Gamma):**
   Di `data.js`, fungsi `loadCandles()` memiliki mekanisme fallback membaca data tersimpan:
   `const cached = localStorage.getItem(cacheKey);`. Saat menyimpan (baris 34), tercatat timestamp `time: Date.now()`. Namun saat data dibaca kembali (baris 48), tidak ada validasi berapa lama usia data tersebut.  
   Jika pengguna membuka Cockpit Mapping saat offline setelah 2 minggu tidak menggunakan aplikasi, grafik chart akan memuat data 2 minggu lalu seolah-olah data live terbaru tanpa ada peringatan rentang waktu yang tegas di layar.
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   Tambahkan pengecekan durasi usia cache: jika `Date.now() - parsed.time > 48 * 3600 * 1000` (lebih dari 2 hari), sertakan flag `outdated: true` dan tampilkan warning bar oranye: *"Mode Offline: Menampilkan data arsip [Tanggal/Waktu]. Hubungkan internet untuk aksi harga terkini."*
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Menyematkan pengecekan `MAX_OFFLINE_CACHE_MS = 48 * 3600 * 1000` di `getOfflineCache` (`data.js`) dengan properti `outdated: isExpired` dan `cachedTime`, serta menampilkan bilah peringatan oranye *"Mode Offline: Menampilkan data arsip (Tanggal). Hubungkan internet untuk aksi harga terkini."* di `app.js`. 3/3 unit test lolos di `tests/mapping-cache-expiry.test.mjs`.
 
 ---
 
@@ -2578,7 +2579,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.3. Guard `SecurityException` Android 14 Exact Alarm** | P0 (Tinggi) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.7. Bridge Native Intent `openPdfDocument` di `MainActivity`** | P0 (Tinggi) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.27. Kompresi WebP Wallpaper Kustom (Cegah `QuotaExceededError`)** | P1 (Sedang) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.28. Validasi Kadaluarsa Cache Offline Lilin di `apps/mapping/data.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.28. Validasi Kadaluarsa Cache Offline Lilin di `apps/mapping/data.js`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.25. Throttling Query `DELETE` 24 Jam di `CandleStore.upsertAll()`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.21. Fingerprint $O(1)$ Menggantikan `JSON.stringify` di `ict-canvas.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.22. Hapus I/O Disk Redundan `startBackgroundScanner` di `MainActivity`** | P1 (Sedang) | ~4 menit | [ ] Setuju / [ ] Tunda |
