@@ -53,6 +53,19 @@ function filterCandles(values, closed) {
   });
 }
 
+function lenientCandles(values) {
+  const closed = !isGoldMarketOpen(Date.now() / 1000);
+  const map = new Map();
+  for (const c of values || []) {
+    if (c?.amyfxSyntheticCurrent || c?.synthetic) continue;
+    const t = toTimestamp(c.time ?? c.datetime ?? c.open_time);
+    if (closed && isWeekendClosure(t)) continue;
+    const o = { time: t, open: Number(c.open), high: Number(c.high), low: Number(c.low), close: Number(c.close) };
+    if (Object.values(o).every(Number.isFinite) && o.low > 0) map.set(t, o);
+  }
+  return [...map.values()].sort((a, b) => a.time - b.time);
+}
+
 export function mountHomeChart(root) {
   const $=id=>root.querySelector('#'+id);
   let view=null,raw=null,controller=null,timer=null,generation=0,disposed=false;
@@ -64,7 +77,13 @@ export function mountHomeChart(root) {
     const closed=!isGoldMarketOpen(Date.now()/1000);
     const safeCandles=filterCandles(raw?.candles||[],closed);
     const safeContext=filterCandles(raw?.context||[],closed);
-    const result=analyze({...raw,candles:safeCandles,context:safeContext,tf,now:Date.now()/1000,degraded:degraded||raw?.degraded||false});
+    let result=null;
+    try {
+      result=analyze({...raw,candles:safeCandles,context:safeContext,tf,now:Date.now()/1000,degraded:degraded||raw?.degraded||false});
+    } catch (_) {
+      const candles=lenientCandles(safeCandles);
+      result={candles,tf,plan:null,sourceTime:candles.at(-1)?.time||null,fresh:!raw?.degraded};
+    }
     view.draw(result);
     const last=result.candles.at(-1);
     $('home-chart-price').textContent=last?last.close.toFixed(2):'—';

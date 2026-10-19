@@ -2,6 +2,7 @@ import {createIctCanvas} from './ict-canvas.js';
 import {calculateNextGenIndicators} from './nextgen-indicators.js';
 // Shared presentation only; candle/model ownership remains with each caller.
 export function createPriceChart(element,{touchAxes=false}={}) {
+  let lastClosePrice=null;
   const chart=window.LightweightCharts.createChart(element,{autoSize:true,
     timeScale:{timeVisible:true},rightPriceScale:{minimumWidth:65,autoScale:true},
     handleScale:{pinch:true,mouseWheel:true,axisPressedMouseMove:{time:true,price:true},axisDoubleClickReset:{time:true,price:true}},
@@ -16,9 +17,9 @@ export function createPriceChart(element,{touchAxes=false}={}) {
       // Item 2.35: Auto-Clamping Bounded Y-Axis Visualizer (clamping extreme spikes to preserve candlestick body/wick anatomy)
       const maxSpan=70; // Gold M15/M5 normal trading boundary (+-$35)
       if(max-min>maxSpan){
-        const mid=(min+max)/2;
-        min=mid-maxSpan/2;
-        max=mid+maxSpan/2;
+        const anchor=(Number.isFinite(lastClosePrice)&&lastClosePrice>=min&&lastClosePrice<=max)?lastClosePrice:(min+max)/2;
+        min=anchor-maxSpan/2;
+        max=anchor+maxSpan/2;
       }
       return {priceRange:{minValue:min,maxValue:max},margins:res.margins};
     }
@@ -36,6 +37,7 @@ export function createPriceChart(element,{touchAxes=false}={}) {
     draw(result,plan=result.plan,presentation=null){
       const cs=result.candles||[];
       const first=cs[0], last=cs[cs.length-1];
+      if(last&&Number.isFinite(last.close))lastClosePrice=last.close;
       const next=`${result.tf}:${cs.length}:${first?.time}:${first?.close}:${last?.time}:${last?.open}:${last?.high}:${last?.low}:${last?.close}`;
       if(next!==key){const initial=!key;series.setData(result.candles);key=result.candles.length?next:'';if(initial&&result.candles.length)chart.timeScale().fitContent();}
       if(presentation&&!ict)ict=createIctCanvas(element,chart,series);
