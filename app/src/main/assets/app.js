@@ -229,12 +229,14 @@ document.addEventListener('DOMContentLoaded', () => {
       <div id="home-price-chart" aria-label="Chart candlestick XAU/USD dengan level model ICT"></div>
       <p id="home-chart-note"></p>
     </section><div class="section-heading"><h2>Menu Utama</h2></div><div class="quick-grid slide-up">${projects.map(item => quickCard(item)).join('')}</div>`;
-    mainContent.querySelector?.('#home-chart-alert')?.addEventListener('click', () => {
-      if (typeof window.AmyPriceAlertManager?.openAddAlertDialog === 'function') {
-        window.AmyPriceAlertManager.openAddAlertDialog();
-      }
-    });
-    if(window.AmyHomeChart)disposeHomeChart=window.AmyHomeChart.mount(mainContent.querySelector?.('.home-price-panel'));
+    if (typeof mainContent.querySelector === 'function') {
+      mainContent.querySelector('#home-chart-alert')?.addEventListener('click', () => {
+        if (typeof window.AmyPriceAlertManager?.openAddAlertDialog === 'function') {
+          window.AmyPriceAlertManager.openAddAlertDialog();
+        }
+      });
+      if(window.AmyHomeChart)disposeHomeChart=window.AmyHomeChart.mount(mainContent.querySelector('.home-price-panel'));
+    }
   }
 
   function renderProjectList(title) {
