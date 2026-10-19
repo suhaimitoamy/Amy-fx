@@ -331,7 +331,10 @@
   function updateResumeButton() {
     var resumeBtn = ui.byId('btnResumeReplay');
     if (!resumeBtn) return;
-    var currentSource = provider.selectedSourceId();
+    if (!resumeBtn.style) resumeBtn.style = {};
+    var currentSource = (provider && typeof provider.selectedSourceId === 'function')
+      ? provider.selectedSourceId()
+      : ((typeof latestPayload !== 'undefined' && latestPayload) ? latestPayload.sourceId : '');
     var savedCursor = localStorage.getItem('amy_replay_last_cursor_' + currentSource) ||
                       localStorage.getItem('amy_practice_last_cursor_' + currentSource);
     var savedNum = Number(savedCursor);

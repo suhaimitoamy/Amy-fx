@@ -11,7 +11,7 @@ const payload = (cursor, candles, timeframe = 'M1') => ({ symbol: 'XAUUSD', sour
 function runtime(shared = new Map()) {
   const nodes = new Map();
   const node = id => {
-    if (!nodes.has(id)) nodes.set(id, { innerHTML: '', textContent: '', dataset: {}, value: 'M1' });
+    if (!nodes.has(id)) nodes.set(id, { innerHTML: '', textContent: '', dataset: {}, style: {}, value: 'M1' });
     return nodes.get(id);
   };
   const ctx = { console, setTimeout, clearTimeout, Map,
@@ -32,7 +32,10 @@ function runtime(shared = new Map()) {
       return trade;
     }
   };
-  ctx.AmyPracticeData = { async getCandles() { throw new Error('Unexpected provider request'); } };
+  ctx.AmyPracticeData = {
+    async getCandles() { throw new Error('Unexpected provider request'); },
+    selectedSourceId() { return 'pack-a'; }
+  };
   ctx.AmyReplayEngine = { lowerBound: (list, time) => Math.max(0, list.indexOf(time)) };
   const source = read('assets/js/candle-replay.js').replace(/\}\)\(\);\s*$/, `
     window.testReplay = { render, renderHistory, updateOutcomes, saveTrade,
@@ -49,7 +52,7 @@ function runtime(shared = new Map()) {
 async function submit(rt, bias = 'BUY', current = 100) {
   const form = rt.node('tradeForm');
   form.values = { bias, entry: 100, stopLoss: bias === 'SELL' ? 102 : 98, takeProfit: bias === 'SELL' ? 98 : 102, notes: 'catatan <entry>' };
-  rt.ctx.testReplay.setPayload(payload(60, [candle(60, 97, 103, current)]));
+  rt.ctx.testReplay.setPayload(payload(60, [candle(60, 99.5, 100.5, current)]));
   await rt.ctx.testReplay.saveTrade({ currentTarget: form, preventDefault() {} });
   return (await rt.ctx.AmyPracticeStorage.listTrades())[0];
 }
@@ -91,13 +94,13 @@ for (const [bias, low, high, expected] of [['BUY',99,103,'TP'], ['BUY',97,101,'S
   test(`${bias} ${low}/${high}: advancing renders ${expected} evidence and rewind/reload preserves it`, async () => {
     const rt = runtime();
     await submit(rt, bias);
-    await rt.ctx.testReplay.render(payload(120, [candle(60, 97, 103), candle(120, low, high)]));
+    await rt.ctx.testReplay.render(payload(120, [candle(60, 99.5, 100.5), candle(120, low, high)]));
     const markup = rt.node('replayHistoryRows').innerHTML;
     assert.match(markup, new RegExp(`${expected} tercapai`));
     assert.match(markup, new RegExp(`Bukti ${expected}`));
     assert.match(markup, /Low .*High/);
     if (low === 97 && high === 103) assert.match(markup, /SL diprioritaskan/);
-    await rt.ctx.testReplay.render(payload(60, [candle(60, 97, 103)]));
+    await rt.ctx.testReplay.render(payload(60, [candle(60, 99.5, 100.5)]));
     assert.equal(rt.node('replayHistoryRows').innerHTML, markup);
     const fresh = runtime(rt.shared);
     await fresh.ctx.testReplay.renderHistory();
