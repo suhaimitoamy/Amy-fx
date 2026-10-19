@@ -270,6 +270,8 @@ body.amyfx-module--ict #gold-chart-workspace #chart tr:first-child td:last-child
 .bias-val-warn { color: #f59e0b !important; }
 .bias-val-sweep { color: #00bcd4 !important; font-weight: 700; }
 .bias-val-gold { color: #F5C451 !important; font-weight: 700; }
+.bias-val-purple { color: #c084fc !important; font-weight: 700; }
+.bias-val-cyan { color: #38bdf8 !important; font-weight: 700; }
 
 /* Card 4: AMY ENTRY ASSISTANT V3 PLAN Card */
 .amy-assistant-plan-card {

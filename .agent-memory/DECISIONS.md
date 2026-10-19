@@ -1,5 +1,29 @@
 # Technical Decisions
 
+## 2026-10-19 — Upgrade Cockpit Mapping ke AMY ICT CONTEXT V4 (100% Pure Market Context Engine)
+1. **Latar Belakang & Kebutuhan:**
+   - Evaluasi backtest September menunjukkan strategi mekanikal sinyal kaku rawan terkena noise atau false break. User memutuskan mengubah fondasi Cockpit Mapping menjadi **AMY ICT CONTEXT V4** (100% Pure Market Context) sebagai kompas navigasi objektif tanpa repainting sinyal.
+2. **Arsitektur Matriks 11-Baris & Fase Narasi:**
+   - **Tabel Navigasi 11-Baris:**
+     1. `MATRIKS 3-TIMEFRAME`: Status arah H1 (Major), M15 (Swing), M5 (Orderflow).
+     2. `FASE NARASI MARKET`: Membedakan secara cerdas antara Ekspansi Searah, Manipulasi Likuiditas (Sweep BSL/SSL/Asia/PDHL), dan Koreksi Pullback masuk ke Demand/Supply.
+     3. `DEALING RANGE & ZONA`: Lokasi persentase harga dalam dealing range (Discount <47.5%, Premium >52.5%, EQ 50%).
+     4. `MAGNET ATAS (BSL/PDH)`: Jarak poin/dolar ke BSL M15 & PDH serta status sweep.
+     5. `MAGNET BAWAH (SSL/PDL)`: Jarak poin/dolar ke SSL M15 & PDL serta status sweep.
+     6. `SESI & ASIA RANGE`: Sesi aktif berjalan dan status sweep/break range Asia.
+     7. `INDUCEMENT (IDM)`: Level internal swing M15 dan validasi apakah IDM sudah disapu sebelum POI.
+     8. `ZONA SUPPLY (M15)`: Area unmitigated Bear OB & FVG serta deteksi saat harga di dalam supply.
+     9. `ZONA DEMAND (M15)`: Area unmitigated Bull OB & FVG serta deteksi saat harga di dalam demand.
+     10. `BATAS CHoCH (H1)`: Level invalidasi tren major H1.
+     11. `PANDUAN KONTEKS`: Rekomendasi objektif kontekstual (misal: *"Harga di Demand/Discount — JANGAN SELL! Tunggu M5 CHoCH Bullish"*).
+3. **Penyelarasan Live Assistant & Backward-Compatibility:**
+   - `renderLiveAssistant`: Terintegrasi langsung dengan fase narasi V4 untuk menampilkan headline dan sub-message yang memandu trader saat standby.
+   - `dashboardRows`: Fungsi legacy 15-baris tetap dipertahankan untuk menjamin backward-compatibility penuh dengan seluruh suite tes sebelumnya.
+4. **Verifikasi & Status Tes:**
+   - Syntax valid: `node --check app/src/main/assets/apps/mapping/js/ict-workspace/ict-presentation.js`.
+   - Unit test targeted baru: `tests/mapping-context-v4-matrix.test.mjs` (4/4 lolos).
+   - Seluruh targeted regression suites (56 tests) lolos 100%.
+
 ## 2026-10-19 — Implementasi Active Forming Candle Live (TradingView Parity) pada Chart Gold & Peta Harga Beranda
 1. **Latar Belakang & Kebutuhan:**
    - Pengguna menanyakan mengapa chart sebelumnya hanya menampilkan candle tertutup sehingga terkesan "usang" hingga interval candle 15 menit selesai, berbeda dengan TradingView yang menampilkan candle aktif yang bergerak live.
