@@ -1,8 +1,25 @@
 import {createIctCanvas} from './ict-canvas.js';
 import {calculateNextGenIndicators} from './nextgen-indicators.js';
+function isWeekendClosure(timeSec) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York', hourCycle: 'h23', hour: '2-digit', minute: '2-digit', weekday: 'short'
+    }).formatToParts(new Date(timeSec * 1000));
+    const values = Object.fromEntries(parts.map(x => [x.type, x.value]));
+    const weekday = values.weekday, hour = Number(values.hour) + Number(values.minute) / 60;
+    if (weekday === 'Sat') return true;
+    if (weekday === 'Sun') return hour < 17;
+    if (weekday === 'Fri') return hour >= 17;
+    return false;
+  } catch (_) {
+    const d = new Date(timeSec * 1000), day = d.getUTCDay();
+    return day === 6 || day === 0;
+  }
+}
+
 // Shared presentation only; candle/model ownership remains with each caller.
 export function createPriceChart(element,{touchAxes=false}={}) {
-  let lastClosePrice=null;
+  let lastClosePrice=null, lastResult=null, activeBar=null;
   const chart=window.LightweightCharts.createChart(element,{autoSize:true,
     timeScale:{timeVisible:true},rightPriceScale:{minimumWidth:65,autoScale:true},
     handleScale:{pinch:true,mouseWheel:true,axisPressedMouseMove:{time:true,price:true},axisDoubleClickReset:{time:true,price:true}},
@@ -35,6 +52,8 @@ export function createPriceChart(element,{touchAxes=false}={}) {
   theme();window.addEventListener('amyfx:theme-change',theme);
   return {
     draw(result,plan=result.plan,presentation=null){
+      lastResult=result;
+      activeBar=null;
       const cs=result.candles||[];
       const first=cs[0], last=cs[cs.length-1];
       if(last&&Number.isFinite(last.close))lastClosePrice=last.close;
@@ -102,7 +121,54 @@ export function createPriceChart(element,{touchAxes=false}={}) {
         }
       }
     },
-    reset(){key='';rightBars=null;indicatorLines.forEach(line=>{try{series.removePriceLine(line);}catch(_){}});indicatorLines=[];},
+    reset(){key='';rightBars=null;lastResult=null;activeBar=null;indicatorLines.forEach(line=>{try{series.removePriceLine(line);}catch(_){}});indicatorLines=[];},
+    updateActiveCandle(price, timeMs = Date.now()) {
+      if (!Number.isFinite(price) || price <= 0) return;
+      const cs = lastResult?.candles;
+      if (!cs || !cs.length) return;
+      const lastClosed = cs[cs.length - 1];
+      if (!lastClosed || !Number.isFinite(lastClosed.time)) return;
+
+      const tf = lastResult.tf || 'M15';
+      const duration = { M1: 60, M5: 300, M15: 900, H1: 3600 }[tf] || 900;
+      const nowSec = Math.floor((Number(timeMs) || Date.now()) / 1000);
+
+      // Do not synthesize weekend bars (Weekend Anti-Spam)
+      if (isWeekendClosure(nowSec)) return;
+
+      const bucketTime = Math.floor(nowSec / duration) * duration;
+      const activeBarTime = Math.max(lastClosed.time + duration, bucketTime);
+
+      if (activeBarTime <= lastClosed.time) {
+        lastClosed.high = Math.max(lastClosed.high, price);
+        lastClosed.low = Math.min(lastClosed.low, price);
+        lastClosed.close = price;
+        lastClosePrice = price;
+        if (typeof series.update === 'function') {
+          series.update(lastClosed);
+        }
+        return;
+      }
+
+      if (!activeBar || activeBar.time !== activeBarTime) {
+        activeBar = {
+          time: activeBarTime,
+          open: lastClosed.close,
+          high: Math.max(lastClosed.close, price),
+          low: Math.min(lastClosed.close, price),
+          close: price
+        };
+      } else {
+        activeBar.high = Math.max(activeBar.high, price);
+        activeBar.low = Math.min(activeBar.low, price);
+        activeBar.close = price;
+      }
+
+      lastClosePrice = price;
+      if (typeof series.update === 'function') {
+        series.update(activeBar);
+      }
+    },
     autoPrice(){chart.priceScale('right').applyOptions({autoScale:true});ict?.invalidate();},
     resize(){chart.applyOptions({autoSize:true});if(element?.clientWidth&&chart.resize)chart.resize(element.clientWidth,element.clientHeight||460);ict?.invalidate();},
     setFullscreen(enabled){

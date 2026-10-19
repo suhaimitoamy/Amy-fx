@@ -82,14 +82,17 @@ function draw(degraded=false){
   const presentation={settings:display||loadDisplay(),amy:context?.amy,context,candles:result.candles,tf};
   chart?.draw(result,activePlan,presentation);
   const last=result.candles.at(-1);
-  if($('chart-price'))$('chart-price').textContent=last?last.close.toFixed(2):'—';
+  const currentLive=Number(window.amyfxCurrentPrice);
+  const displayPrice=(Number.isFinite(currentLive)&&currentLive>0)?currentLive:(last?last.close:null);
+  if($('chart-price'))$('chart-price').textContent=displayPrice?displayPrice.toFixed(2):'—';
   const dr = context?.m15?.dealingRange || context?.amy?.levels?.dealingRange || context?.dealingRange;
-  if(last&&$('chart-dealing-range-badge')){
-    updateDealingRangeBadge($('chart-dealing-range-badge'), last.close, dr);
+  if(displayPrice&&$('chart-dealing-range-badge')){
+    updateDealingRangeBadge($('chart-dealing-range-badge'), displayPrice, dr);
   }
-  if(last&&Number.isFinite(last.close)&&typeof window.AmyPriceAlertManager?.checkPrice==='function'){
-    window.AmyPriceAlertManager.checkPrice(last.close);
+  if(displayPrice&&Number.isFinite(displayPrice)&&typeof window.AmyPriceAlertManager?.checkPrice==='function'){
+    window.AmyPriceAlertManager.checkPrice(displayPrice);
   }
+  if(displayPrice)chart?.updateActiveCandle?.(displayPrice);
   if($('source')){
     const timeStr=new Date((result.sourceTime||last.time)*1000).toLocaleString('id-ID',{timeZone:'Asia/Makassar',hour12:false});
     if(closed){
@@ -106,6 +109,44 @@ function draw(degraded=false){
     coverage.textContent=k?`MO: ${k.midnightStatus} · Asia: ${k.asiaStatus} · Pivot ${display?.pivotTf||'D'}: ${p?.[display?.pivotTf||'D']?'tersedia':'data periode belum lengkap'} · Bias M15 / trigger M5 tertutup`:'Menunggu konteks server; visual keputusan belum tersedia.';
   }
 }
+function applyLivePrice(price, timestamp){
+  if(!Number.isFinite(price)||price<=0)return;
+  window.amyfxCurrentPrice=price;
+  if($('chart-price'))$('chart-price').textContent=price.toFixed(2);
+  const dr=context?.m15?.dealingRange||context?.amy?.levels?.dealingRange||context?.dealingRange;
+  if($('chart-dealing-range-badge')){
+    updateDealingRangeBadge($('chart-dealing-range-badge'),price,dr);
+  }
+  chart?.updateActiveCandle?.(price,timestamp);
+  if(typeof window.AmyPriceAlertManager?.checkPrice==='function'){
+    window.AmyPriceAlertManager.checkPrice(price);
+  }
+}
+window.addEventListener('amyfx:twelvedata-price',event=>{
+  const detail=event?.detail;
+  applyLivePrice(Number(detail?.price),Number(detail?.timestamp));
+});
+window.addEventListener('amyfx:live-price-display',event=>{
+  const detail=event?.detail;
+  applyLivePrice(Number(detail?.price),Number(detail?.capturedAt));
+});
+function startBrowserLivePriceStream(){
+  if(typeof window==='undefined'||window.Android||window.AmyLivePrice||window.__amyFxSseStarted)return;
+  if(typeof EventSource!=='function')return;
+  window.__amyFxSseStarted=true;
+  try{
+    const es=new EventSource('https://amy-fx.vercel.app/api/live-price');
+    es.onmessage=(event)=>{
+      try{
+        const data=JSON.parse(event.data);
+        if(data&&Number.isFinite(Number(data.price))){
+          applyLivePrice(Number(data.price),Number(data.timestamp)||Date.now());
+        }
+      }catch(_){}
+    };
+  }catch(_){}
+}
+startBrowserLivePriceStream();
 window.addEventListener('amyfx:driver-plan',event=>{driverPlan=event.detail||null;draw();});
 window.addEventListener('amyfx:assistant-plan',event=>{driverPlan=event.detail||null;draw();});
 window.addEventListener('amyfx:driver-setups',event=>{if(driverPlan){const s=(event.detail||[]).find(s=>s.id===driverPlan.id);driverPlan=s?{id:s.id,entry:s.entry,sl:s.stopLoss,tp:s.target,label:s.driverName}:null;draw();}});

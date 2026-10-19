@@ -86,11 +86,14 @@ export function mountHomeChart(root) {
     }
     view.draw(result);
     const last=result.candles.at(-1);
-    $('home-chart-price').textContent=last?last.close.toFixed(2):'—';
+    const currentLive=Number(window.amyfxCurrentPrice);
+    const displayPrice=(Number.isFinite(currentLive)&&currentLive>0)?currentLive:(last?last.close:null);
+    $('home-chart-price').textContent=displayPrice?displayPrice.toFixed(2):'—';
     if($('home-chart-dealing-range-badge')){
       const dr = window.amyfxLastContext?.m15?.dealingRange || window.amyfxLastContext?.amy?.levels?.dealingRange || window.amyfxLastContext?.dealingRange;
-      if(last) updateDealingRangeBadge($('home-chart-dealing-range-badge'), last.close, dr);
+      if(displayPrice) updateDealingRangeBadge($('home-chart-dealing-range-badge'), displayPrice, dr);
     }
+    if(displayPrice) view?.updateActiveCandle?.(displayPrice);
     if($('home-chart-source')){
       if(!last){
         $('home-chart-source').textContent='Belum ada candle. Periksa koneksi lalu tekan Perbarui.';
@@ -177,17 +180,34 @@ export function mountHomeChart(root) {
     } catch (_) {}
     refresh();
   }
+  function handleLiveTick(event){
+    const detail=event?.detail;
+    const price=Number(detail?.price);
+    const capturedAt=Number(detail?.timestamp||detail?.capturedAt);
+    if(!Number.isFinite(price)||price<=0)return;
+    window.amyfxCurrentPrice=price;
+    const priceEl=$('home-chart-price');
+    if(priceEl)priceEl.textContent=price.toFixed(2);
+    const dr=window.amyfxLastContext?.m15?.dealingRange||window.amyfxLastContext?.amy?.levels?.dealingRange||window.amyfxLastContext?.dealingRange;
+    const badgeEl=$('home-chart-dealing-range-badge');
+    if(badgeEl)updateDealingRangeBadge(badgeEl,price,dr);
+    view?.updateActiveCandle?.(price,capturedAt);
+  }
   function visibility(){if(document.hidden)stop();else refresh();}
   function pageshow(event){if(event.persisted)refresh();}
   $('home-chart-refresh').addEventListener('click',refresh);
   $('home-chart-tf').addEventListener('change',change);
   document.addEventListener('visibilitychange',visibility);
   window.addEventListener('online',refresh);window.addEventListener('pagehide',stop);window.addEventListener('pageshow',pageshow);
+  window.addEventListener('amyfx:twelvedata-price',handleLiveTick);
+  window.addEventListener('amyfx:live-price-display',handleLiveTick);
   refresh();
   return ()=>{disposed=true;stop();view.destroy();
     $('home-chart-refresh').removeEventListener('click',refresh);$('home-chart-tf').removeEventListener('change',change);
     document.removeEventListener('visibilitychange',visibility);window.removeEventListener('online',refresh);
     window.removeEventListener('pagehide',stop);window.removeEventListener('pageshow',pageshow);
+    window.removeEventListener('amyfx:twelvedata-price',handleLiveTick);
+    window.removeEventListener('amyfx:live-price-display',handleLiveTick);
   };
 }
 window.AmyHomeChart={mount:mountHomeChart,isWeekendClosure,isGoldMarketOpen,filterCandles};

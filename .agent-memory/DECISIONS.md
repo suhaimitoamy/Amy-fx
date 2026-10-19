@@ -1,5 +1,21 @@
 # Technical Decisions
 
+## 2026-10-19 — Implementasi Active Forming Candle Live (TradingView Parity) pada Chart Gold & Peta Harga Beranda
+1. **Latar Belakang & Kebutuhan:**
+   - Pengguna menanyakan mengapa chart sebelumnya hanya menampilkan candle tertutup sehingga terkesan "usang" hingga interval candle 15 menit selesai, berbeda dengan TradingView yang menampilkan candle aktif yang bergerak live.
+2. **Arsitektur Pemisahan Visual vs Logika Keputusan:**
+   - **Tampilan Visual Lilin (TradingView Parity):** Lilin aktif periode berjalan (*forming candle*) kini ditampilkan dan diperbarui secara *real-time* menggunakan `candlestickSeries.update()`. Nilai High, Low, dan Close berfluktuasi mulus setiap kali ada *tick* harga live (`amyfx:twelvedata-price` / `amyfx:live-price-display`).
+   - **Integritas Otak Analisis ICT (Anti-Repainting & Anti-False-Alarm):** Seluruh kalkulasi FVG, 50% CE, BOS, MSS, dealing range, skoring konfluensi 8-lapis, checklist pre-trade, dan sinyal eksekusi tetap **100% terkunci pada candle tertutup terkonfirmasi** (`result.candles`). Tidak ada sinyal palsu atau repainting.
+   - **Weekend Anti-Spam Guard:** Lilin aktif dilarang disintesis pada periode penutupan pasar akhir pekan (`isWeekendClosure`).
+   - **Siklus Transisi Tertutup Graceful:** Ketika satu periode candle (misal M15) genap selesai, `loadCandles()` membawa candle tertutup resmi dari Twelve Data, `setData()` mengunci candle tersebut, dan lilin aktif baru dimulai dari penutupan candle tersebut.
+3. **File yang Dimodifikasi & Pengujian:**
+   - [`chart-view.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/ict-workspace/chart-view.js): Menambahkan state `lastResult` dan `activeBar`, metode `updateActiveCandle(price, timeMs)`, serta proteksi `isWeekendClosure`.
+   - [`app.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/ict-workspace/app.js): Mendengarkan event tick live (`amyfx:twelvedata-price`, `amyfx:live-price-display`) dan menyediakan browser SSE fallback (`https://amy-fx.vercel.app/api/live-price`).
+   - [`home-price-chart.js`](file:///root/Amy-fx/app/src/main/assets/home-price-chart.js): Menambahkan pendengar tick live dan sinkronisasi `updateActiveCandle` untuk menjaga paritas 100% dengan Peta Harga Beranda.
+   - [`tests/active-candle-stream.test.mjs`](file:///root/Amy-fx/tests/active-candle-stream.test.mjs): Unit test baru yang menguji pembentukan bar aktif, pelebaran High/Low, proteksi weekend, dan reset transisi candle tertutup (lolos 2/2).
+   - Seluruh targeted regression suites (65 tests) lolos 100%.
+   - Disinkronkan ke `/root/Amy-fx-pro/`.
+
 ## 2026-10-19 — Perbaikan Kritis Chart Blank (Autoscale Clamping & Sanitasi Era Data Gold $4175 vs $2643) & Rilis 2.0.0-amyfx.418
 1. **Latar Belakang & Gejala:**
    - Seluruh candle di Card Peta Harga (Beranda) dan Chart Gold (Cockpit Mapping) tidak muncul sama sekali (blank/kosong) baik di Amy FX maupun Amy FX Pro.

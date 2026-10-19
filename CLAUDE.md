@@ -31,6 +31,15 @@ When developing or modifying UI components for the **Amy FX** project, strictly 
 3. **Protokol Pemulihan Error (Golden Rule):**
    - Jika Chart Gold mengalami error atau glitch visual saat pengembangan indikator, **AI DILARANG mengutak-atik struktur sembarangan dan WAJIB MENUNGGU PERINTAH LANGSUNG dari user untuk disamakan kembali dengan Peta Harga.**
 
+## Active Forming Candle Live (TradingView Parity) (Pro 419)
+
+1. **Lilin Terakhir Bergerak Live (`candlestickSeries.update`):**
+   - Di kedua chart (Chart Gold Mapping dan Peta Harga Beranda), lilin aktif periode berjalan (*forming candle*) kini diperbarui secara *real-time* mengikuti setiap *tick* harga live (`amyfx:twelvedata-price` / `amyfx:live-price-display`).
+   - Body lilin, jarum atas (High), dan jarum bawah (Low) bergerak dinamis tanpa menunggu 15 menit selesai.
+2. **Integritas Analisis ICT Tetap Terkunci (*Zero Repainting*):**
+   - Seluruh logika keputusan (FVG, 50% CE, BOS, MSS, dealing range, skoring konfluensi, checklist pre-trade) tetap dihitung 100% dari closed candles terkonfirmasi.
+   - Weekend Anti-Spam: Tidak ada sintesis lilin saat penutupan pasar akhir pekan.
+
 ## Fast Dev Mode & Larangan Full npm test Otomatis (Pro 404)
 
 1. **Dilarang Menjalankan Full npm test (148 Suites) Secara Rutin:**
