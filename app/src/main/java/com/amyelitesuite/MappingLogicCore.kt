@@ -88,12 +88,13 @@ object MappingLogicCore {
     fun detectStructure(candles: List<Candle>, swings: List<SwingPoint>, displacementMultiplier: Double = 1.2): List<StructureEvent> {
         if (candles.size < 3 || swings.isEmpty()) return emptyList()
         val events = mutableListOf<StructureEvent>()
+        val brokenSwings = mutableSetOf<Int>()
         var lastDirection: StructureEvent.Direction? = null
         val atr = averageRange(candles).coerceAtLeast(0.01)
 
         candles.forEachIndexed { index, candle ->
-            val previousHigh = swings.lastOrNull { it.index < index && it.kind == SwingPoint.Kind.HIGH }
-            val previousLow = swings.lastOrNull { it.index < index && it.kind == SwingPoint.Kind.LOW }
+            val previousHigh = swings.lastOrNull { it.index < index && it.kind == SwingPoint.Kind.HIGH && it.index !in brokenSwings }
+            val previousLow = swings.lastOrNull { it.index < index && it.kind == SwingPoint.Kind.LOW && it.index !in brokenSwings }
             val body = kotlin.math.abs(candle.close - candle.open)
             val hasDisplacement = body >= atr * displacementMultiplier
 
@@ -101,11 +102,13 @@ object MappingLogicCore {
                 val type = if (lastDirection == StructureEvent.Direction.BEARISH) StructureEvent.Type.CHOCH else StructureEvent.Type.BOS
                 events.add(StructureEvent(index, candle.time, previousHigh.price, type, StructureEvent.Direction.BULLISH))
                 lastDirection = StructureEvent.Direction.BULLISH
+                brokenSwings.add(previousHigh.index)
             }
             if (previousLow != null && candle.close < previousLow.price && hasDisplacement) {
                 val type = if (lastDirection == StructureEvent.Direction.BULLISH) StructureEvent.Type.CHOCH else StructureEvent.Type.BOS
                 events.add(StructureEvent(index, candle.time, previousLow.price, type, StructureEvent.Direction.BEARISH))
                 lastDirection = StructureEvent.Direction.BEARISH
+                brokenSwings.add(previousLow.index)
             }
         }
         return events

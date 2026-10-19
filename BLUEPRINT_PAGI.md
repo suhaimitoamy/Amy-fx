@@ -698,7 +698,7 @@
 
 ---
 
-### 1.31. [REPEATED BOS NOISE] Duplikasi Event Struktur Beruntun pada Level Swing yang Sama di `MappingLogicCore.kt`
+### 1.31. [REPEATED BOS NOISE] Duplikasi Event Struktur Beruntun pada Level Swing yang Sama di `MappingLogicCore.kt` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/java/com/amyelitesuite/MappingLogicCore.kt`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/MappingLogicCore.kt#L94-L110)
 - **Akar Masalah (Temuan Agen Gamma & Agen Epsilon):**
   Di Android Native `MappingLogicCore.kt`, fungsi `detectStructure` melacak penembusan struktur swing:
@@ -721,6 +721,7 @@
   Jika candle pada index 15 menembus `previousHigh`, ia menerbitkan event BOS. Jika candle berikutnya (index 16, 17) juga memiliki displacement dan ditutup di atas `previousHigh.price` yang sama, fungsi akan kembali menganggap `previousHigh` tersebut sebagai struktur baru yang tertembus, lalu memancarkan kembali event BOS berulang-ulang pada level harga yang identik. Hal ini membingungkan trader karena grafik dipenuhi garis BOS bertumpuk-tumpuk pada level yang sama.
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   Tambahkan `val brokenSwings = mutableSetOf<Int>()`. Begitu sebuah swing point memicu event BOS/CHOCH, masukkan `previousHigh.index` ke dalam `brokenSwings`. Pada iterasi berikutnya, filter swing yang belum ditembus: `swings.lastOrNull { it.index < index && it.kind == SwingPoint.Kind.HIGH && it.index !in brokenSwings }`.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Ditambahkan pelacak `brokenSwings` set di `MappingLogicCore.kt#detectStructure`, menyaring swing yang telah ditembus sebelumnya (`it.index !in brokenSwings`) dan mendaftarkannya saat terjadi penembusan struktur, mengeliminasi duplikasi event BOS bertumpuk. Targeted unit test lolos di `tests/mapping-logic-core-bos.test.mjs`.
 
 ---
 
@@ -2559,7 +2560,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.34. Validasi Fleksibel TP1/TP2 & Score 0 di `journal-schema.js`** | P1 (Sedang) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.29. Pindahkan `writeJson` Entry Watch ke Guard Signature (Cegah 4.800x/jam)** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.30. Normalisasi String `side` di `sweep-acceptance.js` (Cegah Deadlock Sweep)** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.31. Pelacakan `brokenSwings` di `MappingLogicCore.kt` (Hilangkan Duplikasi BOS)** | P1 (Sedang) | ~6 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.31. Pelacakan `brokenSwings` di `MappingLogicCore.kt` (Hilangkan Duplikasi BOS)** | P1 (Sedang) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.26. Perbaikan Target PDH/PDL pada Engine 6 Drivers (Fetch D1)** | P0 (Kritis) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.23. Perbaikan Override TTL 30s di `api/twelvedata.js` (Cegah Limit 429)** | P0 (Kritis) | ~6 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.24. Toleransi Drift Jam 5 Menit di Stream Live Price OkHttp/Vercel** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
