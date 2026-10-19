@@ -1,5 +1,15 @@
 # Technical Decisions
 
+## 2026-10-19 — Penuntasan Penuh Blueprint Pagi & Peluncuran Dasbor Analitik Performa Replay Offline IndexedDB (Item 2.2)
+1. **Latar Belakang & Status Blueprint:**
+   - Seluruh 119 item pada [`BLUEPRINT_PAGI.md`](file:///root/Amy-fx/BLUEPRINT_PAGI.md) telah selesai 100% dan lolos audit reviewer (Item 2.5 TTS dieksklusikan secara permanen atas instruksi pengguna).
+   - Item terakhir yang dituntaskan dan diaudit: Item 2.2 (Dasbor Analitik Performa Latihan Replay di IndexedDB).
+2. **Arsitektur Item 2.2 (Offline Practice Analytics):**
+   - Object store `amy_practice_analytics` ditambahkan ke IndexedDB Practice (`DB_VERSION = 3`) di [`storage.js`](file:///root/Amy-fx/app/src/main/assets/apps/academy/trading-practice/assets/js/storage.js) dengan index `timestamp`, `setupType`, `session`, `winLoss`.
+   - Modul [`practice-analytics.js`](file:///root/Amy-fx/app/src/main/assets/apps/academy/trading-practice/assets/js/practice-analytics.js) mandiri menghitung metrik Win Rate %, Expectancy R, Profit Factor, Max Drawdown, klasifikasi sesi otomatis (London, New York, Asia), dan breakdown arketipe setup ICT (FVG, Order Block, Liquidity Sweep, Structure Break).
+   - Tampilan [`backtest-history.html`](file:///root/Amy-fx/app/src/main/assets/apps/academy/trading-practice/backtest-history.html) & [`backtest-history.js`](file:///root/Amy-fx/app/src/main/assets/apps/academy/trading-practice/assets/js/backtest-history.js) merender kartu analitik visual evaluasi diri trader secara live.
+   - Teruji lolos 5/5 targeted unit tests di [`tests/replay-performance-stats.test.mjs`](file:///root/Amy-fx/tests/replay-performance-stats.test.mjs).
+
 ## 2026-10-17 — Perbaikan Notifikasi Alarm Belajar (Pencegahan Notifikasi Dini & Sinkronisasi AlarmManager)
 1. **Latar Belakang & Gejala:**
    - Pengguna menyetel pengingat belajar harian pada jam 20:00 WITA ("Waktunya tingkatkan skill trading-mu").
