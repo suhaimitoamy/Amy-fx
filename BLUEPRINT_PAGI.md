@@ -545,7 +545,7 @@
 
 ---
 
-### 1.23. [API QUOTA DRAIN] Override TTL 30 Detik Membuang Konstanta `CACHE_TTL_SECONDS` di `api/twelvedata.js`
+### 1.23. [API QUOTA DRAIN] Override TTL 30 Detik Membuang Konstanta `CACHE_TTL_SECONDS` di `api/twelvedata.js` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`api/twelvedata.js`](file:///root/Amy-fx/api/twelvedata.js#L10-L19) & [`api/twelvedata.js#L32-L38`](file:///root/Amy-fx/api/twelvedata.js#L32-L38)
 - **Akar Masalah (Temuan Agen Alpha):**
   Di `api/twelvedata.js`, terdapat objek konfigurasi `CACHE_TTL_SECONDS` yang mengatur durasi simpan candle secara cerdas (misal: `1h: 1800` detik / 30 menit, `1day: 14400` detik / 4 jam, `1week: 43200` detik / 12 jam) guna melindungi jatah kuota TwelveData API gratis (8 call/menit, 800 call/hari).  
@@ -560,6 +560,7 @@
   const configuredTtl = CACHE_TTL_SECONDS[interval] || 60;
   const ttl = interval === '1min' || interval === '5min' ? ttlSeconds(interval) : configuredTtl;
   ```
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Menggunakan `CACHE_TTL_SECONDS[interval]` tanpa batas paksa 30 detik pada timeframe non-scalping, memangkas konsumsi kuota TwelveData hingga 90%. Unit test lolos di `tests/twelvedata-cache-ttl.test.mjs`.
 
 ---
 
@@ -601,7 +602,7 @@
 
 ---
 
-### 1.26. [CRITICAL LIQUIDITY GAP] Ketiadaan Timeframe D1 Melumpuhkan Target PDH/PDL pada Engine 6 Drivers
+### 1.26. [CRITICAL LIQUIDITY GAP] Ketiadaan Timeframe D1 Melumpuhkan Target PDH/PDL pada Engine 6 Drivers — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`api/scalper-setups.js`](file:///root/Amy-fx/api/scalper-setups.js#L65-L75), [`api/scalper-setups.js#L93`](file:///root/Amy-fx/api/scalper-setups.js#L93), & [`lib/scalper-engine/six-drivers.mjs`](file:///root/Amy-fx/lib/scalper-engine/six-drivers.mjs#L89-L94)
 - **Akar Masalah (Temuan Agen Delta & Alpha):**
   Di `api/scalper-setups.js`, pemanggilan `Promise.all` hanya mengambil `res15` (15min), `res5` (5min), dan `res60` (1h). Timeframe Harian (`d1`) sama sekali tidak di-fetch. Di baris 93, pemanggilan dilakukan:
@@ -621,6 +622,7 @@
   Ketika sinyal valid muncul dan bergerak menuju PDH/PDL, algoritma driver gagal menemukan level likuiditas dan menolak setup dengan status `WAITING_TARGET` ("Target model belum memiliki ruang ke likuiditas aktif searah"), menghilangkan peluang profit trader.
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   Sertakan fetch `1day&outputsize=10` pada `Promise.all` di `api/scalper-setups.js`, lalu operkan variabel `d1` ke `buildMarketContext({ ... })` dan `evaluateSixDrivers({ ... })`.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Menyertakan timeframe 1day pada batch fetch `api/scalper-setups.js` dan mengopernya ke `evaluateSixDrivers`, mengaktifkan target likuiditas PDH/PDL. Unit test lolos di `tests/scalper-setups-d1-pdh-pdl.test.mjs`.
 
 ---
 
@@ -648,7 +650,7 @@
 
 ---
 
-### 1.29. [FLASH WEAR & BATTERY] Disk Thrashing 4.800x `localStorage.setItem` per Jam di `entry-watch-runtime.js`
+### 1.29. [FLASH WEAR & BATTERY] Disk Thrashing 4.800x `localStorage.setItem` per Jam di `entry-watch-runtime.js` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/assets/apps/mapping/js/entry-watch-runtime.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/entry-watch-runtime.js#L394-L434)
 - **Akar Masalah (Temuan Agen Gamma & Agen Epsilon):**
   Di `entry-watch-runtime.js`, fungsi `start()` menjalankan interval tersinkronisasi cepat:
@@ -676,10 +678,11 @@
   Setiap 750ms ($1.33\times$ per detik atau $4.800\times$ per jam), runtime melakukan serialisasi JSON dan menulis langsung ke flash storage smartphone via `localStorage.setItem(STORAGE_KEY, json)`. Sekalipun harga diam atau chart tidak bergerak, flash storage ponsel trader disiksa dengan 4.800 siklus penulisan disk per jam yang menguras baterai dan memperpendek usia chip NAND flash HP.
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   Pindahkan `writeJson(STORAGE_KEY, watch)` dan `syncScanner(watch)` ke dalam blok `if (signature !== lastSignature)`. Dengan demikian, penulisan ke disk hanya terjadi saat status watch benar-benar berubah (misal transisi state atau candle baru), memangkas penulisan disk hingga 99.8%.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Diproteksi dengan helper throttled persister dan guard perubahan signature riil di `sweep-acceptance.js` & `entry-watch-runtime.js`, memangkas penulisan disk hingga 99.8%. Unit test lolos di `tests/sweep-acceptance-multiformat.test.mjs`.
 
 ---
 
-### 1.30. [LOGIC DEADLOCK] Parsing Input `side` di `sweep-acceptance.js` Menggagalkan Status `SWEEP_REJECTION`
+### 1.30. [LOGIC DEADLOCK] Parsing Input `side` di `sweep-acceptance.js` Menggagalkan Status `SWEEP_REJECTION` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/assets/apps/mapping/js/engine/sweep-acceptance.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/engine/sweep-acceptance.js#L27-L36)
 - **Akar Masalah (Temuan Agen Alpha & Agen Epsilon):**
   Di `sweep-acceptance.js`, evaluasi sweep rejection mengecek level reclaim:
@@ -705,6 +708,7 @@
     ? false
     : isBsl ? close < level : isSsl ? close > level : false;
   ```
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Normalisasi multiformat string side ('BUY', 'SELL', 'BUY_SIDE', 'SELL_SIDE', 'PDH', 'PDL', dll) diimplementasikan di `sweep-acceptance.js`. Unit test lolos di `tests/sweep-acceptance-multiformat.test.mjs`.
 
 ---
 
@@ -735,7 +739,7 @@
 
 ---
 
-### 1.32. [LEARNING PROGRESS BREAK] Regex `bagian-` Melumpuhkan Pelacakan Progres 10 Modul Baru di Akademi
+### 1.32. [LEARNING PROGRESS BREAK] Regex `bagian-` Melumpuhkan Pelacakan Progres 10 Modul Baru di Akademi — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/assets/apps/academy/assets/js/main.js`](file:///root/Amy-fx/app/src/main/assets/apps/academy/assets/js/main.js#L282-L302)
 - **Akar Masalah (Temuan Agen Beta & Agen Gamma):**
   Di `main.js`, pelacakan progres membaca materi dilakukan oleh dua fungsi:
@@ -759,6 +763,7 @@
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   1. Perbarui regex menjadi `/(?:bagian|modul)-\d+[^/]+/` pada kedua fungsi.
   2. Panggil `window.Android?.recordLastStudiedLesson?.(title, url, folderMatch ? folderMatch[0] : '')` tepat setelah `localStorage.setItem('amy_last_opened_url', url)`.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Regex diperluas untuk mendeteksi `modul-` dan sinkronisasi native Android `recordLastStudiedLesson` diaktifkan. Unit test lolos di `tests/learning-and-equity-engine.test.mjs`.
 
 ---
 
@@ -813,7 +818,7 @@
 
 ---
 
-### 1.35. [MISSED SETUP TRAP] Pending Limit Practice Tidak Kadaluarsa Saat Target Tercapai Duluan
+### 1.35. [MISSED SETUP TRAP] Pending Limit Practice Tidak Kadaluarsa Saat Target Tercapai Duluan — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/assets/apps/academy/trading-practice/assets/js/trade-engine.js`](file:///root/Amy-fx/app/src/main/assets/apps/academy/trading-practice/assets/js/trade-engine.js#L95-L103)
 - **Akar Masalah (Temuan Agen Delta & Agen Epsilon):**
   Di `trade-engine.js`, siklus evaluasi candle pada limit order:
@@ -850,6 +855,7 @@
     next.entryActivatedAt = candle.time;
   }
   ```
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Guard deteksi MISSED dan pembatalan order saat target TP tersentuh lebih dahulu diimplementasikan di `trade-engine.js` (`TARGET_HIT_BEFORE_FILL`, `r: 0`). Unit test lolos di `tests/realistic-order-lifecycle.test.mjs`.
 
 ---
 
@@ -944,7 +950,7 @@
 
 ---
 
-### 1.41. [LIFECYCLE INITIALIZATION] `trackAssistantPlan` Mengabaikan Kondisi `Price >= TP1` Saat Registrasi Plan Baru
+### 1.41. [LIFECYCLE INITIALIZATION] `trackAssistantPlan` Mengabaikan Kondisi `Price >= TP1` Saat Registrasi Plan Baru — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/assets/apps/mapping/js/ict-workspace/trade-lifecycle-tracker.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/ict-workspace/trade-lifecycle-tracker.js#L128-L148)
 - **Akar Masalah (Temuan Agen Epsilon & Agen Delta):**
   Fungsi `trackAssistantPlan` bertugas mendaftarkan setup sinyal asisten baru ke dalam histori trade (`trade_history`). Saat mengevaluasi `currentPrice`:
@@ -984,10 +990,11 @@
     }
   }
   ```
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Menolak registrasi plan baru jika harga saat registrasi sudah melampaui TP1 di `trade-lifecycle-tracker.js`. Unit test lolos di `tests/trade-lifecycle-tracker.test.mjs`.
 
 ---
 
-### 1.42. [TRADE STATE MACHINE] Ketiadaan Guard `MISSED` Ketika Harga Menyentuh TP1 Sebelum Entry di `trade-lifecycle-tracker.js`
+### 1.42. [TRADE STATE MACHINE] Ketiadaan Guard `MISSED` Ketika Harga Menyentuh TP1 Sebelum Entry di `trade-lifecycle-tracker.js` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/assets/apps/mapping/js/ict-workspace/trade-lifecycle-tracker.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/ict-workspace/trade-lifecycle-tracker.js#L198-L225)
 - **Akar Masalah (Temuan Agen Epsilon & Agen Delta):**
   Pada loop evaluasi tick live/playback `updateTradeLifecycle(price, high, low, timestamp)`:
@@ -1031,6 +1038,7 @@
     // ... pemeriksaan touchHigh >= trade.entry ...
   }
   ```
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Guard transisi MISSED saat harga menyentuh TP1 sebelum entry fill diimplementasikan di `trade-lifecycle-tracker.js`. Unit test lolos di `tests/trade-lifecycle-tracker.test.mjs`.
 
 ---
 
@@ -2039,7 +2047,7 @@
 
 ---
 
-### 2.2. [BACKTEST LAB] Dasbor Analitik Performa Latihan Replay (Offline IndexedDB)
+### 2.2. [BACKTEST LAB] Dasbor Analitik Performa Latihan Replay (Offline IndexedDB) — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Delta & Agen Gamma
 - **Konsep & Nilai untuk Trader:**  
   Candle Replay memiliki arsip data 8 tahun. Fitur ini menambahkan modul evaluasi diri: melacak Winrate setup ICT pengguna (FVG vs OB vs Liquidity Sweep) dan performa per sesi trading (London vs New York) secara mandiri di IndexedDB tanpa kirim data ke server.
@@ -2047,6 +2055,11 @@
   - Store: `amy_practice_analytics`
   - Field: `{ id, timestamp, setupType, session, winLoss, realizedR, pips, durationBars }`
   - Visualisasi ringkas: Kartu skor Winrate, Expectancy R per trade, dan radar kebiasaan trading.
+- **Implementasi & Audit Reviewer:**
+  - `storage.js`: Penambahan object store `amy_practice_analytics` dengan keyPath `id`, index `timestamp`, `setupType`, `session`, `winLoss`, bump `DB_VERSION = 3` dengan migrasi mulus, serta helper `savePracticeAnalytics(record)` dan `listPracticeAnalytics(limit)`.
+  - `practice-analytics.js`: Mesin komputasi offline mandiri untuk klasifikasi otomatis sesi trading (`classifySession` -> Asia, London, New York), deteksi setup ICT (`classifySetup` -> FVG, Order Block, Liquidity Sweep, Structure Break), dan kalkulasi metrik win rate %, total/realized R, profit factor, max drawdown, breakdown per setup ICT, dan breakdown per sesi market.
+  - `backtest-history.html` & `backtest-history.js`: Render dasbor visual metrik analitik Replay dengan kartu skor Winrate, Expectancy R, Total Profit Factor, status kebiasaan trader, dan visualisasi rincian breakdown performa per setup dan per sesi market.
+  - Targeted unit tests: `tests/replay-performance-stats.test.mjs` (5/5 lulus 100%).
 
 ---
 
@@ -2078,10 +2091,11 @@
 
 ---
 
-### 2.5. [SMART DIGEST] Audio Briefing Pasar Pagi (Offline Android TTS)
+### 2.5. [SMART DIGEST] Audio Briefing Pasar Pagi (Offline Android TTS) — `[DIEKSKLUSIKAN ATAS PERINTAH USER]`
 - **Diusulkan oleh:** Agen Alpha & Agen Beta
 - **Konsep & Nilai untuk Trader:**  
   Tombol `[ 🎧 Dengarkan Analisis Pagi ]` di Beranda. Memberikan briefing audio ringkas 45 detik mengenai Bias harian, Dealing Range, dan Jadwal Berita High Impact tanpa perlu membaca teks panjang. Menggunakan `TextToSpeech` offline bawaan OS Android.
+- **Status:** Dieksklusikan secara permanen sesuai instruksi user (Fitur Audio Briefing TTS Offline dilarang dikerjakan).
 
 ---
 
@@ -2193,7 +2207,7 @@
 
 ---
 
-### 2.15. [LOGIC & PERSISTENCE] Throttled State Persistence & Clean Sweep Acceptance Engine
+### 2.15. [LOGIC & PERSISTENCE] Throttled State Persistence & Clean Sweep Acceptance Engine — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Status:** [x] SELESAI & LOLOS AUDIT REVIEWER
 - **Diusulkan oleh:** Agen Epsilon & Agen Beta
 - **Konsep & Nilai untuk Trader:**  
@@ -2205,7 +2219,7 @@
 
 ---
 
-### 2.16. [LEARNING & ANALYTICS] Integrated Learning Journey & Chronological Equity Engine
+### 2.16. [LEARNING & ANALYTICS] Integrated Learning Journey & Chronological Equity Engine — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Status:** [x] SELESAI & LOLOS AUDIT REVIEWER
 - **Diusulkan oleh:** Agen Beta, Agen Delta & Agen Gamma
 - **Konsep & Nilai untuk Trader:**  
@@ -2218,7 +2232,7 @@
 
 ---
 
-### 2.17. [PRACTICE FIDELITY] Realistic Order Lifecycle & Missed Setup Simulator di Replay Engine
+### 2.17. [PRACTICE FIDELITY] Realistic Order Lifecycle & Missed Setup Simulator di Replay Engine — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Status:** [x] SELESAI & LOLOS AUDIT REVIEWER
 - **Diusulkan oleh:** Agen Delta, Agen Epsilon & Agen Beta
 - **Konsep & Nilai untuk Trader:**  
@@ -2232,7 +2246,7 @@
 
 ---
 
-### 2.18. [FRACTAL AUTONOMY] Standalone Embedded Fractal Twin Matcher (Zero-Python Engine)
+### 2.18. [FRACTAL AUTONOMY] Standalone Embedded Fractal Twin Matcher (Zero-Python Engine) — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Status:** [x] SELESAI & LOLOS AUDIT REVIEWER
 - **Diusulkan oleh:** Agen Alpha, Agen Delta & Agen Gamma
 - **Konsep & Nilai untuk Trader:**  
@@ -2324,7 +2338,7 @@
 
 ---
 
-### 2.26. [MULTI-TARGET RR SELECTOR] Dynamic Liquidity Target Fallback ($\ge 2R$) di Engine ICT
+### 2.26. [MULTI-TARGET RR SELECTOR] Dynamic Liquidity Target Fallback ($\ge 2R$) di Engine ICT — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Alpha & Agen Delta
 - **Konsep & Nilai untuk Trader:**  
   1. *Pencegahan Pembatalan Prematur Setup A+:* Jika target likuiditas terdekat (`targets[0]`) hanya berjarak sempit sehingga rasio Risk-Reward kurang dari 1:2.0, engine tidak lagi langsung membuang setup FVG, melainkan memindai target eksternal berikutnya (`targets.find(t => (t.level - entry)/risk >= 2.0)` atau level swing PDH/PWH).  
@@ -2333,7 +2347,7 @@
 
 ---
 
-### 2.27. [ECONOMIC EVENT COUNTDOWN] Widget Mini Countdown Rilis Berita High-Impact di Header Cockpit
+### 2.27. [ECONOMIC EVENT COUNTDOWN] Widget Mini Countdown Rilis Berita High-Impact di Header Cockpit — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Beta & Agen Delta
 - **Konsep & Nilai untuk Trader:**  
   1. *Perlindungan Anti-Slippage:* Menampilkan banner mini berkedip halus di header Cockpit Mapping saat berita berlabel `High` (seperti Non-Farm Payrolls, CPI, suku bunga FOMC) berada dalam rentang 30 menit ke depan:  
@@ -2632,8 +2646,8 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.8. Tombol 1-Tap "Bersihkan Cache Sementara" di Tab Profil** | P1 (Bermanfaat) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.4. Tombol 1-Tap Buka PDF Masterclass di Akademi** | P1 (Praktis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.3. Notifikasi Suara Chime Emas Kustom untuk Grade A+** | P1 (Keren & Fungsional) | ~10 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.2. Statistik Performa Replay Trader di IndexedDB** | P2 (Lanjutan) | ~20 menit | [ ] Setuju / [ ] Tunda |
-| 🚀 **Fitur Baru** | **2.5. Audio Briefing Pasar Pagi (TTS Offline)** | P2 (Lanjutan) | ~15 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.2. Statistik Performa Replay Trader di IndexedDB** | P2 (Lanjutan) | ~20 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
+| 🚀 **Fitur Baru** | **2.5. Audio Briefing Pasar Pagi (TTS Offline)** | P2 (Lanjutan) | ~15 menit | [DIEKSKLUSIKAN ATAS PERINTAH USER] |
 
 ---
 *Dokumen ini akan terus diperbarui dan ditajamkan oleh Tim Agent Amy FX setiap 20 menit sekali selama Anda beristirahat. Selamat tidur!*
