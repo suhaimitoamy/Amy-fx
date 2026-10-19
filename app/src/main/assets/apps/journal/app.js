@@ -430,6 +430,24 @@ function bindEvents() {
   dom.exportAllBtn?.addEventListener("click", exportBackup);
   dom.importBackupInput?.addEventListener("change", importBackup);
 
+  const handleObsidianSync = () => {
+    if (!window.AmyJournalExport) return window.showToast?.("Modul ekspor belum siap.");
+    const res = window.AmyJournalExport.syncToObsidian(state.journals, state.personalNotes);
+    if (res.ok) {
+      const msg = res.target === 'native'
+        ? `Berhasil disinkronkan ke Obsidian (${res.count} item)!`
+        : `Markdown tersimpan (${res.count} item)!`;
+      if (typeof window.showToast === 'function') window.showToast(msg);
+      else alert(msg);
+    } else {
+      if (typeof window.showToast === 'function') window.showToast(res.message || "Gagal sinkronisasi.");
+      else alert(res.message || "Gagal sinkronisasi.");
+    }
+  };
+
+  document.getElementById("syncObsidianBtn")?.addEventListener("click", handleObsidianSync);
+  document.getElementById("syncNotesObsidianBtn")?.addEventListener("click", handleObsidianSync);
+
   // Quick Backup, Restore & PIN forwards from Header and Drawer
   document.getElementById("headBackupBtn")?.addEventListener("click", () => dom.exportAllBtn?.click());
   document.getElementById("headRestoreInput")?.addEventListener("change", (e) => {

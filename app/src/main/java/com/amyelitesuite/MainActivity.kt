@@ -1443,6 +1443,7 @@ class MainActivity : Activity() {
                 val mimeType = when {
                     filename.endsWith(".csv", ignoreCase = true) -> "text/csv"
                     filename.endsWith(".json", ignoreCase = true) -> "application/json"
+                    filename.endsWith(".md", ignoreCase = true) -> "text/markdown"
                     filename.endsWith(".pdf", ignoreCase = true) -> "application/pdf"
                     filename.endsWith(".zip", ignoreCase = true) -> "application/zip"
                     filename.endsWith(".png", ignoreCase = true) -> "image/png"
@@ -1461,6 +1462,35 @@ class MainActivity : Activity() {
             } catch (e: Exception) {
                 (mContext as Activity).runOnUiThread {
                     Toast.makeText(mContext, "Gagal menyimpan file", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun saveObsidianMarkdown(filename: String, content: String): Boolean {
+            return try {
+                val cleanName = if (filename.endsWith(".md", ignoreCase = true)) filename else "$filename.md"
+                val downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                val targetDir = File(downloads, "Obsidian/Catatan Pribadi/Trading Journal").apply { mkdirs() }
+                val targetFile = File(targetDir, cleanName)
+                targetFile.writeText(content, Charsets.UTF_8)
+                (mContext as Activity).runOnUiThread {
+                    Toast.makeText(mContext, "Disimpan ke Obsidian: $cleanName", Toast.LENGTH_LONG).show()
+                }
+                true
+            } catch (e: Exception) {
+                try {
+                    val cleanName = if (filename.endsWith(".md", ignoreCase = true)) filename else "$filename.md"
+                    val os = openDownloadOutputStream(cleanName, "text/markdown") ?: return false
+                    os.write(content.toByteArray(Charsets.UTF_8))
+                    os.flush()
+                    os.close()
+                    (mContext as Activity).runOnUiThread {
+                        Toast.makeText(mContext, "Tersimpan di Download: $cleanName", Toast.LENGTH_LONG).show()
+                    }
+                    true
+                } catch (err: Exception) {
+                    false
                 }
             }
         }

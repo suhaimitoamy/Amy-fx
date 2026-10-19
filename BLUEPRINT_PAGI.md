@@ -2084,13 +2084,15 @@
 
 ---
 
-### 2.6. [OBSIDIAN SYNC] 1-Tap Sync Catatan Jurnal Trading ke Obsidian Catatan Pribadi
+### 2.6. [OBSIDIAN SYNC] 1-Tap Sync Catatan Jurnal Trading ke Obsidian Catatan Pribadi — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Diusulkan oleh:** Agen Delta & Agen Beta
 - **Konsep & Nilai untuk Trader:**  
   Trader mengevaluasi psikologi dan mencatat jurnal harian di Amy FX. Selaras dengan integrasi storage bersama di Obsidian Catatan Pribadi (`/sdcard/Download/Obsidian/Catatan Pribadi`), fitur ini memungkinkan ekspor 1-tap catatan menjadi file Markdown murni yang siap dibaca di Obsidian lengkap dengan tag pencarian ICT (`#fvg`, `#mss`, `#liquidity_sweep`, `#a_plus_setup`).
-- **Rancangan Implementasi:**
-  - Tombol di pojok Jurnal: `[ 📓 Simpan ke Obsidian ]`.
-  - Format output Markdown ber-frontmatter rapi.
+- **Implementasi & Audit Reviewer:**
+  - `journal-export.js`: Implementasi serializer `toObsidianMarkdown(entry)`, `personalNoteToObsidianMarkdown(note)`, dan `syncToObsidian(journals, personalNotes)` dengan format YAML frontmatter rapi, tabel parameter eksekusi ICT, refleksi psikologi, dan tagar pencarian.
+  - `MainActivity.kt`: Tambahkan bridge native `@JavascriptInterface fun saveObsidianMarkdown(filename: String, content: String): Boolean` yang menulis langsung ke `/sdcard/Download/Obsidian/Catatan Pribadi/Trading Journal/` dengan fallback ke MediaStore Download.
+  - `apps/journal/index.html` & `app.js`: Tambahkan tombol `[ 📓 Simpan ke Obsidian ]` pada dasbor statistik dan kartu catatan pribadi, dengan toast konfirmasi jumlah item tersinkronisasi.
+  - Targeted unit tests: `tests/journal-obsidian-sync.test.mjs` (5/5 lulus 100%).
 
 ---
 
@@ -2625,7 +2627,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🚀 **Fitur Baru** | **2.12. Bundled Audio Resource Bel Emas Offline di Android App** | P1 (Praktis & Instan) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.14. Auto-Compacting Kompresi Foto Wallpaper ke WebP (<100 KB)** | P1 (Hemat Storage) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.9. Tombol "Lanjutkan Latihan" (Resume Cursor) di Replay** | P1 (Sangat Praktis) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🚀 **Fitur Baru** | **2.6. 1-Tap Sync Catatan Jurnal ke Obsidian (Markdown)** | P1 (Sangat Rapi) | ~10 menit | [ ] Setuju / [ ] Tunda |
+| 🚀 **Fitur Baru** | **2.6. 1-Tap Sync Catatan Jurnal ke Obsidian (Markdown)** | P1 (Sangat Rapi) | ~10 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🚀 **Fitur Baru** | **2.8. Tombol 1-Tap "Bersihkan Cache Sementara" di Tab Profil** | P1 (Bermanfaat) | ~8 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.4. Tombol 1-Tap Buka PDF Masterclass di Akademi** | P1 (Praktis) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🚀 **Fitur Baru** | **2.3. Notifikasi Suara Chime Emas Kustom untuk Grade A+** | P1 (Keren & Fungsional) | ~10 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
