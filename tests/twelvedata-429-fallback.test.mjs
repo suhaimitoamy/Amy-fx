@@ -35,13 +35,20 @@ test('Item 1.4: getCandles falls back to offline snapshot on cold start when pro
   }
 
   // Request candles with invalid/empty API key to trigger provider error
-  const result = await getCandles({
-    symbol: 'XAU/USD',
-    interval: '15min',
-    outputsize: 50,
-    apiKey: '', // will trigger provider error and invoke snapshot fallback
-    forceRefresh: true
-  });
+  const prevEnvKey = process.env.TWELVEDATA_API_KEY;
+  delete process.env.TWELVEDATA_API_KEY;
+  let result;
+  try {
+    result = await getCandles({
+      symbol: 'XAU/USD',
+      interval: '15min',
+      outputsize: 50,
+      apiKey: '', // will trigger provider error and invoke snapshot fallback
+      forceRefresh: true
+    });
+  } finally {
+    if (prevEnvKey !== undefined) process.env.TWELVEDATA_API_KEY = prevEnvKey;
+  }
 
   assert.equal(result.status, 'ok', 'Status must be ok even when provider fails');
   assert.ok(Array.isArray(result.values), 'Values must be an array');
