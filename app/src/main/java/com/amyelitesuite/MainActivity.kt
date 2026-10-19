@@ -882,36 +882,8 @@ class MainActivity : Activity() {
 
         @JavascriptInterface
         fun startBackgroundScanner(apiKey: String?, bsl: String?, ssl: String?) {
-            try {
-                if (!this@MainActivity.hasRequiredPermissions()) {
-                    (mContext as Activity).runOnUiThread {
-                        this@MainActivity.maybeRequestNotificationPermission()
-                        Toast.makeText(mContext, "Aktifkan izin notifikasi agar alert mengambang muncul.", Toast.LENGTH_LONG).show()
-                    }
-                    return
-                }
-
-                val prefs = mContext.getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
-                prefs.edit()
-                    .remove("api_key")
-                    .putBoolean("scanner_enabled", true)
-                    .apply()
-                SecurePrefs.remove(mContext, "api_key")
-                val cleanBsl = bsl?.trim()?.takeIf { it.isNotBlank() && it != "undefined" && it != "null" }
-                val cleanSsl = ssl?.trim()?.takeIf { it.isNotBlank() && it != "undefined" && it != "null" }
-                prefs.edit().apply {
-                    if (cleanBsl != null) putString("scanner_bsl_target", cleanBsl)
-                    if (cleanSsl != null) putString("scanner_ssl_target", cleanSsl)
-                }.apply()
-                val intent = Intent(mContext, ScannerService::class.java).apply {
-                    putExtra("bsl", cleanBsl)
-                    putExtra("ssl", cleanSsl)
-                }
-                // ScannerService is a retired compatibility stub; never call startForegroundService
-                mContext.startService(intent)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            // ScannerService is a retired compatibility stub.
+            // Redundant SharedPreferences writes and service launches removed to eliminate flash wear and CPU wakeups.
         }
 
         @JavascriptInterface
@@ -923,15 +895,7 @@ class MainActivity : Activity() {
 
         @JavascriptInterface
         fun stopBackgroundScanner() {
-            try {
-                mContext.getSharedPreferences("AmyFXPrefs", Context.MODE_PRIVATE)
-                    .edit().putBoolean("scanner_enabled", false).apply()
-                val intent = Intent(mContext, ScannerService::class.java)
-                intent.action = "STOP_SCANNER"
-                mContext.startService(intent)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            // Retired compatibility stub; no-op to eliminate redundant disk writes.
         }
 
         @JavascriptInterface

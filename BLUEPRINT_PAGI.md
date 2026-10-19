@@ -526,8 +526,8 @@
 
 ---
 
-### 1.22. [STORAGE I/O & RETIRED STUB] Disk Write Beruntun yang Sia-sia pada `startBackgroundScanner`
-- **Lokasi File:** [`MainActivity.kt`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/MainActivity.kt#L786-L803), [`ScannerService.kt`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/ScannerService.kt#L18-L40), & [`entry-watch-runtime.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/entry-watch-runtime.js#L256-L279)
+### 1.22. [STORAGE I/O & RETIRED STUB] Disk Write Beruntun yang Sia-sia pada `startBackgroundScanner` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
+- **Lokasi File:** [`MainActivity.kt`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/MainActivity.kt#L883-L935), [`ScannerService.kt`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/ScannerService.kt#L18-L40), & [`entry-watch-runtime.js`](file:///root/Amy-fx/app/src/main/assets/apps/mapping/js/entry-watch-runtime.js#L256-L279)
 - **Akar Masalah (Temuan Agen Gamma):**
   Ketika status watch berubah menjadi `WATCHING_LEVEL`, `entry-watch-runtime.js` memanggil `window.Android.startBackgroundScanner(...)`.  
   `MainActivity.kt` menulis ke `SharedPreferences` dua kali berturut-turut (`.apply()` lalu `.apply()`) untuk menyimpan target BSL/SSL dan status enabled, kemudian menyalakan `ScannerService`.  
@@ -535,6 +535,7 @@
   Hal ini menimbulkan 3 kali I/O tulis storage flash ponsel tanpa menghasilkan efek fungsional apapun.
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   Hapus overhead I/O tulis disk di `startBackgroundScanner` pada `MainActivity.kt` atau nonaktifkan pemanggilan scanner legacy di `entry-watch-runtime.js`, memastikan tidak ada siklus CPU/flash storage yang terbuang percuma.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Menghapus penulisan redundan ke `SharedPreferences` dan peluncuran service pensiun dari method `startBackgroundScanner` dan `stopBackgroundScanner` di `MainActivity.kt`, mengubahnya menjadi safe no-op stub tanpa I/O disk. 1/1 unit test lolos di `tests/android-scanner-io.test.mjs`.
 
 ---
 
@@ -2583,7 +2584,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.28. Validasi Kadaluarsa Cache Offline Lilin di `apps/mapping/data.js`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.25. Throttling Query `DELETE` 24 Jam di `CandleStore.upsertAll()`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.21. Fingerprint $O(1)$ Menggantikan `JSON.stringify` di `ict-canvas.js`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.22. Hapus I/O Disk Redundan `startBackgroundScanner` di `MainActivity`** | P1 (Sedang) | ~4 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.22. Hapus I/O Disk Redundan `startBackgroundScanner` di `MainActivity`** | P1 (Sedang) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.18. Prefetch Buffer Lilin Playback 5x di `replay-engine.js`** | P1 (Sedang) | ~8 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.14. Validasi Checksum SHA-256 APK di `NativeAppUpdater`** | P1 (Sedang) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.16. Persistensi Status Accordion `<details open>` di Mapping** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |

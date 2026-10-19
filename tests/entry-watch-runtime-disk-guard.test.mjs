@@ -19,10 +19,13 @@ test('Item 1.29: writeJson and syncScanner are guarded by signature change in en
 
   const context = {
     console,
+    location: { href: 'http://localhost/apps/mapping/' },
     localStorage: {
       getItem: () => null,
       setItem: (key, value) => {
-        setItemCalls.push({ key, value });
+        if (key === 'amy_entry_watch_state_v2') {
+          setItemCalls.push({ key, value });
+        }
       }
     },
     document: {
@@ -35,7 +38,8 @@ test('Item 1.29: writeJson and syncScanner are guarded by signature change in en
     window: {
       Android: {
         startBackgroundScanner: () => {},
-        stopBackgroundScanner: () => {}
+        stopBackgroundScanner: () => {},
+        showNotificationWithUrl: () => {}
       }
     },
     setInterval: () => {},
