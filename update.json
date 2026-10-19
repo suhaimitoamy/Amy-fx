@@ -1,6 +1,7 @@
 {
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.417/AmyFX-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.418/AmyFX-latest.apk",
   "changelog": [
+    "Perbaikan Kritis Chart Gold: Menghilangkan bug layar chart blank dengan menyelaraskan autoscale sumbu Y terhadap harga aktif pasar ($4175) dan menyaring deviasi data historis lawas.",
     "Dasbor Analitik Replay Offline (IndexedDB v3): Evaluasi mandiri Win Rate %, Expectancy R, Profit Factor, Max Drawdown, serta breakdown performa setup ICT (FVG vs OB vs Sweep) dan sesi pasar.",
     "Notifikasi Suara Bel Emas Sinyal A+: Bel kristal emas offline bawaan APK dan lampu emas eksklusif saat setup Grade A+ terkonfirmasi.",
     "1-Tap Sync Catatan Jurnal ke Obsidian: Ekspor instan seluruh catatan jurnal dan refleksi psikologi ke Obsidian Catatan Pribadi berformat Markdown lengkap.",
@@ -8,14 +9,15 @@
     "Realistic Order Lifecycle di Replay: Deteksi otomatis setup MISSED jika target TP tercapai sebelum limit entry terisi.",
     "Pembersih Cache Sementara 1-Tap di Profil: Membersihkan file sementara, cache unduhan, dan video temp dalam 1 ketukan."
   ],
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.417/AmyFX-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.418/AmyFX-latest.apk",
   "enabled": true,
   "force_update": false,
-  "latest_version_code": 950417,
-  "latest_version_name": "2.0.0-amyfx.417",
+  "latest_version_code": 950418,
+  "latest_version_name": "2.0.0-amyfx.418",
   "mandatory": false,
   "releaseDate": "2026-10-19",
   "release_notes": [
+    "Perbaikan Kritis Chart Gold: Menghilangkan bug layar chart blank dengan menyelaraskan autoscale sumbu Y terhadap harga aktif pasar ($4175) dan menyaring deviasi data historis lawas.",
     "Dasbor Analitik Replay Offline (IndexedDB v3): Evaluasi mandiri Win Rate %, Expectancy R, Profit Factor, Max Drawdown, serta breakdown performa setup ICT (FVG vs OB vs Sweep) dan sesi pasar.",
     "Notifikasi Suara Bel Emas Sinyal A+: Bel kristal emas offline bawaan APK dan lampu emas eksklusif saat setup Grade A+ terkonfirmasi.",
     "1-Tap Sync Catatan Jurnal ke Obsidian: Ekspor instan seluruh catatan jurnal dan refleksi psikologi ke Obsidian Catatan Pribadi berformat Markdown lengkap.",
@@ -23,7 +25,7 @@
     "Realistic Order Lifecycle di Replay: Deteksi otomatis setup MISSED jika target TP tercapai sebelum limit entry terisi.",
     "Pembersih Cache Sementara 1-Tap di Profil: Membersihkan file sementara, cache unduhan, dan video temp dalam 1 ketukan."
   ],
-  "version": "2.0.0-amyfx.417",
-  "versionCode": 950417,
+  "version": "2.0.0-amyfx.418",
+  "versionCode": 950418,
   "sha256": "354424344968a22ebf168445624f46cbaf507d13121026a91de009c5e7aef1c4"
 }
