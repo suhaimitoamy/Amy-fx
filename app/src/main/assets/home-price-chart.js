@@ -56,6 +56,7 @@ function filterCandles(values, closed) {
 export function mountHomeChart(root) {
   const $=id=>root.querySelector('#'+id);
   let view=null,raw=null,controller=null,timer=null,generation=0,disposed=false;
+  let h1Cache=null,h1CacheTime=0;
   try { view=createPriceChart($('home-price-chart')); }
   catch { $('home-price-chart').textContent='Chart tidak tersedia. Coba muat ulang aplikasi.';return ()=>{}; }
   function render(degraded=false){
@@ -96,12 +97,25 @@ export function mountHomeChart(root) {
     $('home-chart-refresh').disabled=true;$('home-chart-error').textContent='';
     if(raw)render();
     try {
-      const [entry,context]=await Promise.all([loadCandles(tf,request.signal),loadCandles('H1',request.signal)]);
+      const isH1 = tf === 'H1';
+      const shouldFetchH1 = !isH1 && (!h1Cache || (Date.now() - h1CacheTime > 300000));
+      const [entry, context] = await Promise.all([
+        loadCandles(tf, request.signal),
+        isH1 ? null : (shouldFetchH1 ? loadCandles('H1', request.signal).catch(() => h1Cache || ({ candles: [], degraded: true })) : h1Cache)
+      ]);
       if(disposed||id!==generation)return;
+      if (isH1) {
+        h1Cache = entry;
+        h1CacheTime = Date.now();
+      } else if (shouldFetchH1 && context) {
+        h1Cache = context;
+        h1CacheTime = Date.now();
+      }
+      const actualContext = isH1 ? entry : (context || h1Cache || { candles: [], degraded: true });
       const closed=!isGoldMarketOpen(Date.now()/1000);
       const safeEntryCandles=filterCandles(entry.candles,closed);
-      const safeContextCandles=filterCandles(context.candles,closed);
-      const next={candles:safeEntryCandles,context:safeContextCandles,tf,degraded:entry.degraded||context.degraded};
+      const safeContextCandles=filterCandles(actualContext.candles,closed);
+      const next={candles:safeEntryCandles,context:safeContextCandles,tf,degraded:entry.degraded||actualContext.degraded};
       const result=analyze({...next,now:Date.now()/1000});
       const previous=raw?analyze({...raw,now:Date.now()/1000}):null;
       if(!result.candles.length||(previous&&result.sourceTime<previous.sourceTime))throw Error('Candle tidak lengkap atau lebih lama');
@@ -121,7 +135,29 @@ export function mountHomeChart(root) {
       }
     }
   }
-  function change(){stop();raw=null;view.reset();render();refresh();}
+  function change(){
+    stop();
+    const newTf = $('home-chart-tf').value;
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const stored = localStorage.getItem(`amyfx.mapping.candles.${newTf}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed?.values) && parsed.values.length > 0) {
+            const closed = !isGoldMarketOpen(Date.now() / 1000);
+            raw = {
+              candles: filterCandles(parsed.values, closed),
+              context: raw?.context || h1Cache?.candles || [],
+              tf: newTf,
+              degraded: true
+            };
+            render(true);
+          }
+        }
+      }
+    } catch (_) {}
+    refresh();
+  }
   function visibility(){if(document.hidden)stop();else refresh();}
   function pageshow(event){if(event.persisted)refresh();}
   $('home-chart-refresh').addEventListener('click',refresh);

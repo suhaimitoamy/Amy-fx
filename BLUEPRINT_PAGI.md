@@ -305,8 +305,8 @@
 
 ---
 
-### 1.9. [UI FLICKER] Blank Screen Flicker Saat Ganti Timeframe di Beranda
-- **Lokasi File:** [`app/src/main/assets/home-price-chart.js`](file:///root/Amy-fx/app/src/main/assets/home-price-chart.js#L35-L45)
+### 1.9. [UI FLICKER] Blank Screen Flicker Saat Ganti Timeframe di Beranda — `[x] SELESAI & LOLOS AUDIT REVIEWER`
+- **Lokasi File:** [`app/src/main/assets/home-price-chart.js`](file:///root/Amy-fx/app/src/main/assets/home-price-chart.js#L56-L145)
 - **Akar Masalah (Temuan Agen Beta):**
   Pada fungsi `change()` di `home-price-chart.js`, saat pengguna menekan tombol ganti timeframe (misal dari M15 ke M5):
   ```javascript
@@ -315,6 +315,7 @@
   Baris `raw=null; view.reset(); render();` langsung menghapus kanvas chart sehingga layar berkedip kosong (blank) selama 1–2 detik sebelum data timeframe baru selesai di-fetch dari jaringan. Selain itu, fungsi `refresh()` selalu memanggil ulang `loadCandles('H1')` dari jaringan meskipun lilin H1 baru saja diunduh beberapa detik sebelumnya.
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   Pertahankan visual chart lama (*stale-while-revalidate*) dengan overlay spinner halus di pojok kanan atas, jangan hapus `view` sebelum data baru tiba, dan manfaatkan cache memori lilin H1 agar tidak membuang kuota data.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Menghapus `raw = null` dan `view.reset()` saat ganti timeframe untuk mempertahankan chart lama (*stale-while-revalidate*) serta memeriksa cache lilin lokal agar transisi timeframe instan tanpa layar berkedip kosong. Menambahkan caching memori lilin konteks H1 (TTL 5 menit) untuk menghemat kuota jaringan. Unit test lolos di `tests/home-chart-flicker.test.mjs`.
 
 ---
 
@@ -2591,7 +2592,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.18. Prefetch Buffer Lilin Playback 5x di `replay-engine.js`** | P1 (Sedang) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.14. Validasi Checksum SHA-256 APK di `NativeAppUpdater`** | P1 (Sedang) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.16. Persistensi Status Accordion `<details open>` di Mapping** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.9. Hilangkan Layar Berkedip (Flicker) Ganti TF di Beranda** | P1 (Sedang) | ~7 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.9. Hilangkan Layar Berkedip (Flicker) Ganti TF di Beranda** | P1 (Sedang) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.6. Chunking Yielding Ekstraksi ZIP di `data-provider.js`** | P1 (Sedang) | ~10 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.2. Dual-Source Fallback Dataset 8 Tahun di `candles.js`** | P1 (Sedang) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.12. Dynamic Base URL Fallback Berita di `api/calendar.js`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
