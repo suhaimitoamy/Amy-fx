@@ -1550,6 +1550,7 @@ class MainActivity : Activity() {
             return freedMb
         }
 
+        @android.annotation.SuppressLint("MissingPermission")
         @JavascriptInterface
         fun isBiometricAvailable(): Boolean {
             return try {
@@ -1567,6 +1568,7 @@ class MainActivity : Activity() {
             }
         }
 
+        @android.annotation.SuppressLint("MissingPermission")
         @JavascriptInterface
         fun authenticateBiometric(title: String, subtitle: String, callbackJs: String) {
             val act = mContext as? Activity ?: return
