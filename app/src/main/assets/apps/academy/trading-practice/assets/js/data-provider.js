@@ -246,11 +246,14 @@
 
     if (m1Entries.length > 1) {
       for (var m = 0; m < m1Entries.length; m += 1) {
+        if (onProgress) onProgress({ stage: 'extract', fileName: m1Entries[m].name, index: m + 1, total: m1Entries.length, message: 'Mengekstrak ' + m1Entries[m].name });
         var csvBytes = await archive.extract(m1Entries[m]);
         var csvBlob = new Blob([csvBytes], { type: 'text/csv' });
         var childSource = context.provenance + ' → ' + m1Entries[m].name;
         await saveTextPack(csvBlob, { symbol: 'XAUUSD', timeframe: 'M1', source: childSource, fileName: m1Entries[m].name, format: 'csv' }, results);
         if (onProgress) onProgress({ stage: 'saved', fileName: m1Entries[m].name, packCount: results.length, message: results[results.length - 1].label + ' tersimpan' });
+        // Chunking yield: allow browser event loop to breathe (1 frame @ 60fps) to prevent UI freeze and ANR
+        await new Promise(function (resolve) { setTimeout(resolve, 16); });
       }
       return;
     }
@@ -266,7 +269,7 @@
         name: nested[i].name,
         provenance: context.provenance + ' → ' + nested[i].name
       }, depth + 1, results, onProgress);
-      await new Promise(function (resolve) { setTimeout(resolve, 0); });
+      await new Promise(function (resolve) { setTimeout(resolve, 16); });
     }
   }
 

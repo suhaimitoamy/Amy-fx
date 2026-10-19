@@ -245,12 +245,13 @@
 
 ---
 
-### 1.6. [MEMORY & ANR] UI Freeze Saat Ekstraksi Full-Year ZIP di Replay (`data-provider.js`)
-- **Lokasi File:** [`app/src/main/assets/apps/academy/trading-practice/assets/js/data-provider.js`](file:///root/Amy-fx/app/src/main/assets/apps/academy/trading-practice/assets/js/data-provider.js#L400-L430)
+### 1.6. [MEMORY & ANR] UI Freeze Saat Ekstraksi Full-Year ZIP di Replay (`data-provider.js`) — `[x] SELESAI & LOLOS AUDIT REVIEWER`
+- **Lokasi File:** [`app/src/main/assets/apps/academy/trading-practice/assets/js/data-provider.js`](file:///root/Amy-fx/app/src/main/assets/apps/academy/trading-practice/assets/js/data-provider.js#L240-L272)
 - **Akar Masalah (Temuan Agen Gamma & Delta):**
   Ketika pengguna memilih mengunduh pack *"Semua Bulan (Tahun Penuh)"*, file ZIP berukuran 15–30 MB diunduh lalu fungsi `scanZip` mengekstrak 12 file CSV secara berurutan dalam loop tanpa jeda ke browser event loop (`await` sinkron). Di WebView HP RAM 3GB/4GB, hal ini memakan CPU hingga 100% dan membekukan tampilan UI (UI freeze) selama 3–6 detik, berpotensi memicu dialog *Application Not Responding (ANR)*.
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   Tambahkan pemecahan tugas (chunking yielding): setiap selesai mengekstrak 1 file bulanan, panggil jeda mikro `await new Promise(r => setTimeout(r, 16))` (1 frame) agar UI render progress bar tetap bergerak mulus pada 60 FPS tanpa jeda freeze.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Menambahkan jeda mikro `await new Promise(r => setTimeout(r, 16))` di setiap iterasi ekstraksi file M1 dan ZIP bertingkat pada `scanZip`, membebaskan CPU WebView untuk memproses event loop dan animasi progres 60 FPS tanpa risiko UI freeze atau ANR. Unit test lolos di `tests/zip-chunking-yield.test.mjs`.
 
 ---
 
@@ -2593,7 +2594,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.14. Validasi Checksum SHA-256 APK di `NativeAppUpdater`** | P1 (Sedang) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.16. Persistensi Status Accordion `<details open>` di Mapping** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.9. Hilangkan Layar Berkedip (Flicker) Ganti TF di Beranda** | P1 (Sedang) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.6. Chunking Yielding Ekstraksi ZIP di `data-provider.js`** | P1 (Sedang) | ~10 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.6. Chunking Yielding Ekstraksi ZIP di `data-provider.js`** | P1 (Sedang) | ~10 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.2. Dual-Source Fallback Dataset 8 Tahun di `candles.js`** | P1 (Sedang) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.12. Dynamic Base URL Fallback Berita di `api/calendar.js`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.5. Isolasi Touch Sumbu Harga Layar Ponsel Sempit** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
