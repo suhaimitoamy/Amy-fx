@@ -751,7 +751,7 @@
 
 ---
 
-### 1.33. [EQUITY REVERSAL] Kurva Pertumbuhan Modal (Equity Curve) Jurnal Terdistorsi Kronologinya
+### 1.33. [EQUITY REVERSAL] Kurva Pertumbuhan Modal (Equity Curve) Jurnal Terdistorsi Kronologinya — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/assets/apps/journal/journal-analytics.js`](file:///root/Amy-fx/app/src/main/assets/apps/journal/journal-analytics.js#L23-L40)
 - **Akar Masalah (Temuan Agen Delta & Agen Alpha):**
   Fungsi kalkulasi saldo pertumbuhan modal:
@@ -778,10 +778,11 @@
     return tA - tB;
   });
   ```
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Ditambahkan sorting kronologis ascending berdasarkan `actualEntryTime` / `entryTime` / `analysisTime` / `createdAt` sebelum kalkulasi akumulasi balance, memastikan kurva ekuitas tumbuh maju secara natural dari waktu ke waktu. 4/4 unit test lolos di `tests/journal-analytics.test.mjs`.
 
 ---
 
-### 1.34. [JOURNAL LOCKOUT] Validasi Skema Jurnal Menolak Setup Scalping Single TP & Setup Score 0
+### 1.34. [JOURNAL LOCKOUT] Validasi Skema Jurnal Menolak Setup Scalping Single TP & Setup Score 0 — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/assets/apps/journal/journal-schema.js`](file:///root/Amy-fx/app/src/main/assets/apps/journal/journal-schema.js#L2, L36-L39)
 - **Akar Masalah (Temuan Agen Delta & Agen Epsilon):**
   Di `journal-schema.js`:
@@ -797,6 +798,7 @@
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
   1. Ganti syarat `'takeProfit2'` menjadi pemenuhan salah satu target: `hasTp = Boolean(entry.takeProfit1 || entry.takeProfit2)`.
   2. Gunakan pengecekan nilai eksplisit `(entry[k] != null && String(entry[k]).trim() !== '')` untuk validasi kolom wajib.
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Validasi skema jurnal `validate(entry)` menerima single TP (`takeProfit1` atau `takeProfit2`) serta menerima skor setup `0` secara eksplisit tanpa tertolak falsy. 6/6 unit test lolos di `tests/journal-schema.test.mjs`.
 
 ---
 
@@ -2553,8 +2555,8 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.36. Resolusi Dinamis `API_BASE` Localhost/LAN di `market-intel/app.js`** | P1 (Sedang) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.37. Sorting Kronologis Ascending Kalender Ekonomi di `market-intel/app.js`** | P1 (Sedang) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.32. Perbaiki Regex Progres 10 Modul & Bridge Native di `main.js`** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.33. Sorting Kronologis Kurva Pertumbuhan Modal di `journal-analytics.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
-| 🐛 **Debugging** | **1.34. Validasi Fleksibel TP1/TP2 & Score 0 di `journal-schema.js`** | P1 (Sedang) | ~4 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.33. Sorting Kronologis Kurva Pertumbuhan Modal di `journal-analytics.js`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
+| 🐛 **Debugging** | **1.34. Validasi Fleksibel TP1/TP2 & Score 0 di `journal-schema.js`** | P1 (Sedang) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.29. Pindahkan `writeJson` Entry Watch ke Guard Signature (Cegah 4.800x/jam)** | P0 (Kritis) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.30. Normalisasi String `side` di `sweep-acceptance.js` (Cegah Deadlock Sweep)** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.31. Pelacakan `brokenSwings` di `MappingLogicCore.kt` (Hilangkan Duplikasi BOS)** | P1 (Sedang) | ~6 menit | [ ] Setuju / [ ] Tunda |

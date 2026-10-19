@@ -39,7 +39,7 @@ window.AmyJournalAnalytics = {
                         .filter(x => x.result !== null);
     
     const entryTime = (e) => {
-      const raw = e?.entryTime || e?.exitTime || e?.analysisTime || e?.date || e?.createdAt || e?.timestamp;
+      const raw = e?.actualEntryTime || e?.entryTime || e?.exitTime || e?.analysisTime || e?.date || e?.createdAt || e?.timestamp;
       const t = raw ? new Date(raw).getTime() : 0;
       return Number.isFinite(t) ? t : 0;
     };
