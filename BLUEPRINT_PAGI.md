@@ -840,7 +840,7 @@
 
 ---
 
-### 1.36. [OFFLINE RUNTIME] URL `API_BASE` Hardcoded Menghambat Pengujian Offline & Local Preview di `market-intel/app.js`
+### 1.36. [OFFLINE RUNTIME] URL `API_BASE` Hardcoded Menghambat Pengujian Offline & Local Preview di `market-intel/app.js` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/assets/apps/market-intel/app.js`](file:///root/Amy-fx/app/src/main/assets/apps/market-intel/app.js#L9)
 - **Akar Masalah (Temuan Agen Alpha & Agen Gamma):**
   Pada baris 9 `market-intel/app.js`, basis API dideklarasikan secara statis:
@@ -856,10 +856,11 @@
   const isLocal = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
   const API_BASE = isLocal ? '/api' : 'https://amy-fx.vercel.app/api';
   ```
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Ditambahkan fungsi `resolveApiBase()` yang secara dinamis beralih ke `/api` saat mendeteksi environment localhost, Termux local server (127.0.0.1 / IP LAN), dan fallback ke `https://amy-fx.vercel.app/api` di serverless production. 2/2 unit test lolos di `tests/market-intel-api-and-chrono.test.mjs`.
 
 ---
 
-### 1.37. [CALENDAR CHRONO] Pengurutan Kronologis Kalender Ekonomi pada Fallback Ekstraksi Berita
+### 1.37. [CALENDAR CHRONO] Pengurutan Kronologis Kalender Ekonomi pada Fallback Ekstraksi Berita — `[x] SELESAI & LOLOS AUDIT REVIEWER`
 - **Lokasi File:** [`app/src/main/assets/apps/market-intel/app.js`](file:///root/Amy-fx/app/src/main/assets/apps/market-intel/app.js#L2017-L2027)
 - **Akar Masalah (Temuan Agen Beta & Agen Delta):**
   Ketika API kalender utama offline dan sistem mengaktifkan fallback cerdas ekstraksi kalender dari berita Telegram (`extractCalendarEventsFromNews()`), event-event berita yang diekstrak berada dalam urutan *newest-first* (postingan terbaru di awal).  
@@ -871,6 +872,7 @@
   ```javascript
   filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   ```
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Fungsi `renderCalendar()` sekarang melakukan sorting ascending (`timeA - timeB`) pada array filtered sebelum grouping tanggal, menjamin urutan kronologis yang runtut dan rapi dari sesi pagi hingga malam WITA. 2/2 unit test lolos di `tests/market-intel-api-and-chrono.test.mjs`.
 
 ---
 
@@ -2548,8 +2550,8 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.39. Ganti Label Tombol FAB "CS" Menjadi "AMY" / "AI" di `amy-local-assistant.js`** | P1 (Sedang) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.40. Fleksibilitas Format Warna Hex (#RGB/#RGBA) di `drawing-core.js`** | P1 (Sedang) | ~3 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.35. Batalkan Order Practice Jika TP Tersentuh Lebih Dulu (`MISSED` Trap)** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.36. Resolusi Dinamis `API_BASE` Localhost/LAN di `market-intel/app.js`** | P1 (Sedang) | ~4 menit | [ ] Setuju / [ ] Tunda |
-| 🐛 **Debugging** | **1.37. Sorting Kronologis Ascending Kalender Ekonomi di `market-intel/app.js`** | P1 (Sedang) | ~4 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.36. Resolusi Dinamis `API_BASE` Localhost/LAN di `market-intel/app.js`** | P1 (Sedang) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
+| 🐛 **Debugging** | **1.37. Sorting Kronologis Ascending Kalender Ekonomi di `market-intel/app.js`** | P1 (Sedang) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.32. Perbaiki Regex Progres 10 Modul & Bridge Native di `main.js`** | P0 (Kritis) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.33. Sorting Kronologis Kurva Pertumbuhan Modal di `journal-analytics.js`** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.34. Validasi Fleksibel TP1/TP2 & Score 0 di `journal-schema.js`** | P1 (Sedang) | ~4 menit | [ ] Setuju / [ ] Tunda |

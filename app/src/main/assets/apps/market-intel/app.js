@@ -5,8 +5,12 @@
  *        Heatmap dari liquidity calculation (via API)
  */
 
-// ─── Config ──────────────────────────────────────────────
-const API_BASE = 'https://amy-fx.vercel.app/api';
+function resolveApiBase() {
+  const host = typeof location !== 'undefined' ? String(location.hostname || '') : '';
+  const isLocal = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
+  return isLocal ? '/api' : 'https://amy-fx.vercel.app/api';
+}
+const API_BASE = resolveApiBase();
 const REFRESH_INTERVAL = 60 * 1000; // Auto-refresh setiap 1 menit
 
 // ─── State ───────────────────────────────────────────────
@@ -2012,6 +2016,13 @@ function renderCalendar() {
     list.innerHTML = '<div class="empty-state">Tidak ada rilis berita untuk filter yang dipilih.</div>';
     return;
   }
+
+  // Ensure chronological ascending sorting (oldest first so London and New York releases flow sequentially)
+  filtered.sort((a, b) => {
+    const timeA = new Date(a.date).getTime() || 0;
+    const timeB = new Date(b.date).getTime() || 0;
+    return timeA - timeB;
+  });
 
   // Group events by local date string
   const groups = new Map();
