@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = '/root/Amy-fx';
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 test('1. Native audio asset amy_gold_chime.wav exists with valid RIFF WAVE header', () => {
   const wavPath = path.join(ROOT, 'app/src/main/res/raw/amy_gold_chime.wav');

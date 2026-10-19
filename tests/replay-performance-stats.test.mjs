@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = '/root/Amy-fx';
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const analyticsCode = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/apps/academy/trading-practice/assets/js/practice-analytics.js'), 'utf8');
 const vmCtx = { console };
 vmCtx.window = vmCtx;

@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = '/root/Amy-fx';
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 test('1. MainActivity.kt contains clearAppCache method targeting updates and background-video', () => {
   const content = fs.readFileSync(path.join(ROOT, 'app/src/main/java/com/amyelitesuite/MainActivity.kt'), 'utf8');

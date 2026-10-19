@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = '/root/Amy-fx';
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 test('1. Modul 01 and Modul 02 HTML pages have 1-Tap Masterclass PDF open button', () => {
   const mod01Html = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/apps/academy/modul-01/index.html'), 'utf8');
