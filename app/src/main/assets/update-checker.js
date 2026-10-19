@@ -264,8 +264,13 @@
           downloading: true
         };
         setNativeState('starting', `Menyiapkan unduhan Amy FX ${displayVersionName(latestName)}...`);
+        const expectedSha = String(data.sha256 || data.apk_sha256 || '').trim();
         try {
-          window.Android.startAppUpdate(String(downloadUrl), String(latestName), Number(latestCode));
+          if (expectedSha) {
+            window.Android.startAppUpdate(String(downloadUrl), String(latestName), Number(latestCode), expectedSha);
+          } else {
+            window.Android.startAppUpdate(String(downloadUrl), String(latestName), Number(latestCode));
+          }
         } catch (error) {
           window.AmyFXUpdateNative.onError(error?.message || 'Updater native tidak dapat dijalankan.');
         }

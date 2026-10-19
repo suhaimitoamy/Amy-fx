@@ -34,7 +34,12 @@ class NativeAppUpdater(
     @Volatile
     private var pendingInstall: File? = null
 
-    fun start(downloadUrl: String, expectedVersionName: String, expectedVersionCode: Int) {
+    fun start(
+        downloadUrl: String,
+        expectedVersionName: String,
+        expectedVersionCode: Int,
+        expectedSha256: String? = null
+    ) {
         val safeUri = runCatching { Uri.parse(downloadUrl) }.getOrNull()
         if (!isAllowedDownloadUri(safeUri)) {
             emitError("Alamat update tidak diizinkan.")
@@ -108,7 +113,7 @@ class NativeAppUpdater(
                         }
 
                         emitState("verifying", "Memverifikasi package, versi, dan tanda tangan...")
-                        verifyApk(finalFile, expectedVersionName, expectedVersionCode)
+                        verifyApk(finalFile, expectedVersionName, expectedVersionCode, expectedSha256)
                         pendingInstall = finalFile
                         emitProgress(100, finalFile.length(), finalFile.length())
                         requestInstallPermissionOrOpenInstaller()
@@ -189,7 +194,18 @@ class NativeAppUpdater(
         }
     }
 
-    private fun verifyApk(file: File, expectedVersionName: String, expectedVersionCode: Int) {
+    private fun verifyApk(
+        file: File,
+        expectedVersionName: String,
+        expectedVersionCode: Int,
+        expectedSha256: String? = null
+    ) {
+        if (!expectedSha256.isNullOrBlank()) {
+            val actualSha = calculateFileSha256(file)
+            if (!actualSha.equals(expectedSha256.trim(), ignoreCase = true)) {
+                error("Checksum SHA-256 APK tidak cocok (file unduhan korup). Diharapkan: $expectedSha256, didapat: $actualSha")
+            }
+        }
         val archive = packageInfoForArchive(file)
             ?: error("Android tidak dapat membaca identitas APK")
         if (archive.packageName != activity.packageName) {
@@ -217,6 +233,18 @@ class NativeAppUpdater(
         if (installedSigners != archiveSigners) {
             error("Tanda tangan APK tidak cocok dengan Amy FX terpasang")
         }
+    }
+
+    private fun calculateFileSha256(file: File): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        file.inputStream().buffered().use { input ->
+            val buffer = ByteArray(8192)
+            var bytesRead: Int
+            while (input.read(buffer).also { bytesRead = it } != -1) {
+                digest.update(buffer, 0, bytesRead)
+            }
+        }
+        return digest.digest().joinToString("") { byte -> "%02x".format(Locale.US, byte) }
     }
 
     @Suppress("DEPRECATION")

@@ -386,8 +386,8 @@
 
 ---
 
-### 1.14. [INTEGRITY CHECK] Verifikasi Hash SHA-256 APK Belum Divalidasi di `NativeAppUpdater.kt`
-- **Lokasi File:** [`app/src/main/java/com/amyelitesuite/NativeAppUpdater.kt`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/NativeAppUpdater.kt#L192-L220) & [`update.json`](file:///root/Amy-fx/update.json#L24)
+### 1.14. [INTEGRITY CHECK] Verifikasi Hash SHA-256 APK Belum Divalidasi di `NativeAppUpdater.kt` — `[x] SELESAI & LOLOS AUDIT REVIEWER`
+- **Lokasi File:** [`app/src/main/java/com/amyelitesuite/NativeAppUpdater.kt`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/NativeAppUpdater.kt#L192-L245), [`MainActivity.kt`](file:///root/Amy-fx/app/src/main/java/com/amyelitesuite/MainActivity.kt#L814-L822), [`update-checker.js`](file:///root/Amy-fx/app/src/main/assets/update-checker.js#L265-L275), & [`update.json`](file:///root/Amy-fx/update.json#L24)
 - **Akar Masalah (Temuan Agen Gamma):**
   File manifest `update.json` menyediakan field `"sha256": "9e0e55...b31f"`. Namun pada method `verifyApk()` di `NativeAppUpdater.kt`, sistem hanya memverifikasi nama package, version code, dan signature sertifikat APK tanpa membandingkan hash SHA-256 file fisik. Meskipun tanda tangan sertifikat sudah menjamin keaslian publisher, verifikasi SHA-256 memberikan proteksi tambahan 100% terhadap kemungkinan file korup sebagian (*partial/corrupt byte transfer*) yang lolos dari pembacaan zip header.
 - **Rancangan Solusi (Draft Solusi untuk ACC):**
@@ -400,6 +400,7 @@
       }
   }
   ```
+- **Status Eksekusi:** [x] SELESAI & LOLOS AUDIT REVIEWER. Parameter `expectedSha256` diteruskan dari manifest `update.json` via `update-checker.js` -> `MainActivity.kt#startAppUpdate` -> `NativeAppUpdater.kt#start`. Fungsi `calculateFileSha256` melakukan verifikasi byte file aktual via `MessageDigest("SHA-256")` sebelum membuka installer. Unit test lolos di `tests/native-updater-sha256.test.mjs`.
 
 ---
 
@@ -2587,7 +2588,7 @@ Silakan centang item yang disetujui untuk dieksekusi kodingnya begitu Anda bangu
 | 🐛 **Debugging** | **1.21. Fingerprint $O(1)$ Menggantikan `JSON.stringify` di `ict-canvas.js`** | P1 (Sedang) | ~5 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.22. Hapus I/O Disk Redundan `startBackgroundScanner` di `MainActivity`** | P1 (Sedang) | ~4 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.18. Prefetch Buffer Lilin Playback 5x di `replay-engine.js`** | P1 (Sedang) | ~8 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
-| 🐛 **Debugging** | **1.14. Validasi Checksum SHA-256 APK di `NativeAppUpdater`** | P1 (Sedang) | ~7 menit | [ ] Setuju / [ ] Tunda |
+| 🐛 **Debugging** | **1.14. Validasi Checksum SHA-256 APK di `NativeAppUpdater`** | P1 (Sedang) | ~7 menit | [x] SELESAI & LOLOS AUDIT REVIEWER |
 | 🐛 **Debugging** | **1.16. Persistensi Status Accordion `<details open>` di Mapping** | P1 (Sedang) | ~5 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.9. Hilangkan Layar Berkedip (Flicker) Ganti TF di Beranda** | P1 (Sedang) | ~7 menit | [ ] Setuju / [ ] Tunda |
 | 🐛 **Debugging** | **1.6. Chunking Yielding Ekstraksi ZIP di `data-provider.js`** | P1 (Sedang) | ~10 menit | [ ] Setuju / [ ] Tunda |

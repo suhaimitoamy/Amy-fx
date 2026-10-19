@@ -816,6 +816,11 @@ class MainActivity : Activity() {
         }
 
         @JavascriptInterface
+        fun startAppUpdate(downloadUrl: String?, versionName: String?, versionCode: Int, sha256: String?) {
+            nativeUpdater.start(downloadUrl.orEmpty(), versionName.orEmpty(), versionCode, sha256)
+        }
+
+        @JavascriptInterface
         fun cancelAppUpdate() {
             nativeUpdater.cancel(deletePending = true)
         }
