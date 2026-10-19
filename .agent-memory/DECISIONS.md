@@ -1,5 +1,22 @@
 # Technical Decisions
 
+## 2026-10-19 — Perbaikan Kritis Chart Blank (Autoscale Clamping & Sanitasi Era Data Gold $4175 vs $2643) & Rilis 2.0.0-amyfx.418
+1. **Latar Belakang & Gejala:**
+   - Seluruh candle di Card Peta Harga (Beranda) dan Chart Gold (Cockpit Mapping) tidak muncul sama sekali (blank/kosong) baik di Amy FX maupun Amy FX Pro.
+2. **Akar Masalah (Root Cause):**
+   - **Benturan Deviasi Era Harga:** File snapshot offline `lib/market-snapshot-offline.json` memuat data historis Gold lama di rentang $2643–$2675, sedangkan harga live pasar berada di sekitar $4175.
+   - **Deadzone Autoscale Clamping:** Algoritma autoscale di `chart-view.js` membatasi rentang sumbu Y maksimal 70 poin dari titik tengah `(min + max) / 2 = 3415`. Hal ini menempatkan candle $2675 jauh di bawah layar dan candle $4175 jauh di atas layar, sehingga 0 candle berada di dalam viewport.
+   - **Rejection Tanpa Fallback:** Pemanggilan `analyze()` di `home-price-chart.js` tidak terproteksi `try...catch` dan ketiadaan fallback `lenientCandles` memicu crash diam saat kalkulasi indikator ICT.
+3. **Solusi Teknis:**
+   - **`chart-view.js`**: `autoscaleInfoProvider` diperbaiki agar menjepit (*anchor*) sumbu Y ke harga penutupan candle aktif (`lastClosePrice`) dengan bantalan wajar jika terjadi outlier, memastikan candle aktif selalu berada tepat di tengah viewport.
+   - **`home-price-chart.js`**: Menambahkan fungsi `lenientCandles()` dan membungkus `analyze()` dalam blok `try...catch` dengan fallback visual graceful.
+   - **`market-candle-store.mjs`**: Menambahkan filter toleransi deviasi harga ($500) pada `mergeRows`, `writeLocalStore`, dan `readLocalStore` untuk menolak candle lama yang bocor.
+   - **`market-snapshot-offline.json`**: Memperbarui data historis ke era riil Oktober 2026 ($4164–$4184) dari Twelve Data dan membersihkan cache korup.
+4. **Sinkronisasi & Rilis:**
+   - Logika disinkronkan 100% ke repositori `Amy-fx` dan `Amy-fx-pro`.
+   - Versi di-bump ke `2.0.0-amyfx.418` (Code `950418`) dan APK berhasil di-build serta dipublikasikan via GitHub Actions.
+
+
 ## 2026-10-19 — Penuntasan Penuh Blueprint Pagi & Peluncuran Dasbor Analitik Performa Replay Offline IndexedDB (Item 2.2)
 1. **Latar Belakang & Status Blueprint:**
    - Seluruh 119 item pada [`BLUEPRINT_PAGI.md`](file:///root/Amy-fx/BLUEPRINT_PAGI.md) telah selesai 100% dan lolos audit reviewer (Item 2.5 TTS dieksklusikan secara permanen atas instruksi pengguna).
