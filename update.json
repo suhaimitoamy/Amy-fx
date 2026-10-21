@@ -1,15 +1,9 @@
 {
   "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.420/AmyFX-latest.apk",
   "changelog": [
-    "AMY ICT CONTEXT V4 [Pure Market Context]: Pembaruan total Cockpit Mapping ke kompas navigasi 11-baris objektif tanpa sinyal repainting (Matriks 3-TF, Fase Narasi Market, Dealing Range %, Magnet BSL/SSL, Sesi Asia, Status IDM, Zona Supply/Demand M15, dan Batas CHoCH).",
-    "Lilin Aktif Berjalan Real-Time (TradingView Parity): Menampilkan candle aktif M15/M5 bergerak dinamis naik-turun mengikuti tick harga live di Chart Gold dan Peta Harga Beranda tanpa repainting analisa ICT.",
-    "Perbaikan Kritis Chart Gold: Menghilangkan bug layar chart blank dengan menyelaraskan autoscale sumbu Y terhadap harga aktif pasar ($4175) dan menyaring deviasi data historis lawas.",
-    "Dasbor Analitik Replay Offline (IndexedDB v3): Evaluasi mandiri Win Rate %, Expectancy R, Profit Factor, Max Drawdown, serta breakdown performa setup ICT (FVG vs OB vs Sweep) dan sesi pasar.",
-    "Notifikasi Suara Bel Emas Sinyal A+: Bel kristal emas offline bawaan APK dan lampu emas eksklusif saat setup Grade A+ terkonfirmasi.",
-    "1-Tap Sync Catatan Jurnal ke Obsidian: Ekspor instan seluruh catatan jurnal dan refleksi psikologi ke Obsidian Catatan Pribadi berformat Markdown lengkap.",
-    "Kalkulator Risiko & Ukuran Lot Instan di Card 4 Plan: Perhitungan lot presisi Gold berdasarkan jarak Stop Loss dan saldo akun.",
-    "Realistic Order Lifecycle di Replay: Deteksi otomatis setup MISSED jika target TP tercapai sebelum limit entry terisi.",
-    "Pembersih Cache Sementara 1-Tap di Profil: Membersihkan file sementara, cache unduhan, dan video temp dalam 1 ketukan."
+    "AMY ICT CONTEXT V4: Kompas navigasi pasar 11-baris objektif tanpa repainting di Cockpit Mapping.",
+    "Pemulihan 594 Bab Akademi: Seluruh materi 10 modul tematik kembali lengkap offline.",
+    "Stabilitas & Paritas Live: Candle aktif dinamis, autoscale chart $4175, dan fitur native Android."
   ],
   "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.420/AmyFX-latest.apk",
   "enabled": true,
@@ -19,15 +13,9 @@
   "mandatory": false,
   "releaseDate": "2026-10-19",
   "release_notes": [
-    "AMY ICT CONTEXT V4 [Pure Market Context]: Pembaruan total Cockpit Mapping ke kompas navigasi 11-baris objektif tanpa sinyal repainting (Matriks 3-TF, Fase Narasi Market, Dealing Range %, Magnet BSL/SSL, Sesi Asia, Status IDM, Zona Supply/Demand M15, dan Batas CHoCH).",
-    "Lilin Aktif Berjalan Real-Time (TradingView Parity): Menampilkan candle aktif M15/M5 bergerak dinamis naik-turun mengikuti tick harga live di Chart Gold dan Peta Harga Beranda tanpa repainting analisa ICT.",
-    "Perbaikan Kritis Chart Gold: Menghilangkan bug layar chart blank dengan menyelaraskan autoscale sumbu Y terhadap harga aktif pasar ($4175) dan menyaring deviasi data historis lawas.",
-    "Dasbor Analitik Replay Offline (IndexedDB v3): Evaluasi mandiri Win Rate %, Expectancy R, Profit Factor, Max Drawdown, serta breakdown performa setup ICT (FVG vs OB vs Sweep) dan sesi pasar.",
-    "Notifikasi Suara Bel Emas Sinyal A+: Bel kristal emas offline bawaan APK dan lampu emas eksklusif saat setup Grade A+ terkonfirmasi.",
-    "1-Tap Sync Catatan Jurnal ke Obsidian: Ekspor instan seluruh catatan jurnal dan refleksi psikologi ke Obsidian Catatan Pribadi berformat Markdown lengkap.",
-    "Kalkulator Risiko & Ukuran Lot Instan di Card 4 Plan: Perhitungan lot presisi Gold berdasarkan jarak Stop Loss dan saldo akun.",
-    "Realistic Order Lifecycle di Replay: Deteksi otomatis setup MISSED jika target TP tercapai sebelum limit entry terisi.",
-    "Pembersih Cache Sementara 1-Tap di Profil: Membersihkan file sementara, cache unduhan, dan video temp dalam 1 ketukan."
+    "AMY ICT CONTEXT V4: Kompas navigasi pasar 11-baris objektif tanpa repainting di Cockpit Mapping.",
+    "Pemulihan 594 Bab Akademi: Seluruh materi 10 modul tematik kembali lengkap offline.",
+    "Stabilitas & Paritas Live: Candle aktif dinamis, autoscale chart $4175, dan fitur native Android."
   ],
   "version": "2.0.0-amyfx.420",
   "versionCode": 950420,

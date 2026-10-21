@@ -167,7 +167,9 @@
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '20px',
+      padding: '16px',
+      overflowY: 'auto',
+      boxSizing: 'border-box',
       fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif'
     });
 
@@ -175,11 +177,15 @@
     css(box, {
       width: '100%',
       maxWidth: '420px',
+      maxHeight: 'min(90vh, 620px)',
+      display: 'flex',
+      flexDirection: 'column',
       background: 'var(--amy-surface-strong, #101925)',
       color: 'var(--amy-text, #fff)',
       border: '1px solid var(--amy-border-strong, rgba(177,214,255,.26))',
       borderRadius: '22px',
       padding: '20px',
+      boxSizing: 'border-box',
       boxShadow: '0 20px 60px rgba(0,0,0,.55)'
     });
 
@@ -188,14 +194,14 @@
       : (Array.isArray(data.changelog) ? data.changelog : []);
 
     box.innerHTML = `
-      <div style="color:var(--amy-accent, #69B7FF);font-weight:850;font-size:20px;margin-bottom:8px">Pembaruan Amy FX Tersedia</div>
-      <div style="color:#ddd;line-height:1.5;margin-bottom:14px">
+      <div style="color:var(--amy-accent, #69B7FF);font-weight:850;font-size:20px;margin-bottom:8px;flex-shrink:0;">Pembaruan Amy FX Tersedia</div>
+      <div style="color:#ddd;line-height:1.5;margin-bottom:12px;flex-shrink:0;font-size:13px;">
         Versi kamu: <b>${escapeHtml(displayVersionName(CURRENT_VERSION_NAME))}</b> (${CURRENT_VERSION_CODE})<br>
         Versi terbaru: <b>${escapeHtml(displayVersionName(latestName || latestCode))}</b> (${latestCode})
       </div>
-      <div style="background:var(--amy-surface-soft, #162131);border:1px solid var(--amy-border, rgba(255,255,255,.08));border-radius:14px;padding:12px;margin-bottom:12px">
-        <div style="font-weight:900;margin-bottom:6px">Perubahan:</div>
-        ${notes.length ? '<ul style="margin:0;padding-left:18px;color:#ddd;line-height:1.5">' + notes.map(x => `<li>${escapeHtml(x)}</li>`).join('') + '</ul>' : '<div style="color:#aaa">Tidak ada catatan perubahan.</div>'}
+      <div style="background:var(--amy-surface-soft, #162131);border:1px solid var(--amy-border, rgba(255,255,255,.08));border-radius:14px;padding:12px;margin-bottom:12px;overflow-y:auto;max-height:160px;-webkit-overflow-scrolling:touch;flex-shrink:1;">
+        <div style="font-weight:900;margin-bottom:6px;font-size:13px;">Perubahan:</div>
+        ${notes.length ? '<ul style="margin:0;padding-left:18px;color:#ddd;line-height:1.5;font-size:12.5px;">' + notes.map(x => `<li>${escapeHtml(x)}</li>`).join('') + '</ul>' : '<div style="color:#aaa;font-size:12px;">Tidak ada catatan perubahan.</div>'}
       </div>`;
 
     const progressWrap = document.createElement('div');
@@ -233,11 +239,11 @@
     note.textContent = hasNativeUpdater()
       ? 'APK diunduh ke cache Amy FX, diverifikasi, lalu Android meminta konfirmasi instalasi. File tidak menumpuk di folder Download.'
       : 'Versi Amy FX ini masih memakai unduhan browser. Setelah pembaruan terpasang, update berikutnya akan berlangsung di dalam aplikasi.';
-    css(note, { color: '#aaa', fontSize: '12px', lineHeight: '1.45', marginBottom: '16px' });
+    css(note, { color: '#aaa', fontSize: '11px', lineHeight: '1.4', marginBottom: '14px', flexShrink: '0' });
     box.appendChild(note);
 
     const row = document.createElement('div');
-    css(row, { display: 'flex', gap: '10px' });
+    css(row, { display: 'flex', gap: '10px', flexShrink: '0', marginTop: 'auto' });
 
     const updateBtn = createButton('Unduh & Perbarui', true);
     const cancelBtn = createButton(forceUpdate ? 'Nanti' : 'Batal', false);
