@@ -1,9 +1,9 @@
 {
   "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.420/AmyFX-latest.apk",
   "changelog": [
-    "AMY ICT CONTEXT V4: Kompas navigasi pasar 11-baris objektif tanpa repainting di Cockpit Mapping.",
-    "Pemulihan 594 Bab Akademi: Seluruh materi 10 modul tematik kembali lengkap offline.",
-    "Stabilitas & Paritas Live: Candle aktif dinamis, autoscale chart $4175, dan fitur native Android."
+    "Latihan Soal: 60 studi kasus eksekusi nyata XAU/USD (Gold $2620-$2660) menggantikan bank soal lama.",
+    "5 Pilar Keputusan: Filter Inducement, Killzone Timing, Dealing Range, SL Invalidation, dan Psikologi Eksekusi.",
+    "Pembersihan Menu Backtest: Menghapus modul Fractal Advisor & Laya AI yang tidak relevan."
   ],
   "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.420/AmyFX-latest.apk",
   "enabled": true,
@@ -13,9 +13,9 @@
   "mandatory": false,
   "releaseDate": "2026-10-21",
   "release_notes": [
-    "AMY ICT CONTEXT V4: Kompas navigasi pasar 11-baris objektif tanpa repainting di Cockpit Mapping.",
-    "Pemulihan 594 Bab Akademi: Seluruh materi 10 modul tematik kembali lengkap offline.",
-    "Stabilitas & Paritas Live: Candle aktif dinamis, autoscale chart $4175, dan fitur native Android."
+    "Latihan Soal: 60 studi kasus eksekusi nyata XAU/USD (Gold $2620-$2660) menggantikan bank soal lama.",
+    "5 Pilar Keputusan: Filter Inducement, Killzone Timing, Dealing Range, SL Invalidation, dan Psikologi Eksekusi.",
+    "Pembersihan Menu Backtest: Menghapus modul Fractal Advisor & Laya AI yang tidak relevan."
   ],
   "version": "2.0.0-amyfx.420",
   "versionCode": 950420,

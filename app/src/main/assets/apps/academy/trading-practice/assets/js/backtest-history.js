@@ -58,7 +58,7 @@
     items.sort(function (a, b) { return Number(b.createdAt || 0) - Number(a.createdAt || 0); });
     ui.byId('guidedHistory').innerHTML = items.length ? '<table class="practice-table"><thead><tr><th>Waktu</th><th>Latihan</th><th>Jawaban</th><th>Hasil</th></tr></thead><tbody>' + items.slice(0, 30).map(function (item) {
       return '<tr><td>' + esc(new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Makassar', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(item.createdAt))) + ' WITA</td><td>' + esc(item.title) + '</td><td>' + esc(item.answer) + '</td><td class="' + (item.correct ? 'result-win' : 'result-loss') + '">' + (item.correct ? 'TEPAT' : 'COBA LAGI') + '</td></tr>';
-    }).join('') + '</tbody></table>' : '<div class="empty-state">Belum ada hasil Guided Practice.</div>';
+    }).join('') + '</tbody></table>' : '<div class="empty-state">Belum ada hasil Latihan Soal.</div>';
   }
 
   function renderAnalytics(trades) {

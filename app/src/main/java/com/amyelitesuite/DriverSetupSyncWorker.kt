@@ -75,48 +75,9 @@ class DriverSetupSyncWorker(
     }
 
     private fun processActiveSetups(active: org.json.JSONArray, contextObj: JSONObject?) {
-        val session = contextObj?.optString("session", "").orEmpty().trim()
-        if (session.equals("PASAR TUTUP", ignoreCase = true) || !AmyFxNotificationGate.isGoldMarketOpen(System.currentTimeMillis())) {
-            android.util.Log.d("AmyFX-DriverWorker", "Market closed (session=$session), driver setups notification suppressed.")
-            return
-        }
-        val prefs = applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        for (i in 0 until active.length()) {
-            val item = active.optJSONObject(i) ?: continue
-            val id = item.optString("id").trim()
-            if (id.isBlank()) continue
-
-            val status = item.optString("status", "WAITING_TRIGGER")
-            val cacheKey = "notified_${id}_${status}"
-            if (prefs.contains(cacheKey)) continue
-
-            val driverName = item.optString("driverName").ifBlank {
-                item.optString("model", "Gold Driver")
-            }
-            val direction = item.optString("direction", "SELL")
-            val entry = item.optDouble("entry", 0.0)
-            val sl = item.optDouble("stopLoss", 0.0)
-            val tp = item.optDouble("target", 0.0)
-
-            val statusLabel = when (status) {
-                "WAITING_TRIGGER" -> "Rencana Limit"
-                "WAITING_NEXT_OPEN" -> "Menunggu Open"
-                "ARMED" -> "Menunggu Retest"
-                "CONFIRMED" -> "Terkonfirmasi"
-                "ACTIVE" -> "Aktif"
-                else -> status
-            }
-
-            val title = "⚡ Setup Driver: $driverName ($direction)"
-            val body = if (entry > 0) {
-                String.format("%s · Entry %.2f · SL %.2f · TP %.2f", statusLabel, entry, sl, tp)
-            } else {
-                "$statusLabel · Periksa chart untuk level acuan."
-            }
-
-            showDriverNotification(title, body, id)
-            prefs.edit().putLong(cacheKey, System.currentTimeMillis()).apply()
-        }
+        // Dinonaktifkan permanen atas instruksi pengguna: setup driver mekanikal ditiadakan (anti-spam & anti-false-signal).
+        // Seluruh notifikasi asli ICT Asisten (SSL/BSL Swept, Valid Break, POI, DOL, News) tetap aktif 100% di processAssistantAlerts.
+        return
     }
 
     private fun processMarketAlerts(result: JSONObject) {

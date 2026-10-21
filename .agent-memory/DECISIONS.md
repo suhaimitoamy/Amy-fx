@@ -1,5 +1,19 @@
 # Technical Decisions
 
+## 2026-10-21 — Eliminasi Total Modul Driver & Notifikasi Setup Driver (Preservasi Penuh Notifikasi ICT Liquidity & Structure)
+1. **Latar Belakang & Keluhan Pengguna:**
+   - Pengguna melaporkan bahwa notifikasi `⚡ Setup Driver:` terlalu spam dan hasil analisanya sering salah karena sifat model sinyal mekanikal yang kaku.
+   - Instruksi pengguna eksplisit: Hapus total modul dan notifikasi driver, namun **JANGAN GANGGU** notifikasi struktur dan likuiditas esensial (SSL Sweep, BSL Sweep, Valid Break, POI, DOL, News Lock).
+2. **Tindakan Teknis:**
+   - **UI Cockpit Mapping (`apps/mapping/index.html`):** Menghapus kartu accordion `<details class="model-context driver-tournament-card">` (Arsip & Riset: 6 Driver Tournament) agar tampilan murni terfokus pada AMY ICT Context V4.
+   - **Web Logic (`context-panel.js`):** Menghapus loop pengiriman notifikasi `window.Android.showNotificationWithUrl` dan registrasi auto plan driver pada `renderDriverSetups`.
+   - **Android Background Worker (`DriverSetupSyncWorker.kt`):** Menetralkan `processActiveSetups` menjadi *early return* sehingga background worker tidak pernah lagi menembakkan notifikasi `⚡ Setup Driver:`.
+   - **Preservasi Notifikasi ICT Asisten:** Seluruh fungsi pendeteksi likuiditas dan struktur di `processAssistantAlerts()` (`💧 SSL/BSL Swept`, `✓ Valid Break`, `🔥 Rejection`, `📍 Area POI`, `🎯 Target DOL`, `🛡️ News Lock`) tetap aktif 100% tanpa perubahan.
+3. **Sinkronisasi & Verifikasi:**
+   - Disinkronkan ke `/root/Amy-fx` dan `/root/Amy-fx-pro`.
+   - Targeted unit tests lolos 28/28 (0 fail).
+   - Server preview direstart via `amy-web restart`.
+
 ## 2026-10-19 — Upgrade Cockpit Mapping ke AMY ICT CONTEXT V4 (100% Pure Market Context Engine)
 1. **Latar Belakang & Kebutuhan:**
    - Evaluasi backtest September menunjukkan strategi mekanikal sinyal kaku rawan terkena noise atau false break. User memutuskan mengubah fondasi Cockpit Mapping menjadi **AMY ICT CONTEXT V4** (100% Pure Market Context) sebagai kompas navigasi objektif tanpa repainting sinyal.
@@ -1179,5 +1193,25 @@ Pro382 release verification completed: source 11239e1de1b42d6677cbd074619c636507
      - `/sdcard/Download/Telegram/Amy FX Academy - Modul 01 [Fondasi Pasar].pdf`
      - `/root/Amy FX Academy - Modul 01 [Fondasi Pasar].pdf`
    - Verifikasi visual 100% via `pdftoppm` dan `view_file` pada halaman 1, 2, 3, 5, 6, dan 24 mengonfirmasi bebas glitch, bebas terpotong, dan tata letak elegan.
+
+## [2026-10-21] Penghapusan Kartu Fractal Advisor & Laya AI dari Menu Backtest
+- **Konteks:** Pengguna meminta penghapusan kartu *"Fractal Advisor & Laya AI"* (Pencocokan fraktal 187k candle & audit gerbang AI Laya) dari tab Backtest karena sudah tidak digunakan lagi.
+- **Tindakan:**
+  - Menghapus item `fractal-advisor` dari array `practiceItems` pada `app/src/main/assets/app.js` (baik di `/root/Amy-fx` maupun `/root/Amy-fx-pro`).
+  - Halaman Backtest kini hanya menampilkan 4 modul latihan utama: Chart Analysis, Candle Replay, Guided Practice, dan Riwayat Backtest Lokal.
+  - File aset di `apps/fractal-advisor/` dibiarkan utuh di penyimpanan tanpa dipanggil di antarmuka navigasi Backtest.
+
+## [2026-10-21] Transformasi Modul Latihan Soal (60 Kasus Eksekusi Riil XAU/USD)
+- **Konteks:** Modul lama berisi 60 soal teoretis sintetis kaku ($100-$260, 21 lilin buatan matematika) yang tidak relevan dengan live trading dan membuat pengguna bingung saat live execution.
+- **Tindakan:**
+  - Mengubah label modul menjadi *"Latihan Soal"* di seluruh menu, header, dan riwayat.
+  - Membangun ulang 60 studi kasus menggunakan data pergerakan riil XAU/USD ($2620-$2660) dari sesi modern 2025 dengan 5 tema inti (12 kasus per tema):
+    1. Filter Jebakan & Inducement (12 kasus)
+    2. Eksekusi Killzone Sisi Kanan London & NY (12 kasus)
+    3. Dealing Range & Disiplin NO TRADE (12 kasus)
+    4. Penempatan SL Invalidation & Target TP Logis (12 kasus)
+    5. Psikologi Eksekusi, Anti-FOMO & Anti-Revenge (12 kasus)
+  - Pembagian kesulitan tetap 20 Mudah, 20 Sedang, 20 Advanced dengan integrasi link materi modul Academy terkait.
+  - Tersinkronisasi penuh pada `/root/Amy-fx` dan `/root/Amy-fx-pro`.
 
 

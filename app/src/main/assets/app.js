@@ -11,14 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const practiceItems = [
     {
-      id: 'fractal-advisor',
-      title: 'Fractal Advisor & Laya AI',
-      badge: 'System 1',
-      icon: 'indicator',
-      desc: 'Pencocokan fraktal 187k candle & audit gerbang AI Laya sebelum entry.',
-      target: 'apps/fractal-advisor/index.html'
-    },
-    {
       id: 'chart-analysis',
       title: 'Chart Analysis',
       badge: 'Praktik',
@@ -36,10 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     {
       id: 'guided-practice',
-      title: 'Guided Practice',
+      title: 'Latihan Soal',
       badge: 'Latihan',
       icon: 'academy',
-      desc: '60 soal acak ICT dengan chart ilustratif & evaluasi terpandu.',
+      desc: '60 studi kasus eksekusi chart riil XAU/USD & evaluasi keputusan.',
       target: 'apps/academy/trading-practice/guided-practice.html'
     },
     {
