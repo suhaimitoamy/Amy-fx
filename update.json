@@ -1,23 +1,22 @@
 {
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.421/AmyFX-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx-pro/releases/download/amyfx-pro-2.0.0-pro.424/AmyFX-Pro-latest.apk",
   "changelog": [
-    "Latihan Soal: 60 studi kasus eksekusi nyata XAU/USD (Gold $2620-$2660) menggantikan bank soal lama.",
-    "5 Pilar Keputusan: Filter Inducement, Killzone Timing, Dealing Range, SL Invalidation, dan Psikologi Eksekusi.",
-    "Pembersihan Menu Backtest: Menghapus modul Fractal Advisor & Laya AI yang tidak relevan."
+    "Perbaikan Rilis Aktual Data Ekonomi: Mengaktifkan ekstraksi instan data aktual (contoh: 194K Klaim Pengangguran / Jobless Claims) dari feed berita real-time @SM_News_24h.",
+    "Sinkronisasi Dua Arah Kalender & Sentimen: Nilai aktual kini langsung diperbarui secara reaktif di tab Sentimen Makro dan Kalender tanpa jeda delay.",
+    "Presisi Analisis Pasca-Rilis: Evaluasi dampak dovish/hawkish langsung aktif seketika setelah angka keluar."
   ],
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.421/AmyFX-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx-pro/releases/download/amyfx-pro-2.0.0-pro.424/AmyFX-Pro-latest.apk",
   "enabled": true,
   "force_update": false,
-  "latest_version_code": 950421,
-  "latest_version_name": "2.0.0-amyfx.421",
+  "latest_version_code": 950424,
+  "latest_version_name": "2.0.0-pro.424",
   "mandatory": false,
-  "releaseDate": "2026-10-21",
+  "releaseDate": "2026-10-22",
   "release_notes": [
-    "Latihan Soal: 60 studi kasus eksekusi nyata XAU/USD (Gold $2620-$2660) menggantikan bank soal lama.",
-    "5 Pilar Keputusan: Filter Inducement, Killzone Timing, Dealing Range, SL Invalidation, dan Psikologi Eksekusi.",
-    "Pembersihan Menu Backtest: Menghapus modul Fractal Advisor & Laya AI yang tidak relevan."
+    "Perbaikan Rilis Aktual Data Ekonomi: Mengaktifkan ekstraksi instan data aktual (contoh: 194K Klaim Pengangguran / Jobless Claims) dari feed berita real-time @SM_News_24h.",
+    "Sinkronisasi Dua Arah Kalender & Sentimen: Nilai aktual kini langsung diperbarui secara reaktif di tab Sentimen Makro dan Kalender tanpa jeda delay.",
+    "Presisi Analisis Pasca-Rilis: Evaluasi dampak dovish/hawkish langsung aktif seketika setelah angka keluar."
   ],
-  "version": "2.0.0-amyfx.421",
-  "versionCode": 950421,
-  "sha256": "9cb034b937464fd00a2d3be32a97d5cefffd9b106888130b0f4f204443fdf5dc"
+  "version": "2.0.0-pro.424",
+  "versionCode": 950424
 }

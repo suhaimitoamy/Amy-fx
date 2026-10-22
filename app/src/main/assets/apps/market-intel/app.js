@@ -296,40 +296,53 @@ function extractActualForEvent(ev, newsItems) {
 
   const keywords = [];
   if (title.includes('unemployment claims') || title.includes('jobless claims')) {
-    keywords.push('unemployment claims', 'jobless claims', 'klaim pengangguran', 'klaim awal');
+    keywords.push('unemployment claims', 'jobless claims', 'initial claims', 'initial jobless', 'klaim pengangguran', 'klaim awal');
+  } else if (title.includes('continuing claims')) {
+    keywords.push('continuing claims', 'continuing jobless', 'klaim lanjutan');
   } else if (title.includes('non-farm') || title.includes('nonfarm') || title.includes('payrolls')) {
-    keywords.push('non-farm', 'nonfarm', 'payroll', 'nfp');
+    keywords.push('non-farm', 'nonfarm', 'payroll', 'nfp', 'tenaga kerja non-pertanian');
   } else if (title.includes('unemployment rate')) {
     keywords.push('unemployment rate', 'tingkat pengangguran');
   } else if (title.includes('hourly earnings')) {
-    keywords.push('hourly earnings', 'penghasilan rata-rata per jam', 'upah per jam');
+    keywords.push('hourly earnings', 'average hourly earnings', 'penghasilan rata-rata per jam', 'upah per jam');
   } else if (title.includes('cpi')) {
-    keywords.push('cpi', 'ihk', 'inflasi');
+    keywords.push('cpi', 'ihk', 'inflasi', 'consumer price');
+  } else if (title.includes('ppi')) {
+    keywords.push('ppi', 'ihp', 'producer price');
   } else if (title.includes('pce')) {
     keywords.push('pce');
   } else if (title.includes('pmi')) {
-    keywords.push('pmi');
+    keywords.push('pmi', 'ism manufacturing', 'ism services');
   } else if (title.includes('retail sales')) {
     keywords.push('retail sales', 'penjualan ritel');
   } else if (title.includes('gdp')) {
-    keywords.push('gdp', 'pdb');
+    keywords.push('gdp', 'pdb', 'gross domestic');
   } else {
     keywords.push(title);
   }
 
   for (const item of newsItems) {
+    if (item.time && ev.date) {
+      const itemDate = new Date(item.time).getTime();
+      const evDate = new Date(ev.date).getTime();
+      if (Number.isFinite(itemDate) && Number.isFinite(evDate)) {
+        const diffHours = Math.abs(itemDate - evDate) / (1000 * 60 * 60);
+        if (diffHours > 18) continue;
+      }
+    }
+
     const raw = `${item.text || ''}\n${item.textOriginal || ''}`;
     const lower = raw.toLowerCase();
     const matchedKw = keywords.find(kw => lower.includes(kw));
     if (!matchedKw) continue;
 
-    // Pattern 1: Explicit Label "Aktual: 89K" or "Actual: 89K" or "Hasil: 89K"
-    const p1 = raw.match(/(?:Aktual|Actual|Hasil|Rilis)\s*[:=]\s*([+-]?\d+(?:[\.,]\d+)?[%KkMmBb]?)/i);
+    // Pattern 1: Explicit Label "Aktual: 89K" or "Actual: 89K" or "Saat ini: 194K" or "Current: 194K" or "Hasil: 89K"
+    const p1 = raw.match(/(?:[•\-\*\s]|^)(?:Aktual|Actual|Saat\s*ini|Current|Sebenarnya|Hasil|Result|Rilis)\s*[:=]?\s*([+-]?\d+(?:[\.,]\d+)?[%KkMmBb]?)/im);
     if (p1 && p1[1]) return p1[1].trim();
 
     // Pattern 2: "EventName: 89K (vs ...)"
     const kwEsc = matchedKw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const p2 = new RegExp(`${kwEsc}[^\\n\\r:]*[:=]\\s*([+-]?\\d+(?:[\\.,]\\d+)?[%KkMmBb]?)`, 'i').exec(raw);
+    const p2 = new RegExp(`${kwEsc}[^\\n\\r:]*[:=]?\\s*([+-]?\\d+(?:[\\.,]\\d+)?[%KkMmBb]?)`, 'i').exec(raw);
     if (p2 && p2[1]) return p2[1].trim();
 
     // Pattern 3: "tercatat 89K" / "keluar 89K" / "sebesar 89K"
@@ -337,6 +350,33 @@ function extractActualForEvent(ev, newsItems) {
     if (p3 && p3[1]) return p3[1].trim();
   }
   return null;
+}
+
+function getCachedNewsItems() {
+  try {
+    const raw = localStorage.getItem('amyfx.assistant.news.v1');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed?.items)) return parsed.items;
+    }
+  } catch (_) {}
+  return [];
+}
+
+function enrichCalendarEventsWithNews(events, newsItems) {
+  if (!Array.isArray(events) || events.length === 0) return;
+  const items = Array.isArray(newsItems) && newsItems.length > 0 ? newsItems : getCachedNewsItems();
+  if (!items || items.length === 0) return;
+
+  for (const ev of events) {
+    if (!ev.actual || ev.actual === '—' || ev.actual === '--') {
+      const ext = extractActualForEvent(ev, items);
+      if (ext) {
+        ev.actual = ext;
+        ev.actualSource = 'news_feed';
+      }
+    }
+  }
 }
 
 async function loadSentiment(isBackground = false) {
@@ -364,16 +404,7 @@ async function loadSentiment(isBackground = false) {
   const hasEvents = usdEvents.length > 0;
 
   // Ambil berita lokal untuk bukti geopolitik & energi, dan enrich actual
-  let newsItems = [];
-  try {
-    const rawNews = localStorage.getItem('amyfx.assistant.news.v1');
-    if (rawNews) {
-      const parsedNews = JSON.parse(rawNews);
-      if (Array.isArray(parsedNews?.items)) {
-        newsItems = parsedNews.items;
-      }
-    }
-  } catch (_) {}
+  const newsItems = getCachedNewsItems();
 
   // Filter event USD hari ini (WITA)
   const todayUsd = usdEvents.filter(e => {
@@ -386,15 +417,7 @@ async function loadSentiment(isBackground = false) {
   todayUsd.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   // Enrich event dengan data aktual dari news feed jika ada
-  for (const ev of todayUsd) {
-    if (!ev.actual || ev.actual === '—' || ev.actual === '--') {
-      const ext = extractActualForEvent(ev, newsItems);
-      if (ext) {
-        ev.actual = ext;
-        ev.actualSource = 'news_feed';
-      }
-    }
-  }
+  enrichCalendarEventsWithNews(todayUsd, newsItems);
 
   // Prioritaskan event High & Medium
   const importantToday = todayUsd.filter(e => {
@@ -731,7 +754,7 @@ async function loadSentiment(isBackground = false) {
         <div class="event-item-numbers">
           <span>Forecast: <strong>${escapeHtml(mainEvent.forecast || '—')}</strong></span>
           <span>Previous: <strong>${escapeHtml(mainEvent.previous || '—')}</strong></span>
-          <span>Actual: <strong>${escapeHtml(mainEvent.actual || '—')}</strong></span>
+          <span>Actual: <strong class="${Boolean(mainEvent.actual && mainEvent.actual !== '—' && mainEvent.actual !== '--') ? 'act-live' : ''}">${escapeHtml(mainEvent.actual || '—')}</strong></span>
         </div>
       </div>
     `;
@@ -1529,9 +1552,13 @@ async function loadNews(silent = false) {
     if (currentSequence === newsFetchSequence) {
       try { localStorage.setItem('amyfx.assistant.news.v1', JSON.stringify({ updated: data.updated, items: sortedNews.slice(0, 20) })); } catch {}
       renderNews(sortedNews, currentExpandedIds);
-      if (calendarEvents.length === 0) {
+      if (calendarEvents.length > 0) {
+        enrichCalendarEventsWithNews(calendarEvents, sortedNews);
+        renderCalendar();
+      } else {
         loadCalendar(true);
       }
+      loadSentiment(true);
       if (currentTab === 'news' && prevScrollTop > 0) {
         window.scrollTo({ top: prevScrollTop, behavior: 'instant' });
       }
@@ -1886,6 +1913,7 @@ async function loadCalendar(silent = false) {
   const cached = getCachedCalendar();
   if (cached?.events?.length > 0 && calendarEvents.length === 0) {
     calendarEvents = cached.events;
+    enrichCalendarEventsWithNews(calendarEvents);
     renderCalendar();
   }
 
@@ -1923,6 +1951,7 @@ async function loadCalendar(silent = false) {
     }
 
     if (Array.isArray(data) && data.length > 0) {
+      enrichCalendarEventsWithNews(data);
       calendarEvents = data;
       saveCalendarToCache(data);
       panelLoadedAt.calendar = Date.now();
@@ -1930,6 +1959,7 @@ async function loadCalendar(silent = false) {
       loadSentiment(true);
     } else if (calendarEvents.length === 0 && cached?.events?.length > 0) {
       calendarEvents = cached.events;
+      enrichCalendarEventsWithNews(calendarEvents);
       isCalendarLive = false;
       renderCalendar();
       loadSentiment(true);
@@ -2042,6 +2072,13 @@ function renderCalendar() {
     html.push(`<div class="calendar-date-header"><span>📅 ${escapeHtml(dateLabel)}</span><small>${items.length} rilis</small></div>`);
 
     items.forEach(ev => {
+      if (!ev.actual || ev.actual === '—' || ev.actual === '--') {
+        const ext = extractActualForEvent(ev, getCachedNewsItems());
+        if (ext) {
+          ev.actual = ext;
+          ev.actualSource = 'news_feed';
+        }
+      }
       const d = new Date(ev.date);
       const timeMs = d.getTime();
       const timeStr = Number.isFinite(timeMs)
