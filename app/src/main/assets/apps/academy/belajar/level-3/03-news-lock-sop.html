@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07090e">
+  <title>Pelajaran 3: SOP News Lock & Kalender Merah — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/micro-learning.css">
+  <style>
+    /* Styling alur News Lock */
+    .timeline-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .timeline-step {
+      display: flex;
+      gap: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 14px;
+      border-left: 4px solid var(--ml-border);
+    }
+    .timeline-step.pre {
+      border-left-color: var(--ml-gold);
+    }
+    .timeline-step.during {
+      border-left-color: var(--ml-danger);
+      background: rgba(239, 68, 68, 0.05);
+    }
+    .timeline-step.post {
+      border-left-color: var(--ml-success);
+    }
+    .step-time-badge {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      height: fit-content;
+      white-space: nowrap;
+    }
+    .step-content h4 {
+      margin: 0 0 4px;
+      font-size: 14.5px;
+      color: #fff;
+    }
+    .step-content p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--ml-muted);
+      line-height: 1.5;
+    }
+    .news-tag-red {
+      display: inline-block;
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 800;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body class="micro-learning-body">
+
+<div class="ml-container">
+  <!-- Header Bar -->
+  <header class="ml-header">
+    <a href="index.html" class="ml-back-link">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      <span>Roadmap Level 3</span>
+    </a>
+    <span class="ml-pill-tag">Pelajaran 3 dari 6</span>
+  </header>
+
+  <!-- Title Box -->
+  <div class="ml-lesson-title-box">
+    <h1>SOP News Lock & Kalender Merah</h1>
+    <div class="ml-lesson-meta">
+      <span>⏱ 4 Menit Baca</span>
+      <span>•</span>
+      <span>Proteksi Modal dari Slippage & Spread Ekstrem</span>
+    </div>
+  </div>
+
+  <!-- Realita Berita Merah -->
+  <section class="ml-card">
+    <h2>1. Realita Berita Kategori Merah (High Impact)</h2>
+    <p>
+      Kalender ekonomi memiliki kode warna untuk setiap rilis data statistik. Berita berlabel <strong>Merah (High Impact)</strong> seperti:
+    </p>
+    <div style="margin: 10px 0 16px;">
+      <span class="news-tag-red">CPI</span> Inflasi Konsumen Amerika Serikat<br style="line-height:2;">
+      <span class="news-tag-red">NFP</span> Non-Farm Payrolls (Jumat Pertama Tiap Bulan)<br style="line-height:2;">
+      <span class="news-tag-red">FOMC</span> Keputusan Suku Bunga & Pidato Ketua The Fed
+    </div>
+    <p>
+      Banyak trader amatir mengira rilis berita adalah momen tercepat untuk mendadak kaya dengan memasang lot besar. Namun realita di balik dapur pasar keuangan berkata sebaliknya.
+    </p>
+  </section>
+
+  <!-- Dua Bahaya Utama Saat Berita -->
+  <div class="ml-warning">
+    <div class="ml-warning-title">⚠️ Dua Monster Pembunuh Akun Saat Berita Rilis</div>
+    <ol style="margin: 8px 0 0; padding-left: 20px; line-height: 1.6;">
+      <li>
+        <strong>Spread Melebar Ekstrem:</strong> Pada detik berita meledak, para penyedia likuiditas (Liquidity Provider) menarik order mereka. Akibatnya, spread normal Gold yang biasanya 15 - 25 sen bisa melebar seketika menjadi <strong>$2.00 s.d. $4.00 per troy ounce</strong>. Memencet buy bisa langsung minus besar saat itu juga!
+      </li>
+      <li>
+        <strong>Slippage Parah (Lonjakan Harga Kosong):</strong> Karena buku pesanan (order book) kosong dalam sepersekian detik, harga melompat. Jika kamu memasang Stop Loss di 2650.00, sistem broker mungkin baru menemukan pembeli di harga 2642.00. Kerugianmu bisa melonjak 3x lipat dari rencana semula!
+      </li>
+    </ol>
+  </div>
+
+  <!-- Protokol 3 Fase News Lock -->
+  <section class="ml-card">
+    <h2>2. Protokol Resmi: News Lock 15 Menit</h2>
+    <p>
+      Trader profesional di hedge fund dunia menerapkan aturan disiplin ketat yang disebut <strong>News Lock</strong>:
+    </p>
+
+    <div class="timeline-steps">
+      <!-- Fase 1: Pre-News -->
+      <div class="timeline-step pre">
+        <div class="step-time-badge">T - 15 Menit</div>
+        <div class="step-content">
+          <h4>Fase 1: Kunci & Amankan Posisi</h4>
+          <p>Dilarang membuka posisi baru. Jika memiliki posisi berjalan yang sudah profit, geser Stop Loss ke Breakeven (BEP / Titik Impas) atau amankan profit sebagian (Take Profit 70%).</p>
+        </div>
+      </div>
+
+      <!-- Fase 2: Zero Hour -->
+      <div class="timeline-step during">
+        <div class="step-time-badge" style="background:#ef4444;">T - 0 (Rilis)</div>
+        <div class="step-content">
+          <h4>Fase 2: Hands Off (Tangan di Bawah Meja!)</h4>
+          <p>Tepat saat berita keluar, jangan sentuh mouse atau layar HP. Biarkan algoritma bank bertarung dan menyapu order retail di kedua arah (Two-Way Whipsaw). Kita cukup menonton tanpa emosi.</p>
+        </div>
+      </div>
+
+      <!-- Fase 3: Post-News -->
+      <div class="timeline-step post">
+        <div class="step-time-badge" style="background:#10b981;">T + 15 s.d. 30 Mnt</div>
+        <div class="step-content">
+          <h4>Fase 3: Masuk Setelah Debu Mereda</h4>
+          <p>Spread sudah kembali normal. Likuiditas kotor sudah tersapu bersih. Sekarang amati pembentukan struktur M5/M15 baru (MSS dan FVG). Masuklah dengan risiko terukur mengikuti arah tren sejati.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Analogi Badai Laut -->
+  <div class="ml-analogi">
+    <div class="ml-analogi-title">⚓ Analogi Kapal Nelayan & Gelombang Badai</div>
+    Kapal nelayan yang bijak tidak akan melaut tepat saat badai topan menerjang pantai hanya demi menangkap ikan kilat. Mereka mengikat tali kapal di dermaga dengan aman.
+    Setelah topan lewat dan ombak tenang, ikan-ikan besar justru berenang ke permukaan mencari makan. Di sanalah nelayan melaut dan membawa pulang tangkapan berlimpah dengan selamat.
+  </div>
+
+  <!-- Diagram Visual Whipsaw -->
+  <div class="ml-diagram">
+    <div class="ml-diagram-title">Anatomi Sapuan Berita (Two-Way Whipsaw)</div>
+    <svg viewBox="0 0 540 160" width="100%" height="auto" style="max-height: 160px; display:block; margin:0 auto;">
+      <!-- Grid lines -->
+      <line x1="20" y1="40" x2="520" y2="40" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4,4" />
+      <line x1="20" y1="80" x2="520" y2="80" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4,4" />
+      <line x1="20" y1="120" x2="520" y2="120" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4,4" />
+
+      <!-- Text Annotations -->
+      <text x="70" y="30" fill="#94a3b8" font-size="11">Sebelum Berita (Tenang)</text>
+      <text x="270" y="22" fill="#f87171" font-size="11" font-weight="bold" text-anchor="middle">DETIK RILIS: Jarum Panjang Dua Sisi!</text>
+      <text x="440" y="30" fill="#34d399" font-size="11" text-anchor="middle">Pasca Berita: Tren Terarah</text>
+
+      <!-- Pre-news path -->
+      <path d="M 20,80 L 60,78 L 110,82 L 170,80" fill="none" stroke="#94a3b8" stroke-width="2.5" />
+
+      <!-- Giant Spike (News Spike up, then down, then stabilize) -->
+      <line x1="270" y1="26" x2="270" y2="148" stroke="#ef4444" stroke-width="3" />
+      <circle cx="270" cy="26" r="4" fill="#ef4444" />
+      <circle cx="270" cy="148" r="4" fill="#ef4444" />
+      <text x="282" y="32" fill="#ef4444" font-size="10">SL Buy kena</text>
+      <text x="282" y="148" fill="#ef4444" font-size="10">SL Sell kena</text>
+
+      <!-- Post-news calm directional recovery -->
+      <path d="M 270,100 L 320,110 L 370,95 L 430,70 L 490,55 L 520,50" fill="none" stroke="#10b981" stroke-width="3.5" />
+      <rect x="360" y="75" width="40" height="20" fill="rgba(16, 185, 129, 0.2)" stroke="#10b981" rx="4" />
+      <text x="380" y="89" fill="#10b981" font-size="9" font-weight="bold" text-anchor="middle">FVG Aman</text>
+    </svg>
+  </div>
+
+  <!-- Aturan Penutup -->
+  <div class="ml-aturan">
+    <div class="ml-aturan-title">🛡 Ringkasan News Lock</div>
+    Jangan pernah berjudi dengan tebak-tebakan angka data ekonomi. Tugas kita bukan memprediksi data inflasi AS, melainkan membaca reaksi institusi terhadap data tersebut setelah pasar kembali teratur.
+  </div>
+
+  <!-- Interactive Mini Quiz -->
+  <div class="ml-quiz-card" data-lesson-id="level-3-03">
+    <span class="ml-quiz-badge">Kuis Cepat · Uji Pemahaman</span>
+    <h3 class="ml-quiz-question">Apa bahaya paling mematikan jika seorang trader memaksakan pasang posisi tepat di detik rilis berita Non-Farm Payroll (NFP)?</h3>
+    <div class="ml-quiz-options">
+      <button type="button" class="ml-quiz-btn" data-correct="false" data-explanation="Trading forex tidak pernah mengenakan denda pajak mendadak, bahayanya ada pada mekanisme eksekusi harga.">
+        A. Pemerintah AS akan menyita dana keuntungan sebagai pajak darurat.
+      </button>
+      <button type="button" class="ml-quiz-btn" data-correct="true" data-explanation="Tepat sekali! Pelebaran spread raksasa dan lonjakan slippage membuat Stop Loss tidak terisi di harga semestinya, sering kali melipatgandakan risiko kerugian dalam hitungan detik.">
+        B. Lonjakan pelebaran spread dan risiko slippage parah yang bisa membuat kerugian jauh melebihi batas Stop Loss terpasang.
+      </button>
+      <button type="button" class="ml-quiz-btn" data-correct="false" data-explanation="Pasar tetap berjalan, hanya saja order book kosong dalam hitungan detik sehingga harganya melompat liar.">
+        C. Akun trading akan diblokir otomatis oleh bursa saham New York secara permanen.
+      </button>
+    </div>
+    <div class="ml-quiz-feedback"></div>
+  </div>
+
+  <!-- Footer Navigation -->
+  <div class="ml-nav-footer">
+    <a href="02-killzones-xauusd.html" class="ml-btn-nav ml-btn-prev">
+      ← Pelajaran 2: Killzone XAU/USD
+    </a>
+    <a href="04-model-silver-bullet.html" class="ml-btn-nav ml-btn-next">
+      Lanjut: Model Silver Bullet →
+    </a>
+  </div>
+</div>
+
+<script src="../assets/micro-learning.js"></script>
+</body>
+</html>

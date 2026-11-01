@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07090e">
+  <title>Pelajaran 04: Order Block (OB) — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/micro-learning.css">
+  <style>
+    .ob-diagram-svg {
+      width: 100%;
+      max-width: 480px;
+      height: auto;
+      margin: 0 auto;
+      display: block;
+    }
+    .ob-criteria-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(212, 168, 50, 0.12);
+      border: 1px solid rgba(212, 168, 50, 0.3);
+      color: var(--ml-gold);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body class="micro-learning-body">
+
+<div class="ml-container">
+  <!-- Header / Breadcrumb -->
+  <header class="ml-header">
+    <a href="index.html" class="ml-back-link">
+      <span>←</span> Roadmap Level 2
+    </a>
+    <span class="ml-pill-tag">Pelajaran 04</span>
+  </header>
+
+  <!-- Title Box -->
+  <section class="ml-lesson-title-box">
+    <h1>Order Block (OB): Jejak Lilin Terakhir Institusi</h1>
+    <div class="ml-lesson-meta">
+      <span>⏱️ 4 Menit Baca</span>
+      <span>•</span>
+      <span>Level 2: Senjata Utama ICT</span>
+      <span>•</span>
+      <span>Kuis Interaktif</span>
+    </div>
+  </section>
+
+  <!-- Bagian 1: Logika Dasar Order Block -->
+  <article class="ml-card">
+    <h2><span>🏛️</span> 1. Apa Itu Order Block yang Sebenarnya?</h2>
+    <p>
+      Banyak materi trading menyebut Order Block hanyalah "lilin merah terakhir sebelum naik". Definisi itu terlalu dangkal dan berbahaya!
+    </p>
+    <div class="ml-analogi">
+      <div class="ml-analogi-title"> Rahasia di Balik Layar Institusi</div>
+      Sebelum bank besar memicu lonjakan harga beli raksasa, mereka terlebih dahulu memasukkan posisi jual kecil untuk memancing ketakutan retail agar retail ikut menjual. Ketika harga kemudian diledakkan ke atas, posisi jual milik bank tersebut <strong>terjebak floating minus</strong>. Oleh karena itu, bank akan mengembalikan harga ke area lilin tersebut (mitigasi) guna menutup posisi minus mereka pada titik impas (Break Even) lalu menambah dorongan Buy baru!
+    </div>
+    <ul style="padding-left: 20px; margin: 10px 0;">
+      <li><strong>Bullish Order Block (+OB):</strong> Lilin turun (merah) terakhir sebelum ledakan harga naik kencang yang memecahkan struktur pasar.</li>
+      <li><strong>Bearish Order Block (-OB):</strong> Lilin naik (hijau) terakhir sebelum longsor harga turun drastis yang memecahkan struktur pasar.</li>
+    </ul>
+  </article>
+
+  <!-- Bagian 2: Diagram Visual Anatomi OB -->
+  <article class="ml-card">
+    <h2><span>📊</span> 2. Anatomi Bullish Order Block &amp; 50% Mean Threshold</h2>
+    <p>
+      Titik paling presisi di dalam Order Block adalah <strong>Mean Threshold (MT)</strong>, yaitu titik tengah 50% dari bodi lilin Order Block tersebut:
+    </p>
+
+    <!-- Visual Diagram SVG -->
+    <div class="ml-diagram">
+      <div class="ml-diagram-title">Visualisasi Bullish Order Block (+OB) &amp; Mitigasi</div>
+      <svg class="ob-diagram-svg" viewBox="0 0 460 230" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Break of Structure Line -->
+        <line x1="120" y1="50" x2="380" y2="50" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="3 3"/>
+        <text x="320" y="42" fill="#38bdf8" font-size="10" font-weight="bold">BOS (Break of Structure)</text>
+
+        <!-- Lilin 1: Order Block (Merah) -->
+        <line x1="80" y1="110" x2="80" y2="190" stroke="#ef4444" stroke-width="2"/>
+        <rect x="68" y="125" width="24" height="50" fill="#ef4444" rx="2"/>
+        <text x="80" y="210" fill="#f87171" font-size="11" text-anchor="middle" font-weight="bold">Lilin OB</text>
+
+        <!-- Garis Mean Threshold (50% Bodi OB) -->
+        <line x1="68" y1="150" x2="310" y2="150" stroke="#d4a832" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <text x="180" y="145" fill="#d4a832" font-size="10" font-weight="bold">50% Mean Threshold (MT)</text>
+
+        <!-- Lilin 2 & 3: Impuls Hijau Raksasa Meninggalkan FVG -->
+        <rect x="110" y="60" width="26" height="100" fill="#10b981" rx="2"/>
+        <line x1="123" y1="45" x2="123" y2="175" stroke="#10b981" stroke-width="2"/>
+
+        <rect x="150" y="30" width="26" height="75" fill="#10b981" rx="2"/>
+        <line x1="163" y1="20" x2="163" y2="120" stroke="#10b981" stroke-width="2"/>
+
+        <!-- Retest Kembali Menyentuh 50% MT OB -->
+        <path d="M 180 50 Q 230 110 250 150" stroke="#94a3b8" stroke-width="2" stroke-dasharray="3 3" fill="none"/>
+        <circle cx="250" cy="150" r="5" fill="#d4a832"/>
+        <text x="260" y="145" fill="#fbbf24" font-size="11" font-weight="bold">ENTRY BUY (Mitigasi)</text>
+
+        <!-- Melesat Naik -->
+        <path d="M 255 150 Q 300 110 350 40" stroke="#10b981" stroke-width="3" fill="none"/>
+        <polygon points="350,40 340,43 346,50" fill="#10b981"/>
+        <text x="320" y="25" fill="#34d399" font-size="11" font-weight="bold">Lompatan Impuls</text>
+      </svg>
+    </div>
+  </article>
+
+  <!-- Bagian 3: 3 Kriteria High Probability A+ OB -->
+  <article class="ml-card">
+    <h2><span>⭐</span> 3. 3 Kriteria Wajib Order Block Berkualitas Tinggi (A+)</h2>
+    <p>
+      Jangan pernah memperdagangkan setiap lilin berlawanan yang kamu temui. Sebuah Order Block hanya layak diperhitungkan jika memenuhi 3 syarat emas berikut:
+    </p>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+      <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 12px 14px; border-radius: 10px;">
+        <span class="ob-criteria-badge">Kriteria 1</span>
+        <strong style="color: #ffffff; display: block; margin: 4px 0 2px;">Meninggalkan Celah FVG</strong>
+        <span style="font-size: 13.5px; color: #cbd5e1;">Impuls yang keluar dari lilin OB wajib meninggalkan Fair Value Gap yang jelas. Ini bukti otentik adanya ketergesa-gesaan institusi.</span>
+      </div>
+
+      <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 12px 14px; border-radius: 10px;">
+        <span class="ob-criteria-badge">Kriteria 2</span>
+        <strong style="color: #ffffff; display: block; margin: 4px 0 2px;">Memecahkan Struktur (BOS / MSS)</strong>
+        <span style="font-size: 13.5px; color: #cbd5e1;">Gelombang impuls setelah lilin OB harus mematahkan Swing High atau Swing Low terdekat secara sah dengan Body Close.</span>
+      </div>
+
+      <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 12px 14px; border-radius: 10px;">
+        <span class="ob-criteria-badge">Kriteria 3</span>
+        <strong style="color: #ffffff; display: block; margin: 4px 0 2px;">Didahului Sapuan Likuiditas (Sweep)</strong>
+        <span style="font-size: 13.5px; color: #cbd5e1;">Lilin OB yang paling tangguh biasanya memiliki ekor yang sempat membersihkan likuiditas (BSL/SSL) sebelum ia melesat ke arah sebaliknya.</span>
+      </div>
+    </div>
+  </article>
+
+  <!-- Bagian 4: Cara Pasang Entry & Stop Loss -->
+  <article class="ml-card">
+    <h2><span>🎯</span> 4. Titik Entry Presisi &amp; Stop Loss</h2>
+    <div class="ml-aturan">
+      <div class="ml-aturan-title">📐 Panduan Eksekusi OB</div>
+      <p style="margin: 0 0 6px 0;">
+        • <strong>Entry Konservatif (Rekomendasi):</strong> Pasang Limit Order tepat pada garis <strong>50% Mean Threshold (MT)</strong> dari bodi lilin Order Block.
+      </p>
+      <p style="margin: 0 0 6px 0;">
+        • <strong>Entry Agresif:</strong> Pasang Limit Order pada <strong>Open Price</strong> lilin Order Block.
+      </p>
+      <p style="margin: 0;">
+        • <strong>Stop Loss Aman:</strong> Letakkan SL 1–2 pip di balik ekor terluar lilin Order Block. Jika ekor lilin OB ditembus bodi candle, setup langsung batal!
+      </p>
+    </div>
+  </article>
+
+  <!-- Kuis Interaktif 1 Soal -->
+  <section class="ml-quiz-card" data-lesson-id="level-2-04">
+    <span class="ml-quiz-badge">Uji Pemahaman Cepat</span>
+    <h3 class="ml-quiz-question">
+      Manakah kriteria yang PALING MENENTUKAN bahwa sebuah Order Block memiliki probabilitas tinggi (High Probability A+) untuk dijadikan area entry?
+    </h3>
+    <div class="ml-quiz-options">
+      <button type="button" class="ml-quiz-btn" data-correct="false" data-explanation="Warna atau ukuran candle saja tanpa konteks pasar tidak membuktikan adanya pesanan institusi.">
+        A. Candle OB harus berukuran raksasa dan memiliki warna hijau pekat.
+      </button>
+
+      <button type="button" class="ml-quiz-btn" data-correct="true" data-explanation="Sempurna! Order Block A+ mutlak wajib diikuti oleh impuls bodi besar yang meninggalkan FVG dan memecahkan struktur pasar (BOS/MSS) secara nyata.">
+        B. OB tersebut didorong oleh ledakan impuls yang meninggalkan FVG dan memecahkan struktur pasar (BOS/MSS) secara tegas dengan body close.
+      </button>
+
+      <button type="button" class="ml-quiz-btn" data-correct="false" data-explanation="Konsep ICT murni tidak bergantung pada indikator moving average retail.">
+        C. Candle OB harus menyentuh indikator Moving Average 200 di time frame M1.
+      </button>
+    </div>
+    <div class="ml-quiz-feedback"></div>
+  </section>
+
+  <!-- Step Footer Navigation -->
+  <footer class="ml-nav-footer">
+    <a href="03-liquidity-pool.html" class="ml-btn-nav ml-btn-prev">
+      <span>←</span> Pelajaran 03
+    </a>
+    <a href="05-fvg-kuat-vs-fvg-lemah.html" class="ml-btn-nav ml-btn-next">
+      <span>Lanjut: FVG Kuat vs Lemah</span>
+      <span>→</span>
+    </a>
+  </footer>
+</div>
+
+<script src="../assets/micro-learning.js"></script>
+</body>
+</html>

@@ -1,22 +1,24 @@
 {
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx-pro/releases/download/amyfx-pro-2.0.0-pro.424/AmyFX-Pro-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.430/AmyFX-latest.apk",
   "changelog": [
-    "Perbaikan Rilis Aktual Data Ekonomi: Mengaktifkan ekstraksi instan data aktual (contoh: 194K Klaim Pengangguran / Jobless Claims) dari feed berita real-time @SM_News_24h.",
-    "Sinkronisasi Dua Arah Kalender & Sentimen: Nilai aktual kini langsung diperbarui secara reaktif di tab Sentimen Makro dan Kalender tanpa jeda delay.",
-    "Presisi Analisis Pasca-Rilis: Evaluasi dampak dovish/hawkish langsung aktif seketika setelah angka keluar."
+    "Dual-Engine M15+M5 Cockpit Mapping: Sinkronisasi paralel M15 untuk tren makro & M5 untuk pemicu eksekusi sniper.",
+    "Detektor 3-Candle M5 Absorption: Validasi instan kehabisan tenaga (rejection & sweep) di area ekstrem Diskon/SSL & Premium/BSL.",
+    "Protokol Anti-Yes-Man & ZONA CINCANG: Peringatan tegas rem disiplin dan pembekuan tombol entry saat harga berada di poros Equilibrium 50%.",
+    "Target Presisi Sayang (100 Pips): Formulasi TP1 +50 pips (kunci profit & BE) dan TP2 +100 pips (Draw on Liquidity)."
   ],
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx-pro/releases/download/amyfx-pro-2.0.0-pro.424/AmyFX-Pro-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.430/AmyFX-latest.apk",
   "enabled": true,
   "force_update": false,
-  "latest_version_code": 950424,
-  "latest_version_name": "2.0.0-pro.424",
+  "latest_version_code": 950430,
+  "latest_version_name": "2.0.0-amyfx.430",
   "mandatory": false,
-  "releaseDate": "2026-10-22",
+  "releaseDate": "2026-11-01",
   "release_notes": [
-    "Perbaikan Rilis Aktual Data Ekonomi: Mengaktifkan ekstraksi instan data aktual (contoh: 194K Klaim Pengangguran / Jobless Claims) dari feed berita real-time @SM_News_24h.",
-    "Sinkronisasi Dua Arah Kalender & Sentimen: Nilai aktual kini langsung diperbarui secara reaktif di tab Sentimen Makro dan Kalender tanpa jeda delay.",
-    "Presisi Analisis Pasca-Rilis: Evaluasi dampak dovish/hawkish langsung aktif seketika setelah angka keluar."
+    "Dual-Engine M15+M5 Cockpit Mapping: Sinkronisasi paralel M15 untuk tren makro & M5 untuk pemicu eksekusi sniper.",
+    "Detektor 3-Candle M5 Absorption: Validasi instan kehabisan tenaga (rejection & sweep) di area ekstrem Diskon/SSL & Premium/BSL.",
+    "Protokol Anti-Yes-Man & ZONA CINCANG: Peringatan tegas rem disiplin dan pembekuan tombol entry saat harga berada di poros Equilibrium 50%.",
+    "Target Presisi Sayang (100 Pips): Formulasi TP1 +50 pips (kunci profit & BE) dan TP2 +100 pips (Draw on Liquidity)."
   ],
-  "version": "2.0.0-pro.424",
-  "versionCode": 950424
+  "version": "2.0.0-amyfx.430",
+  "versionCode": 950430
 }

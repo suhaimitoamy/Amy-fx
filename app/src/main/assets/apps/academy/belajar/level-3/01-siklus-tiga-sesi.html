@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07090e">
+  <title>Pelajaran 1: Siklus Karakter 3 Sesi Dunia — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/micro-learning.css">
+  <style>
+    /* Diagram alur 3 sesi interaktif */
+    .session-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 16px 0;
+    }
+    @media (max-width: 580px) {
+      .session-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .session-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 14px 12px;
+      text-align: center;
+    }
+    .session-box.asia {
+      border-color: rgba(56, 189, 248, 0.3);
+      background: rgba(56, 189, 248, 0.05);
+    }
+    .session-box.london {
+      border-color: rgba(239, 68, 68, 0.3);
+      background: rgba(239, 68, 68, 0.05);
+    }
+    .session-box.ny {
+      border-color: rgba(212, 168, 50, 0.3);
+      background: rgba(212, 168, 50, 0.05);
+    }
+    .session-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+    .session-box.asia .session-badge { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+    .session-box.london .session-badge { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .session-box.ny .session-badge { background: rgba(212, 168, 50, 0.2); color: #fbbf24; }
+    .session-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .session-time {
+      font-size: 11.5px;
+      color: var(--ml-muted);
+      margin-bottom: 8px;
+    }
+    .session-role {
+      font-size: 12.5px;
+      color: #cbd5e1;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body class="micro-learning-body">
+
+<div class="ml-container">
+  <!-- Header Bar -->
+  <header class="ml-header">
+    <a href="index.html" class="ml-back-link">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      <span>Roadmap Level 3</span>
+    </a>
+    <span class="ml-pill-tag">Pelajaran 1 dari 6</span>
+  </header>
+
+  <!-- Title & Meta -->
+  <div class="ml-lesson-title-box">
+    <h1>Siklus Karakter 3 Sesi Pasar Dunia</h1>
+    <div class="ml-lesson-meta">
+      <span>⏱ 3 Menit Baca</span>
+      <span>•</span>
+      <span>Model AMD (Akumulasi - Manipulasi - Distribusi)</span>
+    </div>
+  </div>
+
+  <!-- Inti Konsep: Time and Price -->
+  <section class="ml-card">
+    <h2>1. Konsep "Time and Price"</h2>
+    <p>
+      Banyak trader pemula hanya fokus pada bentuk candle atau indikator teknikal. Padahal, algoritma perbankan global (IPDA) bekerja dengan aturan mutlak: <strong>Waktu menentukan harga</strong>.
+    </p>
+    <p>
+      Pasar forex dan Gold bergerak dalam siklus harian 24 jam yang terbagi dalam tiga sesi raksasa. Masing-masing sesi memiliki peran psikologis dan likuiditas yang sudah terprogram:
+    </p>
+
+    <!-- 3 Box Visual Grid -->
+    <div class="session-grid">
+      <div class="session-box asia">
+        <span class="session-badge">Sesi 1 · Asia</span>
+        <div class="session-title">Akumulasi</div>
+        <div class="session-time">07:00 - 14:00 WITA</div>
+        <div class="session-role">Membentuk batas rentang harga (Asia High & Low) sebagai umpan likuiditas.</div>
+      </div>
+      <div class="session-box london">
+        <span class="session-badge">Sesi 2 · London</span>
+        <div class="session-title">Manipulasi</div>
+        <div class="session-time">15:00 - 23:00 WITA</div>
+        <div class="session-role">Melakukan Judas Swing (sapuan palsu) untuk menjebak retail trader.</div>
+      </div>
+      <div class="session-box ny">
+        <span class="session-badge">Sesi 3 · New York</span>
+        <div class="session-title">Distribusi</div>
+        <div class="session-time">19:30 - 04:00 WITA</div>
+        <div class="session-role">Melepaskan ekspansi tren sejati dengan volume transaksi terbesar dunia.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bedah Karakter Detail -->
+  <section class="ml-card">
+    <h2>2. Karakteristik & Perilaku Masing-Masing Sesi</h2>
+    
+    <h3 style="color:#38bdf8; font-size:16px; margin:16px 0 6px;">🌏 Sesi Asia: Si Pemasang Perangkap</h3>
+    <p>
+      Sesi Asia (Tokyo & Sydney) biasanya tenang dan bergerak dalam rentang sempit (sideway). Namun jangan tertipu: institusi sengaja membuat harga tertahan agar retail menaruh order <em>Buy Stop</em> di atas puncak Asia dan <em>Sell Stop</em> di bawah lembah Asia. Puncak dan lembah ini disebut <strong>Asia High</strong> dan <strong>Asia Low</strong>.
+    </p>
+
+    <h3 style="color:#f87171; font-size:16px; margin:20px 0 6px;">🇬🇧 Sesi London: Serangan Judas Swing</h3>
+    <p>
+      Begitu bursa London buka, volume tiba-tiba melonjak deras. Harga sering melesat tajam menembus Asia High seolah-olah akan terbang tinggi. Retail yang panik FOMO langsung melakukan Buy.
+    </p>
+    <p>
+      Ternyata, pergerakan ini adalah jebakan tipuan yang disebut <strong>Judas Swing</strong>. Institusi hanya mendorong harga ke atas untuk mengambil likuiditas Stop Loss para penjual dan memancing pembeli retail baru, sebelum kemudian membanting harga turun ke arah tren sejati!
+    </p>
+
+    <h3 style="color:#fbbf24; font-size:16px; margin:20px 0 6px;">🇺🇸 Sesi New York: Real Directional Expansion</h3>
+    <p>
+      Ketika New York bergabung (terutama overlap dengan London), dana dari Wall Street masuk. Ini adalah sesi dengan volume terbesar. Di sinilah arah tren sejati (ekspansi) diteruskan hingga mencapai target likuiditas harian.
+    </p>
+  </section>
+
+  <!-- Analogi Dunia Nyata -->
+  <div class="ml-analogi">
+    <div class="ml-analogi-title"> Analogi Dunia Nyata: Pasar Grosir Tradisional</div>
+    <ul style="margin:6px 0 0; padding-left:20px; line-height:1.6;">
+      <li><strong>Subuh (Sesi Asia):</strong> Pedagang menata barang dan menyusun rak dagangan dengan tenang.</li>
+      <li><strong>Pagi (Sesi London):</strong> Tengkulak besar datang, pura-pura menawar sangat tinggi untuk mengelabui warga desa, lalu memborong barang dagangan dengan harga murah di tempat lain.</li>
+      <li><strong>Siang (Sesi New York):</strong> Truk kontainer pabrik datang mengangkut barang secara besar-besaran ke tujuan akhir dengan kekuatan penuh.</li>
+    </ul>
+  </div>
+
+  <!-- Diagram Visual Alur AMD -->
+  <div class="ml-diagram">
+    <div class="ml-diagram-title">Visualisasi Siklus Siklus Harian (ICT AMD)</div>
+    <svg viewBox="0 0 540 170" width="100%" height="auto" style="max-height: 170px; display:block; margin:0 auto;">
+      <!-- Background Zone Highlights -->
+      <rect x="10" y="40" width="160" height="90" fill="rgba(56, 189, 248, 0.08)" rx="8" />
+      <rect x="185" y="15" width="160" height="140" fill="rgba(239, 68, 68, 0.08)" rx="8" />
+      <rect x="360" y="30" width="170" height="125" fill="rgba(212, 168, 50, 0.08)" rx="8" />
+
+      <!-- Labels -->
+      <text x="90" y="30" fill="#38bdf8" font-size="12" font-weight="bold" text-anchor="middle">ASIA (Akumulasi)</text>
+      <text x="265" y="12" fill="#f87171" font-size="12" font-weight="bold" text-anchor="middle">LONDON (Judas Swing)</text>
+      <text x="445" y="24" fill="#fbbf24" font-size="12" font-weight="bold" text-anchor="middle">NEW YORK (Ekspansi)</text>
+
+      <!-- Asia Range Line -->
+      <line x1="20" y1="65" x2="160" y2="65" stroke="#38bdf8" stroke-dasharray="3,3" stroke-width="1.5" />
+      <text x="165" y="68" fill="#38bdf8" font-size="9">Asia High</text>
+      <line x1="20" y1="105" x2="160" y2="105" stroke="#38bdf8" stroke-dasharray="3,3" stroke-width="1.5" />
+      <text x="165" y="109" fill="#38bdf8" font-size="9">Asia Low</text>
+
+      <!-- Price Path (Polyline) -->
+      <!-- Asia sideways -->
+      <path d="M 25,85 Q 50,70 75,90 T 125,75 T 160,85" fill="none" stroke="#94a3b8" stroke-width="2.5" />
+      
+      <!-- London Fake breakout upwards (Judas) then crash -->
+      <path d="M 160,85 L 210,45 L 235,38 L 260,80 L 335,130" fill="none" stroke="#ef4444" stroke-width="3" />
+      <circle cx="235" cy="38" r="4" fill="#ef4444" />
+      <text x="235" y="28" fill="#ef4444" font-size="10" font-weight="bold" text-anchor="middle">Sapuan Judas!</text>
+
+      <!-- New York strong continuation drop -->
+      <path d="M 335,130 L 375,115 L 420,145 L 470,140 L 520,155" fill="none" stroke="#d4a832" stroke-width="3.5" />
+      <text x="445" y="125" fill="#d4a832" font-size="10" font-weight="bold" text-anchor="middle">Ekspansi Tren Utama ➔</text>
+    </svg>
+  </div>
+
+  <!-- Aturan Emas Pelajaran -->
+  <div class="ml-aturan">
+    <div class="ml-aturan-title">🛡 Aturan Emas Disiplin Sesi</div>
+    Jangan pernah langsung memencet Buy hanya karena candle London menembus ke atas garis Asia High di menit-menit pertama pembukaan bursa. Sering kali itu adalah tipuan Judas Swing untuk mengorbankan modal retail!
+  </div>
+
+  <!-- Interaktif Mini Kuis -->
+  <div class="ml-quiz-card" data-lesson-id="level-3-01">
+    <span class="ml-quiz-badge">Kuis Cepat · Uji Pemahaman</span>
+    <h3 class="ml-quiz-question">Apa peran umum Sesi London dalam siklus harian tiga sesi (AMD)?</h3>
+    <div class="ml-quiz-options">
+      <button type="button" class="ml-quiz-btn" data-correct="false" data-explanation="Sesi London justru merupakan salah satu sesi paling volatil dan agresif, bukan bergerak statis.">
+        A. Bergerak lambat tanpa volatilitas sama sekali sampai pasar Amerika buka.
+      </button>
+      <button type="button" class="ml-quiz-btn" data-correct="true" data-explanation="Hebat! Sesi London sangat terkenal dengan Judas Swing — menipu retail dengan menembus Asia High/Low sebelum membalikkan arah ke tren yang sesungguhnya.">
+        B. Melakukan manipulasi (Judas Swing) dengan menyapu batas sesi Asia sebelum berbalik ke tren sejati.
+      </button>
+      <button type="button" class="ml-quiz-btn" data-correct="false" data-explanation="Bursa buka 24 jam di hari kerja; bursa London tidak pernah ditutup mendadak di jam aktifnya.">
+        C. Mengunci seluruh transaksi harga sehingga tidak ada posisi yang bisa dieksekusi.
+      </button>
+    </div>
+    <div class="ml-quiz-feedback"></div>
+  </div>
+
+  <!-- Footer Navigation -->
+  <div class="ml-nav-footer">
+    <a href="index.html" class="ml-btn-nav ml-btn-prev">
+      ← Roadmap Level 3
+    </a>
+    <a href="02-killzones-xauusd.html" class="ml-btn-nav ml-btn-next">
+      Lanjut: Killzone XAU/USD →
+    </a>
+  </div>
+</div>
+
+<script src="../assets/micro-learning.js"></script>
+</body>
+</html>

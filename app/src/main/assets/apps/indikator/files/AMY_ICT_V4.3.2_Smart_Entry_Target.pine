@@ -1,0 +1,1019 @@
+//@version=5
+indicator("AMY ICT V4.3.2 [Smart Entry Target + Mobile Fit]", shorttitle="AMY CONTEXT V4.3.2", overlay=true, max_boxes_count=500, max_lines_count=500, max_labels_count=500)
+
+// ============================================================================
+// 1. INPUT PENGATURAN (PRESET 3-TIMEFRAME & VISUAL KONTEKS MURNI)
+// ============================================================================
+grp_preset = "0. Mode Preset Timeframe Konteks"
+presetMode = input.string("Intraday Standar (H1 / M15 / M5)", "Pilih Pasangan 3-Timeframe", options=["Scalper Cepat (M15 / M5 / M1)", "Intraday Standar (H1 / M15 / M5)", "Swing Pendek (H4 / H1 / M15)", "Custom (Manual Input)"], group=grp_preset)
+
+grp_mtf  = "1. Pengaturan Struktur & Dealing Range"
+htfIn    = input.timeframe("60", "1. Custom Timeframe Tren Utama (HTF)", group=grp_mtf)
+mtfIn    = input.timeframe("15", "2. Custom Timeframe Dealing Range & POI (MTF)", group=grp_mtf)
+ltfIn    = input.timeframe("5",  "3. Custom Timeframe Aliran Internal / Pullback (LTF)", group=grp_mtf)
+swingLen = input.int(5, "Panjang Major Swing (External BSL / SSL)", minval=3, maxval=30, group=grp_mtf)
+idmLen   = input.int(2, "Panjang Internal Swing (LTF / Inducement)", minval=1, maxval=10, group=grp_mtf)
+atrLen   = input.int(14, "Panjang ATR (Filter Displacement)", minval=1, group=grp_mtf)
+
+grp_sess = "2. Sesi (Asia, London, NY) & Likuiditas Harian (PDH/PDL)"
+sessTz   = input.string("UTC", "Zona Waktu Sesi", options=["UTC", "Asia/Jakarta", "Asia/Makassar", "America/New_York"], group=grp_sess)
+asiaSess = input.session("0000-0700", "Waktu Sesi Asia (Default UTC 00:00-07:00)", group=grp_sess)
+lonSess  = input.session("0700-1300", "Waktu Sesi London (Default UTC 07:00-13:00)", group=grp_sess)
+nySess   = input.session("1300-2100", "Waktu Sesi New York (Default UTC 13:00-21:00)", group=grp_sess)
+showPDHL = input.bool(true, "Tampilkan Garis PDH & PDL (Previous Day High/Low)", group=grp_sess)
+
+grp_vis      = "3. Visualisasi Peta Chart (SBR/RBS, RBD/DBR, Anti-Overlap)"
+onlyHtfZones = input.bool(false, "Hanya Tampilkan POI Searah HTF (False = Tampilkan Supply & Demand)", group=grp_vis)
+mergeObFvg   = input.bool(true, "Gabung FVG/SBR yang Nempel dengan OB (True = Chart Bersih Anti-Tumpuk)", group=grp_vis)
+showBOS      = input.bool(true, "Tampilkan Garis BOS / CHoCH di Chart", group=grp_vis)
+showSbrRbs   = input.bool(true, "Tampilkan Kotak SBR / RBS (Breaker Block) MTF", group=grp_vis)
+showIDM      = input.bool(true, "Tampilkan Garis Inducement (IDM) Terdekat", group=grp_vis)
+showAsiaBox  = input.bool(true, "Tampilkan Kotak Range Asia & Garis High/Low", group=grp_vis)
+showOB       = input.bool(true, "Tampilkan Kotak Supply (RBD/DBD) & Demand (DBR/RBR)", group=grp_vis)
+showFVG      = input.bool(true, "Tampilkan Kotak Fair Value Gap (FVG Mandiri)", group=grp_vis)
+showLiqLines = input.bool(true, "Tampilkan Garis External Liquidity (BSL & SSL)", group=grp_vis)
+showEqLine   = input.bool(true, "Tampilkan Garis Equilibrium 50% (Batas Premium/Discount)", group=grp_vis)
+
+grp_dash  = "4. Pengaturan Tabel Context Dashboard & Rekomendasi Entry"
+showDash  = input.bool(true, "Tampilkan Tabel Market Context", group=grp_dash)
+entryMode = input.string("Kontekstual 2-Arah (HTF + MTF)", "Gaya Rekomendasi Skenario Entry", options=["Kontekstual 2-Arah (HTF + MTF)", "Fokus Searah HTF Saja"], group=grp_dash)
+posInput  = input.string("Bottom Right", "Posisi Tabel di Layar", options=["Bottom Right", "Top Right", "Bottom Left", "Bottom Center"], group=grp_dash)
+txtSizeIn = input.string("Tiny", "Ukuran Teks Tabel", options=["Tiny", "Small", "Normal"], group=grp_dash)
+mobSpacer = input.bool(true, "Tambah Ruang Bawah Tabel (Anti-Ketutup Ikon HP)", group=grp_dash)
+
+// ============================================================================
+// 2. LOGIKA ROUTING TIMEFRAME, RASIO OFFSET BAR, & WARNA KONTRAS TINGGI
+// ============================================================================
+isScalp = presetMode == "Scalper Cepat (M15 / M5 / M1)"
+isIntra = presetMode == "Intraday Standar (H1 / M15 / M5)"
+isSwing = presetMode == "Swing Pendek (H4 / H1 / M15)"
+
+htf = isScalp ? "15" : isIntra ? "60" : isSwing ? "240" : htfIn
+mtf = isScalp ? "5"  : isIntra ? "15" : isSwing ? "60"  : mtfIn
+ltf = isScalp ? "1"  : isIntra ? "5"  : isSwing ? "15"  : ltfIn
+
+modeBadge = isScalp ? "SCALP" : isIntra ? "INTRA" : isSwing ? "SWING" : "CUSTOM"
+
+f_tf_lbl(_tf) =>
+    _tf == "1" ? "M1" : _tf == "3" ? "M3" : _tf == "5" ? "M5" : _tf == "15" ? "M15" : _tf == "30" ? "M30" : _tf == "45" ? "M45" : _tf == "60" ? "H1" : _tf == "120" ? "H2" : _tf == "240" ? "H4" : _tf == "D" or _tf == "1D" ? "D1" : _tf
+
+htfLbl = f_tf_lbl(htf)
+mtfLbl = f_tf_lbl(mtf)
+ltfLbl = f_tf_lbl(ltf)
+
+mtfSec  = timeframe.in_seconds(mtf)
+chtSec  = timeframe.in_seconds(timeframe.period)
+tfRatio = not na(mtfSec) and not na(chtSec) and chtSec > 0 ? math.max(1, math.round(mtfSec / chtSec)) : 1
+
+c_bull    = #059669 // Deep Emerald (Demand / Bullish)
+c_bear    = #e11d48 // Deep Rose (Supply / Bearish)
+c_fvg_u   = #0891b2 // Deep Cyan (Bull FVG)
+c_fvg_b   = #9333ea // Deep Purple (Bear FVG)
+c_sbr     = #be123c // Crimson (SBR / Bearish Breaker)
+c_rbs     = #047857 // Teal Green (RBS / Bullish Breaker)
+c_asia    = #0284c7 // Deep Sky Blue
+c_gold    = #d97706 // Deep Amber
+c_idm     = #7c3aed // Deep Violet
+c_pdhl    = #0f172a // Dark Slate
+c_neutral = #475569 // Slate Gray
+
+// ============================================================================
+// 3. MESIN STRUKTUR 3-TF + DETEKSI PANTULAN V-SHAPE & HARGA LTF
+// ============================================================================
+f_calc_structure(_pivLen, _useVShape) =>
+    atrS    = nz(ta.atr(14), syminfo.mintick * 10)
+    ph      = ta.pivothigh(high, _pivLen, _pivLen)
+    pl      = ta.pivotlow(low, _pivLen, _pivLen)
+    recL    = ta.lowest(low, 12)
+    recH    = ta.highest(high, 12)
+    emaFast = ta.ema(close, 9)
+    recentH = ta.highest(high, 3)
+    recentL = ta.lowest(low, 3)
+
+    var float lastH   = high
+    var float lastL   = low
+    var int   dir     = 0
+    var bool  isChoch = false
+
+    if not na(ph)
+        lastH := ph
+    if not na(pl)
+        lastL := pl
+
+    vBull = _useVShape and close > emaFast and (close - recL) >= (atrS * 1.35) and close > ta.highest(high, 3)[1]
+    vBear = _useVShape and close < emaFast and (recH - close) >= (atrS * 1.35) and close < ta.lowest(low, 3)[1]
+
+    if barstate.isconfirmed
+        if close > lastH or (dir <= 0 and vBull)
+            isChoch := (dir == -1)
+            dir     := 1
+        else if close < lastL or (dir >= 0 and vBear)
+            isChoch := (dir == 1)
+            dir     := -1
+        else if dir == 0
+            dir := close >= open ? 1 : -1
+
+    [dir, lastH, lastL, isChoch, recentH, recentL]
+
+[htfDir, htfHigh, htfLow, htfChoch, htfRecH, htfRecL] = request.security(syminfo.tickerid, htf, f_calc_structure(swingLen, false), gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off)
+[mtfDir, mtfHigh, mtfLow, mtfChoch, mtfRecH, mtfRecL] = request.security(syminfo.tickerid, mtf, f_calc_structure(swingLen, false), gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off)
+[ltfDir, ltfHigh, ltfLow, ltfChoch, ltfRecH, ltfRecL] = request.security(syminfo.tickerid, ltf, f_calc_structure(idmLen,   true),  gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off)
+
+[pdhPrice, pdlPrice] = request.security(syminfo.tickerid, "D", [high[1], low[1]], gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_on)
+
+// ============================================================================
+// 4. KALKULASI ZONA POI, SBR/RBS, & EXTREMES TERKUNCI DI MTF
+// ============================================================================
+f_calc_mtf_zones(_swingLen, _idmLen, _atrLen) =>
+    atrZ  = nz(ta.atr(_atrLen), syminfo.mintick * 10)
+    phMaj = ta.pivothigh(high, _swingLen, _swingLen)
+    plMaj = ta.pivotlow(low, _swingLen, _swingLen)
+    phIdm = ta.pivothigh(high, _idmLen, _idmLen)
+    plIdm = ta.pivotlow(low, _idmLen, _idmLen)
+
+    mtfDevH = ta.highest(high, 32)
+    mtfDevL = ta.lowest(low, 32)
+
+    var float bearIdm = high
+    var float bullIdm = low
+    if not na(phIdm)
+        bearIdm := phIdm
+    if not na(plIdm)
+        bullIdm := plIdm
+
+    var float mSwH    = na
+    var bool  mSwHBrk = false
+    var float mSwL    = na
+    var bool  mSwLBrk = false
+    var float sbrT    = na
+    var float sbrB    = na
+    var float rbsT    = na
+    var float rbsB    = na
+
+    if not na(phMaj)
+        mSwH    := phMaj
+        mSwHBrk := false
+    if not na(plMaj)
+        mSwL    := plMaj
+        mSwLBrk := false
+
+    if barstate.isconfirmed
+        if not na(mSwH) and not mSwHBrk and close > mSwH
+            mSwHBrk := true
+            rbsT    := mSwH + (atrZ * 0.10)
+            rbsB    := mSwH - (atrZ * 0.25)
+        if not na(mSwL) and not mSwLBrk and close < mSwL
+            mSwLBrk := true
+            sbrT    := mSwL + (atrZ * 0.25)
+            sbrB    := mSwL - (atrZ * 0.10)
+
+    var float bOB_T   = na
+    var float bOB_B   = na
+    var int   bOB_Typ = 1
+    var float uOB_T   = na
+    var float uOB_B   = na
+    var int   uOB_Typ = 1
+    var float bFVG_T  = na
+    var float bFVG_B  = na
+    var float uFVG_T  = na
+    var float uFVG_B  = na
+
+    minGap  = atrZ * 0.12
+    bullFvg = low > high[2] and (low - high[2]) >= minGap and close[1] > open[1]
+    bearFvg = high < low[2] and (low[2] - high) >= minGap and close[1] < open[1]
+
+    bearDisp = bearFvg and ((open[1] - close[1]) > (atrZ * 0.5) or close[1] < low[2])
+    bullDisp = bullFvg and ((close[1] - open[1]) > (atrZ * 0.5) or close[1] > high[2])
+
+    bearTop = close[2] >= open[2] ? high[2] : math.max(high[2], high[3])
+    bearBot = close[2] >= open[2] ? low[2]  : math.min(low[2], high[2] - (atrZ * 0.6))
+    bullTop = close[2] <= open[2] ? high[2] : math.max(high[2], low[2] + (atrZ * 0.6))
+    bullBot = close[2] <= open[2] ? low[2]  : math.min(low[2], low[3])
+
+    wasRallyBeforeBase = close[3] > open[2] or close[2] > close[4]
+    wasDropBeforeBase  = close[3] < open[2] or close[2] < close[4]
+
+    if barstate.isconfirmed
+        if bearDisp
+            bOB_T   := bearTop
+            bOB_B   := bearBot
+            bOB_Typ := wasRallyBeforeBase ? 1 : 2
+        if bullDisp
+            uOB_T   := bullTop
+            uOB_B   := bullBot
+            uOB_Typ := wasDropBeforeBase ? 1 : 2
+        if bullFvg
+            uFVG_T := low
+            uFVG_B := high[2]
+        if bearFvg
+            bFVG_T := low[2]
+            bFVG_B := high
+
+    [close, barstate.isconfirmed, atrZ, mtfDevH, mtfDevL, bearIdm, bullIdm, bOB_T, bOB_B, bOB_Typ, uOB_T, uOB_B, uOB_Typ, bFVG_T, bFVG_B, uFVG_T, uFVG_B, sbrT, sbrB, rbsT, rbsB]
+
+[mtfClose, mtfConfirmed, mtfAtr, devHigh, devLow, rawBearIdm, rawBullIdm, rawBearOB_T, rawBearOB_B, rawBearOB_Typ, rawBullOB_T, rawBullOB_B, rawBullOB_Typ, rawBearFVG_T, rawBearFVG_B, rawBullFVG_T, rawBullFVG_B, rawSbrT, rawSbrB, rawRbsT, rawRbsB] = request.security(syminfo.tickerid, mtf, f_calc_mtf_zones(swingLen, idmLen, atrLen), gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off)
+
+chartAtr = ta.atr(14)
+atrVal   = nz(mtfAtr, ta.atr(atrLen))
+
+// ============================================================================
+// 5. BOS/CHoCH DI CHART & SINKRONISASI SBR / RBS MTF
+// ============================================================================
+phChart = ta.pivothigh(high, swingLen, swingLen)
+plChart = ta.pivotlow(low, swingLen, swingLen)
+
+var float cSwingH    = na
+var int   cSwingHBar = na
+var bool  cSwingHBrk = false
+var float cSwingL    = na
+var int   cSwingLBar = na
+var bool  cSwingLBrk = false
+var int   cTrend     = 0
+
+var line[]  bosLines  = array.new_line()
+var label[] bosLabels = array.new_label()
+
+if not na(phChart)
+    cSwingH    := phChart
+    cSwingHBar := bar_index - swingLen
+    cSwingHBrk := false
+if not na(plChart)
+    cSwingL    := plChart
+    cSwingLBar := bar_index - swingLen
+    cSwingLBrk := false
+
+if not na(cSwingH) and not cSwingHBrk and close > cSwingH and barstate.isconfirmed
+    cSwingHBrk := true
+    isChoch    = (cTrend == -1)
+    cTrend     := 1
+    if showBOS and (bar_index - cSwingHBar) <= 250
+        midB = math.round((cSwingHBar + bar_index) / 2)
+        bL   = line.new(cSwingHBar, cSwingH, bar_index, cSwingH, color=c_bull, style=isChoch ? line.style_solid : line.style_dashed, width=1)
+        bT   = label.new(midB, cSwingH, isChoch ? "CHoCH" : "BOS", color=color.new(color.black, 100), textcolor=c_bull, style=label.style_label_down, size=size.tiny)
+        array.push(bosLines, bL)
+        array.push(bosLabels, bT)
+        if array.size(bosLines) > 6
+            line.delete(array.shift(bosLines))
+            label.delete(array.shift(bosLabels))
+
+if not na(cSwingL) and not cSwingLBrk and close < cSwingL and barstate.isconfirmed
+    cSwingLBrk := true
+    isChoch    = (cTrend == 1)
+    cTrend     := -1
+    if showBOS and (bar_index - cSwingLBar) <= 250
+        midB = math.round((cSwingLBar + bar_index) / 2)
+        sL   = line.new(cSwingLBar, cSwingL, bar_index, cSwingL, color=c_bear, style=isChoch ? line.style_solid : line.style_dashed, width=1)
+        sT   = label.new(midB, cSwingL, isChoch ? "CHoCH" : "BOS", color=color.new(color.black, 100), textcolor=c_bear, style=label.style_label_up, size=size.tiny)
+        array.push(bosLines, sL)
+        array.push(bosLabels, sT)
+        if array.size(bosLines) > 6
+            line.delete(array.shift(bosLines))
+            label.delete(array.shift(bosLabels))
+
+var float sbrTop = na
+var float sbrBot = na
+var int   sbrBar = na
+var bool  sbrMit = false
+
+var float rbsTop = na
+var float rbsBot = na
+var int   rbsBar = na
+var bool  rbsMit = false
+
+if not na(rawSbrT) and ta.change(rawSbrT) != 0
+    sbrTop := rawSbrT
+    sbrBot := rawSbrB
+    sbrBar := bar_index - (3 * tfRatio)
+    sbrMit := false
+
+if not na(rawRbsT) and ta.change(rawRbsT) != 0
+    rbsTop := rawRbsT
+    rbsBot := rawRbsB
+    rbsBar := bar_index - (3 * tfRatio)
+    rbsMit := false
+
+if not na(sbrTop) and mtfClose > (sbrTop + atrVal * 0.05) and mtfConfirmed
+    sbrMit := true
+if not na(rbsBot) and mtfClose < (rbsBot - atrVal * 0.05) and mtfConfirmed
+    rbsMit := true
+
+inSbrZone = not sbrMit and not na(sbrBot) and mtfClose >= (sbrBot - atrVal * 0.08) and mtfClose <= (sbrTop + atrVal * 0.10)
+inRbsZone = not rbsMit and not na(rbsTop) and mtfClose <= (rbsTop + atrVal * 0.08) and mtfClose >= (rbsBot - atrVal * 0.10)
+
+// ============================================================================
+// 6. PELACAKAN BSL, SSL, IDM, PDH/PDL, & SESI ASIA (DENGAN TIMER TERPISAH)
+// ============================================================================
+var float bslLevel  = high
+var float sslLevel  = low
+var int   bslBar    = bar_index
+var int   sslBar    = bar_index
+var bool  bslSwept  = false
+var bool  sslSwept  = false
+var bool  bslBroken = false
+var bool  sslBroken = false
+
+var int   topSwpBar = 0
+var int   botSwpBar = 0
+
+if not na(mtfHigh) and ta.change(mtfHigh) != 0
+    bslLevel  := mtfHigh
+    bslBar    := bar_index - (swingLen * tfRatio)
+    bslSwept  := false
+    bslBroken := false
+
+if not na(mtfLow) and ta.change(mtfLow) != 0
+    sslLevel  := mtfLow
+    sslBar    := bar_index - (swingLen * tfRatio)
+    sslSwept  := false
+    sslBroken := false
+
+if not bslBroken and barstate.isconfirmed
+    if mtfClose > bslLevel and mtfConfirmed
+        bslBroken := true
+        bslSwept  := false
+    else if high > bslLevel and close < bslLevel and not bslSwept
+        bslSwept  := true
+        sslSwept  := false
+        topSwpBar := bar_index
+
+if not sslBroken and barstate.isconfirmed
+    if mtfClose < sslLevel and mtfConfirmed
+        sslBroken := true
+        sslSwept  := false
+    else if low < sslLevel and close > sslLevel and not sslSwept
+        sslSwept  := true
+        bslSwept  := false
+        botSwpBar := bar_index
+
+var float bearIDM      = na
+var int   bearIdmBar   = bar_index
+var bool  bearIdmSwept = false
+var float bullIDM      = na
+var int   bullIdmBar   = bar_index
+var bool  bullIdmSwept = false
+
+if not na(rawBearIdm) and ta.change(rawBearIdm) != 0
+    bearIDM      := rawBearIdm
+    bearIdmBar   := bar_index - (idmLen * tfRatio)
+    bearIdmSwept := false
+if not na(rawBullIdm) and ta.change(rawBullIdm) != 0
+    bullIDM      := rawBullIdm
+    bullIdmBar   := bar_index - (idmLen * tfRatio)
+    bullIdmSwept := false
+
+if not na(bearIDM) and not bearIdmSwept and high > bearIDM
+    bearIdmSwept := true
+if not na(bullIDM) and not bullIdmSwept and low < bullIDM
+    bullIdmSwept := true
+
+var bool pdhSwept  = false
+var bool pdlSwept  = false
+var bool pdhBroken = false
+var bool pdlBroken = false
+
+if ta.change(time("D")) != 0
+    pdhSwept  := false
+    pdlSwept  := false
+    pdhBroken := false
+    pdlBroken := false
+
+if not na(pdhPrice) and not pdhBroken and barstate.isconfirmed
+    if close > pdhPrice
+        pdhBroken := true
+        pdhSwept  := false
+    else if high > pdhPrice and close < pdhPrice and not pdhSwept
+        pdhSwept  := true
+        topSwpBar := bar_index
+
+if not na(pdlPrice) and not pdlBroken and barstate.isconfirmed
+    if close < pdlPrice
+        pdlBroken := true
+        pdlSwept  := false
+    else if low < pdlPrice and close > pdlPrice and not pdlSwept
+        pdlSwept  := true
+        botSwpBar := bar_index
+
+inAsia   = not na(time(timeframe.period, asiaSess, sessTz))
+inLondon = not na(time(timeframe.period, lonSess, sessTz))
+inNY     = not na(time(timeframe.period, nySess, sessTz))
+sessName = inAsia ? "ASIA" : inLondon ? "LONDON" : inNY ? "NEW YORK" : "TRANSISI"
+
+var float asiaHigh      = na
+var float asiaLow       = na
+var int   asiaEndBar    = na
+var bool  asiaHighSwept = false
+var bool  asiaLowSwept  = false
+var bool  asiaHighBrk   = false
+var bool  asiaLowBrk    = false
+var box[] asiaBoxes     = array.new_box()
+var box   curAsiaBox    = na
+
+if inAsia and not inAsia[1]
+    asiaHigh      := high
+    asiaLow       := low
+    asiaEndBar    := bar_index
+    asiaHighSwept := false
+    asiaLowSwept  := false
+    asiaHighBrk   := false
+    asiaLowBrk    := false
+    if showAsiaBox
+        curAsiaBox := box.new(bar_index, high, bar_index, low, bgcolor=color.new(c_asia, 92), border_color=color.new(c_asia, 55), border_style=line.style_dotted, text="ASIA RANGE", text_size=size.tiny, text_color=color.new(c_asia, 15), text_halign=text.align_left, text_valign=text.align_top)
+        array.push(asiaBoxes, curAsiaBox)
+        if array.size(asiaBoxes) > 3
+            box.delete(array.shift(asiaBoxes))
+else if inAsia
+    asiaHigh   := math.max(nz(asiaHigh, high), high)
+    asiaLow    := math.min(nz(asiaLow, low), low)
+    asiaEndBar := bar_index
+    if showAsiaBox and not na(curAsiaBox)
+        box.set_right(curAsiaBox, bar_index)
+        box.set_top(curAsiaBox, asiaHigh)
+        box.set_bottom(curAsiaBox, asiaLow)
+else if not na(asiaHigh) and not na(asiaLow) and barstate.isconfirmed
+    if not asiaHighBrk
+        if close > asiaHigh
+            asiaHighBrk   := true
+            asiaHighSwept := false
+        else if high > asiaHigh and close < asiaHigh and not asiaHighSwept
+            asiaHighSwept := true
+            topSwpBar     := bar_index
+    if not asiaLowBrk
+        if close < asiaLow
+            asiaLowBrk   := true
+            asiaLowSwept := false
+        else if low < asiaLow and close > asiaLow and not asiaLowSwept
+            asiaLowSwept := true
+            botSwpBar    := bar_index
+
+// ============================================================================
+// 7. DEALING RANGE & PEMISAHAN TEGAS: [DI ZONA] vs [REJECT DARI ZONA]
+// ============================================================================
+rangeHigh = math.max(math.max(bslLevel, nz(htfHigh, high)), devHigh)
+rangeLow  = math.min(math.min(sslLevel, nz(htfLow, low)), devLow)
+rangeSize = math.max(rangeHigh - rangeLow, syminfo.mintick)
+eqMid     = (rangeHigh + rangeLow) / 2.0
+
+rangePct   = math.max(0.0, math.min(100.0, ((close - rangeLow) / rangeSize) * 100.0))
+isPremium  = rangePct > 52.5
+isDiscount = rangePct < 47.5
+zoneLabel  = isPremium ? ("PREMIUM (" + str.tostring(rangePct, "#") + "%)") : isDiscount ? ("DISCOUNT (" + str.tostring(rangePct, "#") + "%)") : ("EQUILIBRIUM (" + str.tostring(rangePct, "#") + "%)")
+
+effBslPrice = (not bslBroken and bslLevel > close) ? bslLevel : devHigh
+effBslTag   = (not bslBroken and bslLevel > close) ? (mtfLbl + " BSL") : "Swing H Baru"
+
+effSslPrice = (not sslBroken and sslLevel < close) ? sslLevel : devLow
+effSslTag   = (not sslBroken and sslLevel < close) ? (mtfLbl + " SSL") : "Swing L Baru"
+
+var float  bearOB_T   = na
+var float  bearOB_B   = na
+var string bearOB_Pat = "RBD"
+var int    bearOB_Bar = na
+var bool   bearOB_Mit = false
+
+var float  bullOB_T   = na
+var float  bullOB_B   = na
+var string bullOB_Pat = "DBR"
+var int    bullOB_Bar = na
+var bool   bullOB_Mit = false
+
+if not na(rawBearOB_T) and ta.change(rawBearOB_T) != 0
+    bearOB_T   := rawBearOB_T
+    bearOB_B   := rawBearOB_B
+    bearOB_Pat := rawBearOB_Typ == 1 ? "RBD" : "DBD"
+    bearOB_Bar := bar_index - (2 * tfRatio)
+    bearOB_Mit := false
+if not na(rawBullOB_T) and ta.change(rawBullOB_T) != 0
+    bullOB_T   := rawBullOB_T
+    bullOB_B   := rawBullOB_B
+    bullOB_Pat := rawBullOB_Typ == 1 ? "DBR" : "RBR"
+    bullOB_Bar := bar_index - (2 * tfRatio)
+    bullOB_Mit := false
+
+if not na(bearOB_T) and mtfClose > (bearOB_T + atrVal * 0.08) and mtfConfirmed
+    bearOB_Mit := true
+if not na(bullOB_B) and mtfClose < (bullOB_B - atrVal * 0.08) and mtfConfirmed
+    bullOB_Mit := true
+
+var float bearFVG_T   = na
+var float bearFVG_B   = na
+var int   bearFVG_Bar = na
+var bool  bearFVG_Mit = false
+
+var float bullFVG_T   = na
+var float bullFVG_B   = na
+var int   bullFVG_Bar = na
+var bool  bullFVG_Mit = false
+
+if not na(rawBearFVG_T) and ta.change(rawBearFVG_T) != 0
+    bearFVG_T   := rawBearFVG_T
+    bearFVG_B   := rawBearFVG_B
+    bearFVG_Bar := bar_index - (2 * tfRatio)
+    bearFVG_Mit := false
+if not na(rawBullFVG_T) and ta.change(rawBullFVG_T) != 0
+    bullFVG_T   := rawBullFVG_T
+    bullFVG_B   := rawBullFVG_B
+    bullFVG_Bar := bar_index - (2 * tfRatio)
+    bullFVG_Mit := false
+
+if not na(bearFVG_T) and mtfClose > (bearFVG_T + atrVal * 0.05) and mtfConfirmed
+    bearFVG_Mit := true
+if not na(bullFVG_B) and mtfClose < (bullFVG_B - atrVal * 0.05) and mtfConfirmed
+    bullFVG_Mit := true
+
+isBearFvgAttached = not bearOB_Mit and not bearFVG_Mit and not na(bearOB_B) and not na(bearFVG_T) and math.abs(bearOB_B - bearFVG_T) <= (atrVal * 0.25)
+isBullFvgAttached = not bullOB_Mit and not bullFVG_Mit and not na(bullOB_T) and not na(bullFVG_B) and math.abs(bullFVG_B - bullOB_T) <= (atrVal * 0.25)
+
+isSbrInsideSupply = not bearOB_Mit and not sbrMit and not na(bearOB_T) and not na(sbrTop) and sbrBot <= bearOB_T and sbrTop >= bearOB_B
+isRbsInsideDemand = not bullOB_Mit and not rbsMit and not na(bullOB_T) and not na(rbsTop) and rbsBot <= bullOB_T and rbsTop >= bullOB_B
+
+supFloor = not bearOB_Mit and not na(bearOB_B) ? bearOB_B : (not bearFVG_Mit and not na(bearFVG_B) ? bearFVG_B : na)
+supCeil  = not bearOB_Mit and not na(bearOB_T) ? bearOB_T : (not bearFVG_Mit and not na(bearFVG_T) ? bearFVG_T : na)
+
+demCeil  = not bullOB_Mit and not na(bullOB_T) ? bullOB_T : (not bullFVG_Mit and not na(bullFVG_T) ? bullFVG_T : na)
+demFloor = not bullOB_Mit and not na(bullOB_B) ? bullOB_B : (not bullFVG_Mit and not na(bullFVG_B) ? bullFVG_B : na)
+
+rawInSupply  = not na(supFloor) and mtfClose >= (supFloor - atrVal * 0.05) and mtfClose <= (supCeil + atrVal * 0.15)
+rawRejSupply = not rawInSupply and not na(supFloor) and ltfRecH >= supFloor and mtfClose < supFloor and (supFloor - mtfClose) <= (atrVal * 0.85)
+
+rawInDemand  = not na(demCeil)  and mtfClose <= (demCeil + atrVal * 0.05)  and mtfClose >= (demFloor - atrVal * 0.15)
+rawRejDemand = not rawInDemand  and not na(demCeil)  and ltfRecL <= demCeil  and mtfClose > demCeil  and (mtfClose - demCeil) <= (atrVal * 0.85)
+
+distToSup = not na(supFloor) ? math.abs(mtfClose - ((supCeil + supFloor) / 2.0)) : 999999.0
+distToDem = not na(demCeil)  ? math.abs(mtfClose - ((demCeil + demFloor) / 2.0)) : 999999.0
+
+inBearSupply  = rawInSupply  and (not rawInDemand  or distToSup <= distToDem)
+rejBearSupply = rawRejSupply and not inBearSupply  and not rawInDemand
+inBullDemand  = rawInDemand  and not inBearSupply
+rejBullDemand = rawRejDemand and not inBullDemand  and not inBearSupply and not rejBearSupply
+
+// ============================================================================
+// 8. LOGIKA NARASI MARKET & MESIN PEMILIH TARGET ZONA ENTRY CERDAS (TANPA ANGKA)
+// ============================================================================
+isHtfBull = htfDir >= 0
+isMtfBull = mtfDir >= 0
+isLtfBull = ltfDir >= 0
+
+isFullBullAlign = isHtfBull and isMtfBull and isLtfBull
+isFullBearAlign = not isHtfBull and not isMtfBull and not isLtfBull
+isBullPullback  = isHtfBull and (not isLtfBull or not isMtfBull or inBullDemand or inRbsZone)
+isBearPullback  = not isHtfBull and (isLtfBull or isMtfBull or inBearSupply or inSbrZone)
+
+isTopSwpFresh = (bslSwept or pdhSwept or asiaHighSwept) and (bar_index - topSwpBar) <= 15 and isPremium and not sslBroken and not pdlBroken
+isBotSwpFresh = (sslSwept or pdlSwept or asiaLowSwept)  and (bar_index - botSwpBar) <= 15 and isDiscount and not bslBroken and not pdhBroken
+
+phaseStatus = ""
+actionGuide = ""
+phaseColor  = c_neutral
+
+if isHtfBull
+    if inBullDemand or inRbsZone
+        zName       = (inBullDemand and inRbsZone) ? "Demand + RBS" : inRbsZone ? "RBS Breaker" : ("Demand [" + bullOB_Pat + "]")
+        idmBonus    = bullIdmSwept ? " (IDM Swept!)" : ""
+        phaseStatus := "DI ZONA BELI: Menguji " + zName + idmBonus
+        actionGuide := "Harga di Area Pantul Bullish — JANGAN SELL! Pantau Rejeksi Naik " + ltfLbl
+        phaseColor  := c_gold
+    else if rejBullDemand
+        phaseStatus := "REJEKSI DARI DEMAND [" + bullOB_Pat + "] (Mulai Memantul Naik)"
+        actionGuide := "Harga Memantul dari Demand " + mtfLbl + " — Pantau Kelanjutan Naik di " + ltfLbl
+        phaseColor  := c_bull
+    else if isBotSwpFresh
+        phaseStatus := "MANIPULASI BAWAH SEGAR (Sweep Likuiditas di Tren Bullish)"
+        actionGuide := "Likuiditas Bawah Baru Disapu — Tunggu " + ltfLbl + " CHoCH Naik"
+        phaseColor  := c_gold
+    else if isBullPullback
+        phaseStatus := "FASE PULLBACK TURUN (HTF Bullish vs " + ltfLbl + " Koreksi)"
+        actionGuide := isPremium ? "Koreksi Wajar dari Premium Menuju RBS / Demand Bawah" : "Koreksi di Discount — Awas Jebakan Sell, Tunggu Masuk Demand"
+        phaseColor  := c_fvg_b
+    else if isFullBullAlign and isPremium
+        phaseStatus := "EKSPANSI BULLISH DI PREMIUM (" + str.tostring(rangePct, "#") + "%)"
+        actionGuide := "Tren Naik Kuat, Tapi Harga Sudah Tinggi (Hindari FOMO Buy di Pucuk)"
+        phaseColor  := c_bull
+    else
+        phaseStatus := "EKSPANSI SEARAH BULLISH (" + htfLbl + "/" + mtfLbl + "/" + ltfLbl + " Naik)"
+        actionGuide := "Struktur Sehat Searah Menuju Magnet Likuiditas Atas"
+        phaseColor  := c_bull
+else
+    if inBearSupply or inSbrZone
+        zName       = (inBearSupply and inSbrZone) ? "Supply + SBR" : inSbrZone ? "SBR Breaker" : ("Supply [" + bearOB_Pat + "]")
+        idmBonus    = bearIdmSwept ? " (IDM Swept!)" : ""
+        phaseStatus := "DI ZONA JUAL: Menguji " + zName + idmBonus
+        actionGuide := "Harga di Dalam " + zName + " — JANGAN KEJAR BUY! Pantau Rejeksi Turun " + ltfLbl
+        phaseColor  := c_gold
+    else if rejBearSupply
+        phaseStatus := "REJEKSI DARI SUPPLY [" + bearOB_Pat + "] (Harga Memantul Turun)"
+        actionGuide := "Supply " + mtfLbl + " Berhasil Menolak Harga — Struktur Turun Menuju Demand/SSL"
+        phaseColor  := c_bear
+    else if isTopSwpFresh
+        phaseStatus := "MANIPULASI ATAS SEGAR (Sweep Likuiditas di Tren Bearish)"
+        actionGuide := "Likuiditas Atas Baru Disapu — Tunggu " + ltfLbl + " CHoCH Turun"
+        phaseColor  := c_gold
+    else if isBearPullback
+        phaseStatus := "FASE PULLBACK NAIK (HTF Bearish vs " + mtfLbl + "/" + ltfLbl + " Rebound)"
+        actionGuide := "Pantulan Koreksi Naik Menuju SBR / Supply Atas (Hati-hati Counter-Trend)"
+        phaseColor  := c_fvg_b
+    else if isFullBearAlign and isDiscount
+        phaseStatus := "EKSPANSI BEARISH DI DISCOUNT (" + str.tostring(rangePct, "#") + "%)"
+        actionGuide := "Tren Turun Kuat, Tapi Harga di Dasar (Jangan FOMO Sell di Lembah!)"
+        phaseColor  := c_bear
+    else
+        phaseStatus := "EKSPANSI SEARAH BEARISH (" + htfLbl + "/" + mtfLbl + "/" + ltfLbl + " Turun)"
+        actionGuide := "Struktur Sehat Searah Menuju Magnet Likuiditas Bawah"
+        phaseColor  := c_bear
+
+// ----------------------------------------------------------------------------
+// MESIN PEMILIH TARGET SKENARIO ENTRY (LOGIKA PENUH + TEKS PADAT ANTI-KEPOTONG)
+// ----------------------------------------------------------------------------
+hasBearOB  = not bearOB_Mit  and not na(bearOB_B)  and bearOB_T  >= close
+hasBearFVG = not bearFVG_Mit and not na(bearFVG_B) and bearFVG_T >= close
+hasSBR     = not sbrMit      and not na(sbrBot)    and sbrTop    >= close
+
+hasBullOB  = not bullOB_Mit  and not na(bullOB_T)  and bullOB_B  <= close
+hasBullFVG = not bullFVG_Mit and not na(bullFVG_T) and bullFVG_B <= close
+hasRBS     = not rbsMit      and not na(rbsTop)    and rbsBot    <= close
+
+// 1. Tentukan Target Terbaik untuk Skenario SELL (Dari harga menuju ke atas)
+sellZoneName = ""
+if inBearSupply or inSbrZone
+    sActName     = (inBearSupply and inSbrZone) ? "Supply+SBR" : inSbrZone ? "SBR" : (isBearFvgAttached ? ("OB[" + bearOB_Pat + "+FVG]") : ("OB[" + bearOB_Pat + "]"))
+    sellZoneName := "Di " + sActName + " (CHoCH " + ltfLbl + ")"
+else if rejBearSupply
+    sellZoneName := "Rej Supply[" + bearOB_Pat + "] (" + ltfLbl + ")"
+else if isTopSwpFresh
+    swpName      = bslSwept ? "BSL" : pdhSwept ? "PDH" : "Asia H"
+    sellZoneName := swpName + " Swp (CHoCH " + ltfLbl + ")"
+else
+    dBearOB  = hasBearOB  ? math.max(0.0, bearOB_B  - close) : 999999.0
+    dBearFVG = hasBearFVG ? math.max(0.0, bearFVG_B - close) : 999999.0
+    dSBR     = hasSBR     ? math.max(0.0, sbrBot    - close) : 999999.0
+    minSellD = math.min(dBearOB, math.min(dBearFVG, dSBR))
+
+    idmSellNote = (not na(bearIDM) and not bearIdmSwept and bearIDM > close and bearIDM < minSellD + close) ? "IDM->" : ""
+
+    if minSellD < 999999.0
+        if hasBearOB and isBearFvgAttached and dBearOB <= dSBR
+            sellZoneName := idmSellNote + "Supply[" + bearOB_Pat + "+FVG]"
+        else if hasBearOB and isSbrInsideSupply and dBearOB <= dBearFVG
+            sellZoneName := idmSellNote + "Supply[" + bearOB_Pat + "+SBR]"
+        else if minSellD == dBearFVG and not isBearFvgAttached
+            sellZoneName := idmSellNote + "Bear FVG" + (hasBearOB ? "/OB" : "")
+        else if minSellD == dSBR and not isSbrInsideSupply
+            sellZoneName := idmSellNote + "SBR" + (hasBearOB ? "/Supply OB" : "")
+        else
+            sellZoneName := idmSellNote + "Supply[" + bearOB_Pat + "]"
+    else
+        topLiqTarget = (not pdhBroken and not na(pdhPrice) and pdhPrice > close and math.abs(pdhPrice - effBslPrice) <= atrVal * 0.5) ? "BSL/PDH" : "BSL"
+        sellZoneName := "Swp " + topLiqTarget + " + CHoCH " + ltfLbl
+
+// 2. Tentukan Target Terbaik untuk Skenario BUY (Dari harga menuju ke bawah)
+buyZoneName = ""
+if inBullDemand or inRbsZone
+    bActName    = (inBullDemand and inRbsZone) ? "Demand+RBS" : inRbsZone ? "RBS" : (isBullFvgAttached ? ("OB[" + bullOB_Pat + "+FVG]") : ("OB[" + bullOB_Pat + "]"))
+    buyZoneName := "Di " + bActName + " (CHoCH " + ltfLbl + ")"
+else if rejBullDemand
+    buyZoneName := "Rej Demand[" + bullOB_Pat + "] (" + ltfLbl + ")"
+else if isBotSwpFresh
+    swpName     = sslSwept ? "SSL" : pdlSwept ? "PDL" : "Asia L"
+    buyZoneName := swpName + " Swp (CHoCH " + ltfLbl + ")"
+else
+    dBullOB  = hasBullOB  ? math.max(0.0, close - bullOB_T)  : 999999.0
+    dBullFVG = hasBullFVG ? math.max(0.0, close - bullFVG_T) : 999999.0
+    dRBS     = hasRBS     ? math.max(0.0, close - rbsTop)    : 999999.0
+    minBuyD  = math.min(dBullOB, math.min(dBullFVG, dRBS))
+
+    idmBuyNote = (not na(bullIDM) and not bullIdmSwept and bullIDM < close and bullIDM > close - minBuyD) ? "IDM->" : ""
+
+    if minBuyD < 999999.0
+        if hasBullOB and isBullFvgAttached and dBullOB <= dRBS
+            buyZoneName := idmBuyNote + "Demand[" + bullOB_Pat + "+FVG]"
+        else if hasBullOB and isRbsInsideDemand and dBullOB <= dBullFVG
+            buyZoneName := idmBuyNote + "Demand[" + bullOB_Pat + "+RBS]"
+        else if minBuyD == dBullFVG and not isBullFvgAttached
+            buyZoneName := idmBuyNote + "Bull FVG" + (hasBullOB ? "/OB" : "")
+        else if minBuyD == dRBS and not isRbsInsideDemand
+            buyZoneName := idmBuyNote + "RBS" + (hasBullOB ? "/Demand OB" : "")
+        else
+            buyZoneName := idmBuyNote + "Demand[" + bullOB_Pat + "]"
+    else
+        botLiqTarget = (not pdlBroken and not na(pdlPrice) and pdlPrice < close and math.abs(pdlPrice - effSslPrice) <= atrVal * 0.5) ? "SSL/PDL" : "SSL"
+        buyZoneName := "Swp " + botLiqTarget + " + CHoCH " + ltfLbl
+
+// 3. Susun Kalimat Rekomendasi Entry Padat (Maks ~52 Karakter agar Kolom Kiri Tidak Terdorong di HP)
+entryRecTxt = ""
+isDualMode  = entryMode == "Kontekstual 2-Arah (HTF + MTF)"
+
+if isHtfBull
+    if not isMtfBull and isDualMode and not inBullDemand and not inRbsZone
+        entryRecTxt := "Buy " + htfLbl + ": " + buyZoneName + " | Sell " + mtfLbl + ": " + sellZoneName
+    else
+        entryRecTxt := "Fokus Buy (" + htfLbl + "/" + mtfLbl + "): " + buyZoneName
+else
+    if isMtfBull and isDualMode and not inBearSupply and not inSbrZone
+        entryRecTxt := "Sell " + htfLbl + ": " + sellZoneName + " | Buy " + mtfLbl + ": " + buyZoneName
+    else
+        entryRecTxt := "Fokus Sell (" + htfLbl + "/" + mtfLbl + "): " + sellZoneName
+
+// ============================================================================
+// 9. VISUALISASI PETA CHART + PENDAFTARAN KOORDINAT KOTAK AGAR BEBAS TABRAKAN
+// ============================================================================
+var line  pdhLine   = line.new(na, na, na, na, style=line.style_dashed, width=1)
+var label pdhLbl    = label.new(na, na, "", style=label.style_label_left, color=color.new(color.black, 100), size=size.tiny)
+var line  pdlLine   = line.new(na, na, na, na, style=line.style_dashed, width=1)
+var label pdlLbl    = label.new(na, na, "", style=label.style_label_left, color=color.new(color.black, 100), size=size.tiny)
+
+var line  asiaHLine = line.new(na, na, na, na, style=line.style_dotted, width=1)
+var label asiaHLbl  = label.new(na, na, "", style=label.style_label_left, color=color.new(color.black, 100), size=size.tiny)
+var line  asiaLLine = line.new(na, na, na, na, style=line.style_dotted, width=1)
+var label asiaLLbl  = label.new(na, na, "", style=label.style_label_left, color=color.new(color.black, 100), size=size.tiny)
+
+var line  bslLine   = line.new(na, na, na, na, style=line.style_dashed, width=1)
+var label bslLbl    = label.new(na, na, "", style=label.style_label_left, color=color.new(color.black, 100), size=size.tiny)
+var line  sslLine   = line.new(na, na, na, na, style=line.style_dashed, width=1)
+var label sslLbl    = label.new(na, na, "", style=label.style_label_left, color=color.new(color.black, 100), size=size.tiny)
+
+var line  eqLine    = line.new(na, na, na, na, color=color.new(c_neutral, 20), style=line.style_dotted, width=1)
+var label eqLbl     = label.new(na, na, "", style=label.style_label_left, textcolor=c_neutral, color=color.new(color.black, 100), size=size.tiny)
+
+var line  idmLine   = line.new(na, na, na, na, style=line.style_dotted, width=1)
+var label idmLbl    = label.new(na, na, "", style=label.style_label_left, color=color.new(color.black, 100), size=size.tiny)
+
+var box   bearObBox  = box.new(na, na, na, na)
+var line  bearObMidL = line.new(na, na, na, na, style=line.style_dashed, width=1)
+var box   bullObBox  = box.new(na, na, na, na)
+var line  bullObMidL = line.new(na, na, na, na, style=line.style_dashed, width=1)
+
+var box   bearFvgBox = box.new(na, na, na, na)
+var box   bullFvgBox = box.new(na, na, na, na)
+
+var box   sbrBox     = box.new(na, na, na, na)
+var box   rbsBox     = box.new(na, na, na, na)
+
+f_safe_bar(_b) =>
+    math.max(nz(_b, bar_index - 20), bar_index - 400)
+
+f_non_overlap_y(_rawY, _usedArr, _minDist) =>
+    adjY = _rawY
+    if not na(adjY)
+        sz = array.size(_usedArr)
+        if sz > 0
+            for pass = 0 to 3
+                for i = 0 to sz - 1
+                    uY = array.get(_usedArr, i)
+                    if math.abs(adjY - uY) < _minDist
+                        adjY := adjY >= uY ? (uY + _minDist) : (uY - _minDist)
+        array.push(_usedArr, adjY)
+    adjY
+
+if barstate.islast
+    rightEdge = bar_index + 3
+    boxEdge   = bar_index + 15
+    minGapY   = nz(chartAtr, atrVal) * 0.32
+    usedLblY  = array.new_float()
+
+    drawBearOB = showOB and not bearOB_Mit and not na(bearOB_T) and (not onlyHtfZones or not isHtfBull)
+    drawBullOB = showOB and not bullOB_Mit and not na(bullOB_T) and (not onlyHtfZones or isHtfBull)
+
+    if drawBearOB
+        array.push(usedLblY, bearOB_T - (minGapY * 0.25))
+    if drawBullOB
+        array.push(usedLblY, bullOB_B + (minGapY * 0.25))
+
+    mergeAsiaHWithBsl = showAsiaBox and showLiqLines and not na(asiaHigh) and math.abs(asiaHigh - effBslPrice) <= (atrVal * 0.12)
+    mergeAsiaLWithSsl = showAsiaBox and showLiqLines and not na(asiaLow)  and math.abs(asiaLow  - effSslPrice) <= (atrVal * 0.12)
+
+    if showLiqLines
+        bslY    = f_non_overlap_y(effBslPrice, usedLblY, minGapY)
+        bslName = mergeAsiaHWithBsl ? (effBslTag + " / Asia H ") : (effBslTag + " ")
+        line.set_xy1(bslLine, f_safe_bar(bslBar), effBslPrice), line.set_xy2(bslLine, rightEdge, effBslPrice)
+        line.set_color(bslLine, c_gold)
+        label.set_xy(bslLbl, rightEdge, bslY)
+        label.set_text(bslLbl, bslName + str.tostring(effBslPrice, format.mintick) + ((bslSwept or (mergeAsiaHWithBsl and asiaHighSwept)) ? " [SWEPT]" : ""))
+        label.set_textcolor(bslLbl, c_gold)
+
+        sslY    = f_non_overlap_y(effSslPrice, usedLblY, minGapY)
+        sslName = mergeAsiaLWithSsl ? (effSslTag + " / Asia L ") : (effSslTag + " ")
+        line.set_xy1(sslLine, f_safe_bar(sslBar), effSslPrice), line.set_xy2(sslLine, rightEdge, effSslPrice)
+        line.set_color(sslLine, c_fvg_u)
+        label.set_xy(sslLbl, rightEdge, sslY)
+        label.set_text(sslLbl, sslName + str.tostring(effSslPrice, format.mintick) + ((sslSwept or (mergeAsiaLWithSsl and asiaLowSwept)) ? " [SWEPT]" : ""))
+        label.set_textcolor(sslLbl, c_fvg_u)
+    else
+        line.set_xy1(bslLine, na, na), line.set_xy2(bslLine, na, na), label.set_xy(bslLbl, na, na)
+        line.set_xy1(sslLine, na, na), line.set_xy2(sslLine, na, na), label.set_xy(sslLbl, na, na)
+
+    if showPDHL and not na(pdhPrice) and not na(pdlPrice)
+        pdhY = f_non_overlap_y(pdhPrice, usedLblY, minGapY)
+        line.set_xy1(pdhLine, bar_index - 50, pdhPrice), line.set_xy2(pdhLine, rightEdge, pdhPrice)
+        line.set_color(pdhLine, pdhSwept ? c_gold : c_pdhl)
+        label.set_xy(pdhLbl, rightEdge, pdhY)
+        label.set_text(pdhLbl, "PDH " + str.tostring(pdhPrice, format.mintick) + (pdhSwept ? " [Swept]" : pdhBroken ? " [Break]" : ""))
+        label.set_textcolor(pdhLbl, pdhSwept ? c_gold : c_pdhl)
+
+        pdlY = f_non_overlap_y(pdlPrice, usedLblY, minGapY)
+        line.set_xy1(pdlLine, bar_index - 50, pdlPrice), line.set_xy2(pdlLine, rightEdge, pdlPrice)
+        line.set_color(pdlLine, pdlSwept ? c_gold : c_pdhl)
+        label.set_xy(pdlLbl, rightEdge, pdlY)
+        label.set_text(pdlLbl, "PDL " + str.tostring(pdlPrice, format.mintick) + (pdlSwept ? " [Swept]" : pdlBroken ? " [Break]" : ""))
+        label.set_textcolor(pdlLbl, pdlSwept ? c_gold : c_pdhl)
+    else
+        line.set_xy1(pdhLine, na, na), line.set_xy2(pdhLine, na, na), label.set_xy(pdhLbl, na, na)
+        line.set_xy1(pdlLine, na, na), line.set_xy2(pdlLine, na, na), label.set_xy(pdlLbl, na, na)
+
+    if showAsiaBox and not na(asiaHigh) and not na(asiaLow)
+        aStart = f_safe_bar(asiaEndBar)
+        if not mergeAsiaHWithBsl
+            ahY = f_non_overlap_y(asiaHigh, usedLblY, minGapY)
+            line.set_xy1(asiaHLine, aStart, asiaHigh), line.set_xy2(asiaHLine, rightEdge, asiaHigh)
+            line.set_color(asiaHLine, asiaHighSwept ? c_gold : c_asia)
+            label.set_xy(asiaHLbl, rightEdge, ahY)
+            label.set_text(asiaHLbl, "Asia H " + str.tostring(asiaHigh, format.mintick) + (asiaHighSwept ? " [Swept]" : ""))
+            label.set_textcolor(asiaHLbl, asiaHighSwept ? c_gold : c_asia)
+        else
+            line.set_xy1(asiaHLine, na, na), line.set_xy2(asiaHLine, na, na), label.set_xy(asiaHLbl, na, na)
+
+        if not mergeAsiaLWithSsl
+            alY = f_non_overlap_y(asiaLow, usedLblY, minGapY)
+            line.set_xy1(asiaLLine, aStart, asiaLow), line.set_xy2(asiaLLine, rightEdge, asiaLow)
+            line.set_color(asiaLLine, asiaLowSwept ? c_gold : c_asia)
+            label.set_xy(asiaLLbl, rightEdge, alY)
+            label.set_text(asiaLLbl, "Asia L " + str.tostring(asiaLow, format.mintick) + (asiaLowSwept ? " [Swept]" : ""))
+            label.set_textcolor(asiaLLbl, asiaLowSwept ? c_gold : c_asia)
+        else
+            line.set_xy1(asiaLLine, na, na), line.set_xy2(asiaLLine, na, na), label.set_xy(asiaLLbl, na, na)
+    else
+        line.set_xy1(asiaHLine, na, na), line.set_xy2(asiaHLine, na, na), label.set_xy(asiaHLbl, na, na)
+        line.set_xy1(asiaLLine, na, na), line.set_xy2(asiaLLine, na, na), label.set_xy(asiaLLbl, na, na)
+
+    if showEqLine
+        eqY      = f_non_overlap_y(eqMid, usedLblY, minGapY)
+        rngStart = f_safe_bar(math.min(bslBar, sslBar))
+        line.set_xy1(eqLine, rngStart, eqMid), line.set_xy2(eqLine, rightEdge, eqMid)
+        label.set_xy(eqLbl, rightEdge, eqY)
+        label.set_text(eqLbl, "EQ 50% (" + str.tostring(eqMid, format.mintick) + ")")
+    else
+        line.set_xy1(eqLine, na, na), line.set_xy2(eqLine, na, na), label.set_xy(eqLbl, na, na)
+
+    activeIdm    = isHtfBull ? bullIDM      : bearIDM
+    activeIdmBar = isHtfBull ? bullIdmBar   : bearIdmBar
+    activeIdmSwp = isHtfBull ? bullIdmSwept : bearIdmSwept
+    if showIDM and not na(activeIdm)
+        idmY = f_non_overlap_y(activeIdm, usedLblY, minGapY)
+        line.set_xy1(idmLine, f_safe_bar(activeIdmBar), activeIdm), line.set_xy2(idmLine, rightEdge, activeIdm)
+        line.set_color(idmLine, activeIdmSwp ? c_gold : c_idm)
+        label.set_xy(idmLbl, rightEdge, idmY)
+        label.set_text(idmLbl, "IDM " + str.tostring(activeIdm, format.mintick) + (activeIdmSwp ? " [Swept]" : " [Umpan]"))
+        label.set_textcolor(idmLbl, activeIdmSwp ? c_gold : c_idm)
+    else
+        line.set_xy1(idmLine, na, na), line.set_xy2(idmLine, na, na), label.set_xy(idmLbl, na, na)
+
+    if drawBearOB
+        bLeft  = f_safe_bar(bearOB_Bar)
+        bMid   = (bearOB_T + bearOB_B) / 2.0
+        fvgTag = (mergeObFvg and isBearFvgAttached) ? "+FVG" : ""
+        sbrTag = (mergeObFvg and isSbrInsideSupply) ? "+SBR" : ""
+        actTag = inBearSupply ? " [DI ZONA!]" : rejBearSupply ? " [REJECT!]" : ""
+        box.set_lefttop(bearObBox, bLeft, bearOB_T), box.set_rightbottom(bearObBox, boxEdge, bearOB_B)
+        box.set_bgcolor(bearObBox, color.new(c_bear, 86)), box.set_border_color(bearObBox, color.new(c_bear, 35))
+        box.set_text(bearObBox, mtfLbl + " Supply [" + bearOB_Pat + fvgTag + sbrTag + "] 50%: " + str.tostring(bMid, format.mintick) + actTag)
+        box.set_text_size(bearObBox, size.tiny), box.set_text_color(bearObBox, c_bear), box.set_text_halign(bearObBox, text.align_right), box.set_text_valign(bearObBox, text.align_top)
+        line.set_xy1(bearObMidL, bLeft, bMid), line.set_xy2(bearObMidL, boxEdge, bMid), line.set_color(bearObMidL, color.new(c_bear, 40))
+    else
+        box.set_lefttop(bearObBox, na, na), box.set_rightbottom(bearObBox, na, na), line.set_xy1(bearObMidL, na, na), line.set_xy2(bearObMidL, na, na)
+
+    if drawBullOB
+        uLeft  = f_safe_bar(bullOB_Bar)
+        uMid   = (bullOB_T + bullOB_B) / 2.0
+        fvgTag = (mergeObFvg and isBullFvgAttached) ? "+FVG" : ""
+        rbsTag = (mergeObFvg and isRbsInsideDemand) ? "+RBS" : ""
+        actTag = inBullDemand ? " [DI ZONA!]" : rejBullDemand ? " [REJECT!]" : ""
+        box.set_lefttop(bullObBox, uLeft, bullOB_T), box.set_rightbottom(bullObBox, boxEdge, bullOB_B)
+        box.set_bgcolor(bullObBox, color.new(c_bull, 86)), box.set_border_color(bullObBox, color.new(c_bull, 35))
+        box.set_text(bullObBox, mtfLbl + " Demand [" + bullOB_Pat + fvgTag + rbsTag + "] 50%: " + str.tostring(uMid, format.mintick) + actTag)
+        box.set_text_size(bullObBox, size.tiny), box.set_text_color(bullObBox, c_bull), box.set_text_halign(bullObBox, text.align_right), box.set_text_valign(bullObBox, text.align_bottom)
+        line.set_xy1(bullObMidL, uLeft, uMid), line.set_xy2(bullObMidL, boxEdge, uMid), line.set_color(bullObMidL, color.new(c_bull, 40))
+    else
+        box.set_lefttop(bullObBox, na, na), box.set_rightbottom(bullObBox, na, na), line.set_xy1(bullObMidL, na, na), line.set_xy2(bullObMidL, na, na)
+
+    drawSBR = showSbrRbs and not sbrMit and not na(sbrTop) and (not onlyHtfZones or not isHtfBull) and not (mergeObFvg and isSbrInsideSupply)
+    drawRBS = showSbrRbs and not rbsMit and not na(rbsTop) and (not onlyHtfZones or isHtfBull)     and not (mergeObFvg and isRbsInsideDemand)
+
+    if drawSBR
+        box.set_lefttop(sbrBox, f_safe_bar(sbrBar), sbrTop), box.set_rightbottom(sbrBox, boxEdge, sbrBot)
+        box.set_bgcolor(sbrBox, color.new(c_sbr, 88)), box.set_border_color(sbrBox, color.new(c_sbr, 40)), box.set_border_style(sbrBox, line.style_dotted)
+        box.set_text(sbrBox, mtfLbl + " SBR / Bear Breaker (" + str.tostring((sbrTop + sbrBot) / 2.0, format.mintick) + ")")
+        box.set_text_size(sbrBox, size.tiny), box.set_text_color(sbrBox, c_sbr), box.set_text_halign(sbrBox, text.align_right)
+    else
+        box.set_lefttop(sbrBox, na, na), box.set_rightbottom(sbrBox, na, na)
+
+    if drawRBS
+        box.set_lefttop(rbsBox, f_safe_bar(rbsBar), rbsTop), box.set_rightbottom(rbsBox, boxEdge, rbsBot)
+        box.set_bgcolor(rbsBox, color.new(c_rbs, 88)), box.set_border_color(rbsBox, color.new(c_rbs, 40)), box.set_border_style(rbsBox, line.style_dotted)
+        box.set_text(rbsBox, mtfLbl + " RBS / Bull Breaker (" + str.tostring((rbsTop + rbsBot) / 2.0, format.mintick) + ")")
+        box.set_text_size(rbsBox, size.tiny), box.set_text_color(rbsBox, c_rbs), box.set_text_halign(rbsBox, text.align_right)
+    else
+        box.set_lefttop(rbsBox, na, na), box.set_rightbottom(rbsBox, na, na)
+
+    drawBearFVG = showFVG and not bearFVG_Mit and not na(bearFVG_T) and (not onlyHtfZones or not isHtfBull) and not (mergeObFvg and isBearFvgAttached)
+    drawBullFVG = showFVG and not bullFVG_Mit and not na(bullFVG_T) and (not onlyHtfZones or isHtfBull)     and not (mergeObFvg and isBullFvgAttached)
+
+    if drawBearFVG
+        box.set_lefttop(bearFvgBox, f_safe_bar(bearFVG_Bar), bearFVG_T), box.set_rightbottom(bearFvgBox, boxEdge, bearFVG_B)
+        box.set_bgcolor(bearFvgBox, color.new(c_fvg_b, 87)), box.set_border_color(bearFvgBox, color.new(c_fvg_b, 45))
+        box.set_text(bearFvgBox, mtfLbl + " Bear FVG"), box.set_text_size(bearFvgBox, size.tiny), box.set_text_color(bearFvgBox, c_fvg_b), box.set_text_halign(bearFvgBox, text.align_right)
+    else
+        box.set_lefttop(bearFvgBox, na, na), box.set_rightbottom(bearFvgBox, na, na)
+
+    if drawBullFVG
+        box.set_lefttop(bullFvgBox, f_safe_bar(bullFVG_Bar), bullFVG_T), box.set_rightbottom(bullFvgBox, boxEdge, bullFVG_B)
+        box.set_bgcolor(bullFvgBox, color.new(c_fvg_u, 87)), box.set_border_color(bullFvgBox, color.new(c_fvg_u, 45))
+        box.set_text(bullFvgBox, mtfLbl + " Bull FVG"), box.set_text_size(bullFvgBox, size.tiny), box.set_text_color(bullFvgBox, c_fvg_u), box.set_text_halign(bullFvgBox, text.align_right)
+    else
+        box.set_lefttop(bullFvgBox, na, na), box.set_rightbottom(bullFvgBox, na, na)
+
+// ============================================================================
+// 10. TABEL CONTEXT DASHBOARD V4.3.2 (ANTI-KEPOTONG DI LAYAR HP)
+// ============================================================================
+tPos  = posInput == "Bottom Right" ? position.bottom_right : posInput == "Top Right" ? position.top_right : posInput == "Bottom Left" ? position.bottom_left : position.bottom_center
+tSize = txtSizeIn == "Tiny" ? size.tiny : txtSizeIn == "Small" ? size.small : size.normal
+
+var table dash = table.new(tPos, 2, 16, bgcolor=color.new(#0f172a, 6), border_color=color.new(#334155, 25), border_width=1, frame_color=color.new(#475569, 10), frame_width=1)
+
+f_row(_tbl, _r, _lbl, _val, _bg, _txtCol) =>
+    table.cell(_tbl, 0, _r, " " + _lbl + " ", bgcolor=color.new(#1e293b, 4), text_color=color.new(#cbd5e1, 0), text_size=tSize, text_halign=text.align_left)
+    table.cell(_tbl, 1, _r, " " + _val + " ", bgcolor=_bg, text_color=_txtCol, text_size=tSize, text_halign=text.align_left)
+
+if barstate.islast
+    table.clear(dash, 0, 0, 1, 15)
+
+    if showDash
+        cRed   = color.new(#9f1239, 8)
+        cGreen = color.new(#065f46, 8)
+        cBlue  = color.new(#0369a1, 12)
+        cAmber = color.new(#92400e, 12)
+        cPurp  = color.new(#581c87, 10)
+        cDark  = color.new(#0f172a, 4)
+        cWhite = color.new(#f8fafc, 0)
+
+        isTestingZone = inBearSupply or inBullDemand or inSbrZone or inRbsZone
+        isRejectZone  = rejBearSupply or rejBullDemand
+        alignBadge    = isTestingZone ? "DI ZONA POI AKTIF!" : isRejectZone ? "REJEKSI DARI POI!" : (isFullBullAlign or isFullBearAlign) ? "SEARAH (ALIGNED)" : "FASE PULLBACK"
+        hdrBg         = isTestingZone ? cAmber : isRejectZone ? (rejBearSupply ? cRed : cGreen) : isFullBullAlign ? cGreen : isFullBearAlign ? cRed : cPurp
+        table.cell(dash, 0, 0, " AMY V4.3.2 [" + modeBadge + "] ", bgcolor=color.new(#020617, 0), text_color=cWhite, text_size=tSize, text_halign=text.align_left)
+        table.cell(dash, 1, 0, " STATUS: " + alignBadge + " ", bgcolor=hdrBg, text_color=cWhite, text_size=tSize, text_halign=text.align_right)
+
+        tfMatrixTxt = htfLbl + ": " + (isHtfBull ? "BULL" : "BEAR") + "  |  " + mtfLbl + ": " + (isMtfBull ? "BULL" : "BEAR") + "  |  " + ltfLbl + ": " + (isLtfBull ? "BULL" : "BEAR")
+        f_row(dash, 1, "3-TF BIAS", tfMatrixTxt, (isBullPullback or isBearPullback) ? cAmber : isHtfBull ? cGreen : cRed, cWhite)
+
+        pBg = phaseColor == c_bull ? cGreen : phaseColor == c_bear ? cRed : phaseColor == c_gold ? cAmber : cPurp
+        f_row(dash, 2, "FASE MARKET", phaseStatus, pBg, cWhite)
+
+        rngInfo = zoneLabel + " | " + str.tostring(rangeLow, format.mintick) + "-" + str.tostring(rangeHigh, format.mintick) + " (EQ: " + str.tostring(eqMid, format.mintick) + ")"
+        rngFav  = (isHtfBull and isDiscount) or (not isHtfBull and isPremium)
+        f_row(dash, 3, "RANGE & POS", rngInfo, rngFav ? cGreen : cDark, cWhite)
+
+        distBSL = math.abs(effBslPrice - close)
+        bslInfo = effBslTag + ": " + str.tostring(effBslPrice, format.mintick) + " ($" + str.tostring(distBSL, "#.#") + ") | PDH: " + str.tostring(pdhPrice, format.mintick) + (pdhSwept ? " [Swp]" : pdhBroken ? " [Brk]" : "")
+        f_row(dash, 4, "MAGNET ATAS", bslInfo, isTopSwpFresh ? cAmber : isHtfBull ? cBlue : cDark, cWhite)
+
+        distSSL = math.abs(close - effSslPrice)
+        sslInfo = effSslTag + ": " + str.tostring(effSslPrice, format.mintick) + " ($" + str.tostring(distSSL, "#.#") + ") | PDL: " + str.tostring(pdlPrice, format.mintick) + (pdlSwept ? " [Swp]" : pdlBroken ? " [Brk]" : "")
+        f_row(dash, 5, "MAGNET BAWAH", sslInfo, isBotSwpFresh ? cAmber : not isHtfBull ? cBlue : cDark, cWhite)
+
+        asiaStat = asiaHighSwept ? "Asia H Swp" : asiaLowSwept ? "Asia L Swp" : asiaHighBrk ? "Asia H Brk" : asiaLowBrk ? "Asia L Brk" : "In Range"
+        sessInfo = sessName + " | Asia: " + str.tostring(asiaLow, format.mintick) + "-" + str.tostring(asiaHigh, format.mintick) + " (" + asiaStat + ")"
+        f_row(dash, 6, "SESI & ASIA", sessInfo, (asiaHighSwept or asiaLowSwept) ? cAmber : cDark, cWhite)
+
+        idmVal  = isHtfBull ? bullIDM : bearIDM
+        idmSwp  = isHtfBull ? bullIdmSwept : bearIdmSwept
+        idmInfo = not na(idmVal) ? (str.tostring(idmVal, format.mintick) + (idmSwp ? " [SUDAH DISAPU - POI Valid]" : " [BELUM DISAPU - Awas Umpan]")) : "Menunggu Swing IDM"
+        f_row(dash, 7, "IDM (" + mtfLbl + ")", idmInfo, idmSwp ? cGreen : cAmber, cWhite)
+
+        sbrTxt  = not sbrMit and not na(sbrTop) ? (str.tostring(sbrBot, format.mintick) + "-" + str.tostring(sbrTop, format.mintick)) : "None/Mit"
+        rbsTxt  = not rbsMit and not na(rbsTop) ? (str.tostring(rbsBot, format.mintick) + "-" + str.tostring(rbsTop, format.mintick)) : "None/Mit"
+        flipTxt = "SBR: " + sbrTxt + " | RBS: " + rbsTxt + (inSbrZone ? " [DI SBR!]" : inRbsZone ? " [DI RBS!]" : "")
+        f_row(dash, 8, "SBR / RBS", flipTxt, inSbrZone ? cRed : inRbsZone ? cGreen : cDark, cWhite)
+
+        supObTxt  = not bearOB_Mit and not na(bearOB_T)  ? ("[" + bearOB_Pat + "] " + str.tostring(bearOB_B, format.mintick) + "-" + str.tostring(bearOB_T, format.mintick)) : "Mit"
+        supFvgTxt = not bearFVG_Mit and not na(bearFVG_T) ? (str.tostring(bearFVG_B, format.mintick) + "-" + str.tostring(bearFVG_T, format.mintick)) : "Mit"
+        supStat   = inBearSupply ? " [DI ZONA!]" : rejBearSupply ? " [REJECT!]" : ""
+        supInfo   = "OB " + supObTxt + " | FVG: " + supFvgTxt + supStat
+        f_row(dash, 9, "SUPPLY (" + mtfLbl + ")", supInfo, inBearSupply ? cAmber : rejBearSupply ? cRed : cDark, cWhite)
+
+        demObTxt  = not bullOB_Mit and not na(bullOB_T)  ? ("[" + bullOB_Pat + "] " + str.tostring(bullOB_B, format.mintick) + "-" + str.tostring(bullOB_T, format.mintick)) : "Mit"
+        demFvgTxt = not bullFVG_Mit and not na(bullFVG_T) ? (str.tostring(bullFVG_B, format.mintick) + "-" + str.tostring(bullFVG_T, format.mintick)) : "Mit"
+        demStat   = inBullDemand ? " [DI ZONA!]" : rejBullDemand ? " [REJECT!]" : ""
+        demInfo   = "OB " + demObTxt + " | FVG: " + demFvgTxt + demStat
+        f_row(dash, 10, "DEMAND (" + mtfLbl + ")", demInfo, inBullDemand ? cAmber : rejBullDemand ? cGreen : cDark, cWhite)
+
+        htfInvTxt = isHtfBull ? (htfLbl + " Batal Bull < " + str.tostring(htfLow, format.mintick)) : (htfLbl + " Batal Bear > " + str.tostring(htfHigh, format.mintick))
+        mtfInvTxt = isMtfBull ? (mtfLbl + " Batal Bull < " + str.tostring(mtfLow, format.mintick)) : (mtfLbl + " Batal Bear > " + str.tostring(mtfHigh, format.mintick))
+        invInfo   = htfInvTxt + " | " + mtfInvTxt
+        f_row(dash, 11, "BATAS CHOCH", invInfo, cDark, cWhite)
+
+        recBg = isTestingZone ? cAmber : isHtfBull ? cGreen : cRed
+        f_row(dash, 12, "TARGET ENTRY", entryRecTxt, recBg, cWhite)
+
+        f_row(dash, 13, "PANDUAN", actionGuide, pBg, cWhite)
+
+        if mobSpacer
+            table.cell(dash, 0, 14, "", bgcolor=color.new(color.black, 100), text_size=size.tiny)
+            table.cell(dash, 1, 14, "", bgcolor=color.new(color.black, 100), text_size=size.tiny)

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pelajaran 04: Diskon vs Premium — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/micro-learning.css">
+  <style>
+    .zone-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin: 16px 0;
+    }
+    @media (min-width: 520px) {
+      .zone-container {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    .zone-box {
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .zone-box.premium {
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+    .zone-box.discount {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+    .zone-title {
+      font-size: 15px;
+      font-weight: 800;
+      margin: 0 0 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .premium .zone-title { color: #f87171; }
+    .discount .zone-title { color: #34d399; }
+    .zone-desc {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.5;
+      margin: 0;
+    }
+  </style>
+</head>
+<body class="micro-learning-body">
+  <div class="ml-container">
+    
+    <!-- Header -->
+    <header class="ml-header">
+      <a href="index.html" class="ml-back-link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </a>
+        <span>Roadmap Level 1</span>
+      </a>
+      <span class="ml-pill-tag">PELAJARAN 04 / 07</span>
+    </header>
+
+    <!-- Title Box -->
+    <div class="ml-lesson-title-box">
+      <h1>Diskon vs Premium: Rahasia Belanja di Harga Obral</h1>
+      <div class="ml-lesson-meta">
+        <span>⏱️ 3 Menit Baca</span>
+        <span>•</span>
+        <span>🏷️ Hukum Dagang Cerdas</span>
+        <span>•</span>
+        <span>⚖️ Batas Wajar 50%</span>
+      </div>
+    </div>
+
+    <!-- Section 1 -->
+    <div class="ml-card">
+      <h2>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ml-gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+          <line x1="7" y1="7" x2="7.01" y2="7"></line>
+        </svg>
+        Hukum Dasar Pedagang di Pasar Mana Pun
+      </h2>
+      <p>
+        Pernahkah kamu pergi ke toko baju atau pasar buah lalu sengaja memilih barang dengan banderol harga paling mahal yang belum dipotong diskon sama sekali? Tentu tidak! Naluri alami kita selalu mencari <strong>harga miring (diskon)</strong> agar modal kita hemat.
+      </p>
+      <p>
+        Namun anehnya, ketika berhadapan dengan grafik trading, banyak orang lupa logika sederhana ini. Mereka nekat klik <em>BUY</em> saat lilin hijau sudah melesat tinggi di langit-langit harga. Hasilnya? Harga langsung anjlok begitu mereka masuk!
+      </p>
+
+      <div class="zone-container">
+        <div class="zone-box premium">
+          <div class="zone-title">🔴 ZONA PREMIUM (> 50%)</div>
+          <p class="zone-desc">
+            Wilayah harga mahal di separuh atas pergerakan. Tempat terbaik pedagang besar <strong>melepas barang / menjual (SELL)</strong>. <em>Jangan pernah Buy di area ini!</em>
+          </p>
+        </div>
+        <div class="zone-box discount">
+          <div class="zone-title">🟢 ZONA DISCOUNT (&lt; 50%)</div>
+          <p class="zone-desc">
+            Wilayah harga murah di separuh bawah pergerakan. Tempat terbaik pembeli <strong>mengoleksi barang / membeli (BUY)</strong>. <em>Jangan pernah Sell di area ini!</em>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Visual Diagram -->
+    <div class="ml-diagram">
+      <div class="ml-diagram-title">Visualisasi Penggaris Rentang Harga (50% Equilibrium)</div>
+      <svg viewBox="0 0 480 260" width="100%" height="auto" style="overflow: visible; font-family: -apple-system, sans-serif;">
+        <!-- Card Frame -->
+        <rect x="40" y="20" width="400" height="200" rx="10" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.08)" />
+
+        <!-- Zona Premium Area -->
+        <rect x="40" y="20" width="400" height="100" rx="10" fill="rgba(239, 68, 68, 0.12)" />
+        <text x="240" y="55" fill="#f87171" font-size="13" font-weight="800" text-anchor="middle">ZONA PREMIUM (HARGA MAHAL)</text>
+        <text x="240" y="75" fill="#fca5a5" font-size="11" text-anchor="middle">Wilayah Menguntungkan untuk Jual (SELL)</text>
+        <text x="430" y="36" fill="#fca5a5" font-size="10.5" font-weight="700" text-anchor="end">100% (PUNCAK HIGH)</text>
+
+        <!-- Equilibrium Line 50% -->
+        <line x1="40" y1="120" x2="440" y2="120" stroke="#d4a832" stroke-width="2.5" stroke-dasharray="6,4" />
+        <rect x="180" y="108" width="120" height="24" rx="12" fill="#d4a832" />
+        <text x="240" y="124" fill="#000" font-size="11" font-weight="800" text-anchor="middle">50% EQUILIBRIUM</text>
+        <text x="430" y="124" fill="#d4a832" font-size="10.5" font-weight="700" text-anchor="end">Harga Wajar</text>
+
+        <!-- Zona Discount Area -->
+        <rect x="40" y="120" width="400" height="100" rx="10" fill="rgba(16, 185, 129, 0.12)" />
+        <text x="240" y="165" fill="#34d399" font-size="13" font-weight="800" text-anchor="middle">ZONA DISCOUNT (HARGA OBRAL)</text>
+        <text x="240" y="185" fill="#a7f3d0" font-size="11" text-anchor="middle">Wilayah Menguntungkan untuk Beli (BUY)</text>
+        <text x="430" y="210" fill="#a7f3d0" font-size="10.5" font-weight="700" text-anchor="end">0% (LEMBAH LOW)</text>
+      </svg>
+    </div>
+
+    <!-- Section 3: Analogi & Golden Rule -->
+    <div class="ml-card">
+      <h2>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ml-gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        Dua Pertanyaan Keramat Sebelum Entry
+      </h2>
+
+      <div class="ml-analogi">
+        <div class="ml-analogi-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+          Pertanyaan Keramat Setiap Kali Melihat Chart
+        </div>
+        Sebelum tanganmu gatal menekan tombol Buy atau Sell, tanyakan pada dirimu:
+        <br><br>
+        1. <em>"Jika aku mau BUY, apakah harga saat ini sudah berada di ZONA DISCOUNT (bawah 50%)?"</em>
+        <br>
+        2. <em>"Jika aku mau SELL, apakah harga saat ini sudah berada di ZONA PREMIUM (atas 50%)?"</em>
+      </div>
+
+      <div class="ml-aturan">
+        <div class="ml-aturan-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          SOP Anti Beli di Pucuk
+        </div>
+        Jika pasar sedang tren naik (Uptrend), jangan mengejar lilin yang sedang melesat ke atas. Duduklah dengan tenang, tunggu harga mundur (retrace) turun ke Zona Diskon (&lt; 50%), barulah kamu bersiap mencari konfirmasi untuk Buy!
+      </div>
+    </div>
+
+    <!-- Quiz Interaktif -->
+    <div class="ml-quiz-card" data-lesson-id="level-1-04">
+      <span class="ml-quiz-badge"> CEK PEMAHAMAN (1 MENIT)</span>
+      <div class="ml-quiz-question">
+        Kamu melihat tren pasar emas sedang naik kencang (Uptrend). Namun harga saat ini sudah berada di area 80% dari rentang pergerakan (jauh di atas batas 50% Equilibrium). Apa keputusan terbaikmu?
+      </div>
+
+      <div class="ml-quiz-options">
+        <button class="ml-quiz-btn" data-correct="false" data-explanation="Membeli di area 80% artinya kamu membeli di Zona Premium (harga sangat mahal). Ini sangat berisiko terkena pembalikan harga.">
+          A. Langsung buru-buru Buy agar tidak ketinggalan kereta harga
+        </button>
+        <button class="ml-quiz-btn" data-correct="true" data-explanation="Luar biasa! Kamu sudah berpikir seperti pedagang profesional. Jangan membeli di Zona Premium (harga mahal). Sabar menunggu harga turun ke Zona Diskon (&lt; 50%) sebelum membuka Buy.">
+          B. Bersabar dan menunggu harga terkoreksi turun ke Zona Diskon (&lt; 50%) agar mendapat harga murah
+        </button>
+        <button class="ml-quiz-btn" data-correct="false" data-explanation="Melawan tren naik yang kuat tanpa tanda konfirmasi pembalikan (MSS) sangat berbahaya bagi pemula.">
+          C. Langsung pasang Sell besar-besaran untuk menjatuhkan harga
+        </button>
+      </div>
+
+      <div class="ml-quiz-feedback"></div>
+    </div>
+
+    <!-- Navigation Footer -->
+    <div class="ml-nav-footer">
+      <a href="03-struktur-bos-dan-mss.html" class="ml-btn-nav ml-btn-prev">
+        ← Pelajaran 03
+      </a>
+      <a href="05-valid-swing-high-dan-low.html" class="ml-btn-nav ml-btn-next">
+        Lanjut Pelajaran 05 →
+      </a>
+    </div>
+
+  </div>
+
+  <script src="../assets/micro-learning.js"></script>
+</body>
+</html>

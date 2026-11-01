@@ -187,19 +187,21 @@
   }
 
   function resumeCardHtml(last, history) {
-    var recent = history.filter(function (item) { return item && item.path !== last.path; }).slice(0, 3);
-    var recentHtml = recent.length
-      ? '<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)"><strong style="display:block;margin-bottom:8px">Riwayat baca terbaru</strong>' + recent.map(function (item) {
-          return '<a class="chapter-row" style="margin-top:8px" href="' + absolutePath(item.path) + '"><span><strong>' + escapeHtml(item.title) + '</strong><br><small>' + escapeHtml(item.section) + ' · ' + Number(item.progress || 0) + '%</small></span><span>→</span></a>';
-        }).join('') + '</div>'
-      : '';
-    return '<div class="course-card" style="padding:24px;background:var(--accent-soft);border-color:var(--accent)">' +
-      '<div class="num" style="color:var(--accent)">TERAKHIR DIBACA</div>' +
-      '<h3 style="margin:8px 0;font-size:18px">' + escapeHtml(last.title) + '</h3>' +
-      '<p style="margin:0 0 4px">' + escapeHtml(last.section) + '</p>' +
-      '<small style="display:block;color:var(--muted)">Posisi ' + Number(last.progress || 0) + '% · ' + escapeHtml(formatTime(last.updatedAt)) + (last.headingText ? ' · ' + escapeHtml(last.headingText) : '') + '</small>' +
-      '<a class="btn primary" href="' + absolutePath(last.path) + '" style="margin-top:14px;width:fit-content">Lanjutkan dari posisi terakhir →</a>' +
-      recentHtml + '</div>';
+    var progressText = Number(last.progress || 0) > 0 ? ' · ' + Number(last.progress || 0) + '%' : '';
+    return '<div class="course-card" style="padding:10px 14px;background:rgba(212,168,50,0.08);border:1px solid rgba(212,168,50,0.35);border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0;">' +
+      '<div style="min-width:0;flex:1;">' +
+        '<div class="num" style="color:var(--gold,#d4a832);font-size:9.5px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:2px;">' +
+          'TERAKHIR DIBACA' + escapeHtml(progressText) +
+        '</div>' +
+        '<h3 style="margin:0;font-size:13.5px;color:#fff;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;">' +
+          escapeHtml(last.title) +
+        '</h3>' +
+        (last.section ? '<div style="font-size:11px;color:var(--muted,#94a3b8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;">' + escapeHtml(last.section) + '</div>' : '') +
+      '</div>' +
+      '<a class="btn primary sm" href="' + absolutePath(last.path) + '" aria-label="Lanjutkan dari posisi terakhir" title="Lanjutkan dari posisi terakhir" style="font-weight:700;font-size:11.5px;padding:6px 14px;border-radius:8px;white-space:nowrap;flex-shrink:0;">' +
+        'Lanjut →' +
+      '</a>' +
+    '</div>';
   }
 
   function escapeHtml(value) {
@@ -226,7 +228,7 @@
     if (!host) return;
     container = document.createElement('div');
     container.id = 'lanjutBelajarContainer';
-    container.style.margin = '0 0 32px';
+    container.style.margin = '0 0 16px';
     container.innerHTML = resumeCardHtml(last, history);
     if (hero) hero.insertAdjacentElement('afterend', container);
     else host.insertAdjacentElement('afterbegin', container);

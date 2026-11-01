@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07090e">
+  <title>Level 3: Waktu & Sesi Emas — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/micro-learning.css">
+  <style>
+    /* Styling khusus Halaman Roadmap Level 3 */
+    .ml-roadmap-hero {
+      background: linear-gradient(135deg, rgba(212, 168, 50, 0.12) 0%, rgba(18, 22, 34, 0.8) 100%);
+      border: 1px solid var(--ml-border);
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .ml-roadmap-hero::before {
+      content: '';
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 140px;
+      height: 140px;
+      background: radial-gradient(circle, rgba(212, 168, 50, 0.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .ml-hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--ml-gold-soft);
+      border: 1px solid var(--ml-border-active);
+      color: var(--ml-gold);
+      padding: 4px 12px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .ml-hero-title {
+      font-size: clamp(22px, 5vw, 28px);
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0 0 10px;
+      line-height: 1.25;
+    }
+    .ml-hero-desc {
+      font-size: 14.5px;
+      color: var(--ml-muted);
+      line-height: 1.6;
+      margin: 0 0 18px;
+    }
+    .ml-stats-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .ml-stat-item {
+      text-align: center;
+    }
+    .ml-stat-val {
+      font-size: 17px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .ml-stat-lbl {
+      font-size: 11.5px;
+      color: var(--ml-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Lesson List Cards */
+    .ml-lessons-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .ml-lesson-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--ml-surface);
+      border: 1px solid var(--ml-border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    .ml-lesson-item:hover, .ml-lesson-item:focus-visible {
+      background: var(--ml-surface-elevated);
+      border-color: var(--ml-gold);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+    }
+    .ml-lesson-num {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--ml-gold);
+      flex-shrink: 0;
+    }
+    .ml-lesson-item.completed .ml-lesson-num {
+      background: var(--ml-success-soft);
+      border-color: var(--ml-success);
+      color: var(--ml-success);
+    }
+    .ml-lesson-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .ml-lesson-h {
+      font-size: 15.5px;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0 0 4px;
+      line-height: 1.35;
+    }
+    .ml-lesson-sub {
+      font-size: 12.5px;
+      color: var(--ml-muted);
+      line-height: 1.4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ml-lesson-meta-tag {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      font-size: 11.5px;
+      color: var(--ml-muted);
+    }
+    .ml-badge-status {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 99px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .ml-badge-status.done {
+      background: var(--ml-success-soft);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .ml-badge-status.ready {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--ml-muted);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .ml-arrow-icon {
+      color: var(--ml-muted);
+      transition: transform 0.2s;
+    }
+    .ml-lesson-item:hover .ml-arrow-icon {
+      color: var(--ml-gold);
+      transform: translateX(4px);
+    }
+
+    /* Level Navigation Card */
+    .ml-level-nav-box {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body class="micro-learning-body">
+
+<div class="ml-container">
+  <!-- Header Bar -->
+  <header class="ml-header">
+    <a href="../../index.html" class="ml-back-link">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      <span>Kembali ke Beranda Academy</span>
+    </a>
+    <span class="ml-pill-tag">Level 3</span>
+  </header>
+
+  <!-- Title Box -->
+  <section class="ml-lesson-title-box">
+    <h1>Level 3: Waktu & Sesi Emas</h1>
+    <div class="ml-lesson-meta">
+      <span>⏱️ ~18 Menit Baca</span>
+      <span>•</span>
+      <span>6 Pelajaran</span>
+      <span>•</span>
+      <span>Kuis Latihan</span>
+    </div>
+  </section>
+
+  <!-- Lesson Directory -->
+  <div class="ml-lessons-list">
+    <!-- Pelajaran 1 -->
+    <a href="01-siklus-tiga-sesi.html" class="ml-lesson-item" id="item-lesson-1" data-lesson-id="level-3-01">
+      <div class="ml-lesson-num" id="icon-lesson-1">01</div>
+      <div class="ml-lesson-body">
+        <h2 class="ml-lesson-h">Siklus Karakter 3 Sesi Dunia</h2>
+        <div class="ml-lesson-sub">Asia (Umpan Likuiditas), London (Manipulasi Judas), dan New York (Ekspansi Tren Sejati).</div>
+        <div class="ml-lesson-meta-tag">
+          <span>⏱ 3 Menit Baca</span>
+          <span>•</span>
+          <span class="ml-badge-status ready" id="badge-lesson-1">Belum Selesai</span>
+        </div>
+      </div>
+      <svg class="ml-arrow-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </a>
+
+    <!-- Pelajaran 2 -->
+    <a href="02-killzones-xauusd.html" class="ml-lesson-item" id="item-lesson-2" data-lesson-id="level-3-02">
+      <div class="ml-lesson-num" id="icon-lesson-2">02</div>
+      <div class="ml-lesson-body">
+        <h2 class="ml-lesson-h">Jam Emas Killzone XAU/USD</h2>
+        <div class="ml-lesson-sub">London Open (15:00-17:00 WITA) & NY Open (19:30-22:30 WITA) — Hentikan Overtrading.</div>
+        <div class="ml-lesson-meta-tag">
+          <span>⏱ 3 Menit Baca</span>
+          <span>•</span>
+          <span class="ml-badge-status ready" id="badge-lesson-2">Belum Selesai</span>
+        </div>
+      </div>
+      <svg class="ml-arrow-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </a>
+
+    <!-- Pelajaran 3 -->
+    <a href="03-news-lock-sop.html" class="ml-lesson-item" id="item-lesson-3" data-lesson-id="level-3-03">
+      <div class="ml-lesson-num" id="icon-lesson-3">03</div>
+      <div class="ml-lesson-body">
+        <h2 class="ml-lesson-h">SOP News Lock & Kalender Merah</h2>
+        <div class="ml-lesson-sub">CPI, NFP, & FOMC — Kunci posisi 15 menit sebelum & sesudah berita, hindari slippage liar.</div>
+        <div class="ml-lesson-meta-tag">
+          <span>⏱ 4 Menit Baca</span>
+          <span>•</span>
+          <span class="ml-badge-status ready" id="badge-lesson-3">Belum Selesai</span>
+        </div>
+      </div>
+      <svg class="ml-arrow-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </a>
+
+    <!-- Pelajaran 4 -->
+    <a href="04-model-silver-bullet.html" class="ml-lesson-item" id="item-lesson-4" data-lesson-id="level-3-04">
+      <div class="ml-lesson-num" id="icon-lesson-4">04</div>
+      <div class="ml-lesson-body">
+        <h2 class="ml-lesson-h">Model ICT Silver Bullet XAU/USD</h2>
+        <div class="ml-lesson-sub">Setup presisi 60 menit (10:00-11:00 AM NY) — Syarat FVG wajib terisi & target 15-20 pips emas.</div>
+        <div class="ml-lesson-meta-tag">
+          <span>⏱ 3 Menit Baca</span>
+          <span>•</span>
+          <span class="ml-badge-status ready" id="badge-lesson-4">Belum Selesai</span>
+        </div>
+      </div>
+      <svg class="ml-arrow-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </a>
+
+    <!-- Pelajaran 5 -->
+    <a href="05-judas-swing-london.html" class="ml-lesson-item" id="item-lesson-5" data-lesson-id="level-3-05">
+      <div class="ml-lesson-num" id="icon-lesson-5">05</div>
+      <div class="ml-lesson-body">
+        <h2 class="ml-lesson-h">Mengidentifikasi Judas Swing Sesi London</h2>
+        <div class="ml-lesson-sub">Membaca sapuan likuiditas manipulasi awal: jebakan penembusan Asia High/Low sebelum ekspansi tren.</div>
+        <div class="ml-lesson-meta-tag">
+          <span>⏱ 3 Menit Baca</span>
+          <span>•</span>
+          <span class="ml-badge-status ready" id="badge-lesson-5">Belum Selesai</span>
+        </div>
+      </div>
+      <svg class="ml-arrow-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </a>
+
+    <!-- Pelajaran 6 -->
+    <a href="06-peta-likuiditas-pra-sesi.html" class="ml-lesson-item" id="item-lesson-6" data-lesson-id="level-3-06">
+      <div class="ml-lesson-num" id="icon-lesson-6">06</div>
+      <div class="ml-lesson-body">
+        <h2 class="ml-lesson-h">Checklist Peta Likuiditas Pra-Sesi</h2>
+        <div class="ml-lesson-sub">Asia High/Low, PDH/PDL, NY Midnight Open, & Unmitigated FVG — SOP navigasi sebelum pasar dibuka.</div>
+        <div class="ml-lesson-meta-tag">
+          <span>⏱ 3 Menit Baca</span>
+          <span>•</span>
+          <span class="ml-badge-status ready" id="badge-lesson-6">Belum Selesai</span>
+        </div>
+      </div>
+      <svg class="ml-arrow-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </a>
+  </div>
+
+  <!-- Navigation antar Level -->
+  <div class="ml-nav-footer">
+    <a href="../level-2/index.html" class="ml-btn-nav ml-btn-prev">
+      ← Level 2: Struktur Pasar
+    </a>
+    <a href="01-siklus-tiga-sesi.html" class="ml-btn-nav ml-btn-next">
+      Mulai Pelajaran 1 →
+    </a>
+  </div>
+</div>
+
+<script src="../assets/micro-learning.js"></script>
+<script>
+  // Render status progres pelajaran di Level 3
+  document.addEventListener('DOMContentLoaded', function() {
+    const progress = window.AmyFXMicroLearning ? window.AmyFXMicroLearning.getProgress() : {};
+    const lessons = ['level-3-01', 'level-3-02', 'level-3-03', 'level-3-04', 'level-3-05', 'level-3-06'];
+    let completedCount = 0;
+
+    lessons.forEach(function(lessonId, idx) {
+      const num = idx + 1;
+      const isDone = progress[lessonId] && progress[lessonId].completed;
+      if (isDone) {
+        completedCount++;
+        const item = document.getElementById('item-lesson-' + num);
+        const icon = document.getElementById('icon-lesson-' + num);
+        const badge = document.getElementById('badge-lesson-' + num);
+        if (item) item.classList.add('completed');
+        if (icon) icon.innerHTML = '✓';
+        if (badge) {
+          badge.className = 'ml-badge-status done';
+          badge.textContent = 'Selesai';
+        }
+      }
+    });
+
+    const progressVal = document.getElementById('progressVal');
+    if (progressVal) {
+      progressVal.textContent = completedCount + ' / ' + lessons.length;
+    }
+  });
+</script>
+</body>
+</html>

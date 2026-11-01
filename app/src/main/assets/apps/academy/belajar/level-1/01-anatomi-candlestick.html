@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pelajaran 01: Anatomi Candlestick — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/micro-learning.css">
+  <style>
+    /* Styling Tambahan Visual Candlestick */
+    .candle-svg-wrap {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      display: block;
+    }
+    .candle-metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .candle-metric-box {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .candle-metric-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ml-gold);
+      margin-bottom: 4px;
+    }
+    .candle-metric-desc {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.45;
+      margin: 0;
+    }
+  </style>
+</head>
+<body class="micro-learning-body">
+  <div class="ml-container">
+    
+    <!-- Header -->
+    <header class="ml-header">
+      <a href="index.html" class="ml-back-link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </a>
+        <span>Roadmap Level 1</span>
+      </a>
+      <span class="ml-pill-tag">PELAJARAN 01 / 07</span>
+    </header>
+
+    <!-- Title Box -->
+    <div class="ml-lesson-title-box">
+      <h1>Anatomi Candlestick: Pertarungan di Balik 1 Lilin</h1>
+      <div class="ml-lesson-meta">
+        <span>⏱️ 3 Menit Baca</span>
+        <span>•</span>
+        <span>🕯️ Logika Candlestick</span>
+        <span>•</span>
+        <span>🎯 Visual & Santai</span>
+      </div>
+    </div>
+
+    <!-- Section 1: Pengantar -->
+    <div class="ml-card">
+      <h2>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ml-gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        Candlestick Bukan Garis Biasa
+      </h2>
+      <p>
+        Banyak pemula melihat grafik lilin (candlestick) seperti kode rahasia yang menyeramkan. Padahal, <strong>satu lilin hanyalah rekaman visual dari satu babak pertandingan sepak bola atau tarik tambang</strong> antara dua kelompok: <em>Pembeli (Buyer/Bulls)</em> dan <em>Penjual (Seller/Bears)</em>.
+      </p>
+      <p>
+        Jika kamu memilih grafik 15 Menit (M15), maka 1 batang lilin menceritakan apa yang terjadi selama 15 menit penuh.
+      </p>
+
+      <!-- 4 Poin Kunci -->
+      <div class="candle-metric-grid">
+        <div class="candle-metric-box">
+          <div class="candle-metric-title">1. OPEN (Harga Pembuka)</div>
+          <p class="candle-metric-desc">Titik harga saat peluit tanda dimulainya waktu ditiup.</p>
+        </div>
+        <div class="candle-metric-box">
+          <div class="candle-metric-title">2. HIGH (Puncak Tertinggi)</div>
+          <p class="candle-metric-desc">Batas terjauh yang sempat dicapai oleh dorongan pembeli.</p>
+        </div>
+        <div class="candle-metric-box">
+          <div class="candle-metric-title">3. LOW (Lembah Terendah)</div>
+          <p class="candle-metric-desc">Batas terendah yang sempat ditekan oleh serangan penjual.</p>
+        </div>
+        <div class="candle-metric-box">
+          <div class="candle-metric-title">4. CLOSE (Harga Penutup)</div>
+          <p class="candle-metric-desc">Titik harga terakhir saat babak pertandingan selesai.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Visual Diagram -->
+    <div class="ml-diagram">
+      <div class="ml-diagram-title">Visualisasi Anatomi Lilin Hijau vs Merah</div>
+      <div class="candle-svg-wrap">
+        <svg viewBox="0 0 460 270" width="100%" height="auto" style="overflow: visible; font-family: -apple-system, sans-serif;">
+          <!-- Background Grid lines -->
+          <line x1="20" y1="30" x2="440" y2="30" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3,3" />
+          <line x1="20" y1="90" x2="440" y2="90" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3,3" />
+          <line x1="20" y1="170" x2="440" y2="170" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3,3" />
+          <line x1="20" y1="230" x2="440" y2="230" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3,3" />
+
+          <!-- CANDLE HIJAU (BULLISH) -->
+          <g transform="translate(110, 0)">
+            <!-- Upper Shadow -->
+            <line x1="25" y1="30" x2="25" y2="90" stroke="#10b981" stroke-width="3" stroke-linecap="round" />
+            <!-- Body -->
+            <rect x="5" y="90" width="40" height="80" rx="4" fill="#10b981" fill-opacity="0.85" stroke="#10b981" stroke-width="2" />
+            <!-- Lower Shadow -->
+            <line x1="25" y1="170" x2="25" y2="230" stroke="#10b981" stroke-width="3" stroke-linecap="round" />
+
+            <!-- Labels -->
+            <text x="-5" y="34" fill="#a7f3d0" font-size="11.5" font-weight="700" text-anchor="end">HIGH</text>
+            <text x="-5" y="94" fill="#34d399" font-size="11.5" font-weight="700" text-anchor="end">CLOSE (Menang!)</text>
+            <text x="-5" y="174" fill="#94a3b8" font-size="11.5" text-anchor="end">OPEN</text>
+            <text x="-5" y="234" fill="#94a3b8" font-size="11.5" text-anchor="end">LOW</text>
+            
+            <text x="25" y="258" fill="#34d399" font-size="12" font-weight="800" text-anchor="middle">LILIN HIJAU (BULLISH)</text>
+            <text x="25" y="272" fill="#94a3b8" font-size="10.5" text-anchor="middle">Harga Tutup Lebih Tinggi Dari Buka</text>
+          </g>
+
+          <!-- CANDLE MERAH (BEARISH) -->
+          <g transform="translate(320, 0)">
+            <!-- Upper Shadow -->
+            <line x1="25" y1="30" x2="25" y2="90" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
+            <!-- Body -->
+            <rect x="5" y="90" width="40" height="80" rx="4" fill="#ef4444" fill-opacity="0.85" stroke="#ef4444" stroke-width="2" />
+            <!-- Lower Shadow -->
+            <line x1="25" y1="170" x2="25" y2="230" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
+
+            <!-- Labels -->
+            <text x="55" y="34" fill="#94a3b8" font-size="11.5" text-anchor="start">HIGH</text>
+            <text x="55" y="94" fill="#94a3b8" font-size="11.5" text-anchor="start">OPEN</text>
+            <text x="55" y="174" fill="#f87171" font-size="11.5" font-weight="700" text-anchor="start">CLOSE (Menang!)</text>
+            <text x="55" y="234" fill="#fca5a5" font-size="11.5" font-weight="700" text-anchor="start">LOW</text>
+            
+            <text x="25" y="258" fill="#f87171" font-size="12" font-weight="800" text-anchor="middle">LILIN MERAH (BEARISH)</text>
+            <text x="25" y="272" fill="#94a3b8" font-size="10.5" text-anchor="middle">Harga Tutup Lebih Rendah Dari Buka</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Section 3: Bodi vs Ekor -->
+    <div class="ml-card">
+      <h2>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ml-gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+        </svg>
+        Bodi Lilin Menentukan Pemenang, Ekor Membocorkan Rahasia
+      </h2>
+      <p>
+        Banyak trader hanya fokus pada warna bodi lilin. Padahal, <strong>ekor lilin (wick / shadow)</strong> adalah sumber rahasia yang paling berharga di mata trader profesional!
+      </p>
+
+      <div class="ml-analogi">
+        <div class="ml-analogi-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Analogi Nyata: Jejak Kaki di Pasir Pantai
+        </div>
+        Bayangkan penjual mendorong ombak harga sampai menyentuh titik paling rendah (Low). Namun tiba-tiba sekelompok pembeli besar datang menghalau dan menolak harga murah tersebut, mendorong harga melesat kembali ke atas sebelum sesi berakhir. Jejak sisa dorongan yang gagal dipertahankan itulah yang menjadi <strong>Ekor Lilin Bawah</strong>.
+      </div>
+
+      <div class="ml-aturan">
+        <div class="ml-aturan-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+          Hukum Membaca Ekor Lilin (Rejection)
+        </div>
+        <ul>
+          <li><strong>Ekor Panjang di Bawah:</strong> Pembeli menolak harga murah dengan keras. Harga berpotensi berbalik naik!</li>
+          <li><strong>Ekor Panjang di Atas:</strong> Penjual menolak harga mahal dengan ganas. Harga berpotensi terbanting turun!</li>
+          <li><strong>Bodi Tebal Tanpa Ekor:</strong> Salah satu pihak menguasai medan secara mutlak tanpa perlawanan berarti.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Quiz Interaktif -->
+    <div class="ml-quiz-card" data-lesson-id="level-1-01">
+      <span class="ml-quiz-badge"> CEK PEMAHAMAN (1 MENIT)</span>
+      <div class="ml-quiz-question">
+        Jika kamu melihat lilin dengan ekor sangat panjang di bagian bawah dan bodi hijau kecil di atas, pesan apa yang sebenarnya sedang disampaikan oleh pasar?
+      </div>
+
+      <div class="ml-quiz-options">
+        <button class="ml-quiz-btn" data-correct="false" data-explanation="Jika penjual menang mutlak, bodi lilin akan berwarna merah tebal ke bawah, bukan meninggalkan ekor panjang di bawah.">
+          A. Penjual menguasai pasar sepenuhnya dan harga akan langsung anjlok bebas
+        </button>
+        <button class="ml-quiz-btn" data-correct="true" data-explanation="Tepat sekali! Ekor bawah yang panjang adalah bukti nyata penolakan (rejection). Penjual sempat menekan, tapi pembeli datang dalam jumlah besar dan mengambil alih kendali.">
+          B. Penjual sempat menekan turun, namun pembeli membalas dengan sangat kuat dan menolak harga murah
+        </button>
+        <button class="ml-quiz-btn" data-correct="false" data-explanation="Ekor panjang menunjukkan aktivitas jual-beli yang sangat sengit, bukan pasar sepi atau libur.">
+          C. Pasar sedang sepi transaksi dan tidak ada pergerakan berarti
+        </button>
+      </div>
+
+      <div class="ml-quiz-feedback"></div>
+    </div>
+
+    <!-- Navigation Footer -->
+    <div class="ml-nav-footer">
+      <a href="index.html" class="ml-btn-nav ml-btn-prev">
+        ← Kembali ke Roadmap
+      </a>
+      <a href="02-tiga-kondisi-pasar.html" class="ml-btn-nav ml-btn-next">
+        Lanjut ke Pelajaran 02 →
+      </a>
+    </div>
+
+  </div>
+
+  <script src="../assets/micro-learning.js"></script>
+</body>
+</html>

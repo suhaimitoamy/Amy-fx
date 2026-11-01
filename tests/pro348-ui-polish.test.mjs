@@ -42,9 +42,9 @@ test('polish provides light-theme and small-screen readability safeguards', () =
   assert.match(polish, /\.cards \{ grid-template-columns: 1fr; \}/);
 });
 
-test('release identity is synchronized for Amy FX Pro', () => {
-  assert.match(read('app/build.gradle.kts'), /versionCode = .*950424/);
-  assert.match(read('app/build.gradle.kts'), /2\.0\.0-pro\.424/);
-  assert.match(read('app/src/main/assets/app-version.js'), /code: 950424/);
-  assert.match(read('app/src/main/assets/update-checker.js'), /CURRENT_VERSION_CODE = Number\(VERSION\.code\) \|\| 950424/);
+test('release identity is synchronized for Amy FX', () => {
+  assert.match(read('app/build.gradle.kts'), /versionCode = .*950430/);
+  assert.match(read('app/build.gradle.kts'), /2\.0\.0-amyfx\.430/);
+  assert.match(read('app/src/main/assets/app-version.js'), /code: 950430/);
+  assert.match(read('app/src/main/assets/update-checker.js'), /CURRENT_VERSION_CODE = Number\(VERSION\.code\) \|\| 950430/);
 });

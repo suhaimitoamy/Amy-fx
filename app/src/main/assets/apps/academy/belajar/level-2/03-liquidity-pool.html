@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07090e">
+  <title>Pelajaran 03: Liquidity Pool (BSL &amp; SSL) — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/micro-learning.css">
+  <style>
+    .liq-diagram-svg {
+      width: 100%;
+      max-width: 480px;
+      height: auto;
+      margin: 0 auto;
+      display: block;
+    }
+    .pool-card-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 480px) {
+      .pool-card-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body class="micro-learning-body">
+
+<div class="ml-container">
+  <!-- Header / Breadcrumb -->
+  <header class="ml-header">
+    <a href="index.html" class="ml-back-link">
+      <span>←</span> Roadmap Level 2
+    </a>
+    <span class="ml-pill-tag">Pelajaran 03</span>
+  </header>
+
+  <!-- Title Box -->
+  <section class="ml-lesson-title-box">
+    <h1>Liquidity Pool: Di Mana Kolam Uang Berada (BSL &amp; SSL)</h1>
+    <div class="ml-lesson-meta">
+      <span>⏱️ 4 Menit Baca</span>
+      <span>•</span>
+      <span>Level 2: Senjata Utama ICT</span>
+      <span>•</span>
+      <span>Kuis Interaktif</span>
+    </div>
+  </section>
+
+  <!-- Bagian 1: Logika Bahan Bakar Pasar -->
+  <article class="ml-card">
+    <h2><span>⛽</span> 1. Logika Pasar: Bahan Bakar Big Player</h2>
+    <p>
+      Pasar finansial tidak digerakkan oleh garis indikator atau pola chart buku teks. <strong>Pasar digerakkan oleh pencarian likuiditas</strong>.
+    </p>
+    <div class="ml-analogi">
+      <div class="ml-analogi-title"> Analogi Truk Gandeng Isi Bensin</div>
+      Jika kamu membawa motor matic, kamu bisa isi bensin di mana saja. Namun jika kamu mengemudikan konvoi 50 truk tronton (Big Player / Smart Money), kamu tidak bisa mampir ke kios pinggir jalan kecil. Kamu butuh SPBU khusus dengan tangki raksasa. Kolam tangki bensin itulah yang disebut <strong>Liquidity Pool</strong>.
+    </div>
+    <p>
+      Institusi mengelola miliaran dolar. Untuk mengeksekusi posisi beli (Buy) bernilai masif, mereka wajib menemukan <strong>jutaan order jual (Sell Orders)</strong> yang setara agar harga tidak melompat tak terkendali.
+    </p>
+  </article>
+
+  <!-- Bagian 2: Dua Kolam Uang (BSL & SSL) -->
+  <article class="ml-card">
+    <h2><span>🏊</span> 2. Dua Kolam Uang Utama: BSL &amp; SSL</h2>
+    <p>
+      Di manakah jutaan order tersebut berkumpul di chart? Jawabannya ada pada titik-titik ekstrim yang paling disukai trader retail:
+    </p>
+
+    <div class="pool-card-grid">
+      <!-- BSL Card -->
+      <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; padding: 14px;">
+        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+          <span style="color: var(--ml-blue); font-weight: 800; font-size: 15px;">BSL</span>
+          <span style="font-size: 11px; color: #94a3b8;">(Buyside Liquidity)</span>
+        </div>
+        <p style="margin: 0; font-size: 13px; color: #cbd5e1; line-height: 1.5;">
+          • Terletak di <strong>ATAS puncak Swing High</strong>, Double Top, atau resistance retail.<br>
+          • <strong>Isinya:</strong> Stop Loss para penjual (yang merupakan order Buy Stop) dan trader breakout yang memencet Buy saat garis jebol.
+        </p>
+      </div>
+
+      <!-- SSL Card -->
+      <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 12px; padding: 14px;">
+        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+          <span style="color: var(--ml-danger); font-weight: 800; font-size: 15px;">SSL</span>
+          <span style="font-size: 11px; color: #94a3b8;">(Sellside Liquidity)</span>
+        </div>
+        <p style="margin: 0; font-size: 13px; color: #cbd5e1; line-height: 1.5;">
+          • Terletak di <strong>BAWAH lembah Swing Low</strong>, Double Bottom, atau support retail.<br>
+          • <strong>Isinya:</strong> Stop Loss para pembeli (yang merupakan order Sell Stop) dan trader breakdown yang buru-buru Sell saat support tembus.
+        </p>
+      </div>
+    </div>
+  </article>
+
+  <!-- Bagian 3: Visual Anatomi Liquidity Sweep -->
+  <article class="ml-card">
+    <h2><span>🎯</span> 3. Fenomena Jarum Suntik (Liquidity Sweep)</h2>
+    <p>
+      Ketika institusi ingin menggerakkan harga ke bawah secara dramatis, mereka terlebih dahulu mendorong harga naik sedikit melewati puncak untuk <strong>menyapu seluruh BSL</strong>:
+    </p>
+
+    <!-- Visual Diagram SVG -->
+    <div class="ml-diagram">
+      <div class="ml-diagram-title">Visualisasi Sapuan Likuiditas (Liquidity Sweep)</div>
+      <svg class="liq-diagram-svg" viewBox="0 0 460 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Resistance Line -->
+        <line x1="40" y1="80" x2="420" y2="80" stroke="#d4a832" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <text x="50" y="70" fill="#d4a832" font-size="11" font-weight="bold">Level Puncak (Resistance Retail)</text>
+        <text x="320" y="70" fill="#38bdf8" font-size="11" font-weight="bold">Kolam BSL (Stop Loss)</text>
+
+        <!-- Price Line Path -->
+        <path d="M 60 160 Q 110 90 140 85 Q 170 82 200 130 Q 230 170 250 140 Q 280 80 300 40 Q 310 100 330 140 Q 370 200 410 205" stroke="#94a3b8" stroke-width="2" fill="none"/>
+
+        <!-- Sweep Peak Circle -->
+        <circle cx="300" cy="40" r="6" fill="#ef4444"/>
+        <text x="250" y="30" fill="#f87171" font-size="11" font-weight="bold">Jarum Sapu (Sweep Wick)</text>
+        <text x="312" y="45" fill="#f87171" font-size="10">Retail kena SL!</text>
+
+        <!-- Target Turun Panah -->
+        <path d="M 330 140 L 400 195" stroke="#10b981" stroke-width="3" fill="none"/>
+        <polygon points="405,198 395,190 402,185" fill="#10b981"/>
+        <text x="330" y="180" fill="#34d399" font-size="11" font-weight="bold">Pergerakan Nyata Smart Money</text>
+      </svg>
+    </div>
+
+    <div class="ml-aturan">
+      <div class="ml-aturan-title"> Kenapa Harga Langsung Berbalik Setelah Sweep?</div>
+      Karena begitu semua Stop Loss di pucuk BSL tersentuh, ratusan ribu order beli terpaksa tereksekusi. Institusi yang sedang menunggu langsung melahap order beli tersebut dengan pesanan Jual (Sell) mereka. Bahan bakar mereka telah penuh, dan seketika harga dijatuhkan!
+    </div>
+  </article>
+
+  <!-- Bagian 4: Prinsip Bertahan Trader ICT -->
+  <article class="ml-card">
+    <h2><span>🛡️</span> 4. Aturan Emas Trader ICT</h2>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="padding: 12px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border-left: 3px solid var(--ml-gold); font-size: 13.5px;">
+        <strong>1. Jangan Pernah Pasang Stop Loss Tepat di Pucuk:</strong> Hindari meletakkan SL di harga yang bulat atau tepat di batas ekor swing high/low yang terlalu mencolok mata.
+      </div>
+      <div style="padding: 12px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border-left: 3px solid var(--ml-blue); font-size: 13.5px;">
+        <strong>2. Menjadi Pemburu, Bukan Mangsa:</strong> Jangan entry saat harga sedang mendekati pucuk. Tunggu harga MENYAPU pucuk terlebih dahulu, lihat pembentukan MSS &amp; FVG, barulah kamu masuk mengikuti arah institusi!
+      </div>
+    </div>
+  </article>
+
+  <!-- Kuis Interaktif 1 Soal -->
+  <section class="ml-quiz-card" data-lesson-id="level-2-03">
+    <span class="ml-quiz-badge">Uji Pemahaman Cepat</span>
+    <h3 class="ml-quiz-question">
+      Di manakah letak Buyside Liquidity (BSL) pada chart dan kumpulan order apa sajakah yang berdiam di kolam tersebut?
+    </h3>
+    <div class="ml-quiz-options">
+      <button type="button" class="ml-quiz-btn" data-correct="false" data-explanation="Di bawah Swing Low adalah area Sellside Liquidity (SSL), bukan Buyside Liquidity (BSL).">
+        A. Di bawah lembah Swing Low terendah, berisi order sell limit trader swing.
+      </button>
+
+      <button type="button" class="ml-quiz-btn" data-correct="true" data-explanation="Tepat sekali! BSL selalu bertengger di atas Swing High atau puncak resistance, yang menjadi sarang Stop Loss para trader penjual dan order buy para trader breakout.">
+        B. Di atas Swing High / puncak resistance, berisi Stop Loss para penjual (Buy Stop) dan order beli trader breakout.
+      </button>
+
+      <button type="button" class="ml-quiz-btn" data-correct="false" data-explanation="Area konsolidasi tengah biasanya hanya menyimpan likuiditas internal kecil, bukan kolam utama BSL.">
+        C. Di tengah-tengah candle doji saat pasar sedang sepi di sesi Asia.
+      </button>
+    </div>
+    <div class="ml-quiz-feedback"></div>
+  </section>
+
+  <!-- Step Footer Navigation -->
+  <footer class="ml-nav-footer">
+    <a href="02-inversion-fvg.html" class="ml-btn-nav ml-btn-prev">
+      <span>←</span> Pelajaran 02
+    </a>
+    <a href="04-order-block.html" class="ml-btn-nav ml-btn-next">
+      <span>Lanjut: Order Block</span>
+      <span>→</span>
+    </a>
+  </footer>
+</div>
+
+<script src="../assets/micro-learning.js"></script>
+</body>
+</html>

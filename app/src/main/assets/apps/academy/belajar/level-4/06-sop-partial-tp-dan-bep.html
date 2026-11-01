@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#07090e">
+  <title>06. SOP Partial Take Profit & Breakeven (BEP) — Level 4 Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/micro-learning.css">
+  <style>
+    .ml-step-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(212, 168, 50, 0.2);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin: 12px 0;
+    }
+    .ml-step-num {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      line-height: 24px;
+      text-align: center;
+      background: var(--ml-gold);
+      color: #000;
+      font-weight: 800;
+      border-radius: 50%;
+      font-size: 12px;
+      margin-right: 8px;
+    }
+    .ml-table-wrap {
+      overflow-x: auto;
+      margin: 16px 0;
+      border-radius: 12px;
+      border: 1px solid var(--ml-border);
+    }
+    .ml-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      text-align: left;
+    }
+    .ml-table th {
+      background: rgba(212, 168, 50, 0.12);
+      color: var(--ml-gold);
+      padding: 12px 14px;
+      font-weight: 800;
+      border-bottom: 1px solid var(--ml-border);
+    }
+    .ml-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+    }
+    .ml-table tr:last-child td {
+      border-bottom: none;
+    }
+    .ml-math-card {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 16px 0;
+    }
+  </style>
+</head>
+<body class="micro-learning-body">
+
+<div class="ml-container">
+  <!-- Top Navigation Header -->
+  <header class="ml-header">
+    <a href="index.html" class="ml-back-link">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Level 4: Playbook Setup A+
+    </a>
+    <span class="ml-pill-tag">Pelajaran 6 dari 6</span>
+  </header>
+
+  <!-- Title Section -->
+  <div class="ml-lesson-title-box">
+    <h1>06. SOP Partial Take Profit & Breakeven (BEP)</h1>
+    <div class="ml-lesson-meta">
+      <span>⏱️ 3 Menit Baca</span>
+      <span>•</span>
+      <span>💰 Amankan Uang Kas Nyata</span>
+      <span>•</span>
+      <span>🛡️ Posisi Bebas Risiko (Free Ride)</span>
+    </div>
+  </div>
+
+  <!-- Kotak 1: Inti Konsep & Analogi -->
+  <div class="ml-card">
+    <h2>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ml-gold)" stroke-width="2.2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path>
+        <line x1="12" y1="6" x2="12" y2="8"></line>
+        <line x1="12" y1="16" x2="12" y2="18"></line>
+      </svg>
+      Mengubah Posisi Trading Menjadi Tiket Bebas Risiko (Free Ride)
+    </h2>
+    <p>
+      Pernahkah kamu melihat posisi trading kamu sudah untung hijau banyak, tapi tidak kamu tutup karena ingin untung lebih besar lagi, lalu tiba-tiba harga berbalik drastis sampai akunmu berdarah merah dan terkena Stop Loss? Rasanya sangat menyakitkan, bukan? Setup teknikal paling dewa sekalipun tidak akan pernah menyelamatkan akunmu jika kamu tidak memiliki aturan pengamanan posisi yang disiplin.
+    </p>
+
+    <div class="ml-analogi">
+      <div class="ml-analogi-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+        </svg>
+        Analogi Pedagang Pasar yang Sudah Balik Modal
+      </div>
+      Bayangkan kamu membeli 100 karung buah di pasar induk seharga 10 juta rupiah. Begitu tokomu dibuka, 50 karung langsung laku terjual seharga 10 juta rupiah. Detik itu juga, seluruh modal awal belanja kamu sudah aman kembali masuk ke dalam kantong celana!<br><br>
+      Sisa 50 karung buah yang masih ada di tokomu sekarang adalah keuntungan murni. Kamu bisa menjualnya dengan sangat santai tanpa ada beban pikiran sedikit pun. Mau harganya nanti melonjak tinggi atau bahkan jika sisa buahnya dibagikan gratis, kamu tidak akan pernah rugi sepeser pun. Inilah rahasia ketenangan trader profesional: mengubah transaksi menjadi <em>Free Ride</em>!
+    </div>
+
+    <p>
+      Di pasar emas yang pergerakannya sangat liar dan penuh intrik, SOP **Partial Take Profit (tutup 50% lot)** dan **Breakeven (geser SL ke titik impas)** adalah kunci kedamaian batin. Angka hijau yang mengapung di layar diubah menjadi uang kas nyata di portofolio, dan sisa posisimu berlayar bebas risiko mengejar target yang jauh.
+    </p>
+  </div>
+
+  <!-- Kotak 2: Syarat Baku / Checklist Memilih -->
+  <div class="ml-card">
+    <h2>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ml-gold)" stroke-width="2.2">
+        <path d="M9 11l3 3L22 4"></path>
+        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+      </svg>
+      Protokol 3 Langkah Pengawalan Posisi
+    </h2>
+
+    <div class="ml-step-card">
+      <span class="ml-step-num">1</span>
+      <strong>Tahan Jempolmu (Sebelum Menyentuh +1.5R):</strong>
+      <p style="margin:6px 0 0; font-size:13.5px; color:#cbd5e1;">
+        Jangan buru-buru menggeser Stop Loss ke harga modal saat posisi baru untung tipis (+0.5R atau beberapa pips). Pergerakan harga di pasar butuh ruang untuk bernapas. Kalau digeser terlalu cepat, posisimu akan gampang terlempar oleh koreksi wajar sebelum harga sempat melesat ke target utama.
+      </p>
+    </div>
+
+    <div class="ml-step-card">
+      <span class="ml-step-num">2</span>
+      <strong>Kunci Separuh Keuntungan di Kantong (+1.5R s.d. +2.0R):</strong>
+      <p style="margin:6px 0 0; font-size:13.5px; color:#cbd5e1;">
+        Begitu harga menyentuh rintangan likuiditas terdekat atau mencapai keuntungan <strong>+1.5R hingga +2.0R</strong>, segera tutup separuh (50%) dari total lot transaksimu. Uang ini resmi cair menjadi saldo nyata di akunmu, bukan lagi sekadar angka berkedip di layar.
+      </p>
+    </div>
+
+    <div class="ml-step-card">
+      <span class="ml-step-num">3</span>
+      <strong>Pasang Tameng BEP Plus (Harga Entry + 1 Pip):</strong>
+      <p style="margin:6px 0 0; font-size:13.5px; color:#cbd5e1;">
+        Bersamaan dengan menutup 50% lot, geser Stop Loss sisa posisi ke harga entry ditambah 1 pip (untuk mengamankan biaya spread dan komisi broker). Sekarang posisimu resmi berstatus <strong>100% Bebas Risiko (Risk-Free)</strong>. Skenario terburuk apa pun yang terjadi, kamu sudah pasti keluar sebagai pemenang dengan profit di tangan!
+      </p>
+    </div>
+  </div>
+
+  <!-- Kotak 3: Contoh Visual / Tabel Komparasi -->
+  <div class="ml-card">
+    <h2>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ml-gold)" stroke-width="2.2">
+        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+        <polyline points="2 17 12 22 22 17"></polyline>
+        <polyline points="2 12 12 17 22 12"></polyline>
+      </svg>
+      Diagram Alur Eksekusi & Tabel Skenario Riil
+    </h2>
+    <p style="font-size:14px; color:var(--ml-muted);">
+      Alur pergerakan harga dari Entry, pengambilan Partial TP1, hingga pelepasan Runner ke TP2:
+    </p>
+
+    <!-- Visual SVG Diagram -->
+    <div class="ml-diagram" style="padding: 12px 8px; overflow-x: auto;">
+      <div class="ml-diagram-title">Mekanisme Pengamanan Posisi (TP1 di +2.0R & Runner ke TP2)</div>
+      <svg viewBox="0 0 540 260" width="100%" height="240" style="max-width:520px; font-family:inherit;">
+        <!-- Level Lines -->
+        <line x1="40" y1="40" x2="500" y2="40" stroke="#10b981" stroke-dasharray="4"/>
+        <line x1="40" y1="100" x2="500" y2="100" stroke="#d4a832" stroke-dasharray="3"/>
+        <line x1="40" y1="170" x2="500" y2="170" stroke="rgba(255,255,255,0.2)"/>
+        <line x1="40" y1="220" x2="500" y2="220" stroke="#ef4444" stroke-dasharray="4"/>
+
+        <!-- Level Labels -->
+        <text x="45" y="35" fill="#10b981" font-size="11" font-weight="bold">TARGET FINAL TP2 (+3.5R RUNNER)</text>
+        <text x="45" y="95" fill="#d4a832" font-size="11" font-weight="bold">LEVEL PARTIAL TP1 (+2.0R) 💰</text>
+        <text x="45" y="165" fill="#94a3b8" font-size="11">ENTRY LEVEL / BEP POINT ($0)</text>
+        <text x="45" y="215" fill="#ef4444" font-size="11">ORIGINAL STOP LOSS (-1.0R)</text>
+
+        <!-- Upward Trajectory -->
+        <polyline points="80,170 140,130 170,145 250,100" fill="none" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="80" cy="170" r="5" fill="#38bdf8"/>
+
+        <!-- Partial Hit Marker -->
+        <circle cx="250" cy="100" r="7" fill="#d4a832" stroke="#fff" stroke-width="2"/>
+        <rect x="260" y="88" width="135" height="24" rx="4" fill="#d4a832"/>
+        <text x="268" y="104" fill="#000" font-size="10.5" font-weight="800">1. TUTUP 50% LOT CASH ✓</text>
+
+        <!-- Arrow Geser SL ke BEP -->
+        <path d="M 120 220 Q 150 190 190 170" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="3" marker-end="url(#arrow)"/>
+        <rect x="150" y="180" width="125" height="20" rx="4" fill="rgba(16,185,129,0.2)" stroke="#10b981"/>
+        <text x="156" y="194" fill="#34d399" font-size="10" font-weight="bold">2. GESER SL KE BEP (+1 Pip)</text>
+
+        <!-- Pullback retest above BEP -->
+        <polyline points="250,100 290,135 320,120 400,60 450,40" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="450" cy="40" r="6" fill="#10b981"/>
+        <rect x="370" y="18" width="130" height="22" rx="4" fill="#10b981"/>
+        <text x="378" y="33" fill="#000" font-size="10.5" font-weight="800">SISA 50% TP FINAL (+3.5R)</text>
+      </svg>
+    </div>
+
+    <!-- Tabel Komparasi 3 Skenario -->
+    <div class="ml-table-wrap">
+      <table class="ml-table">
+        <thead>
+          <tr>
+            <th>Kondisi Pasar</th>
+            <th>Tanpa SOP Pengawalan Posisi</th>
+            <th>Dengan SOP Partial 50% & BEP</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Harga naik +2R lalu berbalik tajam ke SL</strong></td>
+            <td><span style="color:#f87171; font-weight:700;">Rugi Penuh -1.0R</span> (Modal hangus, emosi hancur)</td>
+            <td><span style="color:#34d399; font-weight:700;">Tetap Untung Bersih +1.0R</span> (Uang kas sudah aman di kantong)</td>
+          </tr>
+          <tr>
+            <td><strong>Harga naik +2R lalu retrace ke level entry</strong></td>
+            <td>Impas $0 (Waktu dan stres floating terbuang sia-sia)</td>
+            <td><span style="color:#34d399; font-weight:700;">Untung +1.0R</span> dan sisa posisi keluar aman di $0</td>
+          </tr>
+          <tr>
+            <td><strong>Harga melaju mulus ke target akhir +3.5R</strong></td>
+            <td>Untung +3.5R (Tapi senam jantung dan cemas sepanjang jalan)</td>
+            <td><span style="color:#34d399; font-weight:700;">Untung Mantap +2.75R</span> dengan pikiran tenang dan tidur nyenyak</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Kotak 4: Aturan Main Eksekusi (Rule of Thumb) -->
+  <div class="ml-card">
+    <h2>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ml-gold)" stroke-width="2.2">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+      </svg>
+      Aturan Main Eksekusi (Rule of Thumb)
+    </h2>
+
+    <div class="ml-aturan">
+      <div class="ml-aturan-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+        </svg>
+        3 Prinsip Emas Trade Management Amy FX
+      </div>
+      <ul style="margin:6px 0 0; padding-left:18px; font-size:13.5px; color:#cbd5e1; line-height:1.6;">
+        <li><strong>Uang Kas Adalah Raja (Bank The Cash):</strong> Keuntungan yang mengapung (*floating profit*) hanyalah angka di layar sampai kamu benar-benar menguncinya. Tutup 50% lot untuk kepastian hasil.</li>
+        <li><strong>Kekuatan Mental Sisa Posisi (Runner):</strong> Sisa 50% lot yang sudah bebas risiko membuatmu bisa menahan posisi santai mengejar target harian yang jauh tanpa rasa cemas (*zen state*).</li>
+        <li><strong>Satu Arah Tanpa Penyesalan:</strong> Begitu Stop Loss digeser ke BEP, DILARANG KERAS memundurkannya kembali ke area minus. Kalau harga berbalik dan menyentuh BEP, terima dengan senyum lebar karena separuh profit sudah aman di kantong.</li>
+      </ul>
+    </div>
+
+    <div class="ml-warning">
+      <div class="ml-warning-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+        </svg>
+        Pantangan Fatal: Jangan Geser BEP Terlalu Dini!
+      </div>
+      Godaan terbesar trader pemula adalah gatal tangan menggeser Stop Loss ke BEP saat harga baru naik 10–20 pips (+0.3R). Ingat, pasar butuh napas untuk berayun. Beri ruang gerak sampai target +1.5R tercapai sebelum mengaktifkan tameng BEP.
+    </div>
+  </div>
+
+  <!-- Interactive Quiz Card -->
+  <div class="ml-quiz-card" data-lesson-id="level4-06">
+    <span class="ml-quiz-badge">Kuis Pemahaman Kilat</span>
+    <div class="ml-quiz-question">
+      Kapan waktu yang paling tepat dan teruji untuk mengambil 50% Partial Take Profit dan memindahkan Stop Loss ke titik Breakeven (BEP)?
+    </div>
+
+    <div class="ml-quiz-options">
+      <button type="button" class="ml-quiz-btn" data-correct="true" data-explanation="Tepat sekali! Menunggu pencapaian target +1.5R hingga +2.0R memberi ruang napas bagi pergerakan harga tanpa terkena koreksi prematur, sekaligus mengamankan profit riil dan membuat sisa posisi bebas risiko sepenuhnya.">
+        A. Saat harga telah bergerak menguntungkan minimal +1.5R hingga +2.0R atau mencapai rintangan likuiditas struktural pertama.
+      </button>
+
+      <button type="button" class="ml-quiz-btn" data-correct="false" data-explanation="Menggeser ke BEP saat floating profit baru beberapa detik atau +0.1R akan sangat mudah terkena spread broker dan retest wajar pasar.">
+        B. Tepat beberapa detik setelah order terpasang saat floating profit baru bernilai +0.1R.
+      </button>
+
+      <button type="button" class="ml-quiz-btn" data-correct="false" data-explanation="Jika harga sedang minus mendekati garis Stop Loss, trader dilarang mengotak-atik posisi apalagi memindahkan Stop Loss lebih jauh.">
+        C. Saat harga sedang minus mendekati garis Stop Loss.
+      </button>
+    </div>
+
+    <div class="ml-quiz-feedback"></div>
+  </div>
+
+  <!-- Navigation Footer -->
+  <div class="ml-nav-footer">
+    <a href="05-setup-ifvg-breaker.html" class="ml-btn-nav ml-btn-prev">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Pelajaran 05: IFVG & Breaker
+    </a>
+    <a href="../level-5/index.html" class="ml-btn-nav ml-btn-next">
+      Lanjut ke Level 5: Risk & Mental
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+        <polyline points="12 5 19 12 12 19"></polyline>
+      </svg>
+    </a>
+  </div>
+</div>
+
+<script src="../assets/micro-learning.js"></script>
+</body>
+</html>

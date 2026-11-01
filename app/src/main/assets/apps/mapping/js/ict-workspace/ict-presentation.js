@@ -113,12 +113,14 @@ export function detectLiquiditySweep(amy, context = null) {
   if (liqAsiaHighSwept || textAsiaHigh || (c && asiaHigh && c.high > asiaHigh && c.close < asiaHigh)) {
     const lvl = num(liqAsiaHighSwept?.level) || asiaHigh || (c ? c.high : 0);
     const ext = (c && c.high > lvl) ? c.high : (lvl ? lvl + 1.20 : 0);
-    return { name: 'Asia High', level: lvl, extreme: ext, side: 'SELL' };
+    const sweepTime = num(liqAsiaHighSwept?.sourceTime) || num(d?.sweep?.time) || num(trg?.time) || null;
+    return { name: 'Asia High', level: lvl, extreme: ext, side: 'SELL', time: sweepTime, index: d?.sweep?.index ?? null };
   }
   if (liqAsiaLowSwept || textAsiaLow || (c && asiaLow && c.low < asiaLow && c.close > asiaLow)) {
     const lvl = num(liqAsiaLowSwept?.level) || asiaLow || (c ? c.low : 0);
     const ext = (c && c.low < lvl) ? c.low : (lvl ? lvl - 1.20 : 0);
-    return { name: 'Asia Low', level: lvl, extreme: ext, side: 'BUY' };
+    const sweepTime = num(liqAsiaLowSwept?.sourceTime) || num(d?.sweep?.time) || num(trg?.time) || null;
+    return { name: 'Asia Low', level: lvl, extreme: ext, side: 'BUY', time: sweepTime, index: d?.sweep?.index ?? null };
   }
 
   // 2. PDH / PDL sweep
@@ -132,12 +134,14 @@ export function detectLiquiditySweep(amy, context = null) {
   if (liqPdhSwept || textPdh || (c && pdh && c.high > pdh && c.close < pdh)) {
     const lvl = num(liqPdhSwept?.level) || pdh || (c ? c.high : 0);
     const ext = (c && c.high > lvl) ? c.high : (lvl ? lvl + 1.20 : 0);
-    return { name: 'PDH', level: lvl, extreme: ext, side: 'SELL' };
+    const sweepTime = num(liqPdhSwept?.sourceTime) || num(d?.sweep?.time) || num(trg?.time) || null;
+    return { name: 'PDH', level: lvl, extreme: ext, side: 'SELL', time: sweepTime, index: d?.sweep?.index ?? null };
   }
   if (liqPdlSwept || textPdl || (c && pdl && c.low < pdl && c.close > pdl)) {
     const lvl = num(liqPdlSwept?.level) || pdl || (c ? c.low : 0);
     const ext = (c && c.low < lvl) ? c.low : (lvl ? lvl - 1.20 : 0);
-    return { name: 'PDL', level: lvl, extreme: ext, side: 'BUY' };
+    const sweepTime = num(liqPdlSwept?.sourceTime) || num(d?.sweep?.time) || num(trg?.time) || null;
+    return { name: 'PDL', level: lvl, extreme: ext, side: 'BUY', time: sweepTime, index: d?.sweep?.index ?? null };
   }
 
   // 3. BSL / SSL sweep
@@ -169,13 +173,15 @@ export function detectLiquiditySweep(amy, context = null) {
   if (hasSslSweep) {
     const lvl = (dSweepDir === 1 && dSweepPrice) || (trgSweepDir === 1 && trgSweptPrice) || sslLevel || defaultSsl;
     const ext = (dSweepDir === 1 && dSweepExtreme) || (trgSweepDir === 1 && trgSweepExtreme) || (c && c.low < lvl ? c.low : (lvl ? lvl - 1.70 : 0));
-    return { name: 'SSL', level: lvl, extreme: ext, side: 'BUY' };
+    const sweepTime = num(d?.sweep?.time) || num(trg?.time) || num(liqList.find(l => l.label === 'SSL' && /swept/i.test(l.status))?.sourceTime) || null;
+    return { name: 'SSL', level: lvl, extreme: ext, side: 'BUY', time: sweepTime, index: d?.sweep?.index ?? null };
   }
 
   if (hasBslSweep) {
     const lvl = (dSweepDir === -1 && dSweepPrice) || (trgSweepDir === -1 && trgSweptPrice) || bslLevel || defaultBsl;
     const ext = (dSweepDir === -1 && dSweepExtreme) || (trgSweepDir === -1 && trgSweepExtreme) || (c && c.high > lvl ? c.high : (lvl ? lvl + 1.70 : 0));
-    return { name: 'BSL', level: lvl, extreme: ext, side: 'SELL' };
+    const sweepTime = num(d?.sweep?.time) || num(trg?.time) || num(liqList.find(l => l.label === 'BSL' && /swept/i.test(l.status))?.sourceTime) || null;
+    return { name: 'BSL', level: lvl, extreme: ext, side: 'SELL', time: sweepTime, index: d?.sweep?.index ?? null };
   }
 
   // 4. Any line containing "swept"
@@ -184,7 +190,174 @@ export function detectLiquiditySweep(amy, context = null) {
     const name = isSsl ? 'SSL' : 'BSL';
     const lvl = isSsl ? (sslLevel || defaultSsl) : (bslLevel || defaultBsl);
     const ext = isSsl ? (c && c.low < lvl ? c.low : (lvl ? lvl - 1.70 : 0)) : (c && c.high > lvl ? c.high : (lvl ? lvl + 1.70 : 0));
-    return { name, level: lvl, extreme: ext, side: isSsl ? 'BUY' : 'SELL' };
+    const sweepTime = num(d?.sweep?.time) || num(trg?.time) || null;
+    return { name, level: lvl, extreme: ext, side: isSsl ? 'BUY' : 'SELL', time: sweepTime, index: d?.sweep?.index ?? null };
+  }
+
+  return null;
+}
+
+export function getAvailableM5Candles(amy, context = null) {
+  if (amy?.timeframe === 'M5' && Array.isArray(amy?.chartCandles) && amy.chartCandles.length >= 3) {
+    return amy.chartCandles;
+  }
+  if (typeof window !== 'undefined' && Array.isArray(window.amyfxLastCandlesM5) && window.amyfxLastCandlesM5.length >= 3) {
+    return window.amyfxLastCandlesM5;
+  }
+  const ctx = context || (typeof window !== 'undefined' ? window.AmyMarketContext : null);
+  if (Array.isArray(ctx?.amy?.chartCandles?.M5) && ctx.amy.chartCandles.M5.length >= 3) {
+    return ctx.amy.chartCandles.M5;
+  }
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('amyfx.mapping.candles.M5');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed?.values) && parsed.values.length >= 3) {
+          return parsed.values;
+        }
+      }
+    } catch (_) {}
+  }
+  return [];
+}
+
+export function detectM5SniperTrigger(amy, context = null) {
+  const rawM5 = getAvailableM5Candles(amy, context);
+  if (!rawM5 || rawM5.length < 3) return null;
+
+  const m5 = rawM5.map(c => ({
+    open: Number(c.open),
+    high: Number(c.high),
+    low: Number(c.low),
+    close: Number(c.close),
+    time: Number(c.time || c.open_time || (c.datetime ? Math.floor(new Date(c.datetime).getTime() / 1000) : 0))
+  })).filter(c => Number.isFinite(c.open) && Number.isFinite(c.close));
+
+  if (m5.length < 3) return null;
+
+  const ctx = context || (typeof window !== 'undefined' ? window.AmyMarketContext : null);
+  const d = amy?.dashboard;
+  const levels = amy?.levels || ctx?.levels || ctx?.keyLevels || {};
+
+  const currentPrice = (typeof window !== 'undefined' && Number.isFinite(Number(window.amyfxCurrentPrice)) && Number(window.amyfxCurrentPrice) > 0)
+    ? Number(window.amyfxCurrentPrice)
+    : (Number.isFinite(Number(amy?.currentPrice)) && Number(amy?.currentPrice) > 0)
+    ? Number(amy.currentPrice)
+    : (Number.isFinite(Number(ctx?.price)) && Number(ctx.price) > 0)
+    ? Number(ctx.price)
+    : m5[m5.length - 1].close;
+
+  const rHigh = Number(ctx?.m15?.dealingRange?.rangeHigh ?? d?.rangeHigh ?? d?.protectedHigh ?? levels?.bsl);
+  const rLow = Number(ctx?.m15?.dealingRange?.rangeLow ?? d?.rangeLow ?? d?.protectedLow ?? levels?.ssl);
+  const hasRange = Number.isFinite(rHigh) && Number.isFinite(rLow) && rHigh > rLow;
+  const rangePct = (hasRange && currentPrice > 0) ? Math.min(100, Math.max(0, Math.round(((currentPrice - rLow) / (rHigh - rLow)) * 100))) : 50;
+
+  const sslVal = Number(levels?.ssl ?? d?.ssl ?? rLow);
+  const bslVal = Number(levels?.bsl ?? d?.bsl ?? rHigh);
+  const pdlVal = Number(levels?.pdl ?? ctx?.keyLevels?.pdl);
+  const pdhVal = Number(levels?.pdh ?? ctx?.keyLevels?.pdh);
+  const asiaLow = Number(levels?.asiaLow ?? ctx?.keyLevels?.asiaLow);
+  const asiaHigh = Number(levels?.asiaHigh ?? ctx?.keyLevels?.asiaHigh);
+
+  const len = m5.length;
+  const c0 = m5[len - 1]; // latest M5
+  const c1 = m5[len - 2]; // previous M5
+  const c2 = m5[len - 3]; // candle before previous
+
+  const c0Body = Math.abs(c0.close - c0.open);
+  const c1Body = Math.abs(c1.close - c1.open);
+
+  const c0LowerWick = Math.min(c0.open, c0.close) - c0.low;
+  const c0UpperWick = c0.high - Math.max(c0.open, c0.close);
+  const c1LowerWick = Math.min(c1.open, c1.close) - c1.low;
+  const c1UpperWick = c1.high - Math.max(c1.open, c1.close);
+
+  const floorLevels = [sslVal, pdlVal, asiaLow, rLow].filter(Number.isFinite);
+  const ceilingLevels = [bslVal, pdhVal, asiaHigh, rHigh].filter(Number.isFinite);
+
+  const patternLow = Math.min(c0.low, c1.low, c2.low);
+  const nearFloor = floorLevels.some(lvl => Math.abs(patternLow - lvl) <= 4.0 || patternLow < lvl);
+  const inDiscount = rangePct < 48.0;
+
+  // 1. BULLISH SNIPER REVERSAL
+  if ((inDiscount || nearFloor) && rangePct <= 52.0) {
+    const hasAbsorption = (c1LowerWick >= c1Body * 0.8 && c1LowerWick >= 0.7) || (c0LowerWick >= c0Body * 0.8 && c0LowerWick >= 0.7) || (c1.close > c1.low + (c1.high - c1.low) * 0.5);
+    const hasBullDisp = (c0.close > c0.open && c0.close >= Math.max(c1.close, c1.open)) || (c0.close > c1.high * 0.9995);
+
+    if (hasAbsorption && hasBullDisp) {
+      const entry = currentPrice;
+      const sl = Number((patternLow - 1.50).toFixed(2));
+      const risk = Number(Math.max(1.5, entry - sl).toFixed(2));
+      const tp1 = Number((entry + 5.00).toFixed(2)); // +50 Pips Sayang
+      const tp2Target = (Number.isFinite(bslVal) && bslVal > entry + 6.0) ? bslVal : (entry + 10.00);
+      const tp2 = Number(tp2Target.toFixed(2)); // +100 Pips DOL
+      const rr1 = Number((5.0 / risk).toFixed(1));
+      const rr2 = Number(((tp2 - entry) / risk).toFixed(1));
+
+      return {
+        side: 'BUY',
+        signalType: 1,
+        signalName: '🟢 SNIPER BUY (M5 3-CANDLE ABSORPTION)',
+        status: 'READY',
+        mathZone: inDiscount ? `DISCOUNT EKSTREM (${rangePct}%)` : `SWEEP LANTAI @ ${patternLow.toFixed(2)}`,
+        entry,
+        sl,
+        tp1,
+        tp2,
+        risk,
+        rr1,
+        rr2,
+        reasons: [
+          `Detektor 3-Candle M5: Serapan ekor bawah (absorption wick) di lantai ekstrem $${patternLow.toFixed(2)}.`,
+          `Displacement hijau M5 memicu konfirmasi Micro-MSS menuju likuiditas atas.`,
+          `Target Presisi 100 Pips Sayang: TP1 +50 Pips ($${tp1.toFixed(2)}) kunci profit & TP2 +100 Pips DOL ($${tp2.toFixed(2)}).`
+        ],
+        reclaimed: true
+      };
+    }
+  }
+
+  // 2. BEARISH SNIPER REVERSAL
+  const patternHigh = Math.max(c0.high, c1.high, c2.high);
+  const nearCeiling = ceilingLevels.some(lvl => Math.abs(patternHigh - lvl) <= 4.0 || patternHigh > lvl);
+  const inPremium = rangePct > 52.0;
+
+  if ((inPremium || nearCeiling) && rangePct >= 48.0) {
+    const hasAbsorption = (c1UpperWick >= c1Body * 0.8 && c1UpperWick >= 0.7) || (c0UpperWick >= c0Body * 0.8 && c0UpperWick >= 0.7) || (c1.close < c1.high - (c1.high - c1.low) * 0.5);
+    const hasBearDisp = (c0.close < c0.open && c0.close <= Math.min(c1.close, c1.open)) || (c0.close < c1.low * 1.0005);
+
+    if (hasAbsorption && hasBearDisp) {
+      const entry = currentPrice;
+      const sl = Number((patternHigh + 1.50).toFixed(2));
+      const risk = Number(Math.max(1.5, sl - entry).toFixed(2));
+      const tp1 = Number((entry - 5.00).toFixed(2)); // +50 Pips Sayang
+      const tp2Target = (Number.isFinite(sslVal) && sslVal < entry - 6.0) ? sslVal : (entry - 10.00);
+      const tp2 = Number(tp2Target.toFixed(2)); // +100 Pips DOL
+      const rr1 = Number((5.0 / risk).toFixed(1));
+      const rr2 = Number(((entry - tp2) / risk).toFixed(1));
+
+      return {
+        side: 'SELL',
+        signalType: -1,
+        signalName: '🔴 SNIPER SELL (M5 3-CANDLE ABSORPTION)',
+        status: 'READY',
+        mathZone: inPremium ? `PREMIUM EKSTREM (${rangePct}%)` : `SWEEP PLAFON @ ${patternHigh.toFixed(2)}`,
+        entry,
+        sl,
+        tp1,
+        tp2,
+        risk,
+        rr1,
+        rr2,
+        reasons: [
+          `Detektor 3-Candle M5: Serapan ekor atas (rejection wick) di plafon ekstrem $${patternHigh.toFixed(2)}.`,
+          `Displacement merah M5 memicu konfirmasi Micro-MSS menuju likuiditas bawah.`,
+          `Target Presisi 100 Pips Sayang: TP1 +50 Pips ($${tp1.toFixed(2)}) kunci profit & TP2 +100 Pips DOL ($${tp2.toFixed(2)}).`
+        ],
+        reclaimed: true
+      };
+    }
   }
 
   return null;
@@ -222,7 +395,7 @@ export function dashboardContextV4Rows(amy, context = null) {
   const rangePct = (hasRange && currentPrice > 0) ? Math.min(100, Math.max(0, Math.round(((currentPrice - rLow) / (rHigh - rLow)) * 100))) : 50;
   const isDiscount = rangePct < 47.5;
   const isPremium = rangePct > 52.5;
-  const zoneLabel = isDiscount ? `DISCOUNT (<47.5%) [${rangePct}%]` : isPremium ? `PREMIUM (>52.5%) [${rangePct}%]` : `EQUILIBRIUM (50%) [${rangePct}%]`;
+  const zoneLabel = isDiscount ? `DISCOUNT (<47.5%) [${rangePct}%]` : isPremium ? `PREMIUM (>52.5%) [${rangePct}%]` : `EQUILIBRIUM (50%) [${rangePct}%] · ZONA CINCANG`;
 
   // 3. Sweeps & Liquidity
   const sweep = detectLiquiditySweep(amy, ctx);
@@ -256,6 +429,10 @@ export function dashboardContextV4Rows(amy, context = null) {
       phaseStatus = 'FASE PULLBACK / KOREKSI TURUN (HTF Bullish vs M5 Bearish)';
       actionGuide = 'Penurunan Ini Koreksi Menuju Discount — Awas Jebakan Sell di Bawah!';
       phaseClass = 'bias-val-purple';
+    } else if (rangePct >= 47.5 && rangePct <= 52.5) {
+      phaseStatus = 'ZONA CINCANG (Harga di Poros Equilibrium 50%)';
+      actionGuide = '🛡️ SOP ANTI-YES-MAN: DILARANG ENTRY! Diam & tunggu harga sweep lantai SSL (<47.5%) atau plafon BSL (>52.5%).';
+      phaseClass = 'bias-val-purple';
     } else if (isFullBullAlign && isPremium) {
       phaseStatus = `EKSPANSI BULLISH DI AREA PREMIUM (${rangePct}%)`;
       actionGuide = 'Tren Naik Kuat Menuju BSL, Tapi Rawan Pullback (Jangan FOMO Buy di Pucuk)';
@@ -277,6 +454,10 @@ export function dashboardContextV4Rows(amy, context = null) {
     } else if (isBearPullback) {
       phaseStatus = 'FASE PULLBACK / KOREKSI NAIK (HTF Bearish vs M5 Bullish)';
       actionGuide = 'Kenaikan Ini Koreksi Menuju Premium — Awas Jebakan Buy di Pucuk!';
+      phaseClass = 'bias-val-purple';
+    } else if (rangePct >= 47.5 && rangePct <= 52.5) {
+      phaseStatus = 'ZONA CINCANG (Harga di Poros Equilibrium 50%)';
+      actionGuide = '🛡️ SOP ANTI-YES-MAN: DILARANG ENTRY! Diam & tunggu harga sweep lantai SSL (<47.5%) atau plafon BSL (>52.5%).';
       phaseClass = 'bias-val-purple';
     } else if (isFullBearAlign && isDiscount) {
       phaseStatus = `EKSPANSI BEARISH DI AREA DISCOUNT (${rangePct}%)`;
@@ -408,10 +589,12 @@ export function renderLiveAssistant(amy,news=null,settings={},context=null){
   let primary=lines[0]||'Kondisi pasar seimbang';
   let sub='Menunggu konfirmasi candle tertutup.';
   let notify=false,notifTitle='',notifBody='';
+  const nowSec = Math.floor(Date.now() / 1000);
 
   const mathZoneText=ast?.mathZone||(d?.priceZone===-1?'Diskon (Discount Zone)':d?.priceZone===1?'Premium Zone':'Equilibrium Zone');
   const antiChaseText=ast?.status==='READY'?'READY DI ZONA':ast?.status==='MISSED'?'MISSED - JANGAN KEJAR':'STANDBY';
   const sweepInfo=detectLiquiditySweep(amy,context);
+  const sniperTrigger=detectM5SniperTrigger(amy,context);
 
   if(news?.status==='NEWS_LOCK'){
     badge='NEWS LOCK';badgeClass='badge-news';stateClass='assistant-state-news';
@@ -423,6 +606,14 @@ export function renderLiveAssistant(amy,news=null,settings={},context=null){
     primary='⚠️ Setup Batal: Harga Melewati Level Invalidasi';
     sub=`Close M15 menembus batas pembatalan ${d.invalidLevel?n(d.invalidLevel):''}. Tunggu pembentukan struktur baru.`;
     notify=true;notifTitle='⚠️ Asisten Amy: Setup Batal (Invalid)';notifBody=sub;
+  }else if(sniperTrigger && (!ast || ast.status !== 'READY')){
+    const isBuy=sniperTrigger.side==='BUY';
+    badge=isBuy?'SNIPER BUY':'SNIPER SELL';
+    badgeClass=isBuy?'badge-bull':'badge-bear';
+    stateClass=isBuy?'assistant-state-bull':'assistant-state-bear';
+    primary=`${isBuy?'🟢':'🔴'} SNIPER ${sniperTrigger.side} ENTRY · M5 Reversal`;
+    sub=`Detektor 3-Candle M5: Terkonfirmasi @ ${sniperTrigger.mathZone}. Entry ${n(sniperTrigger.entry)} · Target 100 Pips Sayang`;
+    notify=true;notifTitle=`⚡ Asisten Amy: ${badge}`;notifBody=`${primary}. ${sub}`;
   }else if(ast&&(ast.signalType===1||(ast.rawSignalType===1&&ast.status==='READY'))){
     badge='BUY ENTRY';badgeClass='badge-bull';stateClass='assistant-state-bull';
     primary=`🟢 BUY ENTRY · ${ast.signalName||'Trend Buy'}`;
@@ -460,9 +651,16 @@ export function renderLiveAssistant(amy,news=null,settings={},context=null){
     stateClass='assistant-state-sweep';
     primary=`💧 ${sweepInfo.name} @ ${n(sweepInfo.level)} Swept!`;
     sub=`Tersapu hingga ekor ${n(sweepInfo.extreme)}. Pantau pembentukan rejection untuk potensi ${sweepInfo.side}.`;
-    notify=true;
-    notifTitle=`💧 Asisten Amy: ${sweepInfo.name} @ ${n(sweepInfo.level)} Swept!`;
-    notifBody=`${primary} ${sub}`;
+    const sweepAge = sweepInfo.time ? (nowSec - sweepInfo.time) : 0;
+    const isLatestBar = sweepInfo.index != null && Array.isArray(amy.chartCandles) && amy.chartCandles.length
+      ? (sweepInfo.index === amy.chartCandles.length - 1)
+      : true;
+    const isFresh = sweepInfo.time ? (sweepAge >= 0 && sweepAge <= 900) : isLatestBar;
+    if(isFresh){
+      notify=true;
+      notifTitle=`💧 Asisten Amy: ${sweepInfo.name} @ ${n(sweepInfo.level)} Swept!`;
+      notifBody=`${primary} ${sub}`;
+    }
   }else{
     const v4Rows = dashboardContextV4Rows(amy, context);
     const phaseRow = v4Rows.find(r => r[0] === 'FASE NARASI MARKET');
@@ -470,7 +668,9 @@ export function renderLiveAssistant(amy,news=null,settings={},context=null){
     if(phaseRow && guideRow && phaseRow[1]){
       primary = phaseRow[1];
       sub = guideRow[1];
-      if(primary.includes('SEARAH BULLISH') || primary.includes('EKSPANSI BULLISH')){
+      if(primary.includes('ZONA CINCANG')){
+        badge = 'ZONA CINCANG'; badgeClass = 'badge-warn'; stateClass = 'assistant-state-sweep';
+      } else if(primary.includes('SEARAH BULLISH') || primary.includes('EKSPANSI BULLISH')){
         badge = 'SEARAH BULLISH'; badgeClass = 'badge-bull'; stateClass = 'assistant-state-bull';
       } else if(primary.includes('SEARAH BEARISH') || primary.includes('EKSPANSI BEARISH')){
         badge = 'SEARAH BEARISH'; badgeClass = 'badge-bear'; stateClass = 'assistant-state-bear';
@@ -512,12 +712,11 @@ export function renderLiveAssistant(amy,news=null,settings={},context=null){
   }
 
   const candleTime = amy.source?.M15 || amy.source?.M5;
-  const nowSec = Math.floor(Date.now() / 1000);
-  const isStale = !candleTime || (nowSec - candleTime > 3600);
+  const isStale = !candleTime || (nowSec - candleTime > 900);
 
   if(notify && notifTitle && settings?.assistantNotif !== false && !isStale && candleTime){
     try{
-      const timeKey = candleTime;
+      const timeKey = (badge.includes('SWEPT') && sweepInfo?.time) ? sweepInfo.time : candleTime;
       const eventKey = `${badge}|${timeKey}`;
       const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('amyfx_notified_assistant_events') : null;
       const notified = raw ? JSON.parse(raw) : {};
@@ -563,7 +762,9 @@ export function renderBiasDashboardV2(amy,context=null){
 export function renderEntryAssistantPlan(amy,context=null){
   const planEl=document.getElementById('amy-entry-assistant-v3');
   if(!planEl)return;
-  const ast=amy?.assistant||null,plan=ast?.plan||amy?.plan||null;
+  const ast=amy?.assistant||null;
+  const sniperTrigger=detectM5SniperTrigger(amy,context);
+  const plan=(ast?.status==='READY'&&ast?.plan)?ast.plan:(sniperTrigger||ast?.plan||amy?.plan||null);
   const badgeEl=document.getElementById('plan-signal-badge');
   const antiChaseEl=document.getElementById('plan-anti-chase-pill');
   const rejectionEl=document.getElementById('plan-rejection-pill');
@@ -580,6 +781,54 @@ export function renderEntryAssistantPlan(amy,context=null){
   const btnChart=document.getElementById('btn-show-plan-chart');
 
   if(!plan){
+    const d=amy?.dashboard;
+    const ctx=context||(typeof window!=='undefined'?window.AmyMarketContext:null);
+    const levels=amy?.levels||ctx?.levels||ctx?.keyLevels||{};
+    const currentPrice=(typeof window!=='undefined'&&Number.isFinite(Number(window.amyfxCurrentPrice))&&Number(window.amyfxCurrentPrice)>0)
+      ?Number(window.amyfxCurrentPrice)
+      :(Number.isFinite(Number(amy?.currentPrice))&&Number(amy?.currentPrice)>0)
+      ?Number(amy.currentPrice)
+      :(Number.isFinite(Number(ctx?.price))&&Number(ctx.price)>0)
+      ?Number(ctx.price)
+      :0;
+    const rHigh=Number(ctx?.m15?.dealingRange?.rangeHigh??d?.rangeHigh??d?.protectedHigh??levels?.bsl);
+    const rLow=Number(ctx?.m15?.dealingRange?.rangeLow??d?.rangeLow??d?.protectedLow??levels?.ssl);
+    const hasRange=Number.isFinite(rHigh)&&Number.isFinite(rLow)&&rHigh>rLow;
+    const rangePct=(hasRange&&currentPrice>0)?Math.min(100,Math.max(0,Math.round(((currentPrice-rLow)/(rHigh-rLow))*100))):50;
+    const isEquilibrium=(rangePct>=47.5&&rangePct<=52.5);
+
+    if(isEquilibrium){
+      if(badgeEl){badgeEl.textContent='ZONA CINCANG · NO-TRADE';badgeEl.className='plan-badge badge-neutral';}
+      if(antiChaseEl){antiChaseEl.textContent='DILARANG ENTRY';antiChaseEl.className='anti-chase-pill pill-warning';}
+      if(rejectionEl)rejectionEl.style.display='none';
+      if(mathZoneEl)mathZoneEl.textContent='Math Zone: EQUILIBRIUM 50% (ZONA CINCANG)';
+      if(pullbackEl)pullbackEl.style.display='none';
+      if(entryVal)entryVal.textContent='—';
+      if(slVal)slVal.textContent='—';if(slSub)slSub.textContent='Rem Disiplin';
+      if(tp1Val)tp1Val.textContent='—';if(tp1Sub)tp1Sub.textContent='Stand Aside';
+      if(tp2Val)tp2Val.textContent='—';if(tp2Sub)tp2Sub.textContent='Anti-Yes-Man';
+      if(reasonsEl){
+        const items=[
+          'Harga sedang berputar di poros tengah Dealing Range (Equilibrium 50%).',
+          'SOP Anti-Yes-Man: DIAM dan simpan peluru! Jangan menekan tombol order di zona cincang.',
+          'Tunggu penjemputan likuiditas di Lantai SSL (<47.5%) atau Plafon BSL (>52.5%).'
+        ];
+        reasonsEl.innerHTML=items.map(r=>`<li>${esc(r)}</li>`).join('');
+      }
+      const btnTakeTrade=document.getElementById('btn-take-trade');
+      if(btnTakeTrade){
+        btnTakeTrade.disabled=true;
+        btnTakeTrade.style.background='rgba(255,255,255,0.06)';
+        btnTakeTrade.style.color='#94a3b8';
+        btnTakeTrade.style.border='1px solid rgba(255,255,255,0.15)';
+        btnTakeTrade.style.opacity='0.6';
+        btnTakeTrade.style.cursor='not-allowed';
+        btnTakeTrade.textContent='🛡️ Zona Cincang (Dilarang Entry)';
+      }
+      if(btnChart){btnChart.disabled=true;btnChart.style.opacity='0.5';btnChart.onclick=null;}
+      return;
+    }
+
     if(badgeEl){badgeEl.textContent='MENUNGGU KONFIRMASI';badgeEl.className='plan-badge badge-neutral';}
     if(antiChaseEl){antiChaseEl.textContent='STANDBY';antiChaseEl.className='anti-chase-pill pill-neutral';}
     if(rejectionEl)rejectionEl.style.display='none';
@@ -604,7 +853,9 @@ export function renderEntryAssistantPlan(amy,context=null){
 
   if(badgeEl){badgeEl.textContent=badgeText;badgeEl.className=`plan-badge ${badgeClass}`;}
   if(antiChaseEl){
-    if(ast?.status==='READY'||plan.status==='READY'){
+    if(plan.signalName?.includes('SNIPER')){
+      antiChaseEl.textContent='READY DI ZONA EKSTREM';antiChaseEl.className='anti-chase-pill pill-ready';
+    }else if(ast?.status==='READY'||plan.status==='READY'){
       antiChaseEl.textContent='READY DI ZONA';antiChaseEl.className='anti-chase-pill pill-ready';
     }else if(ast?.status==='MISSED'||plan.status==='MISSED'){
       antiChaseEl.textContent='MISSED: Harga sudah menjauh dari entry';antiChaseEl.className='anti-chase-pill pill-missed';
@@ -617,9 +868,9 @@ export function renderEntryAssistantPlan(amy,context=null){
   const sweepInfo=ast?.sweep||plan?.sweep||amy?.sweep||null;
   const rejectionState=ast?.rejectionState||plan?.rejectionState||(ast?.reclaimed?'SWEEP_REJECTION':(ast?.waitingRejectionClose?'SWEEP_UNCONFIRMED':null));
   if(rejectionEl){
-    if(rejectionState==='SWEEP_REJECTION'||ast?.reclaimed===true||plan?.reclaimed===true){
+    if(rejectionState==='SWEEP_REJECTION'||ast?.reclaimed===true||plan?.reclaimed===true||plan?.signalName?.includes('SNIPER')){
       rejectionEl.style.display='inline-block';
-      rejectionEl.textContent='🎯 Reclaimed Valid';
+      rejectionEl.textContent='🎯 Reversal Valid';
       rejectionEl.className='anti-chase-pill pill-ready';
     }else if(rejectionState==='SWEEP_UNCONFIRMED'||ast?.waitingRejectionClose||(sweepInfo&&!ast?.reclaimed)){
       rejectionEl.style.display='inline-block';
@@ -629,7 +880,7 @@ export function renderEntryAssistantPlan(amy,context=null){
       rejectionEl.style.display='none';
     }
   }
-  if(mathZoneEl)mathZoneEl.textContent=`Math Zone: ${ast?.mathZone||'Fibo OTE / SNR / POI'}`;
+  if(mathZoneEl)mathZoneEl.textContent=`Math Zone: ${plan.mathZone||ast?.mathZone||'Fibo OTE / SNR / POI'}`;
   if(pullbackEl){
     if(isPullback){
       pullbackEl.style.display='block';
@@ -643,12 +894,12 @@ export function renderEntryAssistantPlan(amy,context=null){
   if(slVal)slVal.textContent=n(plan.sl);
   if(slSub)slSub.textContent=plan.risk?`Risk: ${n(plan.risk)} pts`:'Batas Risiko';
   if(tp1Val)tp1Val.textContent=n(plan.tp1);
-  if(tp1Sub)tp1Sub.textContent=plan.rr1?`RR 1:${plan.rr1.toFixed(1)}`:'Target 1';
+  if(tp1Sub)tp1Sub.textContent=plan.rr1?`RR 1:${plan.rr1.toFixed(1)} · +50 Pips (BE)`:'+50 Pips (Kunci & Geser BE)';
   if(tp2Val)tp2Val.textContent=n(plan.tp2);
-  if(tp2Sub)tp2Sub.textContent=plan.rr2?`RR 1:${plan.rr2.toFixed(1)}`:'Target 2';
+  if(tp2Sub)tp2Sub.textContent=plan.rr2?`RR 1:${plan.rr2.toFixed(1)} · +100 Pips DOL`:'+100 Pips Target Sayang (DOL)';
 
   if(reasonsEl){
-    const items=ast?.reasons&&ast.reasons.length?ast.reasons:(plan.reason||'').split('\n').filter(Boolean);
+    const items=plan.reasons&&plan.reasons.length?plan.reasons:(ast?.reasons&&ast.reasons.length?ast.reasons:(plan.reason||'').split('\n').filter(Boolean));
     reasonsEl.innerHTML=items.map(r=>`<li>${esc(r)}</li>`).join('');
   }
 

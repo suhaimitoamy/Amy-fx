@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07090e">
+  <title>Pelajaran 02: Inversion FVG (IFVG) — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/micro-learning.css">
+  <style>
+    .ifvg-diagram-svg {
+      width: 100%;
+      max-width: 480px;
+      height: auto;
+      margin: 0 auto;
+      display: block;
+    }
+    .pill-step {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--ml-gold);
+      color: #07090e;
+      font-weight: 800;
+      font-size: 12px;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body class="micro-learning-body">
+
+<div class="ml-container">
+  <!-- Header / Breadcrumb -->
+  <header class="ml-header">
+    <a href="index.html" class="ml-back-link">
+      <span>←</span> Roadmap Level 2
+    </a>
+    <span class="ml-pill-tag">Pelajaran 02</span>
+  </header>
+
+  <!-- Title Box -->
+  <section class="ml-lesson-title-box">
+    <h1>Inversion FVG (IFVG): Ketika Celah Berbalik Fungsi</h1>
+    <div class="ml-lesson-meta">
+      <span>⏱️ 3-4 Menit Baca</span>
+      <span>•</span>
+      <span>Level 2: Senjata Utama ICT</span>
+      <span>•</span>
+      <span>Kuis Interaktif</span>
+    </div>
+  </section>
+
+  <!-- Bagian 1: Logika Dasar IFVG -->
+  <article class="ml-card">
+    <h2><span>🔄</span> 1. Apa Itu Inversion FVG (IFVG)?</h2>
+    <p>
+      Pernahkah kamu menandai kotak Bullish FVG yang indah, bersiap untuk Buy, namun ternyata harga justru <strong>meluncur deras menembus kotak tersebut tanpa ampun</strong>?
+    </p>
+    <div class="ml-analogi">
+      <div class="ml-analogi-title"> Analogi Pintu Rusak</div>
+      Bayangkan sebuah pintu kayu yang biasanya menahan dorongan (Support). Ketika seseorang mendobrak pintu tersebut hingga jebol ke sisi seberang, pintu yang jebol itu sekarang menjadi penghalang bagi orang yang ingin kembali (Resistance).
+    </div>
+    <p>
+      Dalam metodologi ICT, <strong>FVG yang gagal mempertahankan harga tidak dibuang ke tempat sampah</strong>. Celah tersebut secara otomatis bertukar peran:
+    </p>
+    <ul style="padding-left: 20px; margin: 10px 0;">
+      <li><strong>Bullish FVG yang jebol ke bawah</strong> ➔ Berubah menjadi <strong>Area Pantulan Sell</strong> (Bearish Resistance).</li>
+      <li><strong>Bearish FVG yang ditembus ke atas</strong> ➔ Berubah menjadi <strong>Area Pantulan Buy</strong> (Bullish Support).</li>
+    </ul>
+  </article>
+
+  <!-- Bagian 2: Diagram Visual IFVG -->
+  <article class="ml-card">
+    <h2><span>📊</span> 2. Anatomi Perubahan Peran IFVG</h2>
+    <p>
+      Perhatikan siklus bagaimana kotak FVG yang tadinya diproyeksikan untuk Buy, dijebol dengan bodi candle besar, lalu saat harga retest kembali, ia menjadi titik entry Sell yang sangat akurat:
+    </p>
+
+    <!-- Visual Diagram SVG -->
+    <div class="ml-diagram">
+      <div class="ml-diagram-title">Visualisasi Siklus Inversion FVG (Sell Model)</div>
+      <svg class="ifvg-diagram-svg" viewBox="0 0 460 230" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Kotak FVG yang berubah peran -->
+        <rect x="60" y="80" width="340" height="40" fill="rgba(212, 168, 50, 0.15)" stroke="#d4a832" stroke-width="1.5" stroke-dasharray="4 4" rx="4"/>
+        <text x="75" y="105" fill="#d4a832" font-size="11" font-weight="bold">Kotak FVG Asli (Awalnya Support)</text>
+
+        <!-- Fase 1: Pembentukan FVG Awal (Lilin Hijau) -->
+        <rect x="75" y="65" width="16" height="70" fill="#10b981" rx="2"/>
+        <line x1="83" y1="50" x2="83" y2="150" stroke="#94a3b8" stroke-width="1.5"/>
+
+        <!-- Fase 2: Penembusan Keras (Candle Merah Body Close) -->
+        <rect x="180" y="70" width="22" height="110" fill="#ef4444" rx="2"/>
+        <line x1="191" y1="60" x2="191" y2="195" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="145" y="215" fill="#f87171" font-size="10" font-weight="bold">Body Close Tembus!</text>
+
+        <!-- Fase 3: Retest Naik Mengetes Kotak (Pullback) -->
+        <path d="M 210 170 Q 255 140 280 95" stroke="#38bdf8" stroke-width="2" stroke-dasharray="3 3" fill="none"/>
+        <polygon points="280,95 272,99 275,107" fill="#38bdf8"/>
+
+        <!-- Fase 4: Entry Sell Point -->
+        <circle cx="285" cy="92" r="5" fill="#ef4444"/>
+        <text x="300" y="88" fill="#ef4444" font-size="11" font-weight="bold">ENTRY SELL (IFVG)</text>
+        <text x="300" y="102" fill="#94a3b8" font-size="10">Kini menjadi Atap Resistance</text>
+
+        <!-- Fase 5: Terjun Ke Bawah -->
+        <path d="M 290 100 Q 340 140 380 200" stroke="#10b981" stroke-width="2.5" fill="none"/>
+        <polygon points="380,200 373,192 379,190" fill="#10b981"/>
+        <text x="375" y="220" fill="#34d399" font-size="11" font-weight="bold">Target Kejatuhan</text>
+      </svg>
+    </div>
+  </article>
+
+  <!-- Bagian 3: Syarat Wajib Body Close -->
+  <article class="ml-card">
+    <h2><span>⚠️</span> 3. Syarat Mutlak: Body Close vs Ekor (Wick)</h2>
+    <p>
+      Kunci paling krusial dalam membedakan Inversion FVG sejati dengan sapuan likuiditas palsu adalah <strong>penutupan bodi lilin (Body Close)</strong>:
+    </p>
+
+    <div class="ml-aturan">
+      <div class="ml-aturan-title">📏 Syarat Sah IFVG</div>
+      <p style="margin: 0 0 8px 0;">
+        • <strong>Wajib Body Close Menembus:</strong> Lilin penembus HARUS ditutup bodi penuh di luar kotak FVG. Ini membuktikan bahwa pembeli telah menyerah dan penjual memegang kendali penuh.
+      </p>
+      <p style="margin: 0;">
+        • <strong>Jika Hanya Ekor (Wick):</strong> Jika lilin hanya menusuk ekor panjang ke luar kotak namun bodinya kembali ditutup di dalam kotak, itu <strong>BUKAN IFVG</strong>. Itu adalah reaksi penyerapan likuiditas (Liquidity Sweep).
+      </p>
+    </div>
+  </article>
+
+  <!-- Bagian 4: Cara Eksekusi Entry IFVG -->
+  <article class="ml-card">
+    <h2><span>🎯</span> 4. Langkah Praktis Eksekusi IFVG</h2>
+    
+    <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 12px;">
+      <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 14px;">
+        <div style="display: flex; align-items: center; margin-bottom: 6px;">
+          <span class="pill-step">1</span>
+          <strong style="color: #ffffff;">Tandai FVG yang Dijebol</strong>
+        </div>
+        <p style="margin: 0; font-size: 13.5px; color: #cbd5e1;">
+          Temukan FVG yang tertembus oleh lilin impulsif berlawanan arah dengan konfirmasi penutupan bodi lilin.
+        </p>
+      </div>
+
+      <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 14px;">
+        <div style="display: flex; align-items: center; margin-bottom: 6px;">
+          <span class="pill-step">2</span>
+          <strong style="color: #ffffff;">Tunggu Retest (Sabar)</strong>
+        </div>
+        <p style="margin: 0; font-size: 13.5px; color: #cbd5e1;">
+          Jangan mengejar harga yang sedang meluncur. Tunggu harga kembali berayun (pullback) menyentuh kotak FVG yang baru dijebol tersebut.
+        </p>
+      </div>
+
+      <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 14px;">
+        <div style="display: flex; align-items: center; margin-bottom: 6px;">
+          <span class="pill-step">3</span>
+          <strong style="color: #ffffff;">Pasang Entry &amp; Stop Loss Tipis</strong>
+        </div>
+        <p style="margin: 0; font-size: 13.5px; color: #cbd5e1;">
+          Eksekusi Sell di dalam kotak IFVG. Pasang Stop Loss tepat di atas ekor lilin yang sebelumnya menjebol kotak FVG tersebut.
+        </p>
+      </div>
+    </div>
+  </article>
+
+  <!-- Kuis Interaktif 1 Soal -->
+  <section class="ml-quiz-card" data-lesson-id="level-2-02">
+    <span class="ml-quiz-badge">Uji Pemahaman Cepat</span>
+    <h3 class="ml-quiz-question">
+      Kapan sebuah Bullish FVG secara sah bertransformasi menjadi Inversion FVG (IFVG) yang valid untuk mencari peluang Sell?
+    </h3>
+    <div class="ml-quiz-options">
+      <button type="button" class="ml-quiz-btn" data-correct="false" data-explanation="Menyentuh garis 50% CE adalah reaksi mitigasi normal FVG biasa, bukan penembusan Inversion.">
+        A. Saat harga baru saja menyentuh garis 50% CE dari FVG tersebut.
+      </button>
+
+      <button type="button" class="ml-quiz-btn" data-correct="true" data-explanation="Luar biasa! Syarat mutlak pembentukan IFVG adalah adanya candle yang ditutup bodi penuh (body close) melewati batas luar FVG, bukan cuma ekor.">
+        B. Saat sebuah candle bearish ditutup bodi penuh (body close) menembus batas bawah kotak FVG.
+      </button>
+
+      <button type="button" class="ml-quiz-btn" data-correct="false" data-explanation="Jika hanya ekor yang menembus sedangkan bodi kembali di dalam, itu adalah Liquidity Sweep / reject ekor, bukan IFVG.">
+        C. Saat ada ekor candle panjang yang sempat menusuk keluar kotak namun bodinya ditutup di dalam.
+      </button>
+    </div>
+    <div class="ml-quiz-feedback"></div>
+  </section>
+
+  <!-- Step Footer Navigation -->
+  <footer class="ml-nav-footer">
+    <a href="01-master-fvg-tuntas.html" class="ml-btn-nav ml-btn-prev">
+      <span>←</span> Pelajaran 01
+    </a>
+    <a href="03-liquidity-pool.html" class="ml-btn-nav ml-btn-next">
+      <span>Lanjut: Liquidity Pool</span>
+      <span>→</span>
+    </a>
+  </footer>
+</div>
+
+<script src="../assets/micro-learning.js"></script>
+</body>
+</html>

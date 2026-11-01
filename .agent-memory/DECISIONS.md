@@ -1,5 +1,34 @@
 # Technical Decisions
 
+## 2026-10-29 — Standar Baku Cron Pemantau Teknikal Murni 15 Menitan XAU/USD (Chat Antigravity)
+1. **Latar Belakang & Kesuksesan Eksekusi:**
+   - Sayang meminta pemantauan market Gold yang teratur setiap 15 menit sinkron jam dinding (`:00, :15, :30, :45` WITA), **murni teknikal ICT tanpa intervensi berita/fundamental**, dan tidak monoton/tidak dikirim ke Telegram (fokus di chat Antigravity).
+   - Pengaturan ini berhasil mendampingi Sayang meraih kemenangan gemilang dari profit awal +30 USC melonjak ke **+277 USC (+275 Pips)** melalui eksekusi sniper di dasar jurang Turtle Soup $4,016.00.
+2. **Ketetapan Konfigurasi Permanen (Cross-Session Invariant):**
+   - **Trigger Jadwal:** Cron `0,15,30,45 * * * *` dengan `ExactTiming: true` (sinkron WITA).
+   - **Struktur Laporan 4 Pilar:** (1) Live Price riil, (2) Bedah evolusi 3 candle M5 terakhir (agar tidak ada serapan ekor/displacement yang terlewat), (3) Peta Likuiditas & FVG ICT (BSL, SSL, EQ 50%, FVG M5, Invalidasi Tren), (4) Level Aksi & Kompas Sayang (Anti-Yes-Man, larangan entry di zona cincang, jemputan di lantai/plafon ekstrem target 100 pips).
+   - **Kanal:** Murni di chat Antigravity.
+   - **Emergency Sentinel Alert:** Siaga memberi alert kilat jika terjadi lonjakan/breakout darurat di menit ke-5 atau ke-10 tanpa harus menunggu menit ke-15.
+   - **Auto-Activation di Sesi Baru:** Trigger kata kunci *"pantau market"*, *"nyalakan pemantau"*, *"aktifkan cron"*, *"pos pantau"*, atau *"lapor 15 menit"* otomatis mengaktifkan pos pantau ini secara mandiri.
+3. **Penyimpanan Memori Permanen:**
+   - Tersimpan paten di `/root/GEMINI.md` (Aturan 18), `/root/.gemini/antigravity-cli/rules/00-shared-cross-account-memory.md` (Aturan 18), `/root/Amy-fx/.agent-memory/RULES.md` (Pro 430), dan `/root/Amy-fx/.agent-memory/DECISIONS.md`.
+
+
+## 2026-10-26 — Standar Operasional Asisten Setia: Anti-Yes-Man, Target 100 Pips, Timezone WITA, & Peta Dua Sisi Institusional
+1. **Latar Belakang & Kesadaran Kritis:**
+   - Sayang menegur keras kecenderungan asisten yang sempat bersikap "Yes-Man" reaktif (menuruti Buy saat Sayang tanya Buy, dan langsung menuruti Sell saat Sayang tanya Sell). Sikap plin-plan ini berbahaya dan dapat menjebak trader dalam kondisi *whipsaw* di tengah range cincang.
+   - Sayang membuktikan eksekusi brilian: sabar menunggu di lantai ekstrem keramat `3,975 – 3,978` (Lantai Crash Jumat) dan sukses memanen **100 Pips bersih** ke `3,997` di sesi pembukaan Asia Killzone.
+2. **Ketetapan Aturan Baku Asisten (Permanen):**
+   - **Target Pips Resmi:** Target scalping utama Sayang adalah **100 Pips ($10 move XAU/USD)**, bukan target receh 15-30 pips.
+   - **Timezone Acuan:** **WITA (UTC+8)** adalah jam lokal resmi Sayang dalam memantau sesi pembukaan Killzone (Asia 08:00–12:00 WITA, London 15:00–19:00 WITA, NY 20:00–24:00 WITA).
+   - **Protokol Anti "Yes-Man" (Rem Objektif):** Asisten dilarang keras mengiyakan pergantian arah emosional secara instan. Asisten wajib menjadi rem disiplin dan selalu menyajikan **Peta Taktis Dua Sisi (Two-Way Tactical Map)**:
+     * *Skenario BUY:* Hanya dijemput di Lantai Ekstrem (SSL Sweep / Exhaustion di level keramat).
+     * *Skenario SELL:* Hanya dijemput di Plafon Ekstrem (BSL Sweep / Rejection di level keramat).
+     * *Zona Tengah:* Ditandai tegas sebagai **NO-TRADE ZONE (Zona Cincang)** dengan instruksi diam (stand aside).
+   - **Deteksi Seller/Buyer Kehabisan Tenaga (*Exhaustion*):** Wajib divalidasi di M15 & M5 menggunakan 3 pilar teknikal murni: *Absorption Wick*, *Failure to Body Close*, dan *Displacement Pembalikan*.
+3. **Penyimpanan Memori Permanen:**
+   - Disinkronkan ke `/root/GEMINI.md` (Aturan 14 & 15), `/root/.gemini/antigravity-cli/rules/00-shared-cross-account-memory.md`, dan seluruh dokumen memori lintas sesi Akun 1 & Akun 2.
+
 ## 2026-10-22 — Perbaikan Rilis Aktual Data Ekonomi (Jobless Claims 194K) & Reaktivitas Real-Time Kalender/Sentimen
 1. **Latar Belakang & Gejala:**
    - Pengguna melaporkan bahwa rilis data ekonomi AS (Initial Jobless Claims pada 20:30 WITA) tidak memunculkan angka aktual `194K` di aplikasi Amy FX Pro, melainkan tetap menampilkan tanda strip (`—`) meski sudah lewat 20+ menit.
@@ -1268,3 +1297,47 @@ Pro382 release verification completed: source 11239e1de1b42d6677cbd074619c636507
   - Tersinkronisasi penuh pada `/root/Amy-fx` dan `/root/Amy-fx-pro`.
 
 
+
+## [2026-10-26] Pembaharuan Indikator TradingView Pine Script v6 (AMY 100-Pips Floor & Ceiling Scalper)
+- **Konteks:** Sayang Amy menguji indikator `AMY_100_Pips_Floor_Ceiling_Scalper_v6.pine` di TradingView dan memberikan 7 laporan hasil uji lapangan: garis tanpa nama/harga, label Turtle Soup menutupi candle, `[CUMA SWEEP]` & `[VALID BREAK]` berdampingan akibat ketiadaan market structure engine, absennya label `[MSS]` & `[BOS]`, penempatan label potensi di swing ekstrem, serta posisi HUD panel bias yang terpotong di pojok kanan atas.
+- **Tindakan:**
+  1. Menambahkan label teks nama dan angka harga di ujung kanan setiap garis (`BSL Plafon`, `SSL Lantai`, `EQ 50%`, `TP +100P`, `SL`).
+  2. Menambahkan buffer offset adaptif berbasis ATR (`v_offset = atr14 * lbl_offset_mult`) dan slider setelan jarak di Settings sehingga label eksekusi berjarak bebas dari candle.
+  3. Membangun ICT Market Structure Engine sejati menggunakan Swing High & Swing Low Pivots (`ta.pivothigh` & `ta.pivotlow`) dengan State Lock untuk mencegah label sweep dan valid break bertabrakan di bar berdampingan.
+  4. Menambahkan modul deteksi resmi `[MSS]` (Market Structure Shift) dan `[BOS]` (Break of Structure) lengkap dengan garis struktur.
+  5. Menambahkan label terfilter `🎯 [POTENSI SELL: INCAR SWEEP BSL]` dan `🎯 [POTENSI BUY: INCAR SWEEP SSL]` pada Major Swings ekstrem dengan saklar ON/OFF.
+  6. Memindahkan default posisi panel Status Bias ke Pojok Kanan Bawah (`position.bottom_right`) dengan opsi kustomisasi posisi di menu Settings.
+  7. File diperbarui langsung di `/sdcard/Download/Indikator-trading-view/AMY_100_Pips_Floor_Ceiling_Scalper_v6.pine` dan disinkronkan ke `/sdcard/Download/ADM/`, lalu dipush ke GitHub repo `suhaimitoamy/Indikator-trading-view` (commit `61cf508`).
+
+- **Pembersihan Total Visual (Clean Institutional Edition):**
+  - Mengeliminasi spamming stiker mikro (`[CISD]`, `[ENGULFING]`, dan `[POTENSI]` di tiap lilin) dari tampilan chart dan memindahkannya sebagai filter mesin internal di balik layar (default OFF).
+  - Tampilan visual chart kini 100% minimalis, jernih, dan hanya menyorot: 3 Garis Level Resmi + Label Harga di kanan, Rejection Ekstrem (`⛽ [KEHABISAN BENSIN]`), Struktur `[MSS]`, dan Sinyal Eksekusi `Turtle Soup` (+100 Pips).
+  - Tersinkronisasi dan berhasil di-push ke GitHub repo `suhaimitoamy/Indikator-trading-view` (commit `16dddb9`).
+
+## [2026-10-26] Integrasi Bias Fundamental Makro SM News 24 (@sm_news_24h) ke Analisa Pasar
+- **Konteks:** Sayang meminta agar feed berita terkini dari channel Telegram SM News 24 (`@sm_news_24h`) otomatis diintegrasikan sebagai landasan bias makro setiap kali Sayang menanyakan harga Gold, mengecek market, atau mencari konfirmasi arah.
+- **Tindakan:**
+  1. Membangun live scraper scraper lokal `/root/amy-market-data/sm_news_fetcher.py` yang otomatis menarik siaran berita makro terkini (geopolitik Timur Tengah, keputusan The Fed/FOMC, inflasi PCE, data minyak) lengkap dengan normalisasi waktu WITA (UTC+8).
+  2. Mendaftarkan aturan resmi ke `/root/GEMINI.md` (Aturan 16) dan `/root/Amy-fx/.agent-memory/RULES.md` (Pro 428) agar berlaku permanen bagi Antigravity di kedua akun.
+  3. Menetapkan standar konfluensi dua lapis: Berita makro SM News sebagai penentu arah angin/bias umum, dipadukan dengan level presisi ICT M5/M15/H1 (Dealing Range, FVG, MSS, Consequent Encroachment) sebagai trigger eksekusi murni.
+
+## [2026-10-26] Penerapan AMY CONTEXT V4.3.2 sebagai Standar Mesin Analisa Resmi
+- **Konteks:** Sayang meminta agar kode indikator TradingView Pine Script `AMY ICT V4.3.2 [Smart Entry Target + Mobile Fit]` dijadikan mesin analisis baku internal.
+- **Tindakan:**
+  1. Mentranslasikan 100% logika matematis dan struktural Pine Script V4.3.2 ke mesin Python `/root/amy-market-data/amy_context_v432.py`.
+  2. Mengimplementasikan kalkulasi presisi: 3-TF Bias (H1/M15/M5), Batas CHoCH / Invalidasi Tren (`lastL`/`lastH`), SBR/RBS Breaker, Supply/Demand OB + FVG, serta Dealing Range % EQ 50%.
+  3. Mengintegrasikan output tabel dashboard 16 baris ke bot Telegram Hermes (`@Hermesamygmgobot`) dan MCP server Twelve Data (`analyze_market_structure`).
+  4. Menetapkan Aturan 17 di `/root/GEMINI.md` dan Pro 429 di `/root/Amy-fx/.agent-memory/RULES.md` agar berlaku abadi bagi Antigravity di kedua akun.
+
+
+
+## [2026-10-30] Pembaruan Standar Baku Cron Pemantau Teknikal (Gaya Bernarasi & Terminologi Pro)
+- **Konteks:** Sayang meminta format laporan pemantau 15 menitan XAU/USD diperbarui karena format lama terlalu panjang, kaku dengan deretan bullet-point OHLC angka mentah, dan kurang bernarasi. Selain itu, metafora awam seperti 'plafon', 'lantai', dan 'zona cincang' diganti resmi dengan terminologi profesional Trader Pro (Resistance, Support, Supply, Demand, No-Trade Zone), serta label 'Kompas Aksi' disederhanakan menjadi 'Respon'.
+- **Tindakan:**
+  1. Memperbarui Aturan 14, 15, dan 18 di `/root/GEMINI.md` agar berlaku abadi bagi Akun 1 & Akun 2.
+  2. Memperbarui Aturan Pro 430 di `/root/Amy-fx/.agent-memory/RULES.md` dan `/root/Amy-fx/CLAUDE.md`.
+  3. Menstandarkan format laporan menjadi:
+     - Header Kompak (WITA, Live Price, Bias 3-TF).
+     - Narasi Dinamika Pasar (1–2 Paragraf Mengalir menceritakan pertarungan Buyer vs Seller pada 3 candle M5).
+     - Peta Level & Respon (Resistance BSL/Supply, Support SSL/Demand, dan Respon Objektif Anti-Yes-Man untuk target 100 pips).
+  4. Menyinkronkan prompt default scheduler cron pemantau (`schedule`) agar setiap sesi baru otomatis memproduksi laporan bernarasi hidup ini.

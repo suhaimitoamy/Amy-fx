@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07090e">
+  <title>Pelajaran 10: Breaker Block &amp; Mitigation Block — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/micro-learning.css">
+  <style>
+    .breaker-diagram-svg {
+      width: 100%;
+      max-width: 480px;
+      height: auto;
+      margin: 0 auto;
+      display: block;
+    }
+    .table-compare {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 13.5px;
+    }
+    .table-compare th, .table-compare td {
+      padding: 10px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: left;
+    }
+    .table-compare th {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--ml-gold);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body class="micro-learning-body">
+
+<div class="ml-container">
+  <!-- Header / Breadcrumb -->
+  <header class="ml-header">
+    <a href="index.html" class="ml-back-link">
+      <span>←</span> Roadmap Level 2
+    </a>
+    <span class="ml-pill-tag">Pelajaran 10</span>
+  </header>
+
+  <!-- Title Box -->
+  <section class="ml-lesson-title-box">
+    <h1>Breaker Block &amp; Mitigation Block: Benteng Pembalikan Polaritas</h1>
+    <div class="ml-lesson-meta">
+      <span>⏱️ 5 Menit Baca</span>
+      <span>•</span>
+      <span>Level 2: Senjata Utama ICT</span>
+      <span>•</span>
+      <span>Kuis Interaktif</span>
+    </div>
+  </section>
+
+  <!-- Kotak 1: Inti Konsep -->
+  <article class="ml-card">
+    <h2><span>🔄</span> 1. Inti Konsep: Ketika Pertahanan Lawan Direbut Menjadi Senjatamu</h2>
+    <p>
+      Pernahkah kamu menandai Order Block yang kamu kira bakal memantulkan harga naik, tapi ternyata malah dijebol habis-habisan oleh lilin merah raksasa? Jangan buru-buru menghapus kotak itu dari chart kamu! Dalam trading institusi, <strong>Order Block yang gagal tidak terbuang sia-sia</strong>. Kotak itu langsung berganti peran menjadi senjata pembalikan arah yang sangat mematikan: <strong>Breaker Block</strong> atau <strong>Mitigation Block</strong>.
+    </p>
+    <div class="ml-analogi">
+      <div class="ml-analogi-title">Analogi Benteng Kota yang Direbut Musuh</div>
+      Bayangkan sebuah dinding benteng pertahanan kota. Ketika pasukan penyerang berhasil mendobrak dan <strong>menjebol dinding benteng tersebut dari luar</strong>, mereka tidak meruntuhkannya sampai rata. Sebaliknya, dinding yang jebol itu langsung mereka kuasai dan dijadikan <strong>pos benteng baru untuk menahan serangan balik pasukan dari dalam kota</strong>! Begitu juga di chart: Order Block penahan Buy yang dijebol ke bawah kini berbalik fungsi menjadi atap penahan Sell paling kokoh saat harga datang mengetes ulang (retest).
+    </div>
+    <p>
+      Kenapa institusi bereaksi di sana? Karena saat penembusan terjadi, ada order bank yang sempat tersangkut minus (trapped orders). Begitu harga retest kembali ke kotak itu, bank segera menutup posisi minus mereka di titik impas (Break Even) lalu menyuntikkan pesanan baru searah tren penjebolan!
+    </p>
+  </article>
+
+  <!-- Kotak 2: Syarat Baku / Checklist Memilih -->
+  <article class="ml-card">
+    <h2><span>📋</span> 2. Tiga Syarat Pembeda: Breaker vs Mitigation Block</h2>
+    <ul style="padding-left: 20px; margin: 10px 0; display: grid; gap: 10px;">
+      <li>
+        <strong>1. Breaker Block (Wajib Menyapu Likuiditas / Grade A+):</strong> Terbentuk dari Order Block yang sebelumnya <em>berhasil menyapu pucuk atau lembah lawan</em> (Liquidity Sweep) sebelum dijebol balik secara agresif. Ini adalah setup pembalikan polaritas paling berdaya ledak tinggi!
+      </li>
+      <li>
+        <strong>2. Mitigation Block (Tanpa Sapuan Likuiditas):</strong> Terbentuk dari Order Block pada ayunan harga yang <em>gagal menyapu pucuk/lembah lawan</em> (Failure Swing / loyo) sebelum tertembus. Sifat pantulannya lebih moderat dibanding Breaker Block.
+      </li>
+      <li>
+        <strong>3. Penembusan Wajib Bodi Lilin Tebal (Displacement):</strong> Kotak tersebut harus dijebol oleh lilin berbadan tebal dan meninggalkan celah FVG yang bersih, bukan sekadar dicolek tipis oleh jarum ekor lilin.
+      </li>
+    </ul>
+  </article>
+
+  <!-- Kotak 3: Contoh Visual / Tabel Komparasi -->
+  <article class="ml-card">
+    <h2><span>📊</span> 3. Visual Anatomi: Pembentukan Bearish Breaker Block</h2>
+
+    <!-- Visual Diagram SVG -->
+    <div class="ml-diagram">
+      <div class="ml-diagram-title">Anatomi Bearish Breaker Block: Sweep BSL Lalu Ditembus Drastis</div>
+      <svg class="breaker-diagram-svg" viewBox="0 0 460 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Ayunan Struktur -->
+        <!-- Low 1 -> High 1 -> Lower Low -> Higher High (Sweep) -> Break Downward -->
+        <path d="M 40 140 L 110 60 L 170 120 L 250 25 L 340 190" stroke="#38bdf8" stroke-width="2" stroke-dasharray="3 3" fill="none"/>
+
+        <!-- Swing High 1 -->
+        <circle cx="110" cy="60" r="4" fill="#94a3b8"/>
+        <text x="110" y="48" fill="#94a3b8" font-size="9" text-anchor="middle">High Lama</text>
+
+        <!-- Higher High Sweep BSL -->
+        <circle cx="250" cy="25" r="5" fill="#ef4444"/>
+        <line x1="110" y1="60" x2="260" y2="60" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="2 2"/>
+        <text x="250" y="15" fill="#f87171" font-size="10" font-weight="bold" text-anchor="middle">Higher High (Sweep BSL)</text>
+
+        <!-- Lilin Pembentuk Breaker Block (Lembah Terakhir Sebelum Puncak) -->
+        <rect x="145" y="105" width="50" height="30" fill="rgba(212, 168, 50, 0.25)" stroke="#d4a832" stroke-width="1.5" rx="3"/>
+        <text x="170" y="148" fill="#fbbf24" font-size="9.5" font-weight="bold" text-anchor="middle">BREAKER BLOCK (+OB Lama)</text>
+
+        <!-- Garis Penembusan Bawah -->
+        <line x1="170" y1="120" x2="420" y2="120" stroke="#d4a832" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <text x="360" y="112" fill="#d4a832" font-size="9.5" font-weight="bold">Polaritas Berbalik -> Resistance</text>
+
+        <!-- Retest Masuk Breaker -->
+        <path d="M 340 190 Q 375 140 375 125 L 420 200" stroke="#f87171" stroke-width="2.5" fill="none"/>
+        <circle cx="375" cy="125" r="4" fill="#ef4444"/>
+        <text x="385" y="138" fill="#f87171" font-size="10" font-weight="bold">Entry Retest Sell</text>
+      </svg>
+    </div>
+
+    <table class="table-compare">
+      <thead>
+        <tr>
+          <th>Pembeda Kritis</th>
+          <th>Breaker Block (Grade A+)</th>
+          <th>Mitigation Block (Grade B)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Riwayat Likuiditas</strong></td>
+          <td>Sukses menyapu High/Low lama sebelum dijebol balik.</td>
+          <td>Gagal menyapu High/Low lama (Failure Swing / loyo).</td>
+        </tr>
+        <tr>
+          <td><strong>Kekuatan Pantulan</strong></td>
+          <td>Super kuat; didorong order institusi yang tersangkut.</td>
+          <td>Moderat; sebaiknya tunggu konfirmasi tambahan di timeframe kecil.</td>
+        </tr>
+        <tr>
+          <td><strong>Patokan Stop Loss</strong></td>
+          <td>Di atas pucuk/lembah ekstrim yang melakukan sapuan likuiditas.</td>
+          <td>Di luar bodi lilin Mitigation Block itu sendiri.</td>
+        </tr>
+      </tbody>
+    </table>
+  </article>
+
+  <!-- Kotak 4: Aturan Main Eksekusi -->
+  <article class="ml-card">
+    <h2><span>🎯</span> 4. Aturan Main Eksekusi (Rule of Thumb)</h2>
+    <div class="ml-aturan">
+      <div class="ml-aturan-title">📏 Panduan Eksekusi Breaker Block</div>
+      <p style="margin: 0 0 6px 0;">
+        • <strong>Momen Eksekusi:</strong> Pasang Limit Order atau tunggu konfirmasi saat harga pertama kali datang kembali (retest) mencolek bodi Breaker Block yang sudah jebol.
+      </p>
+      <p style="margin: 0 0 6px 0;">
+        • <strong>Konfluensi Emas (Breaker + FVG):</strong> Kalau area Breaker Block bertepatan dengan adanya celah FVG yang belum tertutup, peluang keberhasilan setup melonjak sangat tinggi!
+      </p>
+      <p style="margin: 0;">
+        • <strong>Stop Loss Aman:</strong> Pasang Stop Loss beberapa pip di balik pucuk/lembah pembuat sapuan likuiditas, bukan cuma pas-pasan di bibir kotak Breaker.
+      </p>
+    </div>
+  </article>
+
+  <!-- Kuis Interaktif 1 Soal -->
+  <section class="ml-quiz-card" data-lesson-id="level-2-10">
+    <span class="ml-quiz-badge">Uji Pemahaman Cepat</span>
+    <h3 class="ml-quiz-question">
+      Apa perbedaan paling mendasar antara Breaker Block dengan Mitigation Block dalam analisis pasar Smart Money / ICT?
+    </h3>
+    <div class="ml-quiz-options">
+      <button type="button" class="ml-quiz-btn" data-correct="false" data-explanation="Kedua pola ini dapat ditemukan di semua timeframe mulai dari M1 hingga Daily.">
+        A. Breaker Block hanya ada di timeframe Daily, sedangkan Mitigation Block hanya ada di M1.
+      </button>
+
+      <button type="button" class="ml-quiz-btn" data-correct="true" data-explanation="Sempurna! Breaker Block mutlak wajib diawali oleh pengambilan likuiditas (sweep pada pucuk atau lembah sebelumnya) sebelum terjadi tembusan agresif, sedangkan Mitigation Block terbentuk tanpa adanya sweep likuiditas (failure swing).">
+        B. Breaker Block terbentuk dari Order Block yang didahului aksi sweep likuiditas sebelum ditembus keras, sedangkan Mitigation Block berasal dari ayunan yang gagal menyapu likuiditas.
+      </button>
+
+      <button type="button" class="ml-quiz-btn" data-correct="false" data-explanation="Warna candle tidak menjadi pembeda konsep antara Breaker dan Mitigation Block.">
+        C. Breaker Block selalu berwarna merah sedangkan Mitigation Block selalu berwarna hijau.
+      </button>
+    </div>
+    <div class="ml-quiz-feedback"></div>
+  </section>
+
+  <!-- Step Footer Navigation -->
+  <footer class="ml-nav-footer">
+    <a href="09-memilih-poi-utama-vs-sekunder.html" class="ml-btn-nav ml-btn-prev">
+      <span>←</span> Pelajaran 09
+    </a>
+    <a href="../level-3/index.html" class="ml-btn-nav ml-btn-next">
+      <span> Selesai! Lanjut ke Level 3</span>
+      <span>→</span>
+    </a>
+  </footer>
+</div>
+
+<script src="../assets/micro-learning.js"></script>
+</body>
+</html>

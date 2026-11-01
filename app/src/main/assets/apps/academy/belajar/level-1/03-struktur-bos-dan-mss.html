@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pelajaran 03: Struktur BOS dan MSS — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/micro-learning.css">
+  <style>
+    .structure-compare {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin: 16px 0;
+    }
+    @media (min-width: 520px) {
+      .structure-compare {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    .structure-box {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .structure-box.bos {
+      border-color: rgba(16, 185, 129, 0.35);
+      background: rgba(16, 185, 129, 0.05);
+    }
+    .structure-box.mss {
+      border-color: rgba(239, 68, 68, 0.35);
+      background: rgba(239, 68, 68, 0.05);
+    }
+    .structure-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 99px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .bos .structure-badge { background: var(--ml-success-soft); color: #34d399; }
+    .mss .structure-badge { background: var(--ml-danger-soft); color: #f87171; }
+  </style>
+</head>
+<body class="micro-learning-body">
+  <div class="ml-container">
+    
+    <!-- Header -->
+    <header class="ml-header">
+      <a href="index.html" class="ml-back-link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </a>
+        <span>Roadmap Level 1</span>
+      </a>
+      <span class="ml-pill-tag">PELAJARAN 03 / 07</span>
+    </header>
+
+    <!-- Title Box -->
+    <div class="ml-lesson-title-box">
+      <h1>Struktur Pasar: Kapan Lanjut (BOS), Kapan Balik (MSS)?</h1>
+      <div class="ml-lesson-meta">
+        <span>⏱️ 3 Menit Baca</span>
+        <span>•</span>
+        <span>🚦 Rambu Lalu Lintas Pasar</span>
+        <span>•</span>
+        <span>🧭 BOS & MSS Sederhana</span>
+      </div>
+    </div>
+
+    <!-- Section 1 -->
+    <div class="ml-card">
+      <h2>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ml-gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        Dua Tanda Rambu Terpenting
+      </h2>
+      <p>
+        Pernahkah kamu menebak: <em>"Wah, harga naik sudah tinggi banget nih, pasti sebentar lagi jatuh!"</em> Lalu kamu memasang Sell, dan ternyata harga malah meroket semakin gila ke atas?
+      </p>
+      <p>
+        Itu terjadi karena kamu menebak-nebak perasaan, bukan membaca rambu pasar. Di pasar keuangan, institusi besar meninggalkan dua rambu penting:
+      </p>
+
+      <div class="structure-compare">
+        <div class="structure-box bos">
+          <span class="structure-badge">Lampu Hijau · Lanjut Jalan</span>
+          <h3 style="margin: 0 0 6px; font-size: 16px; color: #34d399;">BOS (Break of Structure)</h3>
+          <p style="margin: 0; font-size: 13px; color: #cbd5e1; line-height: 1.5;">
+            Harga berhasil menembus puncak tertinggi sebelumnya (Higher High). Ini tanda bahwa <strong>tren yang sedang berlangsung masih sangat kuat dan bersemangat lanjut</strong>.
+          </p>
+        </div>
+
+        <div class="structure-box mss">
+          <span class="structure-badge">Lampu Merah · Awas Putar Balik</span>
+          <h3 style="margin: 0 0 6px; font-size: 16px; color: #f87171;">MSS (Market Structure Shift)</h3>
+          <p style="margin: 0; font-size: 13px; color: #cbd5e1; line-height: 1.5;">
+            Lantai pertahanan terakhir (Higher Low) jebol ditembus ke bawah. Ini sinyal peringatan bahwa <strong>kekuatan tren telah patah dan karakter pasar bersiap berganti arah</strong>.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Visual Diagram -->
+    <div class="ml-diagram">
+      <div class="ml-diagram-title">Visualisasi Perbedaan Nyata BOS vs MSS</div>
+      <svg viewBox="0 0 520 250" width="100%" height="auto" style="overflow: visible; font-family: -apple-system, sans-serif;">
+        <!-- BAGIAN KIRI: BOS (LANJUT TREN) -->
+        <g transform="translate(15, 0)">
+          <!-- Line chart -->
+          <path d="M 10 160 L 50 100 L 75 130 L 130 50 L 160 85 L 210 20" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+
+          <!-- Garis BOS Horizontal -->
+          <line x1="50" y1="100" x2="150" y2="100" stroke="#34d399" stroke-width="1.8" stroke-dasharray="3,3" />
+          <rect x="90" y="88" width="56" height="18" rx="4" fill="#10b981" />
+          <text x="118" y="101" fill="#fff" font-size="10.5" font-weight="800" text-anchor="middle">BOS ✓</text>
+
+          <line x1="130" y1="50" x2="215" y2="50" stroke="#34d399" stroke-width="1.8" stroke-dasharray="3,3" />
+          <rect x="155" y="38" width="56" height="18" rx="4" fill="#10b981" />
+          <text x="183" y="51" fill="#fff" font-size="10.5" font-weight="800" text-anchor="middle">BOS ✓</text>
+
+          <text x="110" y="210" fill="#34d399" font-size="12" font-weight="800" text-anchor="middle">BOS: TEMBUS PUNCAK</text>
+          <text x="110" y="226" fill="#94a3b8" font-size="10" text-anchor="middle">Tren Naik Tetap Bersemangat Lanjut</text>
+        </g>
+
+        <!-- Garis Pemisah -->
+        <line x1="245" y1="20" x2="245" y2="225" stroke="rgba(255,255,255,0.12)" stroke-dasharray="4,4" />
+
+        <!-- BAGIAN KANAN: MSS (PATAH TREN) -->
+        <g transform="translate(265, 0)">
+          <!-- Line chart with shift down -->
+          <path d="M 10 150 L 50 90 L 80 120 L 130 60 L 180 180" fill="none" stroke="#ef4444" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+
+          <!-- Garis Lembah Terakhir yang Jebol (MSS) -->
+          <line x1="80" y1="120" x2="195" y2="120" stroke="#ef4444" stroke-width="1.8" stroke-dasharray="3,3" />
+          <circle cx="80" cy="120" r="4.5" fill="#f87171" />
+          <text x="80" y="140" fill="#fca5a5" font-size="10" font-weight="700" text-anchor="middle">Lembah Kunci (HL)</text>
+
+          <rect x="140" y="108" width="60" height="20" rx="4" fill="#ef4444" />
+          <text x="170" y="122" fill="#fff" font-size="11" font-weight="800" text-anchor="middle">MSS ⚠️</text>
+
+          <text x="115" y="210" fill="#f87171" font-size="12" font-weight="800" text-anchor="middle">MSS: JEBOL LEMBAH</text>
+          <text x="115" y="226" fill="#94a3b8" font-size="10" text-anchor="middle">Lantai Jebol · Siap Putar Arah</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Section 3: Analogi & Panduan Praktik -->
+    <div class="ml-card">
+      <h2>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ml-gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+        </svg>
+        Pahami Maknanya Tanpa Rumit
+      </h2>
+
+      <div class="ml-analogi">
+        <div class="ml-analogi-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Analogi Gedung Bertingkat
+        </div>
+        Bayangkan kamu sedang naik tangga ke lantai paling atas. Setiap kali kamu berhasil mendobrak pintu tangga berikutnya ke atas, itu adalah <strong>BOS</strong> (kamu naik makin tinggi). Tapi jika tiba-tiba lantai tempatmu berpijak runtuh dan kamu terperosok ke lantai bawah, itu adalah <strong>MSS</strong> (struktur tangga runtuh, arah gerakmu berubah jatuh).
+      </div>
+
+      <div class="ml-aturan">
+        <div class="ml-aturan-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+          SOP Praktis Trader Bijak
+        </div>
+        <ul>
+          <li><strong>Melihat BOS:</strong> Jangan buru-buru pasang posisi melawan tren! Beri respek pada momentum yang sedang berjalan.</li>
+          <li><strong>Melihat MSS:</strong> Hentikan posisi searah tren lama, jangan ngotot! Tunggu pasar mengonfirmasi arah barunya sebelum mengambil keputusan.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Quiz Interaktif -->
+    <div class="ml-quiz-card" data-lesson-id="level-1-03">
+      <span class="ml-quiz-badge"> CEK PEMAHAMAN (1 MENIT)</span>
+      <div class="ml-quiz-question">
+        Pasar sedang berada dalam tren naik. Tiba-tiba terjadi penurunan tajam yang berhasil menembus ke bawah lembah terakhir (Higher Low). Peristiwa ini dinamakan apa?
+      </div>
+
+      <div class="ml-quiz-options">
+        <button class="ml-quiz-btn" data-correct="false" data-explanation="BOS pada tren naik terjadi saat harga menembus puncak ke atas, bukan jebol ke bawah.">
+          A. Break of Structure (BOS), menandakan tren naik makin kuat tak terbendung
+        </button>
+        <button class="ml-quiz-btn" data-correct="true" data-explanation="Tepat sekali! MSS (Market Structure Shift) adalah sinyal bahwa lantai pertahanan tren naik telah runtuh, memberi tahu kita untuk bersiap terhadap potensi perubahan arah ke tren turun.">
+          B. Market Structure Shift (MSS), sinyal waspada bahwa tren naik telah patah dan siap berganti arah
+        </button>
+        <button class="ml-quiz-btn" data-correct="false" data-explanation="Jebolnya lantai struktur adalah peristiwa teknikal nyata dalam membaca pergerakan harga, bukan sekadar eror tampilan.">
+          C. Glitch visual grafik yang tidak perlu dipedulikan
+        </button>
+      </div>
+
+      <div class="ml-quiz-feedback"></div>
+    </div>
+
+    <!-- Navigation Footer -->
+    <div class="ml-nav-footer">
+      <a href="02-tiga-kondisi-pasar.html" class="ml-btn-nav ml-btn-prev">
+        ← Pelajaran 02
+      </a>
+      <a href="04-diskon-vs-premium.html" class="ml-btn-nav ml-btn-next">
+        Lanjut ke Pelajaran 04 →
+      </a>
+    </div>
+
+  </div>
+
+  <script src="../assets/micro-learning.js"></script>
+</body>
+</html>

@@ -117,7 +117,7 @@ class DriverSetupSyncWorker(
         if (candleTime <= 0L) return
 
         val nowSec = System.currentTimeMillis() / 1000
-        if (nowSec - candleTime > 3600L) {
+        if (nowSec - candleTime > 900L) {
             android.util.Log.d("AmyFX-DriverWorker", "Candle is stale (${nowSec - candleTime}s old), assistant alerts suppressed.")
             return
         }
@@ -182,15 +182,19 @@ class DriverSetupSyncWorker(
             notifBody = "$primary. $sub"
             notify = true
         } else if (sweepDetails != null) {
-            val levelStr = String.format(java.util.Locale.US, "%.2f", sweepDetails.level)
-            val extremeStr = String.format(java.util.Locale.US, "%.2f", sweepDetails.extreme)
-            val sweepBadge = sweepDetails.name.replace(" ", "_").uppercase(java.util.Locale.US)
-            badge = "${sweepBadge}_SWEPT"
-            notifTitle = "💧 Asisten Amy: ${sweepDetails.name} @ $levelStr Swept!"
-            val primary = "💧 ${sweepDetails.name} @ $levelStr Swept!"
-            val sub = "Tersapu hingga ekor $extremeStr. Pantau pembentukan rejection untuk potensi ${sweepDetails.side}."
-            notifBody = "$primary $sub"
-            notify = true
+            val sweepAge = if (sweepDetails.sweepTime > 0L) (nowSec - sweepDetails.sweepTime) else 0L
+            val isFresh = sweepDetails.sweepTime <= 0L || sweepAge <= 900L
+            if (isFresh) {
+                val levelStr = String.format(java.util.Locale.US, "%.2f", sweepDetails.level)
+                val extremeStr = String.format(java.util.Locale.US, "%.2f", sweepDetails.extreme)
+                val sweepBadge = sweepDetails.name.replace(" ", "_").uppercase(java.util.Locale.US)
+                badge = "${sweepBadge}_SWEPT"
+                notifTitle = "💧 Asisten Amy: ${sweepDetails.name} @ $levelStr Swept!"
+                val primary = "💧 ${sweepDetails.name} @ $levelStr Swept!"
+                val sub = "Tersapu hingga ekor $extremeStr. Pantau pembentukan rejection untuk potensi ${sweepDetails.side}."
+                notifBody = "$primary $sub"
+                notify = true
+            }
         } else if (inPoi) {
             badge = "DI_AREA_POI"
             notifTitle = "📍 Asisten Amy: Area POI Tersentuh"
@@ -210,7 +214,11 @@ class DriverSetupSyncWorker(
 
         if (!notify || notifTitle.isBlank() || notifBody.isBlank()) return
 
-        val cacheKey = "assistant_${badge}_${candleTime}"
+        val cacheKey = if (badge.endsWith("_SWEPT") && sweepDetails?.sweepTime != null && sweepDetails.sweepTime > 0L) {
+            "assistant_${badge}_${sweepDetails.sweepTime}"
+        } else {
+            "assistant_${badge}_${candleTime}"
+        }
         val prefs = applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         if (prefs.contains(cacheKey)) return
 
@@ -222,7 +230,8 @@ class DriverSetupSyncWorker(
         val name: String,
         val level: Double,
         val extreme: Double,
-        val side: String
+        val side: String,
+        val sweepTime: Long = 0L
     )
 
     private fun resolveSweepDetails(amy: JSONObject, contextObj: JSONObject, lines: List<String>): SweepDetails? {
@@ -234,12 +243,21 @@ class DriverSetupSyncWorker(
         val cHigh = candle?.optDouble("high", 0.0) ?: 0.0
         val cLow = candle?.optDouble("low", 0.0) ?: 0.0
         val cClose = candle?.optDouble("close", 0.0) ?: 0.0
+        val cTime = candle?.optLong("close_time", 0L)?.takeIf { it > 0L }
+            ?: (candle?.optLong("open_time", 0L) ?: 0L)
+
+        val currentPrice = contextObj.optDouble("price", 0.0).takeIf { it > 0.0 }
+            ?: (candle?.optDouble("close", 0.0) ?: 0.0)
+        val defaultLow = if (cLow > 0.0) cLow else currentPrice
+        val defaultHigh = if (cHigh > 0.0) cHigh else currentPrice
 
         // 1. Asia High / Asia Low sweep
         val asiaHigh = levels?.optDouble("asiaHigh", 0.0) ?: 0.0
         val asiaLow = levels?.optDouble("asiaLow", 0.0) ?: 0.0
         var liqAsiaHighSweptLevel = 0.0
         var liqAsiaLowSweptLevel = 0.0
+        var liqAsiaHighTime = 0L
+        var liqAsiaLowTime = 0L
 
         if (liquidity != null) {
             for (i in 0 until liquidity.length()) {
@@ -249,8 +267,10 @@ class DriverSetupSyncWorker(
                 if (status.equals("SWEPT", ignoreCase = true)) {
                     if (label.contains("asia high", ignoreCase = true)) {
                         liqAsiaHighSweptLevel = item.optDouble("level", 0.0)
+                        liqAsiaHighTime = item.optLong("sourceTime", 0L)
                     } else if (label.contains("asia low", ignoreCase = true)) {
                         liqAsiaLowSweptLevel = item.optDouble("level", 0.0)
+                        liqAsiaLowTime = item.optLong("sourceTime", 0L)
                     }
                 }
             }
@@ -262,12 +282,14 @@ class DriverSetupSyncWorker(
         if (liqAsiaHighSweptLevel > 0.0 || textAsiaHigh || (asiaHigh > 0.0 && cHigh > asiaHigh && cClose < asiaHigh)) {
             val lvl = if (liqAsiaHighSweptLevel > 0.0) liqAsiaHighSweptLevel else if (asiaHigh > 0.0) asiaHigh else cHigh
             val ext = if (cHigh > lvl) cHigh else lvl + 1.20
-            return SweepDetails("Asia High", lvl, ext, "SELL")
+            val t = if (liqAsiaHighTime > 0L) liqAsiaHighTime else cTime
+            return SweepDetails("Asia High", lvl, ext, "SELL", t)
         }
         if (liqAsiaLowSweptLevel > 0.0 || textAsiaLow || (asiaLow > 0.0 && cLow > 0.0 && cLow < asiaLow && cClose > asiaLow)) {
             val lvl = if (liqAsiaLowSweptLevel > 0.0) liqAsiaLowSweptLevel else if (asiaLow > 0.0) asiaLow else cLow
             val ext = if (cLow > 0.0 && cLow < lvl) cLow else lvl - 1.20
-            return SweepDetails("Asia Low", lvl, ext, "BUY")
+            val t = if (liqAsiaLowTime > 0L) liqAsiaLowTime else cTime
+            return SweepDetails("Asia Low", lvl, ext, "BUY", t)
         }
 
         // 2. PDH / PDL sweep
@@ -275,6 +297,8 @@ class DriverSetupSyncWorker(
         val pdl = levels?.optDouble("pdl", 0.0) ?: 0.0
         var liqPdhSweptLevel = 0.0
         var liqPdlSweptLevel = 0.0
+        var liqPdhTime = 0L
+        var liqPdlTime = 0L
 
         if (liquidity != null) {
             for (i in 0 until liquidity.length()) {
@@ -284,8 +308,10 @@ class DriverSetupSyncWorker(
                 if (status.equals("SWEPT", ignoreCase = true)) {
                     if (label.contains("pdh", ignoreCase = true) || label.contains("previous day high", ignoreCase = true)) {
                         liqPdhSweptLevel = item.optDouble("level", 0.0)
+                        liqPdhTime = item.optLong("sourceTime", 0L)
                     } else if (label.contains("pdl", ignoreCase = true) || label.contains("previous day low", ignoreCase = true)) {
                         liqPdlSweptLevel = item.optDouble("level", 0.0)
+                        liqPdlTime = item.optLong("sourceTime", 0L)
                     }
                 }
             }
@@ -297,12 +323,14 @@ class DriverSetupSyncWorker(
         if (liqPdhSweptLevel > 0.0 || textPdh || (pdh > 0.0 && cHigh > pdh && cClose < pdh)) {
             val lvl = if (liqPdhSweptLevel > 0.0) liqPdhSweptLevel else if (pdh > 0.0) pdh else cHigh
             val ext = if (cHigh > lvl) cHigh else lvl + 1.20
-            return SweepDetails("PDH", lvl, ext, "SELL")
+            val t = if (liqPdhTime > 0L) liqPdhTime else cTime
+            return SweepDetails("PDH", lvl, ext, "SELL", t)
         }
         if (liqPdlSweptLevel > 0.0 || textPdl || (pdl > 0.0 && cLow > 0.0 && cLow < pdl && cClose > pdl)) {
             val lvl = if (liqPdlSweptLevel > 0.0) liqPdlSweptLevel else if (pdl > 0.0) pdl else cLow
             val ext = if (cLow > 0.0 && cLow < lvl) cLow else lvl - 1.20
-            return SweepDetails("PDL", lvl, ext, "BUY")
+            val t = if (liqPdlTime > 0L) liqPdlTime else cTime
+            return SweepDetails("PDL", lvl, ext, "BUY", t)
         }
 
         // 3. BSL / SSL sweep
@@ -310,25 +338,35 @@ class DriverSetupSyncWorker(
         val dSweepPrice = sweepObj?.optDouble("price", 0.0) ?: 0.0
         val dSweepExtreme = sweepObj?.optDouble("extreme", 0.0) ?: 0.0
         val dSweepDir = sweepObj?.optInt("dir", 0) ?: (dashboard?.optInt("sweepDir", 0) ?: 0)
+        val dSweepTime = sweepObj?.optLong("time", 0L) ?: 0L
         val sweepStatus = dashboard?.optInt("sweepStatus", 0) ?: 0
 
         val trgSweepDir = trigger?.optInt("sweepDir", 0) ?: 0
         val trgSweptPrice = trigger?.optDouble("sweptPrice", 0.0) ?: 0.0
         val trgSweepExtreme = trigger?.optDouble("sweepExtreme", 0.0) ?: 0.0
+        val trgTime = trigger?.optLong("time", 0L) ?: 0L
 
         val bslLevel = dashboard?.optDouble("bsl", 0.0) ?: (levels?.optDouble("bsl", 0.0) ?: 0.0)
         val sslLevel = dashboard?.optDouble("ssl", 0.0) ?: (levels?.optDouble("ssl", 0.0) ?: 0.0)
 
         var liqBslSwept = false
         var liqSslSwept = false
+        var liqBslTime = 0L
+        var liqSslTime = 0L
         if (liquidity != null) {
             for (i in 0 until liquidity.length()) {
                 val item = liquidity.optJSONObject(i) ?: continue
                 val label = item.optString("label", "")
                 val status = item.optString("status", "")
                 if (status.equals("SWEPT", ignoreCase = true)) {
-                    if (label.equals("BSL", ignoreCase = true)) liqBslSwept = true
-                    if (label.equals("SSL", ignoreCase = true)) liqSslSwept = true
+                    if (label.equals("BSL", ignoreCase = true)) {
+                        liqBslSwept = true
+                        liqBslTime = item.optLong("sourceTime", 0L)
+                    }
+                    if (label.equals("SSL", ignoreCase = true)) {
+                        liqSslSwept = true
+                        liqSslTime = item.optLong("sourceTime", 0L)
+                    }
                 }
             }
         }
@@ -343,25 +381,29 @@ class DriverSetupSyncWorker(
             lines.any { it.contains("bsl", ignoreCase = true) && it.contains("swept", ignoreCase = true) } ||
             liqBslSwept
 
+        val sweepTimeSsl = if (dSweepDir == 1 && dSweepTime > 0L) dSweepTime else if (trgSweepDir == 1 && trgTime > 0L) trgTime else if (liqSslTime > 0L) liqSslTime else cTime
+        val sweepTimeBsl = if (dSweepDir == -1 && dSweepTime > 0L) dSweepTime else if (trgSweepDir == -1 && trgTime > 0L) trgTime else if (liqBslTime > 0L) liqBslTime else cTime
+
         if (hasSsl) {
-            val lvl = if (dSweepDir == 1 && dSweepPrice > 0.0) dSweepPrice else if (trgSweepDir == 1 && trgSweptPrice > 0.0) trgSweptPrice else if (sslLevel > 0.0) sslLevel else if (cLow > 0.0) cLow else 2642.50
-            val ext = if (dSweepDir == 1 && dSweepExtreme > 0.0) dSweepExtreme else if (trgSweepDir == 1 && trgSweepExtreme > 0.0) trgSweepExtreme else if (cLow > 0.0 && cLow < lvl) cLow else lvl - 1.70
-            return SweepDetails("SSL", lvl, ext, "BUY")
+            val lvl = if (dSweepDir == 1 && dSweepPrice > 0.0) dSweepPrice else if (trgSweepDir == 1 && trgSweptPrice > 0.0) trgSweptPrice else if (sslLevel > 0.0) sslLevel else defaultLow
+            val ext = if (dSweepDir == 1 && dSweepExtreme > 0.0) dSweepExtreme else if (trgSweepDir == 1 && trgSweepExtreme > 0.0) trgSweepExtreme else if (cLow > 0.0 && cLow < lvl) cLow else (if (lvl > 0.0) lvl - 1.70 else 0.0)
+            return SweepDetails("SSL", lvl, ext, "BUY", sweepTimeSsl)
         }
 
         if (hasBsl) {
-            val lvl = if (dSweepDir == -1 && dSweepPrice > 0.0) dSweepPrice else if (trgSweepDir == -1 && trgSweptPrice > 0.0) trgSweptPrice else if (bslLevel > 0.0) bslLevel else if (cHigh > 0.0) cHigh else 2665.30
-            val ext = if (dSweepDir == -1 && dSweepExtreme > 0.0) dSweepExtreme else if (trgSweepDir == -1 && trgSweepExtreme > 0.0) trgSweepExtreme else if (cHigh > lvl) cHigh else lvl + 1.70
-            return SweepDetails("BSL", lvl, ext, "SELL")
+            val lvl = if (dSweepDir == -1 && dSweepPrice > 0.0) dSweepPrice else if (trgSweepDir == -1 && trgSweptPrice > 0.0) trgSweptPrice else if (bslLevel > 0.0) bslLevel else defaultHigh
+            val ext = if (dSweepDir == -1 && dSweepExtreme > 0.0) dSweepExtreme else if (trgSweepDir == -1 && trgSweepExtreme > 0.0) trgSweepExtreme else if (cHigh > lvl) cHigh else (if (lvl > 0.0) lvl + 1.70 else 0.0)
+            return SweepDetails("BSL", lvl, ext, "SELL", sweepTimeBsl)
         }
 
         // 4. Any line containing "swept"
         if (lines.any { it.contains("swept", ignoreCase = true) }) {
             val isSsl = lines.any { it.contains("ssl", ignoreCase = true) }
             val name = if (isSsl) "SSL" else "BSL"
-            val lvl = if (isSsl) (if (sslLevel > 0.0) sslLevel else if (cLow > 0.0) cLow else 2642.50) else (if (bslLevel > 0.0) bslLevel else if (cHigh > 0.0) cHigh else 2665.30)
-            val ext = if (isSsl) (if (cLow > 0.0 && cLow < lvl) cLow else lvl - 1.70) else (if (cHigh > lvl) cHigh else lvl + 1.70)
-            return SweepDetails(name, lvl, ext, if (isSsl) "BUY" else "SELL")
+            val lvl = if (isSsl) (if (sslLevel > 0.0) sslLevel else defaultLow) else (if (bslLevel > 0.0) bslLevel else defaultHigh)
+            val ext = if (isSsl) (if (cLow > 0.0 && cLow < lvl) cLow else (if (lvl > 0.0) lvl - 1.70 else 0.0)) else (if (cHigh > lvl) cHigh else (if (lvl > 0.0) lvl + 1.70 else 0.0))
+            val t = if (isSsl) sweepTimeSsl else sweepTimeBsl
+            return SweepDetails(name, lvl, ext, if (isSsl) "BUY" else "SELL", t)
         }
 
         return null

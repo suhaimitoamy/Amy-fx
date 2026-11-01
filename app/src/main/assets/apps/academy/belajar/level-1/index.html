@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Level 1: Market Reader — Amy FX Academy</title>
+  <link rel="stylesheet" href="../assets/micro-learning.css">
+  <style>
+    /* Styling Tambahan Spesifik Roadmap Level 1 */
+    .ml-hero-card {
+      background: linear-gradient(135deg, rgba(26, 32, 50, 0.85) 0%, rgba(18, 22, 34, 0.95) 100%);
+      border: 1px solid var(--ml-border-active);
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    }
+    .ml-hero-card::after {
+      content: '';
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, rgba(212, 168, 50, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .ml-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--ml-blue);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 4px 12px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .ml-roadmap-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 30px;
+    }
+    .ml-lesson-card {
+      display: block;
+      background: var(--ml-surface);
+      border: 1px solid var(--ml-border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.22s ease;
+      position: relative;
+    }
+    .ml-lesson-card:hover {
+      background: var(--ml-surface-elevated);
+      border-color: var(--ml-border-active);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(212, 168, 50, 0.12);
+    }
+    .ml-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .ml-card-step {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: var(--ml-gold);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .ml-card-time {
+      font-size: 12px;
+      color: var(--ml-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .ml-card-title {
+      font-size: 16.5px;
+      font-weight: 700;
+      color: #fff;
+      margin: 0 0 6px;
+      line-height: 1.4;
+    }
+    .ml-card-desc {
+      font-size: 13.5px;
+      color: var(--ml-muted);
+      margin: 0;
+      line-height: 1.5;
+    }
+    .ml-status-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--ml-muted);
+    }
+    .ml-status-pill.done {
+      background: var(--ml-success-soft);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+  </style>
+</head>
+<body class="micro-learning-body">
+  <div class="ml-container">
+    
+    <!-- Top Bar -->
+    <header class="ml-header">
+      <a href="../../index.html" class="ml-back-link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span>Kembali ke Beranda Academy</span>
+      </a>
+      <span class="ml-pill-tag">Level 1</span>
+    </header>
+
+    <!-- Title Box -->
+    <section class="ml-lesson-title-box">
+      <h1>Level 1: Membaca Arah Pasar</h1>
+      <div class="ml-lesson-meta">
+        <span>⏱️ ~21 Menit Baca</span>
+        <span>•</span>
+        <span>7 Pelajaran</span>
+        <span>•</span>
+        <span>Kuis Latihan</span>
+      </div>
+    </section>
+
+    <div class="ml-roadmap-grid">
+      
+      <!-- Pelajaran 01 -->
+      <a href="01-anatomi-candlestick.html" class="ml-lesson-card" id="card-level-1-01">
+        <div class="ml-card-head">
+          <span class="ml-card-step">Pelajaran 01</span>
+          <span class="ml-card-time">⏱️ 3 Menit</span>
+        </div>
+        <h3 class="ml-card-title">Anatomi Candlestick: Pertarungan di Balik 1 Lilin</h3>
+        <p class="ml-card-desc">
+          Bodi lilin menunjukkan siapa yang menang. Ekor lilin membocorkan wilayah penolakan (rejection). Pahami Open, High, Low, dan Close secara manusiawi.
+        </p>
+      </a>
+
+      <!-- Pelajaran 02 -->
+      <a href="02-tiga-kondisi-pasar.html" class="ml-lesson-card" id="card-level-1-02">
+        <div class="ml-card-head">
+          <span class="ml-card-step">Pelajaran 02</span>
+          <span class="ml-card-time">⏱️ 3 Menit</span>
+        </div>
+        <h3 class="ml-card-title">Tiga Kondisi Pasar: Ke Mana Arus Mengalir?</h3>
+        <p class="ml-card-desc">
+          Pasar hanya punya 3 jalan: Mendaki (Uptrend), Meluncur (Downtrend), atau Bersantai (Sideways). Kenali puncak dan lembahnya dengan mudah.
+        </p>
+      </a>
+
+      <!-- Pelajaran 03 -->
+      <a href="03-struktur-bos-dan-mss.html" class="ml-lesson-card" id="card-level-1-03">
+        <div class="ml-card-head">
+          <span class="ml-card-step">Pelajaran 03</span>
+          <span class="ml-card-time">⏱️ 3 Menit</span>
+        </div>
+        <h3 class="ml-card-title">Struktur BOS & MSS: Kapan Lanjut, Kapan Putar Balik?</h3>
+        <p class="ml-card-desc">
+          BOS adalah lampu hijau bahwa tren masih bersemangat lanjut. MSS adalah sinyal waspada bahwa tren patah dan siap berganti haluan.
+        </p>
+      </a>
+
+      <!-- Pelajaran 04 -->
+      <a href="04-diskon-vs-premium.html" class="ml-lesson-card" id="card-level-1-04">
+        <div class="ml-card-head">
+          <span class="ml-card-step">Pelajaran 04</span>
+          <span class="ml-card-time">⏱️ 3 Menit</span>
+        </div>
+        <h3 class="ml-card-title">Diskon vs Premium: Hukum Dagang Cerdas</h3>
+        <p class="ml-card-desc">
+          Jangan pernah beli di harga mahal (Zona Premium). Belilah saat harga obral di bawah 50% (Zona Diskon). Logika sederhana penyelamat modal.
+        </p>
+      </a>
+
+      <!-- Pelajaran 05 -->
+      <a href="05-valid-swing-high-dan-low.html" class="ml-lesson-card" id="card-level-1-05">
+        <div class="ml-card-head">
+          <span class="ml-card-step">Pelajaran 05</span>
+          <span class="ml-card-time">⏱️ 3 Menit</span>
+        </div>
+        <h3 class="ml-card-title">Valid Swing High & Low: Puncak Sah vs Noise Palsu</h3>
+        <p class="ml-card-desc">
+          Jangan tertipu lekukan lilin minor. Kuasai aturan fraktal 3-bar dan displacement untuk memetakan puncak dan lembah yang benar-benar diakui pasar.
+        </p>
+      </a>
+
+      <!-- Pelajaran 06 -->
+      <a href="06-internal-vs-external-structure.html" class="ml-lesson-card" id="card-level-1-06">
+        <div class="ml-card-head">
+          <span class="ml-card-step">Pelajaran 06</span>
+          <span class="ml-card-time">⏱️ 3 Menit</span>
+        </div>
+        <h3 class="ml-card-title">Internal vs External Structure: Peta Besar & Langkah Kecil</h3>
+        <p class="ml-card-desc">
+          Bedakan ombak samudera (H1/H4) dengan riak permukaan (M5/M15). Jangan panik saat tren kecil berbalik karena sering kali itu hanya jalan mencari diskon.
+        </p>
+      </a>
+
+      <!-- Pelajaran 07 -->
+      <a href="07-equal-highs-dan-equal-lows.html" class="ml-lesson-card" id="card-level-1-07">
+        <div class="ml-card-head">
+          <span class="ml-card-step">Pelajaran 07</span>
+          <span class="ml-card-time">⏱️ 3 Menit</span>
+        </div>
+        <h3 class="ml-card-title">Equal Highs & Equal Lows: Magnet Likuiditas Institusi</h3>
+        <p class="ml-card-desc">
+          Bagi ritel ini Double Top/Bottom, bagi institusi ini kolam Stop Loss siap santap. Pelajari cara menghindari jebakan dan memanfaatkan sapuan likuiditas.
+        </p>
+      </a>
+
+    </div>
+
+    <!-- Navigation Footer -->
+    <div class="ml-nav-footer">
+      <a href="../level-0/index.html" class="ml-btn-nav ml-btn-prev">
+        ← Kembali ke Level 0
+      </a>
+      <a href="01-anatomi-candlestick.html" class="ml-btn-nav ml-btn-next">
+        Mulai Pelajaran 01 →
+      </a>
+    </div>
+
+  </div>
+
+  <script src="../assets/micro-learning.js"></script>
+  <script>
+    // Tandai kartu yang sudah diselesaikan
+    document.addEventListener('DOMContentLoaded', function () {
+      if (window.AmyFXMicroLearning) {
+        const prog = window.AmyFXMicroLearning.getProgress();
+        ['level-1-01', 'level-1-02', 'level-1-03', 'level-1-04', 'level-1-05', 'level-1-06', 'level-1-07'].forEach(function(id) {
+          if (prog[id] && prog[id].completed) {
+            const card = document.getElementById('card-' + id);
+            if (card) {
+              const head = card.querySelector('.ml-card-head');
+              if (head) {
+                const badge = document.createElement('span');
+                badge.className = 'ml-status-pill done';
+                badge.textContent = '✓ Selesai';
+                head.appendChild(badge);
+              }
+            }
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
