@@ -870,7 +870,7 @@ export function renderEntryAssistantPlan(amy,context=null){
   if(rejectionEl){
     if(rejectionState==='SWEEP_REJECTION'||ast?.reclaimed===true||plan?.reclaimed===true||plan?.signalName?.includes('SNIPER')){
       rejectionEl.style.display='inline-block';
-      rejectionEl.textContent='🎯 Reversal Valid';
+      rejectionEl.textContent='🎯 Reclaimed Valid';
       rejectionEl.className='anti-chase-pill pill-ready';
     }else if(rejectionState==='SWEEP_UNCONFIRMED'||ast?.waitingRejectionClose||(sweepInfo&&!ast?.reclaimed)){
       rejectionEl.style.display='inline-block';
