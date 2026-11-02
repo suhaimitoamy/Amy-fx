@@ -1,25 +1,25 @@
 {
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.430/AmyFX-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.431/AmyFX-latest.apk",
   "changelog": [
     "Dual-Engine M15+M5 Cockpit Mapping: Sinkronisasi paralel M15 untuk tren makro & M5 untuk pemicu eksekusi sniper.",
     "Detektor 3-Candle M5 Absorption: Validasi instan kehabisan tenaga (rejection & sweep) di area ekstrem Diskon/SSL & Premium/BSL.",
     "Protokol Anti-Yes-Man & ZONA CINCANG: Peringatan tegas rem disiplin dan pembekuan tombol entry saat harga berada di poros Equilibrium 50%.",
     "Target Presisi Sayang (100 Pips): Formulasi TP1 +50 pips (kunci profit & BE) dan TP2 +100 pips (Draw on Liquidity)."
   ],
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.430/AmyFX-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx/releases/download/amyfx-2.0.0-amyfx.431/AmyFX-latest.apk",
   "enabled": true,
   "force_update": false,
-  "latest_version_code": 950430,
-  "latest_version_name": "2.0.0-amyfx.430",
+  "latest_version_code": 950431,
+  "latest_version_name": "2.0.0-amyfx.431",
   "mandatory": false,
-  "releaseDate": "2026-11-01",
+  "releaseDate": "2026-11-02",
   "release_notes": [
     "Dual-Engine M15+M5 Cockpit Mapping: Sinkronisasi paralel M15 untuk tren makro & M5 untuk pemicu eksekusi sniper.",
     "Detektor 3-Candle M5 Absorption: Validasi instan kehabisan tenaga (rejection & sweep) di area ekstrem Diskon/SSL & Premium/BSL.",
     "Protokol Anti-Yes-Man & ZONA CINCANG: Peringatan tegas rem disiplin dan pembekuan tombol entry saat harga berada di poros Equilibrium 50%.",
     "Target Presisi Sayang (100 Pips): Formulasi TP1 +50 pips (kunci profit & BE) dan TP2 +100 pips (Draw on Liquidity)."
   ],
-  "version": "2.0.0-amyfx.430",
-  "versionCode": 950430,
-  "sha256": "10959f2556c8bb8329942ace71e2fb0b6e2f1d0e698348a74aa931b2379d6873"
+  "version": "2.0.0-amyfx.431",
+  "versionCode": 950431,
+  "sha256": "5ff669af92b03a9ea8a3abd38534f934fe78686b52f785f4fec37e89fb81c914"
 }
