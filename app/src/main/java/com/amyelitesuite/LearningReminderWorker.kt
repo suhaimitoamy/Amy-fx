@@ -13,8 +13,8 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.work.CoroutineWorker
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.Dispatchers
@@ -35,42 +35,60 @@ class LearningReminderWorker(
             if (!enabled) return@withContext Result.success()
 
             val timeStr = prefs.getString(KEY_TIME, DEFAULT_TIME) ?: DEFAULT_TIME
-            val parts = timeStr.split(":")
-            val targetHour = parts.getOrNull(0)?.toIntOrNull() ?: 20
-            val targetMinute = parts.getOrNull(1)?.toIntOrNull() ?: 0
+            val targetTimes = timeStr.split(",")
+                .map { it.trim() }
+                .filter { it.contains(":") }
+                .mapNotNull { t ->
+                    val p = t.split(":")
+                    val h = p.getOrNull(0)?.toIntOrNull()
+                    val m = p.getOrNull(1)?.toIntOrNull()
+                    if (h != null && m != null && h in 0..23 && m in 0..59) Triple(h, m, t) else null
+                }
+                .ifEmpty { listOf(Triple(20, 0, "20:00")) }
 
             val nowWita = Calendar.getInstance(WITA_TIME_ZONE)
             val currentHour = nowWita.get(Calendar.HOUR_OF_DAY)
             val currentMinute = nowWita.get(Calendar.MINUTE)
             val currentMinutesOfDay = currentHour * 60 + currentMinute
-            val targetMinutesOfDay = targetHour * 60 + targetMinute
-            val diffMinutes = Math.abs(currentMinutesOfDay - targetMinutesOfDay)
 
-            // STRICT TIME-WINDOW GUARD:
-            // WorkManager periodic jobs can wake up during system maintenance or app launch (e.g. at 13:41).
-            // Reject any execution that is not within 15 minutes of the user-configured WITA time.
-            if (diffMinutes > 15 && diffMinutes < (24 * 60 - 15)) {
+            // Match if current time is within [-5m .. +120m] of one of the configured target times
+            val matchedTarget = targetTimes
+                .filter { (th, tm, _) ->
+                    val targetMinutesOfDay = th * 60 + tm
+                    val diff = currentMinutesOfDay - targetMinutesOfDay
+                    (diff >= -5 && diff <= 120) || (diff <= -1435)
+                }
+                .minByOrNull { (th, tm, _) ->
+                    val targetMinutesOfDay = th * 60 + tm
+                    Math.abs(currentMinutesOfDay - targetMinutesOfDay)
+                }
+
+            if (matchedTarget == null) {
                 android.util.Log.w(
                     "AmyFX-LearningWorker",
-                    "Ignored premature worker trigger: current time is %02d:%02d WITA, scheduled for %s WITA (diff: %d min). Rescheduling.".format(
-                        currentHour, currentMinute, timeStr, diffMinutes
+                    "Ignored premature worker trigger: current time is %02d:%02d, scheduled for [%s]. Rescheduling.".format(
+                        currentHour, currentMinute, timeStr
                     )
                 )
                 schedule(applicationContext)
                 return@withContext Result.success()
             }
 
-            // ONCE-PER-DAY DATE GUARD:
+            val slotTimeStr = matchedTarget.third
+            val slotNotifiedKey = "${KEY_LAST_NOTIFIED_DATE}_$slotTimeStr"
+
+            // ONCE-PER-SLOT DATE GUARD:
             val witaDateKey = String.format(
                 java.util.Locale.US,
-                "%04d-%02d-%02d",
+                "%04d-%02d-%02d_%s",
                 nowWita.get(Calendar.YEAR),
                 nowWita.get(Calendar.MONTH) + 1,
-                nowWita.get(Calendar.DAY_OF_MONTH)
+                nowWita.get(Calendar.DAY_OF_MONTH),
+                slotTimeStr
             )
-            val lastNotifiedDate = prefs.getString(KEY_LAST_NOTIFIED_DATE, null)
-            if (lastNotifiedDate == witaDateKey) {
-                android.util.Log.d("AmyFX-LearningWorker", "Already notified today for $witaDateKey. Skipping.")
+            val lastNotifiedSlot = prefs.getString(slotNotifiedKey, null)
+            if (lastNotifiedSlot == witaDateKey) {
+                android.util.Log.d("AmyFX-LearningWorker", "Already notified today for slot $slotTimeStr ($witaDateKey). Skipping.")
                 schedule(applicationContext)
                 return@withContext Result.success()
             }
@@ -82,12 +100,15 @@ class LearningReminderWorker(
             val resolvedUrl = if (!lastUrl.isNullOrBlank()) lastUrl else DEFAULT_LESSON_URL
 
             val title = "📚 Waktunya Tingkatkan Skill Trading-mu!"
-            val message = "Materi terakhir yang kamu pelajari: \"$resolvedTitle\". Yuk lanjutkan belajar sekarang! (Jadwal: $timeStr WITA)"
+            val message = "Materi terakhir yang kamu pelajari: \"$resolvedTitle\". Yuk lanjutkan belajar sekarang! (Jadwal: $slotTimeStr)"
 
-            showNotification(title, message, resolvedUrl)
-            prefs.edit().putString(KEY_LAST_NOTIFIED_DATE, witaDateKey).apply()
+            showNotification(title, message, resolvedUrl, witaDateKey)
+            prefs.edit()
+                .putString(slotNotifiedKey, witaDateKey)
+                .putString(KEY_LAST_NOTIFIED_DATE, witaDateKey)
+                .apply()
 
-            // Re-anchor schedule strictly to WITA time
+            // Re-anchor schedule strictly to next target time
             schedule(applicationContext)
             Result.success()
         } catch (error: Exception) {
@@ -96,17 +117,9 @@ class LearningReminderWorker(
         }
     }
 
-    private fun showNotification(title: String, message: String, targetUrl: String) {
+    private fun showNotification(title: String, message: String, targetUrl: String, witaDateKey: String) {
         if (!canPostNotifications()) return
 
-        val nowWita = Calendar.getInstance(WITA_TIME_ZONE)
-        val witaDateKey = String.format(
-            java.util.Locale.US,
-            "%04d-%02d-%02d",
-            nowWita.get(Calendar.YEAR),
-            nowWita.get(Calendar.MONTH) + 1,
-            nowWita.get(Calendar.DAY_OF_MONTH)
-        )
         val gateKey = "learning_reminder|$witaDateKey"
         if (!AmyFxNotificationGate.shouldNotify(applicationContext, gateKey, System.currentTimeMillis())) {
             return
@@ -205,37 +218,41 @@ class LearningReminderWorker(
             }
 
             val timeStr = prefs.getString(KEY_TIME, DEFAULT_TIME) ?: DEFAULT_TIME
-            val parts = timeStr.split(":")
-            val targetHour = parts.getOrNull(0)?.toIntOrNull() ?: 20
-            val targetMinute = parts.getOrNull(1)?.toIntOrNull() ?: 0
+            val targetTimes = timeStr.split(",")
+                .map { it.trim() }
+                .filter { it.contains(":") }
+                .mapNotNull { t ->
+                    val p = t.split(":")
+                    val h = p.getOrNull(0)?.toIntOrNull()
+                    val m = p.getOrNull(1)?.toIntOrNull()
+                    if (h != null && m != null && h in 0..23 && m in 0..59) Pair(h, m) else null
+                }
+                .ifEmpty { listOf(Pair(20, 0)) }
 
             val now = Calendar.getInstance(WITA_TIME_ZONE)
-            val target = Calendar.getInstance(WITA_TIME_ZONE).apply {
-                set(Calendar.HOUR_OF_DAY, targetHour)
-                set(Calendar.MINUTE, targetMinute)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
+            val candidateTargets = targetTimes.map { (th, tm) ->
+                val target = Calendar.getInstance(WITA_TIME_ZONE).apply {
+                    set(Calendar.HOUR_OF_DAY, th)
+                    set(Calendar.MINUTE, tm)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                if (target.before(now) || target.timeInMillis <= now.timeInMillis) {
+                    target.add(Calendar.DAY_OF_YEAR, 1)
+                }
+                target
             }
 
-            if (target.before(now) || target.timeInMillis <= now.timeInMillis) {
-                target.add(Calendar.DAY_OF_YEAR, 1)
-            }
+            val nextTarget = candidateTargets.minByOrNull { it.timeInMillis } ?: return
+            val initialDelayMs = (nextTarget.timeInMillis - now.timeInMillis).coerceAtLeast(0L)
 
-            val initialDelayMs = (target.timeInMillis - now.timeInMillis).coerceAtLeast(0L)
-
-            val request = PeriodicWorkRequestBuilder<LearningReminderWorker>(24, TimeUnit.HOURS)
+            val request = OneTimeWorkRequestBuilder<LearningReminderWorker>()
                 .setInitialDelay(initialDelayMs, TimeUnit.MILLISECONDS)
                 .build()
 
-            val policy = if (forceReenqueue) {
-                ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE
-            } else {
-                ExistingPeriodicWorkPolicy.KEEP
-            }
-
-            workManager.enqueueUniquePeriodicWork(
+            workManager.enqueueUniqueWork(
                 UNIQUE_WORK_NAME,
-                policy,
+                ExistingWorkPolicy.REPLACE,
                 request
             )
         }

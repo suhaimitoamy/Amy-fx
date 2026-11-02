@@ -8,8 +8,14 @@
 
   var STORAGE_KEY_ENABLED = 'amy_learning_reminder_enabled';
   var STORAGE_KEY_TIME = 'amy_learning_reminder_time';
+  var STORAGE_KEY_SLOTS = 'amy_learning_reminder_slots';
   var STORAGE_KEY_LAST_NOTIFIED = 'amy_learning_reminder_last_date';
   var DEFAULT_TIME = '20:00';
+  var DEFAULT_SLOTS = {
+    morning: { enabled: true, time: '08:00', label: 'Pagi' },
+    afternoon: { enabled: true, time: '13:00', label: 'Siang' },
+    night: { enabled: true, time: '20:00', label: 'Malam' }
+  };
   var DEFAULT_TITLE = 'Fondasi ICT & Market Structure Dasar';
   var DEFAULT_URL = 'https://appassets.androidplatform.net/assets/apps/academy/index.html';
   var WITA_TIMEZONE = 'Asia/Makassar';
@@ -72,6 +78,15 @@
     getConfig: function () {
       var enabled = localStorage.getItem(STORAGE_KEY_ENABLED) !== 'false';
       var time = localStorage.getItem(STORAGE_KEY_TIME) || DEFAULT_TIME;
+      var slots = readJson(STORAGE_KEY_SLOTS, null);
+
+      if (!slots || typeof slots !== 'object') {
+        slots = {
+          morning: { enabled: true, time: '08:00', label: 'Pagi' },
+          afternoon: { enabled: true, time: '13:00', label: 'Siang' },
+          night: { enabled: true, time: (time.includes(',') ? time.split(',')[0] : time) || '20:00', label: 'Malam' }
+        };
+      }
 
       // Last studied lesson details from Academy reading history
       var lastRead = readJson('amy_academy_last_read_v2', null);
@@ -103,15 +118,16 @@
             timeZone: WITA_TIMEZONE,
             dateStyle: 'medium',
             timeStyle: 'short'
-          }).format(new Date(lastTime)) + ' WITA';
+          }).format(new Date(lastTime));
         } catch (_) {
-          lastTimeText = new Date(lastTime).toLocaleString('id-ID') + ' WITA';
+          lastTimeText = new Date(lastTime).toLocaleString('id-ID');
         }
       }
 
       return {
         enabled: enabled,
         time: time,
+        slots: slots,
         lastTitle: lastTitle || DEFAULT_TITLE,
         lastUrl: lastUrl,
         lastTime: lastTime,
@@ -119,7 +135,34 @@
       };
     },
 
+    saveSlots: function (enabled, slots) {
+      var safeSlots = slots && typeof slots === 'object' ? slots : DEFAULT_SLOTS;
+      localStorage.setItem(STORAGE_KEY_ENABLED, enabled ? 'true' : 'false');
+      localStorage.setItem(STORAGE_KEY_SLOTS, JSON.stringify(safeSlots));
+
+      var activeTimes = [];
+      if (safeSlots.morning && safeSlots.morning.enabled && safeSlots.morning.time) activeTimes.push(safeSlots.morning.time);
+      if (safeSlots.afternoon && safeSlots.afternoon.enabled && safeSlots.afternoon.time) activeTimes.push(safeSlots.afternoon.time);
+      if (safeSlots.night && safeSlots.night.enabled && safeSlots.night.time) activeTimes.push(safeSlots.night.time);
+
+      var timeString = activeTimes.length ? activeTimes.join(',') : (safeSlots.night && safeSlots.night.time ? safeSlots.night.time : DEFAULT_TIME);
+      localStorage.setItem(STORAGE_KEY_TIME, timeString);
+
+      if (global.Android && typeof global.Android.saveLearningReminderConfig === 'function') {
+        try {
+          global.Android.saveLearningReminderConfig(Boolean(enabled), timeString);
+        } catch (e) {
+          console.warn('Android saveLearningReminderConfig failed', e);
+        }
+      }
+
+      return { enabled: Boolean(enabled), slots: safeSlots, time: timeString };
+    },
+
     saveConfig: function (enabled, timeOfDay) {
+      if (timeOfDay && typeof timeOfDay === 'object') {
+        return this.saveSlots(enabled, timeOfDay);
+      }
       var cleanTime = String(timeOfDay || '').trim();
       if (!/^\d{1,2}:\d{2}$/.test(cleanTime)) {
         cleanTime = DEFAULT_TIME;
@@ -130,6 +173,11 @@
       localStorage.setItem(STORAGE_KEY_ENABLED, enabled ? 'true' : 'false');
       localStorage.setItem(STORAGE_KEY_TIME, cleanTime);
 
+      var currentSlots = this.getConfig().slots || DEFAULT_SLOTS;
+      currentSlots.night = currentSlots.night || { enabled: true, label: 'Malam' };
+      currentSlots.night.time = cleanTime;
+      localStorage.setItem(STORAGE_KEY_SLOTS, JSON.stringify(currentSlots));
+
       if (global.Android && typeof global.Android.saveLearningReminderConfig === 'function') {
         try {
           global.Android.saveLearningReminderConfig(Boolean(enabled), cleanTime);
@@ -138,7 +186,7 @@
         }
       }
 
-      return { enabled: Boolean(enabled), time: cleanTime };
+      return { enabled: Boolean(enabled), time: cleanTime, slots: currentSlots };
     },
 
     recordLesson: function (title, url, section) {
@@ -158,12 +206,13 @@
       }
     },
 
-    formatNotification: function (customTitle) {
+    formatNotification: function (customTitle, customTime) {
       var config = this.getConfig();
       var lessonTitle = customTitle || config.lastTitle || DEFAULT_TITLE;
+      var timeDisplay = customTime || (config.time.includes(',') ? config.time.split(',')[0] : config.time);
       return {
         title: '📚 Waktunya Tingkatkan Skill Trading-mu!',
-        message: 'Materi terakhir yang kamu pelajari: "' + lessonTitle + '". Yuk lanjutkan belajar sekarang! (Jadwal: ' + config.time + ' WITA)',
+        message: 'Materi terakhir yang kamu pelajari: "' + lessonTitle + '". Yuk lanjutkan belajar sekarang! (Jadwal: ' + timeDisplay + ')',
         url: config.lastUrl || DEFAULT_URL
       };
     },
@@ -213,11 +262,20 @@
 
       var currentHHMM = getLocalTimeHHMM();
       var todayDate = getLocalDateString();
-      var lastNotified = localStorage.getItem(STORAGE_KEY_LAST_NOTIFIED);
+      var slots = config.slots || DEFAULT_SLOTS;
 
-      if (currentHHMM === config.time && lastNotified !== todayDate) {
-        localStorage.setItem(STORAGE_KEY_LAST_NOTIFIED, todayDate);
-        this.triggerReminderNotification();
+      for (var key in slots) {
+        var s = slots[key];
+        if (s && s.enabled && s.time === currentHHMM) {
+          var slotNotifiedKey = todayDate + '_' + s.time;
+          var lastNotified = localStorage.getItem(STORAGE_KEY_LAST_NOTIFIED + '_' + key);
+          if (lastNotified !== slotNotifiedKey) {
+            localStorage.setItem(STORAGE_KEY_LAST_NOTIFIED + '_' + key, slotNotifiedKey);
+            localStorage.setItem(STORAGE_KEY_LAST_NOTIFIED, slotNotifiedKey);
+            this.triggerReminderNotification(null, s.time);
+            break;
+          }
+        }
       }
     },
 

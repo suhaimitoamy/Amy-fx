@@ -1,5 +1,19 @@
 # Technical Decisions
 
+## 2026-11-02 — Penguatan Mutlak Zero-Hallucination Trading Uang Riil Sayang & Penyelamatan Modal BEP
+1. **Latar Belakang Insiden & Evaluasi Kritis:**
+   - Sayang menegur keras asisten karena sempat terjadi halusinasi pelabelan level (menyebut target proyeksi pip $3,912 sebagai FVG H1, padahal FVG Bearish H1 sesungguhnya ada di level $3,923.40 yang diverifikasi langsung oleh Sayang).
+   - Asisten juga sempat terlalu prematur memvalidasi lonjakan 1 candle pembukaan Asia (08:00 WITA) ke $3,903 sebagai pijakan RBS, yang kemudian ternyata merupakan manipulasi Judas swing/sweep likuiditas di pucuk.
+   - Sayang yang sempat entry BUY di $3,900 berhasil diselamatkan modalnya tanpa kerugian melalui instruksi darurat disiplin **BEP (Break Even Point)** saat harga memantul kembali dari lantai swing low $3,897 ke $3,901.
+2. **Ketetapan Permanen (Zero-Hallucination Real-Money Protocol):**
+   - **Sayang Trading Uang Riil:** Seluruh analisa menyangkut uang riil Sayang. Nol toleransi untuk asumsi, tebakan, atau salah menamai level ICT.
+   - **Verifikasi Mentah Database:** Seluruh level FVG, Order Block, Dealing Range, BSL, dan SSL wajib diverifikasi langsung via query OHLCV basis data sebelum disampaikan ke Sayang.
+   - **Anti-Premature Breakout:** Dilarang menyimpulkan pembalikan arah atau breakout hanya dari 1 candle M5 di awal pembukaan sesi.
+   - **Penyimpanan Memori Permanen:** Dicatat paten di `/root/GEMINI.md` (Aturan 19), `/root/Amy-fx/.agent-memory/RULES.md`, dan `/root/Amy-fx/.agent-memory/DECISIONS.md`.
+3. **Penyimpanan Spesifikasi Akun & SOP Napas Spread Riil (XAUUSDc):**
+   - Sayang memverifikasi via screenshot galeri bahwa simbol trading yang digunakan adalah **`XAUUSDc`** (Akun Cent) dengan spread riil **34 Poin = 3.4 Pips ($0.34)**.
+   - Ditetapkan aturan baku: Setiap rekomendasi TP SELL wajib memasukkan buffer "Napas Spread" (+0.40 s.d. +0.50) agar terjemput harga Ask tanpa ditinggal mental, Buy Limit dinaikkan (+0.40 s.d. +0.50), dan SL BUY diberi jarak toleransi spread (-0.40). Tersimpan permanen di Aturan 20 GEMINI.md.
+
 ## 2026-10-29 — Standar Baku Cron Pemantau Teknikal Murni 15 Menitan XAU/USD (Chat Antigravity)
 1. **Latar Belakang & Kesuksesan Eksekusi:**
    - Sayang meminta pemantauan market Gold yang teratur setiap 15 menit sinkron jam dinding (`:00, :15, :30, :45` WITA), **murni teknikal ICT tanpa intervensi berita/fundamental**, dan tidak monoton/tidak dikirim ke Telegram (fokus di chat Antigravity).

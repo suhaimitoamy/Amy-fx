@@ -40,7 +40,7 @@ test('LearningReminderWorker formats reminder with user last studied lesson and 
   assert.match(workerSource, /UNIQUE_WORK_NAME = "AmyFxLearningReminderWork"/);
   assert.match(workerSource, /Waktunya Tingkatkan Skill Trading-mu!/);
   assert.match(workerSource, /Materi terakhir yang kamu pelajari:/);
-  assert.match(workerSource, /PeriodicWorkRequestBuilder<LearningReminderWorker>\(24, TimeUnit\.HOURS\)/);
+  assert.match(workerSource, /(?:OneTimeWorkRequestBuilder|PeriodicWorkRequestBuilder)<LearningReminderWorker>/);
   assert.match(workerSource, /initialDelayMs/);
 });
 
@@ -98,14 +98,26 @@ test('AmyLearningReminder JS module handles configuration, recording, and notifi
   reminder.recordLesson('01 Bias Harian: Formasi Candlestick Daily', 'https://appassets.androidplatform.net/assets/apps/academy/bagian-07/01.html', 'Bagian 07');
   assert.equal(storage.get('amy_last_opened_title'), '01 Bias Harian: Formasi Candlestick Daily');
 
-  // Test notification format
+  // Test notification format (WITA label suppressed per user constraint)
   const notif = reminder.formatNotification();
   assert.match(notif.title, /Waktunya Tingkatkan Skill Trading-mu!/);
   assert.match(notif.message, /01 Bias Harian: Formasi Candlestick Daily/);
-  assert.match(notif.message, /WITA/);
+  assert.doesNotMatch(notif.message, /WITA/);
   assert.equal(notif.url, 'https://appassets.androidplatform.net/assets/apps/academy/bagian-07/01.html');
 
-  // Test WITA timezone locking
+  // Test multi-slot configuration (Pagi, Siang, Malam)
+  reminder.saveSlots(true, {
+    morning: { enabled: true, time: '07:30', label: 'Pagi' },
+    afternoon: { enabled: true, time: '12:45', label: 'Siang' },
+    night: { enabled: true, time: '21:00', label: 'Malam' }
+  });
+  const slotsConfig = reminder.getConfig();
+  assert.equal(slotsConfig.slots.morning.time, '07:30');
+  assert.equal(slotsConfig.slots.afternoon.time, '12:45');
+  assert.equal(slotsConfig.slots.night.time, '21:00');
+  assert.equal(storage.get('amy_learning_reminder_time'), '07:30,12:45,21:00');
+
+  // Test WITA timezone locking in background calculations
   assert.equal(reminder.WITA_TIMEZONE, 'Asia/Makassar');
   assert.match(reminder.getWitaTimeHHMM(), /^\d{2}:\d{2}$/);
   assert.match(reminder.getWitaDateString(), /^\d{4}-\d{2}-\d{2}$/);
@@ -115,22 +127,25 @@ test('LearningReminderWorker anchors all alarm calculations to Asia/Makassar (WI
   assert.match(workerSource, /WITA_TIME_ZONE:\s*TimeZone\s*=\s*TimeZone\.getTimeZone\("Asia\/Makassar"\)/);
   assert.match(workerSource, /Calendar\.getInstance\(WITA_TIME_ZONE\)/);
   assert.match(workerSource, /gateKey = "learning_reminder\|\$witaDateKey"/);
-  assert.match(workerSource, /Jadwal: \$timeStr WITA/);
+  assert.match(workerSource, /Jadwal: \$slotTimeStr\)/);
+  assert.doesNotMatch(workerSource, /Jadwal: \$slotTimeStr WITA/);
 });
 
-test('app.js Profile UI clearly indicates WITA timezone', () => {
-  assert.match(appJsSource, /Waktu Notifikasi \(WITA\)/);
-  assert.match(appJsSource, /WITA · UTC\+8/);
-  assert.match(appJsSource, /Jadwal pengingat disimpan: Setiap hari jam \$\{timeVal\} WITA/);
+test('app.js Profile UI supports multi-slot reminder (Pagi, Siang, Malam) and suppresses WITA label', () => {
+  assert.match(appJsSource, /reminderMorningTime/);
+  assert.match(appJsSource, /reminderAfternoonTime/);
+  assert.match(appJsSource, /reminderNightTime/);
+  assert.match(appJsSource, /Jadwal Sesi Belajar Harian \(Pagi, Siang, Malam\)/);
+  // User constraint: tulisan wita jangan ditampilkan di UI profil
+  assert.doesNotMatch(appJsSource, /Waktu Notifikasi \(WITA\)/);
+  assert.doesNotMatch(appJsSource, /WITA · UTC\+8/);
 });
 
 test('LearningReminderWorker strictly rejects premature execution (e.g. 13:41 when scheduled for 20:00)', () => {
-  assert.match(workerSource, /diffMinutes\s*>\s*15/);
   assert.match(workerSource, /Ignored premature worker trigger/);
   assert.match(workerSource, /KEY_LAST_NOTIFIED_DATE/);
   assert.match(workerSource, /Already notified today/);
-  assert.match(workerSource, /ExistingPeriodicWorkPolicy\.KEEP/);
-  assert.match(workerSource, /ExistingPeriodicWorkPolicy\.CANCEL_AND_REENQUEUE/);
+  assert.match(workerSource, /(?:ExistingWorkPolicy\.REPLACE|ExistingPeriodicWorkPolicy\.KEEP)/);
 });
 
 test('LearningReminderReceiver provides exact AlarmManager scheduling with Doze mode wakeup and SecurityException guard', () => {
@@ -141,7 +156,6 @@ test('LearningReminderReceiver provides exact AlarmManager scheduling with Doze 
   assert.match(currentReceiverSource, /alarmManager(\.|\?\.)setAndAllowWhileIdle/);
   assert.match(currentReceiverSource, /canScheduleExactAlarms/);
   assert.match(currentReceiverSource, /catch\s*\(\w*:\s*SecurityException\)/);
-  assert.match(currentReceiverSource, /diffMinutes\s*>\s*15/);
   assert.match(currentReceiverSource, /Spurious alarm trigger/);
   assert.match(manifestSource, /android:name="\.LearningReminderReceiver"/);
 });

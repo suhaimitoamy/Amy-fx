@@ -1253,6 +1253,11 @@ document.addEventListener('DOMContentLoaded', () => {
       lastTitle: localStorage.getItem('amy_last_opened_title') || 'Fondasi ICT & Market Structure Dasar',
       lastTimeText: 'Belum ada riwayat belajar'
     };
+    const reminderSlots = reminderConfig.slots || {
+      morning: { enabled: true, time: '08:00', label: 'Pagi' },
+      afternoon: { enabled: true, time: '13:00', label: 'Siang' },
+      night: { enabled: true, time: reminderConfig.time || '20:00', label: 'Malam' }
+    };
 
     const GLASS_PRESETS = [
       { id: 'obsidian', name: 'Obsidian Glass', bg: '#070b14', accent: '#F5C451' },
@@ -1374,12 +1379,47 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <div id="learningReminderSettingsWrap" style="margin-top:14px; ${reminderConfig.enabled ? '' : 'display:none;'}">
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-top:1px solid var(--border-color);">
-            <div>
-              <span style="display:block; font-size:12px; font-weight:750; color:var(--text-main);">Waktu Notifikasi (WITA)</span>
-              <small style="color:var(--text-muted); font-size:11px;">Pilih jam pengingat harian (WITA · UTC+8)</small>
+          <input type="hidden" id="learningReminderTimeInput" value="${escapeHtml(reminderConfig.time)}">
+          <div style="display:flex; flex-direction:column; gap:8px; border-top:1px solid var(--border-color); padding-top:12px;">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">
+              Jadwal Sesi Belajar Harian (Pagi, Siang, Malam)
             </div>
-            <input type="time" id="learningReminderTimeInput" value="${escapeHtml(reminderConfig.time)}" style="border:1px solid var(--border-color); background:var(--surface-soft); color:var(--text-main); border-radius:8px; padding:6px 12px; font-size:14px; font-weight:700; font-family:monospace; outline:none;">
+
+            <!-- Slot Pagi -->
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface-soft); padding:8px 12px; border-radius:10px; border:1px solid var(--border-color);">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <input type="checkbox" id="reminderMorningEnabled" ${reminderSlots.morning?.enabled ? 'checked' : ''} style="width:18px; height:18px; accent-color:#38bdf8; cursor:pointer;">
+                <div>
+                  <span style="display:block; font-size:12px; font-weight:750; color:var(--text-main);">🌅 Pagi</span>
+                  <small style="color:var(--text-muted); font-size:10px;">Review materi &amp; mindset pagi</small>
+                </div>
+              </div>
+              <input type="time" id="reminderMorningTime" value="${escapeHtml(reminderSlots.morning?.time || '08:00')}" style="border:1px solid var(--border-color); background:var(--surface-color); color:var(--text-main); border-radius:8px; padding:6px 10px; font-size:13px; font-weight:700; font-family:monospace; outline:none;">
+            </div>
+
+            <!-- Slot Siang -->
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface-soft); padding:8px 12px; border-radius:10px; border:1px solid var(--border-color);">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <input type="checkbox" id="reminderAfternoonEnabled" ${reminderSlots.afternoon?.enabled ? 'checked' : ''} style="width:18px; height:18px; accent-color:#38bdf8; cursor:pointer;">
+                <div>
+                  <span style="display:block; font-size:12px; font-weight:750; color:var(--text-main);">☀️ Siang</span>
+                  <small style="color:var(--text-muted); font-size:10px;">Studi kilat sebelum London Open</small>
+                </div>
+              </div>
+              <input type="time" id="reminderAfternoonTime" value="${escapeHtml(reminderSlots.afternoon?.time || '13:00')}" style="border:1px solid var(--border-color); background:var(--surface-color); color:var(--text-main); border-radius:8px; padding:6px 10px; font-size:13px; font-weight:700; font-family:monospace; outline:none;">
+            </div>
+
+            <!-- Slot Malam -->
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface-soft); padding:8px 12px; border-radius:10px; border:1px solid var(--border-color);">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <input type="checkbox" id="reminderNightEnabled" ${reminderSlots.night?.enabled ? 'checked' : ''} style="width:18px; height:18px; accent-color:#38bdf8; cursor:pointer;">
+                <div>
+                  <span style="display:block; font-size:12px; font-weight:750; color:var(--text-main);">🌙 Malam</span>
+                  <small style="color:var(--text-muted); font-size:10px;">Evaluasi setup &amp; baca materi santai</small>
+                </div>
+              </div>
+              <input type="time" id="reminderNightTime" value="${escapeHtml(reminderSlots.night?.time || '20:00')}" style="border:1px solid var(--border-color); background:var(--surface-color); color:var(--text-main); border-radius:8px; padding:6px 10px; font-size:13px; font-weight:700; font-family:monospace; outline:none;">
+            </div>
           </div>
 
           <div style="margin-top:10px; padding:10px 12px; background:var(--surface-soft); border-radius:10px; border:1px solid var(--border-color);">
@@ -1455,29 +1495,51 @@ document.addEventListener('DOMContentLoaded', () => {
     // Learning Reminder event bindings
     const reminderToggle = document.getElementById('learningReminderEnabled');
     const reminderSettingsWrap = document.getElementById('learningReminderSettingsWrap');
+
+    function collectCurrentSlots() {
+      const mEn = document.getElementById('reminderMorningEnabled')?.checked ?? true;
+      const mTime = document.getElementById('reminderMorningTime')?.value || '08:00';
+      const aEn = document.getElementById('reminderAfternoonEnabled')?.checked ?? true;
+      const aTime = document.getElementById('reminderAfternoonTime')?.value || '13:00';
+      const nEn = document.getElementById('reminderNightEnabled')?.checked ?? true;
+      const nTime = document.getElementById('reminderNightTime')?.value || '20:00';
+      return {
+        morning: { enabled: mEn, time: mTime, label: 'Pagi' },
+        afternoon: { enabled: aEn, time: aTime, label: 'Siang' },
+        night: { enabled: nEn, time: nTime, label: 'Malam' }
+      };
+    }
+
     reminderToggle?.addEventListener('change', () => {
       const isChecked = reminderToggle.checked;
       if (reminderSettingsWrap) reminderSettingsWrap.style.display = isChecked ? 'block' : 'none';
-      const timeVal = document.getElementById('learningReminderTimeInput')?.value || '20:00';
-      if (window.AmyLearningReminder) {
-        window.AmyLearningReminder.saveConfig(isChecked, timeVal);
+      const slots = collectCurrentSlots();
+      if (window.AmyLearningReminder?.saveSlots) {
+        window.AmyLearningReminder.saveSlots(isChecked, slots);
       } else {
         localStorage.setItem('amy_learning_reminder_enabled', isChecked ? 'true' : 'false');
-        localStorage.setItem('amy_learning_reminder_time', timeVal);
+        localStorage.setItem('amy_learning_reminder_slots', JSON.stringify(slots));
       }
       showToast(isChecked ? 'Pengingat belajar diaktifkan.' : 'Pengingat belajar dinonaktifkan.');
     });
 
     document.getElementById('saveLearningReminderBtn')?.addEventListener('click', () => {
       const isChecked = document.getElementById('learningReminderEnabled')?.checked ?? true;
-      const timeVal = document.getElementById('learningReminderTimeInput')?.value || '20:00';
-      if (window.AmyLearningReminder) {
-        window.AmyLearningReminder.saveConfig(isChecked, timeVal);
+      const slots = collectCurrentSlots();
+      if (window.AmyLearningReminder?.saveSlots) {
+        window.AmyLearningReminder.saveSlots(isChecked, slots);
       } else {
         localStorage.setItem('amy_learning_reminder_enabled', isChecked ? 'true' : 'false');
-        localStorage.setItem('amy_learning_reminder_time', timeVal);
+        localStorage.setItem('amy_learning_reminder_slots', JSON.stringify(slots));
       }
-      showToast(`Jadwal pengingat disimpan: Setiap hari jam ${timeVal} WITA`);
+
+      const activeList = [];
+      if (slots.morning.enabled) activeList.push(`Pagi (${slots.morning.time})`);
+      if (slots.afternoon.enabled) activeList.push(`Siang (${slots.afternoon.time})`);
+      if (slots.night.enabled) activeList.push(`Malam (${slots.night.time})`);
+
+      const summaryText = activeList.length ? activeList.join(', ') : 'Semua sesi nonaktif';
+      showToast(`Jadwal pengingat disimpan: ${summaryText}`);
     });
 
     document.getElementById('testLearningReminderBtn')?.addEventListener('click', () => {
