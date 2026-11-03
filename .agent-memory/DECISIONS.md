@@ -1465,5 +1465,27 @@ Pro382 release verification completed: source 11239e1de1b42d6677cbd074619c636507
 - **Renumbering:** Menata ulang seluruh aturan secara berurutan menjadi 22 pasal baku.
 - **Penetapan Pasal 22 (Weekend Productive Switch):** Menambahkan protokol pengalihan fokus produktif akhir pekan (Lab Backtest, Obsidian Catatan Pribadi, dan Roblox Studio) saat pasar Gold tutup, bebas dari pembahasan chart mati.
 
+### 2026-11-03: Eksekusi Perintah Sayang — Purge Modul 4, 5, 8 & Perbaikan 1, 2, 3, 6, 7
+- **Hapus Permanen Nomor 8 (Fractal Advisor & Fractal Audit):**
+  - Menghapus folder `apps/fractal-advisor/` (1.210 baris).
+  - Menghapus `api/fractal-audit.js`, `tests/fractal-audit-endpoint.test.mjs`, dan endpoint `/api/fractal-audit` di `tools/serve-local.mjs`.
+- **Hapus Permanen Nomor 4 (Ghost Indikator & Tab Kode):**
+  - Menghapus tab filter Kode dan tombol mati `data-open="indikator"` di menu Media agar antarmuka Video fokus murni sebagai media replay tanpa tombol hantu.
+- **Hapus Permanen Nomor 5 (1.964 Broken Links Academy):**
+  - 1.931 tautan 404/rusak di seluruh materi Academy dibersihkan permanen menjadi teks biasa.
+  - 33 tautan navigasi awalan angka dinormalisasi ke file validnya. Sisa broken links: 0.
+- **Perbaikan Nomor 1 (DOMException di Academy `main.js`):**
+  - Memperbaiki `nav.insertBefore(btn, hamburger)` agar aman jika hamburger dibungkus div container.
+- **Perbaikan Nomor 2 (Timeframe Candle Rejection Bug):**
+  - Memperbaiki `home-price-chart.js` dan `apps/mapping/js/ict-workspace/app.js` agar hanya membandingkan sourceTime saat timeframe sama (`raw?.tf === next.tf`).
+- **Perbaikan Nomor 3 (Backup & Restore Profil Riil):**
+  - Ekspor Profil kini menyertakan data jurnal riil dari IndexedDB `journals.v2` / localStorage `tradingLibraryManager.journals.v1`.
+  - Menambahkan tombol **"Pulihkan / Impor Cadangan Data"** (`profileImportBtn`) di Profil.
+- **Perbaikan Nomor 6 (Kartu Nama Trader di Profil):**
+  - Menampilkan kartu profil `#traderNameTitle` dan tombol `#editTraderNameBtn` di antarmuka Profil.
+- **Perbaikan Nomor 7 (Konflik Dead Code System Settings):**
+  - Menyelaraskan selector guard `profile-system-settings-v1.js` agar kustomisasi warna kaca dan opacity slider aktif tanpa terblokir.
+
+
 
 
