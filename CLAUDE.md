@@ -251,3 +251,16 @@ When developing or modifying UI components for the **Amy FX** project, strictly 
 5. **Auto-Trigger di Sesi Baru:**
    - Kata kunci *"pantau market"*, *"nyalakan pemantau"*, *"aktifkan cron"*, *"lapor 15 menit"*, atau *"pos pantau"* otomatis mengaktifkan cron ini tanpa perlu re-konfigurasi manual.
 
+## Perangkat Headless Browser AI Agent: Lightpanda (Pro 431)
+1. **Lokasi Binary:** `/usr/local/bin/lightpanda` (v1.0.2 aarch64-linux Zig).
+2. **Karakter:** 9x lebih cepat, 16x lebih hemat RAM (~50-120 MB RAM peak) dibanding Chromium (2 GB), sangat dingin di HP Infinix ARM64 Sayang.
+3. **Penggunaan:** Ekstraksi web murni Markdown (`lightpanda fetch <url> --dump markdown --strip-mode clutter`), CDP Server, dan native MCP Server.
+
+## Paradigma Fundamental Makro: Fenomena War News Dump / Fade the War Spike (Pro 432)
+1. **Prinsip Dasar:** Berita perang di XAU/USD sering kali berujung **BEARISH / DUMP**, bukan bullish abadi. Lonjakan minyak memicu ekspektasi inflasi -> The Fed hawkish / Dolar menguat -> Likuidasi emas non-yielding, serta aksi *Smart Money Buy the Rumor, Sell the News*.
+2. **SOP Respon Perang Sayang (Target 100 Pips):**
+   - **Haram FOMO BUY:** Dilarang Buy saat breaking news perang meletus.
+   - **Strategi Fade the News:** Manfaatkan lonjakan awal kepanikan perang (*Judas Swing / BSL Sweep*) untuk mencari setup jemputan **SELL di Resistance Ekstrem / Supply MTF (M15)** begitu terkonfirmasi pelemahan (*absorption wick* / MSS Bearish di M5).
+   - **Kecepatan Berita:** Utamakan *wire news* seketika SM News 24 (`@sm_news_24h`) dibanding portal artikel editorial lambat (Yahoo/Investing yang sering lag).
+
+

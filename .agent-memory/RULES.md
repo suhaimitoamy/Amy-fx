@@ -61,6 +61,15 @@
   4. **Emergency Sentinel Alert**: Siaga mendeteksi lonjakan ekstrem di menit 5/10 (jebol lantai kritis atau konfirmasi MSS kilat) tanpa harus menunggu 15 menit.
   5. **Auto-Trigger di Sesi Baru**: Kata kunci *"pantau market"*, *"nyalakan pemantau"*, *"aktifkan cron"*, *"lapor 15 menit"*, atau *"pos pantau"* otomatis mengaktifkan cron ini tanpa perlu re-konfigurasi manual.
 
+- **Perangkat Headless Browser AI Agent: Lightpanda (Pro 431)**:
+  1. Lokasi di `/usr/local/bin/lightpanda` (v1.0.2 aarch64-linux Zig).
+  2. Digunakan untuk web scraping cepat (`--dump markdown --strip-mode clutter`), server CDP, dan server MCP native tanpa membebani RAM/CPU HP Infinix Sayang.
+
+- **Paradigma Fundamental Makro: Fenomena War News Dump / Fade the War Spike (Pro 432)**:
+  1. Berita perang di XAU/USD sering kali berujung **BEARISH / DUMP** akibat lonjakan minyak -> ekspektasi inflasi -> The Fed hawkish / penguatan Dolar AS -> likuidasi aset non-yielding emas, serta aksi *Smart Money Buy the Rumor, Sell the News*.
+  2. SOP Respon Perang: Haram FOMO Buy saat breaking news perang meletus. Manfaatkan lonjakan kepanikan perang awal (*Judas Swing / BSL Sweep*) sebagai pancingan untuk mencari setup jemputan SELL di Resistance Ekstrem / Supply MTF (M15) saat pelemahan (*absorption wick* / MSS Bearish di M5) terkonfirmasi. Target: 100 Pips.
+
+
 
 
 ## Memory Rules

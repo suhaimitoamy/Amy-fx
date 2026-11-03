@@ -1,5 +1,75 @@
 # Technical Decisions
 
+## 2026-11-03 — Perbaikan Tuntas Cacat Logika & Audit Cockpit Mapping Amy FX Pro (Sesuai 4 Screenshot Artemis)
+1. **Latar Belakang & Keluhan Sayang:**
+   - Sayang mengecek langsung antarmuka Cockpit Mapping (`apps/mapping/index.html`) di browser HP dan menemukan sejumlah kejanggalan logika:
+     1. Status data terlempar ke tanggal lama (19 Oktober / $4,177) disertai error *"Pembaruan gagal / data terlambat"*.
+     2. Discrepancy Mini-Badge Dealing Range (`EQUILIBRIUM 50% · NETRAL ⚪`) dengan tabel V6 (`PREMIUM (>52.5%) [74%]`).
+     3. Countdown jam sesi mengabaikan sesi Asia yang sedang berlangsung dan menampilkan jam London 15:00 WITA (tidak sesuai aturan Winter GMT 16:00 WITA).
+     4. Magnet Atas (BSL / Resistance) mencantumkan PWH $3,949.00 padahal harga pasar saat itu berada di $3,956.03 (PWH sudah ditembus/swept dari bawah).
+     5. Lilin candlestick chart terhimpit kerdil dan pipih karena LightweightCharts memanggil `fitContent()` pada 300 bar data.
+     6. Kontradiksi sinyal: Header berbunyi `TREND SELL REJECT` namun pemicu Asisten Entry berbunyi `PULLBACK BUY (Breakout)`.
+2. **Akar Masalah (Root Cause):**
+   - **Data Feed Stale Ingestion:** Server Vercel mengembalikan status HTTP 200 dengan payload snapshot stale (19 Okt, 429 rate limit). `serve-local.mjs` menerima response ini sebagai valid dan mengabaikan database SQLite lokal `/root/amy-market-data/xauusd_bot.sqlite` yang menyimpan candle terkini 3 November 2026 ($3,956+).
+   - **Dealing Range Parity Bug:** `dealing-range-badge.js` hanya mencari property `.top` dan `.bottom`, sementara kalkulasi V6 memproduksi `.rangeHigh` dan `.rangeLow`.
+   - **Session Definitions Mismatch:** `market-session-clock.js` belum mendaftarkan sesi ASIA (08:00–12:00 WITA), dan London disetel `startMinute: 7 * 60` (07:00 London = 15:00 WITA) alih-alih `8 * 60` (08:00 GMT = 16:00 WITA musim dingin sesuai Rule 14).
+   - **Liquidity Labeling Logic:** PWH yang sudah berada di bawah harga live belum diberi penanda status `[SWEPT]`.
+   - **Viewport Clamping:** `chart.timeScale().fitContent()` merentangkan 300 candle sekaligus di layar HP 380px sehingga lilin menjadi garis tipis tak beranatomi.
+   - **Signal Precedence Inversion:** `pullbackBuyBreak` dievaluasi mendahului `trendSellReject`, sehingga koreksi minor di LTF membajak setup tren utama.
+3. **Penyempurnaan Dilakukan:**
+   - **Data Feed Local Fallback:** `serve-local.mjs` diperkuat dengan fungsi `getLocalSqliteCandles` dan filter `isUpstreamStale`. Data stale dari Twelve Data otomatis dibuang dan digantikan feed SQLite lokal terkini.
+   - **Sinkronisasi Dealing Range 100%:** `dealing-range-badge.js` kini membaca fallback `window.amyfxLastDealingRange` serta mendukung `rangeHigh`/`rangeLow`, menyamakan status badge dengan tabel analisis V6 secara instan.
+   - **Integrasi Sesi Asia & Winter Time London:** `market-session-clock.js` resmi mendukung sesi ASIA (08:00–12:00 WITA), London Killzone dimutakhirkan ke 16:00 WITA (08:00 GMT), dan unit test `tests/market-session-clock.test.mjs` lulus 4/4.
+   - **Swept Liquidity Tagging:** `ict-presentation.js` menandai `PWH: [SWEPT]` bila harga live berada di atas PWH.
+   - **Proportional Candle Viewport:** `chart-view.js` menerapkan `setVisibleLogicalRange({ from: total - 45, to: total + 4 })` saat initial render sehingga anatomi body dan wick candlestick tampil jelas dan proporsional.
+   - **Hierarki Sinyal Tren Mutlak:** Urutan eksekusi di `amy-ict.mjs` diperbaiki agar sinyal searah tren (`trendBuy`/`trendSell`) selalu mendahului counter-trend pullback, serta melarang `pullbackBuy` di dalam zona Bearish POI / Supply.
+   - **Sinkronisasi Upstream:** Seluruh perbaikan disinkronkan 1:1 ke `/root/Amy-fx-pro/`.
+4. **Verifikasi:**
+   - Targeted unit tests: `tests/market-session-clock.test.mjs` (4/4 lulus), `tests/mapping-amy-ict-pro375.test.mjs` (34/34 lulus byte-identical), `tests/market-context-rebuild.test.mjs` (15/15 lulus).
+   - Preview server `amy-fx-preview` online dan melayani endpoint live dengan candle terkini 3 November 2026.
+
+
+## 2026-11-03 — Evaluasi Kritis Post-Mortem Scalper Otonom Wave 2: Analisa Stop Out Akun Demo & Fatal Flaw Grid Hedging
+1. **Latar Belakang Insiden:**
+   - Setelah sukses di Wave 1 (panen +Rp 910.070 dari Rp 3,3 juta ke Rp 4,2 juta), asisten menguji coba bot `fast_ea_scalper.py` semalaman sesuai izin Sayang (*learning by doing*).
+   - Di pagi hari (07:16 WITA), Sayang mendapati saldo akun demo tergerus menjadi sisa sekitar **Rp 600.000**.
+2. **Akar Masalah (Root Cause):**
+   - **Bug Koordinat Deteksi Profit:** Script memeriksa pixel profit di `Y=60-110` (status bar Android), bukan di `Y=260-340` (baris ringkasan P/L MT5). Akibatnya, posisi profit tidak tertutup dan terus floating.
+   - **Overleveraging Grid Hedging:** Bot membuka ~14 posisi BUY & SELL akumulatif (total volume ~0.42 lot). Pada akun modal Rp 4,2 juta, menahan volume 0.42 lot saat Gold trending semalaman adalah tindakan *overleverage* fatal.
+   - **Ketiadaan Hard SL di Broker:** Posisi tidak diberi Hard SL/TP di tiket MT5, murni bergantung pada bot lokal di Termux. Saat koneksi/server idle di malam hari, broker mengeksekusi Stop Out otomatis saat Margin Level jebol di bawah batas kritis.
+3. **Pelajaran Permanen (Reinforcement Learning):**
+   - **Mitos Bot TikTok Terbantahkan:** Bot scalping kilat tanpa SL adalah ilusi berbahaya. Wajib menanam Hard SL dan Hard TP langsung di server broker pada setiap order.
+   - **Maksimal Lot Terukur:** Modal Rp 4 juta maksimal volume trading adalah 0.03 (maksimal 1 layer averaging 0.03). Dilarang menumpuk belasan posisi.
+   - **Nilai Simulasi Demo:** Insiden di akun demo ini membuktikan kelemahan fatal sistem sebelum menyentuh uang riil sepeser pun.
+
+## 2026-11-02 — Sesi Challenge Otonom MT5 Sayang: Eksekusi Averaging Gold & Panen +Rp 910.070 (Reinforcement Learning)
+1. **Latar Belakang & Tantangan Sayang:**
+   - Sayang menantang agen untuk trading mandiri secara otonom di aplikasi MT5 HP Android (Infinix Hot 30) pada akun demo Gold (XAUUSD) M1, dengan izin melakukan averaging agresif dan kewajiban belajar dari hasil (*learning by doing*).
+2. **Hasil Eksekusi Riil di MT5:**
+   - **Entry 1:** BUY XAUUSD 0.03 @ $3,957.77 (Rebound M1 Support).
+   - **Entry 2 (Averaging Layer):** BUY XAUUSD 0.03 @ $3,956.63 (Retest Wick Absorption).
+   - **Target Run:** Harga meledak naik hingga ke **$3,964.82 (+82 Pips move)**.
+   - **Close All:** Seluruh posisi berhasil ditutup tuntas via menu *Operasi Massal* (`Tutup Semua Posisi`).
+   - **Hasil Akhir:** Saldo awal 3.306.742,19 IDR melesat menjadi **4.216.812,84 IDR** (**Cuan Bersih: +910.070,65 IDR / +27.5% profit**).
+3. **Pelajaran Kritis (Reinforcement Learning - Lesson Learned):**
+   - **Bug Navigasi Close:** Tombol *Tutup Semua Posisi* pada bottom sheet MT5 Android Infinix Hot 30 terletak presisi di `(X=300, Y=1855)`. Kesalahan koordinat sebelumnya (mencoba tap di Y=1770) menyebabkan keterlambatan close.
+   - **Solusi Latensi (Zero-Lag):** Trading manual interaktif melalui chat cloud memiliki jeda 10-15s per pesan yang membuat user bosan/mengantuk. Untuk scalping cepat berikutnya, gunakan script loop background lokal (`gold_autonomous_scalper.py`) tanpa intervensi chat berulang.
+   - **Kekuatan Averaging di Support:** Layer averaging yang dieksekusi di titik exhaustion berhasil melipatgandakan profit saat momentum pembalikan terjadi.
+
+## 2026-11-02 — Overhaul Tipografi & Skala Visual Amy FX Pro (Standar Aplikasi Profesional Artemis)
+1. **Latar Belakang & Analisa Pengguna:**
+   - Sayang mengevaluasi UI Amy FX Pro melalui kendali otonom Artemis/ADB di HP Infinix Hot 30 dan mendapati bahwa teks menu serta navigasi berukuran terlalu kerdil (7px – 10px), kontras rendah, dan tidak sebanding dengan standar estetika aplikasi mobile profesional.
+2. **Akar Masalah (Root Cause):**
+   - Aturan agresif `.nav-btn { font-size: 10px !important; }` di `amyfx-natural-ui-pro355.css` mengecilkan seluruh label navigasi bawah.
+   - Modul sub-aplikasi (`asia-range.css`, `entry-watch.css`, `analysis-compact.css`, `market-intelligence.css`) memiliki font mikro statis (6.5px – 9px) yang tidak terbaca pada layar HP resolusi tinggi 1080x2460 (~400 ppi).
+3. **Penyempurnaan Dilakukan:**
+   - **Bottom Navigation Bar:** Tinggi dinaikkan menjadi `calc(64px + var(--amy-safe-bottom, 0px))`, label dinaikkan ke `12.5px - 13px` dengan font-weight 600 (active 750), dan SVG icon diperbesar ke `24px x 24px`.
+   - **Hierarki Konten & Header:** `.page-header h2` dinaikkan ke `24px`, sub-header dan kicker ke `13px - 16px`, badge dan chip ke `12px`.
+   - **Market Intelligence & Compact Analysis:** Dihapus seluruh font ekstrem di bawah 11px, command strip metric dinaikkan ke `11px - 16px`.
+   - **Sinkronisasi Upstream:** Seluruh perbaikan CSS disinkronkan 1:1 ke `/root/Amy-fx-pro/`.
+4. **Verifikasi Visual:**
+   - Preview server `amy-web` (port 8080) diaktifkan dan diverifikasi langsung pada browser Infinix Hot 30 Sayang via ADB screenshot (`amyfx_browser_preview.png`, `amyfx_mapping_preview.png`, `amyfx_academy_preview.png`). Seluruh teks kini tampil tajam, proporsional, dan nyaman dibaca.
+
 ## 2026-11-02 — Penguatan Mutlak Zero-Hallucination Trading Uang Riil Sayang & Penyelamatan Modal BEP
 1. **Latar Belakang Insiden & Evaluasi Kritis:**
    - Sayang menegur keras asisten karena sempat terjadi halusinasi pelabelan level (menyebut target proyeksi pip $3,912 sebagai FVG H1, padahal FVG Bearish H1 sesungguhnya ada di level $3,923.40 yang diverifikasi langsung oleh Sayang).
@@ -1355,3 +1425,35 @@ Pro382 release verification completed: source 11239e1de1b42d6677cbd074619c636507
      - Narasi Dinamika Pasar (1–2 Paragraf Mengalir menceritakan pertarungan Buyer vs Seller pada 3 candle M5).
      - Peta Level & Respon (Resistance BSL/Supply, Support SSL/Demand, dan Respon Objektif Anti-Yes-Man untuk target 100 pips).
   4. Menyinkronkan prompt default scheduler cron pemantau (`schedule`) agar setiap sesi baru otomatis memproduksi laporan bernarasi hidup ini.
+
+## 2026-11-02: Integrasi Roblox Open Cloud Studio di Termux / Antigravity
+- **Akun Roblox Sayang:** `HiddenCrow45075` (User ID: `11928849120`)
+- **Kredensial:** Disimpan secara aman di `/root/.roblox/credentials.json` (chmod 600)
+- **Status Konektivitas:** 200 OK (Open Cloud v2 API terverifikasi aktif)
+- **Kapabilitas:** Antigravity dapat menulis skrip Luau, mengelola data DataStore, dan mem-publish assets / experiences ke akun Sayang tanpa membutuhkan desktop Roblox Studio.
+
+### 2026-11-02: Google Artemis Mobile Agent Integration
+- **Context:** User requested integration of Google Artemis (open-source autonomous mobile testing & automation agent by Google PTE Fusion).
+- **Environment:** Termux on Infinix Hot 30 (Android 14 XOS, aarch64).
+- **Setup:**
+  - Cloned `google/artemis` to `/root/artemis`.
+  - Installed ARM64 native `adb` package in Debian environment; paired and connected via Wireless Debugging at `127.0.0.1:42229`.
+  - Installed Python 3.13 virtual environment with `uv sync --link-mode=copy` (191 dependencies).
+  - Configured multimodal Gemini 2.5 Flash API key from `/root/.gemini_keys`.
+  - Installed and verified Artemis Accessibility Helper APK v1.2.0 on device.
+- **Outcome:** Full autonomous Android UI control operational directly from Antigravity.
+
+### 2026-11-03: Instalasi Lightpanda Browser & Penetapan Paradigma "War News Dump"
+- **Adopsi Lightpanda Browser (v1.0.2 aarch64):**
+  - Berdasarkan rekomendasi screenshot Sayang (video DevC), dipasang di `/usr/local/bin/lightpanda`.
+  - Terbukti 9x lebih cepat dan 16x lebih hemat RAM (~50-120 MB RAM peak) dibanding Chromium (2 GB).
+  - Berhasil diuji untuk scraping artikel berita fundamental makro global (Yahoo Finance / Investing.com) via CLI `--dump markdown --strip-mode clutter`.
+- **Penetapan Paradigma Fundamental Makro: Fenomena War News Dump (Fade the War Spike):**
+  - Mengadopsi observasi riil Sayang selama setahun terakhir: berita perang di XAU/USD sering kali berujung **BEARISH / DUMP**, bukan bullish abadi.
+  - Alasan makro & ICT:
+    1. Kenaikan minyak memicu ekspektasi inflasi -> The Fed hawkish / Dolar menguat -> Emas dilepas.
+    2. *Smart Money Buy the Rumor, Sell the News* (memanfaatkan FOMO retail Buy untuk BSL Raid lalu dump).
+    3. Likuidasi margin call di bursa saham global menguras emas untuk cash USD.
+  - SOP Sayang: Haram FOMO Buy saat berita perang meletus; manfaatkan lonjakan kepanikan perang untuk mencari setup jemputan SELL di Resistance/Supply M15 saat exhaustion terkonfirmasi di M5 untuk target 100 Pips.
+  - Disinkronkan ke `/root/GEMINI.md` Aturan 23 & 24.
+
