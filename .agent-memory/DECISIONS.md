@@ -1455,5 +1455,13 @@ Pro382 release verification completed: source 11239e1de1b42d6677cbd074619c636507
     2. *Smart Money Buy the Rumor, Sell the News* (memanfaatkan FOMO retail Buy untuk BSL Raid lalu dump).
     3. Likuidasi margin call di bursa saham global menguras emas untuk cash USD.
   - SOP Sayang: Haram FOMO Buy saat berita perang meletus; manfaatkan lonjakan kepanikan perang untuk mencari setup jemputan SELL di Resistance/Supply M15 saat exhaustion terkonfirmasi di M5 untuk target 100 Pips.
-  - Disinkronkan ke `/root/GEMINI.md` Aturan 23 & 24.
+  - Disinkronkan ke `/root/GEMINI.md` Aturan 21 & 22.
+
+### 2026-11-03: Refactoring Aturan GEMINI.md Sesuai Arahan Sayang
+- **Workspace Utama:** Ditetapkan mutlak kembali ke **`Amy-fx-pro`** (`/root/Amy-fx-pro`) sebagai basis aktif yang selalu dikerjakan Sayang. `Amy-fx` (`/root/Amy-fx`) tetap menjadi proyek pribadi Sayang.
+- **Pembersihan Protokol Usang:**
+  1. Menghapus Protokol Tim Laya AI Subagent Dispatcher (karena Antigravity menggunakan subagent native internal bawaan sistem sehingga layer Laya eksternal tidak pernah digunakan).
+  2. Menghapus Protokol Virtual Office / Nyalakan Kantor (sesuai instruksi Sayang "hapus kantor").
+- **Renumbering:** Menata ulang seluruh aturan secara berurutan menjadi 22 pasal baku.
+
 
