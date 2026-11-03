@@ -1463,5 +1463,7 @@ Pro382 release verification completed: source 11239e1de1b42d6677cbd074619c636507
   1. Menghapus Protokol Tim Laya AI Subagent Dispatcher (karena Antigravity menggunakan subagent native internal bawaan sistem sehingga layer Laya eksternal tidak pernah digunakan).
   2. Menghapus Protokol Virtual Office / Nyalakan Kantor (sesuai instruksi Sayang "hapus kantor").
 - **Renumbering:** Menata ulang seluruh aturan secara berurutan menjadi 22 pasal baku.
+- **Penetapan Pasal 22 (Weekend Productive Switch):** Menambahkan protokol pengalihan fokus produktif akhir pekan (Lab Backtest, Obsidian Catatan Pribadi, dan Roblox Studio) saat pasar Gold tutup, bebas dari pembahasan chart mati.
+
 
 
