@@ -319,5 +319,7 @@ When developing or modifying UI components for the **Amy FX** project, strictly 
   4. *Verifikasi CI & Build Release:*
      - Jalankan `node --test tests/local-assistant.test.mjs` untuk memastikan tidak ada pelanggaran test.
      - Bump versi ke versi baru (misal `2.0.0-pro.438`), commit, push, dan kawal workflow GitHub Actions hingga APK terbit.
+  5. *Sandi Aktivasi Instan:*
+     - Cukup ketik: `"eksekusi amy live"` atau `"pasang amy live"` -> AI otomatis langsung mengeksekusi seluruh 5 langkah di atas tanpa perlu penjelasan ulang.
 
 

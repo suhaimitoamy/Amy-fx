@@ -1574,6 +1574,8 @@ Pro382 release verification completed: source 11239e1de1b42d6677cbd074619c636507
      - Sesuaikan URL resolver dinamis di `amy-gemini-live-bridge.js` untuk APK (`appassets.androidplatform.net`).
      - Sinkronkan injeksi loader di `app/src/main/assets/apps/shared/amy-local-assistant.js` (`Amy-fx-pro`).
      - Jalankan `node --test tests/local-assistant.test.mjs`, bump version, dan rilis APK baru via GitHub Actions.
+  4. Sandi Aktivasi Instan:
+     - "eksekusi amy live" atau "pasang amy live" -> Otomatis langsung menjalankan seluruh 5 langkah perbaikan tanpa perlu penjelasan panjang.
 
 
 
