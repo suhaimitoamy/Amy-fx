@@ -292,4 +292,32 @@ When developing or modifying UI components for the **Amy FX** project, strictly 
   4. Eksekusi kini resmi menggunakan `--profile pro` (Closed-Loop Planner + Operator + Validator) dan `--explorer-version ultra` (8-turn reasoning loop dengan OCR teks & Zoom) serta mengunci aplikasi ke `com.tradingview.tradingviewapp`.
   5. Mendukung SOP Top-Down otomatis (H1 -> M15 -> M5) untuk membedah arah tren, Dealing Range, FVG, dan lilin konfirmasi untuk target 100 pips Sayang.
 
+### [2026-11-08] Audit Paritas Tampilan & Backend: Amy Web (Termux) vs Amy FX Pro (APK Android) — SOP Perbaikan Mandiri dengan Model Argon
+
+- **Status:** TERTUNDA ATAS PERINTAH SAYANG (HOLD FOR ARGON / CLAUDE SONNET).
+- **Target Eksekusi:** Dijadwalkan ~1 minggu lagi saat limit model Argon (Claude Sonnet) telah pulih. DILARANG dieksekusi terburu-buru dengan Gemini 3.8 Flash untuk mencegah kesalahan koding dan halusinasi.
+- **Gejala Masalah (Dua Screenshot 8 Nov 2026):**
+  1. *Amy Web Browser (`http://localhost:8080/apps/mapping/index.html`):* Tampilan sangat mewah dan interaktif dengan Gelembung Orb Emas 3D bersinar (`✦ AMY`), tombol suara live mic (Aoede), snapshot chart kanvas, dan penjelasan materi Academy secara luwes.
+  2. *Amy FX Pro APK Android (Versi 2.0.0-pro.437 / `950437`):* Saat tombol `AMY` disentuh, yang muncul masih panel kotak lama ("Amy · Asisten aplikasi | Lokal · tanpa API AI / LLM").
+- **Akar Masalah (Root Causes Terverifikasi):**
+  1. *Frontend Script Injection Belum Ada di Amy-fx-pro:*
+     - Di `/root/Amy-fx/app/src/main/assets/apps/shared/amy-local-assistant.js` baris 217 sudah ada loader:
+       `const g=document.createElement('script');g.src=new URL('amy-gemini-live-bridge.js',script).href;g.async=true;document.head.appendChild(g);`
+     - Di repositori `/root/Amy-fx-pro/app/src/main/assets/apps/shared/amy-local-assistant.js`, baris loader ini belum ada sehingga file `amy-gemini-live-bridge.js` tidak pernah dimuat di APK Android.
+  2. *Backend Cloud Vercel vs Server Termux:*
+     - Di Termux Web Preview (`localhost:8080`), server lokal `tools/serve-local.mjs` (baris 1082–1160) menangani endpoint `/api/gemini-config` (baca `/root/.gemini_keys`) dan `/api/gemini-chat` (sambungan ke Gemini AI).
+     - Di APK Android, WebView berjalan pada origin `https://appassets.androidplatform.net/assets/`.
+     - Request relative `/api/...` di APK otomatis diarahkan ke domain publik Vercel (`https://amy-fx.vercel.app/api/...`).
+     - Namun di Vercel (`api/`), endpoint `gemini-config.js` dan `gemini-chat.js` **belum dibuat dan belum dideploy**.
+- **Action Plan Presisi untuk Sesi Argon (1 Minggu Lagi):**
+  1. *Deploy Vercel Serverless Function:*
+     - Buat `api/gemini-config.js` dan `api/gemini-chat.js` di kedua repositori (`Amy-fx-pro` & `Amy-fx`) yang membaca secret `GEMINI_API_KEY` dari environment Vercel.
+  2. *Frontend URL Resolver di `amy-gemini-live-bridge.js`:*
+     - Sesuaikan pemanggilan endpoint agar dinamis: jika berjalan di APK (`https://appassets.androidplatform.net/`), gunakan prefix `https://amy-fx.vercel.app/api/...`.
+  3. *Aktifkan Injeksi di `Amy-fx-pro`:*
+     - Tambahkan pemanggilan `amy-gemini-live-bridge.js` di `app/src/main/assets/apps/shared/amy-local-assistant.js`.
+  4. *Verifikasi CI & Build Release:*
+     - Jalankan `node --test tests/local-assistant.test.mjs` untuk memastikan tidak ada pelanggaran test.
+     - Bump versi ke versi baru (misal `2.0.0-pro.438`), commit, push, dan kawal workflow GitHub Actions hingga APK terbit.
+
 

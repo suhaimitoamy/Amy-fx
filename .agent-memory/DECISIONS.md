@@ -1560,5 +1560,20 @@ Pro382 release verification completed: source 11239e1de1b42d6677cbd074619c636507
   3. Menetapkan roadmap masa depan untuk ekspansi kemampuan coding bertahap tanpa merusak stabilitas live voice saat ini.
   4. Sandi aktivasi instan: "aktifkan jarvis", "nyalakan jarvis", "start jarvis", "gemini live" -> Otomatis pastikan server lab aktif dan berikan link http://localhost:8088.
 
+## DECISION-20261108-01: Audit Paritas Tampilan & Backend Amy Web vs Amy FX Pro APK (Hold for Argon)
+- **Tanggal:** 2026-11-08
+- **Konteks:** Penyelidikan atas perbedaan tampilan asisten antara Amy Web (`localhost:8080`) yang memiliki Gelembung Orb 3D emas bersinar (`✦ AMY`) dan APK Android yang masih menampilkan modal asisten lama ("Lokal · tanpa API AI / LLM").
+- **Status:** TERTUNDA ATAS PERINTAH SAYANG (HOLD FOR ARGON / CLAUDE SONNET).
+- **Keputusan & Target:**
+  1. Menunda implementasi hingga limit model Argon (Claude Sonnet) pulih (~1 minggu ke depan) guna menjamin kualitas kode zero-defect dan mencegah halusinasi Gemini 3.8 Flash.
+  2. Mencatat 2 akar masalah terverifikasi:
+     - *Injeksi Frontend:* Loader `amy-gemini-live-bridge.js` di baris 217 `amy-local-assistant.js` belum disinkronkan ke repo `Amy-fx-pro`.
+     - *Backend Cloud Vercel:* Serverless function `/api/gemini-config.js` dan `/api/gemini-chat.js` belum ada di Vercel publik (`https://amy-fx.vercel.app`), padahal APK Android WebView mengakses API cloud.
+  3. Mengunci Roadmap Eksekusi untuk Sesi Argon:
+     - Buat endpoint Vercel `api/gemini-config.js` dan `api/gemini-chat.js` (dengan `GEMINI_API_KEY`).
+     - Sesuaikan URL resolver dinamis di `amy-gemini-live-bridge.js` untuk APK (`appassets.androidplatform.net`).
+     - Sinkronkan injeksi loader di `app/src/main/assets/apps/shared/amy-local-assistant.js` (`Amy-fx-pro`).
+     - Jalankan `node --test tests/local-assistant.test.mjs`, bump version, dan rilis APK baru via GitHub Actions.
+
 
 
