@@ -21,7 +21,7 @@ function isWeekendClosure(timeSec) {
 export function createPriceChart(element,{touchAxes=false}={}) {
   let lastClosePrice=null, lastResult=null, activeBar=null;
   const chart=window.LightweightCharts.createChart(element,{autoSize:true,
-    timeScale:{timeVisible:true},rightPriceScale:{minimumWidth:65,autoScale:true},
+    timeScale:{timeVisible:true},rightPriceScale:{minimumWidth:65,autoScale:true,scaleMargins:{top:0.12,bottom:0.12}},
     handleScale:{pinch:true,mouseWheel:true,axisPressedMouseMove:{time:true,price:true},axisDoubleClickReset:{time:true,price:true}},
     handleScroll:{vertTouchDrag:touchAxes,horzTouchDrag:true,pressedMouseMove:true,mouseWheel:true}});
   const series=chart.addCandlestickSeries({
@@ -63,24 +63,29 @@ export function createPriceChart(element,{touchAxes=false}={}) {
         series.setData(result.candles);
         key=result.candles.length?next:'';
         if(initial&&result.candles.length){
-          const total=result.candles.length;
-          chart.timeScale().setVisibleLogicalRange({
-            from: Math.max(0, total - 45),
-            to: total + 4
-          });
+          if(typeof chart.timeScale().fitContent==='function'){
+            chart.timeScale().fitContent();
+          }
+          if(typeof chart.timeScale().setVisibleLogicalRange==='function'){
+            const total=result.candles.length;
+            chart.timeScale().setVisibleLogicalRange({
+              from: Math.max(0, total - 35),
+              to: total + 6
+            });
+          }
         }
       }
       if(presentation&&!ict)ict=createIctCanvas(element,chart,series);
       if(presentation&&rightBars!==presentation.settings?.rightBars){rightBars=presentation.settings.rightBars;chart.applyOptions({timeScale:{rightOffset:rightBars}});}
 
       const getInd=typeof calculateNextGenIndicators==='function'?calculateNextGenIndicators:null;
-      const indicators=presentation?(presentation.indicators||(getInd?getInd(result.candles,{context:presentation.context||(presentation.amy?{amy:presentation.amy}:null)}):null)):null;
+      const indicators=presentation?(presentation.indicators||(getInd?getInd(result.candles,{context:presentation.context||(presentation.amy?{amy:presentation.amy}:null),tf:result.tf}):null)):null;
       if(typeof window!=='undefined'&&indicators)window.amyfxLastIndicators=indicators;
 
       ict?.update(presentation?{...presentation,indicators,candles:result.candles,tf:result.tf}:null);
       const signalMarkers=[];
       if(presentation?.amy&&presentation.settings?.signals){const duration={M1:60,M5:300,M15:900}[result.tf]||900,times=new Set(result.candles.map(c=>c.time)),seen=new Set();
-        for(const signal of presentation.amy.signals||[]){const time=Math.floor(signal.time/duration)*duration,id=time+':'+signal.winDir;if(!times.has(time)||seen.has(id))continue;seen.add(id);signalMarkers.push({time,position:signal.winDir===1?'belowBar':'aboveBar',color:signal.winDir===1?'#00c853':'#ef5350',shape:signal.winDir===1?'arrowUp':'arrowDown',text:`${signal.grade} ${signal.score}`});}
+        for(const signal of presentation.amy.signals||[]){const time=Math.floor(signal.time/duration)*duration,id=time+':'+signal.winDir;if(!times.has(time)||seen.has(id))continue;seen.add(id);signalMarkers.push({time,position:signal.winDir===1?'belowBar':'aboveBar',color:signal.winDir===1?'#00c853':'#ef5350',shape:signal.winDir===1?'arrowUp':'arrowDown',text:''});}
       }
       if(presentation?.settings?.displacement&&presentation.amy){for(const marker of presentation.amy.visuals?.displacement||[])if(result.candles.some(c=>c.time===marker.time))signalMarkers.push({time:marker.time,position:marker.side==='BUY'?'belowBar':'aboveBar',color:'#f5c562',shape:'circle',text:'Disp'});}
       series.setMarkers?.(signalMarkers.sort((a,b)=>a.time-b.time));
@@ -120,8 +125,9 @@ export function createPriceChart(element,{touchAxes=false}={}) {
 
       indicatorLines.forEach(line=>{try{series.removePriceLine(line);}catch(_){}});indicatorLines=[];
       if(presentation&&typeof series.createPriceLine==='function'&&indicators?.keyLevels){
-        const kl=indicators.keyLevels,lastPrice=result.candles?.at(-1)?.close;
-        const valid=v=>Number.isFinite(v)&&(!lastPrice||Math.abs(v-lastPrice)<=35);
+        const kl=indicators.keyLevels;
+        const lastPrice=Number(window.amyfxCurrentPrice)||result.candles?.at(-1)?.close||result.candles?.[result.candles.length-1]?.close;
+        const valid=v=>Number.isFinite(v)&&(!lastPrice||Math.abs(v-lastPrice)<=28);
         if(valid(kl.pdh))indicatorLines.push(series.createPriceLine({price:kl.pdh,title:'PDH',color:'#f97316',lineWidth:1,lineStyle:2,axisLabelVisible:true}));
         if(valid(kl.pdl))indicatorLines.push(series.createPriceLine({price:kl.pdl,title:'PDL',color:'#3b82f6',lineWidth:1,lineStyle:2,axisLabelVisible:true}));
         if(valid(kl.pwh))indicatorLines.push(series.createPriceLine({price:kl.pwh,title:'PWH',color:'#d946ef',lineWidth:1,lineStyle:1,axisLabelVisible:true}));
@@ -182,6 +188,9 @@ export function createPriceChart(element,{touchAxes=false}={}) {
       }
     },
     autoPrice(){chart.priceScale('right').applyOptions({autoScale:true});ict?.invalidate();},
+    chart,
+    series,
+    element,
     resize(){chart.applyOptions({autoSize:true});if(element?.clientWidth&&chart.resize)chart.resize(element.clientWidth,element.clientHeight||460);ict?.invalidate();},
     setFullscreen(enabled){
       chart.applyOptions({

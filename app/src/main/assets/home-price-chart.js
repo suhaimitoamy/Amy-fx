@@ -2,6 +2,92 @@ import {analyze} from './apps/mapping/js/ict-workspace/engine.js';
 import {loadCandles} from './apps/mapping/js/ict-workspace/data.js';
 import {createPriceChart} from './apps/mapping/js/ict-workspace/chart-view.js';
 import {updateDealingRangeBadge} from './apps/mapping/js/ict-workspace/dealing-range-badge.js';
+import {createManualDrawingTool} from './manual-drawing-tool.js?v=backtest-svg-2';
+
+function mountHomeFullscreen(panel, view, drawingTool) {
+  const button = panel?.querySelector('#home-chart-fullscreen');
+  if (!panel || !button) return null;
+  const placeholder = typeof document?.createComment === 'function'
+    ? document.createComment('Home price panel position')
+    : (typeof document?.createElement === 'function' ? document.createElement('span') : null);
+  if (!placeholder) return null;
+  const token = 'home-fs-' + Date.now();
+  let active = false;
+  let scrollY = 0;
+  let pendingBack = false;
+
+  const ownsHistory = () => history.state?.amyfxHomeFullscreen === token;
+
+  function layout(enabled, restore = true) {
+    if (active === enabled) return;
+    active = enabled;
+    if (enabled) {
+      scrollY = window.scrollY;
+      panel.parentNode.insertBefore(placeholder, panel);
+      document.body.appendChild(panel);
+      panel.setAttribute('role', 'dialog');
+      panel.setAttribute('aria-modal', 'true');
+    } else {
+      if (placeholder.parentNode) placeholder.parentNode.replaceChild(panel, placeholder);
+      panel.removeAttribute('role');
+      panel.removeAttribute('aria-modal');
+    }
+    document.body.classList.toggle('home-chart-fullscreen', enabled);
+    panel.classList.toggle('is-fullscreen', enabled);
+    button.textContent = enabled ? '× Keluar' : '⛶ Fullscreen';
+    button.setAttribute('aria-label', enabled ? 'Keluar fullscreen Peta Harga' : 'Buka fullscreen Peta Harga');
+    button.setAttribute('aria-pressed', String(enabled));
+    view?.setFullscreen(enabled);
+    drawingTool?.setFullscreen(enabled);
+
+    requestAnimationFrame(() => {
+      view?.resize();
+      drawingTool?.repaint();
+      if (restore && !enabled) window.scrollTo(0, scrollY);
+      if (restore) button.focus({ preventScroll: true });
+    });
+  }
+
+  function close() {
+    if (!active) return;
+    layout(false);
+    if (ownsHistory()) {
+      pendingBack = true;
+      history.back();
+    }
+  }
+
+  function onButtonClick() {
+    if (pendingBack) return;
+    if (active) {
+      close();
+      return;
+    }
+    history.pushState({ ...history.state, amyfxHomeFullscreen: token }, '');
+    layout(true);
+  }
+
+  function onPopState() {
+    if (active && !ownsHistory()) {
+      pendingBack = false;
+      layout(false, false);
+    } else if (pendingBack) {
+      pendingBack = false;
+    }
+  }
+
+  button.addEventListener('click', onButtonClick);
+  window.addEventListener('popstate', onPopState);
+
+  return () => {
+    button.removeEventListener('click', onButtonClick);
+    window.removeEventListener('popstate', onPopState);
+    if (active) {
+      layout(false, false);
+      if (ownsHistory()) history.back();
+    }
+  };
+}
 
 function isWeekendClosure(timeSec) {
   try {
@@ -68,10 +154,44 @@ function lenientCandles(values) {
 
 export function mountHomeChart(root) {
   const $=id=>root.querySelector('#'+id);
-  let view=null,raw=null,controller=null,timer=null,generation=0,disposed=false;
+  let view=null,raw=null,controller=null,timer=null,generation=0,disposed=false,es=null,drawingTool=null;
   let h1Cache=null,h1CacheTime=0;
   try { view=createPriceChart($('home-price-chart')); }
   catch { $('home-price-chart').textContent='Chart tidak tersedia. Coba muat ulang aplikasi.';return ()=>{}; }
+  if(view?.chart&&view?.series){
+    try{
+      drawingTool=createManualDrawingTool({
+        container:$('home-price-chart'),
+        chart:view.chart,
+        series:view.series,
+        getTf:()=>$('home-chart-tf')?.value||'M15',
+        getCandles:()=>filterCandles(raw?.candles||[],!isGoldMarketOpen(Date.now()/1000))
+      });
+    }catch(_){}
+  }
+  const fsTeardown=mountHomeFullscreen(root,view,drawingTool);
+  function startBrowserLivePriceStream(){
+    if(typeof window==='undefined'||window.Android||window.AmyLivePrice||window.__amyFxHomeSseStarted)return;
+    if(typeof EventSource!=='function')return;
+    window.__amyFxHomeSseStarted=true;
+    try{
+      const host=typeof location!=='undefined'?String(location.hostname||''):'';
+      const isLocal=/^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
+      const url=isLocal?'/api/live-price':'https://amy-fx.vercel.app/api/live-price';
+      es=new EventSource(url);
+      es.onmessage=(event)=>{
+        try{
+          const data=JSON.parse(event.data);
+          if(data&&Number.isFinite(Number(data.price))){
+            handleLiveTick({detail:{price:Number(data.price),timestamp:Number(data.timestamp)||Date.now()}});
+          }
+        }catch(_){}
+      };
+      es.onerror=()=>{
+        // Browser automatically retries EventSource connection
+      };
+    }catch(_){}
+  }
   function render(degraded=false){
     const tf=$('home-chart-tf').value;
     const closed=!isGoldMarketOpen(Date.now()/1000);
@@ -85,6 +205,8 @@ export function mountHomeChart(root) {
       result={candles,tf,plan:null,sourceTime:candles.at(-1)?.time||null,fresh:!raw?.degraded};
     }
     view.draw(result);
+    drawingTool?.setCandles(result.candles);
+    drawingTool?.repaint();
     const last=result.candles.at(-1);
     const currentLive=Number(window.amyfxCurrentPrice);
     const displayPrice=(!closed&&Number.isFinite(currentLive)&&currentLive>0)?currentLive:(last?last.close:null);
@@ -143,7 +265,7 @@ export function mountHomeChart(root) {
       const next={candles:safeEntryCandles,context:safeContextCandles,tf,degraded:entry.degraded||actualContext.degraded};
       const result=analyze({...next,now:Date.now()/1000});
       const previous=raw?analyze({...raw,now:Date.now()/1000}):null;
-      if(!result.candles.length||(previous&&result.sourceTime<previous.sourceTime))throw Error('Candle tidak lengkap atau lebih lama');
+      if(!result.candles.length||(previous&&raw?.tf===next.tf&&result.sourceTime<previous.sourceTime))throw Error('Candle tidak lengkap atau lebih lama');
       raw=next;render();
     } catch {
       if(disposed||id!==generation)return;
@@ -163,6 +285,7 @@ export function mountHomeChart(root) {
   function change(){
     stop();
     const newTf = $('home-chart-tf').value;
+    drawingTool?.setTf(newTf);
     try {
       if (typeof localStorage !== 'undefined') {
         const stored = localStorage.getItem(`amyfx.mapping.candles.${newTf}`);
@@ -206,7 +329,15 @@ export function mountHomeChart(root) {
   window.addEventListener('amyfx:twelvedata-price',handleLiveTick);
   window.addEventListener('amyfx:live-price-display',handleLiveTick);
   refresh();
+  startBrowserLivePriceStream();
   return ()=>{disposed=true;stop();view.destroy();
+    fsTeardown?.();
+    drawingTool?.destroy();
+    if(es){
+      try{es.close();}catch(_){}
+      es=null;
+      window.__amyFxHomeSseStarted=false;
+    }
     $('home-chart-refresh').removeEventListener('click',refresh);$('home-chart-tf').removeEventListener('change',change);
     document.removeEventListener('visibilitychange',visibility);window.removeEventListener('online',refresh);
     window.removeEventListener('pagehide',stop);window.removeEventListener('pageshow',pageshow);

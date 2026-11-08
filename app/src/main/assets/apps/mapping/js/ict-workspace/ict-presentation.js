@@ -1,5 +1,5 @@
 // Presentation settings never change server-owned bias/scoring.
-export const DISPLAY_DEFAULTS=Object.freeze({mode:'Present',structure:true,mss:true,bos:true,displacement:false,ob:true,breaker:true,polarity:false,liquidity:true,fvg:true,gapType:'FVG',bpr:false,vi:true,nwog:true,ndog:false,pivots:true,pivotTf:'D',pivotMode:'Clean',nearAtr:2,keyLevels:true,mo:true,pdh:true,pdl:true,bsl:false,ssl:false,asia:true,killzones:false,ny:true,londonOpen:true,londonClose:true,asian:true,fib:'NONE',fibExtend:false,labels:true,signals:true,narration:true,dashboard:true,panel:false,assistantNotif:true,visible:2,bullOb:1,bearOb:1,nwogCount:3,ndogCount:1,backBars:80,rightBars:40,lineWidth:1});
+export const DISPLAY_DEFAULTS=Object.freeze({mode:'Present',structure:true,mss:true,bos:true,displacement:false,ob:true,breaker:true,polarity:false,liquidity:true,fvg:true,gapType:'FVG',bpr:false,vi:true,nwog:true,ndog:false,pivots:true,pivotTf:'D',pivotMode:'Clean',nearAtr:2,keyLevels:true,mo:true,pdh:true,pdl:true,bsl:false,ssl:false,asia:true,killzones:false,ny:true,londonOpen:true,londonClose:true,asian:true,fib:'NONE',fibExtend:false,labels:true,signals:false,narration:false,dashboard:true,panel:false,assistantNotif:true,visible:2,bullOb:1,bearOb:1,nwogCount:3,ndogCount:1,backBars:80,rightBars:40,lineWidth:1});
 export function loadDisplay(storage=globalThis.localStorage){try{return {...DISPLAY_DEFAULTS,...JSON.parse(storage.getItem('amyfx.ict.display.v2')||'{}')};}catch{return {...DISPLAY_DEFAULTS};}}
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const n=x=>Number.isFinite(x)?x.toFixed(2):'—';
@@ -405,7 +405,7 @@ export function dashboardContextV4Rows(amy, context = null) {
   const rangePct = (hasRange && currentPrice > 0) ? Math.min(100, Math.max(0, Math.round(((currentPrice - rLow) / (rHigh - rLow)) * 100))) : 50;
   const isDiscount = rangePct < 47.5;
   const isPremium = rangePct > 52.5;
-  const zoneLabel = isDiscount ? `DISCOUNT (<47.5%) [${rangePct}%]` : isPremium ? `PREMIUM (>52.5%) [${rangePct}%]` : `EQUILIBRIUM (50%) [${rangePct}%] · ZONA CINCANG`;
+  const zoneLabel = isDiscount ? `DISCOUNT (<47.5%) [${rangePct}%]` : isPremium ? `PREMIUM (>52.5%) [${rangePct}%]` : `EQUILIBRIUM (50%) [${rangePct}%] · NO-TRADE ZONE`;
 
   // 3. Sweeps & Liquidity
   const sweep = detectLiquiditySweep(amy, ctx);
@@ -440,8 +440,8 @@ export function dashboardContextV4Rows(amy, context = null) {
       actionGuide = 'Penurunan Ini Koreksi Menuju Discount — Awas Jebakan Sell di Bawah!';
       phaseClass = 'bias-val-purple';
     } else if (rangePct >= 47.5 && rangePct <= 52.5) {
-      phaseStatus = 'ZONA CINCANG (Harga di Poros Equilibrium 50%)';
-      actionGuide = '🛡️ SOP ANTI-YES-MAN: DILARANG ENTRY! Diam & tunggu harga sweep lantai SSL (<47.5%) atau plafon BSL (>52.5%).';
+      phaseStatus = 'NO-TRADE ZONE (Harga di Poros Equilibrium 50%)';
+      actionGuide = '🛡️ SOP ANTI-YES-MAN: DILARANG ENTRY! Diam & tunggu harga sweep Support / SSL (<47.5%) atau Resistance / BSL (>52.5%).';
       phaseClass = 'bias-val-purple';
     } else if (isFullBullAlign && isPremium) {
       phaseStatus = `EKSPANSI BULLISH DI AREA PREMIUM (${rangePct}%)`;
@@ -466,8 +466,8 @@ export function dashboardContextV4Rows(amy, context = null) {
       actionGuide = 'Kenaikan Ini Koreksi Menuju Premium — Awas Jebakan Buy di Pucuk!';
       phaseClass = 'bias-val-purple';
     } else if (rangePct >= 47.5 && rangePct <= 52.5) {
-      phaseStatus = 'ZONA CINCANG (Harga di Poros Equilibrium 50%)';
-      actionGuide = '🛡️ SOP ANTI-YES-MAN: DILARANG ENTRY! Diam & tunggu harga sweep lantai SSL (<47.5%) atau plafon BSL (>52.5%).';
+      phaseStatus = 'NO-TRADE ZONE (Harga di Poros Equilibrium 50%)';
+      actionGuide = '🛡️ SOP ANTI-YES-MAN: DILARANG ENTRY! Diam & tunggu harga sweep Support / SSL (<47.5%) atau Resistance / BSL (>52.5%).';
       phaseClass = 'bias-val-purple';
     } else if (isFullBearAlign && isDiscount) {
       phaseStatus = `EKSPANSI BEARISH DI AREA DISCOUNT (${rangePct}%)`;
@@ -895,12 +895,28 @@ export function renderLiveAssistant(amy,news=null,settings={},context=null){
     }
   }else if(sniperTrigger && (!ast || ast.status !== 'READY')){
     const isBuy=sniperTrigger.side==='BUY';
-    badge=isBuy?'SNIPER BUY':'SNIPER SELL';
-    badgeClass=isBuy?'badge-bull':'badge-bear';
-    stateClass=isBuy?'assistant-state-bull':'assistant-state-bear';
-    primary=`${isBuy?'🟢':'🔴'} SNIPER ${sniperTrigger.side} ENTRY · M5 Reversal`;
-    sub=`Detektor 3-Candle M5: Terkonfirmasi @ ${sniperTrigger.mathZone}. Entry ${n(sniperTrigger.entry)} · Target 100 Pips Sayang`;
-    notify=true;notifTitle=`⚡ Asisten Amy: ${badge}`;notifBody=`${primary}. ${sub}`;
+    const isMtfBearish=d?.dirMTF?d.dirMTF<0:(ctx?.m15?.dir?ctx.m15.dir<0:false);
+    const isMtfBullish=d?.dirMTF?d.dirMTF>0:(ctx?.m15?.dir?ctx.m15.dir>0:false);
+    const isCounterTrend=(isBuy&&isMtfBearish)||(!isBuy&&isMtfBullish);
+    const confZone=amy?.confluence?.zone||ctx?.confluence?.zone||'';
+    const confScore=Number(amy?.confluence?.score??ctx?.confluence?.score??0);
+    const isNoEntry=confZone==='NO ENTRY'||(confScore>0&&confScore<60);
+
+    if(isCounterTrend||isNoEntry){
+      badge='PULLBACK WATCH';
+      badgeClass='badge-neutral';
+      stateClass='assistant-state-neutral';
+      primary=`⚠️ PULLBACK KOREKTIF (M5 Reversal vs M15 ${isMtfBearish?'Bearish':'Bullish'})`;
+      sub=`SOP Anti-Yes-Man: Pantulan M5 di area ${sniperTrigger.mathZone}. Dilarang FOMO ${isBuy?'Buy':'Sell'} — Tunggu konfirmasi struktur baru atau jemputan di zona ekstrem!`;
+      notify=false;
+    }else{
+      badge=isBuy?'SNIPER BUY':'SNIPER SELL';
+      badgeClass=isBuy?'badge-bull':'badge-bear';
+      stateClass=isBuy?'assistant-state-bull':'assistant-state-bear';
+      primary=`${isBuy?'🟢':'🔴'} SNIPER ${sniperTrigger.side} ENTRY · M5 Reversal`;
+      sub=`Detektor 3-Candle M5: Terkonfirmasi @ ${sniperTrigger.mathZone}. Entry ${n(sniperTrigger.entry)} · Target 100 Pips Sayang`;
+      notify=true;notifTitle=`⚡ Asisten Amy: ${badge}`;notifBody=`${primary}. ${sub}`;
+    }
   }else if(ast&&(ast.signalType===1||(ast.rawSignalType===1&&ast.status==='READY'))){
     badge='BUY ENTRY';badgeClass='badge-bull';stateClass='assistant-state-bull';
     primary=`🟢 BUY ENTRY · ${ast.signalName||'Trend Buy'}`;
@@ -916,18 +932,18 @@ export function renderLiveAssistant(amy,news=null,settings={},context=null){
       notify=true;notifTitle='🔴 Asisten Amy: SELL ENTRY';notifBody=`${primary}. ${sub}`;
     }
   }else if(ast&&(ast.signalType===-2||(ast.rawSignalType===-2&&ast.status==='READY'))){
-    badge='PULLBACK SELL';badgeClass='badge-bear';stateClass='assistant-state-bear';
-    primary='🟠 PULLBACK SELL (Pucuk Premium)';
-    sub=`Anti-Chase: READY · Math Zone: ${mathZoneText} · Catatan: Sell ini pullback, bukan ubah bias utama`;
+    badge='PULLBACK SELL (CISD)';badgeClass='badge-bear';stateClass='assistant-state-bear';
+    primary='🟠 PULLBACK SELL (CISD Pucuk Premium)';
+    sub=`Anti-Chase: READY · CISD Terkonfirmasi · Entry ${plan?.entry!=null?n(plan.entry):'—'}`;
     if(isPlanFresh){
-      notify=true;notifTitle='🟠 Asisten Amy: PULLBACK SELL';notifBody=`${primary}. ${sub}`;
+      notify=true;notifTitle='🟠 Asisten Amy: PULLBACK SELL (CISD)';notifBody=`${primary}. ${sub}`;
     }
   }else if(ast&&(ast.signalType===2||(ast.rawSignalType===2&&ast.status==='READY'))){
-    badge='PULLBACK BUY';badgeClass='badge-bull';stateClass='assistant-state-bull';
-    primary='🔵 PULLBACK BUY (Dasar Diskon)';
-    sub=`Anti-Chase: READY · Math Zone: ${mathZoneText} · Catatan: Buy ini pullback, bukan ubah bias utama`;
+    badge='PULLBACK BUY (CISD)';badgeClass='badge-bull';stateClass='assistant-state-bull';
+    primary='🔵 PULLBACK BUY (CISD Dasar Diskon)';
+    sub=`Anti-Chase: READY · CISD Terkonfirmasi · Entry ${plan?.entry!=null?n(plan.entry):'—'}`;
     if(isPlanFresh){
-      notify=true;notifTitle='🔵 Asisten Amy: PULLBACK BUY';notifBody=`${primary}. ${sub}`;
+      notify=true;notifTitle='🔵 Asisten Amy: PULLBACK BUY (CISD)';notifBody=`${primary}. ${sub}`;
     }
   }else if(ast&&ast.status==='MISSED'){
     badge='STANDBY';badgeClass='badge-warn';stateClass='assistant-state-sweep';
@@ -957,6 +973,24 @@ export function renderLiveAssistant(amy,news=null,settings={},context=null){
       notifTitle=`💧 Asisten Amy: ${sweepInfo.name} @ ${n(sweepInfo.level)} Swept!`;
       notifBody=`${primary} ${sub}`;
     }
+  }else if(e?.importance === 4){
+    const isBull = d?.biasDir === 1;
+    const trg = amy?.trigger;
+    const trgHigh = trg?.high;
+    const trgLow = trg?.low;
+    const lastBreak = ctx?.m15?.lastBreak;
+    const breakKind = lastBreak?.kind || (isBull ? 'BOS Bullish' : 'BOS Bearish');
+    const brokenLvl = isBull ? (trgHigh || lastBreak?.level || d?.protectedHigh) : (trgLow || lastBreak?.level || d?.protectedLow);
+    const brokenStr = brokenLvl ? `@ ${n(brokenLvl)}` : '';
+    const dolTgt = d?.dolTarget ? ` · Target DOL: ${n(d.dolTarget)}` : '';
+    badge = isBull ? 'VALID BREAK BULL' : 'VALID BREAK BEAR';
+    badgeClass = isBull ? 'badge-bull' : 'badge-bear';
+    stateClass = isBull ? 'assistant-state-bull' : 'assistant-state-bear';
+    primary = `✓ Valid Break ${isBull ? 'Bullish' : 'Bearish'} dengan Displacement: ${breakKind} ${brokenStr} Ditembus!`;
+    sub = `Struktur M5 terkonfirmasi searah tren${dolTgt}. Siapkan observasi entry Sayang.`;
+    notify = true;
+    notifTitle = `✓ Asisten Amy: VALID BREAK ${isBull ? 'BULLISH' : 'BEARISH'} (${breakKind})`;
+    notifBody = `${primary} ${sub}`;
   }else{
     const v4Rows = dashboardContextV4Rows(amy, context);
     const phaseRow = v4Rows.find(r => r[0] === 'FASE NARASI MARKET');
@@ -964,8 +998,8 @@ export function renderLiveAssistant(amy,news=null,settings={},context=null){
     if(phaseRow && guideRow && phaseRow[1]){
       primary = phaseRow[1];
       sub = guideRow[1];
-      if(primary.includes('ZONA CINCANG')){
-        badge = 'ZONA CINCANG'; badgeClass = 'badge-warn'; stateClass = 'assistant-state-sweep';
+      if(primary.includes('NO-TRADE ZONE') || primary.includes('ZONA CINCANG')){
+        badge = 'NO-TRADE ZONE'; badgeClass = 'badge-warn'; stateClass = 'assistant-state-sweep';
       } else if(primary.includes('SEARAH BULLISH') || primary.includes('EKSPANSI BULLISH')){
         badge = 'SEARAH BULLISH'; badgeClass = 'badge-bull'; stateClass = 'assistant-state-bull';
       } else if(primary.includes('SEARAH BEARISH') || primary.includes('EKSPANSI BEARISH')){
@@ -1101,10 +1135,10 @@ export function renderEntryAssistantPlan(amy,context=null){
     const isEquilibrium=(rangePct>=47.5&&rangePct<=52.5);
 
     if(isEquilibrium){
-      if(badgeEl){badgeEl.textContent='ZONA CINCANG · NO-TRADE';badgeEl.className='plan-badge badge-neutral';}
+      if(badgeEl){badgeEl.textContent='NO-TRADE ZONE';badgeEl.className='plan-badge badge-neutral';}
       if(antiChaseEl){antiChaseEl.textContent='DILARANG ENTRY';antiChaseEl.className='anti-chase-pill pill-warning';}
       if(rejectionEl)rejectionEl.style.display='none';
-      if(mathZoneEl)mathZoneEl.textContent='Math Zone: EQUILIBRIUM 50% (ZONA CINCANG)';
+      if(mathZoneEl)mathZoneEl.textContent='Math Zone: EQUILIBRIUM 50% (NO-TRADE ZONE)';
       if(pullbackEl)pullbackEl.style.display='none';
       if(entryVal)entryVal.textContent='—';
       if(slVal)slVal.textContent='—';if(slSub)slSub.textContent='Rem Disiplin';
@@ -1113,8 +1147,8 @@ export function renderEntryAssistantPlan(amy,context=null){
       if(reasonsEl){
         const items=[
           'Harga sedang berputar di poros tengah Dealing Range (Equilibrium 50%).',
-          'SOP Anti-Yes-Man: DIAM dan simpan peluru! Jangan menekan tombol order di zona cincang.',
-          'Tunggu penjemputan likuiditas di Lantai SSL (<47.5%) atau Plafon BSL (>52.5%).'
+          'SOP Anti-Yes-Man: DIAM dan simpan peluru! Jangan menekan tombol order di area tengah (No-Trade Zone).',
+          'Tunggu penjemputan likuiditas di Support / Demand (<47.5%) atau Resistance / Supply (>52.5%).'
         ];
         reasonsEl.innerHTML=items.map(r=>`<li>${esc(r)}</li>`).join('');
       }
@@ -1149,14 +1183,26 @@ export function renderEntryAssistantPlan(amy,context=null){
     return;
   }
 
-  const isPullback=Math.abs(plan.signalType)===2||Boolean(ast?.isPullback);
+  const ctx=context||(typeof window!=='undefined'?window.AmyMarketContext:null);
+  const d=amy?.dashboard;
+  const isMtfBull=d?.dirMTF?d.dirMTF>0:(ctx?.m15?.dir?ctx.m15.dir>0:false);
+  const confZone=amy?.confluence?.zone||ctx?.confluence?.zone||'';
+  const confScore=Number(amy?.confluence?.score??ctx?.confluence?.score??0);
+  const isNoEntry=confZone==='NO ENTRY'||(confScore>0&&confScore<60);
   const isBuy=plan.side==='BUY';
-  const badgeText=plan.signalName||(isPullback?(isBuy?'PULLBACK BUY':'PULLBACK SELL'):(isBuy?'BUY ENTRY':'SELL ENTRY'));
-  const badgeClass=isBuy?'badge-bull':'badge-bear';
+  const isCounterTrend=(isBuy&&!isMtfBull)||(!isBuy&&isMtfBull);
+  const isPullback=Math.abs(plan.signalType)===2||Boolean(ast?.isPullback)||isCounterTrend;
+
+  const badgeText=isCounterTrend
+    ?`⚠️ PULLBACK (M15 ${isMtfBull?'BULL':'BEAR'})`
+    :(plan.signalName||(isPullback?(isBuy?'PULLBACK BUY':'PULLBACK SELL'):(isBuy?'BUY ENTRY':'SELL ENTRY')));
+  const badgeClass=isCounterTrend?'badge-neutral':(isBuy?'badge-bull':'badge-bear');
 
   if(badgeEl){badgeEl.textContent=badgeText;badgeEl.className=`plan-badge ${badgeClass}`;}
   if(antiChaseEl){
-    if(plan.signalName?.includes('SNIPER')){
+    if(isCounterTrend||isNoEntry){
+      antiChaseEl.textContent='DILARANG ENTRY (PULLBACK KOREKTIF)';antiChaseEl.className='anti-chase-pill pill-warning';
+    }else if(plan.signalName?.includes('SNIPER')){
       antiChaseEl.textContent='READY DI ZONA EKSTREM';antiChaseEl.className='anti-chase-pill pill-ready';
     }else if(ast?.status==='READY'||plan.status==='READY'){
       antiChaseEl.textContent='READY DI ZONA';antiChaseEl.className='anti-chase-pill pill-ready';
@@ -1171,7 +1217,11 @@ export function renderEntryAssistantPlan(amy,context=null){
   const sweepInfo=ast?.sweep||plan?.sweep||amy?.sweep||null;
   const rejectionState=ast?.rejectionState||plan?.rejectionState||(ast?.reclaimed?'SWEEP_REJECTION':(ast?.waitingRejectionClose?'SWEEP_UNCONFIRMED':null));
   if(rejectionEl){
-    if(rejectionState==='SWEEP_REJECTION'||ast?.reclaimed===true||plan?.reclaimed===true||plan?.signalName?.includes('SNIPER')){
+    if(isCounterTrend||isNoEntry){
+      rejectionEl.style.display='inline-block';
+      rejectionEl.textContent='🛡️ Lawan Bias MTF';
+      rejectionEl.className='anti-chase-pill pill-warning';
+    }else if(rejectionState==='SWEEP_REJECTION'||ast?.reclaimed===true||plan?.reclaimed===true||plan?.signalName?.includes('SNIPER')){
       rejectionEl.style.display='inline-block';
       rejectionEl.textContent='🎯 Reclaimed Valid';
       rejectionEl.className='anti-chase-pill pill-ready';
@@ -1185,9 +1235,9 @@ export function renderEntryAssistantPlan(amy,context=null){
   }
   if(mathZoneEl)mathZoneEl.textContent=`Math Zone: ${plan.mathZone||ast?.mathZone||'Fibo OTE / SNR / POI'}`;
   if(pullbackEl){
-    if(isPullback){
+    if(isCounterTrend||isPullback){
       pullbackEl.style.display='block';
-      pullbackEl.innerHTML=`<span>⚠️ <strong>Catatan Khusus:</strong> ${isBuy?'Buy':'Sell'} ini pullback, bukan mengubah bias utama.</span>`;
+      pullbackEl.innerHTML=`<span>🛡️ <strong>SOP ANTI-YES-MAN:</strong> Sinyal ${isBuy?'BUY':'SELL'} ini adalah koreksi/pullback yang berlawanan dengan arah Order Flow M15 (${isMtfBull?'BULLISH':'BEARISH'}). DILARANG FOMO ${isBuy?'BUY':'SELL'}! Disiplin tunggu setup searah.</span>`;
     }else{
       pullbackEl.style.display='none';
     }

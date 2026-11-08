@@ -139,7 +139,7 @@ export default async function handler(req, res) {
         const formedAtSec = v3Plan.formedAt ? Math.floor(new Date(v3Plan.formedAt).getTime() / 1000) : (m15.at(-1)?.close_time || m15[0]?.close_time || nowSec);
         const p = {
           signalType: v3Plan.signalType,
-          signalName: v3Plan.signalName || (v3Plan.signalType === 1 ? 'BUY ENTRY (Trend Buy)' : v3Plan.signalType === -1 ? 'SELL ENTRY (Trend Sell)' : v3Plan.signalType === -2 ? 'PULLBACK SELL (Pullback di Pucuk Premium)' : 'PULLBACK BUY (Pullback di Dasar Diskon)'),
+          signalName: v3Plan.signalName || (v3Plan.signalType === 1 ? 'BUY ENTRY (Trend Buy)' : v3Plan.signalType === -1 ? 'SELL ENTRY (Trend Sell)' : v3Plan.signalType === -2 ? 'PULLBACK SELL (CISD Pucuk Premium)' : 'PULLBACK BUY (CISD Dasar Diskon)'),
           direction: v3Plan.direction || v3Plan.side || (v3Plan.signalType > 0 ? 'BUY' : 'SELL'),
           entry: v3Plan.entry,
           stopLoss: v3Plan.stopLoss ?? v3Plan.sl,
