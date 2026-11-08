@@ -1,23 +1,23 @@
 {
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx-pro/releases/download/amyfx-pro-2.0.0-pro.436/AmyFX-Pro-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx-pro/releases/download/amyfx-pro-2.0.0-pro.437/AmyFX-Pro-latest.apk",
   "changelog": [
     "Paritas Harga & Analisa Mapping: Filter candle akhir pekan di backend & sinkronisasi penuh harga Beranda, Header Mapping, dan Tabel V6.1.",
     "Anti-Notifikasi Basi (Web & Native Android): Kunci waktu sweep/break/setup batal presisi <= 15 menit tanpa bunyi ulang dari event berjam-jam lalu.",
     "Peleburan Kurikulum Academy Level 0–6 (222 Bab Utuh) & Redesain Asisten Suara/Teks ✦ AMY."
   ],
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx-pro/releases/download/amyfx-pro-2.0.0-pro.436/AmyFX-Pro-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx-pro/releases/download/amyfx-pro-2.0.0-pro.437/AmyFX-Pro-latest.apk",
   "enabled": true,
   "force_update": false,
-  "latest_version_code": 950436,
-  "latest_version_name": "2.0.0-pro.436",
+  "latest_version_code": 950437,
+  "latest_version_name": "2.0.0-pro.437",
   "mandatory": false,
-  "releaseDate": "2026-11-07",
+  "releaseDate": "2026-11-08",
   "release_notes": [
     "Paritas Harga & Analisa Mapping: Filter candle akhir pekan di backend & sinkronisasi penuh harga Beranda, Header Mapping, dan Tabel V6.1.",
     "Anti-Notifikasi Basi (Web & Native Android): Kunci waktu sweep/break/setup batal presisi <= 15 menit tanpa bunyi ulang dari event berjam-jam lalu.",
     "Peleburan Kurikulum Academy Level 0–6 (222 Bab Utuh) & Redesain Asisten Suara/Teks ✦ AMY."
   ],
-  "version": "2.0.0-pro.436",
-  "versionCode": 950436,
-  "sha256": "4be30f8a60adda35b437e85ec97d720592290bd75a8947354e6226f774c7652c"
+  "version": "2.0.0-pro.437",
+  "versionCode": 950437,
+  "sha256": "9e71153abae60e49f81bfa0c2764b52183f57a084224a91891c9f10cc1c07824"
 }
