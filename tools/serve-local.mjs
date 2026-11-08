@@ -1133,6 +1133,8 @@ const requestHandler = async (req, res) => {
             `- Istilah wajib standar trader pro: Support / Demand, Resistance / Supply, No-Trade Zone (jangan entry di tengah), Dealing Range (Premium/Discount/EQ 50%), PDH/PDL, PWH/PWL, Asia High/Low, FVG, Order Block, BSL/SSL, MSS/BOS.\n` +
             `- Prinsip Anti-Yes-Man: Ingatkan dengan jujur jika harga berada di No-Trade Zone atau pasar sedang tutup akhir pekan.\n\n` +
             `DATA REAL-TIME LANGSUNG DARI APLIKASI AMY FX PRO SAAT INI:\n${appContext || 'Tidak ada konteks tambahan.'}\n\n` +
+            `ATURAN ANTI-HALUSINASI ANGKA HARGA:\n` +
+            `DILARANG KERAS MENGARANG ATAU MEMFABRIKASI ANGKA HARGA GOLD. Patokan harga riil XAU/USD wajib diambil dari data Konteks Aplikasi di atas (Harga Tampil di Layar / Candle Terakhir). Jika data harga belum terbaca di konteks, katakan dengan jujur "Data harga live sedang dimuat, mohon tunggu sebentar". JANGAN PERNAH mengarang angka seperti 4000+!\n\n` +
             `ATURAN JAWABAN & AKSES PENUH MATERI ACADEMY:\n` +
             `- DILARANG KERAS memakai simbol markdown seperti tanda bintang (* atau **), pagar (# atau ###), garis (---), atau backtick (\`). Tulis teks biasa yang bersih dan rapi, gunakan tanda titik bulat (•) untuk poin.\n` +
             `- AKSES PENUH SELURUH MATERI PER LEVEL & MODUL: Kamu memiliki akses penuh ke seluruh kurikulum Amy FX Academy (Level 0 s.d. Level 6 yang berisi 42 bab, 10 Modul Master, dan 36 Bagian / 222 bab yang tercantum pada DATA REAL-TIME di atas).\n` +

@@ -78,14 +78,32 @@
     } catch (_) {}
   }
 
+  function getApiBaseUrl() {
+    if (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin.includes('appassets.androidplatform.net')) {
+      return 'https://amy-fx.vercel.app';
+    }
+    return '';
+  }
+
   async function ensureGeminiConfig() {
     if (geminiConfig && geminiConfig.apiKey) return geminiConfig;
     try {
-      const res = await fetch('/api/gemini-config');
+      const res = await fetch(getApiBaseUrl() + '/api/gemini-config');
       if (res.ok) {
-        geminiConfig = await res.json();
+        const d = await res.json();
+        if (d && d.apiKey) {
+          geminiConfig = d;
+          return geminiConfig;
+        }
       }
     } catch (_) {}
+    // Fallback bawaan aman agar selalu siap tanpa bergantung deploy cloud
+    geminiConfig = {
+      ok: true,
+      apiKey: 'AIzaSyAiB-yJ-wg6Pbd_dPiaO1Q7ZJ_DzLjqsTs',
+      liveModel: 'models/gemini-3.8-live',
+      voiceName: 'Aoede'
+    };
     return geminiConfig;
   }
 
@@ -131,7 +149,8 @@
     try {
       const raw =
         root.localStorage.getItem(`amyfx.mapping.candles.${tf}`) ||
-        root.localStorage.getItem(`amyfx.candles.XAU/USD.${tf}`);
+        root.localStorage.getItem(`amyfx.candles.XAU/USD.${tf}`) ||
+        root.localStorage.getItem(`amyfx.mapping.candles.${tf === 'M15' ? '15min' : tf === 'M5' ? '5min' : tf}`);
       if (!raw) return '';
       const parsed = JSON.parse(raw);
       const list = Array.isArray(parsed)
@@ -142,12 +161,44 @@
         ? parsed.values
         : [];
       if (!list.length) return '';
-      const recent = list.slice(-5);
+
+      // Cek arah urutan candle (TwelveData biasanya newest-first values[0])
+      function getCandleTime(c) {
+        if (!c) return 0;
+        if (typeof c.time === 'number') return c.time;
+        if (typeof c.timestamp === 'number') return c.timestamp;
+        if (typeof c.t === 'number') return c.t;
+        if (c.datetime) {
+          const t = new Date(String(c.datetime).replace(' ', 'T')).getTime();
+          if (!isNaN(t)) return t;
+        }
+        if (typeof c.time === 'string') {
+          const t = new Date(String(c.time).replace(' ', 'T')).getTime();
+          if (!isNaN(t)) return t;
+        }
+        return 0;
+      }
+
+      let chronological = list;
+      if (list.length > 1) {
+        const tFirst = getCandleTime(list[0]);
+        const tLast = getCandleTime(list[list.length - 1]);
+        if (tFirst && tLast && tFirst > tLast) {
+          chronological = [...list].reverse();
+        } else if (Array.isArray(parsed?.values) && (!tFirst || !tLast)) {
+          chronological = [...list].reverse();
+        }
+      }
+
+      const recent = chronological.slice(-5);
+      if (!recent.length) return '';
       const last = recent[recent.length - 1];
-      const hi = Math.max(...list.slice(-32).map(c => Number(c.high || c.h || 0)).filter(Boolean));
-      const lo = Math.min(...list.slice(-32).map(c => Number(c.low || c.l || 0)).filter(Boolean));
+      const hi = Math.max(...chronological.slice(-32).map(c => Number(c.high || c.h || 0)).filter(Boolean));
+      const lo = Math.min(...chronological.slice(-32).map(c => Number(c.low || c.l || 0)).filter(Boolean));
       const eq = hi && lo ? ((hi + lo) / 2).toFixed(2) : '';
       const closeVal = Number(last.close || last.c || 0).toFixed(2);
+      if (isNaN(Number(closeVal)) || Number(closeVal) <= 0) return '';
+
       const candlesText = recent
         .map(c => {
           const o = Number(c.open || c.o || 0).toFixed(2);
@@ -204,7 +255,7 @@
           /\b(modul|level|bab|bagian|materi|pelajari|belajar|buka|fvg|order block|liquidity|bos|mss|ote|killzone|turtle soup|inducement|amd|po3)\b/i.test(userQuestion || '');
         const effectiveLessonQuery = isAcademyLessonQuery ? (userQuestion || '') : '';
         const qParam = effectiveLessonQuery ? `?q=${encodeURIComponent(effectiveLessonQuery)}` : '';
-        const resp = await fetch(`/api/academy-reading${qParam}`, {
+        const resp = await fetch(getApiBaseUrl() + `/api/academy-reading${qParam}`, {
           method: hasState || effectiveLessonQuery ? 'POST' : 'GET',
           headers: hasState || effectiveLessonQuery ? { 'Content-Type': 'application/json' } : undefined,
           body: hasState || effectiveLessonQuery ? JSON.stringify({ lastRead, history, microProgress, query: effectiveLessonQuery }) : undefined
@@ -292,8 +343,21 @@
     const academyCtx = await collectAcademyReadingContext(userQuestion);
     if (academyCtx) lines.push(academyCtx);
 
-    const domPrice =
-      document.querySelector('#live-price-value, #mapping-live-price, .gold-live-price, [data-live-price]')?.textContent?.trim() || '';
+    let domPrice = '';
+    if (typeof root !== 'undefined' && Number.isFinite(Number(root.amyfxCurrentPrice)) && Number(root.amyfxCurrentPrice) > 0) {
+      domPrice = '$' + Number(root.amyfxCurrentPrice).toFixed(2);
+    }
+    if (!domPrice) {
+      const priceEl = document.querySelector(
+        '#hero-price, #chart-price, #scenario-price, .hero-live-price, #home-chart-price, #home-price, #live-price-value, #mapping-live-price, .gold-live-price, [data-price], [data-live-price]'
+      );
+      if (priceEl) {
+        const text = (priceEl.textContent || priceEl.getAttribute('data-price') || '').trim();
+        if (text && text !== '—' && /\d/.test(text)) {
+          domPrice = text.startsWith('$') ? text : '$' + text;
+        }
+      }
+    }
     if (domPrice) lines.push(`Harga Tampil di Layar: ${domPrice}`);
 
     const domAssistantPrimary = document.querySelector('#assistant-primary-msg')?.textContent?.trim() || '';
@@ -1046,7 +1110,7 @@
         let turnText = q || 'Tolong analisa gambar chart ini.';
         if (/\b(modul|level|bab|bagian|materi|pelajari|belajar|buka|fvg|order block|liquidity|bos|mss|ote|killzone|candle)\b/i.test(q)) {
           try {
-            const r = await fetch(`/api/academy-reading?q=${encodeURIComponent(q)}`);
+            const r = await fetch(getApiBaseUrl() + `/api/academy-reading?q=${encodeURIComponent(q)}`);
             if (r.ok) {
               const d = await r.json();
               if (d?.requestedLesson?.title) {
@@ -1083,17 +1147,60 @@
       try {
         const hist = loadHistory();
         const appContext = await collectAmyAppContext(q);
-        const resp = await fetch('/api/gemini-chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: q,
-            appContext,
-            imageBase64: imgToSend,
-            history: hist
-          })
-        });
-        const data = await resp.json();
+        let data = null;
+        try {
+          const resp = await fetch(getApiBaseUrl() + '/api/gemini-chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: q,
+              appContext,
+              imageBase64: imgToSend,
+              history: hist
+            })
+          });
+          if (resp.ok) {
+            data = await resp.json();
+          }
+        } catch (_) {}
+
+        if (!data || !data.ok) {
+          try {
+            const cfg = await ensureGeminiConfig();
+            const gUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${cfg.apiKey}`;
+            const sysText =
+              `Kamu adalah AMY (✦ AMY), asisten pintar di dalam aplikasi Amy FX Pro.\n` +
+              `Panggil pengguna dengan sapaan "kamu". Nada ramah, profesional, dan to the point.\n` +
+              `Pengguna adalah Pure Gold Scalper M15/M5 target 100 pips WITA.\n` +
+              `Konteks data aplikasi saat ini:\n${appContext || 'Data tidak tersedia.'}\n` +
+              `DILARANG mengarang angka harga Gold. Jangan pakai simbol markdown bintang (*), pagar (#), atau garis (---). Jawab dalam teks bersih.`;
+            const gContents = [];
+            for (const h of hist.slice(-6)) {
+              if (h?.text) gContents.push({ role: h.role === 'model' ? 'model' : 'user', parts: [{ text: String(h.text) }] });
+            }
+            const parts = [];
+            if (imgToSend) parts.push({ inlineData: { mimeType: 'image/jpeg', data: imgToSend } });
+            parts.push({ text: q || 'Analisa chart' });
+            gContents.push({ role: 'user', parts });
+
+            const gResp = await fetch(gUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: sysText }] },
+                generationConfig: { temperature: 0.2, maxOutputTokens: 500 },
+                contents: gContents
+              })
+            });
+            if (gResp.ok) {
+              const gJson = await gResp.json();
+              const reply = gJson?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('').trim();
+              if (reply) {
+                data = { ok: true, reply: cleanPlainText(reply) };
+              }
+            }
+          } catch (_) {}
+        }
 
         let replyText = '';
         let links = [];
@@ -1101,10 +1208,10 @@
           try {
             const localRes = await root.AmyLocalAssistant.ask(q);
             if (Array.isArray(localRes?.links)) links = localRes.links;
-            if (!data.ok && localRes?.text) replyText = localRes.text;
+            if ((!data || !data.ok) && localRes?.text) replyText = localRes.text;
           } catch (_) {}
         }
-        if (data.ok && data.reply) {
+        if (data && data.ok && data.reply) {
           replyText = data.reply;
         }
         if (lastRequestedLesson && lastRequestedLesson.relPath) {
@@ -1266,6 +1373,15 @@
                         },
                         required: ['query']
                       }
+                    },
+                    {
+                      name: 'get_live_gold_price',
+                      description:
+                        'Mengambil harga live pasar XAU/USD (Gold) saat ini dari layar dan candle aplikasi. WAJIB dipanggil jika ingin memverifikasi harga riil Gold.',
+                      parameters: {
+                        type: 'OBJECT',
+                        properties: {}
+                      }
                     }
                   ]
                 }
@@ -1278,7 +1394,8 @@
                     `Pengguna adalah Pure Gold Scalper (XAU/USD timeframe M15 & M5, target presisi 100 pips / $10, zona waktu WITA).\n` +
                     `Kamu berada langsung di dalam layar aplikasi Amy FX Pro bersama pengguna, sehingga kamu bisa melihat langsung Chart Gold M15/M5 yang sedang tampil di layar pengguna beserta seluruh data aplikasi berikut:\n\n` +
                     `${appContext}\n\n` +
-                    `ATURAN PENTING & AKSES PENUH MATERI PER LEVEL/MODUL:\n` +
+                    `ATURAN PENTING & ANTI-HALUSINASI ANGKA HARGA:\n` +
+                    `- DILARANG KERAS MENGARANG ATAU MEMFABRIKASI ANGKA HARGA GOLD. Patokan harga riil XAU/USD wajib diambil dari data Konteks Aplikasi di atas (Harga Tampil di Layar / Candle Terakhir). Jika data harga belum terbaca di konteks, katakan dengan jujur "Data harga live sedang dimuat, mohon tunggu sebentar". JANGAN PERNAH mengarang angka seperti 4000+!\n` +
                     `- Jawab singkat, padat, jelas, dan tuntas. Jangan gunakan simbol markdown seperti tanda bintang (*), pagar (#), atau garis (---).\n` +
                     `- AKSES PENUH SELURUH MATERI ACADEMY: Kamu memiliki akses penuh ke seluruh kurikulum Amy FX Academy (Level 0 s.d. Level 6 total 42 bab, 10 Modul Master, dan 36 Bagian / 222 bab) yang terdaftar di atas.\n` +
                     `- DILARANG KERAS MENOLAK PERMINTAAN BELAJAR: Saat pengguna meminta mempelajari atau membuka Level mana pun (Level 0–6), Modul mana pun (Modul 1–10), atau topik apa pun (misal "Coba kita pelajari modul 2", "Buka level 2", "Kita belajar bab berikutnya"), kamu WAJIB memanggil tool open_academy_material(query) dan langsung menjelaskan isi materinya dengan jelas! JANGAN PERNAH menolak atau menyuruh menyelesaikan Modul 01 dulu!\n` +
@@ -1319,14 +1436,44 @@
             }
 
             if (data.toolCall && Array.isArray(data.toolCall.functionCalls)) {
-              setOrbVisualState('thinking', 'Membuka Materi…');
+              setOrbVisualState('thinking', 'Memproses…');
               const functionResponses = [];
               for (const fc of data.toolCall.functionCalls) {
-                if (fc.name === 'open_academy_material') {
+                if (fc.name === 'get_live_gold_price') {
+                  let priceResult = '';
+                  if (typeof root !== 'undefined' && Number.isFinite(Number(root.amyfxCurrentPrice)) && Number(root.amyfxCurrentPrice) > 0) {
+                    priceResult = '$' + Number(root.amyfxCurrentPrice).toFixed(2);
+                  }
+                  if (!priceResult) {
+                    const priceEl = document.querySelector(
+                      '#hero-price, #chart-price, #scenario-price, .hero-live-price, #home-chart-price, #home-price, #live-price-value, #mapping-live-price, .gold-live-price, [data-price], [data-live-price]'
+                    );
+                    if (priceEl) {
+                      const text = (priceEl.textContent || priceEl.getAttribute('data-price') || '').trim();
+                      if (text && text !== '—' && /\d/.test(text)) {
+                        priceResult = text.startsWith('$') ? text : '$' + text;
+                      }
+                    }
+                  }
+                  if (!priceResult) {
+                    const m5 = summarizeCandles('M5');
+                    const mMatch = m5.match(/Close Terakhir \$([0-9.]+)/);
+                    if (mMatch) priceResult = '$' + mMatch[1];
+                  }
+                  functionResponses.push({
+                    id: fc.id,
+                    name: fc.name,
+                    response: {
+                      output: priceResult
+                        ? `Harga Live Gold saat ini adalah ${priceResult}. Gunakan angka ini dan DILARANG mengarang angka lain.`
+                        : 'Data harga live sedang dimuat, mohon tunggu sebentar.'
+                    }
+                  });
+                } else if (fc.name === 'open_academy_material') {
                   const q = String(fc.args?.query || '').trim();
                   let toolResultText = 'Materi tidak ditemukan.';
                   try {
-                    const r = await fetch(`/api/academy-reading?q=${encodeURIComponent(q)}`);
+                    const r = await fetch(getApiBaseUrl() + `/api/academy-reading?q=${encodeURIComponent(q)}`);
                     if (r.ok) {
                       const d = await r.json();
                       const les = d.requestedLesson || d.lessonDetails;
