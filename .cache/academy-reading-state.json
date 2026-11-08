@@ -1,0 +1,48 @@
+{
+  "lastRead": {
+    "version": 2,
+    "path": "bagian-01-pemula-nol/index.html",
+    "title": "Fondasi Pasar & Mekanisme Algoritmik IPDA",
+    "section": "KURIKULUM MASTER ICT TERPADU • MODUL 01 (1 SKS)",
+    "scrollY": 5838,
+    "progress": 89,
+    "headingIndex": 5,
+    "headingText": "Mengapa Indikator Retail Klasik Menjadi Jebakan Likuiditas",
+    "namespace": "academy-main",
+    "status": "completed",
+    "completed": true,
+    "updatedAt": 1791590158807
+  },
+  "history": [
+    {
+      "version": 2,
+      "path": "bagian-01-pemula-nol/index.html",
+      "title": "Fondasi Pasar & Mekanisme Algoritmik IPDA",
+      "section": "KURIKULUM MASTER ICT TERPADU • MODUL 01 (1 SKS)",
+      "scrollY": 5838,
+      "progress": 89,
+      "headingIndex": 5,
+      "headingText": "Mengapa Indikator Retail Klasik Menjadi Jebakan Likuiditas",
+      "namespace": "academy-main",
+      "status": "completed",
+      "completed": true,
+      "updatedAt": 1791590158807
+    },
+    {
+      "version": 2,
+      "path": "bagian-03-fondasi-market/index.html",
+      "title": "Fondasi Market",
+      "section": "SEMESTER 1 • PEMULA • PERTEMUAN 03 (1 SKS)",
+      "scrollY": 3331,
+      "progress": 10,
+      "headingIndex": 50,
+      "headingText": "Daftar Isi Modul",
+      "namespace": "academy-main",
+      "status": "reading",
+      "completed": false,
+      "updatedAt": 1791255734259
+    }
+  ],
+  "microProgress": {},
+  "updatedAt": 1794143165638
+}

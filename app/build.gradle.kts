@@ -14,13 +14,14 @@ val hasReleaseSigning = listOf(
 fun buildConfigString(value: String): String =
     "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
-// Amy FX independent application identity. Uses com.amyelitesuite to remain
-// completely separate from Amy FX Pro (com.amyelitesuite.learningpreview).
-val configuredApplicationId = System.getenv("AMYFX_APPLICATION_ID") ?: "com.amyelitesuite"
-val configuredAppLabel = System.getenv("AMYFX_APP_LABEL") ?: "Amy FX"
-val configuredUriScheme = System.getenv("AMYFX_URI_SCHEME") ?: "amyfx"
+// Amy FX Pro is promoted from the Preview lineage. Keep the registered Preview
+// package and URI for Firebase/data/deep-link continuity, but use the Pro label,
+// version line, and dedicated Pro update channel.
+val configuredApplicationId = System.getenv("AMYFX_APPLICATION_ID") ?: "com.amyelitesuite.learningpreview"
+val configuredAppLabel = System.getenv("AMYFX_APP_LABEL") ?: "Amy FX Pro"
+val configuredUriScheme = System.getenv("AMYFX_URI_SCHEME") ?: "amyfxpreview"
 val configuredUpdateManifestUrl = System.getenv("AMYFX_UPDATE_MANIFEST_URL")
-    ?: "https://raw.githubusercontent.com/suhaimitoamy/Amy-fx/main/update.json"
+    ?: "https://raw.githubusercontent.com/suhaimitoamy/Amy-fx-pro/main/update.json"
 val configuredTwelveDataApiKey = "" // Provider credential is server-only.
 
 android {
@@ -31,8 +32,8 @@ android {
         applicationId = configuredApplicationId
         minSdk = 26
         targetSdk = 35
-        versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 950431)
-        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "2.0.0-amyfx.431"
+        versionCode = (System.getenv("AMYFX_VERSION_CODE")?.toIntOrNull() ?: 950437)
+        versionName = System.getenv("AMYFX_VERSION_NAME") ?: "2.0.0-pro.437"
         manifestPlaceholders["appLabel"] = configuredAppLabel
         manifestPlaceholders["amyFxScheme"] = configuredUriScheme
         buildConfigField("String", "UPDATE_MANIFEST_URL", buildConfigString(configuredUpdateManifestUrl))

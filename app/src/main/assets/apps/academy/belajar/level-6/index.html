@@ -150,7 +150,7 @@
         <span class="ml-roadmap-step">Pelajaran 01</span>
         <span class="ml-status-pill" id="badge-level6-01">Belum Selesai</span>
       </div>
-      <h2 class="ml-roadmap-title">Alur Analisa Top-Down: Daily ➔ H1 ➔ M5</h2>
+      <h2 class="ml-roadmap-title">Alur Analisa Top-Down</h2>
       <p class="ml-roadmap-desc">
         SOP integrasi 3 timeframe: menentukan directional bias di Daily, memetakan Dealing Range & POI di H1, dan mencari pemicu MSS di M5.
       </p>
@@ -169,7 +169,7 @@
         <span class="ml-roadmap-step">Pelajaran 02</span>
         <span class="ml-status-pill" id="badge-level6-02">Belum Selesai</span>
       </div>
-      <h2 class="ml-roadmap-title">Studi Kasus 1: Eksekusi Deep OTE 78.6% Sesi New York</h2>
+      <h2 class="ml-roadmap-title">Studi Kasus 1: Deep OTE Sesi New York</h2>
       <p class="ml-roadmap-desc">
         Bedah kasus transaksi riil setup juara Amy FX: sapuan likuiditas low Asia, retracement 78.6% beririsan dengan FVG, dan take profit 1:3.
       </p>
@@ -188,7 +188,7 @@
         <span class="ml-roadmap-step">Pelajaran 03</span>
         <span class="ml-status-pill" id="badge-level6-03">Belum Selesai</span>
       </div>
-      <h2 class="ml-roadmap-title">Studi Kasus 2: Menghindari Jebakan Whipsaw Berita Merah</h2>
+      <h2 class="ml-roadmap-title">Studi Kasus 2: Menghindari Jebakan News</h2>
       <p class="ml-roadmap-desc">
         Anatomi manipulasi harga rilis berita CPI/NFP: mengapa pasang order di menit awal adalah bunuh diri dan bagaimana cara masuk pasca-badai.
       </p>
@@ -207,7 +207,7 @@
         <span class="ml-roadmap-step">Pelajaran 04</span>
         <span class="ml-status-pill" id="badge-level6-04">Belum Selesai</span>
       </div>
-      <h2 class="ml-roadmap-title">Studi Kasus 3: Reversal Transisi Sesi London ke New York</h2>
+      <h2 class="ml-roadmap-title">Studi Kasus 3: Reversal London ke New York</h2>
       <p class="ml-roadmap-desc">
         Bedah pola klasik perputaran arah: ekspansi palsu sesi London (Judas Swing) yang dibalikkan secara agresif saat sesi New York dimulai.
       </p>
@@ -244,6 +244,328 @@
   <div style="margin-top:36px; text-align:center; padding:16px; border-top:1px solid rgba(255,255,255,0.06); font-size:13px; color:var(--ml-muted);">
     Amy FX Academy • Materi Puncak Analisa Kasus Riil
   </div>
+<!-- START FULL CURRICULUM ACCORDEON -->
+  <style>
+    .ml-deep-section {
+      margin-top: 34px;
+      padding-top: 26px;
+      border-top: 1px solid rgba(255, 255, 255, 0.09);
+    }
+    .ml-deep-head {
+      margin-bottom: 16px;
+    }
+    .ml-deep-eyebrow {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #f5c451;
+      margin-bottom: 4px;
+    }
+    .ml-deep-heading {
+      font-size: 19px;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0 0 6px 0;
+    }
+    .ml-deep-subtext {
+      font-size: 13.5px;
+      color: #94a3b8;
+      margin: 0;
+      line-height: 1.5;
+    }
+    .ml-deep-accordion {
+      background: rgba(15, 21, 35, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      transition: border-color 0.2s ease;
+    }
+    .ml-deep-accordion[open] {
+      border-color: rgba(212, 168, 50, 0.35);
+    }
+    .ml-deep-summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      user-select: none;
+    }
+    .ml-deep-summary::-webkit-details-marker {
+      display: none;
+    }
+    .ml-deep-sum-left {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+    .ml-deep-tag {
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      color: #f5c451;
+      text-transform: uppercase;
+    }
+    .ml-deep-sum-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f8fafc;
+      line-height: 1.35;
+    }
+    .ml-deep-count {
+      flex-shrink: 0;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 4px 10px;
+      border-radius: 99px;
+    }
+    .ml-deep-content {
+      padding: 0 16px 16px 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .ml-deep-group-desc {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin: 12px 0 14px 0;
+    }
+    .ml-deep-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .ml-deep-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 11px 13px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      text-decoration: none;
+      transition: all 0.18s ease;
+    }
+    .ml-deep-item:hover, .ml-deep-item:active {
+      background: rgba(212, 168, 50, 0.08);
+      border-color: rgba(212, 168, 50, 0.3);
+      transform: translateX(2px);
+    }
+    .ml-deep-num {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #f5c451;
+      padding-top: 2px;
+      min-width: 42px;
+      flex-shrink: 0;
+    }
+    .ml-deep-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .ml-deep-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #f1f5f9;
+      line-height: 1.35;
+      margin-bottom: 2px;
+    }
+    .ml-deep-desc {
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.45;
+    }
+    .ml-deep-arrow {
+      color: #f5c451;
+      font-weight: 800;
+      font-size: 14px;
+      padding-top: 2px;
+      flex-shrink: 0;
+    }
+  </style>
+  <section class="ml-deep-section" id="kurikulum-lengkap-level-6">
+    <div class="ml-deep-head">
+      <div class="ml-deep-eyebrow">ENSIKLOPEDIA LENGKAP LEVEL 6</div>
+      <h2 class="ml-deep-heading">Bab Pendalaman & Masterclass (15 Bab Lengkap)</h2>
+      <p class="ml-deep-subtext">Seluruh materi lengkap pada tingkat ini yang dikelompokkan rapi per sub-topik tanpa ada yang dipotong.</p>
+    </div>
+    
+      <details class="ml-deep-accordion" open>
+        <summary class="ml-deep-summary">
+          <div class="ml-deep-sum-left">
+            <span class="ml-deep-tag">SUB-BAGIAN 6.1</span>
+            <strong class="ml-deep-sum-title">Katalog A+ Setup & Studi Kasus Riil XAUUSD</strong>
+          </div>
+          <span class="ml-deep-count">3 Bab ▾</span>
+        </summary>
+        <div class="ml-deep-content">
+          <p class="ml-deep-group-desc">Checklist lengkap seluruh setup probabilitas tertinggi Amy FX Pro dan studi kasus bedah market nyata saat setup sukses maupun gagal.</p>
+          <div class="ml-deep-list">
+            
+          <a href="../../bagian-30-a-plus-setup-library/full-ict-checklist.html" class="ml-deep-item">
+            <div class="ml-deep-num">6.1.01</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Checklist Lengkap Setup Peluru Utama A+</div>
+              <div class="ml-deep-desc">Skor kelolosan 8 lapis: waktu, konteks HTF, likuiditas, MSS, PD Array, diskon/premium, RR.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-33-live-case-studies/studi-kasus-1-xauusd-london-killzone.html" class="ml-deep-item">
+            <div class="ml-deep-num">6.1.02</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Studi Kasus Riil 1: Eksekusi London Killzone XAUUSD</div>
+              <div class="ml-deep-desc">Bedah posisi live langkah-demi-langkah dari analisis pra-market hingga Take Profit tercapai.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-33-live-case-studies/bedah-kegagalan-setup-a-plus.html" class="ml-deep-item">
+            <div class="ml-deep-num">6.1.03</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Bedah Kasus Kegagalan: Analisis Mengapa Setup A+ Bisa Loss</div>
+              <div class="ml-deep-desc">Menganalisis kekalahan secara objektif: apakah karena kesalahan eksekusi atau bagian dari statistik normal.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          </div>
+        </div>
+      </details>
+
+      <details class="ml-deep-accordion" >
+        <summary class="ml-deep-summary">
+          <div class="ml-deep-sum-left">
+            <span class="ml-deep-tag">SUB-BAGIAN 6.2</span>
+            <strong class="ml-deep-sum-title">Metodologi Backtesting & Jurnal</strong>
+          </div>
+          <span class="ml-deep-count">6 Bab ▾</span>
+        </summary>
+        <div class="ml-deep-content">
+          <p class="ml-deep-group-desc">Manual backtest per model entry, template jurnal terstruktur, transisi ke forward testing, kalkulasi Winrate, Risk-Reward, dan Math Expectancy.</p>
+          <div class="ml-deep-list">
+            
+          <a href="../../bagian-14-backtesting-dan-jurnal/apa-itu-backtesting.html" class="ml-deep-item">
+            <div class="ml-deep-num">6.2.01</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Hakikat Backtesting: Membeli Keyakinan Mental</div>
+              <div class="ml-deep-desc">Membangun keyakinan eksekusi berdasarkan ratusan data sampel masa lalu yang objektif.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-14-backtesting-dan-jurnal/cara-backtest-manual.html" class="ml-deep-item">
+            <div class="ml-deep-num">6.2.02</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Metodologi Backtest Manual per Model Entry Spesifik</div>
+              <div class="ml-deep-desc">SOP mengumpulkan minimal 100 sampel data per satu model tanpa melihat hasil masa depan.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-14-backtesting-dan-jurnal/template-backtesting.html" class="ml-deep-item">
+            <div class="ml-deep-num">6.2.03</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Template Dokumen Pencatatan Data Backtest</div>
+              <div class="ml-deep-desc">Format tabel pencatatan: tanggal, sesi, model entry, jarak SL, target TP, dan hasil R-multiple.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-14-backtesting-dan-jurnal/jurnal-trading.html" class="ml-deep-item">
+            <div class="ml-deep-num">6.2.04</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Rutinitas Jurnal Trading Harian</div>
+              <div class="ml-deep-desc">Jurnal adalah cermin kejujuran: mencatat emosi sebelum, saat, dan sesudah posisi ditutup.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-14-backtesting-dan-jurnal/forward-testing.html" class="ml-deep-item">
+            <div class="ml-deep-num">6.2.05</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Transisi Bertahap: Dari Backtest ke Forward Testing</div>
+              <div class="ml-deep-desc">Menguji ketajaman eksekusi pada chart berjalan di akun simulasi sebelum menggunakan uang riil.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-28-trade-management-advanced/review-mingguan-dan-expectancy.html" class="ml-deep-item">
+            <div class="ml-deep-num">6.2.06</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Menghitung Winrate, RR, dan Math Expectancy Portofolio</div>
+              <div class="ml-deep-desc">Rumus matematika ekspektansi: membuktikan secara ilmiah mengapa akunmu akan bertumbuh dalam jangka panjang.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          </div>
+        </div>
+      </details>
+
+      <details class="ml-deep-accordion" >
+        <summary class="ml-deep-summary">
+          <div class="ml-deep-sum-left">
+            <span class="ml-deep-tag">SUB-BAGIAN 6.3</span>
+            <strong class="ml-deep-sum-title">Rencana Bisnis Trading, SOP 1 Halaman & Prop Firm Mastery</strong>
+          </div>
+          <span class="ml-deep-count">6 Bab ▾</span>
+        </summary>
+        <div class="ml-deep-content">
+          <p class="ml-deep-group-desc">Trading plan formal, SOP 1-halaman (4 langkah printable), evaluasi industri Prop Firm, kalkulasi batas drawdown, dan strategi menjaga akun funded.</p>
+          <div class="ml-deep-list">
+            
+          <a href="../../bagian-15-menjadi-trader-mandiri/jangan-bergantung-sinyal.html" class="ml-deep-item">
+            <div class="ml-deep-num">6.3.01</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Memutus Ketergantungan Pada Grup Sinyal & Mentor</div>
+              <div class="ml-deep-desc">Kemandirian sejati: mampu menganalisis, mengeksekusi, dan mengevaluasi chart secara mandiri 100%.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-15-menjadi-trader-mandiri/membuat-trading-plan.html" class="ml-deep-item">
+            <div class="ml-deep-num">6.3.02</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Menyusun Dokumen Rencana Bisnis Trading (Trading Plan)</div>
+              <div class="ml-deep-desc">Panduan formal: instrumen pilihan, jam kerja sesi, batas risiko harian, dan kriteria penarikan profit.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-35-trading-plan-template/sop-trading-1-halaman-printable.html" class="ml-deep-item">
+            <div class="ml-deep-num">6.3.03</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">SOP Trading 1-Halaman Printable: 4 Langkah Baku</div>
+              <div class="ml-deep-desc">Lembar SOP ringkas yang bisa dicetak dan ditempel di meja kerja sebagai panduan harian.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-34-prop-firm-mastery/apa-itu-prop-firm-dan-cara-kerjanya.html" class="ml-deep-item">
+            <div class="ml-deep-num">6.3.04</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Memahami Model Bisnis & Evaluasi Industri Prop Firm</div>
+              <div class="ml-deep-desc">Peluang mengelola modal $10,000 hingga $200,000 dari firma penyedia likuiditas global.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-34-prop-firm-mastery/aturan-drawdown-dan-cara-menghitungnya.html" class="ml-deep-item">
+            <div class="ml-deep-num">6.3.05</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Kalkulasi Presisi: Max Daily Loss & Trailing Drawdown</div>
+              <div class="ml-deep-desc">Matematika bertahan hidup: cara menghitung batas rugi harian berbasis balance vs equity.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-34-prop-firm-mastery/manajemen-risiko-khusus-prop-firm.html" class="ml-deep-item">
+            <div class="ml-deep-num">6.3.06</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Strategi Lulus Evaluasi & Menjaga Akun Funded</div>
+              <div class="ml-deep-desc">Manajemen risiko konservatif (0.25% - 0.5% per trade) untuk konsistensi pencairan profit (payout).</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          </div>
+        </div>
+      </details>
+  </section>
+  <!-- END FULL CURRICULUM ACCORDEON -->
 </div>
 
 <script src="../assets/micro-learning.js"></script>

@@ -153,7 +153,7 @@
         <span class="ml-roadmap-step">Pelajaran 01</span>
         <span class="ml-status-pill" id="badge-level4-01">Belum Selesai</span>
       </div>
-      <h2 class="ml-roadmap-title">Setup Peluru Utama: Deep OTE 78.6% + FVG</h2>
+      <h2 class="ml-roadmap-title">Setup Deep OTE 78.6% + FVG</h2>
       <p class="ml-roadmap-desc">
         Model eksekusi utama Amy FX: perpaduan Fibonacci retracement 78.6% dengan Fair Value Gap segar di zona diskon/premium.
       </p>
@@ -172,7 +172,7 @@
         <span class="ml-roadmap-step">Pelajaran 02</span>
         <span class="ml-status-pill" id="badge-level4-02">Belum Selesai</span>
       </div>
-      <h2 class="ml-roadmap-title">Setup Reversal: Sesi Asia Sweep + MSS</h2>
+      <h2 class="ml-roadmap-title">Setup Sesi Asia Sweep + MSS</h2>
       <p class="ml-roadmap-desc">
         Memanfaatkan sapuan likuiditas sesi Asia (High/Low) yang diikuti patah struktur (MSS) dan entri di celah pantulan.
       </p>
@@ -210,7 +210,7 @@
         <span class="ml-roadmap-step">Pelajaran 04</span>
         <span class="ml-status-pill" id="badge-level4-04">Belum Selesai</span>
       </div>
-      <h2 class="ml-roadmap-title">Setup Turtle Soup: Menunggangi Liquidity Raid</h2>
+      <h2 class="ml-roadmap-title">Setup Turtle Soup</h2>
       <p class="ml-roadmap-desc">
         Menangkap pembalikan harga tajam saat harga hanya menusuk pucuk atau lembah likuiditas kunci dengan ekor jarum dan berbalik kilat.
       </p>
@@ -278,6 +278,424 @@
   <div style="margin-top:36px; text-align:center; padding:16px; border-top:1px solid rgba(255,255,255,0.06); font-size:13px; color:var(--ml-muted);">
     Amy FX Academy • Playbook Model Eksekusi XAU/USD
   </div>
+<!-- START FULL CURRICULUM ACCORDEON -->
+  <style>
+    .ml-deep-section {
+      margin-top: 34px;
+      padding-top: 26px;
+      border-top: 1px solid rgba(255, 255, 255, 0.09);
+    }
+    .ml-deep-head {
+      margin-bottom: 16px;
+    }
+    .ml-deep-eyebrow {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #f5c451;
+      margin-bottom: 4px;
+    }
+    .ml-deep-heading {
+      font-size: 19px;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0 0 6px 0;
+    }
+    .ml-deep-subtext {
+      font-size: 13.5px;
+      color: #94a3b8;
+      margin: 0;
+      line-height: 1.5;
+    }
+    .ml-deep-accordion {
+      background: rgba(15, 21, 35, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      transition: border-color 0.2s ease;
+    }
+    .ml-deep-accordion[open] {
+      border-color: rgba(212, 168, 50, 0.35);
+    }
+    .ml-deep-summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      user-select: none;
+    }
+    .ml-deep-summary::-webkit-details-marker {
+      display: none;
+    }
+    .ml-deep-sum-left {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+    .ml-deep-tag {
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      color: #f5c451;
+      text-transform: uppercase;
+    }
+    .ml-deep-sum-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f8fafc;
+      line-height: 1.35;
+    }
+    .ml-deep-count {
+      flex-shrink: 0;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 4px 10px;
+      border-radius: 99px;
+    }
+    .ml-deep-content {
+      padding: 0 16px 16px 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .ml-deep-group-desc {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin: 12px 0 14px 0;
+    }
+    .ml-deep-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .ml-deep-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 11px 13px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      text-decoration: none;
+      transition: all 0.18s ease;
+    }
+    .ml-deep-item:hover, .ml-deep-item:active {
+      background: rgba(212, 168, 50, 0.08);
+      border-color: rgba(212, 168, 50, 0.3);
+      transform: translateX(2px);
+    }
+    .ml-deep-num {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #f5c451;
+      padding-top: 2px;
+      min-width: 42px;
+      flex-shrink: 0;
+    }
+    .ml-deep-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .ml-deep-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #f1f5f9;
+      line-height: 1.35;
+      margin-bottom: 2px;
+    }
+    .ml-deep-desc {
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.45;
+    }
+    .ml-deep-arrow {
+      color: #f5c451;
+      font-weight: 800;
+      font-size: 14px;
+      padding-top: 2px;
+      flex-shrink: 0;
+    }
+  </style>
+  <section class="ml-deep-section" id="kurikulum-lengkap-level-4">
+    <div class="ml-deep-head">
+      <div class="ml-deep-eyebrow">ENSIKLOPEDIA LENGKAP LEVEL 4</div>
+      <h2 class="ml-deep-heading">Bab Pendalaman & Masterclass (25 Bab Lengkap)</h2>
+      <p class="ml-deep-subtext">Seluruh materi lengkap pada tingkat ini yang dikelompokkan rapi per sub-topik tanpa ada yang dipotong.</p>
+    </div>
+    
+      <details class="ml-deep-accordion" open>
+        <summary class="ml-deep-summary">
+          <div class="ml-deep-sum-left">
+            <span class="ml-deep-tag">SUB-BAGIAN 4.1</span>
+            <strong class="ml-deep-sum-title">Fibonacci ICT & Optimal Trade Entry / OTE</strong>
+          </div>
+          <span class="ml-deep-count">9 Bab ▾</span>
+        </summary>
+        <div class="ml-deep-content">
+          <p class="ml-deep-group-desc">Kuasai pengaturan angka Fibonacci ICT (zona 0.62–0.79 / 0.705), penggunaan OTE sebagai area konfluensi pada Bullish & Bearish Model, penempatan SL dalam OTE, serta kondisi kapan OTE tidak dipakai.</p>
+          <div class="ml-deep-list">
+            
+          <a href="../../bagian-09-entry-model/fibonacci-ote.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.1.01</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Pengaturan Angka Fibonacci ICT Murni</div>
+              <div class="ml-deep-desc">Setting level 0.0, 0.50 (Equilibrium), 0.62, 0.705 (OTE Sweet Spot), dan 0.79.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-26-xauusd-advanced-playbook/fibonacci-ict.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.1.02</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Aplikasi Fibonacci ICT pada Karakter XAUUSD</div>
+              <div class="ml-deep-desc">Penyesuaian tarikan swing pada Gold yang terkenal dengan wick panjang.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-26-xauusd-advanced-playbook/ote-optimal-trade-entry-menemukan-titik-masuk-paling-efisien.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.1.03</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Optimal Trade Entry (OTE): Rasio Emas Institusi</div>
+              <div class="ml-deep-desc">Menemukan titik masuk paling efisien dengan rasio Risk-Reward terbaik.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-26-xauusd-advanced-playbook/ote-dalam-bullish-model.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.1.04</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">OTE sebagai Area Konfluensi Bullish Model</div>
+              <div class="ml-deep-desc">Menggabungkan zona 70.5% diskon dengan Bullish FVG atau Bullish Order Block.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-26-xauusd-advanced-playbook/ote-dalam-bearish-model.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.1.05</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">OTE sebagai Area Konfluensi Bearish Model</div>
+              <div class="ml-deep-desc">Menggabungkan zona 70.5% premium dengan Bearish FVG atau Bearish Breaker.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-26-xauusd-advanced-playbook/stop-loss-dalam-ote.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.1.06</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Penempatan Stop Loss Logis dalam Setup OTE</div>
+              <div class="ml-deep-desc">Menempatkan Stop Loss di luar level invalidasi 100% atau swing extreme.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-26-xauusd-advanced-playbook/kapan-ote-tidak-dipakai.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.1.07</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Kondisi Kapan OTE Tidak Boleh Digunakan</div>
+              <div class="ml-deep-desc">Pasar runaway momentum tinggi di mana harga menolak mitigasi dalam.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-31-ict-advanced-concepts/optimal-trade-entry-ote.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.1.08</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Optimal Trade Entry Lanjutan & Konfluensi Tambahan</div>
+              <div class="ml-deep-desc">Penguatan setup OTE dengan konfirmasi waktu sesi Killzone New York.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-26-xauusd-advanced-playbook/proyeksi-target-dengan-standard-deviation-fibonacci.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.1.09</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Standard Deviation (STDV) Targeting untuk Proyeksi TP</div>
+              <div class="ml-deep-desc">Menentukan target Take Profit objektif berbasis level ekstensi -1.0, -2.0, -2.5 STDV.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          </div>
+        </div>
+      </details>
+
+      <details class="ml-deep-accordion" >
+        <summary class="ml-deep-summary">
+          <div class="ml-deep-sum-left">
+            <span class="ml-deep-tag">SUB-BAGIAN 4.2</span>
+            <strong class="ml-deep-sum-title">Model Entry Continuation</strong>
+          </div>
+          <span class="ml-deep-count">5 Bab ▾</span>
+        </summary>
+        <div class="ml-deep-content">
+          <p class="ml-deep-group-desc">Alur lengkap Liquidity Grab → MSS → FVG/OB/OTE, model ICT 2022 Mentorship, teknik refinement ke M5/M1, dan flowchart keputusan entry.</p>
+          <div class="ml-deep-list">
+            
+          <a href="../../bagian-09-entry-model/urutan-entry-yang-benar.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.2.01</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Urutan Entry yang Benar: Alur Kerja 4 Langkah</div>
+              <div class="ml-deep-desc">Likuiditas tersapu → Terjadi perpindahan struktur (MSS) → Muncul FVG/OB → Entry di mitigasi.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-09-entry-model/liquidity-grab-mss-fvg.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.2.02</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Model Continuation Standar: Grab → MSS → FVG</div>
+              <div class="ml-deep-desc">Model paling stabil dan konsisten untuk menangkap kelanjutan tren di timeframe intra-day.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-11-advanced-ict/ict-2022-mentorship-model.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.2.03</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Masterclass: ICT 2022 Mentorship Entry Model</div>
+              <div class="ml-deep-desc">Model trading mandiri gratis terpopuler karya Michael J. Huddleston yang telah teruji.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-16-advanced-entry-logic/entry-refinement-m1-dan-m5-model.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.2.04</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Teknik Refinement Timeframe: Konfirmasi M15 ke Presisi M5/M1</div>
+              <div class="ml-deep-desc">Mengecilkan jarak Stop Loss hingga hanya 10-15 pips pada Gold dengan presisi timeframe mikro.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-28-trade-management-advanced/liquidity-grab-ke-mss-ke-entry-flow-chart-praktis.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.2.05</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Flowchart Praktis Eksekusi Model Continuation</div>
+              <div class="ml-deep-desc">Bagan alur ya/tidak yang memandu keputusan eksekusi dalam hitungan detik.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          </div>
+        </div>
+      </details>
+
+      <details class="ml-deep-accordion" >
+        <summary class="ml-deep-summary">
+          <div class="ml-deep-sum-left">
+            <span class="ml-deep-tag">SUB-BAGIAN 4.3</span>
+            <strong class="ml-deep-sum-title">Model Pembalikan Arah / Reversal</strong>
+          </div>
+          <span class="ml-deep-count">6 Bab ▾</span>
+        </summary>
+        <div class="ml-deep-content">
+          <p class="ml-deep-group-desc">Turtle Soup Model A & B, Smart Money Reversal (SMR), Market Maker Models (MMXM), dan target Standard Deviation (STDV 1, 2, 2.5, 4).</p>
+          <div class="ml-deep-list">
+            
+          <a href="../../bagian-09-entry-model/turtle-soup.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.3.01</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Model Turtle Soup: Menangkap Sapuan Puncak & Lembah</div>
+              <div class="ml-deep-desc">Membeli di bawah dasar terendah lama dan menjual di atas puncak tertinggi lama.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-25-session-entry-model/turtle-soup-model-a.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.3.02</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Turtle Soup Model A: Reversal Instan Pasca Sapuan</div>
+              <div class="ml-deep-desc">Eksekusi cepat saat ekor lilin menyapu likuiditas dan langsung ditolak kembali.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-25-session-entry-model/turtle-soup-model-b.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.3.03</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Turtle Soup Model B: Konfirmasi MSS & Mitigasi</div>
+              <div class="ml-deep-desc">Versi konservatif: menunggu struktur M5 berbalik sebelum menekan order limit.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-11-advanced-ict/smart-money-reversal-smr.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.3.04</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Smart Money Reversal (SMR): Menangkap Titik Balik Mayor</div>
+              <div class="ml-deep-desc">Transisi lengkap saat institusi menyelesaikan distribusi dan mulai mengakumulasi posisi baru.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-30-a-plus-setup-library/market-maker-models-mmxm-peta-besar-pengiriman-harga.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.3.05</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Market Maker Models (MMXM): Peta Besar Pengiriman Harga</div>
+              <div class="ml-deep-desc">Market Maker Buy Model (MMBM) & Market Maker Sell Model (MMSM) dari kurva akumulasi ke distribusi.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-31-ict-advanced-concepts/standard-deviation-projections.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.3.06</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Standard Deviation Projections (STDV 1, 2, 2.5, 4)</div>
+              <div class="ml-deep-desc">Menghitung target pembalikan arah objektif menggunakan deviasi standar rentang manipulasi.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          </div>
+        </div>
+      </details>
+
+      <details class="ml-deep-accordion" >
+        <summary class="ml-deep-summary">
+          <div class="ml-deep-sum-left">
+            <span class="ml-deep-tag">SUB-BAGIAN 4.4</span>
+            <strong class="ml-deep-sum-title">Master Playbook XAUUSD / Gold</strong>
+          </div>
+          <span class="ml-deep-count">5 Bab ▾</span>
+        </summary>
+        <div class="ml-deep-content">
+          <p class="ml-deep-group-desc">Karakteristik spesifik instrumen Gold, volatilitas sesi, peta likuiditas harian XAUUSD, playbook sesi, dan aturan No-Trade khusus Emas.</p>
+          <div class="ml-deep-list">
+            
+          <a href="../../bagian-10-xauusd-playbook/karakter-xauusd.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.4.01</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Karakteristik Unik Gold (XAUUSD)</div>
+              <div class="ml-deep-desc">Mengapa Emas bergerak agresif, bagaimana pola spread-nya, dan cara menghormati volatilitasnya.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-10-xauusd-playbook/waktu-terbaik-trading-gold.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.4.02</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Waktu Terbaik Trading Gold: London & New York Crossover</div>
+              <div class="ml-deep-desc">Jam-jam paling produktif di mana volume transaksi Emas mencapai puncak tertingginya.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-26-xauusd-advanced-playbook/karakter-gold-per-session.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.4.03</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Perilaku Khusus XAUUSD di Setiap Sesi Pasar</div>
+              <div class="ml-deep-desc">Asia membentuk perangkap, London memicu manipulasi, New York mendistribusikan tren utama.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-26-xauusd-advanced-playbook/xauusd-liquidity-map-memetakan-bahan-bakar-market.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.4.04</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Peta Likuiditas Harian XAUUSD: SOP Pagi Hari</div>
+              <div class="ml-deep-desc">Menandai PDH/PDL, Asia High/Low, FVG M15/H1 yang masih terbuka sebelum sesi dibuka.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-26-xauusd-advanced-playbook/xauusd-no-trade-playbook.html" class="ml-deep-item">
+            <div class="ml-deep-num">4.4.05</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Playbook No-Trade Khusus Gold: Kondisi Berbahaya</div>
+              <div class="ml-deep-desc">Kondisi market Gold yang haram disentuh: spread melebar, menjelang berita merah pekat, dan pasar flat.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          </div>
+        </div>
+      </details>
+  </section>
+  <!-- END FULL CURRICULUM ACCORDEON -->
 </div>
 
 <script src="../assets/micro-learning.js"></script>

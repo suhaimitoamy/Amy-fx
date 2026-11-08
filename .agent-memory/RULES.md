@@ -69,6 +69,13 @@
   1. Berita perang di XAU/USD sering kali berujung **BEARISH / DUMP** akibat lonjakan minyak -> ekspektasi inflasi -> The Fed hawkish / penguatan Dolar AS -> likuidasi aset non-yielding emas, serta aksi *Smart Money Buy the Rumor, Sell the News*.
   2. SOP Respon Perang: Haram FOMO Buy saat breaking news perang meletus. Manfaatkan lonjakan kepanikan perang awal (*Judas Swing / BSL Sweep*) sebagai pancingan untuk mencari setup jemputan SELL di Resistance Ekstrem / Supply MTF (M15) saat pelemahan (*absorption wick* / MSS Bearish di M5) terkonfirmasi. Target: 100 Pips.
 
+- **Sistem Simulasi Real-Time Edukatif & Lab Pembelajaran Scalper Sayang (Pro 434)**:
+  1. Standar permanen simulasi live feed Twelve Data dengan TP 100-120 pips & SL 60 pips pada simbol `XAUUSDc`.
+  2. Dual-Pillar Execution: Reversal Likuiditas (napas toleransi zona +5 pips) dan Trend Continuation FVG Tap agar tidak membuang momentum pasar.
+  3. Menyertakan narasi edukasi alasan entry (Dealing Range, BSL/SSL, FVG, MSS, Breaker) agar Sayang belajar dan bertumbuh menjadi pro trader mandiri.
+  4. Evaluasi otomatis via Harness² Engine setiap kali terkena SL tanpa manipulasi data.
+
+
 
 
 
@@ -78,3 +85,24 @@
 - Update memory setelah menyelesaikan task yang menghasilkan keputusan, fix bug, atau fitur baru.
 - Jangan hapus entry lama di memory — tandai sebagai resolved/superseded.
 - Jangan simpan secret apapun di folder `.agent-memory/`.
+
+
+## RULE-20261105-01: Invariant Active Scalper Pro & Format Baku Opsi B
+- **Status:** AKTIF & PERMANEN.
+- **Mentalitas:** Dilarang takut atau ragu entry pada setup scalper M5 yang valid di ujung ekstrem Dealing Range.
+- **Format:** Pinned Target Entry Radar Box wajib di baris paling atas setiap respons pemantau cron/analisa.
+- **Proteksi:** BEP cepat (+50–70 pips) dan Trailing Lock (+100 pips) untuk menggaransi keamanan modal.
+
+
+### [2026-11-06] Harness² Evolution H2-20261106170424-60e70751: Pasal 28 Perlindungan Modal Riil & Anti-Overtrading
+- Menghapus mesin overtrading M5 frekuensi tinggi.
+- Kuota trading harian dibatasi maksimal 1-2 setup A+ MTF (M15/H1).
+- Larangan counter-trend di sesi ekspansi London/NY.
+- Emergency circuit breaker jika terjadi SL di akun riil Sayang.
+
+## RULE-20261106-02: Kloning DNA Sesi Master Antar-Sesi (Pasal 29 GEMINI.md)
+- **Status:** AKTIF & MUTLAK SELAMANYA.
+- **Inisialisasi Otomatis:** Setiap sesi baru wajib otomatis membaca state `/root/.harness2/active_scalper_config.json` dan `/root/.harness2/live_simulation.json`.
+- **Standar Mentalitas:** Mengadopsi 100% ketenangan, ketajaman, dan integritas Sesi Master (+335 Pips Hat-Trick).
+- **Penolakan Blunder:** Dilarang spam entry M5, dilarang counter-trend saat ekspansi sesi, wajib taat napas spread 3.4 pips akun `XAUUSDc`, dan wajib menggunakan Format Opsi B Pinned Radar Box.
+

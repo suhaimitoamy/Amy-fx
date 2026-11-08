@@ -264,3 +264,32 @@ When developing or modifying UI components for the **Amy FX** project, strictly 
    - **Kecepatan Berita:** Utamakan *wire news* seketika SM News 24 (`@sm_news_24h`) dibanding portal artikel editorial lambat (Yahoo/Investing yang sering lag).
 
 
+
+### [2026-11-06] Sandi Otonom: "aktifkan simulasi" & Integrasi Harness² + Pasal 28
+- Sandi resmi: "aktifkan simulasi"
+- Otomatis mengeksekusi /root/.harness2/activate_simulation.py
+- Memeriksa Circuit Breaker Pasal 28 (Mode Cooling-Off jika ada 1x SL hari ini atau kuota 2 setup tercapai).
+- Cron pemantau 15 menitan (0,15,30,45 * * * *), dilarang keras 5 menitan.
+- Format Baku Opsi B Ultra-Compact + Pinned Radar.
+- Disiplin maksimal 1-2 setup A+ MTF (M15/H1) per hari.
+
+### [2026-11-07] Fix Riwayat Terakhir Dibaca Academy Ngestuck (Integrasi Micro-Learning Level 0–6)
+- **Problem:** Card "Terakhir Dibuka" di Beranda Academy (`index.html`) ngestuck terus di "Risk Reward Ratio", padahal Sayang sudah berpindah membaca kurikulum baru (Level 0 s.d. Level 6 di `apps/academy/belajar/`).
+- **Akar Masalah:**
+  1. Halaman pelajaran micro-learning di `belajar/level-X/` hanya memuat `micro-learning.js` dan tidak memuat `reading-history-v2.js` / `main.js`.
+  2. `micro-learning.js` sebelumnya hanya mencatat kuis (`amyfx.academy.micro_progress`) dan tidak mengupdate `amy_last_opened_title`, `amy_last_opened_url`, `amy_academy_last_read_v2`, maupun bridge Android.
+  3. Di `reading-history-v2.js`, fungsi `isLessonPage()` memakai regex lama `(?:bagian-\d+|modul-\d+)` yang mengabaikan path baru `belajar/level-\d+`.
+- **Solusi:**
+  1. Ditambahkan `recordReadingHistory()` di `micro-learning.js` yang otomatis menyimpan judul, path, section, fallback keys `amy_last_opened_*`, `amy_academy_last_read_v2`, serta sinkron ke Android bridge.
+  2. Diperluas regex `isLessonPage()` dan `sectionLabel()` di `reading-history-v2.js` untuk mengenali `belajar/level-\d+` dengan namespace `micro-learning`.
+
+### [2026-11-08] Upgrade Kecerdasan Artemis & Modul Analisa TradingView Cerdas (artemis-tv)
+- **Problem:** Artemis terasa "bodoh" dan lambat di MT5/TradingView karena sebelumnya dijalankan di profile `flash` reaktif yang tidak punya pemahaman domain grafis, sering meleset koordinat di kanvas OpenGL, dan tidak tahu SOP trading Sayang.
+- **Solusi:**
+  1. Default model di `/root/artemis/config/artemis.jsonc` di-upgrade ke `gemini-3.8-flash` dengan thinking capability.
+  2. Dibuatkan dokumen playbook anatomi TradingView Android & SOP ICT di `/root/artemis/config/tradingview_ict_playbook.md`.
+  3. Dibuatkan engine runner cerdas `/root/artemis/scripts/artemis_tradingview_analyst.py` dan shortcut terminal `/usr/local/bin/artemis-tv`.
+  4. Eksekusi kini resmi menggunakan `--profile pro` (Closed-Loop Planner + Operator + Validator) dan `--explorer-version ultra` (8-turn reasoning loop dengan OCR teks & Zoom) serta mengunci aplikasi ke `com.tradingview.tradingviewapp`.
+  5. Mendukung SOP Top-Down otomatis (H1 -> M15 -> M5) untuk membedah arah tren, Dealing Range, FVG, dan lilin konfirmasi untuk target 100 pips Sayang.
+
+

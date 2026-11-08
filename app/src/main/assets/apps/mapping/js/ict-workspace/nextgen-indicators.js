@@ -489,6 +489,80 @@ function getTradingDayKey(timeSec) {
     trendInvalidationTime = lastHighTime;
   }
 
+  // Calculate ATR 14 for Batas Ekspansi V6.1
+  let trSum = 0;
+  const trSlice = safeCandles.slice(-14);
+  for (let idx = 0; idx < trSlice.length; idx++) {
+    const cur = trSlice[idx];
+    const prevC = idx > 0 ? trSlice[idx - 1].close : cur.open;
+    const tr = Math.max(cur.high - cur.low, Math.abs(cur.high - prevC), Math.abs(cur.low - prevC));
+    trSum += tr;
+  }
+  const atr14 = trSlice.length > 0 ? (trSum / trSlice.length) : 5.0;
+
+  // Batas Ekspansi ala AMY ICT V6.1 (Std Dev -2.0 & -4.0: Target Normal & Batas Habis)
+  let expansion = null;
+  if (trend === 'BULL' && Number.isFinite(lastHigh) && Number.isFinite(lastLow)) {
+    const legRange = Math.max(lastHigh - lastLow, atr14 * 1.5);
+    const expNorm = lastHigh + legRange * 1.0;
+    const expMax = lastHigh + legRange * 2.5;
+    expansion = {
+      trend: 'BULL',
+      expNorm,
+      expMax,
+      normLabel: '🎯 TARGET NAIK (NORMAL)',
+      maxLabel: '🛑 BATAS NAIK (HABIS)',
+      startTime: lastHighTime
+    };
+  } else if (trend === 'BEAR' && Number.isFinite(lastHigh) && Number.isFinite(lastLow)) {
+    const legRange = Math.max(lastHigh - lastLow, atr14 * 1.5);
+    const expNorm = lastLow - legRange * 1.0;
+    const expMax = lastLow - legRange * 2.5;
+    expansion = {
+      trend: 'BEAR',
+      expNorm,
+      expMax,
+      normLabel: '🎯 TARGET TURUN (NORMAL)',
+      maxLabel: '🛑 BATAS TURUN (HABIS)',
+      startTime: lastLowTime
+    };
+  }
+
+  // Inducement (IDM V6.1): lookback 2 bars internal minor swing
+  let idm = null;
+  if (safeCandles.length >= 5) {
+    const recent = safeCandles.slice(-15);
+    if (trend === 'BULL') {
+      let minLow = Infinity;
+      let minLowTime = null;
+      for (let idx = 1; idx < recent.length - 1; idx++) {
+        if (recent[idx].low < recent[idx - 1].low && recent[idx].low < recent[idx + 1].low) {
+          minLow = recent[idx].low;
+          minLowTime = recent[idx].time;
+        }
+      }
+      if (Number.isFinite(minLow) && minLow < Infinity) {
+        const lastBar = safeCandles[safeCandles.length - 1];
+        const swept = lastBar.low < minLow;
+        idm = { level: minLow, time: minLowTime, swept, side: 'BUY' };
+      }
+    } else if (trend === 'BEAR') {
+      let maxHigh = -Infinity;
+      let maxHighTime = null;
+      for (let idx = 1; idx < recent.length - 1; idx++) {
+        if (recent[idx].high > recent[idx - 1].high && recent[idx].high > recent[idx + 1].high) {
+          maxHigh = recent[idx].high;
+          maxHighTime = recent[idx].time;
+        }
+      }
+      if (Number.isFinite(maxHigh) && maxHigh > -Infinity) {
+        const lastBar = safeCandles[safeCandles.length - 1];
+        const swept = lastBar.high > maxHigh;
+        idm = { level: maxHigh, time: maxHighTime, swept, side: 'SELL' };
+      }
+    }
+  }
+
   return {
     keyLevels: {
       pdh,
@@ -531,6 +605,8 @@ function getTradingDayKey(timeSec) {
     poi: {
       fvg: fvgList.filter(z => !z.mitigated).slice(-options.fvgVisible || -4),
       ob: obList.filter(z => !z.mitigated).slice(-options.obVisible || -4)
-    }
+    },
+    expansion,
+    idm
   };
 }

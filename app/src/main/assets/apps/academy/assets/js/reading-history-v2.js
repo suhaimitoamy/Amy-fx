@@ -54,7 +54,7 @@
   }
 
   function cleanTitle() {
-    var heading = document.querySelector('.article h1, .article-layout h1, .hero-card h1, .lesson-content h1, main h1, h1');
+    var heading = document.querySelector('.article h1, .article-layout h1, .hero-card h1, .lesson-content h1, .ml-lesson-title-box h1, main h1, h1');
     var title = heading && heading.textContent ? heading.textContent.trim() : '';
     if (title) return title;
     return String(document.title || 'Materi Trading')
@@ -67,6 +67,12 @@
     var eyebrow = document.querySelector('.article .eyebrow, .article-layout .eyebrow, .lesson-content .eyebrow');
     if (eyebrow && eyebrow.textContent.trim()) return eyebrow.textContent.trim();
     if (/^backtest-learning\/lesson\.html\?lesson=\d{2}$/i.test(String(path || ''))) return 'ICT Berbasis Backtest';
+    var matchLevel = String(path || '').match(/belajar\/level-(\d+)/i);
+    if (matchLevel) {
+      var backLink = document.querySelector('.ml-back-link');
+      if (backLink && backLink.textContent.trim()) return backLink.textContent.trim().replace(/\s+/g, ' ');
+      return 'Level ' + matchLevel[1] + ' — Fondasi Bertahap';
+    }
     var matchModul = String(path || '').match(/modul-(\d+)/i);
     if (matchModul) {
       var badge = document.querySelector('.badge');
@@ -80,8 +86,9 @@
 
   function isLessonPage(path) {
     if (/^backtest-learning\/lesson\.html\?lesson=\d{2}$/i.test(String(path || ''))) return true;
-    if (/(?:bagian-\d+[^/]+|modul-\d+[^/]*)\/.+\.html$/i.test(String(path || ''))) {
-      return Boolean(document.querySelector('.article, .article-layout, .hero-card, .course-card, .lesson-content, main'));
+    if (/(?:belajar\/level-\d+|bagian-\d+[^/]+|modul-\d+[^/]*)\/.+\.html$/i.test(String(path || ''))) {
+      if (/index\.html$/i.test(path) && /^belajar\//i.test(path)) return false;
+      return Boolean(document.querySelector('.article, .article-layout, .hero-card, .course-card, .lesson-content, .ml-container, main'));
     }
     return false;
   }
@@ -118,7 +125,7 @@
       progress: progress,
       headingIndex: heading ? heading.index : null,
       headingText: heading ? heading.text : null,
-      namespace: /^backtest-learning\//i.test(path) ? 'ict-backtest' : (/^modul-/i.test(path) ? 'modul-tematik' : 'academy-main'),
+      namespace: /^backtest-learning\//i.test(path) ? 'ict-backtest' : (/^belajar\//i.test(path) ? 'micro-learning' : (/^modul-/i.test(path) ? 'modul-tematik' : 'academy-main')),
       status: priorPosition.completed || progress >= 95 ? 'completed' : (progress > 0 ? 'reading' : 'unread'),
       completed: Boolean(priorPosition.completed || progress >= 95),
       updatedAt: Date.now()
@@ -139,6 +146,14 @@
 
     localStorage.setItem('amy_last_opened_title', record.title);
     localStorage.setItem('amy_last_opened_url', absolutePath(record.path));
+
+    try {
+      fetch('/api/academy-reading', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lastRead: record, history: history.slice(0, MAX_HISTORY) })
+      }).catch(function () {});
+    } catch (_) {}
 
     try {
       if (window.AmyLearningReminder && typeof window.AmyLearningReminder.recordLesson === 'function') {

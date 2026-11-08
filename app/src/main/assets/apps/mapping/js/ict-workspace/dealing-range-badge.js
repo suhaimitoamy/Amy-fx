@@ -18,16 +18,21 @@ export function getDealingRangeStatus(price, dealingRange) {
     };
   }
 
-  // 1. Prioritas string lokasi terkonfirmasi dari model
-  const loc = String(dealingRange?.location || dealingRange?.currentZone || '').toUpperCase();
-  if (loc === 'DISCOUNT') {
+  // 1. Fallback cerdas ke window.amyfxLastDealingRange jika parameter dealingRange kosong / parsial
+  const dr = (dealingRange && (dealingRange.high || dealingRange.top || dealingRange.rangeHigh || dealingRange.rHigh || dealingRange.location))
+    ? dealingRange
+    : (typeof window !== 'undefined' ? window.amyfxLastDealingRange : null);
+
+  // 2. Prioritas string lokasi terkonfirmasi dari model
+  const loc = String(dr?.location || dr?.currentZone || dr?.zone || '').toUpperCase();
+  if (loc.includes('DISCOUNT')) {
     return {
       zone: 'DISCOUNT',
       text: 'ZONA DISKON · BUY ONLY 🟢',
       className: 'dr-badge dr-discount'
     };
   }
-  if (loc === 'PREMIUM') {
+  if (loc.includes('PREMIUM')) {
     return {
       zone: 'PREMIUM',
       text: 'ZONA PREMIUM · SELL ONLY 🔴',
@@ -35,10 +40,10 @@ export function getDealingRangeStatus(price, dealingRange) {
     };
   }
 
-  // 2. Perhitungan matematis level Equilibrium 50%
-  let eq = Number(dealingRange?.equilibrium ?? dealingRange?.eq);
-  const top = Number(dealingRange?.top ?? dealingRange?.high);
-  const bottom = Number(dealingRange?.bottom ?? dealingRange?.low);
+  // 3. Perhitungan matematis level Equilibrium 50%
+  let eq = Number(dr?.equilibrium ?? dr?.eq);
+  const top = Number(dr?.rangeHigh ?? dr?.rHigh ?? dr?.top ?? dr?.high);
+  const bottom = Number(dr?.rangeLow ?? dr?.rLow ?? dr?.bottom ?? dr?.low);
 
   if (!Number.isFinite(eq) && Number.isFinite(top) && Number.isFinite(bottom) && top > bottom) {
     eq = (top + bottom) / 2;
@@ -46,7 +51,7 @@ export function getDealingRangeStatus(price, dealingRange) {
 
   if (Number.isFinite(eq) && eq > 0) {
     const span = Number.isFinite(top) && Number.isFinite(bottom) && top > bottom ? (top - bottom) : 20.0;
-    const threshold = Math.max(1.0, span * 0.05); // Band netral 5% di sekitar 50% CE
+    const threshold = Math.max(0.5, span * 0.05); // Band netral 5% di sekitar 50% CE
 
     if (Math.abs(p - eq) <= threshold) {
       return {

@@ -195,7 +195,7 @@
         <span class="ml-roadmap-step">Pelajaran 01</span>
         <span class="ml-status-pill" id="badge-level5-01">Belum Selesai</span>
       </div>
-      <h2 class="ml-roadmap-title">Aturan Emas 1% Per Trade: Menghitung Lot Presisi</h2>
+      <h2 class="ml-roadmap-title">Aturan Risiko 1% Per Trade</h2>
       <p class="ml-roadmap-desc">
         Rumus perhitungan ukuran lot berdasarkan jarak Stop Loss dalam pips, menjaga ketahanan modal akun jangka panjang.
       </p>
@@ -214,7 +214,7 @@
         <span class="ml-roadmap-step">Pelajaran 02</span>
         <span class="ml-status-pill" id="badge-level5-02">Belum Selesai</span>
       </div>
-      <h2 class="ml-roadmap-title">SOP Disiplin 2 Peluru: Anti-Revenge Trading</h2>
+      <h2 class="ml-roadmap-title">SOP Disiplin 2 Peluru</h2>
       <p class="ml-roadmap-desc">
         Batasan disiplin harian: berhenti dan tutup chart saat mengalami 2 kali kerugian berturut-turut untuk mencegah transaksi emosional.
       </p>
@@ -233,7 +233,7 @@
         <span class="ml-roadmap-step">Pelajaran 03</span>
         <span class="ml-status-pill" id="badge-level5-03">Belum Selesai</span>
       </div>
-      <h2 class="ml-roadmap-title">Manajemen Drawdown: Cara Bangkit Tanpa Panik</h2>
+      <h2 class="ml-roadmap-title">Manajemen Drawdown</h2>
       <p class="ml-roadmap-desc">
         Protokol defensif pangkas risiko saat losing streak dan tahapan karantina untuk mencegah kebangkrutan akun modal.
       </p>
@@ -252,7 +252,7 @@
         <span class="ml-roadmap-step">Pelajaran 04</span>
         <span class="ml-status-pill" id="badge-level5-04">Belum Selesai</span>
       </div>
-      <h2 class="ml-roadmap-title">Checklist Pra-Entry: 5 Pertanyaan Wajib</h2>
+      <h2 class="ml-roadmap-title">Checklist Pra-Entry</h2>
       <p class="ml-roadmap-desc">
         Sistem gerbang filter disiplin pra-eksekusi: verifikasi Killzone, POI, Sweep, MSS M5, dan Risk-to-Reward sebelum menekan tombol.
       </p>
@@ -271,7 +271,7 @@
         <span class="ml-roadmap-step">Pelajaran 05</span>
         <span class="ml-status-pill" id="badge-level5-05">Belum Selesai</span>
       </div>
-      <h2 class="ml-roadmap-title">Format Jurnal Evaluasi: Rekam Jejak Juara</h2>
+      <h2 class="ml-roadmap-title">Format Jurnal Evaluasi</h2>
       <p class="ml-roadmap-desc">
         Standar pencatatan visual Before & After, audit mingguan kepatuhan SOP, dan cara melacak kebocoran disiplin trading.
       </p>
@@ -308,6 +308,512 @@
   <div style="margin-top:36px; text-align:center; padding:16px; border-top:1px solid rgba(255,255,255,0.06); font-size:13px; color:var(--ml-muted);">
     Amy FX Academy • Manajemen Risiko & Disiplin Akun
   </div>
+<!-- START FULL CURRICULUM ACCORDEON -->
+  <style>
+    .ml-deep-section {
+      margin-top: 34px;
+      padding-top: 26px;
+      border-top: 1px solid rgba(255, 255, 255, 0.09);
+    }
+    .ml-deep-head {
+      margin-bottom: 16px;
+    }
+    .ml-deep-eyebrow {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #f5c451;
+      margin-bottom: 4px;
+    }
+    .ml-deep-heading {
+      font-size: 19px;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0 0 6px 0;
+    }
+    .ml-deep-subtext {
+      font-size: 13.5px;
+      color: #94a3b8;
+      margin: 0;
+      line-height: 1.5;
+    }
+    .ml-deep-accordion {
+      background: rgba(15, 21, 35, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      transition: border-color 0.2s ease;
+    }
+    .ml-deep-accordion[open] {
+      border-color: rgba(212, 168, 50, 0.35);
+    }
+    .ml-deep-summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      user-select: none;
+    }
+    .ml-deep-summary::-webkit-details-marker {
+      display: none;
+    }
+    .ml-deep-sum-left {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+    .ml-deep-tag {
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      color: #f5c451;
+      text-transform: uppercase;
+    }
+    .ml-deep-sum-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f8fafc;
+      line-height: 1.35;
+    }
+    .ml-deep-count {
+      flex-shrink: 0;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 4px 10px;
+      border-radius: 99px;
+    }
+    .ml-deep-content {
+      padding: 0 16px 16px 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .ml-deep-group-desc {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin: 12px 0 14px 0;
+    }
+    .ml-deep-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .ml-deep-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 11px 13px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      text-decoration: none;
+      transition: all 0.18s ease;
+    }
+    .ml-deep-item:hover, .ml-deep-item:active {
+      background: rgba(212, 168, 50, 0.08);
+      border-color: rgba(212, 168, 50, 0.3);
+      transform: translateX(2px);
+    }
+    .ml-deep-num {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #f5c451;
+      padding-top: 2px;
+      min-width: 42px;
+      flex-shrink: 0;
+    }
+    .ml-deep-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .ml-deep-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #f1f5f9;
+      line-height: 1.35;
+      margin-bottom: 2px;
+    }
+    .ml-deep-desc {
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.45;
+    }
+    .ml-deep-arrow {
+      color: #f5c451;
+      font-weight: 800;
+      font-size: 14px;
+      padding-top: 2px;
+      flex-shrink: 0;
+    }
+  </style>
+  <section class="ml-deep-section" id="kurikulum-lengkap-level-5">
+    <div class="ml-deep-head">
+      <div class="ml-deep-eyebrow">ENSIKLOPEDIA LENGKAP LEVEL 5</div>
+      <h2 class="ml-deep-heading">Bab Pendalaman & Masterclass (36 Bab Lengkap)</h2>
+      <p class="ml-deep-subtext">Seluruh materi lengkap pada tingkat ini yang dikelompokkan rapi per sub-topik tanpa ada yang dipotong.</p>
+    </div>
+    
+      <details class="ml-deep-accordion" open>
+        <summary class="ml-deep-summary">
+          <div class="ml-deep-sum-left">
+            <span class="ml-deep-tag">SUB-BAGIAN 5.1</span>
+            <strong class="ml-deep-sum-title">Aturan Besi Manajemen Risiko</strong>
+          </div>
+          <span class="ml-deep-count">12 Bab ▾</span>
+        </summary>
+        <div class="ml-deep-content">
+          <p class="ml-deep-group-desc">Pelajari cara menghitung risiko sebelum entry, penentuan Risk per Trade (misal 0,5%–1%), Risk to Reward Ratio (RR), rumus Cara Hitung Lot berdasarkan jarak SL, batas rugi harian (Daily Loss Limit), maksimal entry per hari, dan larangan layering sembarangan.</p>
+          <div class="ml-deep-list">
+            
+          <a href="../../bagian-01-pemula-nol/risk-sebelum-entry.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.1.01</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Menghitung Risiko Sebelum Entry</div>
+              <div class="ml-deep-desc">Mentalitas mendahulukan risiko sebelum memikirkan potensi keuntungan.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-12-risk-management/trading-tanpa-risk-itu-bahaya.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.1.02</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Bahaya Trading Tanpa Manajemen Risiko</div>
+              <div class="ml-deep-desc">Matematika kebangkrutan akun dan cara mencegah margin call seketika.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-12-risk-management/risk-per-trade.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.1.03</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Penentuan Risk per Trade (0.5% - 1%)</div>
+              <div class="ml-deep-desc">Aturan baku membatasi kerugian maksimal per satu posisi trading.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-12-risk-management/risk-reward-ratio.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.1.04</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Risk to Reward Ratio (RR) Asimetris</div>
+              <div class="ml-deep-desc">Mengapa rasio RR 1:2 atau 1:3 membuatmu profit konsisten meski winrate 50%.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-12-risk-management/cara-hitung-lot.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.1.05</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Rumus Cara Hitung Lot Berdasarkan Jarak Stop Loss</div>
+              <div class="ml-deep-desc">Kalkulasi ukuran posisi presisi agar nominal risiko selalu konsisten.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-12-risk-management/daily-loss-limit.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.1.06</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Batas Rugi Harian (Daily Loss Limit)</div>
+              <div class="ml-deep-desc">Tombol rem darurat: kapan wajib mematikan layar saat target rugi tercapai.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-12-risk-management/maksimal-entry-per-hari.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.1.07</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Maksimal Entry per Hari</div>
+              <div class="ml-deep-desc">Mencegah overtrading dan mempertahankan ketajaman fokus analitis.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-12-risk-management/jangan-layering-sembarangan.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.1.08</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Larangan Layering Sembarangan (Anti Martingale)</div>
+              <div class="ml-deep-desc">Membongkar bahaya fatal menambah posisi saat floating minus.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-12-risk-management/cut-loss-bukan-kalah.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.1.09</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Cut Loss Bukan Kalah: Logika Proteksi Modal</div>
+              <div class="ml-deep-desc">Melihat Stop Loss sebagai biaya operasional bisnis, bukan kegagalan diri.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-12-risk-management/floating-minus-dan-harapan.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.1.10</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Floating Minus dan Jebakan Harapan (Hope Trap)</div>
+              <div class="ml-deep-desc">Bahaya psikologis menahan kerugian dengan harapan market akan balik.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-12-risk-management/position-sizing-saat-volatilitas-tinggi-nfp-fomc.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.1.11</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Position Sizing Saat Volatilitas Tinggi (NFP/FOMC)</div>
+              <div class="ml-deep-desc">Penyesuaian ukuran lot saat menghadapi rilis data ekonomi berdampak tinggi.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-12-risk-management/membuat-rules-risk-pribadi.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.1.12</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Menyusun Dokumen Aturan Risiko Pribadi</div>
+              <div class="ml-deep-desc">Checklist mandiri yang wajib dipatuhi sebelum menekan tombol order.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          </div>
+        </div>
+      </details>
+
+      <details class="ml-deep-accordion" >
+        <summary class="ml-deep-summary">
+          <div class="ml-deep-sum-left">
+            <span class="ml-deep-tag">SUB-BAGIAN 5.2</span>
+            <strong class="ml-deep-sum-title">Alur Kerja Eksekusi Baku & Filter No-Trade</strong>
+          </div>
+          <span class="ml-deep-count">6 Bab ▾</span>
+        </summary>
+        <div class="ml-deep-content">
+          <p class="ml-deep-group-desc">Alur analisis baku (Context → Validasi → Trigger), Flowchart Entry, prinsip Do Not Chase, menyikapi Setup Hampir Valid, dan seni duduk diam.</p>
+          <div class="ml-deep-list">
+            
+          <a href="../../bagian-28-trade-management-advanced/menyusun-trading-rules-dan-alur-baca-dari-konsep-ke-keputusan.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.2.01</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Alur Kerja Analisis Baku: Konteks → Validasi → Trigger</div>
+              <div class="ml-deep-desc">Tiga gerbang wajib: tentukan narasi makro, validasi sweep likuiditas, eksekusi di lilin trigger.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-28-trade-management-advanced/flowchart-entry.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.2.02</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Flowchart Pengambilan Keputusan Entry</div>
+              <div class="ml-deep-desc">Bagan panduan visual: jika salah satu syarat tidak terpenuhi, langsung batalkan niat transaksi.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-28-trade-management-advanced/do-not-chase-disiplin-menunggu-lokasi-yang-sehat.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.2.03</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Prinsip Do Not Chase: Dilarang Mengejar Harga</div>
+              <div class="ml-deep-desc">Jika harga sudah terbang meninggalkan area entry tanpa menjemput ordermu, ikhlaskan tanpa kompromi.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-27-no-trade-advanced/setup-hampir-valid.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.2.04</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Jebakan "Setup Hampir Valid": Bahaya Kompromi Aturan</div>
+              <div class="ml-deep-desc">Mendekati valid sama sekali BUKAN valid; kompromi aturan adalah awal mula kehancuran akun.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-27-no-trade-advanced/kapan-tidak-trade-seni-menunggu-peluang-berkualitas.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.2.05</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Seni Duduk Diam: Menunggu Peluang Berkualitas Tinggi</div>
+              <div class="ml-deep-desc">Trader pro dibayar untuk kesabarannya menunggu momen tepat, bukan untuk frekuensi klik mouse.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-28-trade-management-advanced/checklist-sebelum-entry-filter-terakhir-sebelum-eksekusi.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.2.06</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Checklist Filter Terakhir Sebelum Menekan Tombol Order</div>
+              <div class="ml-deep-desc">Verifikasi 30 detik terakhir: cek jarak SL, ukuran lot, waktu sesi, dan jadwal kalender berita.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          </div>
+        </div>
+      </details>
+
+      <details class="ml-deep-accordion" >
+        <summary class="ml-deep-summary">
+          <div class="ml-deep-sum-left">
+            <span class="ml-deep-tag">SUB-BAGIAN 5.3</span>
+            <strong class="ml-deep-sum-title">Manajemen Posisi Aktif</strong>
+          </div>
+          <span class="ml-deep-count">7 Bab ▾</span>
+        </summary>
+        <div class="ml-deep-content">
+          <p class="ml-deep-group-desc">Skema Partial Take Profit, menggeser SL ke BE, menghindari BE Trap, aturan Scaling In / Scaling Out, serta membedakan Valid Win vs Invalid Win.</p>
+          <div class="ml-deep-list">
+            
+          <a href="../../bagian-28-trade-management-advanced/partial-tp-dan-break-even.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.3.01</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Skema Partial Take Profit yang Terukur</div>
+              <div class="ml-deep-desc">Ambil 50-70% profit di target pertama (IRL/liquidity terdekat) untuk mengamankan uang nyata.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-28-trade-management-advanced/kapan-memindahkan-stop-loss-dan-kapan-tidak-seni-proteksi-modal.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.3.02</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Menggeser Stop Loss ke Breakeven (BE): Kapan Boleh & Kapan Tidak</div>
+              <div class="ml-deep-desc">Jangan terburu-buru menggeser SL ke titik masuk sebelum harga membentuk struktur pelindung baru.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-28-trade-management-advanced/be-trap.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.3.03</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Menghindari BE Trap: Bahaya Terkena Jarum Sebelum Terbang</div>
+              <div class="ml-deep-desc">Mengapa terlalu cepat pasang BE justru membuatmu sering terkena stop out sebelum harga mencapai TP.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-28-trade-management-advanced/pyramiding-dan-scaling-in-position-strategi-agresif-yang-terukur.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.3.04</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Aturan Scaling In (Pyramiding) & Scaling Out</div>
+              <div class="ml-deep-desc">Menambah posisi hanya saat posisi pertama sudah aman profit dan struktur baru telah terkonfirmasi.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-28-trade-management-advanced/valid-win-dan-invalid-win.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.3.05</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Membedakan Valid Win vs Invalid Win</div>
+              <div class="ml-deep-desc">Profit karena mematuhi SOP adalah kemenangan sejati; profit karena melanggar aturan adalah racun tertunda.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-28-trade-management-advanced/bedanya-exit-objektif-vs-exit-emosional.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.3.06</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Exit Objektif vs Exit Emosional</div>
+              <div class="ml-deep-desc">Menutup posisi berdasarkan target struktur chart vs menutup posisi karena takut atau serakah.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-28-trade-management-advanced/checklist-setelah-entry-mengelola-posisi-dengan-kepala-dingin.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.3.07</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Checklist Pasca-Entry: Mengelola Posisi dengan Kepala Dingin</div>
+              <div class="ml-deep-desc">Setelah order terpasang: pasang alert harga, tutup layar chart, dan biarkan probabilitas bekerja.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          </div>
+        </div>
+      </details>
+
+      <details class="ml-deep-accordion" >
+        <summary class="ml-deep-summary">
+          <div class="ml-deep-sum-left">
+            <span class="ml-deep-tag">SUB-BAGIAN 5.4</span>
+            <strong class="ml-deep-sum-title">Manajemen Emosi & Psikologi Tingkat Lanjut</strong>
+          </div>
+          <span class="ml-deep-count">11 Bab ▾</span>
+        </summary>
+        <div class="ml-deep-content">
+          <p class="ml-deep-group-desc">FOMO, Revenge Trading, Overtrading, Takut Cut Loss, Analysis Freeze, Backtest/Narrative Bias, kebiasaan gonta-ganti sistem (System Hopping), dan membangun mental juara.</p>
+          <div class="ml-deep-list">
+            
+          <a href="../../bagian-13-psikologi-trading/kenapa-trader-gagal.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.4.01</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Akar Masalah Mengapa 90% Trader Retail Gagal</div>
+              <div class="ml-deep-desc">Bukan karena tekniknya yang kurang, melainkan kegagalan mengendalikan emosi dan ego diri.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-13-psikologi-trading/fomo-fear-of-missing-out.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.4.02</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Anatomi & Pengobatan FOMO (Fear of Missing Out)</div>
+              <div class="ml-deep-desc">Menghilangkan ketakutan ketinggalan kereta: pasar akan selalu ada besok dengan setup baru.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-13-psikologi-trading/revenge-trading-balas-dendam-ke-market.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.4.03</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Menghentikan Revenge Trading: Balas Dendam ke Market</div>
+              <div class="ml-deep-desc">Memutus spiral kehancuran akun saat terpukul oleh kekalahan beruntun.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-13-psikologi-trading/takut-cut-loss-membiarkan-rugi-membengkak.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.4.04</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Mengatasi Ketakutan Cut Loss & Menghormati Invalidation</div>
+              <div class="ml-deep-desc">Menerima kekalahan kecil secara terhormat sebelum berubah menjadi bencana margin call.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-13-psikologi-trading/penyakit-ego-ingin-selalu-benar.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.4.05</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Penyakit Ego: Ingin Selalu Benar Melawan Market</div>
+              <div class="ml-deep-desc">Pasar tidak peduli dengan analisismu; fleksibilitas pikiran adalah kunci kelangsungan hidup trader pro.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-13-psikologi-trading/overtrade-transaksi-berlebihan.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.4.06</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Menghentikan Penyakit Overtrading</div>
+              <div class="ml-deep-desc">Trading bukan pekerjaan pabrik yang digaji per jam; kualitas satu posisi jauh lebih bernilai dari sepuluh order acak.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-13-psikologi-trading/sabar-menunggu-setup.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.4.07</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Seni Kesabaran Menunggu Setup Sempurna</div>
+              <div class="ml-deep-desc">Meniru perilaku predator buas yang diam berjam-jam menunggu mangsa masuk ke zona jangkauan.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-36-psikologi-ict-lanjutan/analysis-freeze.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.4.08</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Mengatasi Analysis Freeze (Lumpuh Karena Terlalu Banyak Analisis)</div>
+              <div class="ml-deep-desc">Menghilangkan keraguan saat trigger muncul: percaya pada statistik probabilitas trading plan.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-36-psikologi-ict-lanjutan/backtest-bias.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.4.09</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Menghilangkan Backtest Bias & Narrative Bias</div>
+              <div class="ml-deep-desc">Mencegah ilusi hindsight: membedakan kemampuan membaca live market dari membaca data masa lalu.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-36-psikologi-ict-lanjutan/pindah-metode.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.4.10</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Menghentikan Kebiasaan Gonta-Ganti Sistem (System Hopping)</div>
+              <div class="ml-deep-desc">Kuasai satu setup hingga level master daripada mengetahui seratus indikator setengah matang.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          <a href="../../bagian-13-psikologi-trading/membangun-mental-trader-menjadi-profesional-sejati.html" class="ml-deep-item">
+            <div class="ml-deep-num">5.4.11</div>
+            <div class="ml-deep-body">
+              <div class="ml-deep-title">Membangun Mentalitas Trader Profesional Sejati</div>
+              <div class="ml-deep-desc">Transformasi identitas dari spekulan amatir menjadi pengelola modal berdisiplin tinggi.</div>
+            </div>
+            <div class="ml-deep-arrow">→</div>
+          </a>
+          </div>
+        </div>
+      </details>
+  </section>
+  <!-- END FULL CURRICULUM ACCORDEON -->
 </div>
 
 <script src="../assets/micro-learning.js"></script>

@@ -1,11 +1,18 @@
 const DISPLAY_ZONE = 'Asia/Makassar';
 
 const SESSION_DEFINITIONS = Object.freeze({
+  ASIA: Object.freeze({
+    id: 'ASIA',
+    label: 'Tokyo / Asia',
+    timeZone: 'Asia/Makassar',
+    startMinute: 8 * 60,
+    endMinute: 12 * 60
+  }),
   LONDON: Object.freeze({
     id: 'LONDON',
     label: 'London',
     timeZone: 'Europe/London',
-    startMinute: 7 * 60,
+    startMinute: 8 * 60,
     endMinute: 11 * 60
   }),
   NEW_YORK: Object.freeze({
@@ -59,6 +66,9 @@ function sourceOffsetMinutes(timestamp, timeZone) {
 }
 
 function sourceSeason(timestamp, timeZone) {
+  if (timeZone === 'Asia/Makassar' || timeZone === 'Asia/Tokyo') {
+    return 'WITA';
+  }
   const offset = sourceOffsetMinutes(timestamp, timeZone);
   if (timeZone === 'America/New_York') {
     if (offset === -240) return 'EDT';
@@ -153,11 +163,13 @@ export function executionSessionState(value, mode = 'NONE') {
       ready: false,
       allowed: mode === 'NONE',
       activeSession: 'UNKNOWN',
+      asia: null,
       london: null,
       newYork: null,
       source: 'DST_AWARE_SESSION_CLOCK_V1'
     };
   }
+  const asia = sessionDetail(SESSION_DEFINITIONS.ASIA, timestamp);
   const london = sessionDetail(SESSION_DEFINITIONS.LONDON, timestamp);
   const newYork = sessionDetail(SESSION_DEFINITIONS.NEW_YORK, timestamp);
   const allowed = mode === 'NONE'
@@ -166,17 +178,22 @@ export function executionSessionState(value, mode = 'NONE') {
       ? newYork.active
       : mode === 'LONDON_ONLY'
         ? london.active
-        : london.active || newYork.active;
+        : mode === 'ASIA_ONLY'
+          ? asia.active
+          : london.active || newYork.active;
   const activeSession = newYork.active
     ? 'NEW_YORK'
     : london.active
       ? 'LONDON'
-      : 'OFF_SESSION';
+      : asia.active
+        ? 'ASIA'
+        : 'OFF_SESSION';
   return {
     mode,
     ready: true,
     allowed,
     activeSession,
+    asia,
     london,
     newYork,
     displayZone: DISPLAY_ZONE,
@@ -192,8 +209,10 @@ export function executionSessionRequirement(mode = 'NONE', value = Date.now()) {
   if (mode === 'NONE') return 'Tidak menjadi hard gate';
   const state = executionSessionState(value, mode);
   if (!state.ready) return 'Jam sesi belum dapat dihitung';
+  const asia = `Asia ${state.asia.witaStart}–${state.asia.witaEnd} WITA`;
   const london = `London ${state.london.witaStart}–${state.london.witaEnd} WITA (${state.london.season})`;
   const newYork = `New York ${state.newYork.witaStart}–${state.newYork.witaEnd} WITA (${state.newYork.season})`;
+  if (mode === 'ASIA_ONLY') return `${asia} · WITA`;
   if (mode === 'NEW_YORK_ONLY') return `${newYork} · DST otomatis`;
   if (mode === 'LONDON_ONLY') return `${london} · DST otomatis`;
   return `${london} / ${newYork} · DST otomatis`;
@@ -201,6 +220,7 @@ export function executionSessionRequirement(mode = 'NONE', value = Date.now()) {
 
 export const EXECUTION_SESSION_CONFIG = Object.freeze({
   displayZone: DISPLAY_ZONE,
+  asia: SESSION_DEFINITIONS.ASIA,
   london: SESSION_DEFINITIONS.LONDON,
   newYork: SESSION_DEFINITIONS.NEW_YORK
 });
@@ -223,10 +243,23 @@ export function sessionCountdownPill(value = Date.now()) {
     };
   }
 
+  const asia = sessionDetail(SESSION_DEFINITIONS.ASIA, timestamp);
   const london = sessionDetail(SESSION_DEFINITIONS.LONDON, timestamp);
   const newYork = sessionDetail(SESSION_DEFINITIONS.NEW_YORK, timestamp);
 
   // 1. Active sessions
+  if (asia.active) {
+    const remaining = Math.max(0, asia.end - timestamp);
+    return {
+      text: `[ 🇯🇵 Sesi Asia Aktif (Sisa ${formatDuration(remaining)}) ]`,
+      activeSession: 'ASIA',
+      status: 'ACTIVE',
+      season: 'WITA',
+      witaTime: `${asia.witaStart}–${asia.witaEnd} WITA`,
+      remainingMs: remaining
+    };
+  }
+
   if (london.active) {
     const remaining = Math.max(0, london.end - timestamp);
     return {
@@ -252,6 +285,19 @@ export function sessionCountdownPill(value = Date.now()) {
   }
 
   // 2. Upcoming / countdown to next session
+  if (timestamp < asia.start) {
+    const msUntil = asia.start - timestamp;
+    return {
+      text: `[ 🇯🇵 Menuju Sesi Asia dalam ${formatDuration(msUntil)} (${asia.witaStart} WITA) ]`,
+      activeSession: 'OFF_SESSION',
+      status: 'UPCOMING',
+      nextSession: 'ASIA',
+      season: 'WITA',
+      targetTime: asia.witaStart,
+      remainingMs: msUntil
+    };
+  }
+
   if (timestamp < london.start) {
     const msUntil = london.start - timestamp;
     return {
@@ -279,16 +325,16 @@ export function sessionCountdownPill(value = Date.now()) {
   }
 
   const tomorrowTimestamp = timestamp + 24 * 3600 * 1000;
-  const tomorrowLondon = sessionDetail(SESSION_DEFINITIONS.LONDON, tomorrowTimestamp);
-  const msUntilTomorrow = Math.max(0, tomorrowLondon.start - timestamp);
+  const tomorrowAsia = sessionDetail(SESSION_DEFINITIONS.ASIA, tomorrowTimestamp);
+  const msUntilTomorrow = Math.max(0, tomorrowAsia.start - timestamp);
 
   return {
-    text: `[ 🇬🇧 Menuju London Open dalam ${formatDuration(msUntilTomorrow)} (${tomorrowLondon.witaStart} WITA) ]`,
+    text: `[ 🇯🇵 Menuju Sesi Asia dalam ${formatDuration(msUntilTomorrow)} (${tomorrowAsia.witaStart} WITA) ]`,
     activeSession: 'OFF_SESSION',
     status: 'UPCOMING',
-    nextSession: 'LONDON',
-    season: tomorrowLondon.season,
-    targetTime: tomorrowLondon.witaStart,
+    nextSession: 'ASIA',
+    season: 'WITA',
+    targetTime: tomorrowAsia.witaStart,
     remainingMs: msUntilTomorrow
   };
 }
@@ -319,5 +365,3 @@ export function startCockpitSessionPill(element = 'cockpit-session-pill', interv
   }
   return null;
 }
-
-

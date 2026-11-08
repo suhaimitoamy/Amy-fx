@@ -83,16 +83,20 @@ function draw(degraded=false){
   chart?.draw(result,activePlan,presentation);
   const last=result.candles.at(-1);
   const currentLive=Number(window.amyfxCurrentPrice);
-  const displayPrice=(Number.isFinite(currentLive)&&currentLive>0)?currentLive:(last?last.close:null);
+  const displayPrice=(!closed&&Number.isFinite(currentLive)&&currentLive>0)?currentLive:(last?last.close:null);
+  if(closed&&last&&Number.isFinite(last.close)){
+    window.amyfxCurrentPrice=last.close;
+  }
   if($('chart-price'))$('chart-price').textContent=displayPrice?displayPrice.toFixed(2):'—';
-  const dr = context?.m15?.dealingRange || context?.amy?.levels?.dealingRange || context?.dealingRange;
+  if(displayPrice&&!closed)chart?.updateActiveCandle?.(displayPrice);
+  if(displayPrice&&Number.isFinite(displayPrice)&&typeof window.AmyPriceAlertManager?.setPreviousPrice==='function'&&window.AmyPriceAlertManager.previousPrice==null){
+    window.AmyPriceAlertManager.setPreviousPrice(displayPrice);
+  }
+  renderAmy(context?.amy, display||loadDisplay(), context?.news, context);
+  const dr = window.amyfxLastDealingRange || context?.m15?.dealingRange || context?.amy?.levels?.dealingRange || context?.dealingRange;
   if(displayPrice&&$('chart-dealing-range-badge')){
     updateDealingRangeBadge($('chart-dealing-range-badge'), displayPrice, dr);
   }
-  if(displayPrice&&Number.isFinite(displayPrice)&&typeof window.AmyPriceAlertManager?.checkPrice==='function'){
-    window.AmyPriceAlertManager.checkPrice(displayPrice);
-  }
-  if(displayPrice)chart?.updateActiveCandle?.(displayPrice);
   if($('source')){
     const timeStr=new Date((result.sourceTime||last.time)*1000).toLocaleString('id-ID',{timeZone:'Asia/Makassar',hour12:false});
     if(closed){
@@ -111,15 +115,20 @@ function draw(degraded=false){
 }
 function applyLivePrice(price, timestamp){
   if(!Number.isFinite(price)||price<=0)return;
+  if(!isGoldMarketOpen(Date.now()/1000))return;
   window.amyfxCurrentPrice=price;
   if($('chart-price'))$('chart-price').textContent=price.toFixed(2);
-  const dr=context?.m15?.dealingRange||context?.amy?.levels?.dealingRange||context?.dealingRange;
-  if($('chart-dealing-range-badge')){
-    updateDealingRangeBadge($('chart-dealing-range-badge'),price,dr);
-  }
   chart?.updateActiveCandle?.(price,timestamp);
   if(typeof window.AmyPriceAlertManager?.checkPrice==='function'){
     window.AmyPriceAlertManager.checkPrice(price);
+  }
+  if(!window.__lastV6TickRender||Date.now()-window.__lastV6TickRender>2000){
+    window.__lastV6TickRender=Date.now();
+    renderAmy(context?.amy,display||loadDisplay(),context?.news,context);
+  }
+  const dr=window.amyfxLastDealingRange||context?.m15?.dealingRange||context?.amy?.levels?.dealingRange||context?.dealingRange;
+  if($('chart-dealing-range-badge')){
+    updateDealingRangeBadge($('chart-dealing-range-badge'),price,dr);
   }
 }
 window.addEventListener('amyfx:twelvedata-price',event=>{

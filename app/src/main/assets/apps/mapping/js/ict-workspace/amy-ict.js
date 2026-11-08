@@ -527,10 +527,10 @@ export function entryAssistantV3(d, candlesLTF=[], levels={}, pivots={}, options
   const pullbackBuyReject = contextOk && d.biasDir === -1 && pullbackBuyZone && bullRejectNow;
 
   let rawSignalType = 0;
-  if (pullbackSellBreak || pullbackSellReject) rawSignalType = -2;
-  else if (pullbackBuyBreak || pullbackBuyReject) rawSignalType = 2;
-  else if (trendBuyBreak || trendBuyReject || m15BuyTrend) rawSignalType = 1;
+  if (trendBuyBreak || trendBuyReject || m15BuyTrend) rawSignalType = 1;
   else if (trendSellBreak || trendSellReject || m15SellTrend) rawSignalType = -1;
+  else if ((pullbackSellBreak || pullbackSellReject) && !touchBullPoi && !inBuyFibZone && !nearSupport) rawSignalType = -2;
+  else if ((pullbackBuyBreak || pullbackBuyReject) && !touchBearPoi && !inSellFibZone && !nearResistance) rawSignalType = 2;
 
   const rawSignalDir = (rawSignalType === 1 || rawSignalType === 2) ? 1 : (rawSignalType === -1 || rawSignalType === -2) ? -1 : 0;
   const rawSignalIsBreak = rawSignalType === 1 ? (trendBuyBreak || (m15BuyTrend && m15Conf.displacementBreak)) :

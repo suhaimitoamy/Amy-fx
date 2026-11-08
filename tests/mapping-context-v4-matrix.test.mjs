@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {dashboardContextV4Rows, renderBiasDashboardV2} from '../app/src/main/assets/apps/mapping/js/ict-workspace/ict-presentation.js';
+import {dashboardContextV4Rows, dashboardContextV6Rows, renderBiasDashboardV2} from '../app/src/main/assets/apps/mapping/js/ict-workspace/ict-presentation.js';
 
 function setupDomMock() {
   const elements = {};
@@ -143,7 +143,7 @@ test('dashboardContextV4Rows detects Lower Liquidity Manipulation on SSL Sweep',
   assert.match(guideRow[1], /Likuiditas Bawah Sudah Diambil/);
 });
 
-test('renderBiasDashboardV2 populates DOM with V4 header and 11 table rows', () => {
+test('renderBiasDashboardV2 populates DOM with V6.1 header and table rows', () => {
   const { elements, cleanup } = setupDomMock();
 
   const amy = {
@@ -168,10 +168,65 @@ test('renderBiasDashboardV2 populates DOM with V4 header and 11 table rows', () 
 
   renderBiasDashboardV2(amy, context);
 
-  assert.match(elements['bias-table-header'].textContent, /AMY ICT CONTEXT V4 \[INTRADAY\]/);
-  assert.ok(elements['bias-table-body'].innerHTML.includes('MATRIKS 3-TIMEFRAME'));
-  assert.ok(elements['bias-table-body'].innerHTML.includes('FASE NARASI MARKET'));
-  assert.ok(elements['bias-table-body'].innerHTML.includes('PANDUAN KONTEKS'));
+  assert.match(elements['bias-table-header'].textContent, /AMY ICT V6\.1/);
+  assert.ok(elements['bias-table-body'].innerHTML.includes('3-TF ORDER FLOW'));
+  assert.ok(elements['bias-table-body'].innerHTML.includes('BATAS EKSPANSI'));
+  assert.ok(elements['bias-table-body'].innerHTML.includes('PANDUAN KONTEKS ICT'));
 
   cleanup();
+});
+
+test('dashboardContextV6Rows produces exactly 14 pure market context rows', () => {
+  const amy = {
+    dashboard: {
+      biasDir: 1,
+      mssDir: 1,
+      rangeHigh: 2680.00,
+      rangeLow: 2640.00,
+      priceZone: -1,
+      bsl: 2680.00,
+      ssl: 2640.00,
+      sweepStatus: 0,
+      poi: { kind: 'OB', side: 'BUY', low: 2645.00, high: 2648.00, ce: 2646.50 },
+      candle: { close: 2646.00 }
+    },
+    levels: {
+      pdh: 2675.00,
+      pdl: 2635.00,
+      pwh: 2700.00,
+      pwl: 2620.00,
+      asiaHigh: 2660.00,
+      asiaLow: 2642.00
+    },
+    currentPrice: 2646.00
+  };
+
+  const context = {
+    h1: { bias: 'BULLISH', swingHigh: 2685.00, swingLow: 2630.00 },
+    m15: { structure: 'BULLISH' },
+    m5: { status: 'WAITING' },
+    session: 'LONDON',
+    price: 2646.00
+  };
+
+  const rows = dashboardContextV6Rows(amy, context);
+  assert.equal(rows.length, 14, 'Must have exactly 14 rows');
+
+  const keys = rows.map(r => r[0]);
+  assert.deepEqual(keys, [
+    '3-TF ORDER FLOW',
+    'FASE MARKET',
+    'BATAS EKSPANSI',
+    'DEALING RANGE & ZONA',
+    'DRAW ON LIQ (BSL)',
+    'DRAW ON LIQ (SSL)',
+    'KILLZONE & ASIA',
+    'INDUCEMENT (IDM)',
+    'BEARISH PDA (M15)',
+    'BULLISH PDA (M15)',
+    'JEJAK HTF & NWOG',
+    'BATAS MSS / CHoCH',
+    'TARGET ENTRY (2-ARAH)',
+    'PANDUAN KONTEKS ICT'
+  ]);
 });

@@ -207,16 +207,16 @@ main {
 .page-header p,
 .home-hero p {
   color: var(--text-muted);
-  font-size: .75rem;
-  margin-top: 2px;
+  font-size: .88rem;
+  margin-top: 3px;
 }
 
 .eyebrow,
 .section-kicker {
   color: var(--primary-gold);
-  font-size: .62rem;
+  font-size: .76rem;
   font-weight: 900;
-  letter-spacing: 1.35px;
+  letter-spacing: 1.1px;
   text-transform: uppercase;
 }
 
@@ -232,14 +232,14 @@ main {
 
 .section-heading h2 {
   color: var(--text-main);
-  font-size: .98rem;
+  font-size: 1.08rem;
   font-weight: 800;
   margin-top: 2px;
 }
 
 .section-count {
   color: var(--text-muted);
-  font-size: .68rem;
+  font-size: .80rem;
   white-space: nowrap;
 }
 
@@ -279,8 +279,8 @@ main {
   z-index: 1;
   margin-top: 4px;
   color: #fff8df;
-  font-size: 1.12rem;
-  line-height: 1.2;
+  font-size: 1.25rem;
+  line-height: 1.25;
 }
 
 .home-hero p,
@@ -289,10 +289,10 @@ main {
 .hero-status {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   margin-top: 10px;
   color: #d8d0b9;
-  font-size: .64rem;
+  font-size: .80rem;
   font-weight: 700;
 }
 
@@ -351,27 +351,27 @@ main {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.8rem;
+  font-size: 0.94rem;
   font-weight: 800;
   color: #ffffff;
 }
 .quick-card small {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   color: var(--text-muted);
-  font-size: 0.62rem;
+  font-size: 0.78rem;
   margin-top: 4px;
 }
-.quick-card small svg { width: 10px; height: 10px; }
+.quick-card small svg { width: 12px; height: 12px; }
 .quick-card .chevron { font-size: 1.25rem; color: var(--primary-gold); opacity: 0.75; }
 
 .project-grid.compact { gap: 10px; }
-.project-grid.compact .project-card { padding: 11px 12px; grid-template-columns: 40px 1fr 16px; gap: 10px; }
-.project-grid.compact .app-icon { width: 40px; height: 40px; }
-.project-grid.compact .card-content h3 { font-size: .82rem; margin-bottom: 2px; }
-.project-grid.compact .card-content p { font-size: .68rem; -webkit-line-clamp: 1; }
-.project-grid.compact .badge { margin-top: 4px; padding: 2px 6px; font-size: .55rem; }
+.project-grid.compact .project-card { padding: 12px 14px; grid-template-columns: 42px 1fr 16px; gap: 10px; }
+.project-grid.compact .app-icon { width: 42px; height: 42px; }
+.project-grid.compact .card-content h3 { font-size: .96rem; margin-bottom: 3px; }
+.project-grid.compact .card-content p { font-size: .82rem; -webkit-line-clamp: 1; }
+.project-grid.compact .badge { margin-top: 4px; padding: 3px 8px; font-size: .72rem; }
 
 .row {
   align-items: center;
@@ -442,7 +442,7 @@ main {
 .indicator-item strong {
   display: block;
   color: var(--text-main);
-  font-size: 1rem;
+  font-size: 1.08rem;
   font-weight: 800;
   margin-bottom: 4px;
 }
@@ -457,8 +457,8 @@ main {
   -webkit-box-orient: vertical;
   overflow: hidden;
   color: var(--text-muted);
-  font-size: 0.8rem;
-  line-height: 1.4;
+  font-size: 0.88rem;
+  line-height: 1.45;
 }
 
 .badge,
@@ -957,27 +957,27 @@ pre {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 4px;
   padding: 6px 4px;
   border-radius: 9999px;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   position: relative;
 }
 
 .nav-btn .icon svg {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   stroke: currentColor;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .nav-btn span:last-child {
-  font-size: 0.68rem;
+  font-size: 0.82rem;
   font-weight: 750;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.35px;
   transition: color 0.2s ease;
 }
 
@@ -2182,9 +2182,9 @@ body.is-reel-open .bottom-nav {
 .amy-reel-tag {
   background: rgba(245, 196, 81, 0.18);
   color: #f5c451;
-  padding: 2px 8px;
+  padding: 3px 8px;
   border-radius: 4px;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
 }
 .amy-reel-progress {

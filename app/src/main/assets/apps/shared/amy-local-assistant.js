@@ -214,7 +214,7 @@
     host.querySelector('form').onsubmit=e=>{e.preventDefault();send(input.value);};['Harga Mapping','Berita terbaru','Evaluasi jurnal saya','Progres belajar'].forEach(q=>{const b=document.createElement('button');b.type='button';b.textContent=q;b.onclick=()=>send(q);host.querySelector('.prompts').appendChild(b);});
     append('Saya membaca data aplikasi yang tersimpan dan materi Academy. Pilih pertanyaan di atas atau tulis pertanyaanmu.');
     // Knowledge is packaged JavaScript, loaded locally; no network AI call.
-    if(script){knowledgeReady=new Promise(resolve=>{const s=document.createElement('script');const timer=setTimeout(resolve,5000);const done=()=>{clearTimeout(timer);resolve();};s.onload=done;s.onerror=done;s.src=new URL('amy-local-knowledge.js',script).href;document.head.appendChild(s);});}
+    if(script){knowledgeReady=new Promise(resolve=>{const s=document.createElement('script');const timer=setTimeout(resolve,5000);const done=()=>{clearTimeout(timer);resolve();};s.onload=done;s.onerror=done;s.src=new URL('amy-local-knowledge.js',script).href;document.head.appendChild(s);});const g=document.createElement('script');g.src=new URL('amy-gemini-live-bridge.js',script).href;g.async=true;document.head.appendChild(g);}
   }
   root.AmyLocalAssistant=Object.freeze({ask,intent,mapping,news,journal,academy,knowledge});
   if(root.document){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();}

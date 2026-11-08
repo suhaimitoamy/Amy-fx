@@ -1,5 +1,33 @@
 # Technical Decisions
 
+## 2026-11-08 — Upgrade Kecerdasan Artemis & Modul Analisa TradingView Cerdas (artemis-tv)
+1. **Latar Belakang & Keluhan Sayang:**
+   - Artemis sebelumnya terasa lambat, kaku, dan "bodoh" di aplikasi trading karena dijalankan pada profile `flash` reaktif yang tidak memahami konteks kanvas grafis OpenGL/SurfaceView TradingView dan tidak memiliki SOP analisa terstruktur.
+2. **Penyempurnaan Dilakukan:**
+   - **Upgrade Model Default:** Konfigurasi `/root/artemis/config/artemis.jsonc` ditingkatkan ke `gemini-3.8-flash` dengan thinking mode aktif.
+   - **Playbook Anatomi TradingView:** Menyusun `/root/artemis/config/tradingview_ict_playbook.md` yang memetakan elemen UI TradingView Mobile (Timeframe, Header, Canvas, Drawing Tools) dan panduan SOP Top-Down (H1 -> M15 -> M5).
+   - **Engine Runner `artemis-tv`:** Dibuatkan skrip eksekutif `/root/artemis/scripts/artemis_tradingview_analyst.py` dan shortcut `/usr/local/bin/artemis-tv`.
+   - **Arsitektur Pro + Ultra:** Artemis kini otomatis menggunakan `--profile pro` (Planner + Operator + Validator) dan `--explorer-version ultra` (8-turn reasoning loop dengan OCR teks & deep zoom) dengan `--locked-app com.tradingview.tradingviewapp`.
+   - **Deteksi Koneksi Cepat:** Pemeriksaan ADB instan tanpa freeze/loop berlebihan, lengkap dengan panduan aktivasi Wireless Debugging yang ramah.
+3. **Verifikasi:**
+   - Eksekusi `artemis-tv --help` dan pengecekan sintaks Python 3.13 lulus tanpa error.
+   - Symlink `/usr/local/bin/artemis-tv` aktif dan siap dipakai langsung oleh Sayang.
+
+## 2026-11-07 — Perbaikan Riwayat Terakhir Dibaca Academy Ngestuck di Risk Reward (Integrasi Micro-Learning Level 0–6)
+1. **Latar Belakang & Keluhan Sayang:**
+   - Sayang mengecek modul Academy di Amy FX / Amy FX Pro dan mendapati card "Terakhir Dibuka / Terakhir Dibaca" di Beranda (`index.html`) ngestuck terus pada judul *"Risk Reward Ratio"*, padahal kurikulum sekarang sudah beralih ke micro-learning bertahap Level 0 hingga Level 6 (`apps/academy/belajar/`).
+2. **Akar Masalah (Root Cause):**
+   - **Isolasi Skrip Halaman Pelajaran Baru:** Halaman-halaman pelajaran di `belajar/level-X/` hanya menyertakan `micro-learning.js`. Modul ini sebelumnya hanya menangani interaksi kuis dan menyimpan progres kuis (`amyfx.academy.micro_progress`), tanpa pernah mencatat riwayat pembacaan ke `localStorage` (`amy_last_opened_title`, `amy_last_opened_url`, `amy_academy_last_read_v2`, `amy_academy_reading_history_v2`) maupun native Android reminder.
+   - **Filter Regex Usang di Engine Utama:** Di `reading-history-v2.js`, fungsi `isLessonPage()` hanya memfilter `/(?:bagian-\d+|modul-\d+)\/.+\.html$/i` (arsip lama 36 bagian dan 10 modul), sehingga path materi modern `belajar/level-\d+/*.html` tidak dianggap sebagai halaman pelajaran.
+   - **Ketiadaan Update Fallback:** Karena materi baru tidak pernah memperbarui `localStorage`, Beranda Academy terus-menerus membaca data usang sesi lama saat Sayang membuka materi Risk Reward Ratio (`bagian-12-risk-management/risk-reward-ratio.html`).
+3. **Penyempurnaan Dilakukan:**
+   - **Auto-Record Reading History di `micro-learning.js`:** Menambahkan fungsi `recordReadingHistory()` yang otomatis mengambil judul materi (`.ml-lesson-title-box h1`), label level, path relatif, dan menuliskan fallback `amy_last_opened_*`, `amy_academy_last_read_v2`, serta sinkronisasi native bridge `window.Android.recordLastStudiedLesson`.
+   - **Ekspansi Dukungan Regex di `reading-history-v2.js`:** Memperbarui `isLessonPage()` dan `sectionLabel()` agar mengenali path `belajar/level-\d+` dengan namespace `micro-learning`, sehingga kompatibel penuh dengan card resume di Beranda.
+   - **Paritas Repo:** Perbaikan diterapkan identik 100% pada `/root/Amy-fx-pro/` dan `/root/Amy-fx/`.
+4. **Verifikasi:**
+   - Targeted unit test `tests/micro-learning-reading-history.test.mjs` dibuat dan lulus 2/2 di kedua repositori.
+   - 16 test unit pembelajaran yang ada (`tests/learning-and-equity-engine.test.mjs`, `tests/learning-reminder-sync.test.mjs`, `tests/learning-reminder-notification.test.mjs`) tetap lulus 100%.
+
 ## 2026-11-03 — Perbaikan Tuntas Cacat Logika & Audit Cockpit Mapping Amy FX Pro (Sesuai 4 Screenshot Artemis)
 1. **Latar Belakang & Keluhan Sayang:**
    - Sayang mengecek langsung antarmuka Cockpit Mapping (`apps/mapping/index.html`) di browser HP dan menemukan sejumlah kejanggalan logika:
@@ -1486,6 +1514,51 @@ Pro382 release verification completed: source 11239e1de1b42d6677cbd074619c636507
 - **Perbaikan Nomor 7 (Konflik Dead Code System Settings):**
   - Menyelaraskan selector guard `profile-system-settings-v1.js` agar kustomisasi warna kaca dan opacity slider aktif tanpa terblokir.
 
+### 2026-11-05: Sistem Simulasi Real-Time Edukatif & Lab Pembelajaran Scalper Sayang
+- **Status:** Diadopsi Permanen (Pasal 26 GEMINI.md & CLAUDE.md).
+- **Tujuan:** Dual-engine untuk menghasilkan setup XAU/USD real-time berprobabilitas tinggi (Target 100-120 pips, SL 60 pips) sekaligus sarana edukasi alasan entry ICT/SMC murni.
+- **Eksekusi:** Dua pilar fleksibel: Reversal Likuiditas (dengan napas zona +5 pips) dan Trend Continuation (FVG tap pullback) untuk mencegah terbuangnya peluang momentum.
+- **Integritas:** Zero-manipulation Twelve Data feed dan evaluasi mandiri via Harness² Engine setiap kali terkena Stop Loss.
+
+
+
+
+
+
+
+## DECISION-20261105-01: Protokol Active Scalper Pro & Format Tampilan Baku (Opsi B)
+- **Tanggal:** 2026-11-05
+- **Konteks:** Evaluasi keberhasilan simulasi live market XAU/USD yang mencetak Hat-Trick Win (+145p, +150p, +140p) dengan total akumulasi net profit +335.0 Pips.
+- **Keputusan:**
+  1. Mengadopsi mentalitas eksekusi proaktif (Zero-Hesitation / Tidak Ragu Entry) di ujung ekstrem Dealing Range (Discount <30% untuk Buy SSL Sweep, Premium >70% untuk Sell Breaker/BSL Sweep).
+  2. Mewajibkan Format Tampilan Baku Opsi B (Ultra-Compact + Pinned Target Entry Radar Box di baris paling atas).
+  3. Menerapkan SOP Proteksi Bertingkat: BEP Instan (+50-70 pips) dan Trailing Lock (+100 pips) untuk mengunci minimal +85 pips.
+  4. Menyimpan konfigurasi aktif ke `/root/.harness2/active_scalper_config.json` dan Pasal 27 `/root/GEMINI.md`.
+
+
+### [2026-11-06] Harness² Evolution H2-20261106170424-60e70751: Pasal 28 Perlindungan Modal Riil & Anti-Overtrading
+- Menghapus mesin overtrading M5 frekuensi tinggi.
+- Kuota trading harian dibatasi maksimal 1-2 setup A+ MTF (M15/H1).
+- Larangan counter-trend di sesi ekspansi London/NY.
+- Emergency circuit breaker jika terjadi SL di akun riil Sayang.
+
+## DECISION-20261106-02: Kloning DNA Sesi Master & Inisialisasi Mutlak Antar-Sesi (Pasal 29)
+- **Tanggal:** 2026-11-06
+- **Konteks:** Menanggapi keluhan Sayang mengenai sesi lain yang sering blunder, amnesia, dan overtrading.
+- **Keputusan:**
+  1. Menetapkan sesi Hat-Trick (+335 Pips) sebagai Sesi Master pembawa DNA mutlak.
+  2. Mewajibkan seluruh sesi baru mengkloning 100% karakter, ketenangan, pemahaman MT5 visual ($4,138/$4,131), dan proteksi modal riil.
+  3. Mengunci SOP startup otomatis membaca `/root/.harness2/active_scalper_config.json` dan `/root/.harness2/live_simulation.json`.
+  4. Sandi re-sinkronisasi: "lanjut sesi master", "ingat sesi pro", "samakan dengan sesi kemarin".
+
+## DECISION-20261107-01: Standar Arsitektur Gemini JARVIS Live Voice Agent v2.5.0 (Pasal 30)
+- **Tanggal:** 2026-11-07
+- **Konteks:** Penyelesaian sukses pengembangan standalone Gemini Live Voice Assistant (`/root/gemini-live-lab`, port 8088).
+- **Keputusan:**
+  1. Mengunci status v2.5.0 sebagai tonggak sejarah stabil (Stable Milestone): Voice WebSocket streaming `gemini-3.8-live` + suara `Aoede`.
+  2. Mempermanenkan 4 pilar inti: Dual chat persistence (anti-amnesia), Edukasi Obsidian cross-vault (36 bagian), Kalender makro & berita anti-captcha, serta Analisa Gold AMY CONTEXT V4.3.2 + SQLite candle riil.
+  3. Menetapkan roadmap masa depan untuk ekspansi kemampuan coding bertahap tanpa merusak stabilitas live voice saat ini.
+  4. Sandi aktivasi instan: "aktifkan jarvis", "nyalakan jarvis", "start jarvis", "gemini live" -> Otomatis pastikan server lab aktif dan berikan link http://localhost:8088.
 
 
 

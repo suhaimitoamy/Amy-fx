@@ -87,13 +87,16 @@ export function mountHomeChart(root) {
     view.draw(result);
     const last=result.candles.at(-1);
     const currentLive=Number(window.amyfxCurrentPrice);
-    const displayPrice=(Number.isFinite(currentLive)&&currentLive>0)?currentLive:(last?last.close:null);
+    const displayPrice=(!closed&&Number.isFinite(currentLive)&&currentLive>0)?currentLive:(last?last.close:null);
+    if(closed&&last&&Number.isFinite(last.close)){
+      window.amyfxCurrentPrice=last.close;
+    }
     $('home-chart-price').textContent=displayPrice?displayPrice.toFixed(2):'—';
     if($('home-chart-dealing-range-badge')){
-      const dr = window.amyfxLastContext?.m15?.dealingRange || window.amyfxLastContext?.amy?.levels?.dealingRange || window.amyfxLastContext?.dealingRange;
+      const dr = window.amyfxLastDealingRange || window.amyfxLastContext?.m15?.dealingRange || window.amyfxLastContext?.amy?.levels?.dealingRange || window.amyfxLastContext?.dealingRange;
       if(displayPrice) updateDealingRangeBadge($('home-chart-dealing-range-badge'), displayPrice, dr);
     }
-    if(displayPrice) view?.updateActiveCandle?.(displayPrice);
+    if(displayPrice&&!closed) view?.updateActiveCandle?.(displayPrice);
     if($('home-chart-source')){
       if(!last){
         $('home-chart-source').textContent='Belum ada candle. Periksa koneksi lalu tekan Perbarui.';
@@ -181,6 +184,7 @@ export function mountHomeChart(root) {
     refresh();
   }
   function handleLiveTick(event){
+    if(!isGoldMarketOpen(Date.now()/1000))return;
     const detail=event?.detail;
     const price=Number(detail?.price);
     const capturedAt=Number(detail?.timestamp||detail?.capturedAt);
@@ -188,7 +192,7 @@ export function mountHomeChart(root) {
     window.amyfxCurrentPrice=price;
     const priceEl=$('home-chart-price');
     if(priceEl)priceEl.textContent=price.toFixed(2);
-    const dr=window.amyfxLastContext?.m15?.dealingRange||window.amyfxLastContext?.amy?.levels?.dealingRange||window.amyfxLastContext?.dealingRange;
+    const dr=window.amyfxLastDealingRange||window.amyfxLastContext?.m15?.dealingRange||window.amyfxLastContext?.amy?.levels?.dealingRange||window.amyfxLastContext?.dealingRange;
     const badgeEl=$('home-chart-dealing-range-badge');
     if(badgeEl)updateDealingRangeBadge(badgeEl,price,dr);
     view?.updateActiveCandle?.(price,capturedAt);

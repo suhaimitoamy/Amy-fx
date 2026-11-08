@@ -206,9 +206,9 @@ body.amyfx-module--home .bottom-nav {
   box-shadow: 0 -1px 0 var(--amy-border) !important;
 
   /* Height natural seperti app mobile standard */
-  height: calc(56px + var(--amy-safe-bottom)) !important;
-  padding: 4px 0 var(--amy-safe-bottom) !important;
-  align-items: flex-start !important;
+  height: calc(64px + var(--amy-safe-bottom, 0px)) !important;
+  padding: 6px 0 var(--amy-safe-bottom, 0px) !important;
+  align-items: center !important;
 }
 
 html[data-amyfx-theme="light"] body.amyfx-module--home .bottom-nav {
@@ -219,16 +219,23 @@ html[data-amyfx-theme="light"] body.amyfx-module--home .bottom-nav {
 /* Nav button di dalam nav full-width */
 body.amyfx-module--home .nav-btn {
   border-radius: 0 !important;
-  min-height: 48px !important;
-  font-size: 10px !important;
-  font-weight: 500 !important; /* Hapus font-weight 650 yang berlebihan */
+  min-height: 52px !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
   color: var(--amy-text-muted) !important;
-  gap: 2px !important;
+  gap: 4px !important;
+  letter-spacing: 0.02em !important;
+}
+
+body.amyfx-module--home .nav-btn .icon svg {
+  width: 24px !important;
+  height: 24px !important;
 }
 
 body.amyfx-module--home .nav-btn.active {
   background: transparent !important;
   color: var(--amy-accent) !important;
+  font-weight: 750 !important;
 }
 
 /* Hapus glow indicator di atas nav — ganti dengan bawah icon */
@@ -238,7 +245,7 @@ body.amyfx-module--home .nav-btn.active::before {
 
 /* Padding main content menyesuaikan nav height baru */
 body.amyfx-module--home main {
-  padding-bottom: calc(56px + var(--amy-safe-bottom) + 12px) !important;
+  padding-bottom: calc(64px + var(--amy-safe-bottom, 0px) + 16px) !important;
 }
 
 
@@ -274,22 +281,22 @@ body.amyfx-module :is(.bottom-nav, .intel-tabs, .app-header) {
 /* Hapus letter-spacing ekstrem di section label */
 .section-kicker,
 .eyebrow {
-  font-weight: 600 !important;
+  font-weight: 650 !important;
   letter-spacing: 0.04em !important; /* Dari 0.14em → wajar */
   text-transform: none !important; /* Hapus uppercase */
-  font-size: 12px !important;
+  font-size: 13px !important;
 }
 
 /* Header app copy — normal */
 .app-header__copy strong {
-  font-size: 16px !important;
+  font-size: 17px !important;
   letter-spacing: 0 !important; /* Hapus 0.04em */
-  font-weight: 600 !important;
+  font-weight: 700 !important;
 }
 
 .app-header__copy small {
-  font-size: 11px !important;
-  letter-spacing: 0.04em !important; /* Dari 0.12em */
+  font-size: 12.5px !important;
+  letter-spacing: 0.03em !important; /* Dari 0.12em */
   text-transform: none !important; /* Hapus uppercase */
 }
 
@@ -300,9 +307,9 @@ body.amyfx-module :is(button, .btn, [role="button"]) {
 
 /* Page heading */
 body.amyfx-module--home .page-header h2 {
-  font-size: 22px !important; /* Dari 25–32px */
+  font-size: 24px !important; /* Dari 25–32px */
   letter-spacing: -0.01em !important;
-  font-weight: 700 !important;
+  font-weight: 750 !important;
 }
 
 
@@ -359,26 +366,31 @@ body.amyfx-module--home .nav-btn.active {
    8. SECTION HEADING & CARD META — lebih rapi
    ═══════════════════════════════════════════════════ */
 body.amyfx-module--home .section-heading {
-  margin: 20px 0 10px !important;
+  margin: 22px 0 12px !important;
 }
 
 body.amyfx-module--home .section-heading h2 {
-  font-size: 15px !important;
-  font-weight: 600 !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
   color: var(--amy-text) !important;
   letter-spacing: 0 !important;
 }
 
 /* Card content sizing */
 body.amyfx-module--home .quick-card strong {
-  font-size: 14px !important;
-  font-weight: 600 !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
 }
 
 body.amyfx-module--home .quick-card small,
 body.amyfx-module--home .project-card p {
-  font-size: 12px !important;
-  line-height: 1.4 !important;
+  font-size: 13.5px !important;
+  line-height: 1.45 !important;
+}
+
+body.amyfx-module--home .project-card h3 {
+  font-size: 16px !important;
+  font-weight: 700 !important;
 }
 
 /* Badges & chips — lebih flat */
@@ -392,9 +404,9 @@ body.amyfx-module--home .project-card p {
 .entry-watch-badge,
 .execution-badge {
   border-radius: 6px !important;
-  font-size: 11px !important;
-  font-weight: 500 !important;
-  padding: 3px 8px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 4px 9px !important;
 }
 
 

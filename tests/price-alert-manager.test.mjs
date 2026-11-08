@@ -63,7 +63,8 @@ import {
   clearIctCooldowns,
   getIctCooldowns,
   isGoldMarketOpen,
-  playAlertBeep
+  playAlertBeep,
+  getAvailableIctLevels
 } from '../app/src/main/assets/apps/mapping/js/ict-workspace/price-alert-manager.js';
 
 test('PriceAlertManager: getCurrentLivePrice retrieves configured live price', () => {
@@ -223,7 +224,7 @@ test('PriceAlertManager: renderAlertList creates UI structure with active items'
   assert.ok(mockContainer.innerHTML.includes('1 Aktif'));
 });
 
-test('PriceAlertManager: checkIctIntrabarSweeps triggers instant 0s BSL sweep alert', () => {
+test('PriceAlertManager: checkIctIntrabarSweeps is permanently disabled (anti-spam)', () => {
   clearIctCooldowns();
   window.Android.notifications = [];
   window.__amyfxMarketOpen = true;
@@ -239,18 +240,11 @@ test('PriceAlertManager: checkIctIntrabarSweeps triggers instant 0s BSL sweep al
 
   const events = checkIctIntrabarSweeps(2660.50, 2658.00);
 
-  assert.equal(events.length, 1);
-  assert.equal(events[0].key, 'BSL');
-  assert.equal(events[0].type, 'SWEEP');
-  assert.equal(events[0].level, 2660.00);
-  assert.equal(events[0].price, 2660.50);
-
-  assert.equal(window.Android.notifications.length, 1);
-  assert.ok(window.Android.notifications[0].title.includes('BSL'));
-  assert.ok(window.Android.notifications[0].message.includes('2660.50'));
+  assert.equal(events.length, 0, 'Intrabar sweeps must be disabled to prevent spam');
+  assert.equal(window.Android.notifications.length, 0, 'No spam notifications sent');
 });
 
-test('PriceAlertManager: checkIctIntrabarSweeps triggers instant SSL sweep alert', () => {
+test('PriceAlertManager: checkIctIntrabarSweeps suppresses instant SSL sweep alert', () => {
   clearIctCooldowns();
   window.Android.notifications = [];
   window.__amyfxMarketOpen = true;
@@ -264,13 +258,11 @@ test('PriceAlertManager: checkIctIntrabarSweeps triggers instant SSL sweep alert
 
   const events = checkIctIntrabarSweeps(2634.00, 2636.50);
 
-  assert.equal(events.length, 1);
-  assert.equal(events[0].key, 'SSL');
-  assert.equal(events[0].type, 'SWEEP');
-  assert.equal(events[0].level, 2635.00);
+  assert.equal(events.length, 0);
+  assert.equal(window.Android.notifications.length, 0);
 });
 
-test('PriceAlertManager: checkIctIntrabarSweeps respects 5-minute anti-jitter cooldown', () => {
+test('PriceAlertManager: checkIctIntrabarSweeps suppresses anti-jitter alerts', () => {
   clearIctCooldowns();
   window.Android.notifications = [];
   window.__amyfxMarketOpen = true;
@@ -280,15 +272,15 @@ test('PriceAlertManager: checkIctIntrabarSweeps respects 5-minute anti-jitter co
   };
 
   const first = checkIctIntrabarSweeps(2661.00, 2659.00);
-  assert.equal(first.length, 1);
-  assert.equal(window.Android.notifications.length, 1);
+  assert.equal(first.length, 0);
+  assert.equal(window.Android.notifications.length, 0);
 
   const second = checkIctIntrabarSweeps(2662.00, 2659.50);
   assert.equal(second.length, 0);
-  assert.equal(window.Android.notifications.length, 1);
+  assert.equal(window.Android.notifications.length, 0);
 });
 
-test('PriceAlertManager: checkIctIntrabarSweeps triggers POI entry alert', () => {
+test('PriceAlertManager: checkIctIntrabarSweeps suppresses POI entry alerts', () => {
   clearIctCooldowns();
   window.Android.notifications = [];
   window.__amyfxMarketOpen = true;
@@ -301,14 +293,11 @@ test('PriceAlertManager: checkIctIntrabarSweeps triggers POI entry alert', () =>
 
   const events = checkIctIntrabarSweeps(2647.00, 2650.00);
 
-  assert.equal(events.length, 1);
-  assert.equal(events[0].type, 'POI');
-  assert.ok(events[0].key.startsWith('POI_'));
-  assert.equal(window.Android.notifications.length, 1);
-  assert.ok(window.Android.notifications[0].title.includes('UJI ZONA POI'));
+  assert.equal(events.length, 0);
+  assert.equal(window.Android.notifications.length, 0);
 });
 
-test('PriceAlertManager: checkIctIntrabarSweeps triggers structure break / invalidation', () => {
+test('PriceAlertManager: checkIctIntrabarSweeps suppresses structure break alerts', () => {
   clearIctCooldowns();
   window.Android.notifications = [];
   window.__amyfxMarketOpen = true;
@@ -322,10 +311,8 @@ test('PriceAlertManager: checkIctIntrabarSweeps triggers structure break / inval
 
   const events = checkIctIntrabarSweeps(2639.50, 2642.00);
 
-  assert.equal(events.length, 1);
-  assert.equal(events[0].key, 'INVALIDATION');
-  assert.equal(events[0].type, 'BREAK');
-  assert.ok(window.Android.notifications[0].title.includes('BREAK STRUKTUR'));
+  assert.equal(events.length, 0);
+  assert.equal(window.Android.notifications.length, 0);
 });
 
 test('PriceAlertManager: checkIctIntrabarSweeps suppresses alerts during market closure', () => {
@@ -344,7 +331,7 @@ test('PriceAlertManager: checkIctIntrabarSweeps suppresses alerts during market 
   assert.equal(window.Android.notifications.length, 0);
 });
 
-test('PriceAlertManager: checkPrice integrates live ICT sweeps even without manual custom alerts', () => {
+test('PriceAlertManager: checkPrice suppresses automatic intrabar spam when no manual alerts set', () => {
   clearIctCooldowns();
   localStorage.clear();
   window.Android.notifications = [];
@@ -358,9 +345,8 @@ test('PriceAlertManager: checkPrice integrates live ICT sweeps even without manu
 
   const triggered = checkPrice(2671.00);
 
-  assert.equal(triggered, true);
-  assert.equal(window.Android.notifications.length, 1);
-  assert.ok(window.Android.notifications[0].title.includes('PDH'));
+  assert.equal(triggered, false);
+  assert.equal(window.Android.notifications.length, 0);
 });
 
 test('PriceAlertManager: playAlertBeep delegates to native Android.playNotificationSound when available (item 1.60)', () => {
@@ -432,4 +418,74 @@ test('PriceAlertManager: persists lastCheckedPrice to localStorage during ticks 
   // Check that localStorage persisted the updated lastCheckedPrice
   const reloaded = JSON.parse(localStorage.getItem('amyfx_custom_price_alerts'));
   assert.equal(reloaded[0].lastCheckedPrice, 2660.00, 'lastCheckedPrice must be saved to localStorage');
+});
+
+test('PriceAlertManager: getAvailableIctLevels extracts SSL, BSL, POI, and PDH/PDL presets', () => {
+  window.AmyMarketContext = {
+    liquidity: [
+      { label: 'SSL', level: 2640.20 },
+      { label: 'BSL', level: 2655.80 },
+      { label: 'PDH', level: 2662.00 },
+      { label: 'PDL', level: 2636.50 },
+      { label: 'ASIA H', level: 2648.00 },
+      { label: 'ASIA L', level: 2642.00 }
+    ],
+    m15: {
+      poi: { label: 'Demand FVG', low: 2641.00, high: 2644.00, ce: 2642.50 }
+    },
+    plan: {
+      entry: 2643.00,
+      sl: 2639.00,
+      tp1: 2655.00,
+      signalName: 'BUY ENTRY'
+    }
+  };
+
+  const levels = getAvailableIctLevels();
+  assert.ok(Array.isArray(levels));
+  assert.ok(levels.length >= 6);
+
+  const ssl = levels.find(l => l.id === 'ssl');
+  assert.ok(ssl);
+  assert.equal(ssl.price, 2640.20);
+  assert.equal(ssl.direction, 'CROSS_BELOW');
+  assert.ok(ssl.note.includes('SSL Sweep'));
+
+  const bsl = levels.find(l => l.id === 'bsl');
+  assert.ok(bsl);
+  assert.equal(bsl.price, 2655.80);
+  assert.equal(bsl.direction, 'CROSS_ABOVE');
+  assert.ok(bsl.note.includes('BSL Sweep'));
+
+  const poi = levels.find(l => l.id === 'poi');
+  assert.ok(poi);
+  assert.equal(poi.price, 2642.50);
+
+  const planEntry = levels.find(l => l.id === 'plan_entry');
+  assert.ok(planEntry);
+  assert.equal(planEntry.price, 2643.00);
+});
+
+test('PriceAlertManager: SSL Sweep alert triggers custom sweep notification and gold chime', () => {
+  localStorage.clear();
+  window.Android.notifications = [];
+  window.Android.playGoldChimeCount = 0;
+  setPreviousPrice(null);
+
+  // Set alert for SSL Sweep at 2640.00 when price is 2645.00
+  addAlert(2640.00, {
+    direction: 'CROSS_BELOW',
+    note: '⚡ SSL Sweep (Likuiditas Bawah)',
+    currentPrice: 2645.00
+  });
+
+  // Price crosses below to 2639.50
+  const triggered = checkPrice(2639.50);
+  assert.equal(triggered, true);
+
+  assert.equal(window.Android.notifications.length, 1);
+  const notif = window.Android.notifications[0];
+  assert.ok(notif.title.includes('⚡ SSL Sweep'));
+  assert.ok(notif.message.includes('Level Likuiditas 2640.00 telah tersapu (Sweep)!'));
+  assert.ok(window.Android.playGoldChimeCount > 0, 'Must play gold chime on ICT sweep');
 });

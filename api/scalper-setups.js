@@ -5,12 +5,36 @@ let cachePayload = null;
 let cacheTime = 0;
 const CACHE_TTL_MS = 90000; // 90 seconds in-memory cache
 
+function isWeekendClosure(timeSec) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York', hourCycle: 'h23', hour: '2-digit', minute: '2-digit', weekday: 'short'
+    }).formatToParts(new Date(timeSec * 1000));
+    const values = Object.fromEntries(parts.map(x => [x.type, x.value]));
+    const weekday = values.weekday, hour = Number(values.hour) + Number(values.minute) / 60;
+    if (weekday === 'Sat') return true;
+    if (weekday === 'Sun') return hour < 17;
+    if (weekday === 'Fri') return hour >= 17;
+    return false;
+  } catch (_) {
+    const d = new Date(timeSec * 1000), day = d.getUTCDay();
+    return day === 6 || day === 0;
+  }
+}
+
 function convertCandles(vals, dur) {
   const list = Array.isArray(vals) ? vals : (vals && Array.isArray(vals.values) ? vals.values : []);
-  return list.map(v => {
-    const dt = v.datetime && v.datetime.endsWith('Z') ? v.datetime : (v.datetime ? v.datetime + 'Z' : new Date().toISOString());
+  const mapped = [];
+  for (const v of list) {
+    if (!v || v.amyfxSyntheticCurrent || v.synthetic) continue;
+    const rawDt = String(v.datetime || '').trim();
+    const dt = !rawDt
+      ? new Date().toISOString()
+      : (/Z$|[+-]\d{2}:?\d{2}$/.test(rawDt) ? rawDt : `${rawDt.replace(' ', 'T')}Z`);
     const openTime = Math.floor(new Date(dt).getTime() / 1000);
-    return {
+    if (!Number.isFinite(openTime) || openTime <= 0) continue;
+    if (dur < 86400 && isWeekendClosure(openTime)) continue;
+    mapped.push({
       open_time: openTime,
       close_time: openTime + dur,
       open: parseFloat(v.open) || 0,
@@ -18,8 +42,9 @@ function convertCandles(vals, dur) {
       low: parseFloat(v.low) || 0,
       close: parseFloat(v.close) || 0,
       is_closed: true
-    };
-  }).reverse();
+    });
+  }
+  return mapped.reverse().slice(-100);
 }
 
 async function fetchWithAbort(url, timeoutMs = 10000) {
@@ -62,10 +87,15 @@ export default async function handler(req, res) {
     const host = req?.headers?.host || (process.env.VERCEL_URL ? process.env.VERCEL_URL : 'amy-fx.vercel.app');
     const protocol = host.startsWith('localhost') || host.startsWith('127.') || host.startsWith('10.') || host.startsWith('192.') ? 'http' : 'https';
     const baseUrl = `${protocol}://${host}`;
+    const nowSec = Math.floor(now / 1000);
+    const closedOrWeekend = !isGoldMarketOpen(nowSec) || isWeekendClosure(nowSec - 12 * 3600);
+    const size15 = closedOrWeekend ? 350 : 80;
+    const size5 = closedOrWeekend ? 800 : 80;
+    const size60 = closedOrWeekend ? 180 : 80;
     const [res15, res5, res60, resD1, calRes] = await Promise.all([
-      fetchWithAbort(`${baseUrl}/api/twelvedata?symbol=XAU/USD&interval=15min&outputsize=60`),
-      fetchWithAbort(`${baseUrl}/api/twelvedata?symbol=XAU/USD&interval=5min&outputsize=60`),
-      fetchWithAbort(`${baseUrl}/api/twelvedata?symbol=XAU/USD&interval=1h&outputsize=60`),
+      fetchWithAbort(`${baseUrl}/api/twelvedata?symbol=XAU/USD&interval=15min&outputsize=${size15}`),
+      fetchWithAbort(`${baseUrl}/api/twelvedata?symbol=XAU/USD&interval=5min&outputsize=${size5}`),
+      fetchWithAbort(`${baseUrl}/api/twelvedata?symbol=XAU/USD&interval=1h&outputsize=${size60}`),
       fetchWithAbort(`${baseUrl}/api/twelvedata?symbol=XAU/USD&interval=1day&outputsize=10`),
       fetchWithAbort(`${baseUrl}/api/calendar`)
     ]);
@@ -92,7 +122,6 @@ export default async function handler(req, res) {
     }
 
     const calendar = Array.isArray(calRes) ? calRes : (Array.isArray(calRes?.events) ? calRes.events : []);
-    const nowSec = Math.floor(now / 1000);
 
     const context = buildMarketContext({ h1, m15, m5, d1, calendar, nowSeconds: nowSec });
     const driverEvaluation = evaluateSixDrivers({ m15, m5, h1, d1, context, nowSeconds: nowSec });

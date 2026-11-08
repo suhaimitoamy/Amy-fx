@@ -13,6 +13,11 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.work.CoroutineWorker
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -63,8 +68,12 @@ class DriverSetupSyncWorker(
                 }
 
                 if (contextObj != null) {
-                    processAssistantAlerts(contextObj)
+                    processAssistantAlerts(contextObj, payload)
                 }
+
+                try {
+                    scheduleNextCandleSync(applicationContext)
+                } catch (_: Exception) {}
 
                 Result.success()
             }
@@ -96,7 +105,7 @@ class DriverSetupSyncWorker(
         }
     }
 
-    private fun processAssistantAlerts(contextObj: JSONObject) {
+    private fun processAssistantAlerts(contextObj: JSONObject, payload: JSONObject? = null) {
         val session = contextObj.optString("session", "").trim()
         if (session.equals("PASAR TUTUP", ignoreCase = true) || !AmyFxNotificationGate.isGoldMarketOpen(System.currentTimeMillis())) {
             android.util.Log.d("AmyFX-DriverWorker", "Market closed (session=$session), assistant alerts suppressed.")
@@ -117,7 +126,8 @@ class DriverSetupSyncWorker(
         if (candleTime <= 0L) return
 
         val nowSec = System.currentTimeMillis() / 1000
-        if (nowSec - candleTime > 900L) {
+        // Freshness window diperlonggar menjadi 45 menit (2700s) agar tidak langsung di-drop jika Android WorkManager delay beberapa menit saat Doze Mode
+        if (nowSec - candleTime > 2700L) {
             android.util.Log.d("AmyFX-DriverWorker", "Candle is stale (${nowSec - candleTime}s old), assistant alerts suppressed.")
             return
         }
@@ -125,6 +135,20 @@ class DriverSetupSyncWorker(
         val dashboard = amy.optJSONObject("dashboard")
         val entry = amy.optJSONObject("entry")
         val news = contextObj.optJSONObject("news")
+        val trigger = amy.optJSONObject("trigger")
+        val candle = trigger?.optJSONObject("candle") ?: dashboard?.optJSONObject("candle") ?: amy.optJSONObject("candle")
+        val currentPrice = contextObj.optDouble("price", 0.0).takeIf { it > 0.0 }
+            ?: (candle?.optDouble("close", 0.0) ?: 0.0)
+        val cHigh = candle?.optDouble("high", 0.0) ?: 0.0
+        val cLow = candle?.optDouble("low", 0.0) ?: 0.0
+        val curPriceStr = if (currentPrice > 0.0) String.format(java.util.Locale.US, "$%.2f", currentPrice) else ""
+
+        val event = payload?.optJSONObject("event") ?: contextObj.optJSONObject("event")
+        val assistant = amy.optJSONObject("assistant")
+        val plan = amy.optJSONObject("plan") ?: assistant?.optJSONObject("plan") ?: contextObj.optJSONObject("plan")
+        val execution = contextObj.optJSONObject("execution")
+        val isAPlus = execution?.optBoolean("aPlusReady", false) == true ||
+            event?.optString("key", "")?.contains("A_PLUS_READY") == true
 
         val entryText = entry?.optString("text").orEmpty()
         val lines = entryText.split("\n")
@@ -151,74 +175,167 @@ class DriverSetupSyncWorker(
 
         val sweepDetails = resolveSweepDetails(amy, contextObj, lines)
 
+        val m15Obj = contextObj.optJSONObject("m15")
+        val m15Break = m15Obj?.optJSONObject("lastBreak")
+        val lastBreakSec = m15Break?.optLong("time", 0L) ?: 0L
+        val isBreakFresh = lastBreakSec <= 0L || (nowSec - lastBreakSec in 0L..900L)
+
+        val formedAtStr = plan?.optString("formedAt", "").orEmpty()
+        val planFormedSec = try {
+            if (formedAtStr.isNotBlank()) java.time.Instant.parse(formedAtStr).epochSecond else 0L
+        } catch (_: Exception) { 0L }
+        val isPlanFresh = planFormedSec <= 0L || (nowSec - planFormedSec in 0L..900L)
+
         if (newsStatus == "NEWS_LOCK") {
             badge = "NEWS_LOCK"
             notifTitle = "🛡️ Asisten Amy: NEWS LOCK Aktif"
             notifBody = news?.optString("note", "Pasar sangat liar dan rawan slippage. Jangan entry sebelum volatilitas stabil.").orEmpty()
             notify = true
-        } else if (invalidStatus == 2) {
+        } else if (isAPlus && isPlanFresh) {
+            badge = "PELURU_UTAMA_A_PLUS"
+            val sideStr = if (biasDir == 1) "BUY" else if (biasDir == -1) "SELL" else "ENTRY"
+            val score = entry?.optInt("score", 85) ?: 85
+            val grade = entry?.optString("grade", "STRONG").orEmpty()
+            notifTitle = "👑 Asisten Amy: Peluru Utama Grade A+ Siap!"
+            val low = poi?.optDouble("low", 0.0) ?: 0.0
+            val high = poi?.optDouble("high", 0.0) ?: 0.0
+            val areaStr = if (high > 0.0 && low > 0.0) String.format(java.util.Locale.US, "$%.2f – $%.2f", low, high) else "Zona M15"
+            val dolTgt = dashboard?.optDouble("dolTarget", 0.0) ?: 0.0
+            val dolStr = if (dolTgt > 0.0) String.format(java.util.Locale.US, " · DOL $%.2f", dolTgt) else ""
+            notifBody = "👑 Grade A+ $sideStr Confluence $score/100 ($grade). Area $areaStr$dolStr. Target 100 Pips!"
+            notify = true
+        } else if ((assistant?.optString("status") == "READY" || execution?.optBoolean("entryReady", false) == true || event?.optString("key", "")?.contains("ENTRY_SIGNAL") == true) && plan != null && isPlanFresh) {
+            val sigType = assistant?.optInt("signalType", 0) ?: 0
+            val sigName = assistant?.optString("signalName", "ENTRY SIGNAL").orEmpty().ifBlank { "ENTRY SIGNAL" }
+            val isBuy = sigType == 1 || sigType == 2 || (plan.optString("direction").equals("BUY", ignoreCase = true))
+            val entryPrice = plan.optDouble("entry", 0.0)
+            val slPrice = plan.optDouble("sl", 0.0).takeIf { it > 0.0 } ?: plan.optDouble("stopLoss", 0.0)
+            val tp1Price = plan.optDouble("tp1", 0.0).takeIf { it > 0.0 } ?: plan.optDouble("target1", 0.0)
+            val mathZone = assistant?.optString("mathZone", "").orEmpty()
+            val zoneStr = if (mathZone.isNotBlank()) " · Zona $mathZone" else ""
+            if (entryPrice > 0.0 && slPrice > 0.0 && tp1Price > 0.0) {
+                // Anti-stale entry guard: cek jarak harga running saat ini ke level entry
+                val priceDrift = if (currentPrice > 0.0) Math.abs(currentPrice - entryPrice) else 0.0
+                if (priceDrift > 6.0) { // Lebih dari $6 (60 pips) -> harga sudah lari jauh, jangan broadcast sebagai entry ready!
+                    android.util.Log.d("AmyFX-DriverWorker", "Entry price drifted ($priceDrift points away from current $currentPrice), skipping stale execution alert.")
+                    return
+                }
+
+                badge = if (isBuy) "ENTRY_BUY_READY" else "ENTRY_SELL_READY"
+                val icon = if (isBuy) "🟢" else "🔴"
+                notifTitle = "$icon Asisten Amy: $sigName"
+                val spreadNote = if (!isBuy) " (TP Ask +5 Pips)" else ""
+                notifBody = String.format(
+                    java.util.Locale.US,
+                    "%s Entry: $%.2f | SL: $%.2f | TP1: $%.2f%s (+100 Pips)%s. Siapkan eksekusi!",
+                    icon, entryPrice, slPrice, tp1Price, spreadNote, zoneStr
+                )
+                notify = true
+            }
+        } else if (invalidStatus == 2 && isBreakFresh) {
             badge = "SETUP_BATAL"
-            notifTitle = "⚠ Asisten Amy: Setup Batal (Invalid)"
+            notifTitle = "⚠️ Asisten Amy: Setup Batal (Invalid)"
             val invalidLevel = dashboard?.optDouble("invalidLevel", 0.0) ?: 0.0
-            val levelStr = if (invalidLevel > 0.0) String.format(java.util.Locale.US, "%.2f", invalidLevel) else ""
-            notifBody = "Close M15 menembus batas pembatalan $levelStr. Tunggu pembentukan struktur baru."
+            val levelStr = if (invalidLevel > 0.0) String.format(java.util.Locale.US, " $%.2f", invalidLevel) else ""
+            notifBody = "Close M15 menembus batas pembatalan$levelStr. Jangan paksakan entry, tunggu struktur dealing range baru."
             notify = true
         } else if (rejectBuy || rejectSell) {
             val isBuy = rejectBuy
             badge = if (isBuy) "REJECTION_BUY" else "REJECTION_SELL"
             val badgeLabel = if (isBuy) "REJECTION BUY" else "REJECTION SELL"
+            val low = poi?.optDouble("low", 0.0) ?: 0.0
+            val high = poi?.optDouble("high", 0.0) ?: 0.0
+            val poiRange = if (high > 0.0 && low > 0.0) String.format(java.util.Locale.US, " ($%.2f – $%.2f)", low, high) else ""
+            val wickVal = if (isBuy) cLow else cHigh
+            val wickStr = if (wickVal > 0.0) String.format(java.util.Locale.US, " @ $%.2f", wickVal) else ""
             notifTitle = "🔥 Asisten Amy: $badgeLabel"
-            val primary = "🔥 Rejection Kuat di Area $poiKind"
-            val sub = "Candle menolak ${if (isBuy) "bawah" else "atas"} dengan wick panjang. Konfirmasi ${if (isBuy) "BUY" else "SELL"}."
+            val primary = "🔥 Rejection Kuat di Area $poiKind$poiRange"
+            val sub = "Candle menolak ${if (isBuy) "bawah" else "atas"} dengan wick panjang$wickStr. Konfirmasi ${if (isBuy) "BUY" else "SELL"} (Target 100 Pips)."
             notifBody = "$primary. $sub"
             notify = true
-        } else if (importance == 4) {
+        } else if ((importance == 4 || (importance == 5 && lines.any { it.contains("break", ignoreCase = true) || it.contains("displacement", ignoreCase = true) })) && isBreakFresh) {
             val isBull = biasDir == 1
+            val trgHigh = trigger?.optDouble("high", 0.0) ?: 0.0
+            val trgLow = trigger?.optDouble("low", 0.0) ?: 0.0
+            val m15Kind = m15Break?.optString("kind", "").orEmpty()
+            val m15BreakLvl = m15Break?.optDouble("level", 0.0) ?: 0.0
+
+            val brokenLevel = if (isBull) {
+                if (trgHigh > 0.0) trgHigh else if (m15BreakLvl > 0.0) m15BreakLvl else (dashboard?.optDouble("protectedHigh", 0.0) ?: 0.0)
+            } else {
+                if (trgLow > 0.0) trgLow else if (m15BreakLvl > 0.0) m15BreakLvl else (dashboard?.optDouble("protectedLow", 0.0) ?: 0.0)
+            }
+            val brokenLevelStr = if (brokenLevel > 0.0) String.format(java.util.Locale.US, "$%.2f", brokenLevel) else "Struktur"
+            val breakKind = if (m15Kind.isNotBlank()) m15Kind else if (isBull) "BOS Bullish" else "BOS Bearish"
+            val dolTgt = dashboard?.optDouble("dolTarget", 0.0) ?: 0.0
+            val dolStr = if (dolTgt > 0.0) String.format(java.util.Locale.US, " · Target DOL: $%.2f", dolTgt) else ""
+
             badge = if (isBull) "VALID_BREAK_UP" else "VALID_BREAK_DOWN"
-            val badgeLabel = if (isBull) "VALID BREAK UP" else "VALID BREAK DOWN"
+            val badgeLabel = if (isBull) "VALID BREAK BULLISH ($breakKind)" else "VALID BREAK BEARISH ($breakKind)"
             notifTitle = "✓ Asisten Amy: $badgeLabel"
-            val primary = "✓ Valid Break ${if (isBull) "Bullish" else "Bearish"} dengan Displacement"
-            val sub = "Struktur M5 terkonfirmasi searah tren. Siapkan observasi entry."
-            notifBody = "$primary. $sub"
+            val primary = "✓ Valid Break ${if (isBull) "Bullish" else "Bearish"} dengan Displacement: $breakKind @ $brokenLevelStr Ditembus!"
+            val sub = "Struktur M5 terkonfirmasi searah tren$dolStr. Siapkan observasi entry."
+            notifBody = "$primary $sub"
             notify = true
         } else if (sweepDetails != null) {
-            val sweepAge = if (sweepDetails.sweepTime > 0L) (nowSec - sweepDetails.sweepTime) else 0L
-            val isFresh = sweepDetails.sweepTime <= 0L || sweepAge <= 900L
+            val sweepAge = if (sweepDetails.sweepTime > 0L) (nowSec - sweepDetails.sweepTime) else 999999L
+            val isFresh = sweepDetails.sweepTime > 0L && (sweepAge in 0L..900L)
             if (isFresh) {
                 val levelStr = String.format(java.util.Locale.US, "%.2f", sweepDetails.level)
                 val extremeStr = String.format(java.util.Locale.US, "%.2f", sweepDetails.extreme)
+                val sweepPips = if (sweepDetails.extreme > 0.0 && sweepDetails.level > 0.0) Math.abs(sweepDetails.extreme - sweepDetails.level) * 10.0 else 0.0
+                val pipsStr = if (sweepPips > 0.0) String.format(java.util.Locale.US, " (+%.1f Pips)", sweepPips) else ""
                 val sweepBadge = sweepDetails.name.replace(" ", "_").uppercase(java.util.Locale.US)
                 badge = "${sweepBadge}_SWEPT"
-                notifTitle = "💧 Asisten Amy: ${sweepDetails.name} @ $levelStr Swept!"
+                notifTitle = "💧 Asisten Amy: ${sweepDetails.name} @ $levelStr Swept!$pipsStr"
                 val primary = "💧 ${sweepDetails.name} @ $levelStr Swept!"
-                val sub = "Tersapu hingga ekor $extremeStr. Pantau pembentukan rejection untuk potensi ${sweepDetails.side}."
+                val sub = "Tersapu hingga ekor $extremeStr$pipsStr. Pantau pembentukan rejection untuk potensi ${sweepDetails.side} (Target 100 Pips)."
                 notifBody = "$primary $sub"
                 notify = true
             }
         } else if (inPoi) {
             badge = "DI_AREA_POI"
-            notifTitle = "📍 Asisten Amy: Area POI Tersentuh"
-            val primary = "📍 ${if (poiSide.isNotBlank()) "$poiSide " else ""}$poiKind Tersentuh"
             val low = poi?.optDouble("low", 0.0) ?: 0.0
             val high = poi?.optDouble("high", 0.0) ?: 0.0
             val rangeStr = if (high > 0.0 && low > 0.0) String.format(java.util.Locale.US, "(%.2f – %.2f)", high, low) else ""
-            val sub = "Harga berada di zona kritis. Pantau pembentukan candle rejection atau break M5."
+            val curStr = if (curPriceStr.isNotBlank()) " @ $curPriceStr" else ""
+            notifTitle = "📍 Asisten Amy: Area POI Tersentuh"
+            val primary = "📍 ${if (poiSide.isNotBlank()) "$poiSide " else ""}$poiKind Tersentuh"
+            val sub = "Harga berada di zona kritis$curStr. Pantau pembentukan candle rejection atau break M5 (Target 100 Pips)."
             notifBody = "$primary $rangeStr. $sub"
             notify = true
         } else if (dolStatus == 2) {
+            val dolTarget = dashboard?.optDouble("dolTarget", 0.0) ?: 0.0
+            val dolStr = if (dolTarget > 0.0) String.format(java.util.Locale.US, " ($%.2f)", dolTarget) else ""
+            val curStr = if (curPriceStr.isNotBlank()) " @ $curPriceStr" else ""
             badge = "TARGET_DOL"
             notifTitle = "🎯 Asisten Amy: Target DOL Tercapai"
-            notifBody = "🎯 Target Likuiditas (DOL) Telah Tercapai. Hati-hati pembalikan arah, jangan kejar harga."
+            notifBody = "🎯 Target Likuiditas (DOL)$dolStr Telah Tercapai$curStr. Hati-hati pembalikan arah, jangan kejar harga (Anti-Chase)."
             notify = true
         }
 
         if (!notify || notifTitle.isBlank() || notifBody.isBlank()) return
 
-        val cacheKey = if (badge.endsWith("_SWEPT") && sweepDetails?.sweepTime != null && sweepDetails.sweepTime > 0L) {
-            "assistant_${badge}_${sweepDetails.sweepTime}"
-        } else {
-            "assistant_${badge}_${candleTime}"
+        val invLvl = dashboard?.optDouble("invalidLevel", 0.0) ?: 0.0
+        val planEntry = plan?.optDouble("entry", 0.0) ?: 0.0
+        val poiLow = poi?.optDouble("low", 0.0) ?: 0.0
+        val dolTgt = dashboard?.optDouble("dolTarget", 0.0) ?: 0.0
+        val eventIdentity = when {
+            badge.endsWith("_SWEPT") && sweepDetails?.sweepTime != null && sweepDetails.sweepTime > 0L ->
+                "${String.format(java.util.Locale.US, "%.2f", sweepDetails.level)}_${sweepDetails.sweepTime}"
+            badge == "SETUP_BATAL" && invLvl > 0.0 ->
+                "inv_${String.format(java.util.Locale.US, "%.2f", invLvl)}_${if (lastBreakSec > 0L) lastBreakSec else candleTime}"
+            badge.startsWith("VALID_BREAK") ->
+                "brk_${if (lastBreakSec > 0L) lastBreakSec else candleTime}"
+            (badge.startsWith("ENTRY_") || badge == "PELURU_UTAMA_A_PLUS") && planEntry > 0.0 ->
+                "plan_${String.format(java.util.Locale.US, "%.2f", planEntry)}_${if (planFormedSec > 0L) planFormedSec else candleTime}"
+            badge == "DI_AREA_POI" && poiLow > 0.0 ->
+                "poi_${String.format(java.util.Locale.US, "%.2f", poiLow)}"
+            badge == "TARGET_DOL" && dolTgt > 0.0 ->
+                "dol_${String.format(java.util.Locale.US, "%.2f", dolTgt)}"
+            else -> "$candleTime"
         }
+        val cacheKey = "assistant_${badge}_${eventIdentity}"
         val prefs = applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         if (prefs.contains(cacheKey)) return
 
@@ -251,6 +368,23 @@ class DriverSetupSyncWorker(
         val defaultLow = if (cLow > 0.0) cLow else currentPrice
         val defaultHigh = if (cHigh > 0.0) cHigh else currentPrice
 
+        val sweepObj = dashboard?.optJSONObject("sweep")
+        val dSweepPrice = sweepObj?.optDouble("price", 0.0) ?: 0.0
+        val dSweepExtreme = sweepObj?.optDouble("extreme", 0.0) ?: 0.0
+        val dSweepDir = sweepObj?.optInt("dir", 0) ?: (dashboard?.optInt("sweepDir", 0) ?: 0)
+        val dSweepTime = sweepObj?.optLong("time", 0L) ?: 0L
+        val sweepStatus = dashboard?.optInt("sweepStatus", 0) ?: 0
+
+        val trgSweepDir = trigger?.optInt("sweepDir", 0) ?: 0
+        val trgSweptPrice = trigger?.optDouble("sweptPrice", 0.0) ?: 0.0
+        val trgSweepExtreme = trigger?.optDouble("sweepExtreme", 0.0) ?: 0.0
+        val trgTime = trigger?.optLong("time", 0L) ?: 0L
+        val activeSweepTime = when {
+            sweepStatus == 1 && dSweepTime > 0L -> dSweepTime
+            (trgSweepDir == 1 || trgSweepDir == -1) && trgTime > 0L -> trgTime
+            else -> 0L
+        }
+
         // 1. Asia High / Asia Low sweep
         val asiaHigh = levels?.optDouble("asiaHigh", 0.0) ?: 0.0
         val asiaLow = levels?.optDouble("asiaLow", 0.0) ?: 0.0
@@ -267,10 +401,10 @@ class DriverSetupSyncWorker(
                 if (status.equals("SWEPT", ignoreCase = true)) {
                     if (label.contains("asia high", ignoreCase = true)) {
                         liqAsiaHighSweptLevel = item.optDouble("level", 0.0)
-                        liqAsiaHighTime = item.optLong("sourceTime", 0L)
+                        liqAsiaHighTime = item.optLong("sweptAt", 0L)
                     } else if (label.contains("asia low", ignoreCase = true)) {
                         liqAsiaLowSweptLevel = item.optDouble("level", 0.0)
-                        liqAsiaLowTime = item.optLong("sourceTime", 0L)
+                        liqAsiaLowTime = item.optLong("sweptAt", 0L)
                     }
                 }
             }
@@ -282,13 +416,15 @@ class DriverSetupSyncWorker(
         if (liqAsiaHighSweptLevel > 0.0 || textAsiaHigh || (asiaHigh > 0.0 && cHigh > asiaHigh && cClose < asiaHigh)) {
             val lvl = if (liqAsiaHighSweptLevel > 0.0) liqAsiaHighSweptLevel else if (asiaHigh > 0.0) asiaHigh else cHigh
             val ext = if (cHigh > lvl) cHigh else lvl + 1.20
-            val t = if (liqAsiaHighTime > 0L) liqAsiaHighTime else cTime
+            val isCurBar = asiaHigh > 0.0 && cHigh > asiaHigh && cClose < asiaHigh
+            val t = if (activeSweepTime > 0L) activeSweepTime else if (isCurBar) cTime else liqAsiaHighTime
             return SweepDetails("Asia High", lvl, ext, "SELL", t)
         }
         if (liqAsiaLowSweptLevel > 0.0 || textAsiaLow || (asiaLow > 0.0 && cLow > 0.0 && cLow < asiaLow && cClose > asiaLow)) {
             val lvl = if (liqAsiaLowSweptLevel > 0.0) liqAsiaLowSweptLevel else if (asiaLow > 0.0) asiaLow else cLow
             val ext = if (cLow > 0.0 && cLow < lvl) cLow else lvl - 1.20
-            val t = if (liqAsiaLowTime > 0L) liqAsiaLowTime else cTime
+            val isCurBar = asiaLow > 0.0 && cLow > 0.0 && cLow < asiaLow && cClose > asiaLow
+            val t = if (activeSweepTime > 0L) activeSweepTime else if (isCurBar) cTime else liqAsiaLowTime
             return SweepDetails("Asia Low", lvl, ext, "BUY", t)
         }
 
@@ -308,10 +444,10 @@ class DriverSetupSyncWorker(
                 if (status.equals("SWEPT", ignoreCase = true)) {
                     if (label.contains("pdh", ignoreCase = true) || label.contains("previous day high", ignoreCase = true)) {
                         liqPdhSweptLevel = item.optDouble("level", 0.0)
-                        liqPdhTime = item.optLong("sourceTime", 0L)
+                        liqPdhTime = item.optLong("sweptAt", 0L)
                     } else if (label.contains("pdl", ignoreCase = true) || label.contains("previous day low", ignoreCase = true)) {
                         liqPdlSweptLevel = item.optDouble("level", 0.0)
-                        liqPdlTime = item.optLong("sourceTime", 0L)
+                        liqPdlTime = item.optLong("sweptAt", 0L)
                     }
                 }
             }
@@ -323,29 +459,19 @@ class DriverSetupSyncWorker(
         if (liqPdhSweptLevel > 0.0 || textPdh || (pdh > 0.0 && cHigh > pdh && cClose < pdh)) {
             val lvl = if (liqPdhSweptLevel > 0.0) liqPdhSweptLevel else if (pdh > 0.0) pdh else cHigh
             val ext = if (cHigh > lvl) cHigh else lvl + 1.20
-            val t = if (liqPdhTime > 0L) liqPdhTime else cTime
+            val isCurBar = pdh > 0.0 && cHigh > pdh && cClose < pdh
+            val t = if (activeSweepTime > 0L) activeSweepTime else if (isCurBar) cTime else liqPdhTime
             return SweepDetails("PDH", lvl, ext, "SELL", t)
         }
         if (liqPdlSweptLevel > 0.0 || textPdl || (pdl > 0.0 && cLow > 0.0 && cLow < pdl && cClose > pdl)) {
             val lvl = if (liqPdlSweptLevel > 0.0) liqPdlSweptLevel else if (pdl > 0.0) pdl else cLow
             val ext = if (cLow > 0.0 && cLow < lvl) cLow else lvl - 1.20
-            val t = if (liqPdlTime > 0L) liqPdlTime else cTime
+            val isCurBar = pdl > 0.0 && cLow > 0.0 && cLow < pdl && cClose > pdl
+            val t = if (activeSweepTime > 0L) activeSweepTime else if (isCurBar) cTime else liqPdlTime
             return SweepDetails("PDL", lvl, ext, "BUY", t)
         }
 
         // 3. BSL / SSL sweep
-        val sweepObj = dashboard?.optJSONObject("sweep")
-        val dSweepPrice = sweepObj?.optDouble("price", 0.0) ?: 0.0
-        val dSweepExtreme = sweepObj?.optDouble("extreme", 0.0) ?: 0.0
-        val dSweepDir = sweepObj?.optInt("dir", 0) ?: (dashboard?.optInt("sweepDir", 0) ?: 0)
-        val dSweepTime = sweepObj?.optLong("time", 0L) ?: 0L
-        val sweepStatus = dashboard?.optInt("sweepStatus", 0) ?: 0
-
-        val trgSweepDir = trigger?.optInt("sweepDir", 0) ?: 0
-        val trgSweptPrice = trigger?.optDouble("sweptPrice", 0.0) ?: 0.0
-        val trgSweepExtreme = trigger?.optDouble("sweepExtreme", 0.0) ?: 0.0
-        val trgTime = trigger?.optLong("time", 0L) ?: 0L
-
         val bslLevel = dashboard?.optDouble("bsl", 0.0) ?: (levels?.optDouble("bsl", 0.0) ?: 0.0)
         val sslLevel = dashboard?.optDouble("ssl", 0.0) ?: (levels?.optDouble("ssl", 0.0) ?: 0.0)
 
@@ -361,11 +487,11 @@ class DriverSetupSyncWorker(
                 if (status.equals("SWEPT", ignoreCase = true)) {
                     if (label.equals("BSL", ignoreCase = true)) {
                         liqBslSwept = true
-                        liqBslTime = item.optLong("sourceTime", 0L)
+                        liqBslTime = item.optLong("sweptAt", 0L)
                     }
                     if (label.equals("SSL", ignoreCase = true)) {
                         liqSslSwept = true
-                        liqSslTime = item.optLong("sourceTime", 0L)
+                        liqSslTime = item.optLong("sweptAt", 0L)
                     }
                 }
             }
@@ -381,8 +507,8 @@ class DriverSetupSyncWorker(
             lines.any { it.contains("bsl", ignoreCase = true) && it.contains("swept", ignoreCase = true) } ||
             liqBslSwept
 
-        val sweepTimeSsl = if (dSweepDir == 1 && dSweepTime > 0L) dSweepTime else if (trgSweepDir == 1 && trgTime > 0L) trgTime else if (liqSslTime > 0L) liqSslTime else cTime
-        val sweepTimeBsl = if (dSweepDir == -1 && dSweepTime > 0L) dSweepTime else if (trgSweepDir == -1 && trgTime > 0L) trgTime else if (liqBslTime > 0L) liqBslTime else cTime
+        val sweepTimeSsl = if (dSweepDir == 1 && dSweepTime > 0L) dSweepTime else if (trgSweepDir == 1 && trgTime > 0L) trgTime else liqSslTime
+        val sweepTimeBsl = if (dSweepDir == -1 && dSweepTime > 0L) dSweepTime else if (trgSweepDir == -1 && trgTime > 0L) trgTime else liqBslTime
 
         if (hasSsl) {
             val lvl = if (dSweepDir == 1 && dSweepPrice > 0.0) dSweepPrice else if (trgSweepDir == 1 && trgSweptPrice > 0.0) trgSweptPrice else if (sslLevel > 0.0) sslLevel else defaultLow
@@ -435,7 +561,9 @@ class DriverSetupSyncWorker(
 
         val isAPlus = title.contains("A+", ignoreCase = true) ||
             body.contains("Grade A+", ignoreCase = true) ||
-            body.contains("A+ Setup", ignoreCase = true)
+            body.contains("A+ Setup", ignoreCase = true) ||
+            title.contains("Peluru Utama", ignoreCase = true) ||
+            title.contains("ENTRY", ignoreCase = true)
         val channelId = if (isAPlus) AmyFxApplication.GOLD_SIGNAL_CHANNEL_ID else AmyFxApplication.MARKET_CONTEXT_CHANNEL_ID
 
         val notification = NotificationCompat.Builder(applicationContext, channelId)
@@ -502,7 +630,36 @@ class DriverSetupSyncWorker(
 
     companion object {
         const val UNIQUE_WORK_NAME = "amy_fx_driver_setup_sync"
+        const val NEXT_CANDLE_WORK_NAME = "amy_fx_driver_next_candle"
         private const val SETUPS_URL = "https://amy-fx.vercel.app/api/scalper-setups?limit=10"
         private const val PREFS = "amy_driver_worker_prefs"
+
+        /**
+         * Menjadwalkan sinkronisasi persis 15 detik setelah setiap candle M15 selesai (:00, :15, :30, :45).
+         * Mencegah keterlambatan 15-45 menit yang biasa disebabkan oleh interval PeriodicWork / Doze mode Android.
+         */
+        fun scheduleNextCandleSync(context: Context) {
+            val nowMs = System.currentTimeMillis()
+            val nowSec = nowMs / 1000
+            // Boundary M15 terdekat (:00, :15, :30, :45) + 15 detik untuk memastikan feed Twelve Data sudah update
+            val nextM15Sec = ((nowSec / 900) + 1) * 900 + 15
+            val delayMs = Math.max(10_000L, (nextM15Sec * 1000) - nowMs)
+
+            val request = OneTimeWorkRequestBuilder<DriverSetupSyncWorker>()
+                .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+                )
+                .build()
+
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                NEXT_CANDLE_WORK_NAME,
+                ExistingWorkPolicy.REPLACE,
+                request
+            )
+            android.util.Log.d("AmyFX-DriverWorker", "Scheduled next candle sync in ${delayMs / 1000}s (at epoch $nextM15Sec)")
+        }
     }
 }

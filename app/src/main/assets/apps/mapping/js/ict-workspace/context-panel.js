@@ -131,12 +131,38 @@ function render(){
   setTxt('market-state',(c.marketState||'MENUNGGU').replaceAll('NO_SETUP','Belum ada setup').replaceAll('BULLISH','Bullish').replaceAll('BEARISH','Bearish').replaceAll('NEUTRAL','Netral'));
   setTxt('market-story',c.narrative||'Menunggu penjelasan server.');
   setTxt('context-source',`H1 ${time(c.source?.H1)} · M15 ${time(c.source?.M15)}${c.source?.M5?` · M5 ${time(c.source.M5)}`:''}`);
-  const dr = c.m15?.dealingRange;
+
+  const ind=(typeof window!=='undefined'?window.amyfxLastIndicators:null);
+  const livePrice=(typeof window!=='undefined'&&Number.isFinite(Number(window.amyfxCurrentPrice))&&Number(window.amyfxCurrentPrice)>0)
+    ?Number(window.amyfxCurrentPrice)
+    :Number(c.price||0);
+
+  let rHigh=Number(ind?.keyLevels?.pdHigh??c.m15?.dealingRange?.rangeHigh);
+  let rLow=Number(ind?.keyLevels?.pdLow??c.m15?.dealingRange?.rangeLow);
+  if(livePrice>0&&Number.isFinite(rHigh)&&Math.abs(rHigh-livePrice)>80&&Number.isFinite(c.m15?.dealingRange?.rangeHigh)){
+    rHigh=Number(c.m15.dealingRange.rangeHigh);
+    rLow=Number(c.m15.dealingRange.rangeLow);
+  }
+  const eq=(Number.isFinite(rHigh)&&Number.isFinite(rLow))?(rHigh+rLow)/2:null;
+  const dr=(Number.isFinite(rHigh)&&Number.isFinite(rLow))
+    ?{
+        location:(livePrice>eq+(rHigh-rLow)*0.025)?'PREMIUM':(livePrice<eq-(rHigh-rLow)*0.025)?'DISCOUNT':'EQUILIBRIUM',
+        eq,
+        rangeLow:rLow,
+        rangeHigh:rHigh
+      }
+    :c.m15?.dealingRange;
+
   const drLoc = dr?.location ? ` [${dr.location}]` : '';
   const confScore = c.confluence ? ` · Skor: ${c.confluence.score}/100 (${c.confluence.grade})${c.confluence.winDir?` · dominan ${c.confluence.winDir===1?'BUY':'SELL'}`:''}` : '';
-  setTxt('h1-bias',id(c.h1?.bias||'NEUTRAL'));setTxt('h1-health',`Kesehatan: ${id(c.h1?.health)}`);
-  setTxt('m15-poi',c.m15?.poi?`${c.m15.poi.label}${c.m15.poi.ce?` (CE: ${number(c.m15.poi.ce)})`:''} · ${id(c.m15.poi.lifecycle)}`:'Area belum valid');
-  setTxt('m15-range',c.m15?.poi?`${number(c.m15.poi.low)}–${number(c.m15.poi.high)}`:'Menunggu area M15');
+  setTxt('h1-bias',id(ind?.structure?.trend==='BULL'?'BULLISH':ind?.structure?.trend==='BEAR'?'BEARISH':(c.h1?.bias||'NEUTRAL')));
+  setTxt('h1-health',`Kesehatan: ${id(c.h1?.health)}`);
+
+  const poi=(c.m15?.poi&&Number.isFinite(Number(c.m15.poi.low))&&Math.abs(Number(c.m15.poi.low)-livePrice)<80)
+    ?c.m15.poi
+    :(ind?.poi?.ob?.[0]||ind?.poi?.fvg?.[0]||c.m15?.poi);
+  setTxt('m15-poi',poi?`${poi.label||(poi.side==='BUY'?'+OB':'-OB')}${poi.ce?` (CE: ${number(poi.ce)})`:''} · ${id(poi.lifecycle||'ACTIVE')}`:'Area belum valid');
+  setTxt('m15-range',poi?`${number(poi.low||poi.bot)}–${number(poi.high||poi.top)}`:'Menunggu area M15');
   setTxt('m15-control',id(c.m15?.control||'BALANCED'));
   const aPlus = c.execution?.aPlusReady === true && c.execution?.status === 'READY TO REVIEW' && c.confluence?.score >= 75;
   if (aPlus) {

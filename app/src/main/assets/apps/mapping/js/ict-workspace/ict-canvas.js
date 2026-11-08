@@ -64,6 +64,9 @@ export function createIctCanvas(element, chart, series) {
       indicators = state.indicators || calculateNextGenIndicators(candles, {
         context: state.context || (amy ? {amy} : null)
       });
+      if (typeof window !== 'undefined') {
+        window.amyfxLastIndicators = indicators;
+      }
     }
 
     const x = t => Number.isFinite(t) ? chart.timeScale().timeToCoordinate(t) : null;
@@ -288,6 +291,23 @@ export function createIctCanvas(element, chart, series) {
     if (indicators?.structure?.invalidation?.level) {
       const inv = indicators.structure.invalidation;
       line(inv.level, inv.text, inv.color, inv.time, null, true);
+    }
+
+    // 8b. Batas Ekspansi V6.1 (Target Normal & Batas Habis Std Dev -2.0 & -4.0)
+    if (indicators?.expansion) {
+      const exp = indicators.expansion;
+      if (Number.isFinite(exp.expNorm)) {
+        line(exp.expNorm, `${exp.normLabel || 'TARGET NORMAL'} ${exp.expNorm.toFixed(2)}`, exp.trend === 'BULL' ? '#10b981' : '#ef4444', exp.startTime, null, true);
+      }
+      if (Number.isFinite(exp.expMax)) {
+        line(exp.expMax, `${exp.maxLabel || 'BATAS HABIS (KLIMAKS)'} ${exp.expMax.toFixed(2)}`, '#f59e0b', exp.startTime, null, false);
+      }
+    }
+
+    // 8c. Inducement (IDM V6.1)
+    if (indicators?.idm && Number.isFinite(indicators.idm.level)) {
+      const idm = indicators.idm;
+      line(idm.level, `IDM ${idm.level.toFixed(2)}${idm.swept ? ' [SWEPT]' : ''}`, '#8b5cf6', idm.time, null, true);
     }
 
     // 9. Compact Chart Narration

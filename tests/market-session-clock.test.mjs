@@ -9,14 +9,14 @@ import {
 } from '../app/src/main/assets/apps/mapping/js/engine/market-session-clock.js';
 
 test('London gate follows BST and GMT while shifting WITA automatically', () => {
-  const summer = Date.parse('2026-07-01T06:30:00Z');
-  const winter = Date.parse('2026-01-15T07:30:00Z');
+  const summer = Date.parse('2026-07-01T07:30:00Z');
+  const winter = Date.parse('2026-01-15T08:30:00Z');
   assert.equal(executionSessionAllowed(summer, 'LONDON_OR_NEW_YORK'), true);
   assert.equal(executionSessionAllowed(winter, 'LONDON_OR_NEW_YORK'), true);
   const summerText = executionSessionRequirement('LONDON_ONLY', summer);
   const winterText = executionSessionRequirement('LONDON_ONLY', winter);
-  assert.match(summerText, /14:00–18:00 WITA \(BST\)/);
-  assert.match(winterText, /15:00–19:00 WITA \(GMT\)/);
+  assert.match(summerText, /15:00–18:00 WITA \(BST\)/);
+  assert.match(winterText, /16:00–19:00 WITA \(GMT\)/);
 });
 
 test('New York gate follows EDT and EST while shifting WITA automatically', () => {
@@ -40,6 +40,13 @@ test('off-session timestamp remains rejected and NONE remains allowed', () => {
 });
 
 test('Item 2.33: sessionCountdownPill computes dynamic active and countdown pills with DST awareness', () => {
+  // 0. Asia active (e.g. 01:00 UTC = 09:00 WITA)
+  const asiaActive = Date.parse('2026-11-03T01:00:00Z');
+  const pillAsia = sessionCountdownPill(asiaActive);
+  assert.equal(pillAsia.status, 'ACTIVE');
+  assert.equal(pillAsia.activeSession, 'ASIA');
+  assert.match(pillAsia.text, /🇯🇵 Sesi Asia Aktif/);
+
   // 1. Summer London active (e.g. 08:00 UTC = 09:00 BST = 16:00 WITA)
   const londonActive = Date.parse('2026-07-01T08:00:00Z');
   const pill1 = sessionCountdownPill(londonActive);
@@ -69,4 +76,3 @@ test('Item 2.33: sessionCountdownPill computes dynamic active and countdown pill
   assert.equal(mockElement.className, 'cockpit-session-pill session-active');
   assert.equal(mockElement.style.color, '#22C55E');
 });
-
