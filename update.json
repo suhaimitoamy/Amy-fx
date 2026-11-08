@@ -11,7 +11,7 @@
   "latest_version_code": 950439,
   "latest_version_name": "2.0.0-pro.439",
   "mandatory": false,
-  "releaseDate": "2026-11-09",
+  "releaseDate": "2026-11-08",
   "release_notes": [
     "✦ AMY Gemini Live Standalone: Fallback API Key mandiri & koneksi chat langsung tanpa bergantung serverless cloud, bebas error API Key belum siap.",
     "Paritas Penuh Amy Live (Gemini Voice & Orb): Perbaikan akurasi harga live XAU/USD, anti-halusinasi angka harga, integrasi Vercel Serverless Function, izin rekaman suara native Android, dan URL resolver dinamis APK.",
@@ -19,5 +19,5 @@
   ],
   "version": "2.0.0-pro.439",
   "versionCode": 950439,
-  "sha256": "9e71153abae60e49f81bfa0c2764b52183f57a084224a91891c9f10cc1c07824"
+  "sha256": "09b0756538ff9a13c00145da5ee36addcbeced8018b15b18bf333e0b71e42b91"
 }
