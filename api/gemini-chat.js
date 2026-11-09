@@ -56,7 +56,7 @@ export default async function handler(req, res) {
       `ATURAN ANTI-HALUSINASI ANGKA HARGA:\n` +
       `DILARANG KERAS MENGARANG ATAU MEMFABRIKASI ANGKA HARGA GOLD. Patokan harga riil XAU/USD wajib diambil dari data Konteks Aplikasi di atas (Harga Tampil di Layar / Candle Terakhir). Jika data harga belum terbaca di konteks, katakan dengan jujur "Data harga live sedang dimuat, mohon tunggu sebentar". JANGAN PERNAH mengarang angka seperti 4000+!\n\n` +
       `ATURAN JAWABAN & AKSES PENUH MATERI ACADEMY:\n` +
-      `- DILARANG KERAS memakai simbol markdown seperti tanda bintang (* atau **), pagar (# atau ###), garis (---), atau backtick (\`). Tulis teks biasa yang bersih dan rapi, gunakan tanda titik bulat (•) untuk poin.\n` +
+      `- DILARANG KERAS memakai simbol markdown (seperti tanda bintang, pagar, garis pembatas, atau kutip terbalik). Tulis teks biasa yang bersih dan rapi, gunakan tanda titik bulat (•) untuk poin.\n` +
       `- AKSES PENUH SELURUH MATERI PER LEVEL & MODUL: Kamu memiliki akses penuh ke seluruh kurikulum Amy FX Academy (Level 0 s.d. Level 6 yang berisi 42 bab, 10 Modul Master, dan 36 Bagian / 222 bab yang tercantum pada DATA REAL-TIME di atas).\n` +
       `- DILARANG MENOLAK PERMINTAAN BELAJAR: Jika pengguna meminta membuka, mempelajari, atau menjelaskan Level mana pun (Level 0–6), Modul mana pun (Modul 1–10), atau Bab mana pun (misal "Coba kita pelajari modul 2", "Buka level 2", "Tampilkan full materi"), kamu WAJIB langsung membukakan dan menjelaskan isi materi tersebut secara jelas berdasarkan bagian "ISI LENGKAP MATERI YANG DIMINTA PENGGUNA" atau "DAFTAR LENGKAP KURIKULUM AMY FX ACADEMY" di atas! JANGAN PERNAH menolak atau menyuruh menyelesaikan Modul 01 dulu!\n` +
       `- Jika pengguna hanya bertanya "apa bacaan terakhirku?", mengaculah pada "Materi Terakhir Dibaca Pengguna" di atas.`;
@@ -79,7 +79,7 @@ export default async function handler(req, res) {
 
     const modelsToTry = ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
     let replyText = '';
-    const maxTokens = isAskingFullMaterial ? 900 : 420;
+    const maxTokens = isAskingFullMaterial ? 1000 : 700;
 
     for (const m of modelsToTry) {
       try {
@@ -98,7 +98,8 @@ export default async function handler(req, res) {
         });
         if (resp.ok) {
           const result = await resp.json();
-          const candidateText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+          const parts = result?.candidates?.[0]?.content?.parts || [];
+          const candidateText = parts.filter(p => !p.thought && p.text).map(p => p.text).join('').trim() || parts[0]?.text;
           if (candidateText) {
             replyText = candidateText;
             break;

@@ -40,6 +40,7 @@
       .replace(/\*\*([^*]+)\*\*/g, '$1')
       .replace(/\*([^*\n]+)\*/g, '$1')
       .replace(/[*#`]/g, '')
+      .replace(/\bGold([a-zA-Z])/g, 'Gold $1')
       .replace(/\bSayang\b/g, 'kamu')
       .replace(/\bsayang\b/g, 'kamu')
       .replace(/\bHalo kamu\b/gi, 'Halo')
@@ -1194,7 +1195,8 @@
             });
             if (gResp.ok) {
               const gJson = await gResp.json();
-              const reply = gJson?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('').trim();
+              const gParts = gJson?.candidates?.[0]?.content?.parts || [];
+              const reply = gParts.filter(p => !p.thought && p.text).map(p => p.text).join('').trim() || gParts[0]?.text || '';
               if (reply) {
                 data = { ok: true, reply: cleanPlainText(reply) };
               }
@@ -1204,10 +1206,13 @@
 
         let replyText = '';
         let links = [];
+        const isAcademyQuery = /\b(materi|modul|level|bab|pelajari|baca|academy|tutorial|konsep|apa itu|definisi)\b/i.test(q);
         if (root.AmyLocalAssistant) {
           try {
             const localRes = await root.AmyLocalAssistant.ask(q);
-            if (Array.isArray(localRes?.links)) links = localRes.links;
+            if (isAcademyQuery && Array.isArray(localRes?.links)) {
+              links = localRes.links;
+            }
             if ((!data || !data.ok) && localRes?.text) replyText = localRes.text;
           } catch (_) {}
         }
