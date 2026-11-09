@@ -672,7 +672,7 @@ const requestHandler = async (req, res) => {
       let apiKey = '';
       try {
         const rawKeys = fs.readFileSync('/root/.gemini_keys', 'utf-8');
-        apiKey = rawKeys.split('\n').map(s => s.trim()).find(s => s.startsWith('AIza')) || rawKeys.split('\n')[0].trim();
+        apiKey = rawKeys.split('\n').map(s => s.trim()).find(s => s.startsWith('AQ.') || s.startsWith('AIza')) || rawKeys.split('\n')[0].trim();
       } catch (_) {}
       res.writeHead(200, {
         'Content-Type': 'application/json; charset=utf-8',
@@ -696,7 +696,7 @@ const requestHandler = async (req, res) => {
           let apiKey = '';
           try {
             const rawKeys = fs.readFileSync('/root/.gemini_keys', 'utf-8');
-            apiKey = rawKeys.split('\n').map(s => s.trim()).find(s => s.startsWith('AIza')) || rawKeys.split('\n')[0].trim();
+            apiKey = rawKeys.split('\n').map(s => s.trim()).find(s => s.startsWith('AQ.') || s.startsWith('AIza')) || rawKeys.split('\n')[0].trim();
           } catch (_) {}
           if (!apiKey) {
             res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });

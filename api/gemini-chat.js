@@ -18,11 +18,8 @@ export default async function handler(req, res) {
   if (!apiKey) {
     try {
       const rawKeys = fs.readFileSync('/root/.gemini_keys', 'utf-8');
-      apiKey = rawKeys.split('\n').map(s => s.trim()).find(s => s.startsWith('AIza')) || rawKeys.split('\n')[0].trim();
+      apiKey = rawKeys.split('\n').map(s => s.trim()).find(s => s.startsWith('AQ.') || s.startsWith('AIza')) || '';
     } catch (_) {}
-  }
-  if (!apiKey) {
-    apiKey = 'AIzaSyAiB-yJ-wg6Pbd_dPiaO1Q7ZJ_DzLjqsTs';
   }
 
   if (!apiKey) {

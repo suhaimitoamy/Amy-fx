@@ -89,6 +89,18 @@
   async function ensureGeminiConfig() {
     if (geminiConfig && geminiConfig.apiKey) return geminiConfig;
     try {
+      const userKey = root.localStorage?.getItem('amy_user_gemini_api_key')?.trim();
+      if (userKey && userKey.startsWith('AIza')) {
+        geminiConfig = {
+          ok: true,
+          apiKey: userKey,
+          liveModel: 'models/gemini-2.0-flash-exp',
+          voiceName: 'Aoede'
+        };
+        return geminiConfig;
+      }
+    } catch (_) {}
+    try {
       const res = await fetch(getApiBaseUrl() + '/api/gemini-config');
       if (res.ok) {
         const d = await res.json();
@@ -98,14 +110,7 @@
         }
       }
     } catch (_) {}
-    // Fallback bawaan aman agar selalu siap tanpa bergantung deploy cloud
-    geminiConfig = {
-      ok: true,
-      apiKey: 'AIzaSyAiB-yJ-wg6Pbd_dPiaO1Q7ZJ_DzLjqsTs',
-      liveModel: 'models/gemini-3.8-live',
-      voiceName: 'Aoede'
-    };
-    return geminiConfig;
+    return null;
   }
 
   function captureChartCanvasBase64() {
@@ -1313,10 +1318,17 @@
         setBubbleFullscreen(true);
       }
 
-      const cfg = await ensureGeminiConfig();
+      let cfg = await ensureGeminiConfig();
       if (!cfg || !cfg.apiKey) {
-        renderBubble('model', 'API Key Gemini belum siap di server lokal.');
-        return;
+        const inputKey = root.prompt ? root.prompt('Kunci API Gemini Sayang belum terpasang.\nMasukkan Gemini API Key dari Google AI Studio (aistudio.google.com):') : null;
+        if (inputKey && inputKey.trim().startsWith('AIza')) {
+          try { root.localStorage?.setItem('amy_user_gemini_api_key', inputKey.trim()); } catch (_) {}
+          geminiConfig = { ok: true, apiKey: inputKey.trim(), liveModel: 'models/gemini-2.0-flash-exp', voiceName: 'Aoede' };
+          cfg = geminiConfig;
+        } else {
+          renderBubble('model', 'API Key Gemini diperlukan untuk fitur suara. Dapatkan gratis di aistudio.google.com atau periksa server lokal.');
+          return;
+        }
       }
 
       isLiveConnecting = true;
@@ -1344,13 +1356,13 @@
         nextPlayTime = 0;
 
         const appContext = await collectAmyAppContext('Analisa chart dan semua modul');
-        const wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${cfg.apiKey}`;
+        const wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${encodeURIComponent(cfg.apiKey)}`;
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
           const setupMsg = {
             setup: {
-              model: cfg.liveModel || 'models/gemini-3.8-live',
+              model: cfg.liveModel || 'models/gemini-2.0-flash-exp',
               generationConfig: {
                 responseModalities: ['AUDIO'],
                 speechConfig: {

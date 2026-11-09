@@ -1,23 +1,23 @@
 {
-  "apk_url": "https://github.com/suhaimitoamy/Amy-fx-pro/releases/download/amyfx-pro-2.0.0-pro.440/AmyFX-Pro-latest.apk",
+  "apk_url": "https://github.com/suhaimitoamy/Amy-fx-pro/releases/download/amyfx-pro-2.0.0-pro.441/AmyFX-Pro-latest.apk",
   "changelog": [
+    "✦ AMY Aktivasi Kunci Cadangan: Pengaktifan 6 API Key cadangan Sayang tanpa kebocoran publik, dukungan format AQ. & AIza, WebSocket Bidi URI safe encoding, dan respon stabil tanpa halusinasi.",
     "✦ AMY Respon Bersih & Terarah: Perbaikan prompt guard tanpa kebocoran aturan sistem prompt, filter thinking tokens Gemini, pemisahan tombol tautan Academy hanya untuk materi, dan penataan spasi Gold.",
-    "✦ AMY Gemini Live Standalone: Fallback API Key mandiri & koneksi chat langsung tanpa bergantung serverless cloud, bebas error API Key belum siap.",
-    "Paritas Penuh Amy Live (Gemini Voice & Orb): Perbaikan akurasi harga live XAU/USD, anti-halusinasi angka harga, integrasi Vercel Serverless Function, izin rekaman suara native Android, dan URL resolver dinamis APK."
+    "✦ AMY Gemini Live Standalone: Fallback API Key mandiri & koneksi chat langsung tanpa bergantung serverless cloud, bebas error API Key belum siap."
   ],
-  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx-pro/releases/download/amyfx-pro-2.0.0-pro.440/AmyFX-Pro-latest.apk",
+  "downloadUrl": "https://github.com/suhaimitoamy/Amy-fx-pro/releases/download/amyfx-pro-2.0.0-pro.441/AmyFX-Pro-latest.apk",
   "enabled": true,
   "force_update": false,
-  "latest_version_code": 950440,
-  "latest_version_name": "2.0.0-pro.440",
+  "latest_version_code": 950441,
+  "latest_version_name": "2.0.0-pro.441",
   "mandatory": false,
   "releaseDate": "2026-11-09",
   "release_notes": [
+    "✦ AMY Aktivasi Kunci Cadangan: Pengaktifan 6 API Key cadangan Sayang tanpa kebocoran publik, dukungan format AQ. & AIza, WebSocket Bidi URI safe encoding, dan respon stabil tanpa halusinasi.",
     "✦ AMY Respon Bersih & Terarah: Perbaikan prompt guard tanpa kebocoran aturan sistem prompt, filter thinking tokens Gemini, pemisahan tombol tautan Academy hanya untuk materi, dan penataan spasi Gold.",
-    "✦ AMY Gemini Live Standalone: Fallback API Key mandiri & koneksi chat langsung tanpa bergantung serverless cloud, bebas error API Key belum siap.",
-    "Paritas Penuh Amy Live (Gemini Voice & Orb): Perbaikan akurasi harga live XAU/USD, anti-halusinasi angka harga, integrasi Vercel Serverless Function, izin rekaman suara native Android, dan URL resolver dinamis APK."
+    "✦ AMY Gemini Live Standalone: Fallback API Key mandiri & koneksi chat langsung tanpa bergantung serverless cloud, bebas error API Key belum siap."
   ],
-  "version": "2.0.0-pro.440",
-  "versionCode": 950440,
+  "version": "2.0.0-pro.441",
+  "versionCode": 950441,
   "sha256": "d950c2557261716dd2620fd4ee6b8de5510bdb4be47716fb052f9d4bfbe9eb68"
 }
