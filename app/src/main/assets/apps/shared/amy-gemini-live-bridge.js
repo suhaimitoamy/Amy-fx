@@ -486,7 +486,8 @@
 
   function upgradeAssistantPanel() {
     const host = document.getElementById('amy-local-root');
-    if (!host || host.dataset.geminiUpgraded === 'true') return;
+    if (!host) return false;
+    if (host.dataset.geminiUpgraded === 'true') return true;
     host.dataset.geminiUpgraded = 'true';
 
     const panel = host.querySelector('#amy-local-panel');
@@ -1320,15 +1321,8 @@
 
       let cfg = await ensureGeminiConfig();
       if (!cfg || !cfg.apiKey) {
-        const inputKey = root.prompt ? root.prompt('Kunci API Gemini Sayang belum terpasang.\nMasukkan Gemini API Key dari Google AI Studio (aistudio.google.com):') : null;
-        if (inputKey && inputKey.trim().startsWith('AIza')) {
-          try { root.localStorage?.setItem('amy_user_gemini_api_key', inputKey.trim()); } catch (_) {}
-          geminiConfig = { ok: true, apiKey: inputKey.trim(), liveModel: 'models/gemini-2.0-flash-exp', voiceName: 'Aoede' };
-          cfg = geminiConfig;
-        } else {
-          renderBubble('model', 'API Key Gemini diperlukan untuk fitur suara. Dapatkan gratis di aistudio.google.com atau periksa server lokal.');
-          return;
-        }
+        renderBubble('model', 'Koneksi suara Gemini sedang disiapkan oleh server Vercel… Mohon tunggu sebentar.');
+        return;
       }
 
       isLiveConnecting = true;
@@ -1742,11 +1736,30 @@
     btnVoice.onclick = toggleLiveVoice;
 
     restoreSavedChat();
+    return true;
+  }
+
+  function schedulePanelUpgrade() {
+    if (upgradeAssistantPanel()) return;
+    let attempts = 0;
+    const interval = setInterval(() => {
+      attempts++;
+      if (upgradeAssistantPanel() || attempts > 30) {
+        clearInterval(interval);
+      }
+    }, 80);
+
+    if (typeof MutationObserver !== 'undefined' && document.body) {
+      const observer = new MutationObserver(() => {
+        if (upgradeAssistantPanel()) observer.disconnect();
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => setTimeout(upgradeAssistantPanel, 60), { once: true });
+    document.addEventListener('DOMContentLoaded', schedulePanelUpgrade, { once: true });
   } else {
-    setTimeout(upgradeAssistantPanel, 60);
+    schedulePanelUpgrade();
   }
 })(typeof window === 'undefined' ? globalThis : window);

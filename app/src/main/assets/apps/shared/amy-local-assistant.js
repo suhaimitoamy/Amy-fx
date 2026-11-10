@@ -2,7 +2,13 @@
 (function(root) {
   'use strict';
   if(root.AmyLocalAssistant)return;
-  const script=root.document?.currentScript?.src;
+  const script = root.document?.currentScript?.src || (function() {
+    const scripts = root.document?.getElementsByTagName('script') || [];
+    for (let i = scripts.length - 1; i >= 0; i--) {
+      if (scripts[i].src && scripts[i].src.includes('amy-local-assistant.js')) return scripts[i].src;
+    }
+    return '';
+  })();
   const base=script?new URL('../../',script).href:'';
   const routes={mapping:['Mapping','apps/mapping/index.html'],news:['Berita','apps/market-intel/index.html'],journal:['Jurnal Trading','apps/journal/index.html'],academy:['Tutorial Trading','apps/academy/index.html'],home:['Beranda','index.html']};
   const norm=s=>String(s??'').toLowerCase().normalize('NFKD').replace(/[^a-z0-9/\s]/g,' ').replace(/\s+/g,' ').trim();
