@@ -10,7 +10,7 @@
     return '';
   })();
   const base=script?new URL('../../',script).href:'';
-  const routes={mapping:['Mapping','apps/mapping/index.html'],news:['Berita','apps/market-intel/index.html'],journal:['Jurnal Trading','apps/journal/index.html'],academy:['Tutorial Trading','apps/academy/index.html'],home:['Beranda','index.html']};
+  const routes={mapping:['Mapping','apps/mapping/index.html'],news:['Berita','apps/market-intel/index.html'],journal:['Jurnal Trading','apps/journal/index.html'],academy:['Tutorial Trading','apps/academy/index.html'],kalkulator:['Kalkulator Risiko','apps/academy/tools/kalkulator-resiko.html'],glosarium:['Glosarium ICT','apps/academy/glosarium/index.html'],practice:['Trading Practice','apps/practice/index.html'],home:['Beranda','index.html']};
   const norm=s=>String(s??'').toLowerCase().normalize('NFKD').replace(/[^a-z0-9/\s]/g,' ').replace(/\s+/g,' ').trim();
   const list=v=>Array.isArray(v)?v:[];
   const read=(key,fallback=null)=>{try{return JSON.parse(root.localStorage.getItem(key))??fallback;}catch{return fallback;}};
@@ -57,7 +57,10 @@
     if(/\b(harga|price|mapping|market|xau|gold|emas|sinyal|signal|bias|arah|entry|setup|stop loss|target|sl|tp)\b/.test(q))found.push('mapping');
     if(/\b(news|berita|kabar|headline|ekonomi)\b/.test(q))found.push('news');
     if(/\b(jurnal|journal|transaksi|profit|rugi|winrate|win rate|performa|evaluasi|kesalahan|emosi|disiplin|psikologi|fomo|overtrade|revenge)\b/.test(q))found.push('journal');
-    if(/\b(belajar|baca|bacaan|membaca|pelajari|academy|akademi|tutorial|progres|progress|latihan|soal|skor|nilai|materi|pelajaran)\b/.test(q))found.push('academy');
+    if(/\b(kalkulator|hitung lot|lot|resiko|risk calculator)\b/.test(q))found.push('kalkulator');
+    if(/\b(glosarium|kamus|istilah|singkatan)\b/.test(q))found.push('glosarium');
+    if(/\b(practice|simulasi|latihan|replay)\b/.test(q))found.push('practice');
+    if(/\b(belajar|baca|bacaan|membaca|pelajari|academy|akademi|tutorial|progres|progress|soal|skor|nilai|materi|pelajaran)\b/.test(q))found.push('academy');
     // Personal trade questions use Journal, unless Mapping is explicitly named.
     if(found.includes('journal')&&!/mapping|harga|market|xau|gold|emas|sinyal|signal|bias|arah/.test(q))return found.filter(id=>id!=='mapping');
     return found;

@@ -86,6 +86,15 @@
     return '';
   }
 
+  function resolveAppUrl(rawPath) {
+    if (!rawPath) return '#';
+    const clean = String(rawPath).replace(/^(\/assets\/|\.\/|\/)/, '');
+    if (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin.includes('appassets.androidplatform.net')) {
+      return 'https://appassets.androidplatform.net/assets/' + clean;
+    }
+    return '/' + clean;
+  }
+
   async function ensureGeminiConfig() {
     if (geminiConfig && geminiConfig.apiKey) return geminiConfig;
     try {
@@ -222,10 +231,57 @@
   }
 
     let lastRequestedLesson = null;
+    let lastReadLessonDetails = null;
+
+    function findInLocalKnowledge(queryOrTitle, knowledgeList) {
+      if (!queryOrTitle) return null;
+      const knowledge = Array.isArray(knowledgeList) ? knowledgeList : (root.AmyLocalKnowledge || (typeof window !== 'undefined' ? window.AmyLocalKnowledge : []));
+      if (!Array.isArray(knowledge) || !knowledge.length) return null;
+      const q = String(queryOrTitle).toLowerCase().trim();
+
+      let match = knowledge.find(k => k.title && k.title.toLowerCase() === q);
+      if (match) return match;
+
+      const modMatch = q.match(/modul\s*0?(\d+)/i);
+      if (modMatch) {
+        const num = String(modMatch[1]).padStart(2, '0');
+        match = knowledge.find(k => k.path && k.path.includes(`modul-${num}`));
+        if (match) return match;
+      }
+
+      const lvlMatch = q.match(/level\s*(\d+)/i);
+      if (lvlMatch) {
+        match = knowledge.find(k => k.path && k.path.includes(`level-${lvlMatch[1]}`));
+        if (match) return match;
+      }
+
+      const bagMatch = q.match(/bagian\s*0?(\d+)/i);
+      if (bagMatch) {
+        const num = String(bagMatch[1]).padStart(2, '0');
+        match = knowledge.find(k => k.path && k.path.includes(`bagian-${num}`));
+        if (match) return match;
+      }
+
+      const terms = q.split(/\s+/).filter(t => t.length > 2 && !['apa', 'itu', 'cara', 'yang', 'dan', 'di', 'ke', 'materi', 'bab', 'buka', 'pelajari', 'jelaskan', 'ringkum'].includes(t));
+      if (terms.length) {
+        match = knowledge.find(k => {
+          const t = (k.title || '').toLowerCase();
+          return terms.every(term => t.includes(term));
+        });
+        if (match) return match;
+        match = knowledge.find(k => {
+          const t = (k.title || '').toLowerCase();
+          return terms.some(term => t.includes(term));
+        });
+        if (match) return match;
+      }
+      return null;
+    }
 
     async function collectAcademyReadingContext(userQuestion) {
       try {
         lastRequestedLesson = null;
+        lastReadLessonDetails = null;
         let lastRead = null;
       let history = [];
       let microProgress = {};
@@ -253,13 +309,13 @@
       }
 
       let apiData = null;
+      const isJournalOrMarketQuery = /\b(evaluasi performa jurnal|winrate|refleksi emosi saya|berita terbaru|kalender ekonomi|analisa chart gold)\b/i.test(userQuestion || '');
+      const isAcademyLessonQuery =
+        !isJournalOrMarketQuery &&
+        /\b(modul|level|bab|bagian|materi|pelajari|belajar|buka|ringkum|rangkum|isi|fvg|order block|liquidity|bos|mss|ote|killzone|turtle soup|inducement|amd|po3)\b/i.test(userQuestion || '');
+      const effectiveLessonQuery = isAcademyLessonQuery ? (userQuestion || '') : '';
       try {
         const hasState = Boolean(lastRead && lastRead.title);
-        const isJournalOrMarketQuery = /\b(evaluasi performa jurnal|winrate|refleksi emosi saya|berita terbaru|kalender ekonomi|analisa chart gold)\b/i.test(userQuestion || '');
-        const isAcademyLessonQuery =
-          !isJournalOrMarketQuery &&
-          /\b(modul|level|bab|bagian|materi|pelajari|belajar|buka|fvg|order block|liquidity|bos|mss|ote|killzone|turtle soup|inducement|amd|po3)\b/i.test(userQuestion || '');
-        const effectiveLessonQuery = isAcademyLessonQuery ? (userQuestion || '') : '';
         const qParam = effectiveLessonQuery ? `?q=${encodeURIComponent(effectiveLessonQuery)}` : '';
         const resp = await fetch(getApiBaseUrl() + `/api/academy-reading${qParam}`, {
           method: hasState || effectiveLessonQuery ? 'POST' : 'GET',
@@ -272,10 +328,41 @@
       const effectiveState = apiData?.state || { lastRead, history };
       const finalLast = lastRead?.title ? lastRead : (effectiveState.lastRead || null);
       const finalHistory = history.length ? history : (Array.isArray(effectiveState.history) ? effectiveState.history : []);
-      const details = apiData?.lessonDetails || null;
-      const requestedLesson = apiData?.requestedLesson || null;
+      let details = apiData?.lessonDetails || null;
+      let requestedLesson = apiData?.requestedLesson || null;
+
+      // Local offline knowledge fallback if apiData didn't provide lesson content
+      const localKnowledge = root.AmyLocalKnowledge || (typeof window !== 'undefined' ? window.AmyLocalKnowledge : []);
+      if (Array.isArray(localKnowledge) && localKnowledge.length) {
+        if (!details && finalLast && (finalLast.title || finalLast.path)) {
+          const lk = findInLocalKnowledge(finalLast.title || finalLast.path, localKnowledge);
+          if (lk) {
+            details = {
+              title: lk.title,
+              relPath: lk.path.replace(/^.*\/apps\/academy\//, ''),
+              summary: (lk.text || '').slice(0, 1800),
+              fullText: lk.text || ''
+            };
+          }
+        }
+        if (!requestedLesson && effectiveLessonQuery) {
+          const lk = findInLocalKnowledge(effectiveLessonQuery, localKnowledge);
+          if (lk) {
+            requestedLesson = {
+              title: lk.title,
+              relPath: lk.path.replace(/^.*\/apps\/academy\//, ''),
+              summary: (lk.text || '').slice(0, 1800),
+              fullText: lk.text || ''
+            };
+          }
+        }
+      }
+
       if (requestedLesson && requestedLesson.title) {
         lastRequestedLesson = requestedLesson;
+      }
+      if (details && details.title) {
+        lastReadLessonDetails = details;
       }
       const catalogText = apiData?.catalogText || '';
 
@@ -323,8 +410,10 @@
         out.push(`• Daftar Urutan Riwayat Bacaan Terakhir: ${histList}`);
       }
 
-      if (details?.summary) {
-        out.push(`• Isi Asli Materi Terakhir yang Dibaca Pengguna:\n${details.summary}`);
+      if (details && (details.fullText || details.summary)) {
+        out.push(`\n=== ISI LENGKAP MATERI TERAKHIR YANG DIBACA PENGGUNA (GUNAKAN INI UNTUK MERANGKUM/MENJELASKAN ISI MATERI!) ===`);
+        out.push(`• Judul Materi: "${details.title}"`);
+        out.push(`• Teks Lengkap / Rangkuman Inti:\n${(details.fullText || details.summary).slice(0, 3500)}`);
       }
 
       if (details?.nextLessonTitle || finalLast?.nextTitle) {
@@ -773,6 +862,28 @@
         margin-bottom: 6px;
         border: 1px solid rgba(255, 255, 255, 0.15);
       }
+      .amy-action-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 6px;
+        padding: 7px 13px;
+        background: linear-gradient(135deg, rgba(245, 196, 81, 0.22), rgba(245, 196, 81, 0.08)) !important;
+        border: 1px solid rgba(245, 196, 81, 0.45) !important;
+        border-radius: 10px !important;
+        color: #fef08a !important;
+        font-weight: 700 !important;
+        font-size: 12.5px !important;
+        text-decoration: none !important;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+        transition: all 0.2s ease;
+      }
+      .amy-action-link:hover, .amy-action-link:active {
+        background: linear-gradient(135deg, rgba(245, 196, 81, 0.38), rgba(245, 196, 81, 0.16)) !important;
+        border-color: #f5c451 !important;
+        transform: translateY(-1px);
+      }
       #amy-attach-preview {
         display: flex;
         align-items: center;
@@ -978,6 +1089,76 @@
       panel.classList.toggle('amy-minimized');
     };
 
+    function resolveActionLinks(userQuery, replyText, reqLesson, det) {
+      const links = [];
+      const text = `${userQuery || ''} ${replyText || ''}`.toLowerCase();
+
+      // 1. If a specific lesson was requested or discussed
+      const activeLesson = reqLesson || det;
+      if (activeLesson && activeLesson.title && activeLesson.relPath) {
+        links.push({
+          label: `📖 Buka Materi: ${activeLesson.title}`,
+          path: `apps/academy/${activeLesson.relPath}`
+        });
+      }
+
+      // 2. Modul matching (e.g. "modul 2", "modul 02")
+      const modMatch = text.match(/modul\s*0?(\d+)/i);
+      if (modMatch) {
+        const num = String(modMatch[1]).padStart(2, '0');
+        links.push({
+          label: `📚 Buka Modul ${num}`,
+          path: `apps/academy/modul-${num}/index.html`
+        });
+      }
+
+      // 3. Level matching (e.g. "level 0", "level 1")
+      const lvlMatch = text.match(/level\s*(\d+)/i);
+      if (lvlMatch) {
+        links.push({
+          label: `🎓 Buka Level ${lvlMatch[1]}`,
+          path: `apps/academy/belajar/level-${lvlMatch[1]}/index.html`
+        });
+      }
+
+      // 4. Feature modules matching
+      if (/\b(chart|gold|emas|mapping|sinyal|xau|peta harga)\b/i.test(text)) {
+        links.push({ label: '📈 Buka Chart Gold & Mapping', path: 'apps/mapping/index.html' });
+      }
+      if (/\b(berita|news|kalender|ekonomi|fomc|nfp|cpi|makro)\b/i.test(text)) {
+        links.push({ label: '📰 Buka Berita & Kalender', path: 'apps/market-intel/index.html' });
+      }
+      if (/\b(jurnal|journal|evaluasi|winrate|catatan|psikologi)\b/i.test(text)) {
+        links.push({ label: '📓 Buka Jurnal Trading', path: 'apps/journal/index.html' });
+      }
+      if (/\b(kalkulator|lot|resiko|risk calculator)\b/i.test(text)) {
+        links.push({ label: '🧮 Buka Kalkulator Risiko', path: 'apps/academy/tools/kalkulator-resiko.html' });
+      }
+      if (/\b(glosarium|kamus|istilah)\b/i.test(text)) {
+        links.push({ label: '📖 Buka Glosarium ICT', path: 'apps/academy/glosarium/index.html' });
+      }
+      if (/\b(practice|latihan|simulasi|replay)\b/i.test(text)) {
+        links.push({ label: '🎯 Buka Trading Practice', path: 'apps/practice/index.html' });
+      }
+      if (/\b(beranda|home|cockpit)\b/i.test(text)) {
+        links.push({ label: '🏠 Buka Beranda', path: 'index.html' });
+      }
+      if (links.length === 0 && /\b(academy|tutorial|belajar|materi)\b/i.test(text)) {
+        links.push({ label: '🎓 Buka Amy FX Academy', path: 'apps/academy/index.html' });
+      }
+
+      // Deduplicate by path
+      const unique = [];
+      const seen = new Set();
+      for (const l of links) {
+        if (!seen.has(l.path)) {
+          seen.add(l.path);
+          unique.push(l);
+        }
+      }
+      return unique;
+    }
+
     function renderBubble(role, text, opts = {}) {
       const p = document.createElement('p');
       p.className = role === 'user' ? 'amy-msg-user' : 'amy-msg-ai';
@@ -993,18 +1174,27 @@
       span.textContent = cleaned;
       p.appendChild(span);
 
-      if (Array.isArray(opts.links)) {
+      if (Array.isArray(opts.links) && opts.links.length) {
+        const linkWrap = document.createElement('div');
+        linkWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;';
+        const seenPaths = new Set();
         opts.links.forEach(l => {
+          if (!l || !l.path || seenPaths.has(l.path)) return;
+          seenPaths.add(l.path);
           try {
             const a = document.createElement('a');
-            a.href = l.path;
-            a.textContent = l.label;
-            a.style.marginTop = '8px';
-            a.style.fontWeight = '600';
-            a.style.fontSize = '12.5px';
-            p.appendChild(a);
+            a.className = 'amy-action-link';
+            a.textContent = l.label || 'Buka Halaman';
+            const targetUrl = resolveAppUrl(l.path);
+            a.href = targetUrl;
+            a.onclick = e => {
+              e.preventDefault();
+              window.location.href = targetUrl;
+            };
+            linkWrap.appendChild(a);
           } catch (_) {}
         });
+        if (linkWrap.children.length) p.appendChild(linkWrap);
       }
       messages.appendChild(p);
       while (messages.children.length > 40) messages.firstChild.remove();
@@ -1156,8 +1346,11 @@
         const appContext = await collectAmyAppContext(q);
         let data = null;
         try {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 9000);
           const resp = await fetch(getApiBaseUrl() + '/api/gemini-chat', {
             method: 'POST',
+            signal: controller.signal,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               message: q,
@@ -1166,6 +1359,7 @@
               history: hist
             })
           });
+          clearTimeout(timer);
           if (resp.ok) {
             data = await resp.json();
           }
@@ -1190,8 +1384,11 @@
             parts.push({ text: q || 'Analisa chart' });
             gContents.push({ role: 'user', parts });
 
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 7000);
             const gResp = await fetch(gUrl, {
               method: 'POST',
+              signal: controller.signal,
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 systemInstruction: { parts: [{ text: sysText }] },
@@ -1199,6 +1396,7 @@
                 contents: gContents
               })
             });
+            clearTimeout(timer);
             if (gResp.ok) {
               const gJson = await gResp.json();
               const gParts = gJson?.candidates?.[0]?.content?.parts || [];
@@ -1212,12 +1410,11 @@
 
         let replyText = '';
         let links = [];
-        const isAcademyQuery = /\b(materi|modul|level|bab|pelajari|baca|academy|tutorial|konsep|apa itu|definisi)\b/i.test(q);
         if (root.AmyLocalAssistant) {
           try {
             const localRes = await root.AmyLocalAssistant.ask(q);
-            if (isAcademyQuery && Array.isArray(localRes?.links)) {
-              links = localRes.links;
+            if (Array.isArray(localRes?.links) && localRes.links.length) {
+              links.push(...localRes.links);
             }
             if ((!data || !data.ok) && localRes?.text) replyText = localRes.text;
           } catch (_) {}
@@ -1225,18 +1422,16 @@
         if (data && data.ok && data.reply) {
           replyText = data.reply;
         }
-        if (lastRequestedLesson && lastRequestedLesson.relPath) {
-          links.unshift({
-            label: `Buka Materi: ${lastRequestedLesson.title}`,
-            path: `/apps/academy/${lastRequestedLesson.relPath}`
-          });
-          if (lastRequestedLesson.nextLessonPath) {
-            links.push({
-              label: `Selanjutnya: ${lastRequestedLesson.nextLessonTitle || 'Lanjut'}`,
-              path: `/apps/academy/${lastRequestedLesson.nextLessonPath}`
-            });
-          }
-        }
+
+        const actionLinks = resolveActionLinks(q, replyText, lastRequestedLesson, lastReadLessonDetails);
+        links = [...actionLinks, ...links];
+        const seenL = new Set();
+        links = links.filter(l => {
+          if (!l || !l.path || seenL.has(l.path)) return false;
+          seenL.add(l.path);
+          return true;
+        });
+
         if (!replyText) {
           replyText = 'Maaf, koneksi sedang sibuk. Coba ketuk sekali lagi ya.';
         }
